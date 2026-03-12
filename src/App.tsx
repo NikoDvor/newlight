@@ -62,6 +62,10 @@ const App = () => (
             <Route path="/audit-pack" element={<AuditPack />} />
             <Route path="/meeting-outcome" element={<MeetingOutcome />} />
             <Route path="/proposal-draft" element={<ProposalDraft />} />
+            <Route path="/website-builder" element={<WebsiteBuilder />} />
+            <Route path="/funnel-builder" element={<FunnelBuilder />} />
+            <Route path="/landing-pages" element={<LandingPageEditor />} />
+            <Route path="/forms" element={<FormBuilder />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
