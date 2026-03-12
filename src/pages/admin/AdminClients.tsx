@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ArrowRight, ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Search, Building2, ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,7 +28,9 @@ export default function AdminClients() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", primary_location: "",
-    timezone: "America/Los_Angeles", service_package: "starter", owner_name: "", owner_email: ""
+    timezone: "America/Los_Angeles", service_package: "starter", owner_name: "", owner_email: "",
+    // Branding fields
+    logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
   });
   const { setViewMode, setActiveClientId } = useWorkspace();
   const navigate = useNavigate();
@@ -44,9 +46,11 @@ export default function AdminClients() {
       toast.error("Business name and workspace slug are required");
       return;
     }
+    const slug = form.workspace_slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+
     const { data, error } = await supabase.from("clients").insert({
       business_name: form.business_name,
-      workspace_slug: form.workspace_slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+      workspace_slug: slug,
       industry: form.industry || null,
       primary_location: form.primary_location || null,
       timezone: form.timezone,
@@ -60,17 +64,31 @@ export default function AdminClients() {
       return;
     }
 
-    // Create provision queue entry
     if (data) {
-      await supabase.from("provision_queue").insert({ client_id: data.id });
-      // Create default integrations
+      // Create provision queue, integrations, onboarding, and branding in parallel
       const integrations = ["Google Analytics", "Google Search Console", "Google Business Profile", "Meta / Instagram", "Twilio", "Stripe", "Zoom"];
-      await supabase.from("client_integrations").insert(integrations.map(name => ({ client_id: data.id, integration_name: name })));
+      await Promise.all([
+        supabase.from("provision_queue").insert({ client_id: data.id }),
+        supabase.from("client_integrations").insert(integrations.map(name => ({ client_id: data.id, integration_name: name }))),
+        supabase.from("onboarding_progress").insert({ client_id: data.id }),
+        supabase.from("client_branding").insert({
+          client_id: data.id,
+          company_name: form.business_name,
+          logo_url: form.logo_url || null,
+          primary_color: form.primary_color || "#3B82F6",
+          secondary_color: form.secondary_color || "#06B6D4",
+          welcome_message: form.welcome_message || "Welcome to your business dashboard",
+        }),
+      ]);
     }
 
     toast.success("Client workspace created!");
     setShowCreate(false);
-    setForm({ business_name: "", workspace_slug: "", industry: "", primary_location: "", timezone: "America/Los_Angeles", service_package: "starter", owner_name: "", owner_email: "" });
+    setForm({
+      business_name: "", workspace_slug: "", industry: "", primary_location: "",
+      timezone: "America/Los_Angeles", service_package: "starter", owner_name: "", owner_email: "",
+      logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+    });
     fetchClients();
   };
 
@@ -88,6 +106,20 @@ export default function AdminClients() {
     return "bg-white/5 text-white/40";
   };
 
+  const formFields = [
+    { label: "Business Name", key: "business_name", placeholder: "Acme Corp" },
+    { label: "Workspace Slug", key: "workspace_slug", placeholder: "acme-corp" },
+    { label: "Industry", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant" },
+    { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
+    { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
+    { label: "Owner Email", key: "owner_email", placeholder: "john@example.com" },
+  ];
+
+  const brandingFields = [
+    { label: "Logo URL", key: "logo_url", placeholder: "https://your-logo.com/logo.png" },
+    { label: "Welcome Message", key: "welcome_message", placeholder: "Welcome to your dashboard" },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
@@ -101,19 +133,12 @@ export default function AdminClients() {
               <Plus className="h-4 w-4 mr-1" /> Create Client
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg" style={{ background: "hsl(218 35% 12%)", border: "1px solid hsla(211,96%,60%,.15)", color: "white" }}>
+          <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto" style={{ background: "hsl(218 35% 12%)", border: "1px solid hsla(211,96%,60%,.15)", color: "white" }}>
             <DialogHeader>
               <DialogTitle className="text-white">Create Client Workspace</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 mt-2">
-              {[
-                { label: "Business Name", key: "business_name", placeholder: "Acme Corp" },
-                { label: "Workspace Slug", key: "workspace_slug", placeholder: "acme-corp" },
-                { label: "Industry", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant" },
-                { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
-                { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
-                { label: "Owner Email", key: "owner_email", placeholder: "john@example.com" },
-              ].map(f => (
+              {formFields.map(f => (
                 <div key={f.key}>
                   <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
                   <Input
@@ -137,6 +162,63 @@ export default function AdminClients() {
                   <option value="enterprise">Enterprise</option>
                 </select>
               </div>
+
+              {/* Branding Section */}
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
+                {brandingFields.map(f => (
+                  <div key={f.key} className="mb-3">
+                    <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
+                    <Input
+                      value={(form as any)[f.key]}
+                      onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      placeholder={f.placeholder}
+                      className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                    />
+                  </div>
+                ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-white/50 mb-1 block">Primary Color</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={form.primary_color}
+                        onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))}
+                        className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent"
+                      />
+                      <Input
+                        value={form.primary_color}
+                        onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))}
+                        className="bg-white/[0.06] border-white/10 text-white flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 mb-1 block">Secondary Color</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={form.secondary_color}
+                        onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent"
+                      />
+                      <Input
+                        value={form.secondary_color}
+                        onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        className="bg-white/[0.06] border-white/10 text-white flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* Color preview */}
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-[10px] text-white/40">Preview:</span>
+                  <div className="h-5 w-5 rounded-md" style={{ background: form.primary_color }} />
+                  <div className="h-5 w-5 rounded-md" style={{ background: form.secondary_color }} />
+                </div>
+              </div>
+
               <Button onClick={handleCreate} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white mt-2">
                 Create Workspace
               </Button>
