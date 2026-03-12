@@ -68,6 +68,8 @@ export default function SettingsPage() {
             ))}
           </div>
         </DataCard>
+
+        <ClientBrandingSettings />
       </div>
     </div>
   );
