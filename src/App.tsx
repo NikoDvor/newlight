@@ -18,6 +18,13 @@ import Training from "./pages/Training";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Tasks from "./pages/Tasks";
+import Pipeline from "./pages/Pipeline";
+import Inbox from "./pages/Inbox";
+import ProposalBooking from "./pages/ProposalBooking";
+import ProspectDetail from "./pages/ProspectDetail";
+import AuditPack from "./pages/AuditPack";
+import MeetingOutcome from "./pages/MeetingOutcome";
+import ProposalDraft from "./pages/ProposalDraft";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
