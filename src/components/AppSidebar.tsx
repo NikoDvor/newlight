@@ -52,6 +52,12 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     ],
   },
   {
+    type: "group", label: "Integrations",
+    items: [
+      { title: "Integrations", url: "/integrations", icon: Plug },
+    ],
+  },
+  {
     type: "group", label: "Training",
     items: [
       { title: "Courses", url: "/training", icon: GraduationCap },
