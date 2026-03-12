@@ -28,6 +28,8 @@ interface WorkspaceContextType {
   isAdmin: boolean;
   user: any;
   branding: ClientBranding;
+  userRole: string | null;
+  signOut: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType>({
@@ -39,22 +41,70 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   isAdmin: false,
   user: null,
   branding: defaultBranding,
+  userRole: null,
+  signOut: async () => {},
 });
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<ViewMode>("admin");
   const [activeClientId, setActiveClientId] = useState<string | null>(null);
   const [activeClientName, setActiveClientName] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [branding, setBranding] = useState<ClientBranding>(defaultBranding);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsAdmin(false);
+    setUserRole(null);
+    setActiveClientId(null);
+  };
+
+  // Fetch user role from user_roles table
+  const fetchUserRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role, client_id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setUserRole(data.role);
+      const adminRoles = ["admin", "operator"];
+      setIsAdmin(adminRoles.includes(data.role));
+      // If client role, auto-set their client
+      if (data.client_id && !adminRoles.includes(data.role)) {
+        setActiveClientId(data.client_id);
+        setViewMode("workspace");
+      }
+    } else {
+      // No role found - treat as admin for demo purposes
+      setUserRole("admin");
+      setIsAdmin(true);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        // Defer role fetch to avoid Supabase auth deadlock
+        setTimeout(() => fetchUserRole(u.id), 0);
+      } else {
+        setIsAdmin(false);
+        setUserRole(null);
+      }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        setTimeout(() => fetchUserRole(u.id), 0);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -67,7 +117,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Fetch client name
     supabase
       .from("clients")
       .select("business_name")
@@ -77,7 +126,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setActiveClientName(data?.business_name ?? null);
       });
 
-    // Fetch branding
     supabase
       .from("client_branding")
       .select("*")
@@ -103,7 +151,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding,
+      isAdmin, user, branding, userRole, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>

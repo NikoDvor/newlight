@@ -46,6 +46,8 @@ import MarketResearch from "./pages/MarketResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
 import Integrations from "./pages/Integrations";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -58,6 +60,7 @@ import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminPackages from "./pages/admin/AdminPackages";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminMonitoring from "./pages/admin/AdminMonitoring";
+import AdminTeam from "./pages/admin/AdminTeam";
 import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
@@ -70,11 +73,16 @@ const App = () => (
       <BrowserRouter>
         <WorkspaceProvider>
           <Routes>
+            {/* Auth */}
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="clients" element={<AdminClients />} />
               <Route path="monitoring" element={<AdminMonitoring />} />
+              <Route path="team" element={<AdminTeam />} />
               <Route path="prospects" element={<AdminProspects />} />
               <Route path="provision" element={<AdminProvision />} />
               <Route path="fix-now" element={<AdminFixNow />} />

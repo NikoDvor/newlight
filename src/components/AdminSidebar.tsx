@@ -1,8 +1,9 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
-  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity
+  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut
 } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -14,6 +15,7 @@ const navItems = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
   { title: "Clients", url: "/admin/clients", icon: Users },
+  { title: "Team & Users", url: "/admin/team", icon: Shield },
   { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
   { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
@@ -26,6 +28,7 @@ const navItems = [
 export function AdminSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
+  const { signOut } = useWorkspace();
   const collapsed = state === "collapsed";
 
   const isActive = (path: string) => {
@@ -117,6 +120,16 @@ export function AdminSidebar() {
             >
               <ChevronLeft className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110 ${collapsed ? "rotate-180" : ""}`} />
               {!collapsed && <span>Collapse</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={signOut}
+              tooltip={collapsed ? "Sign Out" : undefined}
+              className="h-8 px-3 rounded-xl text-[12px] font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+            >
+              <LogOut className="h-3.5 w-3.5 shrink-0" />
+              {!collapsed && <span>Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
