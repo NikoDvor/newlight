@@ -106,6 +106,7 @@ export function AppLayout() {
             </AnimatePresence>
           </main>
         </div>
+        <AIAssistant />
       </div>
     </SidebarProvider>
   );

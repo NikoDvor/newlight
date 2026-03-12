@@ -40,6 +40,7 @@ const navItems = [
   { title: "Client Performance", url: "/client-performance", icon: BarChart3 },
   { title: "Client Report", url: "/client-report", icon: FileText },
   { title: "Intelligence", url: "/intelligence", icon: Brain },
+  { title: "AI Insights", url: "/ai-insights", icon: Zap },
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Training", url: "/training", icon: GraduationCap },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
