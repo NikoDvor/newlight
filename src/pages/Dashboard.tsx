@@ -213,6 +213,15 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+      {/* Revenue Calculator */}
+      <div className="mt-6">
+        <RevenueCalculator />
+      </div>
+
+      {/* Predictive Growth */}
+      <div className="mt-6">
+        <PredictiveGrowth />
+      </div>
     </div>
   );
 }
