@@ -67,6 +67,18 @@ export default function Dashboard() {
     <div>
       <PageHeader title="Dashboard" description="Your AI-powered business command center" />
 
+      {/* Health Score + Onboarding */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <HealthScoreWidget score={73} />
+        <div className="lg:col-span-2">
+          <OnboardingProgress steps={{
+            business_info: true, website_connected: true, google_business_connected: true,
+            review_platform_connected: false, ad_account_connected: false,
+            crm_setup: true, team_setup: false, launch_ready: false,
+          }} />
+        </div>
+      </div>
+
       {/* Row 1: Top Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
         <MetricCard label="Business Health" value="73" change="Across all systems" changeType="positive" icon={Heart} />
