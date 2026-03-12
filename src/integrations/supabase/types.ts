@@ -55,6 +55,175 @@ export type Database = {
           },
         ]
       }
+      automation_events: {
+        Row: {
+          client_id: string
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_logs: {
+        Row: {
+          automation_id: string | null
+          client_id: string
+          created_at: string
+          id: string
+          log_level: string
+          message: string
+          metadata: Json | null
+        }
+        Insert: {
+          automation_id?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          log_level?: string
+          message: string
+          metadata?: Json | null
+        }
+        Update: {
+          automation_id?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          log_level?: string
+          message?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_runs: {
+        Row: {
+          automation_id: string
+          client_id: string
+          completed_at: string | null
+          error: string | null
+          id: string
+          result: Json | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          automation_id: string
+          client_id: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          automation_id?: string
+          client_id?: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automations: {
+        Row: {
+          action_config: Json | null
+          action_type: string
+          client_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json | null
+          action_type: string
+          client_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json | null
+          action_type?: string
+          client_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_integrations: {
         Row: {
           client_id: string
@@ -219,6 +388,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provision_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_opportunities: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          estimated_missed_revenue: number | null
+          id: string
+          recommended_action: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          estimated_missed_revenue?: number | null
+          id?: string
+          recommended_action?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          estimated_missed_revenue?: number | null
+          id?: string
+          recommended_action?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_opportunities_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
