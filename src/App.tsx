@@ -74,6 +74,7 @@ const App = () => (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="clients" element={<AdminClients />} />
+              <Route path="monitoring" element={<AdminMonitoring />} />
               <Route path="prospects" element={<AdminProspects />} />
               <Route path="provision" element={<AdminProvision />} />
               <Route path="fix-now" element={<AdminFixNow />} />
