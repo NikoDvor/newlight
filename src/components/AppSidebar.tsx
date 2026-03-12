@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Zap, Heart, DollarSign, ListChecks, Activity,
   Globe, Search, Megaphone, Share2, Users, Star,
-  TrendingUp, Eye, Calendar, Workflow,
+  TrendingUp, Eye, Calendar, Workflow, Plug,
   GraduationCap, FileText, Settings, CreditCard,
   ChevronLeft, ChevronDown
 } from "lucide-react";
@@ -49,6 +49,12 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
       { title: "Competitor Tracking", url: "/competitor-tracking", icon: Eye },
       { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Calendar },
       { title: "Automation Workflows", url: "/automations", icon: Workflow },
+    ],
+  },
+  {
+    type: "group", label: "Integrations",
+    items: [
+      { title: "Integrations", url: "/integrations", icon: Plug },
     ],
   },
   {
