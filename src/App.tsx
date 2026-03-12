@@ -57,6 +57,8 @@ import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminPackages from "./pages/admin/AdminPackages";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminMonitoring from "./pages/admin/AdminMonitoring";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
