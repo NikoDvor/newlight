@@ -28,6 +28,7 @@ const navItems = [
 export function AdminSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
+  const { signOut } = useWorkspace();
   const collapsed = state === "collapsed";
 
   const isActive = (path: string) => {
