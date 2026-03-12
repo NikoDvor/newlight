@@ -111,7 +111,7 @@ export function AppLayout() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {isAdmin && <WorkspaceSwitcher />}
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-primary/5 hover:shadow-[0_0_14px_-3px_hsla(211,96%,60%,.22)] relative group">
                 <Bell className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -122,6 +122,15 @@ export function AppLayout() {
                   boxShadow: "0 0 8px hsla(211,96%,60%,.5)"
                 }} />
               </button>
+              {user && (
+                <button
+                  onClick={signOut}
+                  className="p-2 rounded-xl transition-all duration-200 hover:bg-destructive/10 group"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-destructive transition-colors" />
+                </button>
+              )}
               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{
                 background: hasCustomBranding
                   ? `linear-gradient(135deg, ${branding.secondary_color}, ${branding.primary_color})`
