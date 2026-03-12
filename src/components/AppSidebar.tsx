@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Zap, Heart, DollarSign, ListChecks, Activity,
   Globe, Search, Megaphone, Share2, Users, Star,
-  TrendingUp, Eye, Calendar, Workflow,
+  TrendingUp, Eye, Calendar, Workflow, Plug,
   GraduationCap, FileText, Settings, CreditCard,
   ChevronLeft, ChevronDown
 } from "lucide-react";

@@ -131,8 +131,9 @@ export default function RevenueOpportunities() {
                     <span className="text-xs font-medium" style={{ color: "hsl(211 96% 50%)" }}>{opp.action}</span>
                   </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex flex-col gap-2 shrink-0">
                   <Button size="sm" className="btn-gradient h-8 px-4 rounded-lg text-xs">Fix Now</Button>
+                  <Button size="sm" variant="outline" className="h-8 px-4 rounded-lg text-xs">Contact Expert</Button>
                 </div>
               </div>
             </motion.div>
