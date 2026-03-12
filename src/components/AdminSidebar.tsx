@@ -12,6 +12,7 @@ import {
 
 const navItems = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
   { title: "Clients", url: "/admin/clients", icon: Users },
   { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
   { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
