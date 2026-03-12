@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AIAssistant } from "@/components/AIAssistant";
 import { Outlet, useLocation } from "react-router-dom";
 import { Bell, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
