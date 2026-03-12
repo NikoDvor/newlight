@@ -61,6 +61,14 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           muted: "hsl(var(--sidebar-muted))",
         },
+        nl: {
+          sky: "hsl(var(--nl-sky))",
+          cyan: "hsl(var(--nl-cyan))",
+          electric: "hsl(var(--nl-electric))",
+          deep: "hsl(var(--nl-deep))",
+          ice: "hsl(var(--nl-ice))",
+          glow: "hsl(var(--nl-glow))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

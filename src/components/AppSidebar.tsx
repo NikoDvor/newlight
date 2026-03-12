@@ -62,64 +62,101 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-3">
+      {/* Gradient overlay on sidebar */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "linear-gradient(180deg, hsl(220 60% 18%) 0%, hsl(215 55% 12%) 50%, hsl(220 65% 10%) 100%)"
+      }} />
+
+      <SidebarHeader className="p-3 relative z-10">
         <div className="flex items-center justify-between px-2">
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-sidebar-primary" />
-              <span className="font-semibold text-sm text-sidebar-foreground">NewLight</span>
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{
+                background: "linear-gradient(135deg, hsl(199 92% 65%), hsl(217 91% 60%))"
+              }}>
+                <Zap className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-bold text-sm tracking-tight text-white">NewLight</span>
             </div>
           )}
-          {collapsed && <Zap className="h-5 w-5 text-sidebar-primary mx-auto" />}
+          {collapsed && (
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center mx-auto" style={{
+              background: "linear-gradient(135deg, hsl(199 92% 65%), hsl(217 91% 60%))"
+            }}>
+              <Zap className="h-4 w-4 text-white" />
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3">
+      <SidebarContent className="px-3 relative z-10">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    tooltip={collapsed ? item.title : undefined}
-                    className="h-10 px-3 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-foreground transition-colors duration-150"
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                const active = isActive(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={collapsed ? item.title : undefined}
+                      className={`h-9 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? "text-white"
+                          : "text-white/55 hover:text-white/90 hover:bg-white/[0.06]"
+                      }`}
+                      style={active ? {
+                        background: "linear-gradient(135deg, hsla(199,92%,65%,0.2), hsla(217,91%,60%,0.15))",
+                        boxShadow: "0 0 12px -2px hsla(210,100%,65%,0.25), inset 0 0 0 1px hsla(199,92%,65%,0.2)"
+                      } : undefined}
+                    >
+                      <Link to={item.url}>
+                        <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-nl-sky" : ""}`} />
+                        {!collapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="px-3 pb-3">
+      <SidebarFooter className="px-3 pb-3 relative z-10">
         <SidebarMenu>
-          {bottomItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive(item.url)}
-                tooltip={collapsed ? item.title : undefined}
-                className="h-10 px-3 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-foreground transition-colors duration-150"
-              >
-                <Link to={item.url}>
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{item.title}</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {bottomItems.map((item) => {
+            const active = isActive(item.url);
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={collapsed ? item.title : undefined}
+                  className={`h-9 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    active
+                      ? "text-white"
+                      : "text-white/55 hover:text-white/90 hover:bg-white/[0.06]"
+                  }`}
+                  style={active ? {
+                    background: "linear-gradient(135deg, hsla(199,92%,65%,0.2), hsla(217,91%,60%,0.15))",
+                    boxShadow: "0 0 12px -2px hsla(210,100%,65%,0.25), inset 0 0 0 1px hsla(199,92%,65%,0.2)"
+                  } : undefined}
+                >
+                  <Link to={item.url}>
+                    <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-nl-sky" : ""}`} />
+                    {!collapsed && <span>{item.title}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={toggleSidebar}
               tooltip={collapsed ? "Expand" : "Collapse"}
-              className="h-10 px-3 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors duration-150"
+              className="h-9 px-3 rounded-lg text-sm font-medium text-white/55 hover:text-white/90 hover:bg-white/[0.06] transition-all duration-200"
             >
               <ChevronLeft className={`h-4 w-4 shrink-0 transition-transform duration-250 ${collapsed ? "rotate-180" : ""}`} />
               {!collapsed && <span>Collapse</span>}
