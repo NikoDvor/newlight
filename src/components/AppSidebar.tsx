@@ -2,7 +2,8 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, Globe, Share2, Search, Megaphone,
   Star, Calendar, FileText, Brain, GraduationCap, Settings,
-  CreditCard, CheckSquare, Zap, ChevronLeft
+  CreditCard, CheckSquare, Zap, ChevronLeft, Columns3, Mail,
+  ClipboardList, UserCheck, Package, PenSquare, FileCheck2
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
