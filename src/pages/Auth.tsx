@@ -35,12 +35,23 @@ export default function Auth() {
         toast.success("Check your email to verify your account");
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(error.message);
       } else {
         toast.success("Welcome back!");
-        navigate("/");
+        // Check if user is admin/operator and redirect accordingly
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", signInData.user.id)
+          .limit(1)
+          .maybeSingle();
+        if (roleData && ["admin", "operator"].includes(roleData.role)) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       }
     }
     setLoading(false);
