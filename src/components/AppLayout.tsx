@@ -55,7 +55,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user } = useWorkspace();
 
   // Apply dynamic branding CSS variables when a client workspace is active
   const brandStyle = useMemo(() => {
