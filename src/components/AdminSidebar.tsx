@@ -122,6 +122,16 @@ export function AdminSidebar() {
               {!collapsed && <span>Collapse</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={signOut}
+              tooltip={collapsed ? "Sign Out" : undefined}
+              className="h-8 px-3 rounded-xl text-[12px] font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+            >
+              <LogOut className="h-3.5 w-3.5 shrink-0" />
+              {!collapsed && <span>Sign Out</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
