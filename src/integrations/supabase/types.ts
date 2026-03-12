@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_business_insights: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          estimated_revenue: number | null
+          explanation: string | null
+          id: string
+          recommended_action: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          estimated_revenue?: number | null
+          explanation?: string | null
+          id?: string
+          recommended_action?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          estimated_revenue?: number | null
+          explanation?: string | null
+          id?: string
+          recommended_action?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_business_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -224,6 +274,109 @@ export type Database = {
           },
         ]
       }
+      client_branding: {
+        Row: {
+          client_id: string
+          company_name: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          client_id: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          client_id?: string
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_branding_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_health_scores: {
+        Row: {
+          ads_score: number
+          automation_score: number
+          calculated_at: string
+          client_id: string
+          conversion_score: number
+          created_at: string
+          id: string
+          leads_score: number
+          overall_score: number
+          reviews_score: number
+          seo_score: number
+          social_score: number
+          updated_at: string
+          website_score: number
+        }
+        Insert: {
+          ads_score?: number
+          automation_score?: number
+          calculated_at?: string
+          client_id: string
+          conversion_score?: number
+          created_at?: string
+          id?: string
+          leads_score?: number
+          overall_score?: number
+          reviews_score?: number
+          seo_score?: number
+          social_score?: number
+          updated_at?: string
+          website_score?: number
+        }
+        Update: {
+          ads_score?: number
+          automation_score?: number
+          calculated_at?: string
+          client_id?: string
+          conversion_score?: number
+          created_at?: string
+          id?: string
+          leads_score?: number
+          overall_score?: number
+          reviews_score?: number
+          seo_score?: number
+          social_score?: number
+          updated_at?: string
+          website_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_health_scores_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_integrations: {
         Row: {
           client_id: string
@@ -346,6 +499,171 @@ export type Database = {
             foreignKeyName: "fix_now_items_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_projections: {
+        Row: {
+          client_id: string
+          created_at: string
+          current_value: number
+          id: string
+          metric: string
+          projected_30d: number | null
+          projected_60d: number | null
+          projected_90d: number | null
+          trend: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          metric: string
+          projected_30d?: number | null
+          projected_60d?: number | null
+          projected_90d?: number | null
+          trend?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          metric?: string
+          projected_30d?: number | null
+          projected_60d?: number | null
+          projected_90d?: number | null
+          trend?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_projections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_intelligence: {
+        Row: {
+          action_items: Json | null
+          client_id: string
+          created_at: string
+          duration_minutes: number | null
+          follow_up_date: string | null
+          id: string
+          interests: Json | null
+          meeting_date: string | null
+          next_steps: Json | null
+          objections: Json | null
+          score: number | null
+          sentiment: string | null
+          summary: string | null
+          title: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json | null
+          client_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          id?: string
+          interests?: Json | null
+          meeting_date?: string | null
+          next_steps?: Json | null
+          objections?: Json | null
+          score?: number | null
+          sentiment?: string | null
+          summary?: string | null
+          title: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json | null
+          client_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          id?: string
+          interests?: Json | null
+          meeting_date?: string | null
+          next_steps?: Json | null
+          objections?: Json | null
+          score?: number | null
+          sentiment?: string | null
+          summary?: string | null
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_intelligence_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_progress: {
+        Row: {
+          ad_account_connected: boolean
+          business_info: boolean
+          client_id: string
+          created_at: string
+          crm_setup: boolean
+          google_business_connected: boolean
+          id: string
+          launch_ready: boolean
+          review_platform_connected: boolean
+          team_setup: boolean
+          updated_at: string
+          website_connected: boolean
+        }
+        Insert: {
+          ad_account_connected?: boolean
+          business_info?: boolean
+          client_id: string
+          created_at?: string
+          crm_setup?: boolean
+          google_business_connected?: boolean
+          id?: string
+          launch_ready?: boolean
+          review_platform_connected?: boolean
+          team_setup?: boolean
+          updated_at?: string
+          website_connected?: boolean
+        }
+        Update: {
+          ad_account_connected?: boolean
+          business_info?: boolean
+          client_id?: string
+          created_at?: string
+          crm_setup?: boolean
+          google_business_connected?: boolean
+          id?: string
+          launch_ready?: boolean
+          review_platform_connected?: boolean
+          team_setup?: boolean
+          updated_at?: string
+          website_connected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
