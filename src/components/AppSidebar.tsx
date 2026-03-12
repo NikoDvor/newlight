@@ -68,22 +68,22 @@ export function AppSidebar() {
           asChild
           isActive={active}
           tooltip={collapsed ? item.title : undefined}
-          className={`h-9 px-3 rounded-xl text-[13px] font-medium transition-all duration-250 group ${
+          className={`h-9 px-3 rounded-xl text-[13px] font-medium transition-all duration-200 group ${
             active
-              ? "text-white"
-              : "text-white/50 hover:text-white/85 hover:bg-white/[0.05]"
+              ? "text-white font-semibold"
+              : "text-white/70 hover:text-white hover:bg-white/[0.12]"
           }`}
           style={active ? {
-            background: "linear-gradient(135deg, hsla(199,92%,65%,0.22), hsla(217,91%,60%,0.14))",
-            boxShadow: "0 0 16px -3px hsla(210,100%,65%,0.3), inset 0 0 0 1px hsla(199,92%,65%,0.18)",
+            background: "hsla(0,0%,100%,.18)",
+            boxShadow: "0 0 18px -4px hsla(0,0%,100%,.25), inset 0 0 0 1px hsla(0,0%,100%,.15)",
           } : undefined}
         >
           <Link to={item.url}>
-            <item.icon className={`h-4 w-4 shrink-0 transition-all duration-250 ${
+            <item.icon className={`h-4 w-4 shrink-0 transition-all duration-200 ${
               active 
-                ? "drop-shadow-[0_0_6px_hsla(199,92%,65%,0.6)]" 
-                : "group-hover:drop-shadow-[0_0_4px_hsla(199,92%,65%,0.3)]"
-            }`} style={active ? { color: "hsl(199 92% 70%)" } : undefined} />
+                ? "drop-shadow-[0_0_6px_hsla(0,0%,100%,.7)]" 
+                : "group-hover:drop-shadow-[0_0_5px_hsla(0,0%,100%,.4)] group-hover:scale-110"
+            }`} />
             {!collapsed && <span>{item.title}</span>}
           </Link>
         </SidebarMenuButton>
@@ -93,34 +93,33 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
-      {/* Deep gradient background */}
+      {/* Bright blue gradient */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: "linear-gradient(175deg, hsl(222 50% 16%) 0%, hsl(220 55% 10%) 40%, hsl(225 60% 8%) 100%)"
+        background: "linear-gradient(170deg, hsl(211 90% 62%) 0%, hsl(215 80% 52%) 50%, hsl(218 75% 46%) 100%)"
       }} />
-      {/* Subtle glow orb */}
-      <div className="absolute -top-20 -right-20 w-60 h-60 pointer-events-none rounded-full opacity-20" style={{
-        background: "radial-gradient(circle, hsla(213,94%,60%,0.5), transparent 70%)",
-        filter: "blur(40px)"
+      {/* Light energy glow */}
+      <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none opacity-40" style={{
+        background: "radial-gradient(ellipse at 50% 0%, hsla(197,92%,78%,.5), transparent 70%)"
       }} />
 
       <SidebarHeader className="p-3 relative z-10">
         <div className="flex items-center justify-between px-2 py-1">
           {!collapsed ? (
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl flex items-center justify-center shadow-lg" style={{
-                background: "linear-gradient(135deg, hsl(199 92% 65%), hsl(217 91% 58%))",
-                boxShadow: "0 0 18px -3px hsla(210,100%,60%,.45)"
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{
+                background: "hsla(0,0%,100%,.2)",
+                boxShadow: "0 0 20px -4px hsla(0,0%,100%,.35), inset 0 0 0 1px hsla(0,0%,100%,.15)"
               }}>
-                <Zap className="h-4 w-4 text-white drop-shadow-[0_0_4px_hsla(0,0%,100%,0.5)]" />
+                <Zap className="h-4.5 w-4.5 text-white drop-shadow-[0_0_6px_hsla(0,0%,100%,.6)]" />
               </div>
-              <span className="font-bold text-sm tracking-tight text-white/95">NewLight</span>
+              <span className="font-bold text-[15px] tracking-tight text-white drop-shadow-[0_1px_2px_hsla(0,0%,0%,.15)]">NewLight</span>
             </div>
           ) : (
-            <div className="h-8 w-8 rounded-xl flex items-center justify-center mx-auto shadow-lg" style={{
-              background: "linear-gradient(135deg, hsl(199 92% 65%), hsl(217 91% 58%))",
-              boxShadow: "0 0 18px -3px hsla(210,100%,60%,.45)"
+            <div className="h-9 w-9 rounded-xl flex items-center justify-center mx-auto" style={{
+              background: "hsla(0,0%,100%,.2)",
+              boxShadow: "0 0 20px -4px hsla(0,0%,100%,.35), inset 0 0 0 1px hsla(0,0%,100%,.15)"
             }}>
-              <Zap className="h-4 w-4 text-white drop-shadow-[0_0_4px_hsla(0,0%,100%,0.5)]" />
+              <Zap className="h-4.5 w-4.5 text-white drop-shadow-[0_0_6px_hsla(0,0%,100%,.6)]" />
             </div>
           )}
         </div>
@@ -147,9 +146,9 @@ export function AppSidebar() {
             <SidebarMenuButton
               onClick={toggleSidebar}
               tooltip={collapsed ? "Expand" : "Collapse"}
-              className="h-9 px-3 rounded-xl text-[13px] font-medium text-white/50 hover:text-white/85 hover:bg-white/[0.05] transition-all duration-250"
+              className="h-9 px-3 rounded-xl text-[13px] font-medium text-white/70 hover:text-white hover:bg-white/[0.12] transition-all duration-200 group"
             >
-              <ChevronLeft className={`h-4 w-4 shrink-0 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`} />
+              <ChevronLeft className={`h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110 ${collapsed ? "rotate-180" : ""}`} />
               {!collapsed && <span>Collapse</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
