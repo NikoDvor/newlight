@@ -29,6 +29,11 @@ import WebsiteBuilder from "./pages/WebsiteBuilder";
 import FunnelBuilder from "./pages/FunnelBuilder";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import FormBuilder from "./pages/FormBuilder";
+import Automations from "./pages/Automations";
+import ClientPerformance from "./pages/ClientPerformance";
+import ClientReport from "./pages/ClientReport";
+import Notifications from "./pages/Notifications";
+import AgencyDashboard from "./pages/AgencyDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
