@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
-  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap
+  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
