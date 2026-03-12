@@ -33,8 +33,10 @@ export function MetricCard({ label, value, change, changeType = "neutral", icon:
           )}
         </div>
         {Icon && (
-          <div className="p-2 rounded-lg bg-secondary">
-            <Icon className="h-4 w-4 text-muted-foreground" />
+          <div className="p-2.5 rounded-xl" style={{
+            background: "linear-gradient(135deg, hsla(199,92%,65%,0.12), hsla(217,91%,60%,0.08))"
+          }}>
+            <Icon className="h-4 w-4 text-primary" />
           </div>
         )}
       </div>
