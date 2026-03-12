@@ -51,6 +51,13 @@ const App = () => (
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/tasks" element={<Tasks />} />
+            <Route path="/pipeline" element={<Pipeline />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/proposal-booking" element={<ProposalBooking />} />
+            <Route path="/prospect-detail" element={<ProspectDetail />} />
+            <Route path="/audit-pack" element={<AuditPack />} />
+            <Route path="/meeting-outcome" element={<MeetingOutcome />} />
+            <Route path="/proposal-draft" element={<ProposalDraft />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

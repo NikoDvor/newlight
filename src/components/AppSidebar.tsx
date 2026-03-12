@@ -14,6 +14,13 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "CRM", url: "/crm", icon: Users },
+  { title: "Pipeline", url: "/pipeline", icon: Kanban },
+  { title: "Inbox", url: "/inbox", icon: Inbox },
+  { title: "Proposal Booking", url: "/proposal-booking", icon: ClipboardList },
+  { title: "Prospect Detail", url: "/prospect-detail", icon: UserCheck },
+  { title: "Audit Pack", url: "/audit-pack", icon: Package },
+  { title: "Meeting Outcome", url: "/meeting-outcome", icon: ClipboardPen },
+  { title: "Proposal Draft", url: "/proposal-draft", icon: FileCheck },
   { title: "Website", url: "/website", icon: Globe },
   { title: "Social Media", url: "/social-media", icon: Share2 },
   { title: "SEO", url: "/seo", icon: Search },
