@@ -25,6 +25,10 @@ import ProspectDetail from "./pages/ProspectDetail";
 import AuditPack from "./pages/AuditPack";
 import MeetingOutcome from "./pages/MeetingOutcome";
 import ProposalDraft from "./pages/ProposalDraft";
+import WebsiteBuilder from "./pages/WebsiteBuilder";
+import FunnelBuilder from "./pages/FunnelBuilder";
+import LandingPageEditor from "./pages/LandingPageEditor";
+import FormBuilder from "./pages/FormBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +62,10 @@ const App = () => (
             <Route path="/audit-pack" element={<AuditPack />} />
             <Route path="/meeting-outcome" element={<MeetingOutcome />} />
             <Route path="/proposal-draft" element={<ProposalDraft />} />
+            <Route path="/website-builder" element={<WebsiteBuilder />} />
+            <Route path="/funnel-builder" element={<FunnelBuilder />} />
+            <Route path="/landing-pages" element={<LandingPageEditor />} />
+            <Route path="/forms" element={<FormBuilder />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

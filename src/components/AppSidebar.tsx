@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Globe, Share2, Search, Megaphone,
   Star, Calendar, FileText, Brain, GraduationCap, Settings,
   CreditCard, CheckSquare, Zap, ChevronLeft, Columns3, Mail,
-  ClipboardList, UserCheck, Package, PenSquare, FileCheck2
+  ClipboardList, UserCheck, Package, PenSquare, FileCheck2,
+  Hammer, GitBranch, PanelTop, FormInput
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -22,6 +23,10 @@ const navItems = [
   { title: "Audit Pack", url: "/audit-pack", icon: Package },
   { title: "Meeting Outcome", url: "/meeting-outcome", icon: PenSquare },
   { title: "Proposal Draft", url: "/proposal-draft", icon: FileCheck2 },
+  { title: "Website Builder", url: "/website-builder", icon: Hammer },
+  { title: "Funnel Builder", url: "/funnel-builder", icon: GitBranch },
+  { title: "Landing Pages", url: "/landing-pages", icon: PanelTop },
+  { title: "Forms & Leads", url: "/forms", icon: FormInput },
   { title: "Website", url: "/website", icon: Globe },
   { title: "Social Media", url: "/social-media", icon: Share2 },
   { title: "SEO", url: "/seo", icon: Search },
