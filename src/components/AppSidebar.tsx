@@ -16,6 +16,7 @@ import {
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Agency Overview", url: "/agency", icon: Building2 },
   { title: "CRM", url: "/crm", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: Columns3 },
   { title: "Inbox", url: "/inbox", icon: Mail },
@@ -28,6 +29,7 @@ const navItems = [
   { title: "Funnel Builder", url: "/funnel-builder", icon: GitBranch },
   { title: "Landing Pages", url: "/landing-pages", icon: PanelTop },
   { title: "Forms & Leads", url: "/forms", icon: FormInput },
+  { title: "Automations", url: "/automations", icon: Workflow },
   { title: "Website", url: "/website", icon: Globe },
   { title: "Social Media", url: "/social-media", icon: Share2 },
   { title: "SEO", url: "/seo", icon: Search },
@@ -35,7 +37,10 @@ const navItems = [
   { title: "Reviews", url: "/reviews", icon: Star },
   { title: "Meetings", url: "/meetings", icon: Calendar },
   { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Client Performance", url: "/client-performance", icon: BarChart3 },
+  { title: "Client Report", url: "/client-report", icon: FileText },
   { title: "Intelligence", url: "/intelligence", icon: Brain },
+  { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Training", url: "/training", icon: GraduationCap },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
 ];

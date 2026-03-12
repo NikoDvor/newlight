@@ -71,6 +71,11 @@ const App = () => (
             <Route path="/funnel-builder" element={<FunnelBuilder />} />
             <Route path="/landing-pages" element={<LandingPageEditor />} />
             <Route path="/forms" element={<FormBuilder />} />
+            <Route path="/automations" element={<Automations />} />
+            <Route path="/client-performance" element={<ClientPerformance />} />
+            <Route path="/client-report" element={<ClientReport />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/agency" element={<AgencyDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
