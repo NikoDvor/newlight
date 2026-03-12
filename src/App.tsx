@@ -29,6 +29,11 @@ import WebsiteBuilder from "./pages/WebsiteBuilder";
 import FunnelBuilder from "./pages/FunnelBuilder";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import FormBuilder from "./pages/FormBuilder";
+import Automations from "./pages/Automations";
+import ClientPerformance from "./pages/ClientPerformance";
+import ClientReport from "./pages/ClientReport";
+import Notifications from "./pages/Notifications";
+import AgencyDashboard from "./pages/AgencyDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +71,11 @@ const App = () => (
             <Route path="/funnel-builder" element={<FunnelBuilder />} />
             <Route path="/landing-pages" element={<LandingPageEditor />} />
             <Route path="/forms" element={<FormBuilder />} />
+            <Route path="/automations" element={<Automations />} />
+            <Route path="/client-performance" element={<ClientPerformance />} />
+            <Route path="/client-report" element={<ClientReport />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/agency" element={<AgencyDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
