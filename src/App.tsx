@@ -14,6 +14,7 @@ import Reviews from "./pages/Reviews";
 import Meetings from "./pages/Meetings";
 import Reports from "./pages/Reports";
 import Intelligence from "./pages/Intelligence";
+import AIInsights from "./pages/AIInsights";
 import Training from "./pages/Training";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/intelligence" element={<Intelligence />} />
+            <Route path="/ai-insights" element={<AIInsights />} />
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/billing" element={<Billing />} />

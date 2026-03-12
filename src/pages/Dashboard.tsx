@@ -2,10 +2,41 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SystemStatusBar } from "@/components/SystemStatusBar";
+import { ActivityFeed } from "@/components/ActivityFeed";
+import { motion } from "framer-motion";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare,
-  Calendar, Bell, BarChart3, Target
+  Calendar, BarChart3, ArrowUpRight, Brain
 } from "lucide-react";
+import {
+  LineChart, Line, AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts";
+
+const trafficData = [
+  { name: "Mon", visitors: 1200, leads: 32 },
+  { name: "Tue", visitors: 1800, leads: 45 },
+  { name: "Wed", visitors: 2100, leads: 52 },
+  { name: "Thu", visitors: 1900, leads: 48 },
+  { name: "Fri", visitors: 2400, leads: 61 },
+  { name: "Sat", visitors: 1600, leads: 38 },
+  { name: "Sun", visitors: 1400, leads: 30 },
+];
+
+const conversionData = [
+  { name: "Week 1", rate: 3.2 },
+  { name: "Week 2", rate: 3.8 },
+  { name: "Week 3", rate: 4.1 },
+  { name: "Week 4", rate: 4.6 },
+];
+
+const adData = [
+  { name: "Google", spend: 2400, leads: 89 },
+  { name: "Facebook", spend: 1800, leads: 56 },
+  { name: "LinkedIn", spend: 1200, leads: 34 },
+  { name: "Instagram", spend: 900, leads: 28 },
+];
 
 const recentActivity = [
   { action: "New lead captured", detail: "Sarah Johnson — Google Ads", time: "2 min ago" },
@@ -27,10 +58,17 @@ const tasks = [
   { title: "Prepare monthly report", priority: "High", due: "Mar 15" },
 ];
 
+const priorityStyle = (p: string) =>
+  p === "High"
+    ? { bg: "hsla(215,75%,48%,.1)", text: "hsl(215 75% 42%)" }
+    : p === "Medium"
+    ? { bg: "hsla(211,96%,56%,.1)", text: "hsl(211 96% 46%)" }
+    : { bg: "hsla(210,40%,94%,.6)", text: "hsl(215 16% 50%)" };
+
 export default function Dashboard() {
   return (
     <div>
-      <PageHeader title="Dashboard" description="Your business growth command center" />
+      <PageHeader title="Dashboard" description="Your AI-powered business command center" />
 
       {/* Top metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(240px, 1fr))">
@@ -40,7 +78,94 @@ export default function Dashboard() {
         <MetricCard label="Tasks Due" value="4" change="2 high priority" changeType="neutral" icon={CheckSquare} />
       </WidgetGrid>
 
-      {/* Campaign Performance + Notifications */}
+      {/* System Status */}
+      <div className="mt-6">
+        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <Brain className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 56%)" }} />
+          System Status
+        </h3>
+        <SystemStatusBar />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <DataCard title="Traffic & Leads" className="lg:col-span-2">
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={trafficData}>
+              <defs>
+                <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(211 96% 56%)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="hsl(211 96% 56%)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(197 92% 58%)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="hsl(197 92% 58%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,56%,.06)" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsla(210,50%,99%,.95)",
+                  border: "1px solid hsla(211,96%,56%,.12)",
+                  borderRadius: "12px",
+                  backdropFilter: "blur(12px)",
+                  fontSize: "12px",
+                }}
+              />
+              <Area type="monotone" dataKey="visitors" stroke="hsl(211 96% 56%)" fill="url(#colorVisitors)" strokeWidth={2} animationDuration={1500} />
+              <Area type="monotone" dataKey="leads" stroke="hsl(197 92% 58%)" fill="url(#colorLeads)" strokeWidth={2} animationDuration={1800} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </DataCard>
+
+        <DataCard title="Conversion Rate">
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={conversionData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,56%,.06)" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} domain={[2, 6]} unit="%" />
+              <Tooltip
+                contentStyle={{
+                  background: "hsla(210,50%,99%,.95)",
+                  border: "1px solid hsla(211,96%,56%,.12)",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                }}
+              />
+              <Line type="monotone" dataKey="rate" stroke="hsl(211 96% 56%)" strokeWidth={2.5} dot={{ fill: "hsl(211 96% 56%)", r: 4 }} animationDuration={1500} />
+            </LineChart>
+          </ResponsiveContainer>
+        </DataCard>
+      </div>
+
+      {/* Ad Performance + Activity Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <DataCard title="Ad Performance by Channel">
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={adData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,56%,.06)" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsla(210,50%,99%,.95)",
+                  border: "1px solid hsla(211,96%,56%,.12)",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                }}
+              />
+              <Bar dataKey="spend" fill="hsl(211 96% 56%)" radius={[6, 6, 0, 0]} animationDuration={1200} />
+              <Bar dataKey="leads" fill="hsl(197 92% 58%)" radius={[6, 6, 0, 0]} animationDuration={1500} />
+            </BarChart>
+          </ResponsiveContainer>
+        </DataCard>
+
+        <ActivityFeed />
+      </div>
+
+      {/* Campaign + Notifications (existing) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <DataCard title="Campaign Performance Overview">
           <div className="space-y-4">
@@ -53,7 +178,7 @@ export default function Dashboard() {
               <div key={campaign.name} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                 <div>
                   <p className="text-sm font-medium">{campaign.name}</p>
-                  <span className={`text-xs font-medium ${campaign.status === "Active" ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  <span className={`text-xs font-medium`} style={{ color: campaign.status === "Active" ? "hsl(197 92% 48%)" : "hsl(215 16% 50%)" }}>
                     {campaign.status}
                   </span>
                 </div>
@@ -75,9 +200,9 @@ export default function Dashboard() {
               { text: "Meeting with account manager tomorrow at 10 AM", type: "info", time: "6h ago" },
             ].map((n, i) => (
               <div key={i} className="flex items-start gap-3 py-2">
-                <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${
-                  n.type === "warning" ? "bg-amber-500" : n.type === "success" ? "bg-emerald-500" : "bg-accent"
-                }`} />
+                <div className="mt-1 h-2 w-2 rounded-full shrink-0" style={{
+                  background: n.type === "warning" ? "hsl(211 80% 65%)" : n.type === "success" ? "hsl(197 92% 58%)" : "hsl(211 96% 56%)",
+                }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm">{n.text}</p>
                   <p className="text-xs text-muted-foreground">{n.time}</p>
@@ -94,7 +219,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {recentActivity.map((item, i) => (
               <div key={i} className="flex items-start gap-3 py-2">
-                <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+                <div className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
                 <div>
                   <p className="text-sm font-medium">{item.action}</p>
                   <p className="text-xs text-muted-foreground">{item.detail} · {item.time}</p>
@@ -108,7 +233,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {upcomingMeetings.map((m, i) => (
               <div key={i} className="flex items-start gap-3 py-2">
-                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <Calendar className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(211 96% 56%)" }} />
                 <div>
                   <p className="text-sm font-medium">{m.title}</p>
                   <p className="text-xs text-muted-foreground">{m.time} · {m.attendees}</p>
@@ -120,24 +245,26 @@ export default function Dashboard() {
 
         <DataCard title="Task Center">
           <div className="space-y-3">
-            {tasks.map((t, i) => (
-              <div key={i} className="flex items-center justify-between py-2">
-                <div className="flex items-start gap-3 min-w-0">
-                  <CheckSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{t.title}</p>
-                    <p className="text-xs text-muted-foreground">Due: {t.due}</p>
+            {tasks.map((t, i) => {
+              const s = priorityStyle(t.priority);
+              return (
+                <div key={i} className="flex items-center justify-between py-2">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <CheckSquare className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(211 96% 56%)" }} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{t.title}</p>
+                      <p className="text-xs text-muted-foreground">Due: {t.due}</p>
+                    </div>
                   </div>
+                  <span
+                    className="text-xs font-medium px-2 py-1 rounded-md shrink-0 ml-2"
+                    style={{ background: s.bg, color: s.text }}
+                  >
+                    {t.priority}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-md shrink-0 ml-2 ${
-                  t.priority === "High" ? "bg-red-50 text-red-600" :
-                  t.priority === "Medium" ? "bg-amber-50 text-amber-600" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {t.priority}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </DataCard>
       </div>
