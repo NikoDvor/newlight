@@ -36,6 +36,13 @@ import ClientReport from "./pages/ClientReport";
 import Notifications from "./pages/Notifications";
 import AgencyDashboard from "./pages/AgencyDashboard";
 import NotFound from "./pages/NotFound";
+import BusinessHealth from "./pages/BusinessHealth";
+import RevenueOpportunities from "./pages/RevenueOpportunities";
+import PriorityActions from "./pages/PriorityActions";
+import LiveActivity from "./pages/LiveActivity";
+import MarketResearch from "./pages/MarketResearch";
+import CompetitorTracking from "./pages/CompetitorTracking";
+import MeetingIntelligence from "./pages/MeetingIntelligence";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +85,15 @@ const App = () => (
             <Route path="/client-report" element={<ClientReport />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/agency" element={<AgencyDashboard />} />
+            {/* New Client Overview pages */}
+            <Route path="/business-health" element={<BusinessHealth />} />
+            <Route path="/revenue-opportunities" element={<RevenueOpportunities />} />
+            <Route path="/priority-actions" element={<PriorityActions />} />
+            <Route path="/live-activity" element={<LiveActivity />} />
+            {/* New Business Intelligence pages */}
+            <Route path="/market-research" element={<MarketResearch />} />
+            <Route path="/competitor-tracking" element={<CompetitorTracking />} />
+            <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
