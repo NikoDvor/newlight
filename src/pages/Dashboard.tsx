@@ -10,6 +10,10 @@ import {
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
   ArrowUpRight
 } from "lucide-react";
+import { HealthScoreWidget } from "@/components/HealthScoreWidget";
+import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { PredictiveGrowth } from "@/components/PredictiveGrowth";
+import { RevenueCalculator } from "@/components/RevenueCalculator";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
@@ -66,6 +70,18 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader title="Dashboard" description="Your AI-powered business command center" />
+
+      {/* Health Score + Onboarding */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <HealthScoreWidget score={73} />
+        <div className="lg:col-span-2">
+          <OnboardingProgress steps={{
+            business_info: true, website_connected: true, google_business_connected: true,
+            review_platform_connected: false, ad_account_connected: false,
+            crm_setup: true, team_setup: false, launch_ready: false,
+          }} />
+        </div>
+      </div>
 
       {/* Row 1: Top Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
@@ -196,6 +212,15 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
+      </div>
+      {/* Revenue Calculator */}
+      <div className="mt-6">
+        <RevenueCalculator />
+      </div>
+
+      {/* Predictive Growth */}
+      <div className="mt-6">
+        <PredictiveGrowth />
       </div>
     </div>
   );

@@ -57,6 +57,8 @@ import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminPackages from "./pages/admin/AdminPackages";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminMonitoring from "./pages/admin/AdminMonitoring";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +74,7 @@ const App = () => (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="clients" element={<AdminClients />} />
+              <Route path="monitoring" element={<AdminMonitoring />} />
               <Route path="prospects" element={<AdminProspects />} />
               <Route path="provision" element={<AdminProvision />} />
               <Route path="fix-now" element={<AdminFixNow />} />
@@ -122,6 +125,7 @@ const App = () => (
               <Route path="/market-research" element={<MarketResearch />} />
               <Route path="/competitor-tracking" element={<CompetitorTracking />} />
               <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
+              <Route path="/onboarding" element={<Onboarding />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
