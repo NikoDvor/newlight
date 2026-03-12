@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
+import { ClientBrandingSettings } from "@/components/ClientBrandingSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
