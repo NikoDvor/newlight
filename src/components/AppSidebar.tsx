@@ -2,7 +2,8 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, Globe, Share2, Search, Megaphone,
   Star, Calendar, FileText, Brain, GraduationCap, Settings,
-  CreditCard, CheckSquare, Zap, ChevronLeft
+  CreditCard, CheckSquare, Zap, ChevronLeft, Columns3, Mail,
+  ClipboardList, UserCheck, Package, PenSquare, FileCheck2
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -14,6 +15,13 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "CRM", url: "/crm", icon: Users },
+  { title: "Pipeline", url: "/pipeline", icon: Columns3 },
+  { title: "Inbox", url: "/inbox", icon: Mail },
+  { title: "Proposal Booking", url: "/proposal-booking", icon: ClipboardList },
+  { title: "Prospect Detail", url: "/prospect-detail", icon: UserCheck },
+  { title: "Audit Pack", url: "/audit-pack", icon: Package },
+  { title: "Meeting Outcome", url: "/meeting-outcome", icon: PenSquare },
+  { title: "Proposal Draft", url: "/proposal-draft", icon: FileCheck2 },
   { title: "Website", url: "/website", icon: Globe },
   { title: "Social Media", url: "/social-media", icon: Share2 },
   { title: "SEO", url: "/seo", icon: Search },
