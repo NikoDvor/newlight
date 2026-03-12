@@ -1,10 +1,12 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AIAssistant } from "@/components/AIAssistant";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { Outlet, useLocation } from "react-router-dom";
-import { Bell, Zap } from "lucide-react";
+import { Bell, Zap, Building2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 function Particles() {
   const particles = Array.from({ length: 18 }, (_, i) => ({
@@ -53,6 +55,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
+  const { activeClientName, isAdmin } = useWorkspace();
 
   return (
     <SidebarProvider>
@@ -71,8 +74,15 @@ export function AppLayout() {
                 <Zap className="h-3.5 w-3.5 text-primary" />
                 <span className="text-xs font-bold tracking-tight text-foreground/70">NewLight</span>
               </div>
+              {activeClientName && (
+                <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg bg-primary/5">
+                  <Building2 className="h-3 w-3 text-primary/60" />
+                  <span className="text-[11px] font-medium text-primary/70">{activeClientName}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
+              {isAdmin && <WorkspaceSwitcher />}
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-primary/5 hover:shadow-[0_0_14px_-3px_hsla(211,96%,60%,.22)] relative group">
                 <Bell className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{

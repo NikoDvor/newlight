@@ -3,7 +3,9 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import CRM from "./pages/CRM";
 import Website from "./pages/Website";
@@ -43,6 +45,18 @@ import LiveActivity from "./pages/LiveActivity";
 import MarketResearch from "./pages/MarketResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
+import Integrations from "./pages/Integrations";
+
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminProspects from "./pages/admin/AdminProspects";
+import AdminProvision from "./pages/admin/AdminProvision";
+import AdminFixNow from "./pages/admin/AdminFixNow";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminPackages from "./pages/admin/AdminPackages";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -52,51 +66,66 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/crm" element={<CRM />} />
-            <Route path="/website" element={<Website />} />
-            <Route path="/social-media" element={<SocialMedia />} />
-            <Route path="/seo" element={<SEO />} />
-            <Route path="/paid-ads" element={<PaidAds />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/intelligence" element={<Intelligence />} />
-            <Route path="/ai-insights" element={<AIInsights />} />
-            <Route path="/training" element={<Training />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/pipeline" element={<Pipeline />} />
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/proposal-booking" element={<ProposalBooking />} />
-            <Route path="/prospect-detail" element={<ProspectDetail />} />
-            <Route path="/audit-pack" element={<AuditPack />} />
-            <Route path="/meeting-outcome" element={<MeetingOutcome />} />
-            <Route path="/proposal-draft" element={<ProposalDraft />} />
-            <Route path="/website-builder" element={<WebsiteBuilder />} />
-            <Route path="/funnel-builder" element={<FunnelBuilder />} />
-            <Route path="/landing-pages" element={<LandingPageEditor />} />
-            <Route path="/forms" element={<FormBuilder />} />
-            <Route path="/automations" element={<Automations />} />
-            <Route path="/client-performance" element={<ClientPerformance />} />
-            <Route path="/client-report" element={<ClientReport />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/agency" element={<AgencyDashboard />} />
-            {/* New Client Overview pages */}
-            <Route path="/business-health" element={<BusinessHealth />} />
-            <Route path="/revenue-opportunities" element={<RevenueOpportunities />} />
-            <Route path="/priority-actions" element={<PriorityActions />} />
-            <Route path="/live-activity" element={<LiveActivity />} />
-            {/* New Business Intelligence pages */}
-            <Route path="/market-research" element={<MarketResearch />} />
-            <Route path="/competitor-tracking" element={<CompetitorTracking />} />
-            <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <WorkspaceProvider>
+          <Routes>
+            {/* Admin Portal */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="clients" element={<AdminClients />} />
+              <Route path="prospects" element={<AdminProspects />} />
+              <Route path="provision" element={<AdminProvision />} />
+              <Route path="fix-now" element={<AdminFixNow />} />
+              <Route path="audit-logs" element={<AdminAuditLogs />} />
+              <Route path="templates" element={<AdminTemplates />} />
+              <Route path="packages" element={<AdminPackages />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+
+            {/* Client Workspace */}
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/crm" element={<CRM />} />
+              <Route path="/website" element={<Website />} />
+              <Route path="/social-media" element={<SocialMedia />} />
+              <Route path="/seo" element={<SEO />} />
+              <Route path="/paid-ads" element={<PaidAds />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/intelligence" element={<Intelligence />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
+              <Route path="/training" element={<Training />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/inbox" element={<Inbox />} />
+              <Route path="/proposal-booking" element={<ProposalBooking />} />
+              <Route path="/prospect-detail" element={<ProspectDetail />} />
+              <Route path="/audit-pack" element={<AuditPack />} />
+              <Route path="/meeting-outcome" element={<MeetingOutcome />} />
+              <Route path="/proposal-draft" element={<ProposalDraft />} />
+              <Route path="/website-builder" element={<WebsiteBuilder />} />
+              <Route path="/funnel-builder" element={<FunnelBuilder />} />
+              <Route path="/landing-pages" element={<LandingPageEditor />} />
+              <Route path="/forms" element={<FormBuilder />} />
+              <Route path="/automations" element={<Automations />} />
+              <Route path="/client-performance" element={<ClientPerformance />} />
+              <Route path="/client-report" element={<ClientReport />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/agency" element={<AgencyDashboard />} />
+              <Route path="/integrations" element={<Integrations />} />
+              <Route path="/business-health" element={<BusinessHealth />} />
+              <Route path="/revenue-opportunities" element={<RevenueOpportunities />} />
+              <Route path="/priority-actions" element={<PriorityActions />} />
+              <Route path="/live-activity" element={<LiveActivity />} />
+              <Route path="/market-research" element={<MarketResearch />} />
+              <Route path="/competitor-tracking" element={<CompetitorTracking />} />
+              <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </WorkspaceProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
