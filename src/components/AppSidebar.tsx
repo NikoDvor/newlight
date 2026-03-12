@@ -4,7 +4,8 @@ import {
   Star, Calendar, FileText, Brain, GraduationCap, Settings,
   CreditCard, CheckSquare, Zap, ChevronLeft, Columns3, Mail,
   ClipboardList, UserCheck, Package, PenSquare, FileCheck2,
-  Hammer, GitBranch, PanelTop, FormInput
+  Hammer, GitBranch, PanelTop, FormInput, Workflow, BarChart3,
+  Bell, Building2
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
