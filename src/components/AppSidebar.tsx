@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Globe, Share2, Search, Megaphone,
   Star, Calendar, FileText, Brain, GraduationCap, Settings,
   CreditCard, CheckSquare, Zap, ChevronLeft, Columns3, Mail,
-  ClipboardList, UserCheck, Package, PenSquare, FileCheck2
+  ClipboardList, UserCheck, Package, PenSquare, FileCheck2,
+  Hammer, GitBranch, PanelTop, FormInput
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
