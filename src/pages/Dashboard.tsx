@@ -10,6 +10,10 @@ import {
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
   ArrowUpRight
 } from "lucide-react";
+import { HealthScoreWidget } from "@/components/HealthScoreWidget";
+import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { PredictiveGrowth } from "@/components/PredictiveGrowth";
+import { RevenueCalculator } from "@/components/RevenueCalculator";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
