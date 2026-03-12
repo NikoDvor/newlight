@@ -14,6 +14,7 @@ import Reviews from "./pages/Reviews";
 import Meetings from "./pages/Meetings";
 import Reports from "./pages/Reports";
 import Intelligence from "./pages/Intelligence";
+import AIInsights from "./pages/AIInsights";
 import Training from "./pages/Training";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
