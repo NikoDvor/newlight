@@ -87,9 +87,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setViewMode("workspace");
       }
     } else {
-      // No role found - treat as admin for demo purposes
-      setUserRole("admin");
-      setIsAdmin(true);
+      // No role found — keep as non-admin, wait for role assignment
+      setUserRole("client_team");
+      setIsAdmin(false);
     }
   };
 
