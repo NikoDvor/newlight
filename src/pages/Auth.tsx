@@ -9,10 +9,8 @@ import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function Auth() {
-  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
