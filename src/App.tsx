@@ -92,6 +92,7 @@ const App = () => (
               <Route path="templates" element={<AdminTemplates />} />
               <Route path="packages" element={<AdminPackages />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="reports" element={<AdminReports />} />
             </Route>
 
             {/* Client Workspace */}
