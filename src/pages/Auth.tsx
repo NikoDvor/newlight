@@ -8,12 +8,14 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
+type AuthMode = "signin" | "signup" | "forgot";
+
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [forgotMode, setForgotMode] = useState(false);
+  const [mode, setMode] = useState<AuthMode>("signin");
   const navigate = useNavigate();
   const { user, isAdmin, userRole } = useWorkspace();
 
@@ -31,7 +33,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    if (forgotMode) {
+    if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -39,17 +41,35 @@ export default function Auth() {
         toast.error(error.message);
       } else {
         toast.success("Password reset link sent to your email");
-        setForgotMode(false);
+        setMode("signin");
       }
       setLoading(false);
       return;
     }
 
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Account created! Please check your email to verify your address before signing in.");
+        setMode("signin");
+        setEmail("");
+        setPassword("");
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Sign in
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error(error.message);
+      toast.error("Invalid email or password");
     } else if (!signInData.user.email_confirmed_at) {
-      // Email not verified — sign them out and block access
       await supabase.auth.signOut();
       toast.error("Please verify your email before signing in.");
     } else {
@@ -117,7 +137,11 @@ export default function Auth() {
             <span className="text-2xl font-bold text-white tracking-tight">NewLight</span>
           </div>
           <p className="text-sm text-white/40">
-            {forgotMode ? "Reset your password" : "Sign in to your account"}
+            {mode === "forgot"
+              ? "Reset your password"
+              : mode === "signup"
+              ? "Create your account"
+              : "Sign in to your account"}
           </p>
         </div>
 
@@ -146,7 +170,7 @@ export default function Auth() {
               </div>
             </div>
 
-            {!forgotMode && (
+            {mode !== "forgot" && (
               <div>
                 <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
                 <div className="relative">
@@ -180,21 +204,49 @@ export default function Auth() {
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
               }}
             >
-              {loading ? "Please wait..." : forgotMode ? "Send Reset Link" : "Sign In"}
+              {loading
+                ? "Please wait..."
+                : mode === "forgot"
+                ? "Send Reset Link"
+                : mode === "signup"
+                ? "Create Account"
+                : "Sign In"}
             </Button>
           </form>
 
-          <div className="mt-5 text-center">
-            <button
-              onClick={() => setForgotMode(!forgotMode)}
-              className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
-            >
-              {forgotMode ? (
-                <><ArrowLeft className="h-3 w-3" /> Back to Sign In</>
-              ) : (
-                "Forgot your password?"
-              )}
-            </button>
+          <div className="mt-5 flex flex-col items-center gap-2">
+            {mode === "signin" && (
+              <>
+                <button
+                  onClick={() => setMode("forgot")}
+                  className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                >
+                  Forgot your password?
+                </button>
+                <button
+                  onClick={() => setMode("signup")}
+                  className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                >
+                  Don't have an account? <span className="text-white/60 font-medium">Sign Up</span>
+                </button>
+              </>
+            )}
+            {mode === "signup" && (
+              <button
+                onClick={() => setMode("signin")}
+                className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
+              >
+                <ArrowLeft className="h-3 w-3" /> Back to Sign In
+              </button>
+            )}
+            {mode === "forgot" && (
+              <button
+                onClick={() => setMode("signin")}
+                className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
+              >
+                <ArrowLeft className="h-3 w-3" /> Back to Sign In
+              </button>
+            )}
           </div>
         </div>
 
