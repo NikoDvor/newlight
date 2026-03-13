@@ -14,6 +14,10 @@ export function AdminLayout() {
     return <Navigate to="/auth" replace />;
   }
 
+  if (!user.email_confirmed_at) {
+    return <Navigate to="/auth" replace />;
+  }
+
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }

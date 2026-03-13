@@ -76,6 +76,11 @@ export function AppLayout() {
     return <Navigate to="/auth" replace />;
   }
 
+  // Block unverified email users
+  if (!user.email_confirmed_at) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full" style={brandStyle}>
