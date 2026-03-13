@@ -424,6 +424,53 @@ export type Database = {
           },
         ]
       }
+      client_reports: {
+        Row: {
+          ai_summary: string | null
+          client_id: string
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          report_data: Json
+          report_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          report_data?: Json
+          report_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_summary?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_data?: Json
+          report_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           business_name: string
@@ -715,6 +762,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provision_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_schedules: {
+        Row: {
+          client_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          recipients: string[] | null
+          report_type: string
+          send_email: boolean
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          recipients?: string[] | null
+          report_type?: string
+          send_email?: boolean
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          recipients?: string[] | null
+          report_type?: string
+          send_email?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_schedules_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
