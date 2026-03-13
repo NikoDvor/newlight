@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -16,7 +16,6 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user, isAdmin, userRole } = useWorkspace();
 
-  // If already authenticated, redirect based on role
   useEffect(() => {
     if (user && userRole) {
       if (isAdmin) {
@@ -31,38 +30,21 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name },
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Check your email to verify your account");
-      }
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      toast.error(error.message);
     } else {
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast.error(error.message);
+      toast.success("Welcome back!");
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", signInData.user.id)
+        .limit(1)
+        .maybeSingle();
+      if (roleData && ["admin", "operator"].includes(roleData.role)) {
+        navigate("/admin");
       } else {
-        toast.success("Welcome back!");
-        // Check if user is admin/operator and redirect accordingly
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", signInData.user.id)
-          .limit(1)
-          .maybeSingle();
-        if (roleData && ["admin", "operator"].includes(roleData.role)) {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
+        navigate("/");
       }
     }
     setLoading(false);
@@ -75,7 +57,6 @@ export default function Auth() {
         background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
       }}
     >
-      {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div
           className="absolute w-[600px] h-[600px] rounded-full"
@@ -103,7 +84,6 @@ export default function Auth() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div
@@ -117,12 +97,9 @@ export default function Auth() {
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">NewLight</span>
           </div>
-          <p className="text-sm text-white/40">
-            {mode === "login" ? "Sign in to your account" : "Create your account"}
-          </p>
+          <p className="text-sm text-white/40">Sign in to your account</p>
         </div>
 
-        {/* Card */}
         <div
           className="rounded-2xl p-6 sm:p-8"
           style={{
@@ -133,21 +110,6 @@ export default function Auth() {
           }}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "signup" && (
-              <div>
-                <label className="text-xs text-white/50 mb-1.5 block font-medium">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="John Smith"
-                    className="pl-9 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
-                  />
-                </div>
-              </div>
-            )}
-
             <div>
               <label className="text-xs text-white/50 mb-1.5 block font-medium">Email</label>
               <div className="relative">
@@ -195,20 +157,9 @@ export default function Auth() {
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
               }}
             >
-              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
+              {loading ? "Please wait..." : "Sign In"}
             </Button>
           </form>
-
-          <div className="mt-5 text-center">
-            <button
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
-              className="text-xs text-white/40 hover:text-white/70 transition-colors"
-            >
-              {mode === "login"
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
-            </button>
-          </div>
         </div>
 
         <p className="text-center text-[10px] text-white/20 mt-6 tracking-wide">

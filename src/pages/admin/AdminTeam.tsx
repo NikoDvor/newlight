@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserPlus, Users, Mail, Shield } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 
 interface RoleRow {
   id: string;
@@ -22,6 +22,7 @@ export default function AdminTeam() {
   const [inviteRole, setInviteRole] = useState("client_owner");
   const [inviteClientId, setInviteClientId] = useState("");
   const [clients, setClients] = useState<{ id: string; business_name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = async () => {
     const [rolesRes, clientsRes] = await Promise.all([
@@ -39,28 +40,36 @@ export default function AdminTeam() {
       toast.error("Email is required");
       return;
     }
-    // Create user via signup (they'll get an email)
-    const { data, error } = await supabase.auth.signUp({
-      email: inviteEmail,
-      password: crypto.randomUUID().slice(0, 12), // temporary password
-      options: {
-        data: { full_name: inviteEmail.split("@")[0] },
-        emailRedirectTo: window.location.origin,
-      },
-    });
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: inviteEmail,
+          role: inviteRole,
+          client_id: ["client_owner", "client_team", "read_only"].includes(inviteRole) ? inviteClientId || null : null,
+        },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "Failed to invite user");
+      } else {
+        toast.success("Invitation sent to " + inviteEmail);
+        setShowInvite(false);
+        setInviteEmail("");
+        fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to invite user");
+    }
+    setLoading(false);
+  };
+
+  const handleRemove = async (roleId: string) => {
+    const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
     if (error) {
       toast.error(error.message);
-      return;
-    }
-    if (data.user) {
-      await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: inviteRole as any,
-        client_id: ["client_owner", "client_team", "read_only"].includes(inviteRole) ? inviteClientId || null : null,
-      });
-      toast.success("User invited successfully");
-      setShowInvite(false);
-      setInviteEmail("");
+    } else {
+      toast.success("User role removed");
       fetchData();
     }
   };
@@ -76,7 +85,7 @@ export default function AdminTeam() {
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Team & Users</h1>
-          <p className="text-sm text-white/50 mt-1">Manage platform users and roles</p>
+          <p className="text-sm text-white/50 mt-1">Invite and manage platform users</p>
         </div>
         <Dialog open={showInvite} onOpenChange={setShowInvite}>
           <DialogTrigger asChild>
@@ -115,9 +124,10 @@ export default function AdminTeam() {
                   </select>
                 </div>
               )}
-              <Button onClick={handleInvite} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
-                Send Invite
+              <Button onClick={handleInvite} disabled={loading} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+                {loading ? "Sending..." : "Send Invitation"}
               </Button>
+              <p className="text-[10px] text-white/30 text-center">User will receive an email to set their password</p>
             </div>
           </DialogContent>
         </Dialog>
@@ -128,7 +138,7 @@ export default function AdminTeam() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["User ID", "Role", "Client"].map(h => (
+                {["User ID", "Role", "Client", "Actions"].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
@@ -144,10 +154,15 @@ export default function AdminTeam() {
                   <td className="px-4 py-3 text-white/50 text-xs">
                     {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
                   </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => handleRemove(r.id)} className="text-white/30 hover:text-red-400 transition-colors">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
                 </motion.tr>
               ))}
               {roles.length === 0 && (
-                <tr><td colSpan={3} className="text-center py-12 text-white/30">No users found</td></tr>
+                <tr><td colSpan={4} className="text-center py-12 text-white/30">No users found</td></tr>
               )}
             </tbody>
           </table>
