@@ -276,6 +276,8 @@ export type Database = {
       }
       client_branding: {
         Row: {
+          app_display_name: string | null
+          app_icon_url: string | null
           client_id: string
           company_name: string | null
           created_at: string
@@ -283,10 +285,13 @@ export type Database = {
           logo_url: string | null
           primary_color: string | null
           secondary_color: string | null
+          splash_logo_url: string | null
           updated_at: string
           welcome_message: string | null
         }
         Insert: {
+          app_display_name?: string | null
+          app_icon_url?: string | null
           client_id: string
           company_name?: string | null
           created_at?: string
@@ -294,10 +299,13 @@ export type Database = {
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          splash_logo_url?: string | null
           updated_at?: string
           welcome_message?: string | null
         }
         Update: {
+          app_display_name?: string | null
+          app_icon_url?: string | null
           client_id?: string
           company_name?: string | null
           created_at?: string
@@ -305,6 +313,7 @@ export type Database = {
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          splash_logo_url?: string | null
           updated_at?: string
           welcome_message?: string | null
         }
