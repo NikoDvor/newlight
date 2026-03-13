@@ -48,6 +48,10 @@ export default function Auth() {
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast.error(error.message);
+    } else if (!signInData.user.email_confirmed_at) {
+      // Email not verified — sign them out and block access
+      await supabase.auth.signOut();
+      toast.error("Please verify your email before signing in.");
     } else {
       toast.success("Welcome back!");
       const { data: roleData } = await supabase
