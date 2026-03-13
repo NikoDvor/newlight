@@ -112,7 +112,9 @@ export default function Auth() {
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">NewLight</span>
           </div>
-          <p className="text-sm text-white/40">Sign in to your account</p>
+          <p className="text-sm text-white/40">
+            {forgotMode ? "Reset your password" : "Sign in to your account"}
+          </p>
         </div>
 
         <div
