@@ -98,6 +98,25 @@ export function ClientBrandingSettings() {
           className="text-xs bg-secondary/50 min-h-[60px]" />
       </div>
 
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Installable App Branding</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">App Display Name</label>
+          <Input value={form.app_display_name} onChange={e => setForm(p => ({ ...p, app_display_name: e.target.value }))}
+            placeholder="My Business App" className="h-9 text-xs bg-secondary/50" />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">App Icon URL (192×192+)</label>
+          <Input value={form.app_icon_url} onChange={e => setForm(p => ({ ...p, app_icon_url: e.target.value }))}
+            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Splash / Loading Logo URL</label>
+          <Input value={form.splash_logo_url} onChange={e => setForm(p => ({ ...p, splash_logo_url: e.target.value }))}
+            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} size="sm" className="btn-gradient h-9 px-5 rounded-xl text-xs font-semibold">
           <Save className="h-3.5 w-3.5 mr-1.5" /> Save Branding
