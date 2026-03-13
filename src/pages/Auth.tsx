@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Zap, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -13,6 +13,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
   const navigate = useNavigate();
   const { user, isAdmin, userRole } = useWorkspace();
 
@@ -29,6 +30,20 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (forgotMode) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password reset link sent to your email");
+        setForgotMode(false);
+      }
+      setLoading(false);
+      return;
+    }
 
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -97,7 +112,9 @@ export default function Auth() {
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">NewLight</span>
           </div>
-          <p className="text-sm text-white/40">Sign in to your account</p>
+          <p className="text-sm text-white/40">
+            {forgotMode ? "Reset your password" : "Sign in to your account"}
+          </p>
         </div>
 
         <div
@@ -125,28 +142,30 @@ export default function Auth() {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                  className="pl-9 pr-10 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            {!forgotMode && (
+              <div>
+                <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="pl-9 pr-10 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <Button
               type="submit"
@@ -157,9 +176,22 @@ export default function Auth() {
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
               }}
             >
-              {loading ? "Please wait..." : "Sign In"}
+              {loading ? "Please wait..." : forgotMode ? "Send Reset Link" : "Sign In"}
             </Button>
           </form>
+
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => setForgotMode(!forgotMode)}
+              className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
+            >
+              {forgotMode ? (
+                <><ArrowLeft className="h-3 w-3" /> Back to Sign In</>
+              ) : (
+                "Forgot your password?"
+              )}
+            </button>
+          </div>
         </div>
 
         <p className="text-center text-[10px] text-white/20 mt-6 tracking-wide">
