@@ -81,6 +81,24 @@ export function AppLayout() {
     return <Navigate to="/auth" replace />;
   }
 
+  // Block client users without an assigned workspace
+  if (!isAdmin && !activeClientId && userRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{
+        background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
+      }}>
+        <div className="text-center max-w-md">
+          <Zap className="h-10 w-10 text-primary mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-white mb-2">No Workspace Assigned</h1>
+          <p className="text-white/50 text-sm mb-6">Your account has not been assigned to a client workspace yet. Please contact an administrator to get access.</p>
+          <button onClick={signOut} className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1">
+            <LogOut className="h-3 w-3" /> Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full" style={brandStyle}>
