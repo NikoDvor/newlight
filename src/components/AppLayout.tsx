@@ -59,6 +59,11 @@ export function AppLayout() {
   const { activeClientName, isAdmin, branding, activeClientId, signOut, user } = useWorkspace();
   useClientManifest();
 
+  // Redirect unauthenticated users to login
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   // Apply dynamic branding CSS variables when a client workspace is active
   const brandStyle = useMemo(() => {
     if (!activeClientId || !branding.primary_color) return {};
