@@ -9,6 +9,9 @@ interface ClientBranding {
   secondary_color: string;
   company_name: string;
   welcome_message: string;
+  app_icon_url: string;
+  splash_logo_url: string;
+  app_display_name: string;
 }
 
 const defaultBranding: ClientBranding = {
@@ -17,6 +20,9 @@ const defaultBranding: ClientBranding = {
   secondary_color: "#06B6D4",
   company_name: "",
   welcome_message: "Welcome to your business dashboard",
+  app_icon_url: "",
+  splash_logo_url: "",
+  app_display_name: "",
 };
 
 interface WorkspaceContextType {
