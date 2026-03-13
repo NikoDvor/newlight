@@ -16,6 +16,9 @@ export function ClientBrandingSettings() {
     secondary_color: "#06B6D4",
     company_name: "",
     welcome_message: "Welcome to your business dashboard",
+    app_icon_url: "",
+    splash_logo_url: "",
+    app_display_name: "",
   });
 
   useEffect(() => {
@@ -28,6 +31,9 @@ export function ClientBrandingSettings() {
           secondary_color: data.secondary_color || "#06B6D4",
           company_name: data.company_name || "",
           welcome_message: data.welcome_message || "",
+          app_icon_url: (data as any).app_icon_url || "",
+          splash_logo_url: (data as any).splash_logo_url || "",
+          app_display_name: (data as any).app_display_name || "",
         });
       });
   }, [activeClientId]);
@@ -90,6 +96,25 @@ export function ClientBrandingSettings() {
         <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Welcome Message</label>
         <Textarea value={form.welcome_message} onChange={e => setForm(p => ({ ...p, welcome_message: e.target.value }))}
           className="text-xs bg-secondary/50 min-h-[60px]" />
+      </div>
+
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Installable App Branding</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">App Display Name</label>
+          <Input value={form.app_display_name} onChange={e => setForm(p => ({ ...p, app_display_name: e.target.value }))}
+            placeholder="My Business App" className="h-9 text-xs bg-secondary/50" />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">App Icon URL (192×192+)</label>
+          <Input value={form.app_icon_url} onChange={e => setForm(p => ({ ...p, app_icon_url: e.target.value }))}
+            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Splash / Loading Logo URL</label>
+          <Input value={form.splash_logo_url} onChange={e => setForm(p => ({ ...p, splash_logo_url: e.target.value }))}
+            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

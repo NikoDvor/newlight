@@ -7,6 +7,7 @@ import { Bell, Zap, Building2, LogOut } from "lucide-react";
 import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useClientManifest } from "@/hooks/useClientManifest";
 
 function Particles() {
   const particles = Array.from({ length: 18 }, (_, i) => ({
@@ -56,6 +57,7 @@ function CursorGlow() {
 export function AppLayout() {
   const location = useLocation();
   const { activeClientName, isAdmin, branding, activeClientId, signOut, user } = useWorkspace();
+  useClientManifest();
 
   // Apply dynamic branding CSS variables when a client workspace is active
   const brandStyle = useMemo(() => {
