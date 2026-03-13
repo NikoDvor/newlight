@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { Bell, Zap, ChevronDown } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -8,7 +8,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function AdminLayout() {
   const location = useLocation();
-  const { viewMode } = useWorkspace();
+  const { viewMode, user, isAdmin } = useWorkspace();
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <SidebarProvider>

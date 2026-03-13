@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { Bell, Zap, Building2, LogOut } from "lucide-react";
 import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,6 +70,11 @@ export function AppLayout() {
 
   const displayName = branding.company_name || activeClientName;
   const hasCustomBranding = activeClientId && branding.primary_color && branding.primary_color !== "#3B82F6";
+
+  // Redirect unauthenticated users to login
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <SidebarProvider>
