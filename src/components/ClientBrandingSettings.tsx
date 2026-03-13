@@ -31,6 +31,9 @@ export function ClientBrandingSettings() {
           secondary_color: data.secondary_color || "#06B6D4",
           company_name: data.company_name || "",
           welcome_message: data.welcome_message || "",
+          app_icon_url: (data as any).app_icon_url || "",
+          splash_logo_url: (data as any).splash_logo_url || "",
+          app_display_name: (data as any).app_display_name || "",
         });
       });
   }, [activeClientId]);
