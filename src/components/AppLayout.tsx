@@ -7,6 +7,7 @@ import { Bell, Zap, Building2, LogOut } from "lucide-react";
 import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useClientManifest } from "@/hooks/useClientManifest";
 
 function Particles() {
   const particles = Array.from({ length: 18 }, (_, i) => ({
