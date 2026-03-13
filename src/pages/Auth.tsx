@@ -142,28 +142,30 @@ export default function Auth() {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                  className="pl-9 pr-10 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            {!forgotMode && (
+              <div>
+                <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="pl-9 pr-10 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <Button
               type="submit"
@@ -174,9 +176,22 @@ export default function Auth() {
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
               }}
             >
-              {loading ? "Please wait..." : "Sign In"}
+              {loading ? "Please wait..." : forgotMode ? "Send Reset Link" : "Sign In"}
             </Button>
           </form>
+
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => setForgotMode(!forgotMode)}
+              className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
+            >
+              {forgotMode ? (
+                <><ArrowLeft className="h-3 w-3" /> Back to Sign In</>
+              ) : (
+                "Forgot your password?"
+              )}
+            </button>
+          </div>
         </div>
 
         <p className="text-center text-[10px] text-white/20 mt-6 tracking-wide">
