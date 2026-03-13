@@ -16,6 +16,9 @@ export function ClientBrandingSettings() {
     secondary_color: "#06B6D4",
     company_name: "",
     welcome_message: "Welcome to your business dashboard",
+    app_icon_url: "",
+    splash_logo_url: "",
+    app_display_name: "",
   });
 
   useEffect(() => {
