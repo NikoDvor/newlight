@@ -23,6 +23,7 @@ const navItems = [
   { title: "Templates", url: "/admin/templates", icon: FileCode },
   { title: "Package Access", url: "/admin/packages", icon: Package },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
+  { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
 ];
 
