@@ -7,8 +7,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Zap, Calendar, Rocket, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Loader2, CheckCircle, Zap, Calendar, Rocket, ArrowRight, ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { LogoUploader } from "@/components/LogoUploader";
 
 export default function ProposalBooking() {
   const [loading, setLoading] = useState(false);
