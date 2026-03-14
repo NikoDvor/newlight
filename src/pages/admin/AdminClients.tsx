@@ -400,6 +400,9 @@ export default function AdminClients() {
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                       </button>
+                      <button onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Delete / Archive">
+                        <Trash2 className="h-3.5 w-3.5 text-white/30 hover:text-red-400" />
+                      </button>
                     </div>
                   </td>
                 </motion.tr>
@@ -411,6 +414,13 @@ export default function AdminClients() {
           </table>
         </div>
       </Card>
+
+      <DeleteClientDialog
+        open={!!deleteClient}
+        onOpenChange={(open) => { if (!open) setDeleteClient(null); }}
+        client={deleteClient}
+        onComplete={fetchClients}
+      />
     </div>
   );
 }
