@@ -166,6 +166,7 @@ const App = () => (
               <Route path="/finance" element={<Finance />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
+              <Route path="/welcome" element={<Welcome />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
