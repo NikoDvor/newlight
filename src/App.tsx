@@ -69,6 +69,7 @@ import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
+import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>
