@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,13 +11,30 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle } from "lucide-react";
+import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
+const DEMO_KEYWORDS = [
+  { keyword: "best plumber near me", position: 3, volume: 8100, change: 2 },
+  { keyword: "emergency plumbing service", position: 7, volume: 4400, change: -1 },
+  { keyword: "24 hour plumber", position: 12, volume: 6600, change: 3 },
+  { keyword: "drain cleaning service", position: 5, volume: 3200, change: 0 },
+  { keyword: "water heater repair", position: 18, volume: 2900, change: -4 },
+];
+
+const DEMO_CONTENT = [
+  { title: "Write blog: 'Top 10 Plumbing Tips for Homeowners'", keyword: "plumbing tips", potential: "High" },
+  { title: "Create FAQ page for common questions", keyword: "plumbing FAQ", potential: "Medium" },
+  { title: "Update service area pages with local keywords", keyword: "local SEO", potential: "High" },
+];
 
 export default function SEO() {
   const { activeClientId } = useWorkspace();
+  const navigate = useNavigate();
   const [keywords, setKeywords] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
@@ -87,6 +105,7 @@ export default function SEO() {
     fetchData();
   };
 
+  const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0;
   const rankedKws = keywords.filter(k => k.position);
   const openIssues = issues.filter(i => i.status === "open").length;
 
@@ -114,11 +133,23 @@ export default function SEO() {
         </div>
       </PageHeader>
 
-      <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
-        <MetricCard label="Keywords Tracked" value={String(keywords.length)} change={`${rankedKws.length} ranked`} changeType="neutral" icon={Search} />
-        <MetricCard label="Competitors" value={String(competitors.length)} change="Being tracked" changeType="neutral" icon={Shield} />
-        <MetricCard label="Open Issues" value={String(openIssues)} change={`${issues.length} total`} changeType={openIssues > 0 ? "negative" : "positive"} icon={AlertTriangle} />
-        <MetricCard label="Avg Position" value={rankedKws.length > 0 ? `#${Math.round(rankedKws.reduce((s, k) => s + k.position, 0) / rankedKws.length)}` : "—"} change="Tracked keywords" changeType="neutral" icon={TrendingUp} />
+      {!hasRealData && (
+        <SetupBanner
+          icon={Search}
+          title="Track Your Search Rankings"
+          description="Add your target keywords and competitors to start monitoring your SEO performance and discover growth opportunities."
+          actionLabel="Add Keywords"
+          onAction={() => setKwOpen(true)}
+          secondaryLabel="Connect Search Console"
+          onSecondary={() => navigate("/integrations")}
+        />
+      )}
+
+      <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
+        <MetricCard label="Keywords Tracked" value={hasRealData ? String(keywords.length) : "—"} change={hasRealData ? `${rankedKws.length} ranked` : "Add keywords to track"} changeType="neutral" icon={Search} />
+        <MetricCard label="Avg Position" value={rankedKws.length > 0 ? `#${Math.round(rankedKws.reduce((s, k) => s + k.position, 0) / rankedKws.length)}` : "—"} change={hasRealData ? "Tracked keywords" : "Track to measure"} changeType="neutral" icon={TrendingUp} />
+        <MetricCard label="Competitors" value={hasRealData ? String(competitors.length) : "—"} change={hasRealData ? "Being tracked" : "Add competitors"} changeType="neutral" icon={Shield} />
+        <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Run SEO audit"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
       </WidgetGrid>
 
       <div className="mt-6">
@@ -127,14 +158,46 @@ export default function SEO() {
             <TabsTrigger value="keywords" className="rounded-md text-sm">Keywords</TabsTrigger>
             <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
+            <TabsTrigger value="content" className="rounded-md text-sm">Content Opps</TabsTrigger>
+            <TabsTrigger value="local" className="rounded-md text-sm">Local SEO</TabsTrigger>
           </TabsList>
 
           <TabsContent value="keywords" className="mt-4">
             <DataCard title="Keyword Rankings">
               {keywords.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No keywords tracked yet.</p>
-                  <Button size="sm" onClick={() => setKwOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Keyword</Button>
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <DemoDataLabel />
+                    <span className="text-[10px] text-muted-foreground">Example rankings — add your keywords to see real data</span>
+                  </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
+                      </tr>
+                    </thead>
+                    <tbody className="opacity-60">
+                      {DEMO_KEYWORDS.map((k, i) => (
+                        <tr key={i} className="border-b border-border last:border-0">
+                          <td className="text-sm py-3">{k.keyword}</td>
+                          <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
+                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
+                          <td className="text-right py-3">
+                            <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
+                              {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                              {Math.abs(k.change)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="text-center mt-4">
+                    <Button size="sm" onClick={() => setKwOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Your Keywords</Button>
+                  </div>
                 </div>
               ) : (
                 <table className="w-full">
@@ -163,7 +226,11 @@ export default function SEO() {
             <DataCard title="Competitor Overview">
               {competitors.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No competitors tracked.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Shield className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">Track Your Competitors</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add competitor domains to monitor their SEO performance and find opportunities.</p>
                   <Button size="sm" onClick={() => setCompOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Competitor</Button>
                 </div>
               ) : (
@@ -195,7 +262,11 @@ export default function SEO() {
             <DataCard title="SEO Issues">
               {issues.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No issues logged.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <AlertTriangle className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No SEO issues logged</p>
+                  <p className="text-xs text-muted-foreground mb-4">Log issues to track and resolve SEO problems systematically.</p>
                   <Button size="sm" onClick={() => setIssueOpen(true)}><AlertTriangle className="h-4 w-4 mr-1" /> Log Issue</Button>
                 </div>
               ) : (
@@ -216,10 +287,67 @@ export default function SEO() {
               )}
             </DataCard>
           </TabsContent>
+
+          <TabsContent value="content" className="mt-4">
+            <DataCard title="Content Opportunities">
+              <div className="flex items-center gap-2 mb-4">
+                <DemoDataLabel />
+                <span className="text-[10px] text-muted-foreground">Suggested content ideas based on industry best practices</span>
+              </div>
+              <div className="space-y-3">
+                {DEMO_CONTENT.map((c, i) => (
+                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{c.title}</p>
+                        <p className="text-xs text-muted-foreground">Target: {c.keyword}</p>
+                      </div>
+                    </div>
+                    <Badge className="text-[10px] bg-blue-50 text-blue-700">{c.potential}</Badge>
+                  </motion.div>
+                ))}
+              </div>
+            </DataCard>
+          </TabsContent>
+
+          <TabsContent value="local" className="mt-4">
+            <DataCard title="Local SEO Readiness">
+              <div className="flex items-center gap-2 mb-4">
+                <DemoDataLabel />
+                <span className="text-[10px] text-muted-foreground">Connect Google Business Profile for live data</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { item: "Google Business Profile", status: "Not Connected", icon: MapPin },
+                  { item: "NAP Consistency", status: "Needs Review", icon: Target },
+                  { item: "Local Citations", status: "Setup Needed", icon: FileText },
+                  { item: "Review Management", status: "Active", icon: Eye },
+                ].map((item, i) => (
+                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                    initial={{ opacity: 0, y: 4 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <item.icon className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                      </div>
+                      <p className="text-sm font-medium">{item.item}</p>
+                    </div>
+                    <Badge className={`text-[10px] ${item.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{item.status}</Badge>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="text-center mt-4">
+                <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}>Connect Google Business</Button>
+              </div>
+            </DataCard>
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Add Keyword Sheet */}
+      {/* Sheets */}
       <Sheet open={kwOpen} onOpenChange={setKwOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Add Keyword</SheetTitle><SheetDescription>Track a search keyword</SheetDescription></SheetHeader>
@@ -235,7 +363,6 @@ export default function SEO() {
         </SheetContent>
       </Sheet>
 
-      {/* Add Competitor Sheet */}
       <Sheet open={compOpen} onOpenChange={setCompOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Add Competitor</SheetTitle><SheetDescription>Track a competitor domain</SheetDescription></SheetHeader>
@@ -252,7 +379,6 @@ export default function SEO() {
         </SheetContent>
       </Sheet>
 
-      {/* Log Issue Sheet */}
       <Sheet open={issueOpen} onOpenChange={setIssueOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Log SEO Issue</SheetTitle><SheetDescription>Report an SEO issue</SheetDescription></SheetHeader>

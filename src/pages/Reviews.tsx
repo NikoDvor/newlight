@@ -3,17 +3,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Star, MessageSquare, TrendingUp, Send, Plus, Reply,
-  CheckCircle, Clock, Mail, Phone, AlertTriangle, ShieldAlert
+  Star, MessageSquare, TrendingUp, Send, Plus,
+  CheckCircle, Mail, Phone, ShieldAlert, Sparkles, ThumbsUp
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   sent: "Sent", opened: "Opened", feedback_submitted: "Feedback",
-  recovery_needed: "Recovery Needed", recovery_in_progress: "Recovery In Progress",
+  recovery_needed: "Recovery Needed", recovery_in_progress: "Recovering",
   resolved: "Resolved", public_review_left: "Public Review",
 };
 
@@ -40,7 +40,6 @@ export default function ReviewsDashboard() {
   const { activeClientId } = useWorkspace();
   const [requests, setRequests] = useState<any[]>([]);
   const [recoveryTasks, setRecoveryTasks] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [requestOpen, setRequestOpen] = useState(false);
   const [newReq, setNewReq] = useState({ customer_name: "", customer_email: "", customer_phone: "", channel: "sms", platform: "google" });
@@ -48,14 +47,12 @@ export default function ReviewsDashboard() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [rRes, rcRes, tRes] = await Promise.all([
+    const [rRes, rcRes] = await Promise.all([
       supabase.from("review_requests").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("review_recovery_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("review_templates").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setRequests(rRes.data || []);
     setRecoveryTasks(rcRes.data || []);
-    setTemplates(tRes.data || []);
     setLoading(false);
   };
 
@@ -73,12 +70,18 @@ export default function ReviewsDashboard() {
       status: "sent",
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    // Log activity
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "review_request_sent",
+      activity_note: `Review request sent to ${newReq.customer_name} via ${newReq.channel.toUpperCase()}`,
+    });
     toast({ title: "Review Request Sent" });
     setNewReq({ customer_name: "", customer_email: "", customer_phone: "", channel: "sms", platform: "google" });
     setRequestOpen(false);
     fetchData();
   };
 
+  const hasRealData = requests.length > 0;
   const totalRequests = requests.length;
   const feedbackCount = requests.filter(r => r.feedback_text).length;
   const recoveryCount = requests.filter(r => r.recovery_needed).length;
@@ -106,14 +109,46 @@ export default function ReviewsDashboard() {
         </Button>
       </PageHeader>
 
+      {!hasRealData && (
+        <SetupBanner
+          icon={Star}
+          title="Start Building Your Reputation"
+          description="Send review requests to customers after appointments to collect feedback, manage your online reputation, and generate public reviews."
+          actionLabel="Send First Request"
+          onAction={() => setRequestOpen(true)}
+        />
+      )}
+
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Avg Rating" value={avgRating} change={`${feedbackCount} with feedback`} changeType="neutral" icon={Star} />
-        <MetricCard label="Requests Sent" value={String(totalRequests)} change="Total sent" changeType="neutral" icon={Send} />
-        <MetricCard label="Feedback Received" value={String(feedbackCount)} change={`${totalRequests > 0 ? Math.round(feedbackCount / totalRequests * 100) : 0}% response rate`} changeType="positive" icon={MessageSquare} />
-        <MetricCard label="Recovery Needed" value={String(recoveryCount)} change={`${publicCount} public reviews`} changeType={recoveryCount > 0 ? "negative" : "neutral"} icon={ShieldAlert} />
+        <MetricCard label="Avg Rating" value={hasRealData ? avgRating : "—"} change={hasRealData ? `${feedbackCount} with feedback` : "Send requests"} changeType="neutral" icon={Star} />
+        <MetricCard label="Requests Sent" value={hasRealData ? String(totalRequests) : "—"} change={hasRealData ? "Total sent" : "Send first request"} changeType="neutral" icon={Send} />
+        <MetricCard label="Feedback Received" value={hasRealData ? String(feedbackCount) : "—"} change={hasRealData ? `${totalRequests > 0 ? Math.round(feedbackCount / totalRequests * 100) : 0}% response rate` : "Collect feedback"} changeType={hasRealData ? "positive" : "neutral"} icon={MessageSquare} />
+        <MetricCard label="Public Reviews" value={hasRealData ? String(publicCount) : "—"} change={hasRealData ? `${recoveryCount} recovery needed` : "Drive public reviews"} changeType={recoveryCount > 0 ? "negative" : "neutral"} icon={ThumbsUp} />
       </WidgetGrid>
 
-      <div className="mt-8">
+      {/* How It Works - show when no data */}
+      {!hasRealData && (
+        <DataCard title="How Review Automation Works" className="mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            {[
+              { step: "1", title: "Appointment Completes", desc: "Customer finishes their appointment", icon: CheckCircle },
+              { step: "2", title: "Request Sent", desc: "SMS or email review request is sent automatically", icon: Send },
+              { step: "3", title: "Feedback Collected", desc: "Customer submits private feedback and rating", icon: MessageSquare },
+              { step: "4", title: "Smart Routing", desc: "Happy customers get public review link, unhappy trigger recovery", icon: Sparkles },
+            ].map((s, i) => (
+              <motion.div key={i} className="text-center p-4" initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.1)" }}>
+                  <s.icon className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
+                </div>
+                <p className="text-xs font-bold text-foreground">{s.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{s.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </DataCard>
+      )}
+
+      <div className="mt-6">
         <Tabs defaultValue="requests">
           <TabsList className="bg-secondary h-10 rounded-lg">
             <TabsTrigger value="requests" className="rounded-md text-sm">Requests</TabsTrigger>
@@ -125,10 +160,12 @@ export default function ReviewsDashboard() {
             <DataCard title="Review Request Tracking">
               {requests.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No review requests yet.</p>
-                  <Button size="sm" onClick={() => setRequestOpen(true)}>
-                    <Send className="h-4 w-4 mr-1" /> Send First Request
-                  </Button>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Send className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No review requests yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Send your first review request to start collecting customer feedback.</p>
+                  <Button size="sm" onClick={() => setRequestOpen(true)}><Send className="h-4 w-4 mr-1" /> Send First Request</Button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -171,7 +208,13 @@ export default function ReviewsDashboard() {
           <TabsContent value="feedback" className="mt-4">
             <DataCard title="Customer Feedback">
               {requests.filter(r => r.feedback_text).length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">No feedback submitted yet.</p>
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <MessageSquare className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No feedback submitted yet</p>
+                  <p className="text-xs text-muted-foreground">Feedback will appear here when customers respond to your review requests.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {requests.filter(r => r.feedback_text).map((r) => (
@@ -188,7 +231,7 @@ export default function ReviewsDashboard() {
                           <span className="text-sm font-medium">{r.customer_name}</span>
                         </div>
                         {r.recovery_needed && (
-                          <Badge className="bg-red-50 text-red-600 text-[10px]"><AlertTriangle className="h-3 w-3 mr-1" />Recovery</Badge>
+                          <Badge className="bg-red-50 text-red-600 text-[10px]"><ShieldAlert className="h-3 w-3 mr-1" />Recovery</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{r.feedback_text}</p>
@@ -202,7 +245,13 @@ export default function ReviewsDashboard() {
           <TabsContent value="recovery" className="mt-4">
             <DataCard title="Service Recovery">
               {recoveryTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">No recovery tasks. Great job!</p>
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <ShieldAlert className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No recovery tasks</p>
+                  <p className="text-xs text-muted-foreground">Recovery tasks are automatically created when customers submit low ratings.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {recoveryTasks.map((t) => (
@@ -223,18 +272,11 @@ export default function ReviewsDashboard() {
         </Tabs>
       </div>
 
-      {/* Send Review Request Sheet */}
       <Sheet open={requestOpen} onOpenChange={setRequestOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Send Review Request</SheetTitle>
-            <SheetDescription>Request feedback from a customer</SheetDescription>
-          </SheetHeader>
+          <SheetHeader><SheetTitle>Send Review Request</SheetTitle><SheetDescription>Request feedback from a customer</SheetDescription></SheetHeader>
           <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label>Customer Name *</Label>
-              <Input value={newReq.customer_name} onChange={e => setNewReq(p => ({ ...p, customer_name: e.target.value }))} />
-            </div>
+            <div className="space-y-2"><Label>Customer Name *</Label><Input value={newReq.customer_name} onChange={e => setNewReq(p => ({ ...p, customer_name: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Channel</Label>
               <Select value={newReq.channel} onValueChange={v => setNewReq(p => ({ ...p, channel: v }))}>

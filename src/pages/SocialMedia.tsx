@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -12,26 +13,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Users, Heart, Eye, Send, Plus, Instagram, Facebook, Linkedin,
-  Twitter, CheckCircle, AlertCircle, XCircle, Wifi, Clock, MessageSquare, Share
+  Users, Heart, Eye, Send, Plus, CheckCircle, XCircle, AlertCircle, Wifi,
+  MessageSquare, Share, Calendar, ThumbsUp
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-const PLATFORM_ICONS: Record<string, typeof Instagram> = {
-  Instagram, Facebook, LinkedIn: Linkedin, "X (Twitter)": Twitter, TikTok: Eye,
+const PLATFORM_ICONS: Record<string, any> = {
+  Instagram: Heart, Facebook: ThumbsUp, LinkedIn: Users, "X (Twitter)": MessageSquare, TikTok: Eye, YouTube: Eye,
 };
 
 const STATUS_STYLE: Record<string, string> = {
   connected: "bg-emerald-50 text-emerald-700",
   disconnected: "bg-secondary text-muted-foreground",
   needs_auth: "bg-amber-50 text-amber-700",
-};
-
-const STATUS_ICON: Record<string, typeof CheckCircle> = {
-  connected: CheckCircle, disconnected: XCircle, needs_auth: AlertCircle,
 };
 
 const POST_STATUS_STYLE: Record<string, string> = {
@@ -41,8 +39,16 @@ const POST_STATUS_STYLE: Record<string, string> = {
   pending_approval: "bg-violet-50 text-violet-700",
 };
 
+const DEMO_PLATFORMS = [
+  { platform: "Instagram", handle: "@yourbrand", followers: 12400, status: "disconnected" },
+  { platform: "Facebook", handle: "Your Brand", followers: 8200, status: "disconnected" },
+  { platform: "LinkedIn", handle: "Your Brand Inc", followers: 3100, status: "disconnected" },
+  { platform: "TikTok", handle: "@yourbrand", followers: 0, status: "disconnected" },
+];
+
 export default function SocialDashboard() {
   const { activeClientId } = useWorkspace();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,10 +99,12 @@ export default function SocialDashboard() {
     fetchData();
   };
 
+  const hasRealData = accounts.length > 0 || posts.length > 0;
   const totalFollowers = accounts.reduce((s, a) => s + (a.followers || 0), 0);
   const connectedCount = accounts.filter(a => a.status === "connected").length;
   const totalPosts = posts.length;
-  const totalReach = posts.reduce((s, p) => s + (p.reach || 0), 0);
+  const scheduledPosts = posts.filter(p => p.status === "scheduled").length;
+  const pendingApproval = posts.filter(p => p.status === "pending_approval").length;
 
   if (!activeClientId) {
     return (
@@ -122,14 +130,26 @@ export default function SocialDashboard() {
         </div>
       </PageHeader>
 
+      {!hasRealData && (
+        <SetupBanner
+          icon={Share}
+          title="Connect Your Social Accounts"
+          description="Link your Instagram, Facebook, LinkedIn, and TikTok accounts to manage content, track engagement, and schedule posts from one dashboard."
+          actionLabel="Add Accounts"
+          onAction={() => setAccountOpen(true)}
+          secondaryLabel="Create First Post"
+          onSecondary={() => setComposerOpen(true)}
+        />
+      )}
+
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Total Followers" value={totalFollowers.toLocaleString()} change={`${connectedCount} connected`} changeType="neutral" icon={Users} />
-        <MetricCard label="Connected Accounts" value={String(connectedCount)} change={`${accounts.length} total`} changeType={connectedCount > 0 ? "positive" : "neutral"} icon={Wifi} />
-        <MetricCard label="Total Posts" value={String(totalPosts)} change="All time" changeType="neutral" icon={Send} />
-        <MetricCard label="Total Reach" value={totalReach.toLocaleString()} change="Across platforms" changeType="neutral" icon={Eye} />
+        <MetricCard label="Total Followers" value={hasRealData ? totalFollowers.toLocaleString() : "—"} change={hasRealData ? `${connectedCount} connected` : "Add accounts"} changeType="neutral" icon={Users} />
+        <MetricCard label="Connected Accounts" value={hasRealData ? String(connectedCount) : "—"} change={hasRealData ? `${accounts.length} total` : "Connect to track"} changeType={connectedCount > 0 ? "positive" : "neutral"} icon={Wifi} />
+        <MetricCard label="Total Posts" value={hasRealData ? String(totalPosts) : "—"} change={hasRealData ? `${scheduledPosts} scheduled` : "Create first post"} changeType="neutral" icon={Send} />
+        <MetricCard label="Pending Approval" value={hasRealData ? String(pendingApproval) : "—"} change={hasRealData ? "Awaiting review" : "Set up approval flow"} changeType={pendingApproval > 0 ? "negative" : "neutral"} icon={Calendar} />
       </WidgetGrid>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <Tabs defaultValue="accounts">
           <TabsList className="bg-secondary h-10 rounded-lg">
             <TabsTrigger value="accounts" className="rounded-md text-sm">Accounts</TabsTrigger>
@@ -138,20 +158,50 @@ export default function SocialDashboard() {
 
           <TabsContent value="accounts" className="mt-4">
             {accounts.length === 0 ? (
-              <div className="card-widget p-8 rounded-2xl text-center">
-                <p className="text-sm text-muted-foreground mb-3">No social accounts yet.</p>
-                <Button size="sm" onClick={() => setAccountOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Account</Button>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <DemoDataLabel />
+                  <span className="text-[10px] text-muted-foreground">Add your social accounts to start managing them</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {DEMO_PLATFORMS.map((acc, i) => {
+                    const Icon = PLATFORM_ICONS[acc.platform] || Eye;
+                    return (
+                      <motion.div key={i} className="card-widget p-5 rounded-2xl opacity-60" initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 0.6, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                              <Icon className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold">{acc.platform}</p>
+                              <p className="text-xs text-muted-foreground">{acc.handle}</p>
+                            </div>
+                          </div>
+                          <Badge className="text-[10px] bg-secondary text-muted-foreground">
+                            <XCircle className="h-3 w-3 mr-1" /> Not Connected
+                          </Badge>
+                        </div>
+                        <div className="text-center pt-3 border-t border-border">
+                          <Button size="sm" variant="outline" className="text-[11px] h-7" onClick={() => setAccountOpen(true)}>Connect</Button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {accounts.map((acc) => {
                   const Icon = PLATFORM_ICONS[acc.platform] || Eye;
-                  const SIcon = STATUS_ICON[acc.status] || XCircle;
+                  const SIcon = acc.status === "connected" ? CheckCircle : acc.status === "needs_auth" ? AlertCircle : XCircle;
                   return (
                     <motion.div key={acc.id} className="card-widget p-5 rounded-2xl" initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                          <Icon className="h-5 w-5 text-muted-foreground" />
+                          <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                            <Icon className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                          </div>
                           <div>
                             <p className="text-sm font-semibold">{acc.platform}</p>
                             <p className="text-xs text-muted-foreground">{acc.handle || "—"}</p>
@@ -175,10 +225,16 @@ export default function SocialDashboard() {
 
           <TabsContent value="posts" className="mt-4">
             {posts.length === 0 ? (
-              <div className="card-widget p-8 rounded-2xl text-center">
-                <p className="text-sm text-muted-foreground mb-3">No posts yet.</p>
-                <Button size="sm" onClick={() => setComposerOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Post</Button>
-              </div>
+              <DataCard title="Content Calendar">
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Send className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No posts yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Create your first post to start building your content calendar.</p>
+                  <Button size="sm" onClick={() => setComposerOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Post</Button>
+                </div>
+              </DataCard>
             ) : (
               <div className="space-y-3">
                 {posts.map((post) => (
@@ -208,7 +264,6 @@ export default function SocialDashboard() {
         </Tabs>
       </div>
 
-      {/* Add Account Sheet */}
       <Sheet open={accountOpen} onOpenChange={setAccountOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Add Social Account</SheetTitle><SheetDescription>Track a social media account</SheetDescription></SheetHeader>
@@ -245,7 +300,6 @@ export default function SocialDashboard() {
         </SheetContent>
       </Sheet>
 
-      {/* Post Composer Sheet */}
       <Sheet open={composerOpen} onOpenChange={setComposerOpen}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader><SheetTitle>Create Post</SheetTitle><SheetDescription>Compose and schedule across platforms</SheetDescription></SheetHeader>
