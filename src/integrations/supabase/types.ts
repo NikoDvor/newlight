@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_campaigns: {
+        Row: {
+          budget: number | null
+          campaign_name: string
+          clicks: number | null
+          client_id: string
+          conversions: number | null
+          cpl: number | null
+          created_at: string
+          id: string
+          impressions: number | null
+          leads: number | null
+          notes: string | null
+          platform: string
+          roas: number | null
+          spend: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          campaign_name: string
+          clicks?: number | null
+          client_id: string
+          conversions?: number | null
+          cpl?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          notes?: string | null
+          platform?: string
+          roas?: number | null
+          spend?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          campaign_name?: string
+          clicks?: number | null
+          client_id?: string
+          conversions?: number | null
+          cpl?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          notes?: string | null
+          platform?: string
+          roas?: number | null
+          spend?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_business_insights: {
         Row: {
           category: string | null
@@ -2010,8 +2075,10 @@ export type Database = {
       }
       review_requests: {
         Row: {
+          calendar_event_id: string | null
           channel: string
           client_id: string
+          contact_id: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
@@ -2029,8 +2096,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          calendar_event_id?: string | null
           channel?: string
           client_id: string
+          contact_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
@@ -2048,8 +2117,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          calendar_event_id?: string | null
           channel?: string
           client_id?: string
+          contact_id?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string
@@ -2068,10 +2139,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "review_requests_calendar_event_id_fkey"
+            columns: ["calendar_event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "review_requests_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,13 +11,34 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle } from "lucide-react";
+import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useNavigate } from "react-router-dom";
+
+const DEMO_TRAFFIC = [
+  { name: "Mon", visitors: 1200, leads: 32 },
+  { name: "Tue", visitors: 1800, leads: 45 },
+  { name: "Wed", visitors: 2100, leads: 52 },
+  { name: "Thu", visitors: 1900, leads: 48 },
+  { name: "Fri", visitors: 2400, leads: 61 },
+  { name: "Sat", visitors: 1600, leads: 38 },
+  { name: "Sun", visitors: 1400, leads: 30 },
+];
+
+const DEMO_OPPORTUNITIES = [
+  { title: "Improve page load speed", impact: "Est. +12% conversion lift", severity: "high" },
+  { title: "Add lead capture form to services page", impact: "Est. 15 new leads/mo", severity: "high" },
+  { title: "Optimize mobile checkout flow", impact: "Est. +8% mobile CVR", severity: "medium" },
+  { title: "Add social proof to landing page", impact: "Est. +5% trust factor", severity: "low" },
+];
 
 export default function Website() {
   const { activeClientId } = useWorkspace();
+  const navigate = useNavigate();
   const [pages, setPages] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
@@ -72,6 +94,7 @@ export default function Website() {
     fetchData();
   };
 
+  const hasRealData = pages.length > 0 || issues.length > 0;
   const totalVisits = pages.reduce((s, p) => s + (p.visits || 0), 0);
   const totalLeads = pages.reduce((s, p) => s + (p.leads_generated || 0), 0);
   const avgCvr = totalVisits > 0 ? (totalLeads / totalVisits * 100).toFixed(1) : "0";
@@ -101,26 +124,73 @@ export default function Website() {
         </div>
       </PageHeader>
 
-      <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
-        <MetricCard label="Tracked Pages" value={String(pages.length)} change={`${pages.filter(p => p.status === "active").length} active`} changeType="neutral" icon={Globe} />
-        <MetricCard label="Conversion Rate" value={`${avgCvr}%`} change={`${totalLeads} leads total`} changeType="positive" icon={MousePointerClick} />
-        <MetricCard label="Total Traffic" value={totalVisits.toLocaleString()} change="All tracked pages" changeType="neutral" icon={Users} />
-        <MetricCard label="Open Issues" value={String(openIssues)} change={`${issues.length} total`} changeType={openIssues > 0 ? "negative" : "positive"} icon={AlertTriangle} />
+      {!hasRealData && (
+        <SetupBanner
+          icon={Globe}
+          title="Connect Your Website Analytics"
+          description="Add your website pages and connect analytics to unlock live traffic data, conversion tracking, and optimization recommendations."
+          actionLabel="Add Website Pages"
+          onAction={() => setPageOpen(true)}
+          secondaryLabel="Connect Analytics"
+          onSecondary={() => navigate("/integrations")}
+        />
+      )}
+
+      <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
+        <MetricCard label="Tracked Pages" value={hasRealData ? String(pages.length) : "—"} change={hasRealData ? `${pages.filter(p => p.status === "active").length} active` : "Add pages to track"} changeType={hasRealData ? "neutral" : "neutral"} icon={Globe} />
+        <MetricCard label="Conversion Rate" value={hasRealData ? `${avgCvr}%` : "—"} change={hasRealData ? `${totalLeads} leads total` : "Connect to measure"} changeType={hasRealData ? "positive" : "neutral"} icon={MousePointerClick} />
+        <MetricCard label="Total Traffic" value={hasRealData ? totalVisits.toLocaleString() : "—"} change={hasRealData ? "All tracked pages" : "Connect analytics"} changeType="neutral" icon={Users} />
+        <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Log issues to track"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
       </WidgetGrid>
+
+      {/* Traffic Chart - demo or real */}
+      <DataCard title={hasRealData ? "Traffic Overview" : "Traffic Overview"} className="mt-6">
+        {!hasRealData && (
+          <div className="flex items-center gap-2 mb-3">
+            <DemoDataLabel />
+            <span className="text-[10px] text-muted-foreground">Connect analytics to see your real traffic data</span>
+          </div>
+        )}
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={hasRealData ? pages.map(p => ({ name: p.page_name?.substring(0, 12), visitors: p.visits || 0, leads: p.leads_generated || 0 })) : DEMO_TRAFFIC}>
+            <defs>
+              <linearGradient id="wVisitors" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(211 96% 56%)" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="hsl(211 96% 56%)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="wLeads" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(197 92% 58%)" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="hsl(197 92% 58%)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,56%,.06)" />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "hsla(210,50%,99%,.95)", border: "1px solid hsla(211,96%,56%,.12)", borderRadius: "12px", fontSize: "12px" }} />
+            <Area type="monotone" dataKey="visitors" stroke="hsl(211 96% 56%)" fill="url(#wVisitors)" strokeWidth={2} />
+            <Area type="monotone" dataKey="leads" stroke="hsl(197 92% 58%)" fill="url(#wLeads)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </DataCard>
 
       <div className="mt-6">
         <Tabs defaultValue="pages">
           <TabsList className="bg-secondary h-10 rounded-lg">
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
-            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
+            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic Sources</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
+            <TabsTrigger value="opportunities" className="rounded-md text-sm">Opportunities</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pages" className="mt-4">
             <DataCard title="Landing Pages">
               {pages.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No pages tracked yet. Add pages or connect analytics.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Globe className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No pages tracked yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add your website pages to start tracking performance and conversions.</p>
                   <Button size="sm" onClick={() => setPageOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Page</Button>
                 </div>
               ) : (
@@ -136,7 +206,10 @@ export default function Website() {
                   <tbody>
                     {pages.map((p) => (
                       <tr key={p.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="text-sm font-medium py-3">{p.page_name}</td>
+                        <td className="py-3">
+                          <p className="text-sm font-medium">{p.page_name}</p>
+                          {p.page_url && <p className="text-[10px] text-muted-foreground">{p.page_url}</p>}
+                        </td>
                         <td className="text-sm text-right py-3 tabular-nums">{(p.visits || 0).toLocaleString()}</td>
                         <td className="text-sm text-right py-3 tabular-nums">{p.conversion_rate || 0}%</td>
                         <td className="text-sm font-medium text-right py-3 tabular-nums">{p.leads_generated || 0}</td>
@@ -152,7 +225,12 @@ export default function Website() {
             <DataCard title="Traffic Sources">
               {trafficSources.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No traffic source data yet. Connect analytics or enter manually.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <BarChart3 className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No traffic source data yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Connect your analytics to see where your visitors are coming from.</p>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}><Plug className="h-4 w-4 mr-1" /> Connect Analytics</Button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -163,7 +241,7 @@ export default function Website() {
                         <span className="text-muted-foreground tabular-nums">{(s.visits || 0).toLocaleString()}</span>
                       </div>
                       <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-accent rounded-full" style={{ width: `${s.percentage || 0}%` }} />
+                        <div className="h-full rounded-full" style={{ width: `${s.percentage || 0}%`, background: "linear-gradient(90deg, hsl(211 96% 56%), hsl(197 92% 58%))" }} />
                       </div>
                     </div>
                   ))}
@@ -176,7 +254,11 @@ export default function Website() {
             <DataCard title="Website Issues">
               {issues.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No issues logged.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <AlertTriangle className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No issues logged</p>
+                  <p className="text-xs text-muted-foreground mb-4">Log issues to track website problems and optimization opportunities.</p>
                   <Button size="sm" onClick={() => setIssueOpen(true)}><AlertTriangle className="h-4 w-4 mr-1" /> Log Issue</Button>
                 </div>
               ) : (
@@ -188,12 +270,8 @@ export default function Website() {
                         <p className="text-xs text-muted-foreground">{i.description || "No description"}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[10px] ${i.severity === "high" ? "bg-red-50 text-red-600" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>
-                          {i.severity}
-                        </Badge>
-                        <Badge className={`text-[10px] ${i.status === "open" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>
-                          {i.status}
-                        </Badge>
+                        <Badge className={`text-[10px] ${i.severity === "high" ? "bg-red-50 text-red-600" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{i.severity}</Badge>
+                        <Badge className={`text-[10px] ${i.status === "open" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>{i.status}</Badge>
                       </div>
                     </div>
                   ))}
@@ -201,10 +279,35 @@ export default function Website() {
               )}
             </DataCard>
           </TabsContent>
+
+          <TabsContent value="opportunities" className="mt-4">
+            <DataCard title="Conversion Opportunities">
+              <div className="flex items-center gap-2 mb-4">
+                <DemoDataLabel />
+                <span className="text-[10px] text-muted-foreground">Strategic recommendations based on best practices</span>
+              </div>
+              <div className="space-y-3">
+                {DEMO_OPPORTUNITIES.map((opp, i) => (
+                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{opp.title}</p>
+                        <p className="text-xs" style={{ color: "hsl(197 92% 48%)" }}>{opp.impact}</p>
+                      </div>
+                    </div>
+                    <Badge className={`text-[10px] ${opp.severity === "high" ? "bg-blue-50 text-blue-700" : opp.severity === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{opp.severity}</Badge>
+                  </motion.div>
+                ))}
+              </div>
+            </DataCard>
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Add Page Sheet */}
       <Sheet open={pageOpen} onOpenChange={setPageOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Add Page</SheetTitle><SheetDescription>Track a website page</SheetDescription></SheetHeader>
@@ -221,7 +324,6 @@ export default function Website() {
         </SheetContent>
       </Sheet>
 
-      {/* Log Issue Sheet */}
       <Sheet open={issueOpen} onOpenChange={setIssueOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Log Issue</SheetTitle><SheetDescription>Report a website issue</SheetDescription></SheetHeader>

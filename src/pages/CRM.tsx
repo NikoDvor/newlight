@@ -3,15 +3,15 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
+import { SetupBanner } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, DollarSign, TrendingUp, Plus, ChevronRight } from "lucide-react";
+import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -39,6 +39,7 @@ export default function CRM() {
   const { activeClientId } = useWorkspace();
   const [contacts, setContacts] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
@@ -49,13 +50,15 @@ export default function CRM() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, dRes, aRes] = await Promise.all([
+    const [cRes, dRes, lRes, aRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("crm_leads").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(20),
     ]);
     setContacts(cRes.data || []);
     setDeals(dRes.data || []);
+    setLeads(lRes.data || []);
     setActivities(aRes.data || []);
     setLoading(false);
   };
@@ -108,7 +111,7 @@ export default function CRM() {
     fetchData();
   };
 
-  // Computed metrics
+  const hasRealData = contacts.length > 0 || deals.length > 0;
   const totalContacts = contacts.length;
   const openDeals = deals.filter(d => d.status === "open");
   const pipelineValue = openDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
@@ -137,19 +140,31 @@ export default function CRM() {
       <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline">
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={() => setContactOpen(true)}>
-            <Plus className="h-4 w-4" /> Contact
+            <UserPlus className="h-4 w-4" /> Contact
           </Button>
           <Button className="gap-1.5" onClick={() => setDealOpen(true)}>
-            <Plus className="h-4 w-4" /> Deal
+            <Briefcase className="h-4 w-4" /> Deal
           </Button>
         </div>
       </PageHeader>
 
+      {!hasRealData && (
+        <SetupBanner
+          icon={Users}
+          title="Build Your Sales Pipeline"
+          description="Add contacts and create deals to start tracking your sales pipeline, revenue, and customer relationships."
+          actionLabel="Add First Contact"
+          onAction={() => setContactOpen(true)}
+          secondaryLabel="Create First Deal"
+          onSecondary={() => setDealOpen(true)}
+        />
+      )}
+
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Total Contacts" value={String(totalContacts)} change={`${contacts.length} records`} changeType="neutral" icon={Users} />
-        <MetricCard label="Open Deals" value={String(openDeals.length)} change="Active pipeline" changeType="neutral" icon={Building2} />
-        <MetricCard label="Pipeline Value" value={`$${pipelineValue.toLocaleString()}`} change={`${openDeals.length} open deals`} changeType="positive" icon={DollarSign} />
-        <MetricCard label="Deals Won" value={String(dealsWon.length)} change={`$${wonValue.toLocaleString()} closed`} changeType="positive" icon={TrendingUp} />
+        <MetricCard label="Total Contacts" value={hasRealData ? String(totalContacts) : "—"} change={hasRealData ? `${contacts.length} records` : "Add contacts"} changeType="neutral" icon={Users} />
+        <MetricCard label="Open Deals" value={hasRealData ? String(openDeals.length) : "—"} change={hasRealData ? "Active pipeline" : "Create deals"} changeType="neutral" icon={Building2} />
+        <MetricCard label="Pipeline Value" value={hasRealData ? `$${pipelineValue.toLocaleString()}` : "—"} change={hasRealData ? `${openDeals.length} open deals` : "Add deal values"} changeType={hasRealData ? "positive" : "neutral"} icon={DollarSign} />
+        <MetricCard label="Revenue Won" value={hasRealData ? `$${wonValue.toLocaleString()}` : "—"} change={hasRealData ? `${dealsWon.length} deals closed` : "Close deals to track"} changeType={hasRealData ? "positive" : "neutral"} icon={TrendingUp} />
       </WidgetGrid>
 
       <div className="mt-6">
@@ -163,16 +178,24 @@ export default function CRM() {
 
           <TabsContent value="pipeline" className="mt-4">
             <DataCard title="Revenue Pipeline">
-              {loading ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>
+              {!hasRealData ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <TrendingUp className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">Your pipeline is empty</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add contacts and create deals to visualize your sales pipeline.</p>
+                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create First Deal</Button>
+                </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                   {pipelineCounts.map((s) => (
-                    <div key={s.stage} className="bg-secondary rounded-xl p-4 text-center">
+                    <motion.div key={s.stage} className="rounded-xl p-4 text-center" style={{ background: "hsla(211,96%,56%,.03)" }}
+                      initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
                       <p className="text-[10px] font-medium text-muted-foreground leading-tight">{s.label}</p>
                       <p className="text-2xl font-semibold mt-2 tabular-nums">{s.count}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">${s.value.toLocaleString()}</p>
-                    </div>
+                      <p className="text-[10px] mt-1 tabular-nums" style={{ color: "hsl(197 92% 48%)" }}>${s.value.toLocaleString()}</p>
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -183,7 +206,11 @@ export default function CRM() {
             <DataCard title="Contacts">
               {contacts.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No contacts yet.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Users className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No contacts yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add your first contact to start building your CRM.</p>
                   <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
                 </div>
               ) : (
@@ -223,7 +250,11 @@ export default function CRM() {
             <DataCard title="Active Deals">
               {deals.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">No deals yet.</p>
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Briefcase className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No deals yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Create your first deal to start tracking your sales pipeline.</p>
                   <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Deal</Button>
                 </div>
               ) : (
@@ -237,7 +268,7 @@ export default function CRM() {
                           <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
                             {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">${Number(d.deal_value || 0).toLocaleString()}</span>
+                          <span className="text-xs tabular-nums" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</span>
                         </div>
                       </div>
                       {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
@@ -262,12 +293,14 @@ export default function CRM() {
           <TabsContent value="activity" className="mt-4">
             <DataCard title="Recent Activity">
               {activities.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">No activity yet.</p>
+                <div className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground">Activity will appear here as you use your CRM.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {activities.map((a) => (
                     <div key={a.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-                      <div className="h-2 w-2 rounded-full bg-accent mt-2 shrink-0" />
+                      <div className="h-2 w-2 rounded-full mt-2 shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
                       <div>
                         <p className="text-sm">{a.activity_note}</p>
                         <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
@@ -284,27 +317,12 @@ export default function CRM() {
       {/* Add Contact Sheet */}
       <Sheet open={contactOpen} onOpenChange={setContactOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Add Contact</SheetTitle>
-            <SheetDescription>Create a new CRM contact</SheetDescription>
-          </SheetHeader>
+          <SheetHeader><SheetTitle>Add Contact</SheetTitle><SheetDescription>Create a new CRM contact</SheetDescription></SheetHeader>
           <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label>Full Name *</Label>
-              <Input value={newContact.full_name} onChange={e => setNewContact(p => ({ ...p, full_name: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Tags (comma-separated)</Label>
-              <Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} />
-            </div>
+            <div className="space-y-2"><Label>Full Name *</Label><Input value={newContact.full_name} onChange={e => setNewContact(p => ({ ...p, full_name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addContact}>Add Contact</Button>
@@ -316,19 +334,10 @@ export default function CRM() {
       {/* Add Deal Sheet */}
       <Sheet open={dealOpen} onOpenChange={setDealOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Add Deal</SheetTitle>
-            <SheetDescription>Create a new pipeline deal</SheetDescription>
-          </SheetHeader>
+          <SheetHeader><SheetTitle>Add Deal</SheetTitle><SheetDescription>Create a new pipeline deal</SheetDescription></SheetHeader>
           <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label>Deal Name *</Label>
-              <Input value={newDeal.deal_name} onChange={e => setNewDeal(p => ({ ...p, deal_name: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Value ($)</Label>
-              <Input type="number" value={newDeal.deal_value} onChange={e => setNewDeal(p => ({ ...p, deal_value: e.target.value }))} />
-            </div>
+            <div className="space-y-2"><Label>Deal Name *</Label><Input value={newDeal.deal_name} onChange={e => setNewDeal(p => ({ ...p, deal_name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Value ($)</Label><Input type="number" value={newDeal.deal_value} onChange={e => setNewDeal(p => ({ ...p, deal_value: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Pipeline Stage</Label>
               <Select value={newDeal.pipeline_stage} onValueChange={v => setNewDeal(p => ({ ...p, pipeline_stage: v }))}>
