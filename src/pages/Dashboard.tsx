@@ -73,6 +73,14 @@ export default function Dashboard() {
     <div>
       <PageHeader title="Dashboard" description="Your AI-powered business command center" />
 
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <CTAButton variant="complete-setup" size="sm" />
+        <CTAButton variant="connect-accounts" size="sm" />
+        <CTAButton variant="upload-assets" size="sm" />
+        <CTAButton variant="book-kickoff" size="sm" />
+      </div>
+
       {/* Health Score + Onboarding */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <HealthScoreWidget score={73} />
