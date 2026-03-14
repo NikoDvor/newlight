@@ -40,7 +40,7 @@ export default function AdminClients() {
   const navigate = useNavigate();
 
   const fetchClients = () => {
-    supabase.from("clients").select("*").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
+    supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
   };
 
   useEffect(() => { fetchClients(); }, []);
