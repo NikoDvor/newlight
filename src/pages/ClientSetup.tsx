@@ -128,6 +128,7 @@ export default function ClientSetup() {
 
   return (
     <div>
+      <BackArrow to="/" label="Back to Dashboard" dark={false} />
       <PageHeader title="Complete Your Setup" description="Fill in the remaining details to fully activate your workspace" />
 
       {saved && (
