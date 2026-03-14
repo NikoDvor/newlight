@@ -65,6 +65,7 @@ import AdminTeam from "./pages/admin/AdminTeam";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import Onboarding from "./pages/Onboarding";
+import Enterprise from "./pages/Enterprise";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,7 @@ const App = () => (
               <Route path="/competitor-tracking" element={<CompetitorTracking />} />
               <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/enterprise" element={<Enterprise />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
