@@ -245,8 +245,15 @@ export default function AdminCloseConfirm() {
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Kickoff Contact</label>
-                    <Input value={form.kickoff_contact} onChange={e => set("kickoff_contact", e.target.value)} placeholder="Same or different contact" className={inputCls} disabled={submitting} />
+                    <label className={labelCls}>Payment Method</label>
+                    <select value={form.payment_method} onChange={e => set("payment_method", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3" disabled={submitting}>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="ach">ACH / Bank Transfer</option>
+                      <option value="wire">Wire Transfer</option>
+                      <option value="check">Check</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
                   </div>
                 </div>
                 <div>

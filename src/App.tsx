@@ -152,6 +152,7 @@ const App = () => (
               <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/enterprise" element={<Enterprise />} />
+              <Route path="/client-setup" element={<ClientSetup />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
