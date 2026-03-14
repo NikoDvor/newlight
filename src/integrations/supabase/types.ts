@@ -516,6 +516,90 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_builds: {
+        Row: {
+          assigned_to: string | null
+          booking_link: string | null
+          business_name: string
+          business_type: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          main_service: string | null
+          notes: string | null
+          primary_color: string | null
+          primary_goal: string | null
+          primary_location: string | null
+          prospect_id: string | null
+          secondary_color: string | null
+          social_links: Json | null
+          status: string
+          updated_at: string
+          website: string | null
+          workspace_slug: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          booking_link?: string | null
+          business_name: string
+          business_type?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          main_service?: string | null
+          notes?: string | null
+          primary_color?: string | null
+          primary_goal?: string | null
+          primary_location?: string | null
+          prospect_id?: string | null
+          secondary_color?: string | null
+          social_links?: Json | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          workspace_slug: string
+        }
+        Update: {
+          assigned_to?: string | null
+          booking_link?: string | null
+          business_name?: string
+          business_type?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          main_service?: string | null
+          notes?: string | null
+          primary_color?: string | null
+          primary_goal?: string | null
+          primary_location?: string | null
+          prospect_id?: string | null
+          secondary_color?: string | null
+          social_links?: Json | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          workspace_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_builds_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_builds_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fix_now_items: {
         Row: {
           assigned_operator: string | null
