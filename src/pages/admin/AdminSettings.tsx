@@ -1,7 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Shield, Database, Globe } from "lucide-react";
+import { Settings, Shield, Database, Globe, Play, Sparkles, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const settingSections = [
   { title: "General", icon: Settings, desc: "Platform name, timezone, default settings" },
@@ -11,6 +12,8 @@ const settingSections = [
 ];
 
 export default function AdminSettings() {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       <div>
@@ -35,6 +38,49 @@ export default function AdminSettings() {
           </motion.div>
         ))}
       </div>
+
+      {/* Intro Experience Section */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,60%,.1)" }}>
+                <Sparkles className="h-5 w-5 text-[hsl(var(--nl-neon))]" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">Welcome Experience</p>
+                <p className="text-xs text-white/40 mt-0.5">Admin intro & onboarding animation</p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 pt-2">
+              <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-1">Status</p>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
+                  <span className="text-sm font-semibold text-white">Enabled</span>
+                </div>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-1">Branding</p>
+                <span className="text-sm font-semibold text-white">NewLight Default</span>
+              </div>
+              <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-1">Welcome Message</p>
+                <span className="text-sm text-white/70 line-clamp-1">Your Admin Control Center is ready.</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => navigate("/admin/welcome")}
+              variant="outline"
+              className="border-white/10 text-white hover:bg-white/10 gap-2"
+            >
+              <Play className="h-4 w-4" /> Replay Admin Intro
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

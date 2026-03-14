@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2 } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +51,9 @@ export default function AdminDashboard() {
           <p className="text-sm text-white/50 mt-1">Platform overview and system monitoring</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => navigate("/admin/welcome")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+            <Play className="h-4 w-4 mr-1" /> Replay Intro
+          </Button>
           <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
             <Hammer className="h-4 w-4 mr-1" /> New Demo Build
           </Button>
