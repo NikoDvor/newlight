@@ -69,6 +69,7 @@ import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
+import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
