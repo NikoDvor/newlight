@@ -8,6 +8,7 @@ import {
   Loader2, Zap, CheckCircle2, AlertCircle, Building2, Globe, MapPin,
   Palette, Plus, Eye, ArrowRight, Hammer, Clock, CalendarCheck
 } from "lucide-react";
+import { LogoUploader } from "@/components/LogoUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
