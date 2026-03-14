@@ -105,10 +105,15 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader
-        title={branding.welcome_message || "Dashboard"}
-        description="Your AI-powered business command center"
-      />
+      <div className="flex items-start justify-between mb-2">
+        <PageHeader
+          title={branding.welcome_message || "Dashboard"}
+          description="Your AI-powered business command center"
+        />
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate("/welcome")}>
+          <Play className="h-3.5 w-3.5" /> Replay Intro
+        </Button>
+      </div>
 
       {/* Guided onboarding banner for new clients */}
       {isNewClient && (
