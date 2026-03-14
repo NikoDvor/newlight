@@ -73,6 +73,7 @@ import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
+import BrandAssets from "./pages/BrandAssets";
 
 const queryClient = new QueryClient();
 
