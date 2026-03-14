@@ -215,7 +215,7 @@ const initialForm = {
   business_name: "", website: "", primary_location: "", business_type: "",
   main_service: "", primary_goal: "", booking_link: "", logo_url: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", social_links: "",
-  notes: "", full_name: "", email: "", phone: "",
+  notes: "", full_name: "", email: "", phone: "", budget_range: "",
 };
 
 export default function AdminProspects() {
