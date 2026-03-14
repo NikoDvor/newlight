@@ -8,6 +8,7 @@ import {
   Loader2, Zap, CheckCircle2, AlertCircle, Building2, Globe, MapPin,
   Palette, Plus, Eye, ArrowRight, Hammer, Clock, CalendarCheck
 } from "lucide-react";
+import { LogoUploader } from "@/components/LogoUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -175,7 +176,7 @@ export default function AdminDemoBuilds() {
               <div className="rounded-xl p-4 space-y-3" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
                 <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><Palette className="h-3 w-3" /> Branding (Optional)</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="sm:col-span-2"><label className={labelCls}>Logo URL</label><Input value={form.logo_url} onChange={e => set("logo_url", e.target.value)} placeholder="https://..." className={inputCls} disabled={submitting} /></div>
+                  <div className="sm:col-span-2"><LogoUploader value={form.logo_url} onChange={v => set("logo_url", v)} label="Logo" dark={true} /></div>
                   <div><label className={labelCls}>Primary Color</label><div className="flex gap-2"><input type="color" value={form.primary_color} onChange={e => set("primary_color", e.target.value)} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" /><Input value={form.primary_color} onChange={e => set("primary_color", e.target.value)} className={`${inputCls} flex-1`} disabled={submitting} /></div></div>
                   <div><label className={labelCls}>Secondary Color</label><div className="flex gap-2"><input type="color" value={form.secondary_color} onChange={e => set("secondary_color", e.target.value)} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" /><Input value={form.secondary_color} onChange={e => set("secondary_color", e.target.value)} className={`${inputCls} flex-1`} disabled={submitting} /></div></div>
                 </div>

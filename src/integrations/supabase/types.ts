@@ -278,13 +278,17 @@ export type Database = {
         Row: {
           app_display_name: string | null
           app_icon_url: string | null
+          avatar_logo_url: string | null
           client_id: string
           company_name: string | null
           created_at: string
+          dashboard_logo_url: string | null
+          favicon_url: string | null
           id: string
           logo_url: string | null
           primary_color: string | null
           secondary_color: string | null
+          sidebar_logo_url: string | null
           splash_logo_url: string | null
           updated_at: string
           welcome_message: string | null
@@ -292,13 +296,17 @@ export type Database = {
         Insert: {
           app_display_name?: string | null
           app_icon_url?: string | null
+          avatar_logo_url?: string | null
           client_id: string
           company_name?: string | null
           created_at?: string
+          dashboard_logo_url?: string | null
+          favicon_url?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          sidebar_logo_url?: string | null
           splash_logo_url?: string | null
           updated_at?: string
           welcome_message?: string | null
@@ -306,13 +314,17 @@ export type Database = {
         Update: {
           app_display_name?: string | null
           app_icon_url?: string | null
+          avatar_logo_url?: string | null
           client_id?: string
           company_name?: string | null
           created_at?: string
+          dashboard_logo_url?: string | null
+          favicon_url?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          sidebar_logo_url?: string | null
           splash_logo_url?: string | null
           updated_at?: string
           welcome_message?: string | null

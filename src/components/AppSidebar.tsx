@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Zap, Heart, DollarSign, ListChecks, Activity, Brain,
   Globe, Search, Megaphone, Share2, Users, Star,
-  TrendingUp, Eye, Calendar, Workflow, Plug,
+  TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
   ChevronLeft, ChevronDown
 } from "lucide-react";
@@ -56,6 +56,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     type: "group", label: "Setup & Integrations",
     items: [
       { title: "Complete Setup", url: "/client-setup", icon: Plug },
+      { title: "Brand Assets", url: "/brand-assets", icon: Image },
       { title: "Integrations", url: "/integrations", icon: Plug },
       { title: "Onboarding", url: "/onboarding", icon: Workflow },
     ],

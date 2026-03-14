@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { BackArrow } from "@/components/BackArrow";
+import { LogoUploader } from "@/components/LogoUploader";
 import {
   Loader2, Save, CheckCircle2, ArrowLeft, Building2, Globe, Palette,
   MapPin, Search, Share2, CreditCard, Phone, Video, Users, Plug, Zap
@@ -161,9 +163,7 @@ export default function AdminClientSetup() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <button onClick={() => navigate(-1)} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
-          <ArrowLeft className="h-3 w-3" /> Back
-        </button>
+        <BackArrow to="/admin/clients" label="Back to Clients" />
         <h1 className="text-2xl font-bold text-white">Post-Payment Integration + Setup</h1>
         <p className="text-sm text-white/50 mt-1">Complete the remaining setup details for <span className="text-white/70">{client?.business_name}</span></p>
       </div>
@@ -178,7 +178,7 @@ export default function AdminClientSetup() {
               <div><label className={labelCls}>Business Name</label><Input value={form.business_name} onChange={e => set("business_name", e.target.value)} className={inputCls} /></div>
               <div><label className={labelCls}>Website URL</label><Input value={form.website_url} onChange={e => set("website_url", e.target.value)} placeholder="https://..." className={inputCls} /></div>
               <div><label className={labelCls}>Booking Link</label><Input value={form.booking_link} onChange={e => set("booking_link", e.target.value)} placeholder="https://calendly.com/..." className={inputCls} /></div>
-              <div><label className={labelCls}>Logo URL</label><Input value={form.logo_url} onChange={e => set("logo_url", e.target.value)} placeholder="https://..." className={inputCls} /></div>
+              <div className="sm:col-span-2"><LogoUploader value={form.logo_url} onChange={url => set("logo_url", url)} label="Logo" dark={true} /></div>
               <div><label className={labelCls}>Primary Color</label><div className="flex gap-2"><input type="color" value={form.primary_color} onChange={e => set("primary_color", e.target.value)} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" /><Input value={form.primary_color} onChange={e => set("primary_color", e.target.value)} className={`${inputCls} flex-1`} /></div></div>
               <div><label className={labelCls}>Secondary Color</label><div className="flex gap-2"><input type="color" value={form.secondary_color} onChange={e => set("secondary_color", e.target.value)} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" /><Input value={form.secondary_color} onChange={e => set("secondary_color", e.target.value)} className={`${inputCls} flex-1`} /></div></div>
               <div className="sm:col-span-2"><label className={labelCls}>Welcome Message</label><Input value={form.welcome_message} onChange={e => set("welcome_message", e.target.value)} placeholder="Welcome to your business dashboard" className={inputCls} /></div>

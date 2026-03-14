@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { DeleteClientDialog } from "@/components/DeleteClientDialog";
+import { LogoUploader } from "@/components/LogoUploader";
 
 interface Client {
   id: string;
@@ -28,6 +30,7 @@ export default function AdminClients() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
+  const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", primary_location: "",
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
@@ -37,7 +40,7 @@ export default function AdminClients() {
   const navigate = useNavigate();
 
   const fetchClients = () => {
-    supabase.from("clients").select("*").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
+    supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
   };
 
   useEffect(() => { fetchClients(); }, []);
@@ -188,7 +191,6 @@ export default function AdminClients() {
   ];
 
   const brandingFields = [
-    { label: "Logo URL", key: "logo_url", placeholder: "https://your-logo.com/logo.png" },
     { label: "Welcome Message", key: "welcome_message", placeholder: "Welcome to your dashboard" },
   ];
 
@@ -290,6 +292,7 @@ export default function AdminClients() {
                 {/* Branding Section */}
                 <div className="pt-3 border-t border-white/10">
                   <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
+                  <LogoUploader value={form.logo_url} onChange={url => setForm(prev => ({ ...prev, logo_url: url }))} label="Logo" dark={true} className="mb-3" />
                   {brandingFields.map(f => (
                     <div key={f.key} className="mb-3">
                       <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
@@ -397,6 +400,9 @@ export default function AdminClients() {
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                       </button>
+                      <button onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Delete / Archive">
+                        <Trash2 className="h-3.5 w-3.5 text-white/30 hover:text-red-400" />
+                      </button>
                     </div>
                   </td>
                 </motion.tr>
@@ -408,6 +414,13 @@ export default function AdminClients() {
           </table>
         </div>
       </Card>
+
+      <DeleteClientDialog
+        open={!!deleteClient}
+        onOpenChange={(open) => { if (!open) setDeleteClient(null); }}
+        client={deleteClient}
+        onComplete={fetchClients}
+      />
     </div>
   );
 }

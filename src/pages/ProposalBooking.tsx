@@ -7,10 +7,12 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Zap, Calendar, Rocket, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Loader2, CheckCircle, Zap, Calendar, Rocket, ArrowRight, ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { LogoUploader } from "@/components/LogoUploader";
 
 export default function ProposalBooking() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
@@ -144,6 +146,11 @@ export default function ProposalBooking() {
       </div>
 
       <motion.div className="max-w-2xl mx-auto relative z-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Back arrow */}
+        <button onClick={() => navigate(-1)} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1.5 mb-4 transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
@@ -229,7 +236,9 @@ export default function ProposalBooking() {
               <div><Label className="text-xs text-white/60">Instagram URL</Label><Input placeholder="https://instagram.com/..." value={form.instagram_url} onChange={e => update("instagram_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div><Label className="text-xs text-white/60">Facebook URL</Label><Input placeholder="https://facebook.com/..." value={form.facebook_url} onChange={e => update("facebook_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div><Label className="text-xs text-white/60">Other Social Links</Label><Input placeholder="LinkedIn, TikTok, etc." value={form.other_social} onChange={e => update("other_social", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
-              <div><Label className="text-xs text-white/60">Logo URL</Label><Input placeholder="https://your-logo.com/logo.png" value={form.logo_url} onChange={e => update("logo_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
+              <div className="sm:col-span-2">
+                <LogoUploader value={form.logo_url} onChange={url => update("logo_url", url)} label="Logo" dark={true} />
+              </div>
               <div><Label className="text-xs text-white/60">Proposal Recipient Email (if different)</Label><Input type="email" placeholder="other@company.com" value={form.proposal_recipient_email} onChange={e => update("proposal_recipient_email", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div>
                 <Label className="text-xs text-white/60">Primary Brand Color</Label>
