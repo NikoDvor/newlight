@@ -407,6 +407,16 @@ export default function AdminProspects() {
               <Label className="text-white/70 text-xs">Social Links (optional)</Label>
               <Input value={form.social_links} onChange={e => setField("social_links", e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder='e.g. {"facebook":"url","instagram":"url"}' />
             </div>
+            <div className="space-y-1.5 sm:col-span-2 border-t border-white/10 pt-3 mt-2">
+              <Label className="text-yellow-400/80 text-xs">⚠ Budget Range (Internal Only — Not Shown to Client)</Label>
+              <select value={form.budget_range} onChange={e => setField("budget_range", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
+                <option value="">Select...</option>
+                <option value="500-1000">$500 – $1,000/mo</option>
+                <option value="1000-2500">$1,000 – $2,500/mo</option>
+                <option value="2500-5000">$2,500 – $5,000/mo</option>
+                <option value="5000+">$5,000+/mo</option>
+              </select>
+            </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-white/70 text-xs">Notes for Tailoring (optional)</Label>
               <Textarea value={form.notes} onChange={e => setField("notes", e.target.value)} className="bg-white/5 border-white/10 text-white min-h-[60px]" />
