@@ -756,6 +756,189 @@ export type Database = {
           },
         ]
       }
+      meeting_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message_content: string | null
+          metadata: Json | null
+          prospect_id: string
+          reminder_type: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_content?: string | null
+          metadata?: Json | null
+          prospect_id: string
+          reminder_type: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_content?: string | null
+          metadata?: Json | null
+          prospect_id?: string
+          reminder_type?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_reminders_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_status: {
+        Row: {
+          assets_sent: boolean | null
+          assigned_salesman: string | null
+          audit_link: string | null
+          audit_ready: boolean | null
+          cancellation_reason: string | null
+          cancellation_token: string | null
+          confirmation_sent: boolean | null
+          created_at: string
+          demo_app_link: string | null
+          demo_app_ready: boolean | null
+          demo_website_link: string | null
+          demo_website_ready: boolean | null
+          id: string
+          meeting_date: string | null
+          new_requested_date: string | null
+          prospect_id: string
+          reminder_24h_sent: boolean | null
+          reminder_30m_sent: boolean | null
+          reminder_3h_sent: boolean | null
+          reschedule_requested: boolean | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assets_sent?: boolean | null
+          assigned_salesman?: string | null
+          audit_link?: string | null
+          audit_ready?: boolean | null
+          cancellation_reason?: string | null
+          cancellation_token?: string | null
+          confirmation_sent?: boolean | null
+          created_at?: string
+          demo_app_link?: string | null
+          demo_app_ready?: boolean | null
+          demo_website_link?: string | null
+          demo_website_ready?: boolean | null
+          id?: string
+          meeting_date?: string | null
+          new_requested_date?: string | null
+          prospect_id: string
+          reminder_24h_sent?: boolean | null
+          reminder_30m_sent?: boolean | null
+          reminder_3h_sent?: boolean | null
+          reschedule_requested?: boolean | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assets_sent?: boolean | null
+          assigned_salesman?: string | null
+          audit_link?: string | null
+          audit_ready?: boolean | null
+          cancellation_reason?: string | null
+          cancellation_token?: string | null
+          confirmation_sent?: boolean | null
+          created_at?: string
+          demo_app_link?: string | null
+          demo_app_ready?: boolean | null
+          demo_website_link?: string | null
+          demo_website_ready?: boolean | null
+          id?: string
+          meeting_date?: string | null
+          new_requested_date?: string | null
+          prospect_id?: string
+          reminder_24h_sent?: boolean | null
+          reminder_30m_sent?: boolean | null
+          reminder_3h_sent?: boolean | null
+          reschedule_requested?: boolean | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_status_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_send_log: {
+        Row: {
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message_body: string | null
+          metadata: Json | null
+          prospect_id: string | null
+          recipient: string
+          status: string
+          template_name: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_body?: string | null
+          metadata?: Json | null
+          prospect_id?: string | null
+          recipient: string
+          status?: string
+          template_name: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_body?: string | null
+          metadata?: Json | null
+          prospect_id?: string | null
+          recipient?: string
+          status?: string
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_send_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_progress: {
         Row: {
           ad_account_connected: boolean
