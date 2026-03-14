@@ -8,10 +8,11 @@ import { Link } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare, Brain,
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
-  ArrowUpRight, Plug, Calendar, Upload, Rocket
+  ArrowUpRight, Plug, Calendar, Upload, Rocket, Play
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { useNavigate } from "react-router-dom";
 import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
 import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
@@ -75,6 +76,7 @@ const scoreColor = (s: number) => s >= 75 ? "hsl(211 96% 56%)" : s >= 50 ? "hsl(
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
+  const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
 
@@ -103,10 +105,15 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader
-        title={branding.welcome_message || "Dashboard"}
-        description="Your AI-powered business command center"
-      />
+      <div className="flex items-start justify-between mb-2">
+        <PageHeader
+          title={branding.welcome_message || "Dashboard"}
+          description="Your AI-powered business command center"
+        />
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate("/welcome")}>
+          <Play className="h-3.5 w-3.5" /> Replay Intro
+        </Button>
+      </div>
 
       {/* Guided onboarding banner for new clients */}
       {isNewClient && (
