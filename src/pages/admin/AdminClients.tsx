@@ -191,7 +191,6 @@ export default function AdminClients() {
   ];
 
   const brandingFields = [
-    { label: "Logo URL", key: "logo_url", placeholder: "https://your-logo.com/logo.png" },
     { label: "Welcome Message", key: "welcome_message", placeholder: "Welcome to your dashboard" },
   ];
 
