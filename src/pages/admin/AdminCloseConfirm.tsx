@@ -254,6 +254,9 @@ export default function AdminCloseConfirm() {
                       <option value="other">Other</option>
                     </select>
                   </div>
+                  <div>
+                    <label className={labelCls}>Kickoff Contact</label>
+                    <Input value={form.kickoff_contact} onChange={e => set("kickoff_contact", e.target.value)} placeholder="Same or different contact" className={inputCls} disabled={submitting} />
                   </div>
                 </div>
                 <div>
