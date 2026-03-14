@@ -78,11 +78,11 @@ export default function Finance() {
 
       {/* Revenue Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard title="Revenue This Month" value="$82,400" change="+12.4%" icon={DollarSign} />
-        <MetricCard title="Revenue This Year" value="$723,000" change="+18.2%" icon={TrendingUp} />
-        <MetricCard title="Lifetime Revenue" value="$2.14M" change="" icon={ArrowUpRight} />
-        <MetricCard title="Avg Per Deal" value="$4,820" change="+5.1%" icon={CreditCard} />
-        <MetricCard title="Payroll This Period" value="$24,800" change="" icon={Users} />
+        <MetricCard label="Revenue This Month" value="$82,400" change="+12.4%" icon={DollarSign} />
+        <MetricCard label="Revenue This Year" value="$723,000" change="+18.2%" icon={TrendingUp} />
+        <MetricCard label="Lifetime Revenue" value="$2.14M" change="" icon={ArrowUpRight} />
+        <MetricCard label="Avg Per Deal" value="$4,820" change="+5.1%" icon={CreditCard} />
+        <MetricCard label="Payroll This Period" value="$24,800" change="" icon={Users} />
       </WidgetGrid>
 
       <Tabs defaultValue="revenue" className="mt-6">

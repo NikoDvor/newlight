@@ -72,11 +72,11 @@ export default function CalendarPage() {
 
       {/* Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
-        <MetricCard title="Upcoming" value="12" change="" icon={CalendarIcon} />
-        <MetricCard title="Booked This Week" value="8" change="+33%" icon={Clock} />
-        <MetricCard title="Completed" value="142" change="+12%" icon={Check} />
-        <MetricCard title="No Shows" value="3" change="-25%" icon={X} />
-        <MetricCard title="Next Appointment" value="2:00 PM" change="Today" icon={Users} />
+        <MetricCard label="Upcoming" value="12" change="" icon={CalendarIcon} />
+        <MetricCard label="Booked This Week" value="8" change="+33%" icon={Clock} />
+        <MetricCard label="Completed" value="142" change="+12%" icon={Check} />
+        <MetricCard label="No Shows" value="3" change="-25%" icon={X} />
+        <MetricCard label="Next Appointment" value="2:00 PM" change="Today" icon={Users} />
       </WidgetGrid>
 
       <Tabs defaultValue="upcoming" className="mt-6">

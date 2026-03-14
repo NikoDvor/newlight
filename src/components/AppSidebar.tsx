@@ -4,7 +4,7 @@ import {
   Globe, Search, Megaphone, Share2, Users, Star,
   TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
-  ChevronLeft, ChevronDown
+  ChevronLeft, ChevronDown, Wallet
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
