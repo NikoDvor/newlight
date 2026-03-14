@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { useNavigate } from "react-router-dom";
 import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
 import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
