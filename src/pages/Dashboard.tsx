@@ -76,6 +76,7 @@ const scoreColor = (s: number) => s >= 75 ? "hsl(211 96% 56%)" : s >= 50 ? "hsl(
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
+  const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
 
