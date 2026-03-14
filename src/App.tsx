@@ -116,6 +116,7 @@ const App = () => (
               <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
               <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
               <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
+              <Route path="welcome" element={<AdminWelcome />} />
             </Route>
 
             {/* Client Workspace */}
