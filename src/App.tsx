@@ -67,8 +67,10 @@ import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
+import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
+import ClientSetup from "./pages/ClientSetup";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +105,7 @@ const App = () => (
               <Route path="activation" element={<AdminActivation />} />
               <Route path="demo-builds" element={<AdminDemoBuilds />} />
               <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
+              <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
             </Route>
 
             {/* Client Workspace */}
@@ -149,6 +152,7 @@ const App = () => (
               <Route path="/meeting-intelligence" element={<MeetingIntelligence />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/enterprise" element={<Enterprise />} />
+              <Route path="/client-setup" element={<ClientSetup />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

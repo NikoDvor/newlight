@@ -46,6 +46,7 @@ export default function AdminCloseConfirm() {
     owner_email: "",
     phone: "",
     payment_confirmed: "confirmed",
+    payment_method: "credit_card",
     kickoff_contact: "",
     internal_notes: "",
   });
@@ -241,6 +242,16 @@ export default function AdminCloseConfirm() {
                     <select value={form.payment_confirmed} onChange={e => set("payment_confirmed", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3" disabled={submitting}>
                       <option value="confirmed">Confirmed</option>
                       <option value="pending">Pending</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Payment Method</label>
+                    <select value={form.payment_method} onChange={e => set("payment_method", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3" disabled={submitting}>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="ach">ACH / Bank Transfer</option>
+                      <option value="wire">Wire Transfer</option>
+                      <option value="check">Check</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
                   <div>

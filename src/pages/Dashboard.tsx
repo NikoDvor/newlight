@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare, Brain,
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
-  ArrowUpRight
+  ArrowUpRight, Plug, Calendar, Upload, Rocket
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
@@ -16,6 +16,11 @@ import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
 import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
 import { CTAButton } from "@/components/CTAButton";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
@@ -69,9 +74,79 @@ const severityStyle = (s: string) =>
 const scoreColor = (s: number) => s >= 75 ? "hsl(211 96% 56%)" : s >= 50 ? "hsl(211 80% 65%)" : "hsl(222 68% 44%)";
 
 export default function Dashboard() {
+  const { activeClientId, branding } = useWorkspace();
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
+
+  useEffect(() => {
+    if (!activeClientId) return;
+    supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle()
+      .then(({ data }) => setOnboardingData(data));
+    supabase.from("client_integrations").select("status").eq("client_id", activeClientId)
+      .then(({ data }) => {
+        if (data) {
+          setIntegrationStats({ connected: data.filter(d => d.status === "connected").length, total: data.length });
+        }
+      });
+  }, [activeClientId]);
+
+  const onboardingSteps = onboardingData || {
+    business_info: false, website_connected: false, google_business_connected: false,
+    review_platform_connected: false, ad_account_connected: false,
+    crm_setup: false, team_setup: false, launch_ready: false,
+  };
+
+  const completedSteps = Object.values(onboardingSteps).filter(v => v === true).length;
+  const totalSteps = 8;
+  const setupPercentage = Math.round((completedSteps / totalSteps) * 100);
+  const isNewClient = setupPercentage < 50;
+
   return (
     <div>
-      <PageHeader title="Dashboard" description="Your AI-powered business command center" />
+      <PageHeader
+        title={branding.welcome_message || "Dashboard"}
+        description="Your AI-powered business command center"
+      />
+
+      {/* Guided onboarding banner for new clients */}
+      {isNewClient && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-5 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.04] to-transparent"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.1)" }}>
+                <Rocket className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">Welcome to your workspace!</p>
+                <p className="text-xs text-muted-foreground">Complete your setup to unlock your full growth system</p>
+              </div>
+            </div>
+            <span className="text-2xl font-bold" style={{ color: "hsl(211 96% 56%)" }}>{setupPercentage}%</span>
+          </div>
+          <Progress value={setupPercentage} className="h-2 mb-4" />
+          <div className="flex flex-wrap gap-2">
+            <Link to="/client-setup">
+              <Button size="sm" className="btn-gradient h-8 text-[11px]">
+                <Upload className="h-3 w-3 mr-1" /> Complete Setup
+              </Button>
+            </Link>
+            <Link to="/integrations">
+              <Button size="sm" variant="outline" className="h-8 text-[11px]">
+                <Plug className="h-3 w-3 mr-1" /> Connect Accounts ({integrationStats.connected}/{integrationStats.total})
+              </Button>
+            </Link>
+            <Link to="/onboarding">
+              <Button size="sm" variant="outline" className="h-8 text-[11px]">
+                <Calendar className="h-3 w-3 mr-1" /> Book Kickoff
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      )}
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -85,11 +160,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <HealthScoreWidget score={73} />
         <div className="lg:col-span-2">
-          <OnboardingProgress steps={{
-            business_info: true, website_connected: true, google_business_connected: true,
-            review_platform_connected: false, ad_account_connected: false,
-            crm_setup: true, team_setup: false, launch_ready: false,
-          }} />
+          <OnboardingProgress steps={onboardingSteps} />
         </div>
       </div>
 

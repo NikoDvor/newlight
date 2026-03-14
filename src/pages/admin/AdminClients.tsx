@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -389,10 +389,13 @@ export default function AdminClients() {
                       {c.owner_email && (
                         <button onClick={() => handleResendInvite(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Resend invite">
                           <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
-                        </button>
-                      )}
-                      <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
-                        <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+                         </button>
+                       )}
+                       <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open Setup Form">
+                         <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
+                       </button>
+                       <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
+                         <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                       </button>
                     </div>
                   </td>

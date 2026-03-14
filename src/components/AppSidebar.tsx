@@ -53,8 +53,9 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     ],
   },
   {
-    type: "group", label: "Integrations",
+    type: "group", label: "Setup & Integrations",
     items: [
+      { title: "Complete Setup", url: "/client-setup", icon: Plug },
       { title: "Integrations", url: "/integrations", icon: Plug },
       { title: "Onboarding", url: "/onboarding", icon: Workflow },
     ],
