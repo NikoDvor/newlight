@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare, Brain,
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
-  ArrowUpRight, Plug, Calendar, Upload, Rocket
+  ArrowUpRight, Plug, Calendar, Upload, Rocket, Play
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
