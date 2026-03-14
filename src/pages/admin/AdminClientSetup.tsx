@@ -163,9 +163,7 @@ export default function AdminClientSetup() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <button onClick={() => navigate(-1)} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
-          <ArrowLeft className="h-3 w-3" /> Back
-        </button>
+        <BackArrow to="/admin/clients" label="Back to Clients" />
         <h1 className="text-2xl font-bold text-white">Post-Payment Integration + Setup</h1>
         <p className="text-sm text-white/50 mt-1">Complete the remaining setup details for <span className="text-white/70">{client?.business_name}</span></p>
       </div>
