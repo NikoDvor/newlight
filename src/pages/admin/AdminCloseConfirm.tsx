@@ -46,6 +46,7 @@ export default function AdminCloseConfirm() {
     owner_email: "",
     phone: "",
     payment_confirmed: "confirmed",
+    payment_method: "credit_card",
     kickoff_contact: "",
     internal_notes: "",
   });
