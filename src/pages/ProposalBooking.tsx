@@ -146,6 +146,11 @@ export default function ProposalBooking() {
       </div>
 
       <motion.div className="max-w-2xl mx-auto relative z-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Back arrow */}
+        <button onClick={() => navigate(-1)} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1.5 mb-4 transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
