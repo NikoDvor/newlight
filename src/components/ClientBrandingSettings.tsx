@@ -69,9 +69,7 @@ export function ClientBrandingSettings() {
             placeholder="Your Company" className="h-9 text-xs bg-secondary/50" />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Logo URL</label>
-          <Input value={form.logo_url} onChange={e => setForm(p => ({ ...p, logo_url: e.target.value }))}
-            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
+          <LogoUploader value={form.logo_url} onChange={url => setForm(p => ({ ...p, logo_url: url }))} label="Logo" dark={false} />
         </div>
         <div>
           <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Primary Color</label>
