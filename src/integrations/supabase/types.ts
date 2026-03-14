@@ -725,6 +725,78 @@ export type Database = {
           },
         ]
       }
+      prospects: {
+        Row: {
+          assigned_to: string | null
+          budget_range: string | null
+          business_name: string
+          business_type: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_decision_maker: string | null
+          meeting_date: string | null
+          notes: string | null
+          phone: string | null
+          primary_location: string | null
+          proposal_recipient_email: string | null
+          reason_for_inquiry: string | null
+          source: string | null
+          stage: string
+          status: string
+          timeline: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          business_name: string
+          business_type?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_decision_maker?: string | null
+          meeting_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_location?: string | null
+          proposal_recipient_email?: string | null
+          reason_for_inquiry?: string | null
+          source?: string | null
+          stage?: string
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          business_name?: string
+          business_type?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_decision_maker?: string | null
+          meeting_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_location?: string | null
+          proposal_recipient_email?: string | null
+          reason_for_inquiry?: string | null
+          source?: string | null
+          stage?: string
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       provision_queue: {
         Row: {
           automation_setup: boolean | null
