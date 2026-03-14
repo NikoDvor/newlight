@@ -65,6 +65,8 @@ import AdminTeam from "./pages/admin/AdminTeam";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import AdminActivation from "./pages/admin/AdminActivation";
+import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
+import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 
@@ -99,6 +101,8 @@ const App = () => (
               <Route path="reports" element={<AdminReports />} />
               <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
               <Route path="activation" element={<AdminActivation />} />
+              <Route path="demo-builds" element={<AdminDemoBuilds />} />
+              <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
             </Route>
 
             {/* Client Workspace */}
