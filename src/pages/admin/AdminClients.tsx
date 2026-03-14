@@ -292,6 +292,7 @@ export default function AdminClients() {
                 {/* Branding Section */}
                 <div className="pt-3 border-t border-white/10">
                   <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
+                  <LogoUploader value={form.logo_url} onChange={url => setForm(prev => ({ ...prev, logo_url: url }))} label="Logo" dark={true} className="mb-3" />
                   {brandingFields.map(f => (
                     <div key={f.key} className="mb-3">
                       <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
