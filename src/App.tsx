@@ -46,6 +46,7 @@ import MarketResearch from "./pages/MarketResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
 import Integrations from "./pages/Integrations";
+import GrowthAdvisor from "./pages/GrowthAdvisor";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 
