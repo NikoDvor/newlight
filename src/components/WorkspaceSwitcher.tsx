@@ -21,7 +21,7 @@ export function WorkspaceSwitcher() {
   const [clients, setClients] = useState<ClientItem[]>([]);
 
   useEffect(() => {
-    supabase.from("clients").select("id, business_name, workspace_slug, status").order("business_name").then(({ data }) => {
+    supabase.from("clients").select("id, business_name, workspace_slug, status").neq("status", "archived").order("business_name").then(({ data }) => {
       setClients(data ?? []);
     });
   }, []);
