@@ -63,6 +63,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminMonitoring from "./pages/admin/AdminMonitoring";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
