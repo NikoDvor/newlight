@@ -715,6 +715,319 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_activities: {
+        Row: {
+          activity_note: string | null
+          activity_type: string
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          related_id: string | null
+          related_type: string | null
+        }
+        Insert: {
+          activity_note?: string | null
+          activity_type: string
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Update: {
+          activity_note?: string | null
+          activity_type?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_companies: {
+        Row: {
+          address: string | null
+          client_id: string
+          company_name: string
+          created_at: string
+          id: string
+          industry: string | null
+          primary_contact_id: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          client_id: string
+          company_name: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          primary_contact_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          client_id?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          primary_contact_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_companies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts: {
+        Row: {
+          client_id: string
+          company_id: string | null
+          contact_owner: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          company_id?: string | null
+          contact_owner?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          company_id?: string | null
+          contact_owner?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_deals: {
+        Row: {
+          assigned_user: string | null
+          client_id: string
+          close_probability: number | null
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          deal_name: string
+          deal_value: number | null
+          expected_close_date: string | null
+          id: string
+          pipeline_stage: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          client_id: string
+          close_probability?: number | null
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_name: string
+          deal_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          pipeline_stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user?: string | null
+          client_id?: string
+          close_probability?: number | null
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_name?: string
+          deal_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          pipeline_stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_deals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          assigned_user: string | null
+          client_id: string
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          estimated_value: number | null
+          id: string
+          lead_status: string
+          notes: string | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          client_id: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          lead_status?: string
+          notes?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_user?: string | null
+          client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          lead_status?: string
+          notes?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tasks: {
+        Row: {
+          assigned_user: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          related_id: string | null
+          related_type: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          assigned_user?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_builds: {
         Row: {
           assigned_to: string | null
@@ -1644,6 +1957,407 @@ export type Database = {
           },
         ]
       }
+      review_recovery_tasks: {
+        Row: {
+          assigned_user: string | null
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          resolved_at: string | null
+          review_request_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          review_request_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          review_request_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_recovery_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_recovery_tasks_review_request_id_fkey"
+            columns: ["review_request_id"]
+            isOneToOne: false
+            referencedRelation: "review_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_requests: {
+        Row: {
+          channel: string
+          client_id: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          feedback_at: string | null
+          feedback_text: string | null
+          id: string
+          opened_at: string | null
+          platform: string | null
+          public_review_left: boolean | null
+          rating: number | null
+          recovery_needed: boolean | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          client_id: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          feedback_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          opened_at?: string | null
+          platform?: string | null
+          public_review_left?: boolean | null
+          rating?: number | null
+          recovery_needed?: boolean | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          client_id?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          feedback_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          opened_at?: string | null
+          platform?: string | null
+          public_review_left?: boolean | null
+          rating?: number | null
+          recovery_needed?: boolean | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_templates: {
+        Row: {
+          active: boolean | null
+          channel: string
+          client_id: string
+          created_at: string
+          id: string
+          name: string
+          template_body: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          channel?: string
+          client_id: string
+          created_at?: string
+          id?: string
+          name: string
+          template_body: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          channel?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          template_body?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_competitors: {
+        Row: {
+          authority_score: number | null
+          client_id: string
+          created_at: string
+          domain: string
+          estimated_traffic: string | null
+          id: string
+          keywords_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          authority_score?: number | null
+          client_id: string
+          created_at?: string
+          domain: string
+          estimated_traffic?: string | null
+          id?: string
+          keywords_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          authority_score?: number | null
+          client_id?: string
+          created_at?: string
+          domain?: string
+          estimated_traffic?: string | null
+          id?: string
+          keywords_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_issues: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          id: string
+          issue_title: string
+          recommendation: string | null
+          severity: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          issue_title: string
+          recommendation?: string | null
+          severity?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          issue_title?: string
+          recommendation?: string | null
+          severity?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_issues_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_keywords: {
+        Row: {
+          client_id: string
+          created_at: string
+          difficulty: number | null
+          id: string
+          keyword: string
+          position: number | null
+          previous_position: number | null
+          search_volume: number | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          keyword: string
+          position?: number | null
+          previous_position?: number | null
+          search_volume?: number | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          keyword?: string
+          position?: number | null
+          previous_position?: number | null
+          search_volume?: number | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_keywords_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_accounts: {
+        Row: {
+          client_id: string
+          created_at: string
+          followers: number | null
+          handle: string | null
+          id: string
+          platform: string
+          profile_url: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          followers?: number | null
+          handle?: string | null
+          id?: string
+          platform: string
+          profile_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          followers?: number | null
+          handle?: string | null
+          id?: string
+          platform?: string
+          profile_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          approval_status: string | null
+          caption: string | null
+          client_id: string
+          comments: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          likes: number | null
+          media_url: string | null
+          platforms: string[] | null
+          published_at: string | null
+          reach: number | null
+          scheduled_at: string | null
+          shares: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string | null
+          caption?: string | null
+          client_id: string
+          comments?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          likes?: number | null
+          media_url?: string | null
+          platforms?: string[] | null
+          published_at?: string | null
+          reach?: number | null
+          scheduled_at?: string | null
+          shares?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string | null
+          caption?: string | null
+          client_id?: string
+          comments?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          likes?: number | null
+          media_url?: string | null
+          platforms?: string[] | null
+          published_at?: string | null
+          reach?: number | null
+          scheduled_at?: string | null
+          shares?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_deadlines: {
         Row: {
           client_id: string
@@ -1816,6 +2530,148 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_issues: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          issue_title: string
+          page_id: string | null
+          severity: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          issue_title: string
+          page_id?: string | null
+          severity?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          issue_title?: string
+          page_id?: string | null
+          severity?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_issues_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_issues_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "website_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_pages: {
+        Row: {
+          client_id: string
+          conversion_rate: number | null
+          conversions: number | null
+          created_at: string
+          id: string
+          leads_generated: number | null
+          page_name: string
+          page_type: string | null
+          page_url: string | null
+          status: string | null
+          updated_at: string
+          visits: number | null
+        }
+        Insert: {
+          client_id: string
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string
+          id?: string
+          leads_generated?: number | null
+          page_name: string
+          page_type?: string | null
+          page_url?: string | null
+          status?: string | null
+          updated_at?: string
+          visits?: number | null
+        }
+        Update: {
+          client_id?: string
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string
+          id?: string
+          leads_generated?: number | null
+          page_name?: string
+          page_type?: string | null
+          page_url?: string | null
+          status?: string | null
+          updated_at?: string
+          visits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_pages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_traffic_sources: {
+        Row: {
+          client_id: string
+          id: string
+          percentage: number | null
+          period: string | null
+          recorded_at: string
+          source_name: string
+          visits: number | null
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          percentage?: number | null
+          period?: string | null
+          recorded_at?: string
+          source_name: string
+          visits?: number | null
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          percentage?: number | null
+          period?: string | null
+          recorded_at?: string
+          source_name?: string
+          visits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_traffic_sources_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

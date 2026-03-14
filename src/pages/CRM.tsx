@@ -1,36 +1,155 @@
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
-import { Users, Building2, DollarSign, Mail, Phone, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Building2, DollarSign, TrendingUp, Plus, ChevronRight } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
-const contacts = [
-  { name: "Sarah Johnson", company: "TechCorp Inc.", email: "sarah@techcorp.com", phone: "(555) 123-4567", status: "Qualified", value: "$24,000", tags: ["Enterprise", "Q2"] },
-  { name: "Mike Chen", company: "GrowthLab", email: "mike@growthlab.io", phone: "(555) 234-5678", status: "New Lead", value: "$8,500", tags: ["SMB"] },
-  { name: "Lisa Park", company: "Bloom Agency", email: "lisa@bloom.co", phone: "(555) 345-6789", status: "Proposal Sent", value: "$36,000", tags: ["Agency", "Priority"] },
-  { name: "David Smith", company: "RetailMax", email: "david@retailmax.com", phone: "(555) 456-7890", status: "Negotiation", value: "$52,000", tags: ["Enterprise", "Q1"] },
-  { name: "Emma Wilson", company: "Startup Labs", email: "emma@startuplabs.io", phone: "(555) 567-8901", status: "Qualified", value: "$12,000", tags: ["Startup"] },
+const PIPELINE_STAGES = [
+  "new_lead", "contacted", "qualified", "appointment_booked",
+  "proposal_sent", "negotiation", "closed_won", "closed_lost"
 ];
 
-const pipelineStages = [
-  { stage: "New Leads", count: 24, value: "$48,000" },
-  { stage: "Qualified", count: 18, value: "$126,000" },
-  { stage: "Proposal Sent", count: 8, value: "$84,000" },
-  { stage: "Negotiation", count: 5, value: "$165,000" },
-  { stage: "Closed Won", count: 12, value: "$210,000" },
-];
+const STAGE_LABELS: Record<string, string> = {
+  new_lead: "New Lead", contacted: "Contacted", qualified: "Qualified",
+  appointment_booked: "Appt Booked", proposal_sent: "Proposal Sent",
+  negotiation: "Negotiation", closed_won: "Closed Won", closed_lost: "Closed Lost",
+};
+
+const STAGE_COLORS: Record<string, string> = {
+  new_lead: "bg-blue-50 text-blue-700", contacted: "bg-cyan-50 text-cyan-700",
+  qualified: "bg-emerald-50 text-emerald-700", appointment_booked: "bg-violet-50 text-violet-700",
+  proposal_sent: "bg-amber-50 text-amber-700", negotiation: "bg-orange-50 text-orange-700",
+  closed_won: "bg-green-50 text-green-700", closed_lost: "bg-red-50 text-red-600",
+};
 
 export default function CRM() {
+  const { activeClientId } = useWorkspace();
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [dealOpen, setDealOpen] = useState(false);
+  const [newContact, setNewContact] = useState({ full_name: "", email: "", phone: "", tags: "" });
+  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+
+  const fetchData = async () => {
+    if (!activeClientId) { setLoading(false); return; }
+    setLoading(true);
+    const [cRes, dRes, aRes] = await Promise.all([
+      supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(20),
+    ]);
+    setContacts(cRes.data || []);
+    setDeals(dRes.data || []);
+    setActivities(aRes.data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [activeClientId]);
+
+  const addContact = async () => {
+    if (!activeClientId || !newContact.full_name) return;
+    const tags = newContact.tags ? newContact.tags.split(",").map(t => t.trim()) : [];
+    const { error } = await supabase.from("crm_contacts").insert({
+      client_id: activeClientId, full_name: newContact.full_name,
+      email: newContact.email || null, phone: newContact.phone || null, tags,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "contact_created",
+      activity_note: `Contact "${newContact.full_name}" created`,
+    });
+    toast({ title: "Contact Added" });
+    setNewContact({ full_name: "", email: "", phone: "", tags: "" });
+    setContactOpen(false);
+    fetchData();
+  };
+
+  const addDeal = async () => {
+    if (!activeClientId || !newDeal.deal_name) return;
+    const { error } = await supabase.from("crm_deals").insert({
+      client_id: activeClientId, deal_name: newDeal.deal_name,
+      deal_value: parseFloat(newDeal.deal_value) || 0,
+      pipeline_stage: newDeal.pipeline_stage,
+      contact_id: newDeal.contact_id || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "deal_created",
+      activity_note: `Deal "${newDeal.deal_name}" created`,
+    });
+    toast({ title: "Deal Added" });
+    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+    setDealOpen(false);
+    fetchData();
+  };
+
+  const moveDealStage = async (dealId: string, stage: string) => {
+    await supabase.from("crm_deals").update({ pipeline_stage: stage }).eq("id", dealId);
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId!, activity_type: "stage_changed",
+      activity_note: `Deal moved to ${STAGE_LABELS[stage]}`, related_type: "deal", related_id: dealId,
+    });
+    fetchData();
+  };
+
+  // Computed metrics
+  const totalContacts = contacts.length;
+  const openDeals = deals.filter(d => d.status === "open");
+  const pipelineValue = openDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+  const dealsWon = deals.filter(d => d.pipeline_stage === "closed_won");
+  const wonValue = dealsWon.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+
+  const pipelineCounts = PIPELINE_STAGES.map(stage => ({
+    stage, label: STAGE_LABELS[stage],
+    count: deals.filter(d => d.pipeline_stage === stage).length,
+    value: deals.filter(d => d.pipeline_stage === stage).reduce((s, d) => s + (Number(d.deal_value) || 0), 0),
+  }));
+
+  if (!activeClientId) {
+    return (
+      <div>
+        <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline" />
+        <div className="card-widget p-8 rounded-2xl text-center mt-6">
+          <p className="text-muted-foreground">Select a workspace to view CRM data.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline" />
+      <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline">
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-1.5" onClick={() => setContactOpen(true)}>
+            <Plus className="h-4 w-4" /> Contact
+          </Button>
+          <Button className="gap-1.5" onClick={() => setDealOpen(true)}>
+            <Plus className="h-4 w-4" /> Deal
+          </Button>
+        </div>
+      </PageHeader>
 
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Total Contacts" value="156" change="+12 this month" changeType="positive" icon={Users} />
-        <MetricCard label="Companies" value="42" change="+3 this week" changeType="positive" icon={Building2} />
-        <MetricCard label="Pipeline Value" value="$633K" change="+18.2% vs last month" changeType="positive" icon={DollarSign} />
-        <MetricCard label="Deals Won" value="12" change="$210,000 closed" changeType="positive" icon={DollarSign} />
+        <MetricCard label="Total Contacts" value={String(totalContacts)} change={`${contacts.length} records`} changeType="neutral" icon={Users} />
+        <MetricCard label="Open Deals" value={String(openDeals.length)} change="Active pipeline" changeType="neutral" icon={Building2} />
+        <MetricCard label="Pipeline Value" value={`$${pipelineValue.toLocaleString()}`} change={`${openDeals.length} open deals`} changeType="positive" icon={DollarSign} />
+        <MetricCard label="Deals Won" value={String(dealsWon.length)} change={`$${wonValue.toLocaleString()} closed`} changeType="positive" icon={TrendingUp} />
       </WidgetGrid>
 
       <div className="mt-6">
@@ -39,82 +158,208 @@ export default function CRM() {
             <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
             <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts</TabsTrigger>
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
+            <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pipeline" className="mt-4">
             <DataCard title="Revenue Pipeline">
-              <div className="grid grid-cols-5 gap-3">
-                {pipelineStages.map((s) => (
-                  <div key={s.stage} className="bg-secondary rounded-xl p-4 text-center">
-                    <p className="text-xs font-medium text-muted-foreground">{s.stage}</p>
-                    <p className="text-2xl font-semibold mt-2 tabular-nums">{s.count}</p>
-                    <p className="text-xs text-muted-foreground mt-1 tabular-nums">{s.value}</p>
-                  </div>
-                ))}
-              </div>
+              {loading ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {pipelineCounts.map((s) => (
+                    <div key={s.stage} className="bg-secondary rounded-xl p-4 text-center">
+                      <p className="text-[10px] font-medium text-muted-foreground leading-tight">{s.label}</p>
+                      <p className="text-2xl font-semibold mt-2 tabular-nums">{s.count}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">${s.value.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
 
           <TabsContent value="contacts" className="mt-4">
             <DataCard title="Contacts">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Name</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Company</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Email</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contacts.map((c) => (
-                      <tr key={c.email} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="py-3 pr-4">
-                          <p className="text-sm font-medium">{c.name}</p>
-                          <div className="flex gap-1 mt-1">
-                            {c.tags.map(tag => (
-                              <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{tag}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="text-sm py-3 pr-4">{c.company}</td>
-                        <td className="text-sm text-muted-foreground py-3 pr-4">{c.email}</td>
-                        <td className="py-3 pr-4">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-md ${
-                            c.status === "New Lead" ? "bg-blue-50 text-blue-600" :
-                            c.status === "Qualified" ? "bg-emerald-50 text-emerald-600" :
-                            c.status === "Proposal Sent" ? "bg-amber-50 text-amber-600" :
-                            "bg-purple-50 text-purple-600"
-                          }`}>{c.status}</span>
-                        </td>
-                        <td className="text-sm font-medium text-right py-3 tabular-nums">{c.value}</td>
+              {contacts.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">No contacts yet.</p>
+                  <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Name</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Email</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Phone</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Tags</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {contacts.map((c) => (
+                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                          <td className="text-sm font-medium py-3 pr-4">{c.full_name}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-4">{c.email || "—"}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-4">{c.phone || "—"}</td>
+                          <td className="py-3">
+                            <div className="flex gap-1 flex-wrap">
+                              {(c.tags || []).map((tag: string) => (
+                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{tag}</span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </DataCard>
           </TabsContent>
 
           <TabsContent value="deals" className="mt-4">
             <DataCard title="Active Deals">
-              <div className="space-y-3">
-                {contacts.filter(c => c.status !== "New Lead").map((c) => (
-                  <div key={c.email} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{c.name} — {c.company}</p>
-                      <p className="text-xs text-muted-foreground">{c.status}</p>
+              {deals.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">No deals yet.</p>
+                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Deal</Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {deals.map((d) => (
+                    <motion.div key={d.id} className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{d.deal_name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
+                            {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">${Number(d.deal_value || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                      {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
+                        <Select onValueChange={(v) => moveDealStage(d.id, v)}>
+                          <SelectTrigger className="w-[140px] h-8 text-xs">
+                            <SelectValue placeholder="Move stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PIPELINE_STAGES.map(s => (
+                              <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-4">
+            <DataCard title="Recent Activity">
+              {activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">No activity yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {activities.map((a) => (
+                    <div key={a.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                      <div className="h-2 w-2 rounded-full bg-accent mt-2 shrink-0" />
+                      <div>
+                        <p className="text-sm">{a.activity_note}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold tabular-nums">{c.value}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Contact Sheet */}
+      <Sheet open={contactOpen} onOpenChange={setContactOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Add Contact</SheetTitle>
+            <SheetDescription>Create a new CRM contact</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name *</Label>
+              <Input value={newContact.full_name} onChange={e => setNewContact(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Tags (comma-separated)</Label>
+              <Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addContact}>Add Contact</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Deal Sheet */}
+      <Sheet open={dealOpen} onOpenChange={setDealOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Add Deal</SheetTitle>
+            <SheetDescription>Create a new pipeline deal</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label>Deal Name *</Label>
+              <Input value={newDeal.deal_name} onChange={e => setNewDeal(p => ({ ...p, deal_name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Value ($)</Label>
+              <Input type="number" value={newDeal.deal_value} onChange={e => setNewDeal(p => ({ ...p, deal_value: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Pipeline Stage</Label>
+              <Select value={newDeal.pipeline_stage} onValueChange={v => setNewDeal(p => ({ ...p, pipeline_stage: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PIPELINE_STAGES.map(s => (
+                    <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link Contact</Label>
+                <Select value={newDeal.contact_id} onValueChange={v => setNewDeal(p => ({ ...p, contact_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>
+                    {contacts.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setDealOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addDeal}>Add Deal</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
