@@ -68,6 +68,7 @@ import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
+import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="demo-builds" element={<AdminDemoBuilds />} />
               <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
               <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
+              <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
             </Route>
 
             {/* Client Workspace */}

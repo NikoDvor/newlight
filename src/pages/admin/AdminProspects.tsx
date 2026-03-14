@@ -105,9 +105,11 @@ function PipelineSummary({ prospects }: { prospects: Prospect[] }) {
 }
 
 function ProspectCard({ p, onUpdateStage }: { p: Prospect; onUpdateStage: (id: string, stage: string) => void }) {
+  const navigate = useNavigate();
   const stageStyle = stageColors[p.stage] || stageColors.new_submission;
   return (
-    <Card className="border-0 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-colors" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+    <Card className="border-0 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-colors cursor-pointer" style={{ borderColor: "hsla(211,96%,60%,.08)" }}
+      onClick={() => navigate(`/admin/prospects/${p.id}`)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex-1 min-w-0">
@@ -124,7 +126,7 @@ function ProspectCard({ p, onUpdateStage }: { p: Prospect; onUpdateStage: (id: s
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
             {p.phone && (
               <a href={`tel:${p.phone}`} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <Phone className="h-3.5 w-3.5 text-white/40 hover:text-white" />
@@ -215,7 +217,7 @@ const initialForm = {
   business_name: "", website: "", primary_location: "", business_type: "",
   main_service: "", primary_goal: "", booking_link: "", logo_url: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", social_links: "",
-  notes: "", full_name: "", email: "", phone: "",
+  notes: "", full_name: "", email: "", phone: "", budget_range: "",
 };
 
 export default function AdminProspects() {
@@ -404,6 +406,16 @@ export default function AdminProspects() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-white/70 text-xs">Social Links (optional)</Label>
               <Input value={form.social_links} onChange={e => setField("social_links", e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder='e.g. {"facebook":"url","instagram":"url"}' />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2 border-t border-white/10 pt-3 mt-2">
+              <Label className="text-yellow-400/80 text-xs">⚠ Budget Range (Internal Only — Not Shown to Client)</Label>
+              <select value={form.budget_range} onChange={e => setField("budget_range", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
+                <option value="">Select...</option>
+                <option value="500-1000">$500 – $1,000/mo</option>
+                <option value="1000-2500">$1,000 – $2,500/mo</option>
+                <option value="2500-5000">$2,500 – $5,000/mo</option>
+                <option value="5000+">$5,000+/mo</option>
+              </select>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-white/70 text-xs">Notes for Tailoring (optional)</Label>
