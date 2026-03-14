@@ -80,8 +80,10 @@ export default function Auth() {
         .eq("user_id", signInData.user.id)
         .limit(1)
         .maybeSingle();
-      if (roleData && ["admin", "operator"].includes(roleData.role)) {
+      if (roleData?.role === "admin") {
         navigate("/admin");
+      } else if (roleData?.role === "operator") {
+        navigate("/admin/clients");
       } else {
         navigate("/");
       }
