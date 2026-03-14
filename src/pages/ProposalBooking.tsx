@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LogoUploader } from "@/components/LogoUploader";
 
 export default function ProposalBooking() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
