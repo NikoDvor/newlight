@@ -67,8 +67,10 @@ import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
+import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
+import ClientSetup from "./pages/ClientSetup";
 
 const queryClient = new QueryClient();
 
