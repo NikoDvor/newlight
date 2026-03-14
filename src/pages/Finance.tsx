@@ -4,7 +4,7 @@ import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { DollarSign, TrendingUp, Users, FileText, Plus, Check, Clock, AlertCircle, ArrowUpRight, CreditCard } from "lucide-react";
+import { DollarSign, TrendingUp, Users, FileText, Plus, Check, Clock, AlertCircle, ArrowUpRight, CreditCard, Upload, Calendar, Shield, FolderOpen, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,10 +61,33 @@ const adjustments = [
   { type: "Revenue Correction", amount: "+$1,200", reason: "Late invoice reconciliation", by: "System", date: "Feb 28" },
 ];
 
+const taxDeadlines = [
+  { title: "Q1 Estimated Tax Payment", date: "Apr 15, 2026", type: "Quarterly", status: "Upcoming", daysLeft: 32 },
+  { title: "Payroll Tax Deposit (March)", date: "Apr 15, 2026", type: "Payroll Tax", status: "Upcoming", daysLeft: 32 },
+  { title: "Q2 Estimated Tax Payment", date: "Jun 15, 2026", type: "Quarterly", status: "Upcoming", daysLeft: 93 },
+  { title: "Year-End W-2/1099 Prep", date: "Jan 31, 2027", type: "Year-End", status: "Pending", daysLeft: 323 },
+];
+
+const taxDocuments = [
+  { name: "W-9 - James Wilson", type: "W-9", status: "Received", date: "Jan 15, 2026", by: "Admin" },
+  { name: "Q4 2025 Revenue Summary", type: "Revenue Summary", status: "Generated", date: "Jan 5, 2026", by: "System" },
+  { name: "2025 Payroll Summary", type: "Payroll Summary", status: "Generated", date: "Jan 10, 2026", by: "System" },
+  { name: "Contractor Agreement - Lisa Park", type: "Contract", status: "Pending Review", date: "Feb 20, 2026", by: "Admin" },
+];
+
+const filingItems = [
+  { item: "All W-9s collected", category: "Contractor Records", status: "Ready" },
+  { item: "Q4 revenue reconciled", category: "Revenue", status: "Ready" },
+  { item: "Payroll tax deposits current", category: "Payroll", status: "In Progress" },
+  { item: "1099 preparation", category: "Year-End", status: "Missing" },
+  { item: "End-of-year payroll summary", category: "Payroll", status: "Missing" },
+  { item: "Revenue by category export", category: "Revenue", status: "Ready" },
+];
+
 const statusStyle = (s: string) => {
-  if (s === "Paid" || s === "Active") return "bg-primary/10 text-primary border-primary/20";
-  if (s === "Awaiting Approval") return "bg-accent/10 text-accent border-accent/20";
-  if (s === "Draft") return "bg-muted text-muted-foreground border-border";
+  if (["Paid", "Active", "Ready", "Received", "Generated"].includes(s)) return "bg-primary/10 text-primary border-primary/20";
+  if (["Awaiting Approval", "Upcoming", "In Progress", "Pending Review"].includes(s)) return "bg-accent/10 text-accent border-accent/20";
+  if (["Missing", "Error", "Overdue"].includes(s)) return "bg-destructive/10 text-destructive border-destructive/20";
   return "bg-muted text-muted-foreground border-border";
 };
 
@@ -74,9 +97,8 @@ export default function Finance() {
 
   return (
     <div>
-      <PageHeader title="Finance" description="Revenue tracking, payroll, and financial operations" />
+      <PageHeader title="Finance" description="Revenue tracking, payroll, tax operations, and financial management" />
 
-      {/* Revenue Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
         <MetricCard label="Revenue This Month" value="$82,400" change="+12.4%" icon={DollarSign} />
         <MetricCard label="Revenue This Year" value="$723,000" change="+18.2%" icon={TrendingUp} />
@@ -86,12 +108,15 @@ export default function Finance() {
       </WidgetGrid>
 
       <Tabs defaultValue="revenue" className="mt-6">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+        <TabsList className="bg-card border border-border flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="revenue" className="text-xs">Revenue</TabsTrigger>
+          <TabsTrigger value="payroll" className="text-xs">Payroll</TabsTrigger>
+          <TabsTrigger value="team" className="text-xs">Team</TabsTrigger>
+          <TabsTrigger value="adjustments" className="text-xs">Adjustments</TabsTrigger>
+          <TabsTrigger value="tax" className="text-xs">Tax Operations</TabsTrigger>
+          <TabsTrigger value="documents" className="text-xs">Document Vault</TabsTrigger>
+          <TabsTrigger value="filing" className="text-xs">Filing Readiness</TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs">Reports</TabsTrigger>
         </TabsList>
 
         {/* Revenue Tab */}
@@ -123,9 +148,7 @@ export default function Finance() {
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie data={revenueBySource} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} strokeWidth={2}>
-                        {revenueBySource.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
+                        {revenueBySource.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                       </Pie>
                       <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
                     </PieChart>
@@ -169,13 +192,7 @@ export default function Finance() {
           </div>
           <div className="space-y-3">
             {payrollRuns.map((run, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="card-widget p-4 flex items-center justify-between"
-              >
+              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card-widget p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/10">
                     {run.status === "Paid" ? <Check className="h-4 w-4 text-primary" /> : <Clock className="h-4 w-4 text-accent" />}
@@ -192,9 +209,7 @@ export default function Finance() {
                   </div>
                   <Badge variant="outline" className={statusStyle(run.status)}>{run.status}</Badge>
                   {run.status === "Awaiting Approval" && (
-                    <Button size="sm" variant="outline" className="text-xs border-primary/20 text-primary hover:bg-primary/5">
-                      Approve
-                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs border-primary/20 text-primary hover:bg-primary/5">Approve</Button>
                   )}
                 </div>
               </motion.div>
@@ -212,13 +227,7 @@ export default function Finance() {
           </div>
           <div className="space-y-3">
             {teamMembers.map((m, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="card-widget p-4 flex items-center justify-between"
-              >
+              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card-widget p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
                     {m.name.split(" ").map(n => n[0]).join("")}
@@ -251,9 +260,7 @@ export default function Finance() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-foreground">Add Manual Adjustment</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle className="text-foreground">Add Manual Adjustment</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-2">
                   <div>
                     <Label className="text-foreground">Type</Label>
@@ -264,6 +271,7 @@ export default function Finance() {
                         <SelectItem value="bonus">Bonus</SelectItem>
                         <SelectItem value="deduction">Deduction</SelectItem>
                         <SelectItem value="refund">Refund</SelectItem>
+                        <SelectItem value="tax_adjustment">Tax Adjustment</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
@@ -276,23 +284,14 @@ export default function Finance() {
                     <Label className="text-foreground">Reason</Label>
                     <Textarea placeholder="Reason for adjustment..." className="bg-background border-border" />
                   </div>
-                  <Button className="w-full bg-primary text-primary-foreground" onClick={() => {
-                    toast({ title: "Adjustment added", description: "The manual adjustment has been logged." });
-                    setAdjustOpen(false);
-                  }}>Save Adjustment</Button>
+                  <Button className="w-full bg-primary text-primary-foreground" onClick={() => { toast({ title: "Adjustment added", description: "Logged in audit trail." }); setAdjustOpen(false); }}>Save Adjustment</Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
           <div className="space-y-3">
             {adjustments.map((a, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="card-widget p-4 flex items-center justify-between"
-              >
+              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card-widget p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${a.amount.startsWith("+") ? "bg-primary/10" : "bg-accent/10"}`}>
                     {a.amount.startsWith("+") ? <ArrowUpRight className="h-4 w-4 text-primary" /> : <AlertCircle className="h-4 w-4 text-accent" />}
@@ -314,6 +313,106 @@ export default function Finance() {
           </div>
         </TabsContent>
 
+        {/* Tax Operations Tab */}
+        <TabsContent value="tax" className="mt-4 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">Tax Operations</h3>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">Tax-Prep Management</Badge>
+          </div>
+
+          <WidgetGrid columns="repeat(auto-fit, minmax(240px, 1fr))">
+            <MetricCard label="Next Tax Deadline" value="Apr 15" change="32 days" icon={Calendar} />
+            <MetricCard label="Documents Collected" value="4 / 6" change="67%" icon={FolderOpen} />
+            <MetricCard label="Filing Readiness" value="67%" change="In Progress" icon={ClipboardCheck} />
+            <MetricCard label="Estimated Q1 Tax" value="$18,400" change="" icon={Shield} />
+          </WidgetGrid>
+
+          <DataCard title="Tax Deadlines & Reminders">
+            <div className="space-y-3">
+              {taxDeadlines.map((d, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${d.daysLeft <= 30 ? "bg-accent/10" : "bg-primary/10"}`}>
+                      <Calendar className={`h-4 w-4 ${d.daysLeft <= 30 ? "text-accent" : "text-primary"}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{d.title}</p>
+                      <p className="text-xs text-muted-foreground">{d.date} · {d.type}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">{d.daysLeft} days</span>
+                    <Badge variant="outline" className={statusStyle(d.status)}>{d.status}</Badge>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </DataCard>
+
+          <DataCard title="Accountant Checklist">
+            <div className="space-y-2">
+              {["Revenue reconciliation complete", "All contractor W-9s collected", "Payroll tax deposits current", "Quarterly estimated payments reviewed", "Expense categorization complete"].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                  <div className={`h-5 w-5 rounded-md border flex items-center justify-center ${i < 2 ? "bg-primary/10 border-primary/30" : "border-border"}`}>
+                    {i < 2 && <Check className="h-3 w-3 text-primary" />}
+                  </div>
+                  <span className="text-sm text-foreground">{item}</span>
+                </div>
+              ))}
+            </div>
+          </DataCard>
+        </TabsContent>
+
+        {/* Document Vault Tab */}
+        <TabsContent value="documents" className="mt-4 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">Document Vault</h3>
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload Document
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {taxDocuments.map((d, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card-widget p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/10">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.type} · Uploaded {d.date} by {d.by}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className={statusStyle(d.status)}>{d.status}</Badge>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Filing Readiness Tab */}
+        <TabsContent value="filing" className="mt-4 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">Filing Readiness</h3>
+            <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20 text-xs">4 of 6 items ready</Badge>
+          </div>
+          <div className="space-y-3">
+            {filingItems.map((f, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card-widget p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${f.status === "Ready" ? "bg-primary/10" : f.status === "Missing" ? "bg-destructive/10" : "bg-accent/10"}`}>
+                    {f.status === "Ready" ? <Check className="h-4 w-4 text-primary" /> : f.status === "Missing" ? <AlertCircle className="h-4 w-4 text-destructive" /> : <Clock className="h-4 w-4 text-accent" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{f.item}</p>
+                    <p className="text-xs text-muted-foreground">{f.category}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className={statusStyle(f.status)}>{f.status}</Badge>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+
         {/* Reports Tab */}
         <TabsContent value="reports" className="mt-4">
           <WidgetGrid columns="repeat(auto-fit, minmax(260px, 1fr))">
@@ -324,15 +423,10 @@ export default function Finance() {
               { title: "Revenue vs Payroll", desc: "Profitability snapshot", icon: FileText },
               { title: "Revenue by Channel", desc: "Attribution breakdown", icon: ArrowUpRight },
               { title: "Compensation Report", desc: "Team member pay details", icon: CreditCard },
+              { title: "Tax Prep Summary", desc: "Tax deadlines and document status", icon: Shield },
+              { title: "Filing Readiness Report", desc: "Accountant handoff checklist", icon: ClipboardCheck },
             ].map((r, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="card-widget p-5 cursor-pointer hover:shadow-[var(--shadow-card-hover)] transition-shadow"
-              >
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className="card-widget p-5 cursor-pointer hover:shadow-[var(--shadow-card-hover)] transition-shadow">
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/10">
                     <r.icon className="h-4.5 w-4.5 text-primary" />
@@ -342,9 +436,6 @@ export default function Finance() {
                     <p className="text-xs text-muted-foreground mt-1">{r.desc}</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="mt-4 w-full text-xs border-primary/20 text-primary hover:bg-primary/5">
-                  View Report
-                </Button>
               </motion.div>
             ))}
           </WidgetGrid>

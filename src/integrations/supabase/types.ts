@@ -394,58 +394,127 @@ export type Database = {
       }
       client_branding: {
         Row: {
+          accent_color: string | null
           app_display_name: string | null
           app_icon_url: string | null
           avatar_logo_url: string | null
+          calendar_confirmation_message: string | null
+          calendar_logo_url: string | null
+          calendar_primary_color: string | null
+          calendar_subtitle: string | null
+          calendar_title: string | null
           client_id: string
           company_name: string | null
           created_at: string
           dashboard_logo_url: string | null
+          dashboard_title: string | null
+          display_name: string | null
           favicon_url: string | null
+          filing_readiness_title: string | null
+          finance_dashboard_title: string | null
           id: string
+          login_branding_text: string | null
           logo_url: string | null
+          payroll_header_title: string | null
           primary_color: string | null
+          report_header_title: string | null
+          report_logo_url: string | null
+          report_subtitle: string | null
           secondary_color: string | null
           sidebar_logo_url: string | null
           splash_logo_url: string | null
+          tagline: string | null
+          tax_dashboard_subtitle: string | null
+          tax_document_vault_title: string | null
+          tax_module_title: string | null
+          tax_reminder_header_text: string | null
+          tax_report_header_title: string | null
           updated_at: string
+          updated_by: string | null
           welcome_message: string | null
+          workspace_header_name: string | null
         }
         Insert: {
+          accent_color?: string | null
           app_display_name?: string | null
           app_icon_url?: string | null
           avatar_logo_url?: string | null
+          calendar_confirmation_message?: string | null
+          calendar_logo_url?: string | null
+          calendar_primary_color?: string | null
+          calendar_subtitle?: string | null
+          calendar_title?: string | null
           client_id: string
           company_name?: string | null
           created_at?: string
           dashboard_logo_url?: string | null
+          dashboard_title?: string | null
+          display_name?: string | null
           favicon_url?: string | null
+          filing_readiness_title?: string | null
+          finance_dashboard_title?: string | null
           id?: string
+          login_branding_text?: string | null
           logo_url?: string | null
+          payroll_header_title?: string | null
           primary_color?: string | null
+          report_header_title?: string | null
+          report_logo_url?: string | null
+          report_subtitle?: string | null
           secondary_color?: string | null
           sidebar_logo_url?: string | null
           splash_logo_url?: string | null
+          tagline?: string | null
+          tax_dashboard_subtitle?: string | null
+          tax_document_vault_title?: string | null
+          tax_module_title?: string | null
+          tax_reminder_header_text?: string | null
+          tax_report_header_title?: string | null
           updated_at?: string
+          updated_by?: string | null
           welcome_message?: string | null
+          workspace_header_name?: string | null
         }
         Update: {
+          accent_color?: string | null
           app_display_name?: string | null
           app_icon_url?: string | null
           avatar_logo_url?: string | null
+          calendar_confirmation_message?: string | null
+          calendar_logo_url?: string | null
+          calendar_primary_color?: string | null
+          calendar_subtitle?: string | null
+          calendar_title?: string | null
           client_id?: string
           company_name?: string | null
           created_at?: string
           dashboard_logo_url?: string | null
+          dashboard_title?: string | null
+          display_name?: string | null
           favicon_url?: string | null
+          filing_readiness_title?: string | null
+          finance_dashboard_title?: string | null
           id?: string
+          login_branding_text?: string | null
           logo_url?: string | null
+          payroll_header_title?: string | null
           primary_color?: string | null
+          report_header_title?: string | null
+          report_logo_url?: string | null
+          report_subtitle?: string | null
           secondary_color?: string | null
           sidebar_logo_url?: string | null
           splash_logo_url?: string | null
+          tagline?: string | null
+          tax_dashboard_subtitle?: string | null
+          tax_document_vault_title?: string | null
+          tax_module_title?: string | null
+          tax_reminder_header_text?: string | null
+          tax_report_header_title?: string | null
           updated_at?: string
+          updated_by?: string | null
           welcome_message?: string | null
+          workspace_header_name?: string | null
         }
         Relationships: [
           {
@@ -779,6 +848,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "event_types_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filing_readiness: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          client_id: string
+          created_at: string
+          id: string
+          item_name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          client_id: string
+          created_at?: string
+          id?: string
+          item_name: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          item_name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filing_readiness_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -1524,6 +1637,97 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_deadlines: {
+        Row: {
+          client_id: string
+          created_at: string
+          deadline_date: string
+          deadline_type: string
+          id: string
+          notes: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          deadline_date: string
+          deadline_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          deadline_date?: string
+          deadline_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_deadlines_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_documents: {
+        Row: {
+          client_id: string
+          created_at: string
+          document_type: string
+          file_name: string
+          file_url: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          document_type?: string
+          file_name: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_documents_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
