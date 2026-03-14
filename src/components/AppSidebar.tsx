@@ -1,6 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, Zap, Heart, DollarSign, ListChecks, Activity,
+  LayoutDashboard, Zap, Heart, DollarSign, ListChecks, Activity, Brain,
   Globe, Search, Megaphone, Share2, Users, Star,
   TrendingUp, Eye, Calendar, Workflow, Plug,
   GraduationCap, FileText, Settings, CreditCard,
@@ -22,6 +22,7 @@ interface NavGroup {
 const navStructure: ({ type: "item"; title: string; url: string; icon: any } | { type: "group"; label: string; items: { title: string; url: string; icon: any }[] })[] = [
   { type: "item", title: "Dashboard", url: "/", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Zap },
+  { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain },
   {
     type: "group", label: "Client Overview",
     items: [

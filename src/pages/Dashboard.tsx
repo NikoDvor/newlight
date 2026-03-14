@@ -14,6 +14,7 @@ import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
+import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
@@ -102,7 +103,11 @@ export default function Dashboard() {
         <SystemStatusBar />
       </div>
 
-      {/* Row 2: Priority Actions + Activity Feed + AI Insights */}
+      {/* Row 2: Growth Advisor + Priority Actions + Activity Feed + AI Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <GrowthAdvisorCard />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <DataCard title="Priority Actions">
           <div className="space-y-2">

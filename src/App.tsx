@@ -46,6 +46,7 @@ import MarketResearch from "./pages/MarketResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
 import Integrations from "./pages/Integrations";
+import GrowthAdvisor from "./pages/GrowthAdvisor";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -62,6 +63,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminMonitoring from "./pages/admin/AdminMonitoring";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
@@ -93,6 +95,7 @@ const App = () => (
               <Route path="packages" element={<AdminPackages />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
             </Route>
 
             {/* Client Workspace */}
@@ -129,6 +132,7 @@ const App = () => (
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/agency" element={<AgencyDashboard />} />
               <Route path="/integrations" element={<Integrations />} />
+              <Route path="/growth-advisor" element={<GrowthAdvisor />} />
               <Route path="/business-health" element={<BusinessHealth />} />
               <Route path="/revenue-opportunities" element={<RevenueOpportunities />} />
               <Route path="/priority-actions" element={<PriorityActions />} />
