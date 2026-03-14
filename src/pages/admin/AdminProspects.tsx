@@ -105,9 +105,11 @@ function PipelineSummary({ prospects }: { prospects: Prospect[] }) {
 }
 
 function ProspectCard({ p, onUpdateStage }: { p: Prospect; onUpdateStage: (id: string, stage: string) => void }) {
+  const navigate = useNavigate();
   const stageStyle = stageColors[p.stage] || stageColors.new_submission;
   return (
-    <Card className="border-0 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-colors" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+    <Card className="border-0 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.06] transition-colors cursor-pointer" style={{ borderColor: "hsla(211,96%,60%,.08)" }}
+      onClick={() => navigate(`/admin/prospects/${p.id}`)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex-1 min-w-0">
@@ -124,7 +126,7 @@ function ProspectCard({ p, onUpdateStage }: { p: Prospect; onUpdateStage: (id: s
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
             {p.phone && (
               <a href={`tel:${p.phone}`} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <Phone className="h-3.5 w-3.5 text-white/40 hover:text-white" />
