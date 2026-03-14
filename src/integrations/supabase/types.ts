@@ -274,6 +274,124 @@ export type Database = {
           },
         ]
       }
+      availability_settings: {
+        Row: {
+          client_id: string
+          created_at: string
+          day_of_week: number
+          enabled: boolean
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          day_of_week: number
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          assigned_user: string | null
+          booking_link: string | null
+          calendar_status: string
+          cancellation_reason: string | null
+          client_id: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          event_type_id: string | null
+          id: string
+          intake_answers: Json | null
+          location: string | null
+          original_start_time: string | null
+          reminder_status: string | null
+          start_time: string
+          timezone: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          booking_link?: string | null
+          calendar_status?: string
+          cancellation_reason?: string | null
+          client_id: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          event_type_id?: string | null
+          id?: string
+          intake_answers?: Json | null
+          location?: string | null
+          original_start_time?: string | null
+          reminder_status?: string | null
+          start_time: string
+          timezone?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user?: string | null
+          booking_link?: string | null
+          calendar_status?: string
+          cancellation_reason?: string | null
+          client_id?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          event_type_id?: string | null
+          id?: string
+          intake_answers?: Json | null
+          location?: string | null
+          original_start_time?: string | null
+          reminder_status?: string | null
+          start_time?: string
+          timezone?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_branding: {
         Row: {
           app_display_name: string | null
@@ -608,6 +726,100 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_types: {
+        Row: {
+          active: boolean
+          booking_link: string | null
+          buffer_after: number | null
+          buffer_before: number | null
+          client_id: string
+          color: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          intake_questions: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          booking_link?: string | null
+          buffer_after?: number | null
+          buffer_before?: number | null
+          client_id: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          intake_questions?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          booking_link?: string | null
+          buffer_after?: number | null
+          buffer_before?: number | null
+          client_id?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          intake_questions?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_types_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_adjustments: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          reason: string | null
+          type: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          type?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_adjustments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1004,6 +1216,117 @@ export type Database = {
           },
         ]
       }
+      payroll_line_items: {
+        Row: {
+          adjustments: number | null
+          client_id: string
+          created_at: string
+          final_pay: number | null
+          gross_pay: number | null
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          payroll_run_id: string
+          team_member_id: string
+        }
+        Insert: {
+          adjustments?: number | null
+          client_id: string
+          created_at?: string
+          final_pay?: number | null
+          gross_pay?: number | null
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          payroll_run_id: string
+          team_member_id: string
+        }
+        Update: {
+          adjustments?: number | null
+          client_id?: string
+          created_at?: string
+          final_pay?: number | null
+          gross_pay?: number | null
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          payroll_run_id?: string
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_line_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_line_items_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_line_items_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          approved_at: string | null
+          client_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          pay_period_end: string
+          pay_period_start: string
+          payroll_status: string
+          total_adjustments: number | null
+          total_final_pay: number | null
+          total_gross_pay: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          pay_period_end: string
+          pay_period_start: string
+          payroll_status?: string
+          total_adjustments?: number | null
+          total_final_pay?: number | null
+          total_gross_pay?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          pay_period_end?: string
+          pay_period_start?: string
+          payroll_status?: string
+          total_adjustments?: number | null
+          total_final_pay?: number | null
+          total_gross_pay?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospects: {
         Row: {
           assigned_to: string | null
@@ -1201,6 +1524,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          active_status: boolean
+          client_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          notes: string | null
+          pay_type: string
+          payment_method_status: string | null
+          payroll_frequency: string | null
+          role: string | null
+          salary_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_status?: boolean
+          client_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          notes?: string | null
+          pay_type?: string
+          payment_method_status?: string | null
+          payroll_frequency?: string | null
+          role?: string | null
+          salary_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_status?: boolean
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          notes?: string | null
+          pay_type?: string
+          payment_method_status?: string | null
+          payroll_frequency?: string | null
+          role?: string | null
+          salary_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
