@@ -15,6 +15,7 @@ import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
 import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
+import { CTAButton } from "@/components/CTAButton";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
