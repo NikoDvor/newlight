@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { BackArrow } from "@/components/BackArrow";
+import { LogoUploader } from "@/components/LogoUploader";
 import {
   Loader2, Save, CheckCircle2, ArrowLeft, Building2, Globe, Palette,
   MapPin, Search, Share2, CreditCard, Phone, Video, Users, Plug, Zap
