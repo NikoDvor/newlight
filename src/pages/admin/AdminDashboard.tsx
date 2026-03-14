@@ -112,6 +112,7 @@ export default function AdminDashboard() {
               { label: "Provision Queue", path: "/admin/provision" },
               { label: "Review Fix Now Items", path: "/admin/fix-now" },
               { label: "System Audit Logs", path: "/admin/audit-logs" },
+              { label: "View All Clients", path: "/admin/clients" },
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}
