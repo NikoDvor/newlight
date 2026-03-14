@@ -44,6 +44,13 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     ],
   },
   {
+    type: "group", label: "Enterprise Services",
+    items: [
+      { title: "Finance", url: "/finance", icon: Wallet },
+      { title: "Calendar", url: "/calendar", icon: Calendar },
+    ],
+  },
+  {
     type: "group", label: "Business Intelligence",
     items: [
       { title: "Market Research", url: "/market-research", icon: TrendingUp },
