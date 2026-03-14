@@ -236,7 +236,9 @@ export default function ProposalBooking() {
               <div><Label className="text-xs text-white/60">Instagram URL</Label><Input placeholder="https://instagram.com/..." value={form.instagram_url} onChange={e => update("instagram_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div><Label className="text-xs text-white/60">Facebook URL</Label><Input placeholder="https://facebook.com/..." value={form.facebook_url} onChange={e => update("facebook_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div><Label className="text-xs text-white/60">Other Social Links</Label><Input placeholder="LinkedIn, TikTok, etc." value={form.other_social} onChange={e => update("other_social", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
-              <div><Label className="text-xs text-white/60">Logo URL</Label><Input placeholder="https://your-logo.com/logo.png" value={form.logo_url} onChange={e => update("logo_url", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
+              <div className="sm:col-span-2">
+                <LogoUploader value={form.logo_url} onChange={url => update("logo_url", url)} label="Logo" dark={true} />
+              </div>
               <div><Label className="text-xs text-white/60">Proposal Recipient Email (if different)</Label><Input type="email" placeholder="other@company.com" value={form.proposal_recipient_email} onChange={e => update("proposal_recipient_email", e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" /></div>
               <div>
                 <Label className="text-xs text-white/60">Primary Brand Color</Label>
