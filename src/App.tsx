@@ -88,6 +88,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>
