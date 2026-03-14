@@ -1,10 +1,11 @@
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
-import { ClientBrandingSettings } from "@/components/ClientBrandingSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Link } from "react-router-dom";
+import { Palette, ArrowRight } from "lucide-react";
 
 const teamMembers = [
   { name: "Alex Johnson", role: "Account Manager", email: "alex@newlight.com" },
@@ -18,6 +19,22 @@ export default function SettingsPage() {
       <PageHeader title="Settings" description="Manage your account and preferences" />
 
       <div className="space-y-6">
+        {/* Branding Settings Link */}
+        <Link to="/branding-settings">
+          <div className="card-widget p-5 flex items-center justify-between cursor-pointer hover:shadow-[var(--shadow-card-hover)] transition-all group">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/10">
+                <Palette className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Branding Settings</p>
+                <p className="text-xs text-muted-foreground">Customize your workspace appearance, logos, colors, and module branding</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </Link>
+
         <DataCard title="Company Information">
           <div className="space-y-4">
             <div>
@@ -68,8 +85,6 @@ export default function SettingsPage() {
             ))}
           </div>
         </DataCard>
-
-        <ClientBrandingSettings />
       </div>
     </div>
   );

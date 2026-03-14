@@ -76,6 +76,7 @@ import ClientSetup from "./pages/ClientSetup";
 import BrandAssets from "./pages/BrandAssets";
 import Finance from "./pages/Finance";
 import CalendarPage from "./pages/CalendarPage";
+import BrandingSettings from "./pages/BrandingSettings";
 
 const queryClient = new QueryClient();
 
