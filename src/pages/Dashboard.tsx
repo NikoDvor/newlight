@@ -3,6 +3,10 @@ import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { SystemStatusBar } from "@/components/SystemStatusBar";
+import { MoneyMeter } from "@/components/MoneyMeter";
+import { GrowthAutopilot } from "@/components/GrowthAutopilot";
+import { LeadScoringPanel } from "@/components/LeadScoringPanel";
+import { CampaignEngine } from "@/components/CampaignEngine";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
