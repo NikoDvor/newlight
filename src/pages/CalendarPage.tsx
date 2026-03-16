@@ -9,7 +9,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import {
   Calendar as CalendarIcon, Clock, Users, Plus, Check, X, RefreshCw,
-  Video, MapPin, Link2, ChevronLeft, ChevronRight, List, LayoutGrid, Columns, CalendarDays
+  Video, MapPin, Link2, ChevronLeft, ChevronRight, List, LayoutGrid, Columns, CalendarDays,
+  Settings2, Trash2, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,11 +83,14 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [calendars, setCalendars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda" | "calendars">("month");
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState<any>(null);
+  const [newCalOpen, setNewCalOpen] = useState(false);
+  const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
     start_date: "", start_time: "", duration: "30", location: "zoom",
@@ -96,15 +100,39 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes] = await Promise.all([
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
+      supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
     setContacts(cRes.data || []);
+    setCalendars(calRes.data || []);
     setLoading(false);
+  };
+
+  const createCalendar = async () => {
+    if (!activeClientId || !newCal.calendar_name.trim()) return;
+    const { error } = await supabase.from("calendars").insert({
+      client_id: activeClientId,
+      calendar_name: newCal.calendar_name,
+      calendar_type: newCal.calendar_type,
+      description: newCal.description || null,
+      default_location: newCal.default_location || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Calendar created" });
+    setNewCal({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+    setNewCalOpen(false);
+    fetchData();
+  };
+
+  const deleteCalendar = async (id: string) => {
+    await supabase.from("calendars").delete().eq("id", id);
+    toast({ title: "Calendar deleted" });
+    fetchData();
   };
 
   useEffect(() => { fetchData(); }, [activeClientId]);
@@ -290,6 +318,7 @@ export default function CalendarPage() {
         <MetricCard label="Cancelled" value={String(cancelledCount)} change="" icon={X} />
         <MetricCard label="No Shows" value={String(noShowCount)} change="" icon={Clock} />
         <MetricCard label="Event Types" value={String(eventTypes.length)} change="" icon={Users} />
+        <MetricCard label="Calendars" value={String(calendars.length)} change="" icon={Settings2} />
       </WidgetGrid>
 
       {/* Calendar Controls */}
@@ -306,6 +335,7 @@ export default function CalendarPage() {
             { v: "week" as const, icon: Columns, label: "Week" },
             { v: "day" as const, icon: CalendarDays, label: "Day" },
             { v: "agenda" as const, icon: List, label: "Agenda" },
+            { v: "calendars" as const, icon: Settings2, label: "Calendars" },
           ].map(({ v, icon: Icon, label }) => (
             <Button key={v} variant={view === v ? "default" : "ghost"} size="sm" className="h-7 text-xs gap-1" onClick={() => setView(v)}>
               <Icon className="h-3 w-3" />{label}
@@ -451,6 +481,99 @@ export default function CalendarPage() {
                 </div>
               </motion.div>
             ))
+          )}
+        </div>
+      )}
+
+      {/* CALENDARS VIEW */}
+      {view === "calendars" && (
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Your Calendars</h3>
+            <Dialog open={newCalOpen} onOpenChange={setNewCalOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" /> New Calendar</Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border">
+                <DialogHeader><DialogTitle className="text-foreground">Create Calendar</DialogTitle></DialogHeader>
+                <div className="space-y-3 pt-2">
+                  <div><Label>Calendar Name *</Label><Input value={newCal.calendar_name} onChange={e => setNewCal(p => ({ ...p, calendar_name: e.target.value }))} placeholder="e.g. Sales Calendar" className="bg-background border-border" /></div>
+                  <div><Label>Type</Label>
+                    <Select value={newCal.calendar_type} onValueChange={v => setNewCal(p => ({ ...p, calendar_type: v }))}>
+                      <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="sales">Sales</SelectItem>
+                        <SelectItem value="consultation">Consultation</SelectItem>
+                        <SelectItem value="support">Support</SelectItem>
+                        <SelectItem value="team">Team</SelectItem>
+                        <SelectItem value="personal">Personal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Description</Label><Input value={newCal.description} onChange={e => setNewCal(p => ({ ...p, description: e.target.value }))} placeholder="Optional description" className="bg-background border-border" /></div>
+                  <div><Label>Default Location</Label>
+                    <Select value={newCal.default_location} onValueChange={v => setNewCal(p => ({ ...p, default_location: v }))}>
+                      <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="zoom">Zoom</SelectItem>
+                        <SelectItem value="phone">Phone</SelectItem>
+                        <SelectItem value="office">In Person</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={createCalendar} disabled={!newCal.calendar_name.trim()}>Create Calendar</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {calendars.length === 0 ? (
+            <DataCard title="Calendars">
+              <div className="py-10 text-center">
+                <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                  <CalendarIcon className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">No calendars yet</p>
+                <p className="text-xs text-muted-foreground mb-4">Create separate calendars for sales, consultations, support, or personal scheduling.</p>
+                <Button size="sm" onClick={() => setNewCalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Calendar</Button>
+              </div>
+            </DataCard>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {calendars.map(cal => {
+                const calEvents = events.filter(e => e.calendar_id === cal.id);
+                const upcomingCal = calEvents.filter(e => new Date(e.start_time) >= new Date() && e.calendar_status !== "cancelled");
+                return (
+                  <div key={cal.id} className="card-widget p-4 rounded-2xl">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10">
+                          <CalendarIcon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{cal.calendar_name}</p>
+                          <Badge variant="outline" className="text-[9px] mt-0.5">{cal.calendar_type}</Badge>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteCalendar(cal.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    {cal.description && <p className="text-xs text-muted-foreground mb-2">{cal.description}</p>}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>{upcomingCal.length} upcoming</span>
+                      <span>{calEvents.length} total</span>
+                      {cal.default_location && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{cal.default_location}</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Badge className={`text-[9px] ${cal.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"}`}>{cal.status}</Badge>
+                      <span className="text-[10px] text-muted-foreground">{cal.timezone}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}

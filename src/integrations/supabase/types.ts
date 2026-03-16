@@ -430,11 +430,144 @@ export type Database = {
           },
         ]
       }
+      blackout_dates: {
+        Row: {
+          calendar_id: string | null
+          client_id: string
+          created_at: string
+          end_datetime: string
+          id: string
+          reason: string | null
+          start_datetime: string
+        }
+        Insert: {
+          calendar_id?: string | null
+          client_id: string
+          created_at?: string
+          end_datetime: string
+          id?: string
+          reason?: string | null
+          start_datetime: string
+        }
+        Update: {
+          calendar_id?: string | null
+          client_id?: string
+          created_at?: string
+          end_datetime?: string
+          id?: string
+          reason?: string | null
+          start_datetime?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blackout_dates_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blackout_dates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_links: {
+        Row: {
+          active: boolean
+          calendar_id: string | null
+          client_id: string
+          created_at: string
+          id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          calendar_id?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          calendar_id?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_links_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_access: {
+        Row: {
+          access_role: string
+          calendar_id: string
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          access_role?: string
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          access_role?: string
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_access_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           assigned_user: string | null
           booking_link: string | null
           booking_source: string | null
+          calendar_id: string | null
           calendar_status: string
           cancellation_reason: string | null
           client_id: string
@@ -463,6 +596,7 @@ export type Database = {
           assigned_user?: string | null
           booking_link?: string | null
           booking_source?: string | null
+          calendar_id?: string | null
           calendar_status?: string
           cancellation_reason?: string | null
           client_id: string
@@ -491,6 +625,7 @@ export type Database = {
           assigned_user?: string | null
           booking_link?: string | null
           booking_source?: string | null
+          calendar_id?: string | null
           calendar_status?: string
           cancellation_reason?: string | null
           client_id?: string
@@ -517,6 +652,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "calendar_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "calendar_events_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -535,6 +677,56 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendars: {
+        Row: {
+          calendar_name: string
+          calendar_type: string
+          client_id: string
+          created_at: string
+          default_location: string | null
+          description: string | null
+          id: string
+          owner_user_id: string | null
+          status: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          calendar_name: string
+          calendar_type?: string
+          client_id: string
+          created_at?: string
+          default_location?: string | null
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calendar_name?: string
+          calendar_type?: string
+          client_id?: string
+          created_at?: string
+          default_location?: string | null
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendars_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
