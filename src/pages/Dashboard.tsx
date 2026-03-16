@@ -227,7 +227,11 @@ export default function Dashboard() {
         </DataCard>
       </div>
 
-      <div className="mt-6"><RevenueCalculator /></div>
+      {/* Campaign Engine */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <CampaignEngine />
+        <RevenueCalculator />
+      </div>
       <div className="mt-6"><PredictiveGrowth /></div>
     </div>
   );
