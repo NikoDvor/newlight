@@ -143,6 +143,15 @@ export default function Dashboard() {
         <CTAButton variant="book-kickoff" size="sm" />
       </div>
 
+      {/* Money Meter */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+          <DollarSign className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 56%)" }} />
+          Daily Money Meter
+        </h3>
+        <MoneyMeter />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <HealthScoreWidget score={73} />
         <div className="lg:col-span-2">
