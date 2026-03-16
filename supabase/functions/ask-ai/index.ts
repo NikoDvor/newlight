@@ -143,6 +143,25 @@ serve(async (req) => {
         const enabled = automations.filter(a => a.enabled).length;
         context += `## Automations\n- Total: ${automations.length}\n- Active: ${enabled}\n- Disabled: ${automations.length - enabled}\n\n`;
       }
+
+      // Workforce & Payroll
+      const { data: workers } = await sb.from("workers").select("full_name, role_title, department, status, pay_type, hourly_rate, salary_amount").eq("client_id", client_id);
+      if (workers?.length) {
+        const active = workers.filter(w => w.status === "active").length;
+        context += `## Workforce\n- Total Workers: ${workers.length}\n- Active: ${active}\n${workers.slice(0, 10).map(w => `- ${w.full_name} (${w.role_title || "No title"}, ${w.department || "No dept"}) — ${w.pay_type}, ${w.status}`).join("\n")}\n\n`;
+      }
+
+      const { data: payrollRuns } = await sb.from("payroll_runs").select("pay_period_start, pay_period_end, net_pay_total, payroll_status").eq("client_id", client_id).order("created_at", { ascending: false }).limit(5);
+      if (payrollRuns?.length) {
+        const totalPaid = payrollRuns.filter(p => p.payroll_status === "paid").reduce((s, p) => s + (Number(p.net_pay_total) || 0), 0);
+        context += `## Payroll\n- Recent Runs: ${payrollRuns.length}\n- Total Paid: $${totalPaid.toLocaleString()}\n${payrollRuns.map(p => `- ${p.pay_period_start} to ${p.pay_period_end}: $${Number(p.net_pay_total || 0).toLocaleString()} (${p.payroll_status})`).join("\n")}\n\n`;
+      }
+
+      // Health Scores
+      const { data: healthScores } = await sb.from("client_health_scores").select("*").eq("client_id", client_id).maybeSingle();
+      if (healthScores) {
+        context += `## Health Scores\n- Overall: ${healthScores.overall_score}/100\n- Website: ${healthScores.website_score}\n- SEO: ${healthScores.seo_score}\n- Leads: ${healthScores.leads_score}\n- Reviews: ${healthScores.reviews_score}\n- Social: ${healthScores.social_score}\n- Ads: ${healthScores.ads_score}\n- Automation: ${healthScores.automation_score}\n- Conversion: ${healthScores.conversion_score}\n\n`;
+      }
     }
 
     context += "\nProvide actionable, specific answers using the data above. Suggest concrete next steps. If data is missing, acknowledge it and recommend what to set up. Be concise but helpful.";
