@@ -119,6 +119,7 @@ const App = () => (
               <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
               <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
               <Route path="welcome" element={<AdminWelcome />} />
+              <Route path="app-settings" element={<AdminAppSettings />} />
             </Route>
 
             {/* Client Workspace */}

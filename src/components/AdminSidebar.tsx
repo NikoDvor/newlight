@@ -26,6 +26,7 @@ const navItems = [
   { title: "Package Access", url: "/admin/packages", icon: Package },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
+  { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
 ];
 
