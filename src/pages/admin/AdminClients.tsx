@@ -190,6 +190,7 @@ export default function AdminClients() {
     if (s === "active") return "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]";
     if (s === "provisioning") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-neon))]";
     if (s === "setup_in_progress") return "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]";
+    if (s === "suspended") return "bg-[hsla(0,70%,50%,.15)] text-[hsl(0,70%,68%)]";
     return "bg-white/5 text-white/40";
   };
 
