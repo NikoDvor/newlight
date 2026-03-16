@@ -18,6 +18,7 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { onEmailSent } from "@/lib/crmAutomations";
 import { motion } from "framer-motion";
 
 const CONNECTION_STATUS: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
