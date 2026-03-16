@@ -335,6 +335,7 @@ export default function CalendarPage() {
             { v: "week" as const, icon: Columns, label: "Week" },
             { v: "day" as const, icon: CalendarDays, label: "Day" },
             { v: "agenda" as const, icon: List, label: "Agenda" },
+            { v: "calendars" as const, icon: Settings2, label: "Calendars" },
           ].map(({ v, icon: Icon, label }) => (
             <Button key={v} variant={view === v ? "default" : "ghost"} size="sm" className="h-7 text-xs gap-1" onClick={() => setView(v)}>
               <Icon className="h-3 w-3" />{label}
