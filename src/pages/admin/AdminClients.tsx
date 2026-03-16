@@ -172,6 +172,18 @@ export default function AdminClients() {
     navigate("/");
   };
 
+  const handleSuspend = async (client: Client) => {
+    const newStatus = client.status === "suspended" ? "active" : "suspended";
+    await supabase.from("clients").update({ status: newStatus }).eq("id", client.id);
+    await supabase.from("audit_logs").insert({
+      action: newStatus === "suspended" ? "client_suspended" : "client_unsuspended",
+      client_id: client.id, module: "clients",
+      metadata: { business_name: client.business_name },
+    });
+    toast.success(`${client.business_name} ${newStatus === "suspended" ? "suspended" : "reactivated"}`);
+    fetchClients();
+  };
+
   const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
 
   const statusColor = (s: string) => {
