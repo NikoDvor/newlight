@@ -13,11 +13,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock } from "lucide-react";
+import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock, Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+
+const CRM_PROVIDERS = [
+  { value: "gohighlevel", label: "GoHighLevel" },
+  { value: "hubspot", label: "HubSpot" },
+  { value: "salesforce", label: "Salesforce" },
+  { value: "pipedrive", label: "Pipedrive" },
+  { value: "zoho", label: "Zoho CRM" },
+  { value: "other", label: "Other CRM" },
+];
 
 const PIPELINE_STAGES = [
   "new_lead", "contacted", "qualified", "appointment_booked",
