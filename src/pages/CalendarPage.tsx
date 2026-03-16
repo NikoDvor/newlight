@@ -258,6 +258,17 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               </div>
+              {/* Dynamic Time Slot Picker */}
+              {activeClientId && (
+                <TimeSlotPicker
+                  clientId={activeClientId}
+                  duration={parseInt(newEvent.duration) || 30}
+                  selectedDate={newEvent.start_date}
+                  selectedTime={newEvent.start_time}
+                  onDateChange={d => setNewEvent(p => ({ ...p, start_date: d, start_time: "" }))}
+                  onTimeChange={t => setNewEvent(p => ({ ...p, start_time: t }))}
+                />
+              )}
               <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
