@@ -189,7 +189,51 @@ export default function Onboarding() {
         }
       }
 
-      // 6. Log audit
+      // 6. Create default pipeline stages
+      const leadPipeline = [
+        { stage_name: "New Lead", stage_order: 0, color: "#3B82F6" },
+        { stage_name: "Contacted", stage_order: 1, color: "#06B6D4" },
+        { stage_name: "Qualified", stage_order: 2, color: "#10B981" },
+        { stage_name: "Appointment Booked", stage_order: 3, color: "#8B5CF6" },
+        { stage_name: "Proposal Sent", stage_order: 4, color: "#F59E0B" },
+        { stage_name: "Negotiation", stage_order: 5, color: "#F97316" },
+        { stage_name: "Closed Won", stage_order: 6, color: "#22C55E" },
+        { stage_name: "Closed Lost", stage_order: 7, color: "#EF4444" },
+      ];
+      const customerPipeline = [
+        { stage_name: "Active Customer", stage_order: 0, color: "#22C55E" },
+        { stage_name: "Repeat Customer", stage_order: 1, color: "#10B981" },
+        { stage_name: "Referral Source", stage_order: 2, color: "#3B82F6" },
+        { stage_name: "VIP Customer", stage_order: 3, color: "#8B5CF6" },
+        { stage_name: "Inactive Customer", stage_order: 4, color: "#6B7280" },
+      ];
+      const recoveryPipeline = [
+        { stage_name: "Negative Feedback Received", stage_order: 0, color: "#EF4444" },
+        { stage_name: "Contact Customer", stage_order: 1, color: "#F59E0B" },
+        { stage_name: "Issue Resolved", stage_order: 2, color: "#10B981" },
+        { stage_name: "Review Request Resent", stage_order: 3, color: "#3B82F6" },
+      ];
+      await supabase.from("pipeline_stages").insert([
+        ...leadPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "lead" })),
+        ...customerPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "customer" })),
+        ...recoveryPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "review_recovery" })),
+      ] as any);
+
+      // 7. Create default availability settings
+      const defaultAvailability = [1, 2, 3, 4, 5].map(day => ({
+        client_id: activeClientId, day_of_week: day, enabled: true,
+        start_time: "09:00", end_time: "17:00",
+      }));
+      await supabase.from("availability_settings").insert(defaultAvailability);
+
+      // 8. Create default event type
+      await supabase.from("event_types").insert({
+        client_id: activeClientId, name: "Discovery Call",
+        description: "Initial consultation call", duration_minutes: 30,
+        color: "#3B82F6", active: true,
+      });
+
+      // 9. Log audit
       await supabase.from("audit_logs").insert({
         client_id: activeClientId,
         user_id: user?.id,
@@ -198,11 +242,11 @@ export default function Onboarding() {
         metadata: { businessName, businessType, integrations_selected: Object.keys(integrations).filter(k => integrations[k]) },
       });
 
-      // 7. Create activity
+      // 10. Create activity
       await supabase.from("crm_activities").insert({
         client_id: activeClientId,
         activity_type: "onboarding_completed",
-        activity_note: `Onboarding form submitted for ${businessName}. ${Object.values(integrations).filter(Boolean).length} integrations selected.`,
+        activity_note: `Onboarding form submitted for ${businessName}. ${Object.values(integrations).filter(Boolean).length} integrations selected. Default pipelines, calendar availability, and event types created.`,
         created_by: user?.id,
       });
 

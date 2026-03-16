@@ -13,11 +13,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock } from "lucide-react";
+import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock, Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+
+const CRM_PROVIDERS = [
+  { value: "gohighlevel", label: "GoHighLevel" },
+  { value: "hubspot", label: "HubSpot" },
+  { value: "salesforce", label: "Salesforce" },
+  { value: "pipedrive", label: "Pipedrive" },
+  { value: "zoho", label: "Zoho CRM" },
+  { value: "other", label: "Other CRM" },
+];
 
 const PIPELINE_STAGES = [
   "new_lead", "contacted", "qualified", "appointment_booked",
@@ -46,35 +55,79 @@ export default function CRM() {
   const [leads, setLeads] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
   const [detailContact, setDetailContact] = useState<any>(null);
+  const [crmMode, setCrmMode] = useState<string>("native");
+  const [crmConnection, setCrmConnection] = useState<any>(null);
+  const [selectedProvider, setSelectedProvider] = useState("");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
     lead_source: "", pipeline_stage: "new_lead",
   });
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+  const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, dRes, lRes, aRes, tRes] = await Promise.all([
+    const [cRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_leads").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("clients").select("crm_mode").eq("id", activeClientId).maybeSingle(),
+      supabase.from("crm_connections").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1),
+      supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
     ]);
     setContacts(cRes.data || []);
     setDeals(dRes.data || []);
     setLeads(lRes.data || []);
     setActivities(aRes.data || []);
     setTasks(tRes.data || []);
+    setNotes(notesRes.data || []);
+    if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
+    if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, [activeClientId]);
+
+  const switchCrmMode = async (mode: string) => {
+    if (!activeClientId) return;
+    await supabase.from("clients").update({ crm_mode: mode } as any).eq("id", activeClientId);
+    setCrmMode(mode);
+    await supabase.from("audit_logs").insert({ client_id: activeClientId, action: "crm_mode_changed", module: "crm", metadata: { mode } });
+    toast({ title: `CRM mode set to ${mode === "native" ? "Native" : "External"}` });
+  };
+
+  const connectExternalCrm = async () => {
+    if (!activeClientId || !selectedProvider) return;
+    const { data } = await supabase.from("crm_connections").insert({
+      client_id: activeClientId, crm_provider_name: selectedProvider, connection_status: "pending",
+    } as any).select().single();
+    if (data) setCrmConnection(data);
+    await supabase.from("audit_logs").insert({ client_id: activeClientId, action: "external_crm_connected", module: "crm", metadata: { provider: selectedProvider } });
+    toast({ title: "External CRM connection initiated" });
+  };
+
+  const addNote = async (contactId?: string) => {
+    if (!activeClientId || !newNote.trim()) return;
+    await supabase.from("crm_notes").insert({
+      client_id: activeClientId, contact_id: contactId || null, content: newNote,
+    } as any);
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "note_added",
+      activity_note: `Note added${contactId ? " to contact" : ""}: ${newNote.substring(0, 80)}`,
+      contact_id: contactId || null,
+    } as any);
+    setNewNote("");
+    toast({ title: "Note added" });
+    fetchData();
+  };
 
   const addContact = async () => {
     if (!activeClientId || !newContact.full_name) return;
@@ -169,6 +222,66 @@ export default function CRM() {
         tips={["New leads are automatically scored based on source and engagement", "Contacts update when appointments are booked via Calendar", "Email conversations are linked to contacts automatically"]}
       />
 
+      {/* CRM Mode Selector */}
+      <div className="mb-4 p-4 rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-xs font-semibold text-foreground">CRM Mode</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {crmMode === "native" ? "Using built-in NewLight CRM" : "Connected to external CRM"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant={crmMode === "native" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
+              onClick={() => switchCrmMode("native")}>
+              <CheckCircle className="h-3.5 w-3.5" /> Native CRM
+            </Button>
+            <Button size="sm" variant={crmMode === "external" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
+              onClick={() => switchCrmMode("external")}>
+              <Link2 className="h-3.5 w-3.5" /> External CRM
+            </Button>
+          </div>
+        </div>
+
+        {crmMode === "external" && (
+          <div className="mt-4 pt-4 border-t border-border">
+            {crmConnection ? (
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${crmConnection.connection_status === "connected" ? "bg-primary/10" : "bg-accent/10"}`}>
+                    {crmConnection.connection_status === "connected" ? <CheckCircle className="h-4 w-4 text-primary" /> : <AlertCircle className="h-4 w-4 text-accent" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{CRM_PROVIDERS.find(p => p.value === crmConnection.crm_provider_name)?.label || crmConnection.crm_provider_name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Status: {crmConnection.connection_status} · Last sync: {crmConnection.last_synced_at ? new Date(crmConnection.last_synced_at).toLocaleString() : "Never"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1">
+                    <RefreshCw className="h-3 w-3" /> Sync Now
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label className="text-xs mb-1.5 block">CRM Provider</Label>
+                  <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select provider" /></SelectTrigger>
+                    <SelectContent>{CRM_PROVIDERS.map(p => <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <Button size="sm" className="h-9 text-xs gap-1" onClick={connectExternalCrm} disabled={!selectedProvider}>
+                  <Link2 className="h-3.5 w-3.5" /> Connect
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {!hasRealData && (
         <SetupBanner icon={Users} title="Build Your Sales Pipeline"
           description="Add contacts and create deals to start tracking your sales pipeline, revenue, and customer relationships."
@@ -191,6 +304,7 @@ export default function CRM() {
             <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts</TabsTrigger>
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
             <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
           </TabsList>
 
@@ -349,6 +463,29 @@ export default function CRM() {
             </DataCard>
           </TabsContent>
 
+          <TabsContent value="notes" className="mt-4">
+            <DataCard title="Notes">
+              <div className="mb-4 flex gap-2">
+                <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note..." className="min-h-[44px] flex-1 resize-none" rows={2} />
+                <Button size="icon" className="shrink-0 self-end" onClick={() => addNote()} disabled={!newNote.trim()}>
+                  <StickyNote className="h-4 w-4" />
+                </Button>
+              </div>
+              {notes.length === 0 ? (
+                <div className="py-4 text-center"><p className="text-sm text-muted-foreground">No notes yet.</p></div>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map((n: any) => (
+                    <div key={n.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{n.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
           <TabsContent value="activity" className="mt-4">
             <DataCard title="Recent Activity">
               {activities.length === 0 ? (
@@ -381,14 +518,19 @@ export default function CRM() {
                 <SheetDescription>Contact Details</SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-4">
+                <Badge className={`text-[10px] ${detailContact.contact_status === "customer" ? "bg-primary/10 text-primary" : detailContact.contact_status === "vip" ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}>
+                  {detailContact.contact_status || "Lead"}
+                </Badge>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: "Email", value: detailContact.email },
                     { label: "Phone", value: detailContact.phone },
-                    { label: "Address", value: detailContact.address },
+                    { label: "Secondary Phone", value: detailContact.secondary_phone },
+                    { label: "Address", value: [detailContact.address, detailContact.city, detailContact.state, detailContact.zip].filter(Boolean).join(", ") },
                     { label: "Lead Source", value: detailContact.lead_source },
                     { label: "Lead Score", value: detailContact.lead_score },
                     { label: "Pipeline Stage", value: STAGE_LABELS[detailContact.pipeline_stage] || detailContact.pipeline_stage },
+                    { label: "Customer Value", value: detailContact.customer_value ? `$${Number(detailContact.customer_value).toLocaleString()}` : "—" },
                     { label: "Lifetime Revenue", value: detailContact.lifetime_revenue ? `$${Number(detailContact.lifetime_revenue).toLocaleString()}` : "—" },
                     { label: "Appointments", value: detailContact.number_of_appointments },
                     { label: "First Contact", value: detailContact.first_contact_date ? new Date(detailContact.first_contact_date).toLocaleDateString() : "—" },
@@ -410,6 +552,22 @@ export default function CRM() {
                     </div>
                   </div>
                 )}
+                {/* Notes for this contact */}
+                <div className="pt-4 border-t border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Notes</p>
+                  <div className="flex gap-2 mb-3">
+                    <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add note..." className="min-h-[40px] flex-1 resize-none text-xs" rows={2} />
+                    <Button size="icon" className="shrink-0 self-end h-8 w-8" onClick={() => addNote(detailContact.id)} disabled={!newNote.trim()}>
+                      <StickyNote className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {notes.filter((n: any) => n.contact_id === detailContact.id).map((n: any) => (
+                    <div key={n.id} className="p-2 rounded-lg bg-secondary/50 mb-2">
+                      <p className="text-xs text-foreground">{n.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
