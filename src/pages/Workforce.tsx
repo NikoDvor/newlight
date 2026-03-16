@@ -69,7 +69,7 @@ interface PayrollLineItem {
   team_member_id: string; pay_type: string | null; hours_worked: number;
   overtime_hours: number; base_pay: number; overtime_pay: number;
   commission_pay: number; bonus_pay: number; reimbursement_pay: number;
-  deduction_amount: number; net_pay: number; gross_pay: number;
+  deduction_amount: number; net_pay: number; gross_pay: number; final_pay: number;
   notes: string | null; status: string | null; created_at: string;
 }
 
