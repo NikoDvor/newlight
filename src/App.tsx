@@ -85,6 +85,7 @@ import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
+import Workforce from "./pages/Workforce";
 
 const queryClient = new QueryClient();
 
