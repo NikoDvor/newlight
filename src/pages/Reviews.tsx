@@ -20,6 +20,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { onReviewFeedbackReceived } from "@/lib/crmAutomations";
 
 const STATUS_STYLE: Record<string, string> = {
   sent: "bg-blue-50 text-blue-700",
