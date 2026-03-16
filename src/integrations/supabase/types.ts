@@ -3354,6 +3354,7 @@ export type Database = {
           note_summary: string | null
           start_time: string | null
           submitted_at: string | null
+          timesheet_id: string | null
           total_hours: number | null
           total_minutes: number | null
           updated_at: string
@@ -3384,6 +3385,7 @@ export type Database = {
           note_summary?: string | null
           start_time?: string | null
           submitted_at?: string | null
+          timesheet_id?: string | null
           total_hours?: number | null
           total_minutes?: number | null
           updated_at?: string
@@ -3414,6 +3416,7 @@ export type Database = {
           note_summary?: string | null
           start_time?: string | null
           submitted_at?: string | null
+          timesheet_id?: string | null
           total_hours?: number | null
           total_minutes?: number | null
           updated_at?: string
@@ -3428,7 +3431,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "time_entries_timesheet_id_fkey"
+            columns: ["timesheet_id"]
+            isOneToOne: false
+            referencedRelation: "timesheets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "time_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheets: {
+        Row: {
+          approval_comment: string | null
+          approved_at: string | null
+          approved_by: string | null
+          client_id: string
+          created_at: string
+          id: string
+          locked_at: string | null
+          pay_period_end: string
+          pay_period_start: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          status: string
+          submitted_at: string | null
+          total_billable_hours: number
+          total_hours: number
+          total_nonbillable_hours: number
+          total_notes_count: number
+          total_overtime_hours: number
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          approval_comment?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          pay_period_end: string
+          pay_period_start: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_billable_hours?: number
+          total_hours?: number
+          total_nonbillable_hours?: number
+          total_notes_count?: number
+          total_overtime_hours?: number
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          approval_comment?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          locked_at?: string | null
+          pay_period_end?: string
+          pay_period_start?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_billable_hours?: number
+          total_hours?: number
+          total_nonbillable_hours?: number
+          total_notes_count?: number
+          total_overtime_hours?: number
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheets_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
