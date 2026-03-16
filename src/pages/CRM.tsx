@@ -463,6 +463,29 @@ export default function CRM() {
             </DataCard>
           </TabsContent>
 
+          <TabsContent value="notes" className="mt-4">
+            <DataCard title="Notes">
+              <div className="mb-4 flex gap-2">
+                <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note..." className="min-h-[44px] flex-1 resize-none" rows={2} />
+                <Button size="icon" className="shrink-0 self-end" onClick={() => addNote()} disabled={!newNote.trim()}>
+                  <StickyNote className="h-4 w-4" />
+                </Button>
+              </div>
+              {notes.length === 0 ? (
+                <div className="py-4 text-center"><p className="text-sm text-muted-foreground">No notes yet.</p></div>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map((n: any) => (
+                    <div key={n.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{n.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
           <TabsContent value="activity" className="mt-4">
             <DataCard title="Recent Activity">
               {activities.length === 0 ? (
