@@ -17,10 +17,13 @@ type ActivityType =
   | "crm_sync_completed" | "crm_sync_failed"
   | "stage_changed" | "note_added" | "import_completed";
 
+// Helper to ensure supabase builder chains are proper promises
+const exec = (builder: any): Promise<any> => Promise.resolve(builder);
+
 async function logActivity(clientId: string, type: ActivityType, note: string, opts?: {
   contactId?: string; companyId?: string; relatedType?: string; relatedId?: string;
 }) {
-  return supabase.from("crm_activities").insert({
+  return exec(supabase.from("crm_activities").insert({
     client_id: clientId,
     activity_type: type,
     activity_note: note,
@@ -28,13 +31,13 @@ async function logActivity(clientId: string, type: ActivityType, note: string, o
     company_id: opts?.companyId || null,
     related_type: opts?.relatedType || null,
     related_id: opts?.relatedId || null,
-  });
+  }));
 }
 
 async function logAudit(clientId: string, action: string, module: string, metadata?: Record<string, any>) {
-  return supabase.from("audit_logs").insert({
+  return exec(supabase.from("audit_logs").insert({
     client_id: clientId, action, module, metadata: metadata || {},
-  });
+  }));
 }
 
 // ─── APPOINTMENT LIFECYCLE ─────────────────────────────────────────
@@ -46,23 +49,22 @@ export async function onAppointmentBooked(clientId: string, event: any) {
   if (event.contact_email || event.contact_name) {
     const { data: existing } = await supabase
       .from("crm_contacts")
-      .select("id")
+      .select("id, number_of_appointments")
       .eq("client_id", clientId)
       .eq("email", event.contact_email || "")
       .maybeSingle();
 
     if (existing) {
-      promises.push(
+      promises.push(exec(
         supabase.from("crm_contacts").update({
           last_interaction_date: new Date().toISOString(),
-          number_of_appointments: (event._contact_appts || 0) + 1,
+          number_of_appointments: (existing.number_of_appointments || 0) + 1,
         } as any).eq("id", existing.id)
-      );
-      // Link event to contact
+      ));
       if (!event.contact_id) {
-        promises.push(
+        promises.push(exec(
           supabase.from("calendar_events").update({ contact_id: existing.id }).eq("id", event.id)
-        );
+        ));
       }
     } else if (event.contact_name) {
       const { data: newContact } = await supabase.from("crm_contacts").insert({
@@ -77,9 +79,9 @@ export async function onAppointmentBooked(clientId: string, event: any) {
         number_of_appointments: 1,
       } as any).select("id").single();
       if (newContact) {
-        promises.push(
+        promises.push(exec(
           supabase.from("calendar_events").update({ contact_id: newContact.id }).eq("id", event.id)
-        );
+        ));
         promises.push(logActivity(clientId, "contact_created", `Contact "${event.contact_name}" auto-created from booking`, { contactId: newContact.id }));
       }
     }
@@ -96,18 +98,17 @@ export async function onAppointmentBooked(clientId: string, event: any) {
 export async function onAppointmentCompleted(clientId: string, event: any) {
   const promises: Promise<any>[] = [];
 
-  // Update contact last interaction
   if (event.contact_id) {
-    promises.push(
+    promises.push(exec(
       supabase.from("crm_contacts").update({
         last_interaction_date: new Date().toISOString(),
       } as any).eq("id", event.contact_id)
-    );
+    ));
   }
 
   // Auto-send review request
   if (event.contact_name) {
-    promises.push(
+    promises.push(exec(
       supabase.from("review_requests" as any).insert({
         client_id: clientId,
         customer_name: event.contact_name,
@@ -119,7 +120,7 @@ export async function onAppointmentCompleted(clientId: string, event: any) {
         contact_id: event.contact_id || null,
         appointment_id: event.id,
       })
-    );
+    ));
     promises.push(logActivity(clientId, "review_request_auto", `Auto review request sent to ${event.contact_name} after completed appointment`, {
       contactId: event.contact_id, relatedType: "calendar_event", relatedId: event.id,
     }));
@@ -133,19 +134,17 @@ export async function onAppointmentCompleted(clientId: string, event: any) {
 }
 
 export async function onAppointmentCancelled(clientId: string, event: any, reason?: string) {
-  const promises: Promise<any>[] = [];
-  promises.push(logActivity(clientId, "appointment_cancelled", `Appointment "${event.title}" cancelled${reason ? `: ${reason}` : ""}`, {
-    contactId: event.contact_id, relatedType: "calendar_event", relatedId: event.id,
-  }));
-  promises.push(logAudit(clientId, "appointment_cancelled", "calendar", { event_id: event.id, reason }));
-  await Promise.all(promises);
+  await Promise.all([
+    logActivity(clientId, "appointment_cancelled", `Appointment "${event.title}" cancelled${reason ? `: ${reason}` : ""}`, {
+      contactId: event.contact_id, relatedType: "calendar_event", relatedId: event.id,
+    }),
+    logAudit(clientId, "appointment_cancelled", "calendar", { event_id: event.id, reason }),
+  ]);
 }
 
 export async function onNoShow(clientId: string, event: any) {
-  const promises: Promise<any>[] = [];
-  // Create follow-up task
-  promises.push(
-    supabase.from("crm_tasks").insert({
+  await Promise.all([
+    exec(supabase.from("crm_tasks").insert({
       client_id: clientId,
       title: `Follow up: No-show — ${event.contact_name || event.title}`,
       description: `Customer did not show up for "${event.title}". Follow up to reschedule.`,
@@ -153,12 +152,11 @@ export async function onNoShow(clientId: string, event: any) {
       status: "open",
       related_type: "calendar_event",
       related_id: event.id,
-    })
-  );
-  promises.push(logActivity(clientId, "no_show", `No-show for "${event.title}" — ${event.contact_name || "Unknown"}`, {
-    contactId: event.contact_id, relatedType: "calendar_event", relatedId: event.id,
-  }));
-  await Promise.all(promises);
+    })),
+    logActivity(clientId, "no_show", `No-show for "${event.title}" — ${event.contact_name || "Unknown"}`, {
+      contactId: event.contact_id, relatedType: "calendar_event", relatedId: event.id,
+    }),
+  ]);
 }
 
 // ─── DEAL LIFECYCLE ────────────────────────────────────────────────
@@ -171,25 +169,18 @@ export async function onDealStageChanged(clientId: string, dealId: string, newSt
   }));
 
   if (newStage === "closed_won") {
-    // Update contact revenue
     if (deal.contact_id && deal.deal_value) {
-      const contact = contacts.find(c => c.id === deal.contact_id);
+      const contact = contacts.find((c: any) => c.id === deal.contact_id);
       if (contact) {
         const newRevenue = (Number(contact.lifetime_revenue) || 0) + (Number(deal.deal_value) || 0);
-        promises.push(
+        promises.push(exec(
           supabase.from("crm_contacts").update({
             lifetime_revenue: newRevenue,
             contact_status: "customer",
             last_interaction_date: new Date().toISOString(),
           } as any).eq("id", deal.contact_id)
-        );
+        ));
       }
-    }
-    // Update company revenue if linked
-    if (deal.company_id && deal.deal_value) {
-      promises.push(logActivity(clientId, "revenue_recorded", `$${Number(deal.deal_value).toLocaleString()} revenue from deal "${deal.deal_name}"`, {
-        contactId: deal.contact_id, companyId: deal.company_id, relatedType: "deal", relatedId: dealId,
-      }));
     }
     promises.push(logActivity(clientId, "deal_won", `Deal "${deal.deal_name}" won — $${Number(deal.deal_value || 0).toLocaleString()}`, {
       contactId: deal.contact_id, relatedType: "deal", relatedId: dealId,
@@ -216,21 +207,20 @@ export async function onReviewFeedbackReceived(clientId: string, request: any, r
   }));
 
   if (rating <= 3) {
-    // Negative feedback → recovery
-    promises.push(
+    promises.push(exec(
       supabase.from("review_requests" as any).update({
         recovery_needed: true, status: "recovery_needed",
       }).eq("id", request.id)
-    );
-    promises.push(
+    ));
+    promises.push(exec(
       supabase.from("review_recovery_tasks" as any).insert({
         client_id: clientId,
         review_request_id: request.id,
         status: "open",
         notes: `Low rating (${rating}★) from ${request.customer_name}: "${feedbackText}"`,
       })
-    );
-    promises.push(
+    ));
+    promises.push(exec(
       supabase.from("crm_tasks").insert({
         client_id: clientId,
         title: `Service Recovery: ${request.customer_name} (${rating}★)`,
@@ -240,20 +230,16 @@ export async function onReviewFeedbackReceived(clientId: string, request: any, r
         related_type: "review_request",
         related_id: request.id,
       })
-    );
+    ));
     promises.push(logActivity(clientId, "negative_feedback", `Negative feedback (${rating}★) from ${request.customer_name} — recovery task created`, {
       contactId: request.contact_id,
     }));
-    promises.push(logActivity(clientId, "recovery_task_created", `Recovery task created for ${request.customer_name}`, {
-      contactId: request.contact_id,
-    }));
   } else {
-    // Positive → prompt public review
-    promises.push(
+    promises.push(exec(
       supabase.from("review_requests" as any).update({
         status: "feedback_submitted",
       }).eq("id", request.id)
-    );
+    ));
     if (rating >= 4) {
       promises.push(logActivity(clientId, "public_review_requested", `Public review requested from ${request.customer_name} (${rating}★)`, {
         contactId: request.contact_id,
@@ -261,13 +247,12 @@ export async function onReviewFeedbackReceived(clientId: string, request: any, r
     }
   }
 
-  // Update contact last interaction
   if (request.contact_id) {
-    promises.push(
+    promises.push(exec(
       supabase.from("crm_contacts").update({
         last_interaction_date: new Date().toISOString(),
       } as any).eq("id", request.contact_id)
-    );
+    ));
   }
 
   await Promise.all(promises);
@@ -276,46 +261,39 @@ export async function onReviewFeedbackReceived(clientId: string, request: any, r
 // ─── EMAIL LIFECYCLE ───────────────────────────────────────────────
 
 export async function onEmailReceived(clientId: string, email: any) {
-  const promises: Promise<any>[] = [];
+  if (!email.from_address) return;
+  const { data: contact } = await supabase
+    .from("crm_contacts")
+    .select("id, full_name")
+    .eq("client_id", clientId)
+    .eq("email", email.from_address)
+    .maybeSingle();
 
-  // Try to match to contact
-  if (email.from_address) {
-    const { data: contact } = await supabase
-      .from("crm_contacts")
-      .select("id, full_name")
-      .eq("client_id", clientId)
-      .eq("email", email.from_address)
-      .maybeSingle();
-
-    if (contact) {
-      promises.push(
-        supabase.from("email_messages").update({ contact_id: contact.id }).eq("id", email.id)
-      );
-      promises.push(
-        supabase.from("crm_contacts").update({
-          last_interaction_date: new Date().toISOString(),
-        } as any).eq("id", contact.id)
-      );
-      promises.push(logActivity(clientId, "email_received", `Email from ${contact.full_name}: "${email.subject || "No subject"}"`, {
+  if (contact) {
+    await Promise.all([
+      exec(supabase.from("email_messages").update({ contact_id: contact.id }).eq("id", email.id)),
+      exec(supabase.from("crm_contacts").update({
+        last_interaction_date: new Date().toISOString(),
+      } as any).eq("id", contact.id)),
+      logActivity(clientId, "email_received", `Email from ${contact.full_name}: "${email.subject || "No subject"}"`, {
         contactId: contact.id, relatedType: "email", relatedId: email.id,
-      }));
-    }
+      }),
+    ]);
   }
-
-  await Promise.all(promises);
 }
 
 export async function onEmailSent(clientId: string, email: any) {
-  const promises: Promise<any>[] = [];
-  promises.push(logActivity(clientId, "email_sent", `Email sent to ${email.to_address}: "${email.subject || "No subject"}"`, {
-    contactId: email.contact_id, relatedType: "email", relatedId: email.id,
-  }));
+  const promises: Promise<any>[] = [
+    logActivity(clientId, "email_sent", `Email sent to ${email.to_address}: "${email.subject || "No subject"}"`, {
+      contactId: email.contact_id, relatedType: "email", relatedId: email.id,
+    }),
+  ];
   if (email.contact_id) {
-    promises.push(
+    promises.push(exec(
       supabase.from("crm_contacts").update({
         last_interaction_date: new Date().toISOString(),
       } as any).eq("id", email.contact_id)
-    );
+    ));
   }
   await Promise.all(promises);
 }
@@ -324,10 +302,10 @@ export async function onEmailSent(clientId: string, email: any) {
 
 export async function onSyncCompleted(clientId: string, connectionId: string, recordsProcessed: number) {
   await Promise.all([
-    supabase.from("crm_connections").update({
+    exec(supabase.from("crm_connections").update({
       last_synced_at: new Date().toISOString(),
       connection_status: "connected",
-    } as any).eq("id", connectionId),
+    } as any).eq("id", connectionId)),
     logActivity(clientId, "crm_sync_completed", `CRM sync completed — ${recordsProcessed} records processed`),
     logAudit(clientId, "crm_sync_completed", "crm", { connection_id: connectionId, records: recordsProcessed }),
   ]);
@@ -335,33 +313,19 @@ export async function onSyncCompleted(clientId: string, connectionId: string, re
 
 export async function onSyncFailed(clientId: string, connectionId: string, error: string) {
   await Promise.all([
-    supabase.from("crm_connections").update({
+    exec(supabase.from("crm_connections").update({
       connection_status: "error",
-    } as any).eq("id", connectionId),
-    supabase.from("crm_sync_logs").insert({
+    } as any).eq("id", connectionId)),
+    exec(supabase.from("crm_sync_logs").insert({
       client_id: clientId,
       crm_connection_id: connectionId,
       sync_type: "incremental",
       sync_status: "failed",
       error_message: error,
-    } as any),
+    } as any)),
     logActivity(clientId, "crm_sync_failed", `CRM sync failed: ${error}`),
     logAudit(clientId, "crm_sync_failed", "crm", { connection_id: connectionId, error }),
   ]);
-}
-
-// ─── TASK LIFECYCLE ────────────────────────────────────────────────
-
-export async function onTaskCreated(clientId: string, task: any) {
-  await logActivity(clientId, "task_created", `Task "${task.title}" created`, {
-    contactId: task.contact_id, relatedType: task.related_type, relatedId: task.related_id,
-  });
-}
-
-export async function onTaskCompleted(clientId: string, task: any) {
-  await logActivity(clientId, "task_completed", `Task "${task.title}" completed`, {
-    contactId: task.contact_id, relatedType: task.related_type, relatedId: task.related_id,
-  });
 }
 
 // ─── CONTACT LIFECYCLE ─────────────────────────────────────────────
