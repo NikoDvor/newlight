@@ -47,6 +47,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     type: "group", label: "Enterprise Services",
     items: [
       { title: "Finance", url: "/finance", icon: Wallet },
+      { title: "Workforce", url: "/workforce", icon: HardHat },
       { title: "Calendar", url: "/calendar", icon: Calendar },
       { title: "Email", url: "/email", icon: Mail },
     ],

@@ -183,6 +183,7 @@ const App = () => (
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/workforce" element={<Workforce />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
