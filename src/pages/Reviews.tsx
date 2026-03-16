@@ -110,6 +110,12 @@ export default function ReviewsDashboard() {
         </Button>
       </PageHeader>
 
+      <ModuleHelpPanel
+        moduleName="Reviews"
+        description="This is where review requests and feedback are managed. After appointments, customers receive requests to leave feedback — happy ones get directed to Google/Yelp, unhappy ones trigger recovery workflows."
+        tips={["Review requests are sent automatically after completed appointments", "Happy responses are directed to public review sites", "Unhappy responses are flagged for internal follow-up"]}
+      />
+
       {!hasRealData && (
         <SetupBanner
           icon={Star}

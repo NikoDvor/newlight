@@ -163,6 +163,12 @@ export default function CRM() {
         </div>
       </PageHeader>
 
+      <ModuleHelpPanel
+        moduleName="CRM"
+        description="This is where all your leads and customer records live. Every contact, deal, and interaction is tracked here so nothing falls through the cracks."
+        tips={["New leads are automatically scored based on source and engagement", "Contacts update when appointments are booked via Calendar", "Email conversations are linked to contacts automatically"]}
+      />
+
       {!hasRealData && (
         <SetupBanner icon={Users} title="Build Your Sales Pipeline"
           description="Add contacts and create deals to start tracking your sales pipeline, revenue, and customer relationships."

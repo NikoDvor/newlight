@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
 import { SetupBanner } from "@/components/SetupBanner";
