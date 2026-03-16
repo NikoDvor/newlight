@@ -79,6 +79,7 @@ import Finance from "./pages/Finance";
 import CalendarPage from "./pages/CalendarPage";
 import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
+import EmailPage from "./pages/Email";
 
 const queryClient = new QueryClient();
 
