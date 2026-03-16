@@ -865,6 +865,63 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_records: {
+        Row: {
+          client_id: string
+          commission_earned: number
+          commission_rate: number
+          created_at: string
+          id: string
+          linked_deal_id: string | null
+          payroll_line_item_id: string | null
+          revenue_source_amount: number
+          status: string
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          client_id: string
+          commission_earned?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          linked_deal_id?: string | null
+          payroll_line_item_id?: string | null
+          revenue_source_amount?: number
+          status?: string
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          client_id?: string
+          commission_earned?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          linked_deal_id?: string | null
+          payroll_line_item_id?: string | null
+          revenue_source_amount?: number
+          status?: string
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_activities: {
         Row: {
           activity_note: string | null
@@ -2031,6 +2088,73 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_cost_records: {
+        Row: {
+          client_id: string
+          created_at: string
+          entry_date: string
+          hourly_cost_rate: number
+          hours: number
+          id: string
+          labor_category: string | null
+          linked_module: string | null
+          linked_record_id: string | null
+          time_entry_id: string | null
+          total_labor_cost: number
+          worker_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          entry_date?: string
+          hourly_cost_rate?: number
+          hours?: number
+          id?: string
+          labor_category?: string | null
+          linked_module?: string | null
+          linked_record_id?: string | null
+          time_entry_id?: string | null
+          total_labor_cost?: number
+          worker_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          entry_date?: string
+          hourly_cost_rate?: number
+          hours?: number
+          id?: string
+          labor_category?: string | null
+          linked_module?: string | null
+          linked_record_id?: string | null
+          time_entry_id?: string | null
+          total_labor_cost?: number
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_cost_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_cost_records_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_cost_records_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
             referencedColumns: ["id"]
           },
         ]
