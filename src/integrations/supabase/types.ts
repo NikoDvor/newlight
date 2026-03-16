@@ -867,38 +867,65 @@ export type Database = {
       }
       crm_contacts: {
         Row: {
+          address: string | null
           client_id: string
           company_id: string | null
           contact_owner: string | null
           created_at: string
           email: string | null
+          first_contact_date: string | null
           full_name: string
           id: string
+          last_interaction_date: string | null
+          lead_score: number | null
+          lead_source: string | null
+          lifetime_revenue: number | null
+          number_of_appointments: number | null
+          number_of_purchases: number | null
           phone: string | null
+          pipeline_stage: string | null
           tags: string[] | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           client_id: string
           company_id?: string | null
           contact_owner?: string | null
           created_at?: string
           email?: string | null
+          first_contact_date?: string | null
           full_name: string
           id?: string
+          last_interaction_date?: string | null
+          lead_score?: number | null
+          lead_source?: string | null
+          lifetime_revenue?: number | null
+          number_of_appointments?: number | null
+          number_of_purchases?: number | null
           phone?: string | null
+          pipeline_stage?: string | null
           tags?: string[] | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           client_id?: string
           company_id?: string | null
           contact_owner?: string | null
           created_at?: string
           email?: string | null
+          first_contact_date?: string | null
           full_name?: string
           id?: string
+          last_interaction_date?: string | null
+          lead_score?: number | null
+          lead_source?: string | null
+          lifetime_revenue?: number | null
+          number_of_appointments?: number | null
+          number_of_purchases?: number | null
           phone?: string | null
+          pipeline_stage?: string | null
           tags?: string[] | null
           updated_at?: string
         }
