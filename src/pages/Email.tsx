@@ -99,14 +99,11 @@ export default function EmailPage() {
       sent_at: new Date().toISOString(),
       contact_id: selectedMsg.contact_id,
     });
-    // Log to CRM if contact linked
-    if (selectedMsg.contact_id) {
-      await supabase.from("crm_activities").insert({
-        client_id: activeClientId, activity_type: "email_sent",
-        activity_note: `Email reply sent: Re: ${selectedMsg.subject}`,
-        related_type: "contact", related_id: selectedMsg.contact_id,
-      });
-    }
+    // Fire automation hook
+    await onEmailSent(activeClientId, {
+      id: "", to_address: selectedMsg.from_address,
+      subject: `Re: ${selectedMsg.subject}`, contact_id: selectedMsg.contact_id,
+    });
     toast({ title: "Reply sent" });
     setReplyText("");
     fetchData();
