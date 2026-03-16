@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
@@ -13,7 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock, Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote } from "lucide-react";
+import {
+  Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock,
+  Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote, Search, Download, Upload,
+  Calendar, Mail, Star, Activity
+} from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -46,49 +51,68 @@ const STAGE_COLORS: Record<string, string> = {
   closed_won: "bg-green-50 text-green-700", closed_lost: "bg-red-50 text-red-600",
 };
 
+const STATUS_STYLE: Record<string, string> = {
+  lead: "bg-blue-50 text-blue-700", customer: "bg-emerald-50 text-emerald-700",
+  vip: "bg-amber-50 text-amber-700", inactive: "bg-muted text-muted-foreground", lost: "bg-red-50 text-red-600",
+};
+
 const LEAD_SOURCES = ["Google Ads", "Organic", "Referral", "Social Media", "Direct", "Email", "Other"];
 
 export default function CRM() {
+  const navigate = useNavigate();
   const { activeClientId } = useWorkspace();
   const [contacts, setContacts] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [emails, setEmails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
-  const [detailContact, setDetailContact] = useState<any>(null);
+  const [companyOpen, setCompanyOpen] = useState(false);
   const [crmMode, setCrmMode] = useState<string>("native");
   const [crmConnection, setCrmConnection] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
-    lead_source: "", pipeline_stage: "new_lead",
+    lead_source: "", pipeline_stage: "new_lead", company_id: "",
   });
-  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
+  const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
   const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes] = await Promise.all([
+    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("crm_companies").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_leads").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
-      supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("clients").select("crm_mode").eq("id", activeClientId).maybeSingle(),
       supabase.from("crm_connections").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1),
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
+      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: false }).limit(50),
+      supabase.from("email_messages").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
     ]);
     setContacts(cRes.data || []);
+    setCompanies(coRes.data || []);
     setDeals(dRes.data || []);
     setLeads(lRes.data || []);
     setActivities(aRes.data || []);
     setTasks(tRes.data || []);
     setNotes(notesRes.data || []);
+    setAppointments(apRes.data || []);
+    setEmails(emRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
@@ -96,6 +120,7 @@ export default function CRM() {
 
   useEffect(() => { fetchData(); }, [activeClientId]);
 
+  // Actions
   const switchCrmMode = async (mode: string) => {
     if (!activeClientId) return;
     await supabase.from("clients").update({ crm_mode: mode } as any).eq("id", activeClientId);
@@ -110,23 +135,7 @@ export default function CRM() {
       client_id: activeClientId, crm_provider_name: selectedProvider, connection_status: "pending",
     } as any).select().single();
     if (data) setCrmConnection(data);
-    await supabase.from("audit_logs").insert({ client_id: activeClientId, action: "external_crm_connected", module: "crm", metadata: { provider: selectedProvider } });
     toast({ title: "External CRM connection initiated" });
-  };
-
-  const addNote = async (contactId?: string) => {
-    if (!activeClientId || !newNote.trim()) return;
-    await supabase.from("crm_notes").insert({
-      client_id: activeClientId, contact_id: contactId || null, content: newNote,
-    } as any);
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId, activity_type: "note_added",
-      activity_note: `Note added${contactId ? " to contact" : ""}: ${newNote.substring(0, 80)}`,
-      contact_id: contactId || null,
-    } as any);
-    setNewNote("");
-    toast({ title: "Note added" });
-    fetchData();
   };
 
   const addContact = async () => {
@@ -138,14 +147,15 @@ export default function CRM() {
       address: newContact.address || null, tags,
       lead_source: newContact.lead_source || null,
       pipeline_stage: newContact.pipeline_stage,
+      company_id: newContact.company_id || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
       client_id: activeClientId, activity_type: "contact_created",
-      activity_note: `Contact "${newContact.full_name}" created via ${newContact.lead_source || "manual entry"}`,
+      activity_note: `Contact "${newContact.full_name}" created`,
     });
     toast({ title: "Contact Added" });
-    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead" });
+    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "" });
     setContactOpen(false);
     fetchData();
   };
@@ -157,6 +167,7 @@ export default function CRM() {
       deal_value: parseFloat(newDeal.deal_value) || 0,
       pipeline_stage: newDeal.pipeline_stage,
       contact_id: newDeal.contact_id || null,
+      close_probability: parseInt(newDeal.close_probability) || 50,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
@@ -164,8 +175,34 @@ export default function CRM() {
       activity_note: `Deal "${newDeal.deal_name}" created — $${parseFloat(newDeal.deal_value) || 0}`,
     });
     toast({ title: "Deal Added" });
-    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
     setDealOpen(false);
+    fetchData();
+  };
+
+  const addCompany = async () => {
+    if (!activeClientId || !newCompany.company_name) return;
+    const { error } = await supabase.from("crm_companies").insert({
+      client_id: activeClientId, company_name: newCompany.company_name,
+      website: newCompany.website || null, industry: newCompany.industry || null,
+      phone: newCompany.phone || null, email: newCompany.email || null,
+    } as any);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "company_created",
+      activity_note: `Company "${newCompany.company_name}" created`,
+    });
+    toast({ title: "Company Added" });
+    setNewCompany({ company_name: "", website: "", industry: "", phone: "", email: "" });
+    setCompanyOpen(false);
+    fetchData();
+  };
+
+  const addNote = async (contactId?: string) => {
+    if (!activeClientId || !newNote.trim()) return;
+    await supabase.from("crm_notes").insert({ client_id: activeClientId, contact_id: contactId || null, content: newNote } as any);
+    setNewNote("");
+    toast({ title: "Note added" });
     fetchData();
   };
 
@@ -175,6 +212,20 @@ export default function CRM() {
       client_id: activeClientId!, activity_type: "stage_changed",
       activity_note: `Deal moved to ${STAGE_LABELS[stage]}`, related_type: "deal", related_id: dealId,
     });
+    // If won, update contact revenue
+    if (stage === "closed_won") {
+      const deal = deals.find(d => d.id === dealId);
+      if (deal?.contact_id && deal.deal_value) {
+        const contact = contacts.find(c => c.id === deal.contact_id);
+        if (contact) {
+          const newRevenue = (Number(contact.lifetime_revenue) || 0) + (Number(deal.deal_value) || 0);
+          await supabase.from("crm_contacts").update({
+            lifetime_revenue: newRevenue, contact_status: "customer",
+            last_interaction_date: new Date().toISOString(),
+          } as any).eq("id", deal.contact_id);
+        }
+      }
+    }
     fetchData();
   };
 
@@ -184,6 +235,33 @@ export default function CRM() {
     fetchData();
   };
 
+  const exportCsv = (data: any[], filename: string) => {
+    if (data.length === 0) return;
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => Object.values(row).map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
+    const csv = [headers, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${filename}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: `${filename}.csv exported` });
+  };
+
+  // Filters
+  const q = searchQuery.toLowerCase();
+  const filteredContacts = contacts.filter(c => {
+    const matchesSearch = !q || c.full_name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.phone?.includes(q) || (c.tags || []).some((t: string) => t.toLowerCase().includes(q));
+    const matchesStage = stageFilter === "all" || c.pipeline_stage === stageFilter;
+    const matchesStatus = statusFilter === "all" || c.contact_status === statusFilter;
+    return matchesSearch && matchesStage && matchesStatus;
+  });
+  const filteredDeals = deals.filter(d => {
+    const matchesSearch = !q || d.deal_name?.toLowerCase().includes(q);
+    const matchesStage = stageFilter === "all" || d.pipeline_stage === stageFilter;
+    return matchesSearch && matchesStage;
+  });
+
   const hasRealData = contacts.length > 0 || deals.length > 0;
   const totalContacts = contacts.length;
   const openDeals = deals.filter(d => d.status === "open");
@@ -192,11 +270,8 @@ export default function CRM() {
   const wonValue = dealsWon.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   const openTaskCount = tasks.filter(t => t.status === "open").length;
 
-  const pipelineCounts = PIPELINE_STAGES.map(stage => ({
-    stage, label: STAGE_LABELS[stage],
-    count: deals.filter(d => d.pipeline_stage === stage).length,
-    value: deals.filter(d => d.pipeline_stage === stage).reduce((s, d) => s + (Number(d.deal_value) || 0), 0),
-  }));
+  const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || "—";
+  const getCompanyName = (id: string) => companies.find(c => c.id === id)?.company_name || "—";
 
   if (!activeClientId) {
     return (
@@ -210,17 +285,16 @@ export default function CRM() {
   return (
     <div>
       <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" className="gap-1.5" onClick={() => setCompanyOpen(true)}><Building2 className="h-4 w-4" /> Company</Button>
           <Button variant="outline" className="gap-1.5" onClick={() => setContactOpen(true)}><UserPlus className="h-4 w-4" /> Contact</Button>
           <Button className="gap-1.5" onClick={() => setDealOpen(true)}><Briefcase className="h-4 w-4" /> Deal</Button>
         </div>
       </PageHeader>
 
-      <ModuleHelpPanel
-        moduleName="CRM"
-        description="This is where all your leads and customer records live. Every contact, deal, and interaction is tracked here so nothing falls through the cracks."
-        tips={["New leads are automatically scored based on source and engagement", "Contacts update when appointments are booked via Calendar", "Email conversations are linked to contacts automatically"]}
-      />
+      <ModuleHelpPanel moduleName="CRM"
+        description="This is where all your leads and customer records live. Every contact, deal, and interaction is tracked here."
+        tips={["Click any contact row to open their full detail page", "Deals update revenue on contacts when marked Won", "Export any table as CSV using the export button"]} />
 
       {/* CRM Mode Selector */}
       <div className="mb-4 p-4 rounded-2xl border border-border bg-card">
@@ -232,17 +306,14 @@ export default function CRM() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant={crmMode === "native" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
-              onClick={() => switchCrmMode("native")}>
+            <Button size="sm" variant={crmMode === "native" ? "default" : "outline"} className="h-8 text-xs gap-1.5" onClick={() => switchCrmMode("native")}>
               <CheckCircle className="h-3.5 w-3.5" /> Native CRM
             </Button>
-            <Button size="sm" variant={crmMode === "external" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
-              onClick={() => switchCrmMode("external")}>
+            <Button size="sm" variant={crmMode === "external" ? "default" : "outline"} className="h-8 text-xs gap-1.5" onClick={() => switchCrmMode("external")}>
               <Link2 className="h-3.5 w-3.5" /> External CRM
             </Button>
           </div>
         </div>
-
         {crmMode === "external" && (
           <div className="mt-4 pt-4 border-t border-border">
             {crmConnection ? (
@@ -258,11 +329,7 @@ export default function CRM() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1">
-                    <RefreshCw className="h-3 w-3" /> Sync Now
-                  </Button>
-                </div>
+                <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1"><RefreshCw className="h-3 w-3" /> Sync Now</Button>
               </div>
             ) : (
               <div className="flex items-end gap-3">
@@ -289,53 +356,63 @@ export default function CRM() {
           secondaryLabel="Create First Deal" onSecondary={() => setDealOpen(true)} />
       )}
 
-      <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
-        <MetricCard label="Total Contacts" value={hasRealData ? String(totalContacts) : "—"} change={hasRealData ? `${contacts.length} records` : "Add contacts"} changeType="neutral" icon={Users} />
-        <MetricCard label="Open Deals" value={hasRealData ? String(openDeals.length) : "—"} change={hasRealData ? "Active pipeline" : "Create deals"} changeType="neutral" icon={Building2} />
-        <MetricCard label="Pipeline Value" value={hasRealData ? `$${pipelineValue.toLocaleString()}` : "—"} change={hasRealData ? `${openDeals.length} open deals` : "Add deal values"} changeType={hasRealData ? "positive" : "neutral"} icon={DollarSign} />
-        <MetricCard label="Revenue Won" value={hasRealData ? `$${wonValue.toLocaleString()}` : "—"} change={hasRealData ? `${dealsWon.length} closed` : "Close deals"} changeType={hasRealData ? "positive" : "neutral"} icon={TrendingUp} />
+      <WidgetGrid columns="repeat(auto-fit, minmax(160px, 1fr))">
+        <MetricCard label="Contacts" value={hasRealData ? String(totalContacts) : "—"} change={hasRealData ? `${companies.length} companies` : "Add contacts"} changeType="neutral" icon={Users} />
+        <MetricCard label="Open Deals" value={hasRealData ? String(openDeals.length) : "—"} change={hasRealData ? "Active pipeline" : "Create deals"} changeType="neutral" icon={Briefcase} />
+        <MetricCard label="Pipeline Value" value={hasRealData ? `$${pipelineValue.toLocaleString()}` : "—"} change={hasRealData ? `${openDeals.length} open` : "—"} changeType={hasRealData ? "positive" : "neutral"} icon={DollarSign} />
+        <MetricCard label="Revenue Won" value={hasRealData ? `$${wonValue.toLocaleString()}` : "—"} change={hasRealData ? `${dealsWon.length} closed` : "—"} changeType={hasRealData ? "positive" : "neutral"} icon={TrendingUp} />
         <MetricCard label="Open Tasks" value={String(openTaskCount)} change="" changeType="neutral" icon={Target} />
       </WidgetGrid>
 
-      <div className="mt-6">
-        <Tabs defaultValue="pipeline" className="w-full">
+      {/* Search & Filter Bar */}
+      <div className="mt-4 flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search contacts, deals, companies, tags…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-sm" />
+        </div>
+        <Select value={stageFilter} onValueChange={setStageFilter}>
+          <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="All Stages" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">All Stages</SelectItem>
+            {PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue placeholder="All Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">All Status</SelectItem>
+            <SelectItem value="lead" className="text-xs">Lead</SelectItem>
+            <SelectItem value="customer" className="text-xs">Customer</SelectItem>
+            <SelectItem value="vip" className="text-xs">VIP</SelectItem>
+            <SelectItem value="inactive" className="text-xs">Inactive</SelectItem>
+            <SelectItem value="lost" className="text-xs">Lost</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-4">
+        <Tabs defaultValue="contacts" className="w-full">
           <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
-            <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
             <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts</TabsTrigger>
+            <TabsTrigger value="companies" className="rounded-md text-sm">Companies</TabsTrigger>
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
+            <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="appointments" className="rounded-md text-sm">Appointments</TabsTrigger>
+            <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
             <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
             <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pipeline" className="mt-4">
-            <DataCard title="Revenue Pipeline">
-              {!hasRealData ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <TrendingUp className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">Your pipeline is empty</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add contacts and create deals to visualize your sales pipeline.</p>
-                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create First Deal</Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-                  {pipelineCounts.map((s) => (
-                    <motion.div key={s.stage} className="rounded-xl p-4 text-center" style={{ background: "hsla(211,96%,56%,.03)" }}
-                      initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-                      <p className="text-[10px] font-medium text-muted-foreground leading-tight">{s.label}</p>
-                      <p className="text-2xl font-semibold mt-2 tabular-nums">{s.count}</p>
-                      <p className="text-[10px] mt-1 tabular-nums" style={{ color: "hsl(197 92% 48%)" }}>${s.value.toLocaleString()}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
+          {/* CONTACTS TABLE */}
           <TabsContent value="contacts" className="mt-4">
-            <DataCard title="Contacts">
+            <DataCard title="Contacts" action={contacts.length > 0 ? (
+              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(contacts, "contacts")}>
+                <Download className="h-3 w-3" /> Export
+              </Button>
+            ) : undefined}>
               {contacts.length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
@@ -343,42 +420,39 @@ export default function CRM() {
                   </div>
                   <p className="text-sm font-medium text-foreground mb-1">No contacts yet</p>
                   <p className="text-xs text-muted-foreground mb-4">Add your first contact to start building your CRM.</p>
-                  <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
+                    {crmMode === "external" && !crmConnection && (
+                      <Button size="sm" variant="outline"><Link2 className="h-4 w-4 mr-1" /> Connect CRM</Button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Name</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Email</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Phone</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Stage</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Tags</th>
+                        {["Name", "Email", "Phone", "Company", "Stage", "Source", "Score", "Revenue", "Status"].map(h => (
+                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {contacts.map((c) => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors cursor-pointer"
-                          onClick={() => setDetailContact(c)}>
-                          <td className="text-sm font-medium py-3 pr-4">{c.full_name}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-4">{c.email || "—"}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-4">{c.phone || "—"}</td>
-                          <td className="text-xs text-muted-foreground py-3 pr-4">{c.lead_source || "—"}</td>
-                          <td className="py-3 pr-4">
-                            {c.pipeline_stage && (
-                              <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
-                                {STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}
-                              </Badge>
-                            )}
+                      {filteredContacts.map(c => (
+                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/crm/contacts/${c.id}`)}>
+                          <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.company_id ? getCompanyName(c.company_id) : "—"}</td>
+                          <td className="py-3 pr-3">
+                            {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
                           </td>
+                          <td className="text-xs text-muted-foreground py-3 pr-3">{c.lead_source || "—"}</td>
+                          <td className="text-sm tabular-nums py-3 pr-3">{c.lead_score || 0}</td>
+                          <td className="text-sm tabular-nums py-3 pr-3">${Number(c.lifetime_revenue || 0).toLocaleString()}</td>
                           <td className="py-3">
-                            <div className="flex gap-1 flex-wrap">
-                              {(c.tags || []).map((tag: string) => (
-                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{tag}</span>
-                              ))}
-                            </div>
+                            <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
                           </td>
                         </tr>
                       ))}
@@ -389,95 +463,292 @@ export default function CRM() {
             </DataCard>
           </TabsContent>
 
+          {/* COMPANIES TABLE */}
+          <TabsContent value="companies" className="mt-4">
+            <DataCard title="Companies" action={companies.length > 0 ? (
+              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(companies, "companies")}>
+                <Download className="h-3 w-3" /> Export
+              </Button>
+            ) : undefined}>
+              {companies.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Building2 className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No companies yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add a company to organize your contacts and deals.</p>
+                  <Button size="sm" onClick={() => setCompanyOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Company</Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {["Company", "Website", "Industry", "Phone", "Contacts", "Revenue"].map(h => (
+                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companies.filter(co => !q || co.company_name?.toLowerCase().includes(q)).map(co => {
+                        const coContacts = contacts.filter(c => c.company_id === co.id);
+                        const coRevenue = deals.filter(d => d.company_id === co.id && d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+                        return (
+                          <tr key={co.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/crm/companies/${co.id}`)}>
+                            <td className="text-sm font-medium py-3 pr-3">{co.company_name}</td>
+                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.website || "—"}</td>
+                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.industry || "—"}</td>
+                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.phone || "—"}</td>
+                            <td className="text-sm tabular-nums py-3 pr-3">{coContacts.length}</td>
+                            <td className="text-sm tabular-nums py-3">${coRevenue.toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* DEALS TABLE */}
           <TabsContent value="deals" className="mt-4">
-            <DataCard title="Active Deals">
+            <DataCard title="Deals" action={deals.length > 0 ? (
+              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(deals, "deals")}>
+                <Download className="h-3 w-3" /> Export
+              </Button>
+            ) : undefined}>
               {deals.length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <Briefcase className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
                   </div>
                   <p className="text-sm font-medium text-foreground mb-1">No deals yet</p>
-                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Deal</Button>
+                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Deal</Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {deals.map((d) => (
-                    <motion.div key={d.id} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{d.deal_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
-                            {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
-                          </Badge>
-                          <span className="text-xs tabular-nums" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</span>
-                        </div>
-                      </div>
-                      {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
-                        <Select onValueChange={(v) => moveDealStage(d.id, v)}>
-                          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Move stage" /></SelectTrigger>
-                          <SelectContent>
-                            {PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </motion.div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {["Deal", "Contact", "Stage", "Value", "Probability", "Expected Close", "Status", "Action"].map(h => (
+                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDeals.map(d => (
+                        <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                          <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                            onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                            {d.contact_id ? getContactName(d.contact_id) : "—"}
+                          </td>
+                          <td className="py-3 pr-3">
+                            <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
+                              {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
+                            </Badge>
+                          </td>
+                          <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
+                          <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{d.expected_close_date || "—"}</td>
+                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                          <td className="py-3">
+                            {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
+                              <Select onValueChange={v => moveDealStage(d.id, v)}>
+                                <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
+                                <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                              </Select>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </DataCard>
           </TabsContent>
 
+          {/* PIPELINE BOARD */}
+          <TabsContent value="pipeline" className="mt-4">
+            <div className="flex gap-3 overflow-x-auto pb-4">
+              {PIPELINE_STAGES.map(stage => {
+                const stageDeals = deals.filter(d => d.pipeline_stage === stage);
+                const stageValue = stageDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+                return (
+                  <div key={stage} className="min-w-[220px] flex-1"
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => { const id = e.dataTransfer.getData("dealId"); if (id) moveDealStage(id, stage); }}>
+                    <div className="rounded-xl border border-border bg-card">
+                      <div className="px-3 py-2.5 border-b border-border">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-semibold">{STAGE_LABELS[stage]}</h3>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">{stageDeals.length}</span>
+                        </div>
+                        <p className="text-[10px] tabular-nums mt-0.5" style={{ color: "hsl(197 92% 48%)" }}>${stageValue.toLocaleString()}</p>
+                      </div>
+                      <div className="p-2 space-y-2 min-h-[120px]">
+                        {stageDeals.map(d => (
+                          <div key={d.id} draggable onDragStart={e => e.dataTransfer.setData("dealId", d.id)}
+                            className="card-widget p-3 rounded-xl cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow">
+                            <p className="text-sm font-medium truncate">{d.deal_name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate cursor-pointer hover:text-primary"
+                              onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                              {d.contact_id ? getContactName(d.contact_id) : "Unlinked"}
+                            </p>
+                            <p className="text-xs font-medium tabular-nums mt-1" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</p>
+                          </div>
+                        ))}
+                        {stageDeals.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-6">No deals</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* TASKS TABLE */}
           <TabsContent value="tasks" className="mt-4">
             <DataCard title="Tasks">
               {tasks.length === 0 ? (
-                <div className="py-8 text-center"><p className="text-sm text-muted-foreground">No tasks yet. Tasks are auto-created during onboarding and automation.</p></div>
+                <p className="py-8 text-center text-sm text-muted-foreground">No tasks yet. Tasks are auto-created during automation and onboarding.</p>
               ) : (
-                <div className="space-y-3">
-                  {tasks.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${t.status === "completed" ? "bg-primary/10" : "bg-accent/10"}`}>
-                          {t.status === "completed" ? <Target className="h-4 w-4 text-primary" /> : <Clock className="h-4 w-4 text-accent" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{t.title}</p>
-                          {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
-                          {t.due_date && <p className="text-[10px] text-muted-foreground">Due: {new Date(t.due_date).toLocaleDateString()}</p>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={t.status === "completed" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"}>
-                          {t.status}
-                        </Badge>
-                        {t.status === "open" && (
-                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>
-                            Complete
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-border">
+                      {["Title", "Due Date", "Priority", "Status", "Action"].map(h => (
+                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {tasks.map(t => (
+                        <tr key={t.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                          <td className="text-sm font-medium py-3 pr-3">
+                            {t.title}
+                            {t.description && <p className="text-[10px] text-muted-foreground">{t.description}</p>}
+                          </td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{t.due_date ? new Date(t.due_date).toLocaleDateString() : "—"}</td>
+                          <td className="py-3 pr-3">
+                            <Badge variant="outline" className={`text-[10px] ${t.priority === "high" ? "border-red-300 text-red-600" : t.priority === "medium" ? "border-amber-300 text-amber-600" : ""}`}>
+                              {t.priority}
+                            </Badge>
+                          </td>
+                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{t.status}</Badge></td>
+                          <td className="py-3">
+                            {t.status === "open" && (
+                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>Complete</Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </DataCard>
           </TabsContent>
 
+          {/* APPOINTMENTS TABLE */}
+          <TabsContent value="appointments" className="mt-4">
+            <DataCard title="Appointments" action={appointments.length > 0 ? (
+              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(appointments, "appointments")}>
+                <Download className="h-3 w-3" /> Export
+              </Button>
+            ) : undefined}>
+              {appointments.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No appointments yet. Schedule one from the Calendar.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-border">
+                      {["Title", "Contact", "Date", "Time", "Status", "Location", "Source"].map(h => (
+                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {appointments.map(ap => (
+                        <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                          <td className="text-sm font-medium py-3 pr-3">{ap.title}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                            onClick={() => ap.contact_id && navigate(`/crm/contacts/${ap.contact_id}`)}>
+                            {ap.contact_name || (ap.contact_id ? getContactName(ap.contact_id) : "—")}
+                          </td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleDateString()}</td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3">{ap.location || "—"}</td>
+                          <td className="text-xs text-muted-foreground py-3">{ap.booking_source || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* EMAILS TABLE */}
+          <TabsContent value="emails" className="mt-4">
+            <DataCard title="Emails">
+              {emails.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Mail className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No emails linked yet. Connect your email from the Email module.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-border">
+                      {["Contact", "Subject", "Direction", "From/To", "Date"].map(h => (
+                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {emails.map(e => (
+                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                            onClick={() => e.contact_id && navigate(`/crm/contacts/${e.contact_id}`)}>
+                            {e.contact_id ? getContactName(e.contact_id) : e.from_name || "Unknown"}
+                          </td>
+                          <td className="text-sm font-medium py-3 pr-3 truncate max-w-[200px]">{e.subject || "(no subject)"}</td>
+                          <td className="py-3 pr-3">
+                            <Badge variant="outline" className={`text-[10px] ${e.direction === "inbound" ? "border-primary/30 text-primary" : ""}`}>
+                              {e.direction}
+                            </Badge>
+                          </td>
+                          <td className="text-sm text-muted-foreground py-3 pr-3 truncate max-w-[160px]">{e.direction === "inbound" ? e.from_address : e.to_address}</td>
+                          <td className="text-xs text-muted-foreground py-3">{e.sent_at ? new Date(e.sent_at).toLocaleString() : new Date(e.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* NOTES */}
           <TabsContent value="notes" className="mt-4">
             <DataCard title="Notes">
               <div className="mb-4 flex gap-2">
-                <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note..." className="min-h-[44px] flex-1 resize-none" rows={2} />
+                <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note…" className="min-h-[44px] flex-1 resize-none" rows={2} />
                 <Button size="icon" className="shrink-0 self-end" onClick={() => addNote()} disabled={!newNote.trim()}>
                   <StickyNote className="h-4 w-4" />
                 </Button>
               </div>
               {notes.length === 0 ? (
-                <div className="py-4 text-center"><p className="text-sm text-muted-foreground">No notes yet.</p></div>
+                <p className="py-4 text-center text-sm text-muted-foreground">No notes yet.</p>
               ) : (
                 <div className="space-y-3">
                   {notes.map((n: any) => (
                     <div key={n.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{n.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{n.content}</p>
                       <p className="text-[10px] text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                   ))}
@@ -486,17 +757,18 @@ export default function CRM() {
             </DataCard>
           </TabsContent>
 
+          {/* ACTIVITY */}
           <TabsContent value="activity" className="mt-4">
             <DataCard title="Recent Activity">
               {activities.length === 0 ? (
-                <div className="py-8 text-center"><p className="text-sm text-muted-foreground">Activity will appear here as you use your CRM.</p></div>
+                <p className="py-8 text-center text-sm text-muted-foreground">Activity will appear as you use your CRM.</p>
               ) : (
                 <div className="space-y-3">
-                  {activities.map((a) => (
+                  {activities.map(a => (
                     <div key={a.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
                       <div className="h-2 w-2 rounded-full mt-2 shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
                       <div>
-                        <p className="text-sm">{a.activity_note}</p>
+                        <p className="text-sm">{a.activity_note || a.activity_type}</p>
                         <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
                       </div>
                     </div>
@@ -508,72 +780,6 @@ export default function CRM() {
         </Tabs>
       </div>
 
-      {/* Contact Detail Sheet */}
-      <Sheet open={!!detailContact} onOpenChange={() => setDetailContact(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          {detailContact && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{detailContact.full_name}</SheetTitle>
-                <SheetDescription>Contact Details</SheetDescription>
-              </SheetHeader>
-              <div className="mt-6 space-y-4">
-                <Badge className={`text-[10px] ${detailContact.contact_status === "customer" ? "bg-primary/10 text-primary" : detailContact.contact_status === "vip" ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}>
-                  {detailContact.contact_status || "Lead"}
-                </Badge>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: "Email", value: detailContact.email },
-                    { label: "Phone", value: detailContact.phone },
-                    { label: "Secondary Phone", value: detailContact.secondary_phone },
-                    { label: "Address", value: [detailContact.address, detailContact.city, detailContact.state, detailContact.zip].filter(Boolean).join(", ") },
-                    { label: "Lead Source", value: detailContact.lead_source },
-                    { label: "Lead Score", value: detailContact.lead_score },
-                    { label: "Pipeline Stage", value: STAGE_LABELS[detailContact.pipeline_stage] || detailContact.pipeline_stage },
-                    { label: "Customer Value", value: detailContact.customer_value ? `$${Number(detailContact.customer_value).toLocaleString()}` : "—" },
-                    { label: "Lifetime Revenue", value: detailContact.lifetime_revenue ? `$${Number(detailContact.lifetime_revenue).toLocaleString()}` : "—" },
-                    { label: "Appointments", value: detailContact.number_of_appointments },
-                    { label: "First Contact", value: detailContact.first_contact_date ? new Date(detailContact.first_contact_date).toLocaleDateString() : "—" },
-                    { label: "Last Interaction", value: detailContact.last_interaction_date ? new Date(detailContact.last_interaction_date).toLocaleDateString() : "—" },
-                  ].map(f => (
-                    <div key={f.label}>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{f.label}</p>
-                      <p className="text-sm text-foreground mt-0.5">{f.value || "—"}</p>
-                    </div>
-                  ))}
-                </div>
-                {detailContact.tags?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Tags</p>
-                    <div className="flex gap-1 flex-wrap">
-                      {detailContact.tags.map((t: string) => (
-                        <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Notes for this contact */}
-                <div className="pt-4 border-t border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Notes</p>
-                  <div className="flex gap-2 mb-3">
-                    <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add note..." className="min-h-[40px] flex-1 resize-none text-xs" rows={2} />
-                    <Button size="icon" className="shrink-0 self-end h-8 w-8" onClick={() => addNote(detailContact.id)} disabled={!newNote.trim()}>
-                      <StickyNote className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  {notes.filter((n: any) => n.contact_id === detailContact.id).map((n: any) => (
-                    <div key={n.id} className="p-2 rounded-lg bg-secondary/50 mb-2">
-                      <p className="text-xs text-foreground">{n.content}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
       {/* Add Contact Sheet */}
       <Sheet open={contactOpen} onOpenChange={setContactOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
@@ -583,6 +789,15 @@ export default function CRM() {
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p, email: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Phone</Label><Input value={newContact.phone} onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Address</Label><Input value={newContact.address} onChange={e => setNewContact(p => ({ ...p, address: e.target.value }))} /></div>
+            {companies.length > 0 && (
+              <div className="space-y-2">
+                <Label>Company</Label>
+                <Select value={newContact.company_id} onValueChange={v => setNewContact(p => ({ ...p, company_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{companies.map(co => <SelectItem key={co.id} value={co.id}>{co.company_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Lead Source</Label>
               <Select value={newContact.lead_source} onValueChange={v => setNewContact(p => ({ ...p, lead_source: v }))}>
@@ -613,6 +828,7 @@ export default function CRM() {
           <div className="mt-6 space-y-4">
             <div className="space-y-2"><Label>Deal Name *</Label><Input value={newDeal.deal_name} onChange={e => setNewDeal(p => ({ ...p, deal_name: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Value ($)</Label><Input type="number" value={newDeal.deal_value} onChange={e => setNewDeal(p => ({ ...p, deal_value: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Probability (%)</Label><Input type="number" value={newDeal.close_probability} onChange={e => setNewDeal(p => ({ ...p, close_probability: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Pipeline Stage</Label>
               <Select value={newDeal.pipeline_stage} onValueChange={v => setNewDeal(p => ({ ...p, pipeline_stage: v }))}>
@@ -632,6 +848,24 @@ export default function CRM() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setDealOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addDeal}>Add Deal</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Company Sheet */}
+      <Sheet open={companyOpen} onOpenChange={setCompanyOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Company</SheetTitle><SheetDescription>Create a new company record</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Company Name *</Label><Input value={newCompany.company_name} onChange={e => setNewCompany(p => ({ ...p, company_name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Website</Label><Input value={newCompany.website} onChange={e => setNewCompany(p => ({ ...p, website: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Industry</Label><Input value={newCompany.industry} onChange={e => setNewCompany(p => ({ ...p, industry: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={newCompany.phone} onChange={e => setNewCompany(p => ({ ...p, phone: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={newCompany.email} onChange={e => setNewCompany(p => ({ ...p, email: e.target.value }))} /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCompanyOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addCompany}>Add Company</Button>
             </div>
           </div>
         </SheetContent>
