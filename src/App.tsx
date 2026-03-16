@@ -82,6 +82,7 @@ import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
+import BookingPage from "./pages/BookingPage";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/login" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
+            <Route path="/book/:slug" element={<BookingPage />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>

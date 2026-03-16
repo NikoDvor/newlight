@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2 } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,12 +172,25 @@ export default function AdminClients() {
     navigate("/");
   };
 
+  const handleSuspend = async (client: Client) => {
+    const newStatus = client.status === "suspended" ? "active" : "suspended";
+    await supabase.from("clients").update({ status: newStatus }).eq("id", client.id);
+    await supabase.from("audit_logs").insert({
+      action: newStatus === "suspended" ? "client_suspended" : "client_unsuspended",
+      client_id: client.id, module: "clients",
+      metadata: { business_name: client.business_name },
+    });
+    toast.success(`${client.business_name} ${newStatus === "suspended" ? "suspended" : "reactivated"}`);
+    fetchClients();
+  };
+
   const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
 
   const statusColor = (s: string) => {
     if (s === "active") return "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]";
     if (s === "provisioning") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-neon))]";
     if (s === "setup_in_progress") return "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]";
+    if (s === "suspended") return "bg-[hsla(0,70%,50%,.15)] text-[hsl(0,70%,68%)]";
     return "bg-white/5 text-white/40";
   };
 
@@ -399,6 +412,9 @@ export default function AdminClients() {
                        </button>
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+                      </button>
+                      <button onClick={() => handleSuspend(c)} className="p-1.5 rounded-lg hover:bg-yellow-500/10 transition-colors" title={c.status === "suspended" ? "Reactivate" : "Suspend"}>
+                        {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-white/30 hover:text-yellow-400" />}
                       </button>
                       <button onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Delete / Archive">
                         <Trash2 className="h-3.5 w-3.5 text-white/30 hover:text-red-400" />

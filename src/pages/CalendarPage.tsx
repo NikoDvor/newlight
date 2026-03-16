@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -233,12 +234,20 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               )}
+              {/* Duration selector */}
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Date *</Label><Input type="date" value={newEvent.start_date} onChange={e => setNewEvent(p => ({ ...p, start_date: e.target.value }))} className="bg-background border-border" /></div>
-                <div><Label>Time *</Label><Input type="time" value={newEvent.start_time} onChange={e => setNewEvent(p => ({ ...p, start_time: e.target.value }))} className="bg-background border-border" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Duration (min)</Label><Input type="number" value={newEvent.duration} onChange={e => setNewEvent(p => ({ ...p, duration: e.target.value }))} className="bg-background border-border" /></div>
+                <div><Label>Duration (min)</Label>
+                  <Select value={newEvent.duration} onValueChange={v => setNewEvent(p => ({ ...p, duration: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 min</SelectItem>
+                      <SelectItem value="30">30 min</SelectItem>
+                      <SelectItem value="45">45 min</SelectItem>
+                      <SelectItem value="60">60 min</SelectItem>
+                      <SelectItem value="90">90 min</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div><Label>Location</Label>
                   <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
                     <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
@@ -249,6 +258,17 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               </div>
+              {/* Dynamic Time Slot Picker */}
+              {activeClientId && (
+                <TimeSlotPicker
+                  clientId={activeClientId}
+                  duration={parseInt(newEvent.duration) || 30}
+                  selectedDate={newEvent.start_date}
+                  selectedTime={newEvent.start_time}
+                  onDateChange={d => setNewEvent(p => ({ ...p, start_date: d, start_time: "" }))}
+                  onTimeChange={t => setNewEvent(p => ({ ...p, start_time: t }))}
+                />
+              )}
               <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
