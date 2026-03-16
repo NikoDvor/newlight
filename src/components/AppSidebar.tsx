@@ -73,6 +73,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     type: "group", label: "Training",
     items: [
       { title: "Courses", url: "/training", icon: GraduationCap },
+      { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
   { type: "item", title: "Reports", url: "/reports", icon: FileText },

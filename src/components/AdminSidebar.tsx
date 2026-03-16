@@ -27,6 +27,7 @@ const navItems = [
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
   { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
+  { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
 ];
 
