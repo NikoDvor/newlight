@@ -23,6 +23,7 @@ import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 
 const STATUS_STYLE: Record<string, string> = {
   scheduled: "bg-accent/10 text-accent border-accent/20",
