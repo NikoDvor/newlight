@@ -123,9 +123,11 @@ export default function CalendarPage() {
       booking_source: "manual",
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId, activity_type: "appointment_booked",
-      activity_note: `Appointment "${newEvent.title}" booked for ${newEvent.contact_name || "Unknown"}`,
+    // Fire automation hooks
+    await onAppointmentBooked(activeClientId, {
+      id: "", title: newEvent.title, contact_name: newEvent.contact_name,
+      contact_email: newEvent.contact_email, contact_phone: newEvent.contact_phone,
+      contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
     setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "", notes: "", contact_id: "" });
