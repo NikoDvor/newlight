@@ -32,10 +32,16 @@ const integrationDefs = [
 const statusConfig: Record<string, { icon: any; label: string; color: string; bg: string }> = {
   connected: { icon: CheckCircle2, label: "Connected", color: "hsl(211 96% 56%)", bg: "hsla(211,96%,56%,.1)" },
   disconnected: { icon: XCircle, label: "Disconnected", color: "hsl(var(--muted-foreground))", bg: "hsla(210,40%,94%,.6)" },
+  not_needed: { icon: XCircle, label: "Not Needed", color: "hsl(var(--muted-foreground))", bg: "hsla(210,40%,94%,.4)" },
+  not_started: { icon: Clock, label: "Not Started", color: "hsl(var(--muted-foreground))", bg: "hsla(210,40%,94%,.6)" },
+  access_needed: { icon: Mail, label: "Access Needed", color: "hsl(38 92% 50%)", bg: "hsla(38,92%,50%,.1)" },
+  ready_to_connect: { icon: Plug, label: "Ready to Connect", color: "hsl(152 60% 44%)", bg: "hsla(152,60%,44%,.08)" },
   needs_reconnect: { icon: AlertTriangle, label: "Needs Reconnect", color: "hsl(222 68% 44%)", bg: "hsla(222,68%,44%,.1)" },
   pending_access: { icon: Mail, label: "Pending Access", color: "hsl(38 92% 50%)", bg: "hsla(38,92%,50%,.1)" },
   access_requested: { icon: Clock, label: "Access Requested", color: "hsl(38 92% 50%)", bg: "hsla(38,92%,50%,.08)" },
   access_received: { icon: CheckCircle2, label: "Access Received", color: "hsl(152 60% 44%)", bg: "hsla(152,60%,44%,.1)" },
+  awaiting_operator: { icon: Clock, label: "Awaiting Operator", color: "hsl(38 92% 50%)", bg: "hsla(38,92%,50%,.06)" },
+  awaiting_client: { icon: Clock, label: "Awaiting Client", color: "hsl(222 68% 44%)", bg: "hsla(222,68%,44%,.08)" },
 };
 
 export default function Integrations() {

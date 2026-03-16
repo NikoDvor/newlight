@@ -99,7 +99,7 @@ export default function CalendarPage() {
     if (status === "completed") {
       const event = events.find(e => e.id === eventId);
       if (event?.contact_name) {
-        await supabase.from("review_requests" as any).insert({
+        await supabase.from("review_requests").insert({
           client_id: activeClientId!,
           customer_name: event.contact_name,
           customer_email: event.contact_email || null,
