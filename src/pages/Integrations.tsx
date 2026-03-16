@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { Plug, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Eye, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
