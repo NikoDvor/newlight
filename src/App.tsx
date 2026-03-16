@@ -81,6 +81,7 @@ import CalendarPage from "./pages/CalendarPage";
 import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
+import HowItWorks from "./pages/HowItWorks";
 
 const queryClient = new QueryClient();
 
