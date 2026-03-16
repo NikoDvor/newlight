@@ -23,6 +23,7 @@ import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 
 const STATUS_STYLE: Record<string, string> = {
   scheduled: "bg-accent/10 text-accent border-accent/20",
@@ -122,9 +123,11 @@ export default function CalendarPage() {
       booking_source: "manual",
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId, activity_type: "appointment_booked",
-      activity_note: `Appointment "${newEvent.title}" booked for ${newEvent.contact_name || "Unknown"}`,
+    // Fire automation hooks
+    await onAppointmentBooked(activeClientId, {
+      id: "", title: newEvent.title, contact_name: newEvent.contact_name,
+      contact_email: newEvent.contact_email, contact_phone: newEvent.contact_phone,
+      contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
     setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "", notes: "", contact_id: "" });
@@ -137,24 +140,12 @@ export default function CalendarPage() {
     if (status === "cancelled" && reason) updateData.cancellation_reason = reason;
     if (status === "rescheduled" && reason) updateData.reschedule_reason = reason;
     await supabase.from("calendar_events").update(updateData).eq("id", eventId);
-    if (status === "completed") {
-      const event = events.find(e => e.id === eventId);
-      if (event?.contact_name) {
-        await supabase.from("review_requests" as any).insert({
-          client_id: activeClientId!, customer_name: event.contact_name,
-          customer_email: event.contact_email || null, customer_phone: event.contact_phone || null,
-          channel: event.contact_phone ? "sms" : "email", platform: "google", status: "sent",
-        });
-        await supabase.from("crm_activities").insert({
-          client_id: activeClientId!, activity_type: "review_request_auto",
-          activity_note: `Auto review request sent to ${event.contact_name} after completed appointment`,
-        });
-      }
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      if (status === "completed") await onAppointmentCompleted(activeClientId!, event);
+      else if (status === "cancelled") await onAppointmentCancelled(activeClientId!, event, reason);
+      else if (status === "no_show") await onNoShow(activeClientId!, event);
     }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId!, activity_type: "appointment_status_changed",
-      activity_note: `Appointment status changed to ${STATUS_LABEL[status] || status}`,
-    });
     toast({ title: `Status updated to ${STATUS_LABEL[status]}` });
     setDetailEvent(null);
     fetchData();

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
+import { onDealStageChanged, onContactCreated } from "@/lib/crmAutomations";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -150,10 +151,7 @@ export default function CRM() {
       company_id: newContact.company_id || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId, activity_type: "contact_created",
-      activity_note: `Contact "${newContact.full_name}" created`,
-    });
+    await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
     setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "" });
     setContactOpen(false);
@@ -207,25 +205,11 @@ export default function CRM() {
   };
 
   const moveDealStage = async (dealId: string, stage: string) => {
+    const deal = deals.find(d => d.id === dealId);
+    // Optimistic update
+    setDeals(prev => prev.map(d => d.id === dealId ? { ...d, pipeline_stage: stage } : d));
     await supabase.from("crm_deals").update({ pipeline_stage: stage }).eq("id", dealId);
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId!, activity_type: "stage_changed",
-      activity_note: `Deal moved to ${STAGE_LABELS[stage]}`, related_type: "deal", related_id: dealId,
-    });
-    // If won, update contact revenue
-    if (stage === "closed_won") {
-      const deal = deals.find(d => d.id === dealId);
-      if (deal?.contact_id && deal.deal_value) {
-        const contact = contacts.find(c => c.id === deal.contact_id);
-        if (contact) {
-          const newRevenue = (Number(contact.lifetime_revenue) || 0) + (Number(deal.deal_value) || 0);
-          await supabase.from("crm_contacts").update({
-            lifetime_revenue: newRevenue, contact_status: "customer",
-            last_interaction_date: new Date().toISOString(),
-          } as any).eq("id", deal.contact_id);
-        }
-      }
-    }
+    if (deal) await onDealStageChanged(activeClientId!, dealId, stage, deal, contacts);
     fetchData();
   };
 

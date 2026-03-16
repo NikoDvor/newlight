@@ -18,6 +18,7 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { onEmailSent } from "@/lib/crmAutomations";
 import { motion } from "framer-motion";
 
 const CONNECTION_STATUS: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
@@ -98,14 +99,11 @@ export default function EmailPage() {
       sent_at: new Date().toISOString(),
       contact_id: selectedMsg.contact_id,
     });
-    // Log to CRM if contact linked
-    if (selectedMsg.contact_id) {
-      await supabase.from("crm_activities").insert({
-        client_id: activeClientId, activity_type: "email_sent",
-        activity_note: `Email reply sent: Re: ${selectedMsg.subject}`,
-        related_type: "contact", related_id: selectedMsg.contact_id,
-      });
-    }
+    // Fire automation hook
+    await onEmailSent(activeClientId, {
+      id: "", to_address: selectedMsg.from_address,
+      subject: `Re: ${selectedMsg.subject}`, contact_id: selectedMsg.contact_id,
+    });
     toast({ title: "Reply sent" });
     setReplyText("");
     fetchData();
@@ -129,13 +127,10 @@ export default function EmailPage() {
       sent_at: new Date().toISOString(),
       contact_id: matchedContact?.id || null,
     });
-    if (matchedContact) {
-      await supabase.from("crm_activities").insert({
-        client_id: activeClientId, activity_type: "email_sent",
-        activity_note: `Email sent to ${matchedContact.full_name}: ${compose.subject}`,
-        related_type: "contact", related_id: matchedContact.id,
-      });
-    }
+    await onEmailSent(activeClientId, {
+      id: "", to_address: compose.to, subject: compose.subject,
+      contact_id: matchedContact?.id || null,
+    });
     toast({ title: "Email sent" });
     setCompose({ to: "", subject: "", body: "" });
     setComposeOpen(false);
