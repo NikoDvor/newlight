@@ -208,25 +208,11 @@ export default function CRM() {
   };
 
   const moveDealStage = async (dealId: string, stage: string) => {
+    const deal = deals.find(d => d.id === dealId);
+    // Optimistic update
+    setDeals(prev => prev.map(d => d.id === dealId ? { ...d, pipeline_stage: stage } : d));
     await supabase.from("crm_deals").update({ pipeline_stage: stage }).eq("id", dealId);
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId!, activity_type: "stage_changed",
-      activity_note: `Deal moved to ${STAGE_LABELS[stage]}`, related_type: "deal", related_id: dealId,
-    });
-    // If won, update contact revenue
-    if (stage === "closed_won") {
-      const deal = deals.find(d => d.id === dealId);
-      if (deal?.contact_id && deal.deal_value) {
-        const contact = contacts.find(c => c.id === deal.contact_id);
-        if (contact) {
-          const newRevenue = (Number(contact.lifetime_revenue) || 0) + (Number(deal.deal_value) || 0);
-          await supabase.from("crm_contacts").update({
-            lifetime_revenue: newRevenue, contact_status: "customer",
-            last_interaction_date: new Date().toISOString(),
-          } as any).eq("id", deal.contact_id);
-        }
-      }
-    }
+    if (deal) await onDealStageChanged(activeClientId!, dealId, stage, deal, contacts);
     fetchData();
   };
 
