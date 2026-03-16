@@ -731,6 +731,9 @@ export default function Workforce() {
           <TabsTrigger value="approvals" className="gap-1.5 text-xs"><ShieldCheck className="h-3.5 w-3.5" /> Approvals{pendingTimesheets > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-amber-500/15 text-amber-400 border-amber-500/30">{pendingTimesheets}</Badge>}</TabsTrigger>
           <TabsTrigger value="payroll" className="gap-1.5 text-xs"><DollarSign className="h-3.5 w-3.5" /> Payroll{draftPayrolls > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30">{draftPayrolls}</Badge>}</TabsTrigger>
           <TabsTrigger value="payouts" className="gap-1.5 text-xs"><Banknote className="h-3.5 w-3.5" /> Payouts</TabsTrigger>
+          <TabsTrigger value="labor" className="gap-1.5 text-xs"><Coins className="h-3.5 w-3.5" /> Labor Costs</TabsTrigger>
+          <TabsTrigger value="commissions" className="gap-1.5 text-xs"><TrendingUp className="h-3.5 w-3.5" /> Commissions</TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1.5 text-xs"><BarChart3 className="h-3.5 w-3.5" /> Reports</TabsTrigger>
         </TabsList>
 
         {/* ==================== DIRECTORY ==================== */}
