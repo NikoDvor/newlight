@@ -134,6 +134,8 @@ export default function SEO() {
         </div>
       </PageHeader>
 
+      <ModuleHelpPanel moduleName="SEO" description="Track keyword rankings, monitor competitors, detect technical SEO issues, and discover content opportunities. Data can be manually entered or synced from Google Search Console." tips={["Add target keywords to track ranking positions over time", "Log competitors to compare authority and traffic", "SEO issues are flagged for action and can be resolved inline"]} />
+
       {!hasRealData && (
         <SetupBanner
           icon={Search}

@@ -104,6 +104,8 @@ export default function PaidAds() {
         </Button>
       </PageHeader>
 
+      <ModuleHelpPanel moduleName="Paid Ads" description="Track campaign performance, spend, cost-per-lead, and ROAS across Google, Meta, LinkedIn, and more. Campaigns can be added manually or synced from ad platforms." tips={["Add campaigns manually or connect ad platforms from Integrations", "AI recommendations suggest budget optimizations", "Demo data shows until real campaigns are added"]} />
+
       {!hasRealData && (
         <SetupBanner
           icon={Megaphone}

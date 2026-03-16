@@ -121,6 +121,11 @@ export default function SocialDashboard() {
   return (
     <div>
       <PageHeader title="Social Media" description="Manage content, track engagement, and grow your audience">
+      </PageHeader>
+
+      <ModuleHelpPanel moduleName="Social Media" description="Manage social accounts, create and schedule posts, track engagement metrics, and manage content approvals. Connect your accounts or manage content manually." tips={["Add social accounts to track followers and engagement", "Create posts with draft, schedule, and approval workflows", "Demo platform data shows until accounts are connected"]} />
+
+      <PageHeader title="" description="">
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={() => setAccountOpen(true)}>
             <Wifi className="h-4 w-4" /> Add Account
