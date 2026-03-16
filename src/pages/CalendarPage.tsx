@@ -318,6 +318,7 @@ export default function CalendarPage() {
         <MetricCard label="Cancelled" value={String(cancelledCount)} change="" icon={X} />
         <MetricCard label="No Shows" value={String(noShowCount)} change="" icon={Clock} />
         <MetricCard label="Event Types" value={String(eventTypes.length)} change="" icon={Users} />
+        <MetricCard label="Calendars" value={String(calendars.length)} change="" icon={Settings2} />
       </WidgetGrid>
 
       {/* Calendar Controls */}
