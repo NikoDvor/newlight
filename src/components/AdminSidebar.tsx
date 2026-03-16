@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
-  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone
+  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -27,6 +27,7 @@ const navItems = [
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
   { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
+  { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
   { title: "System Settings", url: "/admin/settings", icon: Settings },
 ];
 

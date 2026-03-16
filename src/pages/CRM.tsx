@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
@@ -161,6 +162,12 @@ export default function CRM() {
           <Button className="gap-1.5" onClick={() => setDealOpen(true)}><Briefcase className="h-4 w-4" /> Deal</Button>
         </div>
       </PageHeader>
+
+      <ModuleHelpPanel
+        moduleName="CRM"
+        description="This is where all your leads and customer records live. Every contact, deal, and interaction is tracked here so nothing falls through the cracks."
+        tips={["New leads are automatically scored based on source and engagement", "Contacts update when appointments are booked via Calendar", "Email conversations are linked to contacts automatically"]}
+      />
 
       {!hasRealData && (
         <SetupBanner icon={Users} title="Build Your Sales Pipeline"

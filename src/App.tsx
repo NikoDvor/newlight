@@ -81,6 +81,7 @@ import CalendarPage from "./pages/CalendarPage";
 import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
+import HowItWorks from "./pages/HowItWorks";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
               <Route path="welcome" element={<AdminWelcome />} />
               <Route path="app-settings" element={<AdminAppSettings />} />
+              <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
             {/* Client Workspace */}
@@ -173,6 +175,7 @@ const App = () => (
               <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

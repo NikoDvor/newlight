@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
 import { SetupBanner } from "@/components/SetupBanner";
@@ -176,6 +177,12 @@ export default function EmailPage() {
           <Button className="gap-1.5" onClick={() => setComposeOpen(true)}><Plus className="h-4 w-4" /> Compose</Button>
         </div>
       </PageHeader>
+
+      <ModuleHelpPanel
+        moduleName="Email"
+        description="Read, reply to, and manage your business emails inside the app. Conversations are automatically linked to CRM contacts by email address."
+        tips={["Emails are matched to CRM contacts automatically", "You can create new contacts from unknown senders", "Reply to emails without leaving the platform"]}
+      />
 
       {/* Connection status banner */}
       {primaryConnection && primaryConnection.status !== "connected" && (

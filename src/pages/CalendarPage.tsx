@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
@@ -259,6 +260,12 @@ export default function CalendarPage() {
           </DialogContent>
         </Dialog>
       </PageHeader>
+
+      <ModuleHelpPanel
+        moduleName="Calendar"
+        description="This is where your appointments are scheduled and tracked. Bookings create CRM records, reminders go out automatically, and completed appointments can trigger review requests."
+        tips={["Reminders are sent 24h, 3h, and 30min before appointments", "Completed appointments can trigger automatic review requests", "No-shows are flagged for follow-up"]}
+      />
 
       {events.length === 0 && (
         <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
