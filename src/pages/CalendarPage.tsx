@@ -3,21 +3,21 @@ import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
 import { SetupBanner } from "@/components/SetupBanner";
+import { BackArrow } from "@/components/BackArrow";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Calendar as CalendarIcon, Clock, Users, Plus, Check, X, RefreshCw,
-  Video, MapPin, Link2
+  Video, MapPin, Link2, ChevronLeft, ChevronRight, List, LayoutGrid, Columns, CalendarDays
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -36,30 +36,71 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled", no_show: "No Show", rescheduled: "Rescheduled",
 };
 
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am-8pm
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getMonthGrid(year: number, month: number) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = getDaysInMonth(year, month);
+  const prevDays = getDaysInMonth(year, month - 1);
+  const grid: { day: number; inMonth: boolean; date: Date }[] = [];
+  for (let i = firstDay - 1; i >= 0; i--) {
+    grid.push({ day: prevDays - i, inMonth: false, date: new Date(year, month - 1, prevDays - i) });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    grid.push({ day: d, inMonth: true, date: new Date(year, month, d) });
+  }
+  while (grid.length < 42) {
+    const d = grid.length - firstDay - daysInMonth + 1;
+    grid.push({ day: d, inMonth: false, date: new Date(year, month + 1, d) });
+  }
+  return grid;
+}
+
+function getWeekDays(date: Date) {
+  const start = new Date(date);
+  start.setDate(start.getDate() - start.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 export default function CalendarPage() {
   const { activeClientId } = useWorkspace();
   const [events, setEvents] = useState<any[]>([]);
   const [eventTypes, setEventTypes] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
   const [newEventOpen, setNewEventOpen] = useState(false);
+  const [detailEvent, setDetailEvent] = useState<any>(null);
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
     start_date: "", start_time: "", duration: "30", location: "zoom",
-    event_type_id: "",
+    event_type_id: "", notes: "", contact_id: "",
   });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes] = await Promise.all([
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId)
-        .order("start_time", { ascending: true }),
-      supabase.from("event_types").select("*").eq("client_id", activeClientId)
-        .order("created_at", { ascending: false }),
+    const [evRes, etRes, cRes] = await Promise.all([
+      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
+      supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
+    setContacts(cRes.data || []);
     setLoading(false);
   };
 
@@ -69,44 +110,38 @@ export default function CalendarPage() {
     if (!activeClientId || !newEvent.title || !newEvent.start_date || !newEvent.start_time) return;
     const startTime = new Date(`${newEvent.start_date}T${newEvent.start_time}`);
     const endTime = new Date(startTime.getTime() + parseInt(newEvent.duration) * 60000);
-
     const { error } = await supabase.from("calendar_events").insert({
-      client_id: activeClientId,
-      title: newEvent.title,
-      contact_name: newEvent.contact_name || null,
-      contact_email: newEvent.contact_email || null,
-      contact_phone: newEvent.contact_phone || null,
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-      location: newEvent.location,
-      event_type_id: newEvent.event_type_id || null,
-      calendar_status: "scheduled",
-    });
+      client_id: activeClientId, title: newEvent.title,
+      contact_name: newEvent.contact_name || null, contact_email: newEvent.contact_email || null,
+      contact_phone: newEvent.contact_phone || null, start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(), location: newEvent.location,
+      event_type_id: newEvent.event_type_id || null, calendar_status: "scheduled",
+      notes: newEvent.notes || null, contact_id: newEvent.contact_id || null,
+      booking_source: "manual",
+    } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
       client_id: activeClientId, activity_type: "appointment_booked",
       activity_note: `Appointment "${newEvent.title}" booked for ${newEvent.contact_name || "Unknown"}`,
     });
     toast({ title: "Event Created" });
-    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "", notes: "", contact_id: "" });
     setNewEventOpen(false);
     fetchData();
   };
 
-  const updateEventStatus = async (eventId: string, status: string) => {
-    await supabase.from("calendar_events").update({ calendar_status: status }).eq("id", eventId);
-    // If completed, trigger review request automation
+  const updateEventStatus = async (eventId: string, status: string, reason?: string) => {
+    const updateData: any = { calendar_status: status };
+    if (status === "cancelled" && reason) updateData.cancellation_reason = reason;
+    if (status === "rescheduled" && reason) updateData.reschedule_reason = reason;
+    await supabase.from("calendar_events").update(updateData).eq("id", eventId);
     if (status === "completed") {
       const event = events.find(e => e.id === eventId);
       if (event?.contact_name) {
-        await supabase.from("review_requests").insert({
-          client_id: activeClientId!,
-          customer_name: event.contact_name,
-          customer_email: event.contact_email || null,
-          customer_phone: event.contact_phone || null,
-          channel: event.contact_phone ? "sms" : "email",
-          platform: "google",
-          status: "sent",
+        await supabase.from("review_requests" as any).insert({
+          client_id: activeClientId!, customer_name: event.contact_name,
+          customer_email: event.contact_email || null, customer_phone: event.contact_phone || null,
+          channel: event.contact_phone ? "sms" : "email", platform: "google", status: "sent",
         });
         await supabase.from("crm_activities").insert({
           client_id: activeClientId!, activity_type: "review_request_auto",
@@ -119,6 +154,7 @@ export default function CalendarPage() {
       activity_note: `Appointment status changed to ${STATUS_LABEL[status] || status}`,
     });
     toast({ title: `Status updated to ${STATUS_LABEL[status]}` });
+    setDetailEvent(null);
     fetchData();
   };
 
@@ -127,12 +163,19 @@ export default function CalendarPage() {
   const completedCount = events.filter(e => e.calendar_status === "completed").length;
   const noShowCount = events.filter(e => e.calendar_status === "no_show").length;
   const cancelledCount = events.filter(e => e.calendar_status === "cancelled").length;
-  const hasData = events.length > 0;
 
-  const selectedDateEvents = date ? events.filter(e => {
-    const eventDate = new Date(e.start_time);
-    return eventDate.toDateString() === date.toDateString();
-  }) : [];
+  const monthGrid = useMemo(() => getMonthGrid(currentDate.getFullYear(), currentDate.getMonth()), [currentDate]);
+  const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
+
+  const eventsForDay = (date: Date) => events.filter(e => isSameDay(new Date(e.start_time), date));
+
+  const navigate = (dir: number) => {
+    const d = new Date(currentDate);
+    if (view === "month") d.setMonth(d.getMonth() + dir);
+    else if (view === "week") d.setDate(d.getDate() + dir * 7);
+    else d.setDate(d.getDate() + dir);
+    setCurrentDate(d);
+  };
 
   const locationIcon = (loc: string) => {
     if (loc === "zoom") return <Video className="h-3 w-3" />;
@@ -140,16 +183,27 @@ export default function CalendarPage() {
     return <Link2 className="h-3 w-3" />;
   };
 
+  const selectContact = (id: string) => {
+    const c = contacts.find(ct => ct.id === id);
+    if (c) {
+      setNewEvent(p => ({ ...p, contact_id: id, contact_name: c.full_name, contact_email: c.email || "", contact_phone: c.phone || "" }));
+    }
+  };
+
   if (!activeClientId) {
     return (
       <div>
         <PageHeader title="Calendar" description="Branded scheduling, bookings, and appointment management" />
-        <div className="card-widget p-8 rounded-2xl text-center mt-6">
-          <p className="text-muted-foreground">Select a workspace to view Calendar.</p>
-        </div>
+        <div className="card-widget p-8 rounded-2xl text-center mt-6"><p className="text-muted-foreground">Select a workspace to view Calendar.</p></div>
       </div>
     );
   }
+
+  const headerLabel = view === "month"
+    ? currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : view === "week"
+    ? `${weekDays[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekDays[6].toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+    : currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
   return (
     <div>
@@ -158,9 +212,9 @@ export default function CalendarPage() {
           <DialogTrigger asChild>
             <Button className="gap-1.5"><Plus className="h-4 w-4" /> New Event</Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border">
+          <DialogContent className="bg-card border-border max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="text-foreground">Schedule New Event</DialogTitle></DialogHeader>
-            <div className="space-y-4 pt-2">
+            <div className="space-y-3 pt-2">
               <div><Label>Title *</Label><Input value={newEvent.title} onChange={e => setNewEvent(p => ({ ...p, title: e.target.value }))} placeholder="Event title" className="bg-background border-border" /></div>
               {eventTypes.length > 0 && (
                 <div><Label>Event Type</Label>
@@ -170,69 +224,194 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               )}
+              {contacts.length > 0 && (
+                <div><Label>Link CRM Contact</Label>
+                  <Select value={newEvent.contact_id} onValueChange={selectContact}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select contact" /></SelectTrigger>
+                    <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name} {c.email ? `(${c.email})` : ""}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Date *</Label><Input type="date" value={newEvent.start_date} onChange={e => setNewEvent(p => ({ ...p, start_date: e.target.value }))} className="bg-background border-border" /></div>
                 <div><Label>Time *</Label><Input type="time" value={newEvent.start_time} onChange={e => setNewEvent(p => ({ ...p, start_time: e.target.value }))} className="bg-background border-border" /></div>
               </div>
-              <div><Label>Duration (minutes)</Label><Input type="number" value={newEvent.duration} onChange={e => setNewEvent(p => ({ ...p, duration: e.target.value }))} className="bg-background border-border" /></div>
-              <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
-              <div><Label>Contact Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
-              <div><Label>Contact Phone</Label><Input value={newEvent.contact_phone} onChange={e => setNewEvent(p => ({ ...p, contact_phone: e.target.value }))} className="bg-background border-border" /></div>
-              <div><Label>Location</Label>
-                <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
-                  <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zoom">Zoom</SelectItem>
-                    <SelectItem value="office">Office</SelectItem>
-                    <SelectItem value="phone">Phone</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Duration (min)</Label><Input type="number" value={newEvent.duration} onChange={e => setNewEvent(p => ({ ...p, duration: e.target.value }))} className="bg-background border-border" /></div>
+                <div><Label>Location</Label>
+                  <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zoom">Zoom</SelectItem><SelectItem value="office">Office</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem><SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
+                <div><Label>Phone</Label><Input value={newEvent.contact_phone} onChange={e => setNewEvent(p => ({ ...p, contact_phone: e.target.value }))} className="bg-background border-border" /></div>
+              </div>
+              <div><Label>Notes</Label><Textarea value={newEvent.notes} onChange={e => setNewEvent(p => ({ ...p, notes: e.target.value }))} placeholder="Additional notes..." className="bg-background border-border min-h-[60px]" /></div>
               <Button className="w-full" onClick={createEvent}>Create Event</Button>
             </div>
           </DialogContent>
         </Dialog>
       </PageHeader>
 
-      {!hasData && (
+      {events.length === 0 && (
         <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
-          description="Create events, manage appointments, and automate booking workflows. Completed appointments automatically trigger review requests."
+          description="Create events, manage appointments, and automate booking workflows."
           actionLabel="Create First Event" onAction={() => setNewEventOpen(true)} />
       )}
 
-      <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
-        <MetricCard label="Upcoming" value={hasData ? String(upcomingEvents.length) : "—"} change={hasData ? "Active bookings" : "Book first"} icon={CalendarIcon} />
-        <MetricCard label="Completed" value={hasData ? String(completedCount) : "—"} change={hasData ? "Total completed" : "—"} icon={Check} />
-        <MetricCard label="Cancelled" value={hasData ? String(cancelledCount) : "—"} change="" icon={X} />
-        <MetricCard label="No Shows" value={hasData ? String(noShowCount) : "—"} change="" icon={Clock} />
+      <WidgetGrid columns="repeat(auto-fit, minmax(160px, 1fr))">
+        <MetricCard label="Upcoming" value={String(upcomingEvents.length)} change="Active" icon={CalendarIcon} />
+        <MetricCard label="Completed" value={String(completedCount)} change="" icon={Check} />
+        <MetricCard label="Cancelled" value={String(cancelledCount)} change="" icon={X} />
+        <MetricCard label="No Shows" value={String(noShowCount)} change="" icon={Clock} />
         <MetricCard label="Event Types" value={String(eventTypes.length)} change="" icon={Users} />
       </WidgetGrid>
 
-      <Tabs defaultValue="upcoming" className="mt-6">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="all">All Events</TabsTrigger>
-          <TabsTrigger value="types">Event Types</TabsTrigger>
-        </TabsList>
+      {/* Calendar Controls */}
+      <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>Today</Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(1)}><ChevronRight className="h-4 w-4" /></Button>
+          <h3 className="text-sm font-semibold text-foreground ml-2">{headerLabel}</h3>
+        </div>
+        <div className="flex gap-1 bg-secondary rounded-lg p-0.5">
+          {[
+            { v: "month" as const, icon: LayoutGrid, label: "Month" },
+            { v: "week" as const, icon: Columns, label: "Week" },
+            { v: "day" as const, icon: CalendarDays, label: "Day" },
+            { v: "agenda" as const, icon: List, label: "Agenda" },
+          ].map(({ v, icon: Icon, label }) => (
+            <Button key={v} variant={view === v ? "default" : "ghost"} size="sm" className="h-7 text-xs gap-1" onClick={() => setView(v)}>
+              <Icon className="h-3 w-3" />{label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-        <TabsContent value="upcoming" className="mt-4 space-y-3">
+      {/* MONTH VIEW */}
+      {view === "month" && (
+        <div className="mt-4 card-widget rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-7 border-b border-border">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+              <div key={d} className="px-2 py-2 text-[10px] font-semibold text-muted-foreground text-center uppercase">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {monthGrid.map((cell, i) => {
+              const dayEvents = eventsForDay(cell.date);
+              const isToday = isSameDay(cell.date, new Date());
+              return (
+                <div key={i} onClick={() => { setCurrentDate(cell.date); setView("day"); }}
+                  className={`min-h-[80px] p-1 border-b border-r border-border cursor-pointer hover:bg-secondary/50 transition-colors ${!cell.inMonth ? "bg-muted/30" : ""}`}>
+                  <span className={`text-[11px] font-medium inline-flex h-6 w-6 items-center justify-center rounded-full ${isToday ? "bg-primary text-primary-foreground" : cell.inMonth ? "text-foreground" : "text-muted-foreground"}`}>{cell.day}</span>
+                  {dayEvents.slice(0, 3).map(ev => (
+                    <div key={ev.id} onClick={e => { e.stopPropagation(); setDetailEvent(ev); }}
+                      className="text-[9px] leading-tight truncate px-1 py-0.5 rounded bg-primary/10 text-primary mt-0.5 cursor-pointer hover:bg-primary/20">
+                      {new Date(ev.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} {ev.title}
+                    </div>
+                  ))}
+                  {dayEvents.length > 3 && <span className="text-[9px] text-muted-foreground px-1">+{dayEvents.length - 3} more</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* WEEK VIEW */}
+      {view === "week" && (
+        <div className="mt-4 card-widget rounded-2xl overflow-hidden overflow-x-auto">
+          <div className="grid grid-cols-8 min-w-[700px]">
+            <div className="border-b border-r border-border p-2" />
+            {weekDays.map((d, i) => (
+              <div key={i} className={`border-b border-r border-border p-2 text-center ${isSameDay(d, new Date()) ? "bg-primary/5" : ""}`}>
+                <p className="text-[10px] text-muted-foreground uppercase">{d.toLocaleDateString("en-US", { weekday: "short" })}</p>
+                <p className={`text-sm font-semibold ${isSameDay(d, new Date()) ? "text-primary" : "text-foreground"}`}>{d.getDate()}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-8 min-w-[700px]">
+            {HOURS.map(hour => (
+              <div key={hour} className="contents">
+                <div className="border-b border-r border-border px-2 py-3 text-[10px] text-muted-foreground text-right pr-3">
+                  {hour > 12 ? hour - 12 : hour}{hour >= 12 ? "pm" : "am"}
+                </div>
+                {weekDays.map((d, di) => {
+                  const dayEv = eventsForDay(d).filter(e => new Date(e.start_time).getHours() === hour);
+                  return (
+                    <div key={di} className="border-b border-r border-border p-0.5 min-h-[48px] relative">
+                      {dayEv.map(ev => (
+                        <div key={ev.id} onClick={() => setDetailEvent(ev)}
+                          className="text-[9px] leading-tight px-1 py-0.5 rounded bg-primary/10 text-primary mb-0.5 cursor-pointer hover:bg-primary/20 truncate">
+                          {ev.title}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* DAY VIEW */}
+      {view === "day" && (
+        <div className="mt-4 card-widget rounded-2xl overflow-hidden">
+          <div className="p-3 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">{currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+            <p className="text-xs text-muted-foreground">{eventsForDay(currentDate).length} appointments</p>
+          </div>
+          {HOURS.map(hour => {
+            const dayEv = eventsForDay(currentDate).filter(e => new Date(e.start_time).getHours() === hour);
+            return (
+              <div key={hour} className="flex border-b border-border min-h-[56px]">
+                <div className="w-16 shrink-0 px-3 py-3 text-[11px] text-muted-foreground text-right border-r border-border">
+                  {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
+                </div>
+                <div className="flex-1 p-1 space-y-1">
+                  {dayEv.map(ev => (
+                    <div key={ev.id} onClick={() => setDetailEvent(ev)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors">
+                      <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{ev.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{ev.contact_name || "No contact"} · {Math.round((new Date(ev.end_time).getTime() - new Date(ev.start_time).getTime()) / 60000)} min</p>
+                      </div>
+                      {locationIcon(ev.location || "other")}
+                      <Badge variant="outline" className={`text-[9px] ${STATUS_STYLE[ev.calendar_status] || ""}`}>{STATUS_LABEL[ev.calendar_status] || ev.calendar_status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* AGENDA VIEW */}
+      {view === "agenda" && (
+        <div className="mt-4 space-y-3">
           {upcomingEvents.length === 0 ? (
             <DataCard title="Upcoming Appointments">
               <div className="py-8 text-center">
-                <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                  <CalendarIcon className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                </div>
-                <p className="text-sm font-medium text-foreground mb-1">No upcoming appointments</p>
-                <p className="text-xs text-muted-foreground mb-4">Schedule your first event to get started.</p>
-                <Button size="sm" onClick={() => setNewEventOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Event</Button>
+                <p className="text-sm text-muted-foreground">No upcoming appointments</p>
+                <Button size="sm" className="mt-3" onClick={() => setNewEventOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Event</Button>
               </div>
             </DataCard>
           ) : (
-            upcomingEvents.slice(0, 20).map((ev, i) => (
-              <motion.div key={ev.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="card-widget p-4 flex items-center justify-between">
+            upcomingEvents.slice(0, 30).map((ev, i) => (
+              <motion.div key={ev.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                onClick={() => setDetailEvent(ev)}
+                className="card-widget p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <CalendarIcon className="h-4 w-4 text-primary" />
@@ -250,129 +429,66 @@ export default function CalendarPage() {
                       <span>{new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || "bg-muted text-muted-foreground border-border"}>
-                    {STATUS_LABEL[ev.calendar_status] || ev.calendar_status}
-                  </Badge>
-                  <Select onValueChange={(v) => updateEventStatus(ev.id, v)}>
-                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Update" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="confirmed">Confirm</SelectItem>
-                      <SelectItem value="completed">Complete</SelectItem>
-                      <SelectItem value="cancelled">Cancel</SelectItem>
-                      <SelectItem value="no_show">No Show</SelectItem>
-                      <SelectItem value="rescheduled">Reschedule</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || ""}>{STATUS_LABEL[ev.calendar_status] || ev.calendar_status}</Badge>
                 </div>
               </motion.div>
             ))
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="calendar" className="mt-4">
-          <DataCard title="Calendar View">
-            <div className="flex justify-center">
-              <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md" />
-            </div>
-            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
-              <p className="text-sm font-medium text-foreground">
-                {date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Select a date"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{selectedDateEvents.length} appointment{selectedDateEvents.length !== 1 ? "s" : ""} scheduled</p>
-              {selectedDateEvents.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {selectedDateEvents.map(ev => (
-                    <div key={ev.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-background border border-border">
-                      <span className="font-medium text-foreground">{ev.title}</span>
-                      <span className="text-muted-foreground">{new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                  ))}
+      {/* EVENT DETAIL DIALOG */}
+      <Dialog open={!!detailEvent} onOpenChange={open => !open && setDetailEvent(null)}>
+        <DialogContent className="bg-card border-border max-h-[85vh] overflow-y-auto">
+          {detailEvent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-foreground flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />{detailEvent.title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Date & Time</p>
+                    <p className="text-sm text-foreground">{new Date(detailEvent.start_time).toLocaleString()}</p></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Duration</p>
+                    <p className="text-sm text-foreground">{Math.round((new Date(detailEvent.end_time).getTime() - new Date(detailEvent.start_time).getTime()) / 60000)} min</p></div>
                 </div>
-              )}
-            </div>
-          </DataCard>
-        </TabsContent>
-
-        <TabsContent value="all" className="mt-4">
-          <DataCard title="All Events">
-            {events.length === 0 ? (
-              <div className="py-8 text-center"><p className="text-sm text-muted-foreground">No events yet.</p></div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Contact</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {events.map(ev => (
-                      <tr key={ev.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="text-sm font-medium py-3 pr-4">{ev.title}</td>
-                        <td className="text-sm text-muted-foreground py-3 pr-4">{ev.contact_name || "—"}</td>
-                        <td className="text-xs text-muted-foreground py-3 pr-4">{new Date(ev.start_time).toLocaleString()}</td>
-                        <td className="py-3 pr-4">
-                          <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || ""}>
-                            {STATUS_LABEL[ev.calendar_status] || ev.calendar_status}
-                          </Badge>
-                        </td>
-                        <td className="py-3">
-                          <Select onValueChange={(v) => updateEventStatus(ev.id, v)}>
-                            <SelectTrigger className="w-[100px] h-7 text-[10px]"><SelectValue placeholder="Update" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="confirmed">Confirm</SelectItem>
-                              <SelectItem value="completed">Complete</SelectItem>
-                              <SelectItem value="cancelled">Cancel</SelectItem>
-                              <SelectItem value="no_show">No Show</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
-                      </tr>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Status</p>
+                    <Badge variant="outline" className={STATUS_STYLE[detailEvent.calendar_status] || ""}>{STATUS_LABEL[detailEvent.calendar_status] || detailEvent.calendar_status}</Badge></div>
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Location</p>
+                    <div className="flex items-center gap-1 text-sm text-foreground">{locationIcon(detailEvent.location || "other")}{detailEvent.location || "—"}</div></div>
+                </div>
+                {detailEvent.contact_name && (
+                  <div className="p-3 rounded-xl bg-secondary/50 border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Contact</p>
+                    <p className="text-sm font-medium text-foreground">{detailEvent.contact_name}</p>
+                    {detailEvent.contact_email && <p className="text-xs text-muted-foreground">{detailEvent.contact_email}</p>}
+                    {detailEvent.contact_phone && <p className="text-xs text-muted-foreground">{detailEvent.contact_phone}</p>}
+                  </div>
+                )}
+                {detailEvent.notes && (
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Notes</p><p className="text-sm text-foreground">{detailEvent.notes}</p></div>
+                )}
+                {detailEvent.cancellation_reason && (
+                  <div><p className="text-[10px] text-muted-foreground uppercase">Cancellation Reason</p><p className="text-sm text-destructive">{detailEvent.cancellation_reason}</p></div>
+                )}
+                <div className="border-t border-border pt-3">
+                  <p className="text-[10px] text-muted-foreground uppercase mb-2">Update Status</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["confirmed", "completed", "cancelled", "no_show", "rescheduled"].filter(s => s !== detailEvent.calendar_status).map(s => (
+                      <Button key={s} size="sm" variant="outline" className="text-xs" onClick={() => updateEventStatus(detailEvent.id, s)}>
+                        {STATUS_LABEL[s]}
+                      </Button>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </DataCard>
-        </TabsContent>
-
-        <TabsContent value="types" className="mt-4 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Event Types</h3>
-          </div>
-          {eventTypes.length === 0 ? (
-            <DataCard title="Event Types">
-              <div className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">No event types configured. Event types are set up during onboarding.</p>
-              </div>
-            </DataCard>
-          ) : (
-            <WidgetGrid columns="repeat(auto-fit, minmax(260px, 1fr))">
-              {eventTypes.map((et, i) => (
-                <motion.div key={et.id} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                  className="card-widget p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-3 w-3 rounded-full" style={{ background: et.color || "hsl(211 96% 56%)" }} />
-                    <p className="text-sm font-semibold text-foreground flex-1">{et.name}</p>
-                    <Badge variant="outline" className={et.active ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}>
-                      {et.active ? "Active" : "Inactive"}
-                    </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div><p className="text-muted-foreground">Duration</p><p className="font-medium text-foreground">{et.duration_minutes} min</p></div>
-                    <div><p className="text-muted-foreground">Buffer Before</p><p className="font-medium text-foreground">{et.buffer_before || 0} min</p></div>
-                    <div><p className="text-muted-foreground">Buffer After</p><p className="font-medium text-foreground">{et.buffer_after || 0} min</p></div>
-                  </div>
-                </motion.div>
-              ))}
-            </WidgetGrid>
+                </div>
+              </div>
+            </>
           )}
-        </TabsContent>
-      </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

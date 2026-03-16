@@ -48,6 +48,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     items: [
       { title: "Finance", url: "/finance", icon: Wallet },
       { title: "Calendar", url: "/calendar", icon: Calendar },
+      { title: "Email", url: "/email", icon: Mail },
     ],
   },
   {

@@ -168,6 +168,7 @@ const App = () => (
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
             </Route>
