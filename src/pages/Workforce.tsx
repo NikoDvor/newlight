@@ -1107,7 +1107,6 @@ export default function Workforce() {
             </Card>
           )}
         </TabsContent>
-      </Tabs>
 
         {/* ==================== LABOR COSTS ==================== */}
         <TabsContent value="labor">
