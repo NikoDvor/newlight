@@ -234,12 +234,20 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               )}
+              {/* Duration selector */}
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Date *</Label><Input type="date" value={newEvent.start_date} onChange={e => setNewEvent(p => ({ ...p, start_date: e.target.value }))} className="bg-background border-border" /></div>
-                <div><Label>Time *</Label><Input type="time" value={newEvent.start_time} onChange={e => setNewEvent(p => ({ ...p, start_time: e.target.value }))} className="bg-background border-border" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Duration (min)</Label><Input type="number" value={newEvent.duration} onChange={e => setNewEvent(p => ({ ...p, duration: e.target.value }))} className="bg-background border-border" /></div>
+                <div><Label>Duration (min)</Label>
+                  <Select value={newEvent.duration} onValueChange={v => setNewEvent(p => ({ ...p, duration: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 min</SelectItem>
+                      <SelectItem value="30">30 min</SelectItem>
+                      <SelectItem value="45">45 min</SelectItem>
+                      <SelectItem value="60">60 min</SelectItem>
+                      <SelectItem value="90">90 min</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div><Label>Location</Label>
                   <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
                     <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
