@@ -34,13 +34,11 @@
       }
       #splash-screen.hide { opacity: 0; pointer-events: none; }
       #splash-logo {
-        width: 64px; height: 64px; border-radius: 16px;
-        background: linear-gradient(135deg, hsl(197 92% 68%), hsl(217 90% 58%));
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 30px -4px hsla(211,96%,56%,.4);
+        width: 180px; height: auto;
         animation: splash-pulse 2s infinite ease-in-out;
+        filter: drop-shadow(0 4px 30px hsla(211,96%,56%,.3));
       }
-      #splash-logo svg { width: 32px; height: 32px; color: white; }
+      #splash-logo img { width: 100%; height: auto; }
       #splash-text { margin-top: 16px; color: rgba(255,255,255,0.5); font-size: 13px; font-family: system-ui; font-weight: 600; letter-spacing: 0.05em; }
       @keyframes splash-pulse {
         0%, 100% { box-shadow: 0 4px 30px -4px hsla(211,96%,56%,.4); }
@@ -51,9 +49,9 @@
   <body>
     <div id="splash-screen">
       <div id="splash-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <img src="/newlight-logo.jpg" alt="NewLight" />
       </div>
-      <div id="splash-text">NewLight</div>
+      <div id="splash-text">New Eyes To ROI</div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
