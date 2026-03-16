@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { Plug, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Eye, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -70,6 +71,15 @@ export default function Integrations() {
   return (
     <div>
       <PageHeader title="Integrations" description="Connect your business tools and services to power your growth system" />
+      <ModuleHelpPanel
+        moduleName="Integrations"
+        description="Integrations connect your external business tools — Google Analytics, Meta, Stripe, Zoom, and more — to power dashboards, automations, and AI insights. Status tracking shows what's connected, what needs access, and what's ready to go."
+        tips={[
+          "Onboarding auto-creates integration records based on your selections",
+          "Operators can request access on your behalf for enterprise accounts",
+          "Connected integrations feed real data into reports and AI insights",
+        ]}
+      />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {integrationDefs.map((def, i) => {
           const intg = getIntegrationStatus(def.name);

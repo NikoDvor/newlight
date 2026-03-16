@@ -86,6 +86,7 @@ import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
 import Workforce from "./pages/Workforce";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -184,6 +185,7 @@ const App = () => (
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/workforce" element={<Workforce />} />
+              <Route path="/chat" element={<Chat />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
