@@ -17,8 +17,12 @@ import {
   Users, Clock, Plus, Play, Square, FileText, Search,
   CheckCircle, XCircle, Timer, Briefcase, CalendarDays,
   Eye, Lock, Send, ShieldCheck, ClipboardList,
-  DollarSign, Banknote, CreditCard, Edit, RotateCcw
+  DollarSign, Banknote, CreditCard, Edit, RotateCcw,
+  Coins, TrendingUp, BarChart3
 } from "lucide-react";
+import { WorkforceLaborCosts } from "@/components/workforce/WorkforceLaborCosts";
+import { WorkforceCommissions } from "@/components/workforce/WorkforceCommissions";
+import { WorkforceReports } from "@/components/workforce/WorkforceReports";
 
 // ---------- types ----------
 interface Worker {
@@ -727,6 +731,9 @@ export default function Workforce() {
           <TabsTrigger value="approvals" className="gap-1.5 text-xs"><ShieldCheck className="h-3.5 w-3.5" /> Approvals{pendingTimesheets > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-amber-500/15 text-amber-400 border-amber-500/30">{pendingTimesheets}</Badge>}</TabsTrigger>
           <TabsTrigger value="payroll" className="gap-1.5 text-xs"><DollarSign className="h-3.5 w-3.5" /> Payroll{draftPayrolls > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30">{draftPayrolls}</Badge>}</TabsTrigger>
           <TabsTrigger value="payouts" className="gap-1.5 text-xs"><Banknote className="h-3.5 w-3.5" /> Payouts</TabsTrigger>
+          <TabsTrigger value="labor" className="gap-1.5 text-xs"><Coins className="h-3.5 w-3.5" /> Labor Costs</TabsTrigger>
+          <TabsTrigger value="commissions" className="gap-1.5 text-xs"><TrendingUp className="h-3.5 w-3.5" /> Commissions</TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1.5 text-xs"><BarChart3 className="h-3.5 w-3.5" /> Reports</TabsTrigger>
         </TabsList>
 
         {/* ==================== DIRECTORY ==================== */}
@@ -1099,6 +1106,27 @@ export default function Workforce() {
               </Table>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ==================== LABOR COSTS ==================== */}
+        <TabsContent value="labor">
+          <WorkforceLaborCosts clientId={activeClientId} workers={workers as any} />
+        </TabsContent>
+
+        {/* ==================== COMMISSIONS ==================== */}
+        <TabsContent value="commissions">
+          <WorkforceCommissions clientId={activeClientId} workers={workers as any} />
+        </TabsContent>
+
+        {/* ==================== REPORTS ==================== */}
+        <TabsContent value="reports">
+          <WorkforceReports
+            workers={workers as any}
+            entries={entries as any}
+            timesheets={timesheets as any}
+            payrollRuns={payrollRuns as any}
+            payouts={payouts as any}
+          />
         </TabsContent>
       </Tabs>
 
