@@ -23,7 +23,7 @@ interface NavGroup {
 
 const navStructure: ({ type: "item"; title: string; url: string; icon: any } | { type: "group"; label: string; items: { title: string; url: string; icon: any }[] })[] = [
   { type: "item", title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Zap },
+  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles },
   { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain },
   {
     type: "group", label: "Client Overview",
