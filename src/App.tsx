@@ -70,6 +70,7 @@ import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import AdminWelcome from "./pages/admin/AdminWelcome";
+import AdminAppSettings from "./pages/admin/AdminAppSettings";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
