@@ -731,6 +731,137 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          sender_id: string | null
+          sender_name: string | null
+          thread_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          sender_id?: string | null
+          sender_name?: string | null
+          thread_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          sender_id?: string | null
+          sender_name?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          client_id: string
+          id: string
+          joined_at: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          joined_at?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          joined_at?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          linked_id: string | null
+          linked_type: string | null
+          thread_name: string | null
+          thread_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_id?: string | null
+          linked_type?: string | null
+          thread_name?: string | null
+          thread_type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_id?: string | null
+          linked_type?: string | null
+          thread_name?: string | null
+          thread_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_threads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_branding: {
         Row: {
           accent_color: string | null
@@ -2660,6 +2791,53 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          linked_id: string | null
+          linked_type: string | null
+          message: string | null
+          recipient_user_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          linked_id?: string | null
+          linked_type?: string | null
+          message?: string | null
+          recipient_user_id?: string | null
+          title: string
+          type?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          linked_id?: string | null
+          linked_type?: string | null
+          message?: string | null
+          recipient_user_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
