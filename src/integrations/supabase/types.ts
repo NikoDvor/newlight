@@ -821,6 +821,7 @@ export type Database = {
         Row: {
           business_name: string
           created_at: string
+          crm_mode: string
           id: string
           industry: string | null
           owner_email: string | null
@@ -835,6 +836,7 @@ export type Database = {
         Insert: {
           business_name: string
           created_at?: string
+          crm_mode?: string
           id?: string
           industry?: string | null
           owner_email?: string | null
@@ -849,6 +851,7 @@ export type Database = {
         Update: {
           business_name?: string
           created_at?: string
+          crm_mode?: string
           id?: string
           industry?: string | null
           owner_email?: string | null
@@ -867,6 +870,8 @@ export type Database = {
           activity_note: string | null
           activity_type: string
           client_id: string
+          company_id: string | null
+          contact_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -877,6 +882,8 @@ export type Database = {
           activity_note?: string | null
           activity_type: string
           client_id: string
+          company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -887,6 +894,8 @@ export type Database = {
           activity_note?: string | null
           activity_type?: string
           client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -901,45 +910,140 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "crm_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       crm_companies: {
         Row: {
           address: string | null
+          city: string | null
           client_id: string
           company_name: string
           created_at: string
+          email: string | null
+          external_crm_company_id: string | null
           id: string
           industry: string | null
+          notes: string | null
+          owner_contact_id: string | null
+          phone: string | null
           primary_contact_id: string | null
+          state: string | null
           updated_at: string
           website: string | null
+          zip: string | null
         }
         Insert: {
           address?: string | null
+          city?: string | null
           client_id: string
           company_name: string
           created_at?: string
+          email?: string | null
+          external_crm_company_id?: string | null
           id?: string
           industry?: string | null
+          notes?: string | null
+          owner_contact_id?: string | null
+          phone?: string | null
           primary_contact_id?: string | null
+          state?: string | null
           updated_at?: string
           website?: string | null
+          zip?: string | null
         }
         Update: {
           address?: string | null
+          city?: string | null
           client_id?: string
           company_name?: string
           created_at?: string
+          email?: string | null
+          external_crm_company_id?: string | null
           id?: string
           industry?: string | null
+          notes?: string | null
+          owner_contact_id?: string | null
+          phone?: string | null
           primary_contact_id?: string | null
+          state?: string | null
           updated_at?: string
           website?: string | null
+          zip?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "crm_companies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_companies_owner_contact_id_fkey"
+            columns: ["owner_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_connections: {
+        Row: {
+          client_id: string
+          config: Json | null
+          connected_at: string | null
+          connected_by: string | null
+          connection_status: string
+          created_at: string
+          crm_provider_name: string
+          external_workspace_id: string | null
+          id: string
+          last_synced_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          config?: Json | null
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          crm_provider_name: string
+          external_workspace_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          config?: Json | null
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          crm_provider_name?: string
+          external_workspace_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_connections_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -950,11 +1054,15 @@ export type Database = {
       crm_contacts: {
         Row: {
           address: string | null
+          city: string | null
           client_id: string
           company_id: string | null
           contact_owner: string | null
+          contact_status: string
           created_at: string
+          customer_value: number | null
           email: string | null
+          external_crm_contact_id: string | null
           first_contact_date: string | null
           full_name: string
           id: string
@@ -966,16 +1074,23 @@ export type Database = {
           number_of_purchases: number | null
           phone: string | null
           pipeline_stage: string | null
+          secondary_phone: string | null
+          state: string | null
           tags: string[] | null
           updated_at: string
+          zip: string | null
         }
         Insert: {
           address?: string | null
+          city?: string | null
           client_id: string
           company_id?: string | null
           contact_owner?: string | null
+          contact_status?: string
           created_at?: string
+          customer_value?: number | null
           email?: string | null
+          external_crm_contact_id?: string | null
           first_contact_date?: string | null
           full_name: string
           id?: string
@@ -987,16 +1102,23 @@ export type Database = {
           number_of_purchases?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          secondary_phone?: string | null
+          state?: string | null
           tags?: string[] | null
           updated_at?: string
+          zip?: string | null
         }
         Update: {
           address?: string | null
+          city?: string | null
           client_id?: string
           company_id?: string | null
           contact_owner?: string | null
+          contact_status?: string
           created_at?: string
+          customer_value?: number | null
           email?: string | null
+          external_crm_contact_id?: string | null
           first_contact_date?: string | null
           full_name?: string
           id?: string
@@ -1008,8 +1130,11 @@ export type Database = {
           number_of_purchases?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          secondary_phone?: string | null
+          state?: string | null
           tags?: string[] | null
           updated_at?: string
+          zip?: string | null
         }
         Relationships: [
           {
@@ -1025,6 +1150,7 @@ export type Database = {
         Row: {
           assigned_user: string | null
           client_id: string
+          close_date: string | null
           close_probability: number | null
           company_id: string | null
           contact_id: string | null
@@ -1032,14 +1158,17 @@ export type Database = {
           deal_name: string
           deal_value: number | null
           expected_close_date: string | null
+          external_crm_deal_id: string | null
           id: string
           pipeline_stage: string
+          pipeline_stage_id: string | null
           status: string
           updated_at: string
         }
         Insert: {
           assigned_user?: string | null
           client_id: string
+          close_date?: string | null
           close_probability?: number | null
           company_id?: string | null
           contact_id?: string | null
@@ -1047,14 +1176,17 @@ export type Database = {
           deal_name: string
           deal_value?: number | null
           expected_close_date?: string | null
+          external_crm_deal_id?: string | null
           id?: string
           pipeline_stage?: string
+          pipeline_stage_id?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           assigned_user?: string | null
           client_id?: string
+          close_date?: string | null
           close_probability?: number | null
           company_id?: string | null
           contact_id?: string | null
@@ -1062,8 +1194,10 @@ export type Database = {
           deal_name?: string
           deal_value?: number | null
           expected_close_date?: string | null
+          external_crm_deal_id?: string | null
           id?: string
           pipeline_stage?: string
+          pipeline_stage_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1089,6 +1223,61 @@ export type Database = {
             referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "crm_deals_pipeline_stage_id_fkey"
+            columns: ["pipeline_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_field_mappings: {
+        Row: {
+          client_id: string
+          created_at: string
+          crm_connection_id: string | null
+          external_field_name: string
+          id: string
+          internal_field_name: string
+          mapping_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          crm_connection_id?: string | null
+          external_field_name: string
+          id?: string
+          internal_field_name: string
+          mapping_type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          crm_connection_id?: string | null
+          external_field_name?: string
+          id?: string
+          internal_field_name?: string
+          mapping_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_field_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_field_mappings_crm_connection_id_fkey"
+            columns: ["crm_connection_id"]
+            isOneToOne: false
+            referencedRelation: "crm_connections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       crm_leads: {
@@ -1099,9 +1288,11 @@ export type Database = {
           contact_id: string | null
           created_at: string
           estimated_value: number | null
+          external_crm_lead_id: string | null
           id: string
           lead_status: string
           notes: string | null
+          pipeline_stage_id: string | null
           source: string | null
           updated_at: string
         }
@@ -1112,9 +1303,11 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           estimated_value?: number | null
+          external_crm_lead_id?: string | null
           id?: string
           lead_status?: string
           notes?: string | null
+          pipeline_stage_id?: string | null
           source?: string | null
           updated_at?: string
         }
@@ -1125,9 +1318,11 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           estimated_value?: number | null
+          external_crm_lead_id?: string | null
           id?: string
           lead_status?: string
           notes?: string | null
+          pipeline_stage_id?: string | null
           source?: string | null
           updated_at?: string
         }
@@ -1153,6 +1348,129 @@ export type Database = {
             referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "crm_leads_pipeline_stage_id_fkey"
+            columns: ["pipeline_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_notes: {
+        Row: {
+          client_id: string
+          company_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          deal_id: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          company_id?: string | null
+          contact_id?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_notes_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_sync_logs: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          crm_connection_id: string | null
+          error_message: string | null
+          id: string
+          records_processed: number | null
+          started_at: string
+          sync_status: string
+          sync_type: string
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          crm_connection_id?: string | null
+          error_message?: string | null
+          id?: string
+          records_processed?: number | null
+          started_at?: string
+          sync_status?: string
+          sync_type?: string
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          crm_connection_id?: string | null
+          error_message?: string | null
+          id?: string
+          records_processed?: number | null
+          started_at?: string
+          sync_status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_sync_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_sync_logs_crm_connection_id_fkey"
+            columns: ["crm_connection_id"]
+            isOneToOne: false
+            referencedRelation: "crm_connections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       crm_tasks: {
@@ -1160,37 +1478,46 @@ export type Database = {
           assigned_user: string | null
           client_id: string
           created_at: string
+          created_by: string | null
           description: string | null
           due_date: string | null
           id: string
+          priority: string
           related_id: string | null
           related_type: string | null
           status: string
           title: string
+          updated_at: string
         }
         Insert: {
           assigned_user?: string | null
           client_id: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string
           related_id?: string | null
           related_type?: string | null
           status?: string
           title: string
+          updated_at?: string
         }
         Update: {
           assigned_user?: string | null
           client_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string
           related_id?: string | null
           related_type?: string | null
           status?: string
           title?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1411,6 +1738,67 @@ export type Database = {
           },
           {
             foreignKeyName: "email_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_threads: {
+        Row: {
+          client_id: string
+          connection_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          last_message_at: string | null
+          message_count: number | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          last_message_at?: string | null
+          message_count?: number | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          last_message_at?: string | null
+          message_count?: number | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_threads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_threads_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "email_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_threads_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts"
@@ -2117,6 +2505,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "payroll_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_stages: {
+        Row: {
+          client_id: string
+          color: string | null
+          created_at: string
+          id: string
+          pipeline_type: string
+          stage_name: string
+          stage_order: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          pipeline_type?: string
+          stage_name: string
+          stage_order?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          pipeline_type?: string
+          stage_name?: string
+          stage_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_stages_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
