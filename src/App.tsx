@@ -82,6 +82,7 @@ import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
+import BookingPage from "./pages/BookingPage";
 
 const queryClient = new QueryClient();
 
