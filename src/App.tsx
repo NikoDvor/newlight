@@ -8,6 +8,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import CRM from "./pages/CRM";
+import ContactDetail from "./pages/ContactDetail";
+import CompanyDetail from "./pages/CompanyDetail";
 import Website from "./pages/Website";
 import SocialMedia from "./pages/SocialMedia";
 import SEO from "./pages/SEO";

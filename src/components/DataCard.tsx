@@ -4,9 +4,10 @@ interface DataCardProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  action?: React.ReactNode;
 }
 
-export function DataCard({ title, children, className = "" }: DataCardProps) {
+export function DataCard({ title, children, className = "", action }: DataCardProps) {
   return (
     <motion.div
       className={`card-widget ${className}`}
@@ -15,7 +16,10 @@ export function DataCard({ title, children, className = "" }: DataCardProps) {
       viewport={{ once: true }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
     >
-      <h3 className="section-title mb-4">{title}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="section-title">{title}</h3>
+        {action}
+      </div>
       {children}
     </motion.div>
   );
