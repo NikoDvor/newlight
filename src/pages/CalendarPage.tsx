@@ -2,11 +2,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
+import { SetupBanner } from "@/components/SetupBanner";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon, Clock, Users, Plus, Check, X, RefreshCw,
-  Video, MapPin, Link2, ChevronLeft, ChevronRight
+  Video, MapPin, Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,349 +17,360 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-const upcomingEvents = [
-  { title: "Strategy Session", contact: "John Martinez", time: "Today, 2:00 PM", duration: "60 min", status: "Confirmed", type: "Consultation", location: "Zoom" },
-  { title: "Growth Review", contact: "Emma Davis", time: "Today, 4:30 PM", duration: "30 min", status: "Scheduled", type: "Review", location: "Office" },
-  { title: "Onboarding Call", contact: "David Lee", time: "Tomorrow, 10:00 AM", duration: "45 min", status: "Confirmed", type: "Onboarding", location: "Zoom" },
-  { title: "Sales Discovery", contact: "Rachel Kim", time: "Tomorrow, 1:00 PM", duration: "30 min", status: "Scheduled", type: "Discovery", location: "Phone" },
-  { title: "Follow-up Meeting", contact: "Tom Baker", time: "Mar 17, 11:00 AM", duration: "30 min", status: "Rescheduled", type: "Follow-up", location: "Zoom" },
-  { title: "Quarterly Review", contact: "Sarah Chen", time: "Mar 18, 3:00 PM", duration: "60 min", status: "Confirmed", type: "Review", location: "Office" },
-];
-
-const eventTypes = [
-  { name: "Strategy Session", duration: 60, buffer: 15, color: "hsl(211 96% 56%)", bookings: 24, active: true },
-  { name: "Discovery Call", duration: 30, buffer: 10, color: "hsl(197 92% 68%)", bookings: 42, active: true },
-  { name: "Onboarding Call", duration: 45, buffer: 15, color: "hsl(187 70% 58%)", bookings: 18, active: true },
-  { name: "Quick Check-in", duration: 15, buffer: 5, color: "hsl(222 68% 44%)", bookings: 56, active: true },
-  { name: "Review Meeting", duration: 60, buffer: 15, color: "hsl(210 55% 86%)", bookings: 12, active: false },
-];
-
-const availabilityDays = [
-  { day: "Monday", start: "9:00 AM", end: "5:00 PM", enabled: true },
-  { day: "Tuesday", start: "9:00 AM", end: "5:00 PM", enabled: true },
-  { day: "Wednesday", start: "9:00 AM", end: "5:00 PM", enabled: true },
-  { day: "Thursday", start: "9:00 AM", end: "5:00 PM", enabled: true },
-  { day: "Friday", start: "9:00 AM", end: "3:00 PM", enabled: true },
-  { day: "Saturday", start: "10:00 AM", end: "1:00 PM", enabled: false },
-  { day: "Sunday", start: "", end: "", enabled: false },
-];
-
-const statusStyle = (s: string) => {
-  if (s === "Confirmed" || s === "Completed") return "bg-primary/10 text-primary border-primary/20";
-  if (s === "Scheduled") return "bg-accent/10 text-accent border-accent/20";
-  if (s === "Cancelled") return "bg-destructive/10 text-destructive border-destructive/20";
-  if (s === "Rescheduled") return "bg-muted text-muted-foreground border-border";
-  if (s === "No Show") return "bg-destructive/10 text-destructive border-destructive/20";
-  return "bg-muted text-muted-foreground border-border";
+const STATUS_STYLE: Record<string, string> = {
+  scheduled: "bg-accent/10 text-accent border-accent/20",
+  confirmed: "bg-primary/10 text-primary border-primary/20",
+  completed: "bg-primary/10 text-primary border-primary/20",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  no_show: "bg-destructive/10 text-destructive border-destructive/20",
+  rescheduled: "bg-muted text-muted-foreground border-border",
 };
 
-const locationIcon = (loc: string) => {
-  if (loc === "Zoom") return <Video className="h-3 w-3" />;
-  if (loc === "Office") return <MapPin className="h-3 w-3" />;
-  return <Link2 className="h-3 w-3" />;
+const STATUS_LABEL: Record<string, string> = {
+  scheduled: "Scheduled", confirmed: "Confirmed", completed: "Completed",
+  cancelled: "Cancelled", no_show: "No Show", rescheduled: "Rescheduled",
 };
 
 export default function CalendarPage() {
-  const { toast } = useToast();
+  const { activeClientId } = useWorkspace();
+  const [events, setEvents] = useState<any[]>([]);
+  const [eventTypes, setEventTypes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [newEventOpen, setNewEventOpen] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: "", contact_name: "", contact_email: "", contact_phone: "",
+    start_date: "", start_time: "", duration: "30", location: "zoom",
+    event_type_id: "",
+  });
+
+  const fetchData = async () => {
+    if (!activeClientId) { setLoading(false); return; }
+    setLoading(true);
+    const [evRes, etRes] = await Promise.all([
+      supabase.from("calendar_events").select("*").eq("client_id", activeClientId)
+        .order("start_time", { ascending: true }),
+      supabase.from("event_types").select("*").eq("client_id", activeClientId)
+        .order("created_at", { ascending: false }),
+    ]);
+    setEvents(evRes.data || []);
+    setEventTypes(etRes.data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [activeClientId]);
+
+  const createEvent = async () => {
+    if (!activeClientId || !newEvent.title || !newEvent.start_date || !newEvent.start_time) return;
+    const startTime = new Date(`${newEvent.start_date}T${newEvent.start_time}`);
+    const endTime = new Date(startTime.getTime() + parseInt(newEvent.duration) * 60000);
+
+    const { error } = await supabase.from("calendar_events").insert({
+      client_id: activeClientId,
+      title: newEvent.title,
+      contact_name: newEvent.contact_name || null,
+      contact_email: newEvent.contact_email || null,
+      contact_phone: newEvent.contact_phone || null,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      location: newEvent.location,
+      event_type_id: newEvent.event_type_id || null,
+      calendar_status: "scheduled",
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "appointment_booked",
+      activity_note: `Appointment "${newEvent.title}" booked for ${newEvent.contact_name || "Unknown"}`,
+    });
+    toast({ title: "Event Created" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "" });
+    setNewEventOpen(false);
+    fetchData();
+  };
+
+  const updateEventStatus = async (eventId: string, status: string) => {
+    await supabase.from("calendar_events").update({ calendar_status: status }).eq("id", eventId);
+    // If completed, trigger review request automation
+    if (status === "completed") {
+      const event = events.find(e => e.id === eventId);
+      if (event?.contact_name) {
+        await supabase.from("review_requests" as any).insert({
+          client_id: activeClientId!,
+          customer_name: event.contact_name,
+          customer_email: event.contact_email || null,
+          customer_phone: event.contact_phone || null,
+          channel: event.contact_phone ? "sms" : "email",
+          platform: "google",
+          status: "sent",
+        });
+        await supabase.from("crm_activities").insert({
+          client_id: activeClientId!, activity_type: "review_request_auto",
+          activity_note: `Auto review request sent to ${event.contact_name} after completed appointment`,
+        });
+      }
+    }
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId!, activity_type: "appointment_status_changed",
+      activity_note: `Appointment status changed to ${STATUS_LABEL[status] || status}`,
+    });
+    toast({ title: `Status updated to ${STATUS_LABEL[status]}` });
+    fetchData();
+  };
+
+  const now = new Date();
+  const upcomingEvents = events.filter(e => new Date(e.start_time) >= now && e.calendar_status !== "cancelled");
+  const completedCount = events.filter(e => e.calendar_status === "completed").length;
+  const noShowCount = events.filter(e => e.calendar_status === "no_show").length;
+  const cancelledCount = events.filter(e => e.calendar_status === "cancelled").length;
+  const hasData = events.length > 0;
+
+  const selectedDateEvents = date ? events.filter(e => {
+    const eventDate = new Date(e.start_time);
+    return eventDate.toDateString() === date.toDateString();
+  }) : [];
+
+  const locationIcon = (loc: string) => {
+    if (loc === "zoom") return <Video className="h-3 w-3" />;
+    if (loc === "office") return <MapPin className="h-3 w-3" />;
+    return <Link2 className="h-3 w-3" />;
+  };
+
+  if (!activeClientId) {
+    return (
+      <div>
+        <PageHeader title="Calendar" description="Branded scheduling, bookings, and appointment management" />
+        <div className="card-widget p-8 rounded-2xl text-center mt-6">
+          <p className="text-muted-foreground">Select a workspace to view Calendar.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <PageHeader title="Calendar" description="Branded scheduling, bookings, and appointment management" />
+      <PageHeader title="Calendar" description="Branded scheduling, bookings, and appointment management">
+        <Dialog open={newEventOpen} onOpenChange={setNewEventOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-1.5"><Plus className="h-4 w-4" /> New Event</Button>
+          </DialogTrigger>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader><DialogTitle className="text-foreground">Schedule New Event</DialogTitle></DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div><Label>Title *</Label><Input value={newEvent.title} onChange={e => setNewEvent(p => ({ ...p, title: e.target.value }))} placeholder="Event title" className="bg-background border-border" /></div>
+              {eventTypes.length > 0 && (
+                <div><Label>Event Type</Label>
+                  <Select value={newEvent.event_type_id} onValueChange={v => setNewEvent(p => ({ ...p, event_type_id: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>{eventTypes.filter(e => e.active).map(e => <SelectItem key={e.id} value={e.id}>{e.name} ({e.duration_minutes} min)</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Date *</Label><Input type="date" value={newEvent.start_date} onChange={e => setNewEvent(p => ({ ...p, start_date: e.target.value }))} className="bg-background border-border" /></div>
+                <div><Label>Time *</Label><Input type="time" value={newEvent.start_time} onChange={e => setNewEvent(p => ({ ...p, start_time: e.target.value }))} className="bg-background border-border" /></div>
+              </div>
+              <div><Label>Duration (minutes)</Label><Input type="number" value={newEvent.duration} onChange={e => setNewEvent(p => ({ ...p, duration: e.target.value }))} className="bg-background border-border" /></div>
+              <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
+              <div><Label>Contact Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
+              <div><Label>Contact Phone</Label><Input value={newEvent.contact_phone} onChange={e => setNewEvent(p => ({ ...p, contact_phone: e.target.value }))} className="bg-background border-border" /></div>
+              <div><Label>Location</Label>
+                <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
+                  <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zoom">Zoom</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                    <SelectItem value="phone">Phone</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="w-full" onClick={createEvent}>Create Event</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </PageHeader>
 
-      {/* Metrics */}
+      {!hasData && (
+        <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
+          description="Create events, manage appointments, and automate booking workflows. Completed appointments automatically trigger review requests."
+          actionLabel="Create First Event" onAction={() => setNewEventOpen(true)} />
+      )}
+
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
-        <MetricCard label="Upcoming" value="12" change="" icon={CalendarIcon} />
-        <MetricCard label="Booked This Week" value="8" change="+33%" icon={Clock} />
-        <MetricCard label="Completed" value="142" change="+12%" icon={Check} />
-        <MetricCard label="No Shows" value="3" change="-25%" icon={X} />
-        <MetricCard label="Next Appointment" value="2:00 PM" change="Today" icon={Users} />
+        <MetricCard label="Upcoming" value={hasData ? String(upcomingEvents.length) : "—"} change={hasData ? "Active bookings" : "Book first"} icon={CalendarIcon} />
+        <MetricCard label="Completed" value={hasData ? String(completedCount) : "—"} change={hasData ? "Total completed" : "—"} icon={Check} />
+        <MetricCard label="Cancelled" value={hasData ? String(cancelledCount) : "—"} change="" icon={X} />
+        <MetricCard label="No Shows" value={hasData ? String(noShowCount) : "—"} change="" icon={Clock} />
+        <MetricCard label="Event Types" value={String(eventTypes.length)} change="" icon={Users} />
       </WidgetGrid>
 
       <Tabs defaultValue="upcoming" className="mt-6">
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="all">All Events</TabsTrigger>
           <TabsTrigger value="types">Event Types</TabsTrigger>
-          <TabsTrigger value="availability">Availability</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        {/* Upcoming Tab */}
-        <TabsContent value="upcoming" className="mt-4 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Upcoming Appointments</h3>
-            <Dialog open={newEventOpen} onOpenChange={setNewEventOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Plus className="h-3.5 w-3.5 mr-1.5" /> New Event
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-foreground">Schedule New Event</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-2">
-                  <div>
-                    <Label className="text-foreground">Title</Label>
-                    <Input placeholder="Event title" className="bg-background border-border" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Event Type</Label>
-                    <Select>
-                      <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select type" /></SelectTrigger>
-                      <SelectContent>
-                        {eventTypes.filter(e => e.active).map(e => (
-                          <SelectItem key={e.name} value={e.name}>{e.name} ({e.duration} min)</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-foreground">Date</Label>
-                      <Input type="date" className="bg-background border-border" />
-                    </div>
-                    <div>
-                      <Label className="text-foreground">Time</Label>
-                      <Input type="time" className="bg-background border-border" />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Contact Name</Label>
-                    <Input placeholder="Contact name" className="bg-background border-border" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Contact Email</Label>
-                    <Input type="email" placeholder="email@example.com" className="bg-background border-border" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Location</Label>
-                    <Select>
-                      <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select location" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="zoom">Zoom</SelectItem>
-                        <SelectItem value="office">Office</SelectItem>
-                        <SelectItem value="phone">Phone</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full bg-primary text-primary-foreground" onClick={() => {
-                    toast({ title: "Event created", description: "Confirmation will be sent automatically." });
-                    setNewEventOpen(false);
-                  }}>Create Event</Button>
+        <TabsContent value="upcoming" className="mt-4 space-y-3">
+          {upcomingEvents.length === 0 ? (
+            <DataCard title="Upcoming Appointments">
+              <div className="py-8 text-center">
+                <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                  <CalendarIcon className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <div className="space-y-3">
-            {upcomingEvents.map((ev, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="card-widget p-4 flex items-center justify-between"
-              >
+                <p className="text-sm font-medium text-foreground mb-1">No upcoming appointments</p>
+                <p className="text-xs text-muted-foreground mb-4">Schedule your first event to get started.</p>
+                <Button size="sm" onClick={() => setNewEventOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Event</Button>
+              </div>
+            </DataCard>
+          ) : (
+            upcomingEvents.slice(0, 20).map((ev, i) => (
+              <motion.div key={ev.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                className="card-widget p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <CalendarIcon className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{ev.title}</p>
-                    <p className="text-xs text-muted-foreground">{ev.contact} · {ev.duration}</p>
+                    <p className="text-xs text-muted-foreground">{ev.contact_name || "No contact"} · {Math.round((new Date(ev.end_time).getTime() - new Date(ev.start_time).getTime()) / 60000)} min</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">{ev.time}</p>
+                    <p className="text-sm font-medium text-foreground">{new Date(ev.start_time).toLocaleDateString()}</p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground justify-end">
-                      {locationIcon(ev.location)}
-                      <span>{ev.location}</span>
+                      {locationIcon(ev.location || "other")}
+                      <span>{new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className={statusStyle(ev.status)}>{ev.status}</Badge>
+                  <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || "bg-muted text-muted-foreground border-border"}>
+                    {STATUS_LABEL[ev.calendar_status] || ev.calendar_status}
+                  </Badge>
+                  <Select onValueChange={(v) => updateEventStatus(ev.id, v)}>
+                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Update" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="confirmed">Confirm</SelectItem>
+                      <SelectItem value="completed">Complete</SelectItem>
+                      <SelectItem value="cancelled">Cancel</SelectItem>
+                      <SelectItem value="no_show">No Show</SelectItem>
+                      <SelectItem value="rescheduled">Reschedule</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </motion.div>
-            ))}
-          </div>
+            ))
+          )}
         </TabsContent>
 
-        {/* Calendar View Tab */}
         <TabsContent value="calendar" className="mt-4">
           <DataCard title="Calendar View">
             <div className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-md"
-              />
+              <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md" />
             </div>
             <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border">
               <p className="text-sm font-medium text-foreground">
                 {date ? date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Select a date"}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">2 appointments scheduled</p>
+              <p className="text-xs text-muted-foreground mt-1">{selectedDateEvents.length} appointment{selectedDateEvents.length !== 1 ? "s" : ""} scheduled</p>
+              {selectedDateEvents.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {selectedDateEvents.map(ev => (
+                    <div key={ev.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-background border border-border">
+                      <span className="font-medium text-foreground">{ev.title}</span>
+                      <span className="text-muted-foreground">{new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </DataCard>
         </TabsContent>
 
-        {/* Event Types Tab */}
+        <TabsContent value="all" className="mt-4">
+          <DataCard title="All Events">
+            {events.length === 0 ? (
+              <div className="py-8 text-center"><p className="text-sm text-muted-foreground">No events yet.</p></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Contact</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {events.map(ev => (
+                      <tr key={ev.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                        <td className="text-sm font-medium py-3 pr-4">{ev.title}</td>
+                        <td className="text-sm text-muted-foreground py-3 pr-4">{ev.contact_name || "—"}</td>
+                        <td className="text-xs text-muted-foreground py-3 pr-4">{new Date(ev.start_time).toLocaleString()}</td>
+                        <td className="py-3 pr-4">
+                          <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || ""}>
+                            {STATUS_LABEL[ev.calendar_status] || ev.calendar_status}
+                          </Badge>
+                        </td>
+                        <td className="py-3">
+                          <Select onValueChange={(v) => updateEventStatus(ev.id, v)}>
+                            <SelectTrigger className="w-[100px] h-7 text-[10px]"><SelectValue placeholder="Update" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="confirmed">Confirm</SelectItem>
+                              <SelectItem value="completed">Complete</SelectItem>
+                              <SelectItem value="cancelled">Cancel</SelectItem>
+                              <SelectItem value="no_show">No Show</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </DataCard>
+        </TabsContent>
+
         <TabsContent value="types" className="mt-4 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">Event Types</h3>
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="h-3.5 w-3.5 mr-1.5" /> New Type
-            </Button>
           </div>
-          <WidgetGrid columns="repeat(auto-fit, minmax(260px, 1fr))">
-            {eventTypes.map((et, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="card-widget p-5"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-3 w-3 rounded-full" style={{ background: et.color }} />
-                  <p className="text-sm font-semibold text-foreground flex-1">{et.name}</p>
-                  <Badge variant="outline" className={et.active ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}>
-                    {et.active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <p className="text-muted-foreground">Duration</p>
-                    <p className="font-medium text-foreground">{et.duration} min</p>
+          {eventTypes.length === 0 ? (
+            <DataCard title="Event Types">
+              <div className="py-8 text-center">
+                <p className="text-sm text-muted-foreground">No event types configured. Event types are set up during onboarding.</p>
+              </div>
+            </DataCard>
+          ) : (
+            <WidgetGrid columns="repeat(auto-fit, minmax(260px, 1fr))">
+              {eventTypes.map((et, i) => (
+                <motion.div key={et.id} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+                  className="card-widget p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-3 w-3 rounded-full" style={{ background: et.color || "hsl(211 96% 56%)" }} />
+                    <p className="text-sm font-semibold text-foreground flex-1">{et.name}</p>
+                    <Badge variant="outline" className={et.active ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}>
+                      {et.active ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Buffer</p>
-                    <p className="font-medium text-foreground">{et.buffer} min</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><p className="text-muted-foreground">Duration</p><p className="font-medium text-foreground">{et.duration_minutes} min</p></div>
+                    <div><p className="text-muted-foreground">Buffer Before</p><p className="font-medium text-foreground">{et.buffer_before || 0} min</p></div>
+                    <div><p className="text-muted-foreground">Buffer After</p><p className="font-medium text-foreground">{et.buffer_after || 0} min</p></div>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Bookings</p>
-                    <p className="font-medium text-foreground">{et.bookings}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs border-primary/20 text-primary hover:bg-primary/5">Edit</Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-xs border-border">Copy Link</Button>
-                </div>
-              </motion.div>
-            ))}
-          </WidgetGrid>
-        </TabsContent>
-
-        {/* Availability Tab */}
-        <TabsContent value="availability" className="mt-4">
-          <DataCard title="Weekly Availability">
-            <div className="space-y-3">
-              {availabilityDays.map((d, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border bg-background/50">
-                  <div className="flex items-center gap-3 w-24">
-                    <Switch checked={d.enabled} />
-                    <span className={`text-sm font-medium ${d.enabled ? "text-foreground" : "text-muted-foreground"}`}>{d.day}</span>
-                  </div>
-                  {d.enabled ? (
-                    <div className="flex items-center gap-2">
-                      <Input value={d.start} className="w-28 h-8 text-xs bg-background border-border" readOnly />
-                      <span className="text-xs text-muted-foreground">to</span>
-                      <Input value={d.end} className="w-28 h-8 text-xs bg-background border-border" readOnly />
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Unavailable</span>
-                  )}
-                </div>
+                </motion.div>
               ))}
-            </div>
-            <Button className="mt-4 w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Availability</Button>
-          </DataCard>
-        </TabsContent>
-
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="mt-4">
-          <WidgetGrid columns="1fr 1fr">
-            <DataCard title="Booking Settings">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Auto-confirm bookings</p>
-                    <p className="text-xs text-muted-foreground">Automatically confirm new appointments</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Send confirmation SMS</p>
-                    <p className="text-xs text-muted-foreground">SMS confirmation to contact</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Send confirmation email</p>
-                    <p className="text-xs text-muted-foreground">Email confirmation to contact</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Allow cancellations</p>
-                    <p className="text-xs text-muted-foreground">Let contacts cancel via link</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Allow rescheduling</p>
-                    <p className="text-xs text-muted-foreground">Let contacts reschedule</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-            </DataCard>
-            <DataCard title="Reminder Settings">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">24-hour reminder</p>
-                    <p className="text-xs text-muted-foreground">SMS + Email</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">3-hour reminder</p>
-                    <p className="text-xs text-muted-foreground">SMS only</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">30-minute reminder</p>
-                    <p className="text-xs text-muted-foreground">SMS only</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Follow-up after completion</p>
-                    <p className="text-xs text-muted-foreground">Auto-create follow-up task</p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
-            </DataCard>
-          </WidgetGrid>
+            </WidgetGrid>
+          )}
         </TabsContent>
       </Tabs>
     </div>
