@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -15,8 +15,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import {
   Users, Clock, Plus, Play, Square, FileText, Search,
-  CheckCircle, XCircle, AlertCircle, Timer, Briefcase, CalendarDays,
-  Eye, Lock, MessageSquare, Send, ShieldCheck, ClipboardList
+  CheckCircle, XCircle, Timer, Briefcase, CalendarDays,
+  Eye, Lock, Send, ShieldCheck, ClipboardList,
+  DollarSign, Banknote, CreditCard, Edit, RotateCcw
 } from "lucide-react";
 
 // ---------- types ----------
@@ -53,27 +54,56 @@ interface Timesheet {
   created_at: string; updated_at: string;
 }
 
+interface PayrollRun {
+  id: string; client_id: string; pay_period_start: string; pay_period_end: string;
+  payroll_status: string; payroll_frequency: string | null;
+  gross_pay_total: number; tax_withholding_total_placeholder: number;
+  deductions_total: number; bonus_total: number; reimbursement_total: number;
+  net_pay_total: number; total_gross_pay: number; total_final_pay: number;
+  run_date: string | null; approved_at: string | null; approved_by: string | null;
+  paid_at: string | null; created_at: string; updated_at: string;
+}
+
+interface PayrollLineItem {
+  id: string; client_id: string; payroll_run_id: string; worker_id: string | null;
+  team_member_id: string; pay_type: string | null; hours_worked: number;
+  overtime_hours: number; base_pay: number; overtime_pay: number;
+  commission_pay: number; bonus_pay: number; reimbursement_pay: number;
+  deduction_amount: number; net_pay: number; gross_pay: number; final_pay: number;
+  notes: string | null; status: string | null; created_at: string;
+}
+
+interface Payout {
+  id: string; client_id: string; payroll_run_id: string | null;
+  worker_id: string; payout_method: string; payout_amount: number;
+  payout_status: string; payout_reference: string | null;
+  initiated_at: string | null; completed_at: string | null;
+  created_at: string; updated_at: string;
+}
+
 // ---------- constants ----------
 const WORKER_TYPES = ["Employee", "Contractor", "Freelancer", "Manager", "Admin Staff", "Service Provider"];
 const PAY_TYPES = ["Hourly", "Salary", "Commission", "Salary + Commission", "Flat Rate", "Hourly + Bonus", "Contractor Hourly", "Contractor Fixed"];
 const MODULES = ["Calendar", "CRM", "Reviews", "Ads", "Social", "SEO", "Website", "Finance", "Admin", "Operations"];
 const LABOR_CATEGORIES = ["Appointment Delivery", "Sales", "Admin", "Client Support", "Content Creation", "Website Work", "SEO Work", "Ad Management", "Review Recovery", "Internal Ops"];
 const PAY_FREQUENCIES = ["Weekly", "Biweekly", "Semimonthly", "Monthly"];
+const PAYOUT_METHODS = ["Bank Transfer", "ACH", "Check", "Stripe", "Manual", "Cash", "Other"];
 
 const statusColor = (s: string) => {
   switch (s?.toLowerCase()) {
-    case "active": case "approved": case "paid": return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
-    case "inactive": case "terminated": case "rejected": return "bg-red-500/15 text-red-400 border-red-500/30";
-    case "on leave": case "open": return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+    case "active": case "approved": case "paid": case "completed": return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+    case "inactive": case "terminated": case "rejected": case "failed": case "cancelled": case "voided": case "error": return "bg-red-500/15 text-red-400 border-red-500/30";
+    case "on leave": case "open": case "pending": case "awaiting approval": case "processing": return "bg-amber-500/15 text-amber-400 border-amber-500/30";
     case "draft": return "bg-muted text-muted-foreground border-border";
     case "submitted": return "bg-blue-500/15 text-blue-400 border-blue-500/30";
-    case "locked": return "bg-purple-500/15 text-purple-400 border-purple-500/30";
+    case "locked": case "partially paid": return "bg-purple-500/15 text-purple-400 border-purple-500/30";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };
 
 const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString() : "—";
 const fmtTime = (d: string | null) => d ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtCurrency = (n: number | null) => n != null ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00";
 
 function getPayPeriodBounds(freq: string, refDate: Date = new Date()): { start: Date; end: Date } {
   const y = refDate.getFullYear(), m = refDate.getMonth(), d = refDate.getDate();
@@ -100,12 +130,37 @@ function getPayPeriodBounds(freq: string, refDate: Date = new Date()): { start: 
 
 function dateStr(d: Date) { return d.toISOString().split("T")[0]; }
 
+function calcWorkerPay(worker: Worker, hours: number, overtimeHours: number) {
+  const pt = worker.pay_type?.toLowerCase() || "hourly";
+  const rate = worker.hourly_rate || 0;
+  const salary = worker.salary_amount || 0;
+  let basePay = 0, otPay = 0;
+
+  if (pt.includes("hourly") || pt === "contractor hourly") {
+    basePay = (hours - overtimeHours) * rate;
+    otPay = overtimeHours * rate * 1.5;
+  } else if (pt.includes("salary")) {
+    // Prorate salary per period
+    const freq = worker.payroll_frequency || "Biweekly";
+    const periods = freq === "Weekly" ? 52 : freq === "Biweekly" ? 26 : freq === "Semimonthly" ? 24 : 12;
+    basePay = salary / periods;
+  } else if (pt === "flat rate" || pt === "contractor fixed") {
+    basePay = salary > 0 ? salary : rate * hours;
+  } else if (pt === "commission") {
+    basePay = 0; // commission handled separately
+  }
+  return { basePay: Math.round(basePay * 100) / 100, otPay: Math.round(otPay * 100) / 100 };
+}
+
 export default function Workforce() {
   const { activeClientId, user } = useWorkspace();
   const [tab, setTab] = useState("directory");
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
+  const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
+  const [payrollLines, setPayrollLines] = useState<PayrollLineItem[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -117,6 +172,11 @@ export default function Workforce() {
   const [rejectDialogId, setRejectDialogId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [approvalComment, setApprovalComment] = useState("");
+  const [viewPayrollId, setViewPayrollId] = useState<string | null>(null);
+  const [adjustDialogLine, setAdjustDialogLine] = useState<PayrollLineItem | null>(null);
+  const [adjustForm, setAdjustForm] = useState({ bonus_pay: "", deduction_amount: "", reimbursement_pay: "", notes: "" });
+  const [payoutDialogWorker, setPayoutDialogWorker] = useState<{ workerId: string; payrollRunId: string; amount: number } | null>(null);
+  const [payoutMethod, setPayoutMethod] = useState("Bank Transfer");
 
   // forms
   const [wf, setWf] = useState({ first_name: "", last_name: "", email: "", phone: "", role_title: "", department: "", worker_type: "Employee", pay_type: "Hourly", hourly_rate: "", salary_amount: "", payroll_frequency: "Biweekly" });
@@ -125,14 +185,20 @@ export default function Workforce() {
   const fetchData = useCallback(async () => {
     if (!activeClientId) return;
     setLoading(true);
-    const [wRes, eRes, tRes] = await Promise.all([
+    const [wRes, eRes, tRes, prRes, plRes, poRes] = await Promise.all([
       supabase.from("workers").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("time_entries").select("*").eq("client_id", activeClientId).order("entry_date", { ascending: false }).limit(500),
       supabase.from("timesheets").select("*").eq("client_id", activeClientId).order("pay_period_start", { ascending: false }).limit(200),
+      supabase.from("payroll_runs").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(200),
+      supabase.from("payroll_line_items").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(500),
+      supabase.from("payouts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(500),
     ]);
     if (wRes.data) setWorkers(wRes.data as any);
     if (eRes.data) setEntries(eRes.data as any);
     if (tRes.data) setTimesheets(tRes.data as any);
+    if (prRes.data) setPayrollRuns(prRes.data as any);
+    if (plRes.data) setPayrollLines(plRes.data as any);
+    if (poRes.data) setPayouts(poRes.data as any);
     const activeEntry = (eRes.data as any[])?.find((e: any) => e.entry_method === "Clock In/Out" && e.entry_status === "Draft" && !e.end_time);
     setClockedIn(activeEntry?.id ?? null);
     setLoading(false);
@@ -148,7 +214,7 @@ export default function Workforce() {
   const totalWorkers = workers.filter(w => w.status === "Active").length;
   const totalHoursToday = entries.filter(e => e.entry_date === new Date().toISOString().split("T")[0]).reduce((s, e) => s + (e.total_minutes || 0), 0) / 60;
   const pendingTimesheets = timesheets.filter(t => t.status === "Submitted").length;
-  const draftEntries = entries.filter(e => e.entry_status === "Draft").length;
+  const draftPayrolls = payrollRuns.filter(r => r.payroll_status?.toLowerCase() === "draft" || r.payroll_status?.toLowerCase() === "awaiting approval").length;
 
   // ---------- audit helper ----------
   const logAudit = async (action: string, meta?: any) => {
@@ -257,21 +323,14 @@ export default function Workforce() {
     const freq = worker?.payroll_frequency || "Biweekly";
     const { start, end } = getPayPeriodBounds(freq);
     const periodStart = dateStr(start), periodEnd = dateStr(end);
-
-    // Check if timesheet already exists for this period
     const existing = timesheets.find(t => t.worker_id === workerId && t.pay_period_start === periodStart && t.pay_period_end === periodEnd);
     if (existing) { toast({ title: "Timesheet already exists for this period" }); return; }
-
-    // Calculate totals from entries in this period
-    const periodEntries = entries.filter(e =>
-      e.worker_id === workerId && e.entry_date >= periodStart && e.entry_date <= periodEnd
-    );
+    const periodEntries = entries.filter(e => e.worker_id === workerId && e.entry_date >= periodStart && e.entry_date <= periodEnd);
     const totalMin = periodEntries.reduce((s, e) => s + (e.total_minutes || 0), 0);
     const totalHrs = totalMin / 60;
     const overtimeHrs = worker?.overtime_eligible ? Math.max(0, totalHrs - 40) : 0;
     const billableHrs = periodEntries.filter(e => e.billable_status === "Billable").reduce((s, e) => s + (e.total_minutes || 0), 0) / 60;
     const notesCount = periodEntries.filter(e => e.note_summary || e.detailed_notes).length;
-
     const { data, error } = await supabase.from("timesheets").insert({
       client_id: activeClientId, worker_id: workerId,
       pay_period_start: periodStart, pay_period_end: periodEnd,
@@ -281,15 +340,11 @@ export default function Workforce() {
       total_nonbillable_hours: Math.round((totalHrs - billableHrs) * 100) / 100,
       total_notes_count: notesCount, status: "Open",
     } as any).select().single();
-
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-
-    // Link entries to timesheet
     const entryIds = periodEntries.map(e => e.id);
     if (entryIds.length > 0 && data) {
       await supabase.from("time_entries").update({ timesheet_id: (data as any).id } as any).in("id", entryIds);
     }
-
     toast({ title: "Timesheet generated", description: `${periodStart} – ${periodEnd}` });
     await logAudit("timesheet_created", { worker_id: workerId, period: `${periodStart} – ${periodEnd}` });
     await logActivity("Timesheet Created", `Timesheet generated for ${worker?.full_name}: ${periodStart} – ${periodEnd}`);
@@ -312,13 +367,10 @@ export default function Workforce() {
       status: "Approved", approved_at: new Date().toISOString(),
       approved_by: user?.id, approval_comment: approvalComment || null,
     } as any).eq("id", id);
-
-    // Approve linked time entries
     const linked = entries.filter(e => e.timesheet_id === id);
     if (linked.length > 0) {
       await supabase.from("time_entries").update({ entry_status: "Approved", approved_at: new Date().toISOString() } as any).in("id", linked.map(e => e.id));
     }
-
     toast({ title: "Timesheet approved" });
     await logAudit("timesheet_approved", { timesheet_id: id, approver: user?.id, comment: approvalComment });
     await logActivity("Timesheet Approved", `Timesheet approved for ${workerMap[ts?.worker_id || ""]?.full_name || "worker"}`);
@@ -333,13 +385,10 @@ export default function Workforce() {
     await supabase.from("timesheets").update({
       status: "Rejected", rejected_at: new Date().toISOString(), rejection_reason: rejectReason || null,
     } as any).eq("id", rejectDialogId);
-
-    // Reopen linked entries for editing
     const linked = entries.filter(e => e.timesheet_id === rejectDialogId);
     if (linked.length > 0) {
       await supabase.from("time_entries").update({ entry_status: "Draft" } as any).in("id", linked.map(e => e.id));
     }
-
     toast({ title: "Timesheet rejected", description: rejectReason || undefined });
     await logAudit("timesheet_rejected", { timesheet_id: rejectDialogId, reason: rejectReason });
     await logActivity("Timesheet Rejected", `Timesheet rejected for ${workerMap[ts?.worker_id || ""]?.full_name || "worker"}: ${rejectReason || "No reason given"}`);
@@ -359,9 +408,218 @@ export default function Workforce() {
     fetchData();
   };
 
+  // ---------- PAYROLL GENERATION ----------
+  const generatePayroll = async () => {
+    if (!activeClientId) return;
+    const approvedTS = timesheets.filter(t => t.status === "Approved");
+    if (approvedTS.length === 0) { toast({ title: "No approved timesheets", description: "Approve timesheets before generating payroll.", variant: "destructive" }); return; }
+
+    // Group by period
+    const periodKey = (ts: Timesheet) => `${ts.pay_period_start}|${ts.pay_period_end}`;
+    const groups = new Map<string, Timesheet[]>();
+    approvedTS.forEach(ts => {
+      // Skip if payroll already exists for this period
+      const existingRun = payrollRuns.find(r => r.pay_period_start === ts.pay_period_start && r.pay_period_end === ts.pay_period_end);
+      if (existingRun) return;
+      const key = periodKey(ts);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(ts);
+    });
+
+    if (groups.size === 0) { toast({ title: "Payroll already exists for all approved periods" }); return; }
+
+    let created = 0;
+    for (const [key, tsList] of groups) {
+      const [periodStart, periodEnd] = key.split("|");
+      let grossTotal = 0, bonusTotal = 0, netTotal = 0;
+      const lineItems: any[] = [];
+
+      for (const ts of tsList) {
+        const worker = workerMap[ts.worker_id];
+        if (!worker) continue;
+        const { basePay, otPay } = calcWorkerPay(worker, ts.total_hours, ts.total_overtime_hours);
+        const lineNet = basePay + otPay;
+        grossTotal += lineNet;
+        netTotal += lineNet;
+
+        lineItems.push({
+          client_id: activeClientId,
+          worker_id: ts.worker_id,
+          team_member_id: ts.worker_id,
+          pay_type: worker.pay_type,
+          hours_worked: ts.total_hours,
+          overtime_hours: ts.total_overtime_hours,
+          base_pay: basePay,
+          overtime_pay: otPay,
+          gross_pay: basePay + otPay,
+          net_pay: lineNet,
+          final_pay: lineNet,
+          status: "Draft",
+        });
+      }
+
+      const { data: run, error } = await supabase.from("payroll_runs").insert({
+        client_id: activeClientId,
+        pay_period_start: periodStart,
+        pay_period_end: periodEnd,
+        payroll_status: "Draft",
+        payroll_frequency: tsList[0] ? workerMap[tsList[0].worker_id]?.payroll_frequency || "Biweekly" : "Biweekly",
+        gross_pay_total: Math.round(grossTotal * 100) / 100,
+        total_gross_pay: Math.round(grossTotal * 100) / 100,
+        net_pay_total: Math.round(netTotal * 100) / 100,
+        total_final_pay: Math.round(netTotal * 100) / 100,
+        run_date: new Date().toISOString().split("T")[0],
+      } as any).select().single();
+
+      if (error) { toast({ title: "Error creating payroll", description: error.message, variant: "destructive" }); continue; }
+
+      // Insert line items with payroll_run_id
+      const linesWithRun = lineItems.map(l => ({ ...l, payroll_run_id: (run as any).id }));
+      const { error: lineError } = await supabase.from("payroll_line_items").insert(linesWithRun as any);
+      if (lineError) { toast({ title: "Error creating line items", description: lineError.message, variant: "destructive" }); }
+
+      created++;
+      await logAudit("payroll_created", { payroll_run_id: (run as any).id, period: `${periodStart} – ${periodEnd}`, workers: tsList.length });
+      await logActivity("Payroll Created", `Payroll draft created: ${periodStart} – ${periodEnd} (${tsList.length} workers, ${fmtCurrency(grossTotal)} gross)`);
+    }
+
+    toast({ title: `${created} payroll run(s) created` });
+    fetchData();
+  };
+
+  // ---------- PAYROLL ACTIONS ----------
+  const submitPayroll = async (id: string) => {
+    await supabase.from("payroll_runs").update({ payroll_status: "Awaiting Approval" } as any).eq("id", id);
+    toast({ title: "Payroll submitted for approval" });
+    await logAudit("payroll_submitted", { payroll_run_id: id });
+    fetchData();
+  };
+
+  const approvePayroll = async (id: string) => {
+    await supabase.from("payroll_runs").update({
+      payroll_status: "Approved", approved_at: new Date().toISOString(), approved_by: user?.id,
+    } as any).eq("id", id);
+    await supabase.from("payroll_line_items").update({ status: "Approved" } as any).eq("payroll_run_id", id);
+    toast({ title: "Payroll approved" });
+    await logAudit("payroll_approved", { payroll_run_id: id, approver: user?.id });
+    await logActivity("Payroll Approved", `Payroll run approved`);
+    fetchData();
+  };
+
+  const markPayrollPaid = async (id: string) => {
+    await supabase.from("payroll_runs").update({
+      payroll_status: "Paid", paid_at: new Date().toISOString(),
+    } as any).eq("id", id);
+    await supabase.from("payroll_line_items").update({ status: "Paid" } as any).eq("payroll_run_id", id);
+    toast({ title: "Payroll marked as Paid" });
+    await logAudit("payroll_paid", { payroll_run_id: id });
+    fetchData();
+  };
+
+  const voidPayroll = async (id: string) => {
+    await supabase.from("payroll_runs").update({ payroll_status: "Voided" } as any).eq("id", id);
+    await supabase.from("payroll_line_items").update({ status: "Voided" } as any).eq("payroll_run_id", id);
+    toast({ title: "Payroll voided" });
+    await logAudit("payroll_voided", { payroll_run_id: id });
+    fetchData();
+  };
+
+  // ---------- LINE ITEM ADJUSTMENT ----------
+  const saveAdjustment = async () => {
+    if (!adjustDialogLine) return;
+    const bonus = Number(adjustForm.bonus_pay) || 0;
+    const deduction = Number(adjustForm.deduction_amount) || 0;
+    const reimb = Number(adjustForm.reimbursement_pay) || 0;
+    const currentBase = adjustDialogLine.base_pay || adjustDialogLine.gross_pay || 0;
+    const currentOt = adjustDialogLine.overtime_pay || 0;
+    const newNet = currentBase + currentOt + bonus + reimb - deduction;
+
+    await supabase.from("payroll_line_items").update({
+      bonus_pay: bonus, deduction_amount: deduction, reimbursement_pay: reimb,
+      net_pay: Math.round(newNet * 100) / 100,
+      final_pay: Math.round(newNet * 100) / 100,
+      notes: adjustForm.notes || adjustDialogLine.notes,
+    } as any).eq("id", adjustDialogLine.id);
+
+    // Recalculate run totals
+    const runId = adjustDialogLine.payroll_run_id;
+    const allLines = payrollLines.filter(l => l.payroll_run_id === runId);
+    let newGross = 0, newBonus = 0, newDeductions = 0, newReimb = 0, newTotal = 0;
+    for (const l of allLines) {
+      if (l.id === adjustDialogLine.id) {
+        newGross += currentBase + currentOt;
+        newBonus += bonus;
+        newDeductions += deduction;
+        newReimb += reimb;
+        newTotal += newNet;
+      } else {
+        newGross += (l.base_pay || l.gross_pay || 0) + (l.overtime_pay || 0);
+        newBonus += (l.bonus_pay || 0);
+        newDeductions += (l.deduction_amount || 0);
+        newReimb += (l.reimbursement_pay || 0);
+        newTotal += (l.net_pay || l.final_pay || 0);
+      }
+    }
+    await supabase.from("payroll_runs").update({
+      gross_pay_total: Math.round(newGross * 100) / 100,
+      total_gross_pay: Math.round(newGross * 100) / 100,
+      bonus_total: Math.round(newBonus * 100) / 100,
+      deductions_total: Math.round(newDeductions * 100) / 100,
+      reimbursement_total: Math.round(newReimb * 100) / 100,
+      net_pay_total: Math.round(newTotal * 100) / 100,
+      total_final_pay: Math.round(newTotal * 100) / 100,
+    } as any).eq("id", runId);
+
+    toast({ title: "Adjustment saved" });
+    await logAudit("payroll_adjustment", {
+      line_item_id: adjustDialogLine.id, bonus, deduction, reimbursement: reimb,
+      adjusted_by: user?.id, reason: adjustForm.notes,
+    });
+    await logActivity("Payroll Adjustment", `Manual adjustment: +${fmtCurrency(bonus)} bonus, -${fmtCurrency(deduction)} deduction, +${fmtCurrency(reimb)} reimbursement`);
+    setAdjustDialogLine(null);
+    setAdjustForm({ bonus_pay: "", deduction_amount: "", reimbursement_pay: "", notes: "" });
+    fetchData();
+  };
+
+  // ---------- PAYOUT ----------
+  const createPayout = async () => {
+    if (!payoutDialogWorker || !activeClientId) return;
+    const { data, error } = await supabase.from("payouts").insert({
+      client_id: activeClientId,
+      payroll_run_id: payoutDialogWorker.payrollRunId,
+      worker_id: payoutDialogWorker.workerId,
+      payout_method: payoutMethod,
+      payout_amount: payoutDialogWorker.amount,
+      payout_status: "Pending",
+      initiated_at: new Date().toISOString(),
+    } as any).select().single();
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Payout initiated" });
+    await logAudit("payout_created", { payout_id: (data as any).id, worker_id: payoutDialogWorker.workerId, amount: payoutDialogWorker.amount, method: payoutMethod });
+    await logActivity("Payout Initiated", `Payout of ${fmtCurrency(payoutDialogWorker.amount)} initiated via ${payoutMethod}`);
+    setPayoutDialogWorker(null);
+    setPayoutMethod("Bank Transfer");
+    fetchData();
+  };
+
+  const updatePayoutStatus = async (id: string, newStatus: string) => {
+    const updates: any = { payout_status: newStatus };
+    if (newStatus === "Completed") updates.completed_at = new Date().toISOString();
+    await supabase.from("payouts").update(updates).eq("id", id);
+    toast({ title: `Payout marked ${newStatus}` });
+    await logAudit(`payout_${newStatus.toLowerCase()}`, { payout_id: id });
+    await logActivity("Payout Status", `Payout marked ${newStatus}`);
+    fetchData();
+  };
+
   // ---------- VIEWED TIMESHEET ----------
   const viewedTS = viewTimesheetId ? timesheets.find(t => t.id === viewTimesheetId) : null;
   const viewedTSEntries = viewedTS ? entries.filter(e => e.timesheet_id === viewedTS.id || (e.worker_id === viewedTS.worker_id && e.entry_date >= viewedTS.pay_period_start && e.entry_date <= viewedTS.pay_period_end)) : [];
+
+  // ---------- VIEWED PAYROLL ----------
+  const viewedRun = viewPayrollId ? payrollRuns.find(r => r.id === viewPayrollId) : null;
+  const viewedRunLines = viewedRun ? payrollLines.filter(l => l.payroll_run_id === viewedRun.id) : [];
+  const viewedRunPayouts = viewedRun ? payouts.filter(p => p.payroll_run_id === viewedRun.id) : [];
 
   if (!activeClientId) {
     return (
@@ -374,7 +632,7 @@ export default function Workforce() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
-      <PageHeader title="Workforce" description="Team directory, time tracking, timesheets, and approvals." />
+      <PageHeader title="Workforce" description="Team directory, time tracking, timesheets, payroll, and payouts." />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -391,8 +649,8 @@ export default function Workforce() {
           <div><p className="text-2xl font-bold">{pendingTimesheets}</p><p className="text-xs text-muted-foreground">Pending Timesheets</p></div>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center"><FileText className="h-5 w-5 text-muted-foreground" /></div>
-          <div><p className="text-2xl font-bold">{draftEntries}</p><p className="text-xs text-muted-foreground">Draft Entries</p></div>
+          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-emerald-500" /></div>
+          <div><p className="text-2xl font-bold">{draftPayrolls}</p><p className="text-xs text-muted-foreground">Pending Payrolls</p></div>
         </CardContent></Card>
       </div>
 
@@ -414,9 +672,8 @@ export default function Workforce() {
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search workers, entries, timesheets…" value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search workers, entries, payroll…" value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {/* Add Worker Dialog */}
         <Dialog open={addWorkerOpen} onOpenChange={setAddWorkerOpen}>
           <DialogTrigger asChild><Button size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" /> Add Worker</Button></DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -437,7 +694,6 @@ export default function Workforce() {
             <Button onClick={addWorker} className="mt-4 w-full">Save Worker</Button>
           </DialogContent>
         </Dialog>
-        {/* Manual Entry Dialog */}
         <Dialog open={addEntryOpen} onOpenChange={setAddEntryOpen}>
           <DialogTrigger asChild><Button size="sm" variant="outline" className="gap-1.5"><Plus className="h-3.5 w-3.5" /> Manual Entry</Button></DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -455,7 +711,7 @@ export default function Workforce() {
               </div>
               <div><Label>Labor Category</Label><Select value={tf.labor_category} onValueChange={v => setTf(p => ({ ...p, labor_category: v }))}><SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{LABOR_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
               <div><Label>Note Summary</Label><Input value={tf.note_summary} onChange={e => setTf(p => ({ ...p, note_summary: e.target.value }))} placeholder="Brief description of work done" /></div>
-              <div><Label>Detailed Notes</Label><Textarea value={tf.detailed_notes} onChange={e => setTf(p => ({ ...p, detailed_notes: e.target.value }))} placeholder="What did you work on? What was completed? Any blockers?" rows={4} /></div>
+              <div><Label>Detailed Notes</Label><Textarea value={tf.detailed_notes} onChange={e => setTf(p => ({ ...p, detailed_notes: e.target.value }))} placeholder="What did you work on?" rows={4} /></div>
             </div>
             <Button onClick={addManualEntry} className="mt-4 w-full">Save Entry</Button>
           </DialogContent>
@@ -469,6 +725,8 @@ export default function Workforce() {
           <TabsTrigger value="time" className="gap-1.5 text-xs"><Clock className="h-3.5 w-3.5" /> Time Entries</TabsTrigger>
           <TabsTrigger value="timesheets" className="gap-1.5 text-xs"><CalendarDays className="h-3.5 w-3.5" /> Timesheets</TabsTrigger>
           <TabsTrigger value="approvals" className="gap-1.5 text-xs"><ShieldCheck className="h-3.5 w-3.5" /> Approvals{pendingTimesheets > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-amber-500/15 text-amber-400 border-amber-500/30">{pendingTimesheets}</Badge>}</TabsTrigger>
+          <TabsTrigger value="payroll" className="gap-1.5 text-xs"><DollarSign className="h-3.5 w-3.5" /> Payroll{draftPayrolls > 0 && <Badge variant="outline" className="ml-1 h-5 px-1.5 text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30">{draftPayrolls}</Badge>}</TabsTrigger>
+          <TabsTrigger value="payouts" className="gap-1.5 text-xs"><Banknote className="h-3.5 w-3.5" /> Payouts</TabsTrigger>
         </TabsList>
 
         {/* ==================== DIRECTORY ==================== */}
@@ -576,7 +834,6 @@ export default function Workforce() {
         {/* ==================== TIMESHEETS ==================== */}
         <TabsContent value="timesheets">
           <div className="space-y-4">
-            {/* Generate Timesheet Controls */}
             {workers.filter(w => w.status === "Active").length > 0 && (
               <Card className="border-primary/20">
                 <CardContent className="py-3 flex flex-wrap items-center gap-3">
@@ -590,7 +847,6 @@ export default function Workforce() {
                 </CardContent>
               </Card>
             )}
-
             {timesheets.length === 0 ? (
               <Card className="border-dashed"><CardContent className="py-16 text-center space-y-3">
                 <CalendarDays className="h-10 w-10 mx-auto text-muted-foreground" />
@@ -641,14 +897,19 @@ export default function Workforce() {
           {(() => {
             const pending = timesheets.filter(t => t.status === "Submitted");
             const pendingEntries = entries.filter(e => e.entry_status === "Submitted" && !e.timesheet_id);
-            const allPending = [...pending.map(t => ({ type: "timesheet" as const, ...t })), ...pendingEntries.map(e => ({ type: "entry" as const, ...e }))];
+            const pendingPayrolls = payrollRuns.filter(r => r.payroll_status?.toLowerCase() === "awaiting approval");
+            const allPending = [
+              ...pending.map(t => ({ kind: "timesheet" as const, id: t.id, obj: t })),
+              ...pendingEntries.map(e => ({ kind: "entry" as const, id: e.id, obj: e })),
+              ...pendingPayrolls.map(r => ({ kind: "payroll" as const, id: r.id, obj: r })),
+            ];
 
             if (allPending.length === 0) {
               return (
                 <Card className="border-dashed"><CardContent className="py-16 text-center space-y-2">
                   <ShieldCheck className="h-10 w-10 mx-auto text-muted-foreground" />
                   <p className="font-medium">No pending approvals</p>
-                  <p className="text-sm text-muted-foreground">Submitted timesheets and time entries will appear here for review.</p>
+                  <p className="text-sm text-muted-foreground">Submitted timesheets, entries, and payroll runs appear here.</p>
                 </CardContent></Card>
               );
             }
@@ -657,11 +918,10 @@ export default function Workforce() {
               <Card>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>Worker</TableHead>
+                    <TableHead>Item</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Period / Date</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead className="hidden md:table-cell">Notes</TableHead>
+                    <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[160px]">Actions</TableHead>
                   </TableRow></TableHeader>
@@ -672,7 +932,6 @@ export default function Workforce() {
                         <TableCell><Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">Timesheet</Badge></TableCell>
                         <TableCell className="text-sm">{fmt(ts.pay_period_start)} – {fmt(ts.pay_period_end)}</TableCell>
                         <TableCell className="text-sm font-medium">{ts.total_hours}h</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">{ts.total_notes_count} notes</TableCell>
                         <TableCell><Badge variant="outline" className={`text-xs ${statusColor(ts.status)}`}>{ts.status}</Badge></TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -689,7 +948,6 @@ export default function Workforce() {
                         <TableCell><Badge variant="outline" className="text-xs">Entry</Badge></TableCell>
                         <TableCell className="text-sm">{fmt(e.entry_date)}</TableCell>
                         <TableCell className="text-sm font-medium">{((e.total_minutes || 0) / 60).toFixed(1)}h</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm truncate max-w-[200px]">{e.note_summary || "—"}</TableCell>
                         <TableCell><Badge variant="outline" className={`text-xs ${statusColor(e.entry_status)}`}>{e.entry_status}</Badge></TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -699,11 +957,148 @@ export default function Workforce() {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {pendingPayrolls.map(r => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium text-sm">Payroll Run</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Payroll</Badge></TableCell>
+                        <TableCell className="text-sm">{fmt(r.pay_period_start)} – {fmt(r.pay_period_end)}</TableCell>
+                        <TableCell className="text-sm font-medium">{fmtCurrency(r.gross_pay_total || r.total_gross_pay)}</TableCell>
+                        <TableCell><Badge variant="outline" className={`text-xs ${statusColor(r.payroll_status)}`}>{r.payroll_status}</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewPayrollId(r.id)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approvePayroll(r.id)} title="Approve"><CheckCircle className="h-3.5 w-3.5 text-emerald-400" /></Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => voidPayroll(r.id)} title="Void"><XCircle className="h-3.5 w-3.5 text-red-400" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </Card>
             );
           })()}
+        </TabsContent>
+
+        {/* ==================== PAYROLL ==================== */}
+        <TabsContent value="payroll">
+          <div className="space-y-4">
+            <Card className="border-primary/20">
+              <CardContent className="py-3 flex flex-wrap items-center gap-3">
+                <DollarSign className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Generate Payroll from Approved Timesheets</span>
+                <Button size="sm" onClick={generatePayroll} className="gap-1.5"><Plus className="h-3.5 w-3.5" /> Generate Payroll</Button>
+              </CardContent>
+            </Card>
+
+            {payrollRuns.length === 0 ? (
+              <Card className="border-dashed"><CardContent className="py-16 text-center space-y-3">
+                <DollarSign className="h-10 w-10 mx-auto text-muted-foreground" />
+                <p className="font-medium">No payroll runs yet</p>
+                <p className="text-sm text-muted-foreground">Approve timesheets first, then generate payroll.</p>
+              </CardContent></Card>
+            ) : (
+              <Card>
+                <Table>
+                  <TableHeader><TableRow>
+                    <TableHead>Pay Period</TableHead>
+                    <TableHead className="hidden md:table-cell">Frequency</TableHead>
+                    <TableHead>Gross Pay</TableHead>
+                    <TableHead className="hidden md:table-cell">Deductions</TableHead>
+                    <TableHead>Net Pay</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Paid</TableHead>
+                    <TableHead className="w-[180px]">Actions</TableHead>
+                  </TableRow></TableHeader>
+                  <TableBody>
+                    {payrollRuns.map(r => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-sm">{fmt(r.pay_period_start)} – {fmt(r.pay_period_end)}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{r.payroll_frequency || "—"}</TableCell>
+                        <TableCell className="text-sm font-medium">{fmtCurrency(r.gross_pay_total || r.total_gross_pay)}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{fmtCurrency(r.deductions_total)}</TableCell>
+                        <TableCell className="text-sm font-bold">{fmtCurrency(r.net_pay_total || r.total_final_pay)}</TableCell>
+                        <TableCell><Badge variant="outline" className={`text-xs ${statusColor(r.payroll_status)}`}>{r.payroll_status}</Badge></TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{fmt(r.paid_at)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewPayrollId(r.id)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
+                            {r.payroll_status?.toLowerCase() === "draft" && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => submitPayroll(r.id)} title="Submit"><Send className="h-3.5 w-3.5 text-blue-400" /></Button>
+                            )}
+                            {r.payroll_status?.toLowerCase() === "awaiting approval" && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approvePayroll(r.id)} title="Approve"><CheckCircle className="h-3.5 w-3.5 text-emerald-400" /></Button>
+                            )}
+                            {r.payroll_status?.toLowerCase() === "approved" && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => markPayrollPaid(r.id)} title="Mark Paid"><CreditCard className="h-3.5 w-3.5 text-emerald-400" /></Button>
+                            )}
+                            {!["paid", "voided"].includes(r.payroll_status?.toLowerCase() || "") && (
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => voidPayroll(r.id)} title="Void"><RotateCcw className="h-3.5 w-3.5 text-red-400" /></Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ==================== PAYOUTS ==================== */}
+        <TabsContent value="payouts">
+          {payouts.length === 0 ? (
+            <Card className="border-dashed"><CardContent className="py-16 text-center space-y-3">
+              <Banknote className="h-10 w-10 mx-auto text-muted-foreground" />
+              <p className="font-medium">No payouts yet</p>
+              <p className="text-sm text-muted-foreground">Payouts are created from approved payroll runs. Open a payroll detail to initiate payouts.</p>
+            </CardContent></Card>
+          ) : (
+            <Card>
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Worker</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Reference</TableHead>
+                  <TableHead className="hidden md:table-cell">Initiated</TableHead>
+                  <TableHead className="hidden md:table-cell">Completed</TableHead>
+                  <TableHead className="w-[140px]">Actions</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {payouts.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-sm font-medium">{workerMap[p.worker_id]?.full_name ?? "—"}</TableCell>
+                      <TableCell className="text-sm">{p.payout_method}</TableCell>
+                      <TableCell className="text-sm font-bold">{fmtCurrency(p.payout_amount)}</TableCell>
+                      <TableCell><Badge variant="outline" className={`text-xs ${statusColor(p.payout_status)}`}>{p.payout_status}</Badge></TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">{p.payout_reference || "—"}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">{fmt(p.initiated_at)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">{fmt(p.completed_at)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {p.payout_status === "Pending" && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePayoutStatus(p.id, "Processing")} title="Start Processing"><Play className="h-3.5 w-3.5 text-amber-400" /></Button>
+                          )}
+                          {(p.payout_status === "Pending" || p.payout_status === "Processing") && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePayoutStatus(p.id, "Completed")} title="Mark Complete"><CheckCircle className="h-3.5 w-3.5 text-emerald-400" /></Button>
+                          )}
+                          {(p.payout_status === "Pending" || p.payout_status === "Processing") && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePayoutStatus(p.id, "Failed")} title="Mark Failed"><XCircle className="h-3.5 w-3.5 text-red-400" /></Button>
+                          )}
+                          {p.payout_status === "Failed" && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePayoutStatus(p.id, "Pending")} title="Retry"><RotateCcw className="h-3.5 w-3.5 text-blue-400" /></Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -718,7 +1113,6 @@ export default function Workforce() {
                   Timesheet: {workerMap[viewedTS.worker_id]?.full_name}
                 </DialogTitle>
               </DialogHeader>
-
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">Period</p>
@@ -737,7 +1131,6 @@ export default function Workforce() {
                   <Badge variant="outline" className={`text-xs mt-1 ${statusColor(viewedTS.status)}`}>{viewedTS.status}</Badge>
                 </div>
               </div>
-
               {viewedTS.rejection_reason && (
                 <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
                   <p className="text-xs font-medium text-red-400">Rejection Reason</p>
@@ -750,8 +1143,6 @@ export default function Workforce() {
                   <p className="text-sm">{viewedTS.approval_comment}</p>
                 </div>
               )}
-
-              {/* Entries in this timesheet */}
               <div>
                 <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Time Entries ({viewedTSEntries.length})</h4>
                 {viewedTSEntries.length === 0 ? (
@@ -773,8 +1164,6 @@ export default function Workforce() {
                   </div>
                 )}
               </div>
-
-              {/* Approval actions for submitted timesheets */}
               {viewedTS.status === "Submitted" && (
                 <div className="space-y-3 border-t pt-3">
                   <div>
@@ -792,6 +1181,176 @@ export default function Workforce() {
                 </div>
               )}
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== PAYROLL DETAIL DIALOG ==================== */}
+      <Dialog open={!!viewPayrollId} onOpenChange={open => { if (!open) setViewPayrollId(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {viewedRun && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  Payroll: {fmt(viewedRun.pay_period_start)} – {fmt(viewedRun.pay_period_end)}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground">Gross Pay</p>
+                  <p className="text-sm font-bold">{fmtCurrency(viewedRun.gross_pay_total || viewedRun.total_gross_pay)}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground">Deductions</p>
+                  <p className="text-sm font-medium">{fmtCurrency(viewedRun.deductions_total)}</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground">Bonuses</p>
+                  <p className="text-sm font-medium">{fmtCurrency(viewedRun.bonus_total)}</p>
+                </div>
+                <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3">
+                  <p className="text-xs text-muted-foreground">Net Pay</p>
+                  <p className="text-sm font-bold text-emerald-400">{fmtCurrency(viewedRun.net_pay_total || viewedRun.total_final_pay)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={`text-xs ${statusColor(viewedRun.payroll_status)}`}>{viewedRun.payroll_status}</Badge>
+                {viewedRun.payroll_status?.toLowerCase() === "draft" && (
+                  <Button size="sm" variant="outline" onClick={() => submitPayroll(viewedRun.id)} className="gap-1.5 text-xs"><Send className="h-3 w-3" /> Submit for Approval</Button>
+                )}
+                {viewedRun.payroll_status?.toLowerCase() === "awaiting approval" && (
+                  <Button size="sm" onClick={() => approvePayroll(viewedRun.id)} className="gap-1.5 text-xs"><CheckCircle className="h-3 w-3" /> Approve</Button>
+                )}
+                {viewedRun.payroll_status?.toLowerCase() === "approved" && (
+                  <Button size="sm" onClick={() => markPayrollPaid(viewedRun.id)} className="gap-1.5 text-xs"><CreditCard className="h-3 w-3" /> Mark Paid</Button>
+                )}
+              </div>
+
+              {/* Line Items */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">Line Items ({viewedRunLines.length})</h4>
+                {viewedRunLines.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Worker</TableHead>
+                        <TableHead>Pay Type</TableHead>
+                        <TableHead>Hours</TableHead>
+                        <TableHead>Base Pay</TableHead>
+                        <TableHead>OT Pay</TableHead>
+                        <TableHead>Bonus</TableHead>
+                        <TableHead>Deductions</TableHead>
+                        <TableHead>Net Pay</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {viewedRunLines.map(l => (
+                          <TableRow key={l.id}>
+                            <TableCell className="text-sm font-medium">{workerMap[l.worker_id || l.team_member_id]?.full_name ?? "—"}</TableCell>
+                            <TableCell className="text-sm">{l.pay_type || "—"}</TableCell>
+                            <TableCell className="text-sm">{l.hours_worked || 0}h</TableCell>
+                            <TableCell className="text-sm">{fmtCurrency(l.base_pay || l.gross_pay)}</TableCell>
+                            <TableCell className="text-sm">{fmtCurrency(l.overtime_pay)}</TableCell>
+                            <TableCell className="text-sm">{fmtCurrency(l.bonus_pay)}</TableCell>
+                            <TableCell className="text-sm">{fmtCurrency(l.deduction_amount)}</TableCell>
+                            <TableCell className="text-sm font-bold">{fmtCurrency(l.net_pay || l.gross_pay)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {!["paid", "voided"].includes(viewedRun.payroll_status?.toLowerCase() || "") && (
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                                    setAdjustDialogLine(l);
+                                    setAdjustForm({
+                                      bonus_pay: String(l.bonus_pay || 0),
+                                      deduction_amount: String(l.deduction_amount || 0),
+                                      reimbursement_pay: String(l.reimbursement_pay || 0),
+                                      notes: l.notes || "",
+                                    });
+                                  }} title="Adjust"><Edit className="h-3.5 w-3.5" /></Button>
+                                )}
+                                {["approved", "paid"].includes(viewedRun.payroll_status?.toLowerCase() || "") && (
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                                    setPayoutDialogWorker({
+                                      workerId: l.worker_id || l.team_member_id,
+                                      payrollRunId: viewedRun.id,
+                                      amount: l.net_pay || l.gross_pay || 0,
+                                    });
+                                  }} title="Initiate Payout"><Banknote className="h-3.5 w-3.5 text-emerald-400" /></Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              {/* Payouts for this run */}
+              {viewedRunPayouts.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Payouts ({viewedRunPayouts.length})</h4>
+                  <div className="space-y-2">
+                    {viewedRunPayouts.map(p => (
+                      <div key={p.id} className="rounded-lg border p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{workerMap[p.worker_id]?.full_name ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground">{p.payout_method} · {fmtCurrency(p.payout_amount)}</p>
+                        </div>
+                        <Badge variant="outline" className={`text-xs ${statusColor(p.payout_status)}`}>{p.payout_status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== ADJUSTMENT DIALOG ==================== */}
+      <Dialog open={!!adjustDialogLine} onOpenChange={open => { if (!open) { setAdjustDialogLine(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Edit className="h-5 w-5 text-primary" /> Adjust Line Item</DialogTitle>
+          </DialogHeader>
+          {adjustDialogLine && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Worker: <span className="font-medium text-foreground">{workerMap[adjustDialogLine.worker_id || adjustDialogLine.team_member_id]?.full_name}</span></p>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Bonus</Label><Input type="number" value={adjustForm.bonus_pay} onChange={e => setAdjustForm(p => ({ ...p, bonus_pay: e.target.value }))} /></div>
+                <div><Label>Deduction</Label><Input type="number" value={adjustForm.deduction_amount} onChange={e => setAdjustForm(p => ({ ...p, deduction_amount: e.target.value }))} /></div>
+                <div><Label>Reimburse</Label><Input type="number" value={adjustForm.reimbursement_pay} onChange={e => setAdjustForm(p => ({ ...p, reimbursement_pay: e.target.value }))} /></div>
+              </div>
+              <div><Label>Reason / Notes</Label><Textarea value={adjustForm.notes} onChange={e => setAdjustForm(p => ({ ...p, notes: e.target.value }))} placeholder="Reason for adjustment…" rows={2} /></div>
+              <Button onClick={saveAdjustment} className="w-full">Save Adjustment</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== PAYOUT DIALOG ==================== */}
+      <Dialog open={!!payoutDialogWorker} onOpenChange={open => { if (!open) setPayoutDialogWorker(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Banknote className="h-5 w-5 text-emerald-500" /> Initiate Payout</DialogTitle>
+          </DialogHeader>
+          {payoutDialogWorker && (
+            <div className="space-y-3">
+              <p className="text-sm">Worker: <span className="font-medium">{workerMap[payoutDialogWorker.workerId]?.full_name}</span></p>
+              <p className="text-sm">Amount: <span className="font-bold text-emerald-400">{fmtCurrency(payoutDialogWorker.amount)}</span></p>
+              <div>
+                <Label>Payout Method</Label>
+                <Select value={payoutMethod} onValueChange={setPayoutMethod}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PAYOUT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Button onClick={createPayout} className="w-full gap-1.5"><CreditCard className="h-4 w-4" /> Initiate Payout</Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

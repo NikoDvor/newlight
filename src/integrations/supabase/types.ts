@@ -2401,42 +2401,145 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          initiated_at: string | null
+          payout_amount: number
+          payout_method: string
+          payout_reference: string | null
+          payout_status: string
+          payroll_run_id: string | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          initiated_at?: string | null
+          payout_amount?: number
+          payout_method?: string
+          payout_reference?: string | null
+          payout_status?: string
+          payroll_run_id?: string | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          initiated_at?: string | null
+          payout_amount?: number
+          payout_method?: string
+          payout_reference?: string | null
+          payout_status?: string
+          payroll_run_id?: string | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_line_items: {
         Row: {
           adjustments: number | null
+          base_pay: number | null
+          bonus_pay: number | null
           client_id: string
+          commission_pay: number | null
           created_at: string
+          deduction_amount: number | null
           final_pay: number | null
           gross_pay: number | null
           hours_worked: number | null
           id: string
+          net_pay: number | null
           notes: string | null
+          overtime_hours: number | null
+          overtime_pay: number | null
+          pay_type: string | null
           payroll_run_id: string
+          reimbursement_pay: number | null
+          status: string | null
           team_member_id: string
+          updated_at: string
+          worker_id: string | null
         }
         Insert: {
           adjustments?: number | null
+          base_pay?: number | null
+          bonus_pay?: number | null
           client_id: string
+          commission_pay?: number | null
           created_at?: string
+          deduction_amount?: number | null
           final_pay?: number | null
           gross_pay?: number | null
           hours_worked?: number | null
           id?: string
+          net_pay?: number | null
           notes?: string | null
+          overtime_hours?: number | null
+          overtime_pay?: number | null
+          pay_type?: string | null
           payroll_run_id: string
+          reimbursement_pay?: number | null
+          status?: string | null
           team_member_id: string
+          updated_at?: string
+          worker_id?: string | null
         }
         Update: {
           adjustments?: number | null
+          base_pay?: number | null
+          bonus_pay?: number | null
           client_id?: string
+          commission_pay?: number | null
           created_at?: string
+          deduction_amount?: number | null
           final_pay?: number | null
           gross_pay?: number | null
           hours_worked?: number | null
           id?: string
+          net_pay?: number | null
           notes?: string | null
+          overtime_hours?: number | null
+          overtime_pay?: number | null
+          pay_type?: string | null
           payroll_run_id?: string
+          reimbursement_pay?: number | null
+          status?: string | null
           team_member_id?: string
+          updated_at?: string
+          worker_id?: string | null
         }
         Relationships: [
           {
@@ -2460,47 +2563,84 @@ export type Database = {
             referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payroll_line_items_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payroll_runs: {
         Row: {
           approved_at: string | null
+          approved_by: string | null
+          bonus_total: number
           client_id: string
           created_at: string
+          deductions_total: number
+          gross_pay_total: number
           id: string
+          net_pay_total: number
           paid_at: string | null
           pay_period_end: string
           pay_period_start: string
+          payroll_frequency: string | null
           payroll_status: string
+          reimbursement_total: number
+          run_date: string | null
+          tax_withholding_total_placeholder: number
           total_adjustments: number | null
           total_final_pay: number | null
           total_gross_pay: number | null
+          updated_at: string
         }
         Insert: {
           approved_at?: string | null
+          approved_by?: string | null
+          bonus_total?: number
           client_id: string
           created_at?: string
+          deductions_total?: number
+          gross_pay_total?: number
           id?: string
+          net_pay_total?: number
           paid_at?: string | null
           pay_period_end: string
           pay_period_start: string
+          payroll_frequency?: string | null
           payroll_status?: string
+          reimbursement_total?: number
+          run_date?: string | null
+          tax_withholding_total_placeholder?: number
           total_adjustments?: number | null
           total_final_pay?: number | null
           total_gross_pay?: number | null
+          updated_at?: string
         }
         Update: {
           approved_at?: string | null
+          approved_by?: string | null
+          bonus_total?: number
           client_id?: string
           created_at?: string
+          deductions_total?: number
+          gross_pay_total?: number
           id?: string
+          net_pay_total?: number
           paid_at?: string | null
           pay_period_end?: string
           pay_period_start?: string
+          payroll_frequency?: string | null
           payroll_status?: string
+          reimbursement_total?: number
+          run_date?: string | null
+          tax_withholding_total_placeholder?: number
           total_adjustments?: number | null
           total_final_pay?: number | null
           total_gross_pay?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
