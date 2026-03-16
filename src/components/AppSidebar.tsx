@@ -4,7 +4,7 @@ import {
   Globe, Search, Megaphone, Share2, Users, Star,
   TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
-  ChevronLeft, ChevronDown, Wallet
+  ChevronLeft, ChevronDown, Wallet, Mail
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -48,6 +48,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     items: [
       { title: "Finance", url: "/finance", icon: Wallet },
       { title: "Calendar", url: "/calendar", icon: Calendar },
+      { title: "Email", url: "/email", icon: Mail },
     ],
   },
   {

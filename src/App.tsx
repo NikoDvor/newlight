@@ -79,6 +79,7 @@ import Finance from "./pages/Finance";
 import CalendarPage from "./pages/CalendarPage";
 import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
+import EmailPage from "./pages/Email";
 
 const queryClient = new QueryClient();
 
@@ -167,6 +168,7 @@ const App = () => (
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
             </Route>

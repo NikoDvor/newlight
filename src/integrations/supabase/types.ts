@@ -434,10 +434,13 @@ export type Database = {
         Row: {
           assigned_user: string | null
           booking_link: string | null
+          booking_source: string | null
           calendar_status: string
           cancellation_reason: string | null
           client_id: string
+          company_id: string | null
           contact_email: string | null
+          contact_id: string | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
@@ -447,8 +450,10 @@ export type Database = {
           id: string
           intake_answers: Json | null
           location: string | null
+          notes: string | null
           original_start_time: string | null
           reminder_status: string | null
+          reschedule_reason: string | null
           start_time: string
           timezone: string | null
           title: string
@@ -457,10 +462,13 @@ export type Database = {
         Insert: {
           assigned_user?: string | null
           booking_link?: string | null
+          booking_source?: string | null
           calendar_status?: string
           cancellation_reason?: string | null
           client_id: string
+          company_id?: string | null
           contact_email?: string | null
+          contact_id?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -470,8 +478,10 @@ export type Database = {
           id?: string
           intake_answers?: Json | null
           location?: string | null
+          notes?: string | null
           original_start_time?: string | null
           reminder_status?: string | null
+          reschedule_reason?: string | null
           start_time: string
           timezone?: string | null
           title: string
@@ -480,10 +490,13 @@ export type Database = {
         Update: {
           assigned_user?: string | null
           booking_link?: string | null
+          booking_source?: string | null
           calendar_status?: string
           cancellation_reason?: string | null
           client_id?: string
+          company_id?: string | null
           contact_email?: string | null
+          contact_id?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -493,8 +506,10 @@ export type Database = {
           id?: string
           intake_answers?: Json | null
           location?: string | null
+          notes?: string | null
           original_start_time?: string | null
           reminder_status?: string | null
+          reschedule_reason?: string | null
           start_time?: string
           timezone?: string | null
           title?: string
@@ -506,6 +521,20 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -1253,6 +1282,138 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_connections: {
+        Row: {
+          client_id: string
+          config: Json | null
+          created_at: string
+          display_name: string | null
+          email_address: string | null
+          id: string
+          last_synced_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          config?: Json | null
+          created_at?: string
+          display_name?: string | null
+          email_address?: string | null
+          id?: string
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          config?: Json | null
+          created_at?: string
+          display_name?: string | null
+          email_address?: string | null
+          id?: string
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_messages: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          client_id: string
+          connection_id: string | null
+          contact_id: string | null
+          created_at: string
+          direction: string
+          folder: string
+          from_address: string | null
+          from_name: string | null
+          id: string
+          is_read: boolean
+          is_starred: boolean
+          message_id_header: string | null
+          sent_at: string | null
+          subject: string | null
+          thread_id: string | null
+          to_address: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          client_id: string
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          folder?: string
+          from_address?: string | null
+          from_name?: string | null
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          message_id_header?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          to_address?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          client_id?: string
+          connection_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          folder?: string
+          from_address?: string | null
+          from_name?: string | null
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          message_id_header?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          to_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "email_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]
