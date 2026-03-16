@@ -518,14 +518,19 @@ export default function CRM() {
                 <SheetDescription>Contact Details</SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-4">
+                <Badge className={`text-[10px] ${detailContact.contact_status === "customer" ? "bg-primary/10 text-primary" : detailContact.contact_status === "vip" ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}>
+                  {detailContact.contact_status || "Lead"}
+                </Badge>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: "Email", value: detailContact.email },
                     { label: "Phone", value: detailContact.phone },
-                    { label: "Address", value: detailContact.address },
+                    { label: "Secondary Phone", value: detailContact.secondary_phone },
+                    { label: "Address", value: [detailContact.address, detailContact.city, detailContact.state, detailContact.zip].filter(Boolean).join(", ") },
                     { label: "Lead Source", value: detailContact.lead_source },
                     { label: "Lead Score", value: detailContact.lead_score },
                     { label: "Pipeline Stage", value: STAGE_LABELS[detailContact.pipeline_stage] || detailContact.pipeline_stage },
+                    { label: "Customer Value", value: detailContact.customer_value ? `$${Number(detailContact.customer_value).toLocaleString()}` : "—" },
                     { label: "Lifetime Revenue", value: detailContact.lifetime_revenue ? `$${Number(detailContact.lifetime_revenue).toLocaleString()}` : "—" },
                     { label: "Appointments", value: detailContact.number_of_appointments },
                     { label: "First Contact", value: detailContact.first_contact_date ? new Date(detailContact.first_contact_date).toLocaleDateString() : "—" },
