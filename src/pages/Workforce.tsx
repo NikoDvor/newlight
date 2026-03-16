@@ -17,8 +17,12 @@ import {
   Users, Clock, Plus, Play, Square, FileText, Search,
   CheckCircle, XCircle, Timer, Briefcase, CalendarDays,
   Eye, Lock, Send, ShieldCheck, ClipboardList,
-  DollarSign, Banknote, CreditCard, Edit, RotateCcw
+  DollarSign, Banknote, CreditCard, Edit, RotateCcw,
+  Coins, TrendingUp, BarChart3
 } from "lucide-react";
+import { WorkforceLaborCosts } from "@/components/workforce/WorkforceLaborCosts";
+import { WorkforceCommissions } from "@/components/workforce/WorkforceCommissions";
+import { WorkforceReports } from "@/components/workforce/WorkforceReports";
 
 // ---------- types ----------
 interface Worker {
