@@ -115,11 +115,6 @@ export default function Website() {
   return (
     <div>
       <PageHeader title="Website" description="Monitor website health, traffic, and conversions">
-      </PageHeader>
-
-      <ModuleHelpPanel moduleName="Website" description="Monitor page performance, track conversions, and identify website issues. Pages can be added manually or synced from Google Analytics." tips={["Track visits and conversions per page", "Log website issues for prioritized fixes", "Demo traffic data shows until analytics are connected"]} />
-
-      <PageHeader title="" description="">
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <AlertTriangle className="h-4 w-4" /> Log Issue
@@ -129,6 +124,8 @@ export default function Website() {
           </Button>
         </div>
       </PageHeader>
+
+      <ModuleHelpPanel moduleName="Website" description="Monitor page performance, track conversions, and identify website issues. Pages can be added manually or synced from Google Analytics." tips={["Track visits and conversions per page", "Log website issues for prioritized fixes", "Demo traffic data shows until analytics are connected"]} />
 
       {!hasRealData && (
         <SetupBanner
