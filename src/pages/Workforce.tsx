@@ -1109,6 +1109,28 @@ export default function Workforce() {
         </TabsContent>
       </Tabs>
 
+        {/* ==================== LABOR COSTS ==================== */}
+        <TabsContent value="labor">
+          <WorkforceLaborCosts clientId={activeClientId} workers={workers as any} />
+        </TabsContent>
+
+        {/* ==================== COMMISSIONS ==================== */}
+        <TabsContent value="commissions">
+          <WorkforceCommissions clientId={activeClientId} workers={workers as any} />
+        </TabsContent>
+
+        {/* ==================== REPORTS ==================== */}
+        <TabsContent value="reports">
+          <WorkforceReports
+            workers={workers as any}
+            entries={entries as any}
+            timesheets={timesheets as any}
+            payrollRuns={payrollRuns as any}
+            payouts={payouts as any}
+          />
+        </TabsContent>
+      </Tabs>
+
       {/* ==================== TIMESHEET DETAIL DIALOG ==================== */}
       <Dialog open={!!viewTimesheetId} onOpenChange={open => { if (!open) setViewTimesheetId(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
