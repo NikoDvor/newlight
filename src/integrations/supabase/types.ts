@@ -339,6 +339,59 @@ export type Database = {
           },
         ]
       }
+      autopilot_rules: {
+        Row: {
+          action_config: Json | null
+          client_id: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          last_triggered_at: string | null
+          name: string
+          rule_type: string
+          runs_count: number
+          trigger_config: Json | null
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          last_triggered_at?: string | null
+          name: string
+          rule_type?: string
+          runs_count?: number
+          trigger_config?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          last_triggered_at?: string | null
+          name?: string
+          rule_type?: string
+          runs_count?: number
+          trigger_config?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_rules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_settings: {
         Row: {
           client_id: string
@@ -1426,6 +1479,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "growth_projections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          campaign_type: string
+          click_count: number
+          client_id: string
+          completed_at: string | null
+          conversion_count: number
+          created_at: string
+          id: string
+          message_template: string | null
+          name: string
+          open_count: number
+          scheduled_at: string | null
+          sent_count: number
+          status: string
+          subject_line: string | null
+          target_audience: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_type?: string
+          click_count?: number
+          client_id: string
+          completed_at?: string | null
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          message_template?: string | null
+          name: string
+          open_count?: number
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          subject_line?: string | null
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_type?: string
+          click_count?: number
+          client_id?: string
+          completed_at?: string | null
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          message_template?: string | null
+          name?: string
+          open_count?: number
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          subject_line?: string | null
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
