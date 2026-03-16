@@ -14,6 +14,7 @@ import {
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
 import { useState } from "react";
+import newlightLogo from "@/assets/newlight-logo.jpg";
 
 interface NavGroup {
   label: string;
