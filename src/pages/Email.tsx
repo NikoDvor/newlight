@@ -178,6 +178,12 @@ export default function EmailPage() {
         </div>
       </PageHeader>
 
+      <ModuleHelpPanel
+        moduleName="Email"
+        description="Read, reply to, and manage your business emails inside the app. Conversations are automatically linked to CRM contacts by email address."
+        tips={["Emails are matched to CRM contacts automatically", "You can create new contacts from unknown senders", "Reply to emails without leaving the platform"]}
+      />
+
       {/* Connection status banner */}
       {primaryConnection && primaryConnection.status !== "connected" && (
         <div className="mb-4 p-3 rounded-xl border border-border bg-secondary/50 flex items-center gap-3">

@@ -261,6 +261,12 @@ export default function CalendarPage() {
         </Dialog>
       </PageHeader>
 
+      <ModuleHelpPanel
+        moduleName="Calendar"
+        description="This is where your appointments are scheduled and tracked. Bookings create CRM records, reminders go out automatically, and completed appointments can trigger review requests."
+        tips={["Reminders are sent 24h, 3h, and 30min before appointments", "Completed appointments can trigger automatic review requests", "No-shows are flagged for follow-up"]}
+      />
+
       {events.length === 0 && (
         <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
           description="Create events, manage appointments, and automate booking workflows."
