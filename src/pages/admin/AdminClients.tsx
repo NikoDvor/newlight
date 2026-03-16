@@ -413,6 +413,9 @@ export default function AdminClients() {
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                       </button>
+                      <button onClick={() => handleSuspend(c)} className="p-1.5 rounded-lg hover:bg-yellow-500/10 transition-colors" title={c.status === "suspended" ? "Reactivate" : "Suspend"}>
+                        {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-white/30 hover:text-yellow-400" />}
+                      </button>
                       <button onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Delete / Archive">
                         <Trash2 className="h-3.5 w-3.5 text-white/30 hover:text-red-400" />
                       </button>
