@@ -7,6 +7,7 @@ import { MoneyMeter } from "@/components/MoneyMeter";
 import { GrowthAutopilot } from "@/components/GrowthAutopilot";
 import { LeadScoringPanel } from "@/components/LeadScoringPanel";
 import { CampaignEngine } from "@/components/CampaignEngine";
+import { ReactivationEngine } from "@/components/ReactivationEngine";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
