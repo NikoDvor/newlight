@@ -184,6 +184,11 @@ export default function Dashboard() {
         <LeadScoringPanel />
       </div>
 
+      {/* Reactivation Engine */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <ReactivationEngine />
+      </div>
+
       {/* Real Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <DataCard title="Recent Activity">
