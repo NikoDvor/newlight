@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
+import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -638,25 +640,58 @@ export default function Workforce() {
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       <PageHeader title="Workforce" description="Team directory, time tracking, timesheets, payroll, and payouts." />
 
+      <ModuleHelpPanel
+        moduleName="Workforce"
+        description="Workforce is the central operations hub for managing team members, tracking time, processing timesheets, running payroll, and initiating payouts. It connects to CRM, Calendar, Finance, and Reporting for full labor cost visibility."
+        tips={[
+          "Add workers first, then track time via Clock In/Out or Manual Entry",
+          "Timesheets are generated per pay period and require approval before payroll",
+          "Payroll drafts are created from approved timesheets with automatic pay calculations",
+          "Adjustments (bonuses, deductions, reimbursements) can be added to any payroll line item",
+          "Payouts track the final disbursement to workers via ACH, check, Stripe, or manual methods",
+          "Labor cost records are auto-generated from approved time entries for cost intelligence",
+        ]}
+      />
+
+      {workers.length === 0 && !loading && (
+        <SetupBanner
+          icon={Users}
+          title="Set Up Your Workforce"
+          description="Add your first team member to start tracking time, generating timesheets, and running payroll. Workers can be employees, contractors, freelancers, or service providers."
+          actionLabel="Add First Worker"
+          onAction={() => setAddWorkerOpen(true)}
+          secondaryLabel="Learn More"
+        />
+      )}
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary" /></div>
-          <div><p className="text-2xl font-bold">{totalWorkers}</p><p className="text-xs text-muted-foreground">Active Workers</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Timer className="h-5 w-5 text-primary" /></div>
-          <div><p className="text-2xl font-bold">{totalHoursToday.toFixed(1)}h</p><p className="text-xs text-muted-foreground">Hours Today</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center"><ClipboardList className="h-5 w-5 text-amber-500" /></div>
-          <div><p className="text-2xl font-bold">{pendingTimesheets}</p><p className="text-xs text-muted-foreground">Pending Timesheets</p></div>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-emerald-500" /></div>
-          <div><p className="text-2xl font-bold">{draftPayrolls}</p><p className="text-xs text-muted-foreground">Pending Payrolls</p></div>
-        </CardContent></Card>
-      </div>
+      {(() => {
+        const hasData = workers.length > 0;
+        const displayWorkers = hasData ? totalWorkers : 0;
+        const displayHours = hasData ? totalHoursToday : 0;
+        const displayPendingTS = hasData ? pendingTimesheets : 0;
+        const displayPendingPR = hasData ? draftPayrolls : 0;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary" /></div>
+              <div><p className="text-2xl font-bold">{displayWorkers}</p><p className="text-xs text-muted-foreground">Active Workers</p></div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Timer className="h-5 w-5 text-primary" /></div>
+              <div><p className="text-2xl font-bold">{displayHours.toFixed(1)}h</p><p className="text-xs text-muted-foreground">Hours Today</p></div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center"><ClipboardList className="h-5 w-5 text-amber-500" /></div>
+              <div><p className="text-2xl font-bold">{displayPendingTS}</p><p className="text-xs text-muted-foreground">Pending Timesheets</p></div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-emerald-500" /></div>
+              <div><p className="text-2xl font-bold">{displayPendingPR}</p><p className="text-xs text-muted-foreground">Pending Payrolls</p></div>
+            </CardContent></Card>
+          </div>
+        );
+      })()}
 
       {/* Clock In/Out Bar */}
       <Card className="border-primary/20">
