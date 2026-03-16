@@ -222,6 +222,66 @@ export default function CRM() {
         tips={["New leads are automatically scored based on source and engagement", "Contacts update when appointments are booked via Calendar", "Email conversations are linked to contacts automatically"]}
       />
 
+      {/* CRM Mode Selector */}
+      <div className="mb-4 p-4 rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-xs font-semibold text-foreground">CRM Mode</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {crmMode === "native" ? "Using built-in NewLight CRM" : "Connected to external CRM"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant={crmMode === "native" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
+              onClick={() => switchCrmMode("native")}>
+              <CheckCircle className="h-3.5 w-3.5" /> Native CRM
+            </Button>
+            <Button size="sm" variant={crmMode === "external" ? "default" : "outline"} className="h-8 text-xs gap-1.5"
+              onClick={() => switchCrmMode("external")}>
+              <Link2 className="h-3.5 w-3.5" /> External CRM
+            </Button>
+          </div>
+        </div>
+
+        {crmMode === "external" && (
+          <div className="mt-4 pt-4 border-t border-border">
+            {crmConnection ? (
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${crmConnection.connection_status === "connected" ? "bg-primary/10" : "bg-accent/10"}`}>
+                    {crmConnection.connection_status === "connected" ? <CheckCircle className="h-4 w-4 text-primary" /> : <AlertCircle className="h-4 w-4 text-accent" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{CRM_PROVIDERS.find(p => p.value === crmConnection.crm_provider_name)?.label || crmConnection.crm_provider_name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Status: {crmConnection.connection_status} · Last sync: {crmConnection.last_synced_at ? new Date(crmConnection.last_synced_at).toLocaleString() : "Never"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1">
+                    <RefreshCw className="h-3 w-3" /> Sync Now
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label className="text-xs mb-1.5 block">CRM Provider</Label>
+                  <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select provider" /></SelectTrigger>
+                    <SelectContent>{CRM_PROVIDERS.map(p => <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <Button size="sm" className="h-9 text-xs gap-1" onClick={connectExternalCrm} disabled={!selectedProvider}>
+                  <Link2 className="h-3.5 w-3.5" /> Connect
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {!hasRealData && (
         <SetupBanner icon={Users} title="Build Your Sales Pipeline"
           description="Add contacts and create deals to start tracking your sales pipeline, revenue, and customer relationships."
