@@ -259,7 +259,7 @@ export default function Workforce() {
   if (!activeClientId) {
     return (
       <div className="p-6">
-        <PageHeader title="Workforce" subtitle="Select a workspace to manage your workforce." />
+        <PageHeader title="Workforce" description="Select a workspace to manage your workforce." />
         <Card className="mt-6 border-dashed"><CardContent className="py-12 text-center text-muted-foreground">No workspace selected.</CardContent></Card>
       </div>
     );
