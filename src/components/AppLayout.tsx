@@ -129,10 +129,7 @@ export function AppLayout() {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-bold tracking-tight text-foreground/70">
-                    {displayName || "NewLight"}
-                  </span>
+                  <img src={newlightLogo} alt="NewLight" className="h-6 w-auto object-contain" />
                 </div>
               )}
               {activeClientName && !branding.company_name && (

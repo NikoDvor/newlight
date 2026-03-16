@@ -158,21 +158,10 @@ export function AppSidebar() {
         <div className="flex items-center justify-between px-2 py-1">
           {!collapsed ? (
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl flex items-center justify-center" style={{
-                background: "hsla(0,0%,100%,.2)",
-                boxShadow: "0 0 20px -4px hsla(0,0%,100%,.35), inset 0 0 0 1px hsla(0,0%,100%,.15)"
-              }}>
-                <Zap className="h-4 w-4 text-white drop-shadow-[0_0_6px_hsla(0,0%,100%,.6)]" />
-              </div>
-              <span className="font-bold text-[14px] tracking-tight text-white drop-shadow-[0_1px_2px_hsla(0,0%,0%,.15)]">NewLight</span>
+              <img src={newlightLogo} alt="NewLight" className="h-8 w-auto object-contain rounded-lg" style={{ filter: "brightness(1.1) drop-shadow(0 0 8px hsla(0,0%,100%,.3))" }} />
             </div>
           ) : (
-            <div className="h-8 w-8 rounded-xl flex items-center justify-center mx-auto" style={{
-              background: "hsla(0,0%,100%,.2)",
-              boxShadow: "0 0 20px -4px hsla(0,0%,100%,.35), inset 0 0 0 1px hsla(0,0%,100%,.15)"
-            }}>
-              <Zap className="h-4 w-4 text-white drop-shadow-[0_0_6px_hsla(0,0%,100%,.6)]" />
-            </div>
+            <img src={newlightLogo} alt="NewLight" className="h-7 w-7 object-contain rounded-lg mx-auto" style={{ filter: "brightness(1.1) drop-shadow(0 0 8px hsla(0,0%,100%,.3))" }} />
           )}
         </div>
       </SidebarHeader>

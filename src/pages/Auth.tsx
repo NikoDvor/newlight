@@ -127,17 +127,8 @@ export default function Auth() {
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div
-              className="h-10 w-10 rounded-xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, hsl(197 92% 68%), hsl(217 90% 58%))",
-                boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
-              }}
-            >
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">NewLight</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src={newlightLogo} alt="NewLight" className="h-16 w-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px hsla(211,96%,56%,.3))" }} />
           </div>
           <p className="text-sm text-white/40">
             {mode === "forgot"

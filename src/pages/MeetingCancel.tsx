@@ -130,12 +130,7 @@ export default function MeetingCancel() {
       <motion.div className="max-w-md w-full rounded-2xl p-8 relative z-10" style={cardStyle}
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-2 mb-6">
-          <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{
-            background: "linear-gradient(135deg, hsl(197 92% 68%), hsl(217 90% 58%))",
-          }}>
-            <Zap className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-lg font-bold text-white">NewLight</span>
+          <img src={newlightLogo} alt="NewLight" className="h-10 w-auto object-contain" style={{ filter: "drop-shadow(0 4px 12px hsla(211,96%,56%,.3))" }} />
         </div>
 
         <h2 className="text-xl font-bold text-white mb-1">Manage Your Meeting</h2>
