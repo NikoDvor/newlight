@@ -132,6 +132,8 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/crm" element={<CRM />} />
+              <Route path="/crm/contacts/:contactId" element={<ContactDetail />} />
+              <Route path="/crm/companies/:companyId" element={<CompanyDetail />} />
               <Route path="/website" element={<Website />} />
               <Route path="/social-media" element={<SocialMedia />} />
               <Route path="/seo" element={<SEO />} />
