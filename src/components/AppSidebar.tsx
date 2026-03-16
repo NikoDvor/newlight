@@ -1,6 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, Heart, DollarSign, ListChecks, Activity, Brain,
+  LayoutDashboard, Sparkles, Heart, DollarSign, ListChecks, Activity, Brain,
   Globe, Search, Megaphone, Share2, Users, Star,
   TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
