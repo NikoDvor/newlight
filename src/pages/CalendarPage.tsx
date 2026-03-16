@@ -140,24 +140,12 @@ export default function CalendarPage() {
     if (status === "cancelled" && reason) updateData.cancellation_reason = reason;
     if (status === "rescheduled" && reason) updateData.reschedule_reason = reason;
     await supabase.from("calendar_events").update(updateData).eq("id", eventId);
-    if (status === "completed") {
-      const event = events.find(e => e.id === eventId);
-      if (event?.contact_name) {
-        await supabase.from("review_requests" as any).insert({
-          client_id: activeClientId!, customer_name: event.contact_name,
-          customer_email: event.contact_email || null, customer_phone: event.contact_phone || null,
-          channel: event.contact_phone ? "sms" : "email", platform: "google", status: "sent",
-        });
-        await supabase.from("crm_activities").insert({
-          client_id: activeClientId!, activity_type: "review_request_auto",
-          activity_note: `Auto review request sent to ${event.contact_name} after completed appointment`,
-        });
-      }
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      if (status === "completed") await onAppointmentCompleted(activeClientId!, event);
+      else if (status === "cancelled") await onAppointmentCancelled(activeClientId!, event, reason);
+      else if (status === "no_show") await onNoShow(activeClientId!, event);
     }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId!, activity_type: "appointment_status_changed",
-      activity_note: `Appointment status changed to ${STATUS_LABEL[status] || status}`,
-    });
     toast({ title: `Status updated to ${STATUS_LABEL[status]}` });
     setDetailEvent(null);
     fetchData();

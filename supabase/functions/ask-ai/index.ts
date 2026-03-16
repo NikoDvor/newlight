@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -23,10 +23,10 @@ serve(async (req) => {
     context += "Answer using real data provided below. Be specific, actionable, and concise.\n\n";
 
     if (client_id) {
-      // Client info
+      // Client info + CRM mode
       const { data: client } = await sb.from("clients").select("*").eq("id", client_id).maybeSingle();
       if (client) {
-        context += `## Business Info\n- Name: ${client.business_name}\n- Industry: ${client.industry || "Not set"}\n- Location: ${client.primary_location || "Not set"}\n- Status: ${client.status}\n- Package: ${client.service_package || "Not set"}\n\n`;
+        context += `## Business Info\n- Name: ${client.business_name}\n- Industry: ${client.industry || "Not set"}\n- Location: ${client.primary_location || "Not set"}\n- Status: ${client.status}\n- Package: ${client.service_package || "Not set"}\n- CRM Mode: ${client.crm_mode || "native"}\n\n`;
       }
 
       // Branding
@@ -57,6 +57,7 @@ serve(async (req) => {
       const { data: allDeals } = await sb.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", client_id);
       const { count: leadCount } = await sb.from("crm_leads").select("id", { count: "exact", head: true }).eq("client_id", client_id);
       const { count: taskCount } = await sb.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", client_id).eq("status", "open");
+      const { count: companyCount } = await sb.from("crm_companies").select("id", { count: "exact", head: true }).eq("client_id", client_id);
 
       const deals = allDeals || [];
       const openDeals = deals.filter(d => d.status === "open");
@@ -65,11 +66,22 @@ serve(async (req) => {
       const pipelineValue = openDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
       const wonValue = wonDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
 
-      // Pipeline stage breakdown
       const stages = ["new_lead", "contacted", "qualified", "appointment_booked", "proposal_sent", "negotiation", "closed_won", "closed_lost"];
       const stageCounts = stages.map(st => `${st}: ${deals.filter(d => d.pipeline_stage === st).length}`).join(", ");
 
-      context += `## CRM\n- Contacts: ${contactCount || 0}\n- Leads: ${leadCount || 0}\n- Total Deals: ${deals.length}\n- Open Deals: ${openDeals.length} ($${pipelineValue.toLocaleString()} pipeline)\n- Won Deals: ${wonDeals.length} ($${wonValue.toLocaleString()} revenue)\n- Lost Deals: ${lostDeals.length}\n- Open Tasks: ${taskCount || 0}\n- Pipeline: ${stageCounts}\n\n`;
+      context += `## CRM\n- Contacts: ${contactCount || 0}\n- Companies: ${companyCount || 0}\n- Leads: ${leadCount || 0}\n- Total Deals: ${deals.length}\n- Open Deals: ${openDeals.length} ($${pipelineValue.toLocaleString()} pipeline)\n- Won Deals: ${wonDeals.length} ($${wonValue.toLocaleString()} revenue)\n- Lost Deals: ${lostDeals.length}\n- Open Tasks: ${taskCount || 0}\n- Pipeline: ${stageCounts}\n\n`;
+
+      // External CRM connection status
+      if (client?.crm_mode === "external") {
+        const { data: conn } = await sb.from("crm_connections").select("crm_provider_name, connection_status, last_synced_at").eq("client_id", client_id).limit(1).maybeSingle();
+        if (conn) {
+          context += `## External CRM Connection\n- Provider: ${conn.crm_provider_name}\n- Status: ${conn.connection_status}\n- Last Synced: ${conn.last_synced_at ? new Date(conn.last_synced_at).toLocaleString() : "Never"}\n\n`;
+        }
+        const { data: syncLogs } = await sb.from("crm_sync_logs").select("sync_status, records_processed, error_message, started_at").eq("client_id", client_id).order("started_at", { ascending: false }).limit(3);
+        if (syncLogs?.length) {
+          context += `## Recent Sync Logs\n${syncLogs.map(l => `- ${l.sync_status}: ${l.records_processed || 0} records (${new Date(l.started_at).toLocaleDateString()})${l.error_message ? ` Error: ${l.error_message}` : ""}`).join("\n")}\n\n`;
+        }
+      }
 
       // Calendar
       const { data: calEvents } = await sb.from("calendar_events").select("calendar_status, start_time").eq("client_id", client_id);
@@ -93,6 +105,17 @@ serve(async (req) => {
         context += `## Reviews\n- Total Requests: ${reviews.length}\n- Avg Rating: ${avg}\n- 5-Star Reviews: ${fiveStars}\n- Recovery Needed: ${recoveryNeeded}\n- Public Reviews: ${publicReviews}\n\n`;
       }
 
+      // Email
+      const { data: emailConns } = await sb.from("email_connections").select("provider, status, email_address, last_synced_at").eq("client_id", client_id);
+      const { count: inboxCount } = await sb.from("email_messages").select("id", { count: "exact", head: true }).eq("client_id", client_id).eq("folder", "inbox").eq("is_read", false);
+      if (emailConns?.length || inboxCount) {
+        context += `## Email\n`;
+        if (emailConns?.length) {
+          context += emailConns.map(c => `- ${c.provider} (${c.email_address || "unknown"}): ${c.status}`).join("\n") + "\n";
+        }
+        context += `- Unread Inbox: ${inboxCount || 0}\n\n`;
+      }
+
       // Finance
       const { data: adjustments } = await sb.from("financial_adjustments").select("amount, type, created_at").eq("client_id", client_id);
       if (adjustments?.length) {
@@ -101,7 +124,7 @@ serve(async (req) => {
       }
 
       // Recent activity
-      const { data: activities } = await sb.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", client_id).order("created_at", { ascending: false }).limit(10);
+      const { data: activities } = await sb.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", client_id).order("created_at", { ascending: false }).limit(15);
       if (activities?.length) {
         context += `## Recent Activity\n${activities.map(a => `- ${a.activity_type}: ${a.activity_note || "No note"} (${new Date(a.created_at).toLocaleDateString()})`).join("\n")}\n\n`;
       }
@@ -112,6 +135,13 @@ serve(async (req) => {
         const totalSpend = campaigns.reduce((s, c) => s + (Number(c.spend) || 0), 0);
         const totalLeads = campaigns.reduce((s, c) => s + (Number(c.leads) || 0), 0);
         context += `## Ads\n- Active Campaigns: ${campaigns.filter(c => c.status === "active").length}\n- Total Spend: $${totalSpend.toLocaleString()}\n- Total Leads: ${totalLeads}\n${campaigns.map(c => `- ${c.campaign_name} (${c.platform}): ${c.status}, $${Number(c.spend || 0).toLocaleString()} spent, ${c.leads || 0} leads`).join("\n")}\n\n`;
+      }
+
+      // Automation health
+      const { data: automations } = await sb.from("automations").select("name, enabled").eq("client_id", client_id);
+      if (automations?.length) {
+        const enabled = automations.filter(a => a.enabled).length;
+        context += `## Automations\n- Total: ${automations.length}\n- Active: ${enabled}\n- Disabled: ${automations.length - enabled}\n\n`;
       }
     }
 

@@ -151,10 +151,7 @@ export default function CRM() {
       company_id: newContact.company_id || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("crm_activities").insert({
-      client_id: activeClientId, activity_type: "contact_created",
-      activity_note: `Contact "${newContact.full_name}" created`,
-    });
+    await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
     setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "" });
     setContactOpen(false);
