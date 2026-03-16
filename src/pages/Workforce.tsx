@@ -267,7 +267,7 @@ export default function Workforce() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
-      <PageHeader title="Workforce" subtitle="Team directory, time tracking, and workforce operations." />
+      <PageHeader title="Workforce" description="Team directory, time tracking, and workforce operations." />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
