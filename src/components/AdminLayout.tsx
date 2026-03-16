@@ -27,7 +27,7 @@ export function AdminLayout() {
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between px-6 shrink-0 border-b relative z-10" style={{
+          <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
             background: "hsla(218,40%,12%,.95)",
             backdropFilter: "blur(24px) saturate(1.6)",
             borderColor: "hsla(211,96%,60%,.12)"
