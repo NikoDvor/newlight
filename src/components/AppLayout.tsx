@@ -104,7 +104,7 @@ export function AppLayout() {
       <div className="min-h-screen flex w-full" style={brandStyle}>
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between px-6 shrink-0 border-b relative z-10" style={{
+          <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
             background: "hsla(210,50%,99%,.6)",
             backdropFilter: "blur(24px) saturate(1.6)",
             WebkitBackdropFilter: "blur(24px) saturate(1.6)",
@@ -186,7 +186,7 @@ export function AppLayout() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-                className="p-6 lg:p-10 relative z-1"
+                className="p-4 sm:p-6 lg:p-10 relative z-1"
               >
                 <Outlet />
               </motion.div>
