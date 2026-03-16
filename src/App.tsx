@@ -86,6 +86,7 @@ import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
 import Workforce from "./pages/Workforce";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
