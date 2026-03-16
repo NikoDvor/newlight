@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
+import { onDealStageChanged, onContactCreated } from "@/lib/crmAutomations";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
