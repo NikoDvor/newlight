@@ -304,6 +304,7 @@ export default function CRM() {
             <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts</TabsTrigger>
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
             <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
           </TabsList>
 
