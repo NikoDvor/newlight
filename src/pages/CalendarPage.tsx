@@ -9,7 +9,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import {
   Calendar as CalendarIcon, Clock, Users, Plus, Check, X, RefreshCw,
-  Video, MapPin, Link2, ChevronLeft, ChevronRight, List, LayoutGrid, Columns, CalendarDays
+  Video, MapPin, Link2, ChevronLeft, ChevronRight, List, LayoutGrid, Columns, CalendarDays,
+  Settings2, Trash2, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
