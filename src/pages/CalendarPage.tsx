@@ -83,11 +83,14 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [calendars, setCalendars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda" | "calendars">("month");
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState<any>(null);
+  const [newCalOpen, setNewCalOpen] = useState(false);
+  const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
     start_date: "", start_time: "", duration: "30", location: "zoom",
@@ -97,15 +100,39 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes] = await Promise.all([
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
+      supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
     setContacts(cRes.data || []);
+    setCalendars(calRes.data || []);
     setLoading(false);
+  };
+
+  const createCalendar = async () => {
+    if (!activeClientId || !newCal.calendar_name.trim()) return;
+    const { error } = await supabase.from("calendars").insert({
+      client_id: activeClientId,
+      calendar_name: newCal.calendar_name,
+      calendar_type: newCal.calendar_type,
+      description: newCal.description || null,
+      default_location: newCal.default_location || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Calendar created" });
+    setNewCal({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+    setNewCalOpen(false);
+    fetchData();
+  };
+
+  const deleteCalendar = async (id: string) => {
+    await supabase.from("calendars").delete().eq("id", id);
+    toast({ title: "Calendar deleted" });
+    fetchData();
   };
 
   useEffect(() => { fetchData(); }, [activeClientId]);
