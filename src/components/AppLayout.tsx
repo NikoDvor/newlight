@@ -89,7 +89,7 @@ export function AppLayout() {
         background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
       }}>
         <div className="text-center max-w-md">
-          <Zap className="h-10 w-10 text-primary mx-auto mb-4" />
+          <img src={newlightLogo} alt="NewLight" className="h-14 w-auto mx-auto mb-4 object-contain" />
           <h1 className="text-xl font-bold text-white mb-2">No Workspace Assigned</h1>
           <p className="text-white/50 text-sm mb-6">Your account has not been assigned to a client workspace yet. Please contact an administrator to get access.</p>
           <button onClick={signOut} className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1">
