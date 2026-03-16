@@ -3328,6 +3328,114 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          billable_status: string | null
+          break_minutes: number | null
+          client_id: string
+          created_at: string
+          detailed_notes: string | null
+          end_time: string | null
+          entry_date: string
+          entry_method: string
+          entry_status: string
+          id: string
+          labor_category: string | null
+          linked_appointment_id: string | null
+          linked_campaign_id: string | null
+          linked_company_id: string | null
+          linked_contact_id: string | null
+          linked_deal_id: string | null
+          linked_module: string | null
+          linked_project_type: string | null
+          linked_task_id: string | null
+          note_summary: string | null
+          start_time: string | null
+          submitted_at: string | null
+          total_hours: number | null
+          total_minutes: number | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billable_status?: string | null
+          break_minutes?: number | null
+          client_id: string
+          created_at?: string
+          detailed_notes?: string | null
+          end_time?: string | null
+          entry_date?: string
+          entry_method?: string
+          entry_status?: string
+          id?: string
+          labor_category?: string | null
+          linked_appointment_id?: string | null
+          linked_campaign_id?: string | null
+          linked_company_id?: string | null
+          linked_contact_id?: string | null
+          linked_deal_id?: string | null
+          linked_module?: string | null
+          linked_project_type?: string | null
+          linked_task_id?: string | null
+          note_summary?: string | null
+          start_time?: string | null
+          submitted_at?: string | null
+          total_hours?: number | null
+          total_minutes?: number | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billable_status?: string | null
+          break_minutes?: number | null
+          client_id?: string
+          created_at?: string
+          detailed_notes?: string | null
+          end_time?: string | null
+          entry_date?: string
+          entry_method?: string
+          entry_status?: string
+          id?: string
+          labor_category?: string | null
+          linked_appointment_id?: string | null
+          linked_campaign_id?: string | null
+          linked_company_id?: string | null
+          linked_contact_id?: string | null
+          linked_deal_id?: string | null
+          linked_module?: string | null
+          linked_project_type?: string | null
+          linked_task_id?: string | null
+          note_summary?: string | null
+          start_time?: string | null
+          submitted_at?: string | null
+          total_hours?: number | null
+          total_minutes?: number | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           client_id: string | null
@@ -3492,6 +3600,104 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "website_traffic_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workers: {
+        Row: {
+          bonus_eligible: boolean | null
+          client_id: string
+          commission_rate: number | null
+          created_at: string
+          default_cost_center: string | null
+          department: string | null
+          email: string | null
+          end_date: string | null
+          first_name: string
+          full_name: string | null
+          hourly_rate: number | null
+          id: string
+          last_name: string
+          manager_user_id: string | null
+          overtime_eligible: boolean | null
+          pay_type: string
+          payout_method: string | null
+          payout_status: string | null
+          payroll_frequency: string | null
+          phone: string | null
+          role_title: string | null
+          salary_amount: number | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          worker_type: string
+        }
+        Insert: {
+          bonus_eligible?: boolean | null
+          client_id: string
+          commission_rate?: number | null
+          created_at?: string
+          default_cost_center?: string | null
+          department?: string | null
+          email?: string | null
+          end_date?: string | null
+          first_name: string
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string
+          last_name: string
+          manager_user_id?: string | null
+          overtime_eligible?: boolean | null
+          pay_type?: string
+          payout_method?: string | null
+          payout_status?: string | null
+          payroll_frequency?: string | null
+          phone?: string | null
+          role_title?: string | null
+          salary_amount?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          worker_type?: string
+        }
+        Update: {
+          bonus_eligible?: boolean | null
+          client_id?: string
+          commission_rate?: number | null
+          created_at?: string
+          default_cost_center?: string | null
+          department?: string | null
+          email?: string | null
+          end_date?: string | null
+          first_name?: string
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string
+          last_name?: string
+          manager_user_id?: string | null
+          overtime_eligible?: boolean | null
+          pay_type?: string
+          payout_method?: string | null
+          payout_status?: string | null
+          payroll_frequency?: string | null
+          phone?: string | null
+          role_title?: string | null
+          salary_amount?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          worker_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workers_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

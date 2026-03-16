@@ -85,6 +85,7 @@ import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
+import Workforce from "./pages/Workforce";
 
 const queryClient = new QueryClient();
 
@@ -182,6 +183,7 @@ const App = () => (
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/workforce" element={<Workforce />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
