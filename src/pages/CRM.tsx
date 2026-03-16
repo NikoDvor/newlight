@@ -55,35 +55,79 @@ export default function CRM() {
   const [leads, setLeads] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
   const [detailContact, setDetailContact] = useState<any>(null);
+  const [crmMode, setCrmMode] = useState<string>("native");
+  const [crmConnection, setCrmConnection] = useState<any>(null);
+  const [selectedProvider, setSelectedProvider] = useState("");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
     lead_source: "", pipeline_stage: "new_lead",
   });
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "" });
+  const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, dRes, lRes, aRes, tRes] = await Promise.all([
+    const [cRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_leads").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("clients").select("crm_mode").eq("id", activeClientId).maybeSingle(),
+      supabase.from("crm_connections").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1),
+      supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
     ]);
     setContacts(cRes.data || []);
     setDeals(dRes.data || []);
     setLeads(lRes.data || []);
     setActivities(aRes.data || []);
     setTasks(tRes.data || []);
+    setNotes(notesRes.data || []);
+    if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
+    if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, [activeClientId]);
+
+  const switchCrmMode = async (mode: string) => {
+    if (!activeClientId) return;
+    await supabase.from("clients").update({ crm_mode: mode } as any).eq("id", activeClientId);
+    setCrmMode(mode);
+    await supabase.from("audit_logs").insert({ client_id: activeClientId, action: "crm_mode_changed", module: "crm", metadata: { mode } });
+    toast({ title: `CRM mode set to ${mode === "native" ? "Native" : "External"}` });
+  };
+
+  const connectExternalCrm = async () => {
+    if (!activeClientId || !selectedProvider) return;
+    const { data } = await supabase.from("crm_connections").insert({
+      client_id: activeClientId, crm_provider_name: selectedProvider, connection_status: "pending",
+    } as any).select().single();
+    if (data) setCrmConnection(data);
+    await supabase.from("audit_logs").insert({ client_id: activeClientId, action: "external_crm_connected", module: "crm", metadata: { provider: selectedProvider } });
+    toast({ title: "External CRM connection initiated" });
+  };
+
+  const addNote = async (contactId?: string) => {
+    if (!activeClientId || !newNote.trim()) return;
+    await supabase.from("crm_notes").insert({
+      client_id: activeClientId, contact_id: contactId || null, content: newNote,
+    } as any);
+    await supabase.from("crm_activities").insert({
+      client_id: activeClientId, activity_type: "note_added",
+      activity_note: `Note added${contactId ? " to contact" : ""}: ${newNote.substring(0, 80)}`,
+      contact_id: contactId || null,
+    } as any);
+    setNewNote("");
+    toast({ title: "Note added" });
+    fetchData();
+  };
 
   const addContact = async () => {
     if (!activeClientId || !newContact.full_name) return;
