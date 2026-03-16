@@ -552,6 +552,22 @@ export default function CRM() {
                     </div>
                   </div>
                 )}
+                {/* Notes for this contact */}
+                <div className="pt-4 border-t border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Notes</p>
+                  <div className="flex gap-2 mb-3">
+                    <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add note..." className="min-h-[40px] flex-1 resize-none text-xs" rows={2} />
+                    <Button size="icon" className="shrink-0 self-end h-8 w-8" onClick={() => addNote(detailContact.id)} disabled={!newNote.trim()}>
+                      <StickyNote className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {notes.filter((n: any) => n.contact_id === detailContact.id).map((n: any) => (
+                    <div key={n.id} className="p-2 rounded-lg bg-secondary/50 mb-2">
+                      <p className="text-xs text-foreground">{n.content}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
