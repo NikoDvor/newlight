@@ -142,17 +142,89 @@ export default function AdminMasterActivation() {
         });
       }
 
-      // 5. Calendar setup
+      // 5. Calendar setup from configs
       if (form.use_native_calendar === "yes") {
-        const numCals = Math.max(1, parseInt(form.num_calendars) || 1);
-        for (let i = 0; i < numCals; i++) {
-          await supabase.from("calendars").insert({
+        const configs: CalendarConfig[] = form.calendar_configs || [];
+        for (const cfg of configs) {
+          if (!cfg.calendar_name) continue;
+          const tz = form.default_timezone || "America/Los_Angeles";
+
+          // Create calendar
+          const { data: cal } = await supabase.from("calendars").insert({
             client_id: client.id,
-            calendar_name: numCals === 1 ? "Main Calendar" : `Calendar ${i + 1}`,
-            calendar_type: "booking",
-            timezone: form.default_timezone || "America/Los_Angeles",
+            calendar_name: cfg.calendar_name,
+            calendar_type: cfg.calendar_type === "single" ? "booking" : cfg.calendar_type,
+            timezone: tz,
+            description: cfg.description || null,
+            default_location: cfg.location_type || null,
+          }).select().single();
+
+          if (!cal) continue;
+
+          // Create availability rules
+          const days = (cfg.availability_days || "1,2,3,4,5").split(",").map(d => parseInt(d.trim())).filter(d => !isNaN(d));
+          for (const day of days) {
+            await supabase.from("calendar_availability").insert({
+              client_id: client.id,
+              calendar_id: cal.id,
+              day_of_week: day,
+              start_time: cfg.availability_hours_start || "09:00",
+              end_time: cfg.availability_hours_end || "17:00",
+              slot_interval_minutes: parseInt(cfg.slot_interval) || 30,
+              is_active: true,
+            });
+          }
+
+          // Create appointment types
+          const typeNames = (cfg.appointment_types || "Consultation").split(",").map(t => t.trim()).filter(Boolean);
+          for (const typeName of typeNames) {
+            await supabase.from("calendar_appointment_types").insert({
+              client_id: client.id,
+              calendar_id: cal.id,
+              name: typeName,
+              duration_minutes: parseInt(cfg.default_duration) || 30,
+              buffer_before: parseInt(cfg.buffer_before) || 0,
+              buffer_after: parseInt(cfg.buffer_after) || 0,
+              location_type: cfg.location_type || "virtual",
+              meeting_link_type: cfg.meeting_link_type || null,
+              confirmation_message: cfg.confirmation_message || null,
+              reminders_enabled: cfg.reminders_enabled !== "no",
+              is_active: cfg.active !== "no",
+            });
+          }
+
+          // Create booking link
+          const linkSlug = cfg.booking_link_slug || cfg.calendar_name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          await supabase.from("calendar_booking_links").insert({
+            client_id: client.id,
+            calendar_id: cal.id,
+            slug: `${slug}-${linkSlug}`,
+            is_active: cfg.active !== "no",
+            is_public: cfg.calendar_type !== "internal",
           });
+
+          // Create reminder rules if enabled
+          if (cfg.reminders_enabled !== "no") {
+            const channel = form.default_reminder_preference || "email";
+            await Promise.all([
+              supabase.from("calendar_reminder_rules").insert({
+                client_id: client.id, calendar_id: cal.id,
+                reminder_type: "confirmation", channel, offset_minutes: 0, is_active: true,
+              }),
+              supabase.from("calendar_reminder_rules").insert({
+                client_id: client.id, calendar_id: cal.id,
+                reminder_type: "reminder", channel, offset_minutes: 1440, is_active: true,
+              }),
+            ]);
+          }
         }
+      } else if (form.use_native_calendar === "no") {
+        // External calendar — create integration task
+        await supabase.from("client_integrations").insert({
+          client_id: client.id,
+          integration_name: "External Calendar",
+          status: "access_needed",
+        });
       }
 
       // 6. Finalize provision
