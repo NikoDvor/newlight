@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { BackArrow } from "@/components/BackArrow";
 import { DataCard } from "@/components/DataCard";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,11 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Building2, Globe, Phone, Mail, Users, Briefcase, StickyNote, Activity, DollarSign } from "lucide-react";
+import { Building2, Globe, Phone, Mail, Users, Briefcase, StickyNote, Activity, DollarSign, Calendar, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function CompanyDetail() {
+  const navigate = useNavigate();
   const { companyId } = useParams();
   const { activeClientId } = useWorkspace();
   const [company, setCompany] = useState<any>(null);
@@ -34,7 +35,7 @@ export default function CompanyDetail() {
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }).limit(30),
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }),
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("start_time", { ascending: false }),
+      supabase.from("appointments").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("start_time", { ascending: false }),
     ]).then(([co, c, d, a, n, ap]) => {
       setCompany(co.data);
       setContacts(c.data || []);
@@ -86,7 +87,7 @@ export default function CompanyDetail() {
             </div>
             {address && <p className="text-xs text-muted-foreground mt-1">{address}</p>}
           </div>
-          <div className="grid grid-cols-3 gap-3 shrink-0 text-center">
+          <div className="grid grid-cols-4 gap-3 shrink-0 text-center">
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold">{contacts.length}</p>
               <p className="text-[10px] text-muted-foreground">Contacts</p>
@@ -94,6 +95,10 @@ export default function CompanyDetail() {
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold">{deals.length}</p>
               <p className="text-[10px] text-muted-foreground">Deals</p>
+            </div>
+            <div className="p-3 rounded-xl bg-secondary/50">
+              <p className="text-lg font-bold">{appointments.length}</p>
+              <p className="text-[10px] text-muted-foreground">Appointments</p>
             </div>
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold tabular-nums">${totalRevenue.toLocaleString()}</p>
@@ -181,14 +186,22 @@ export default function CompanyDetail() {
                   <thead><tr className="border-b border-border">
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
                   </tr></thead>
                   <tbody>
                     {appointments.map(ap => (
-                      <tr key={ap.id} className="border-b border-border last:border-0">
+                      <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                         <td className="text-sm font-medium py-3 pr-4">{ap.title}</td>
                         <td className="text-sm text-muted-foreground py-3 pr-4">{new Date(ap.start_time).toLocaleString()}</td>
-                        <td className="py-3"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
+                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
+                        <td className="text-xs text-muted-foreground py-3 pr-4">{ap.booking_source || "—"}</td>
+                        <td className="py-3">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/appointments/${ap.id}`)}>
+                            <ArrowUpRight className="h-3 w-3 mr-1" />View
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

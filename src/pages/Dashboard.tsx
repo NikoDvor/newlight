@@ -48,7 +48,7 @@ export default function Dashboard() {
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       supabase.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", activeClientId),
-      supabase.from("calendar_events").select("id, calendar_status, start_time").eq("client_id", activeClientId),
+      supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
       supabase.from("review_requests" as any).select("rating").eq("client_id", activeClientId),
       supabase.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("status", "open"),
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
@@ -66,13 +66,16 @@ export default function Dashboard() {
       const reviewsData = (reviews.data || []) as any[];
       const rated = reviewsData.filter((r: any) => r.rating);
 
+      const cancelledCount = eventsData.filter((e: any) => e.status === "cancelled").length;
+      const noShowCount = eventsData.filter((e: any) => e.status === "no_show").length;
+
       setMetrics({
         contacts: contacts.count || 0,
         openDeals: openDeals.length,
         pipelineValue: openDeals.reduce((s: number, d: any) => s + (Number(d.deal_value) || 0), 0),
         wonValue: wonDeals.reduce((s: number, d: any) => s + (Number(d.deal_value) || 0), 0),
-        upcomingEvents: eventsData.filter((e: any) => new Date(e.start_time) >= now && e.calendar_status !== "cancelled").length,
-        completedEvents: eventsData.filter((e: any) => e.calendar_status === "completed").length,
+        upcomingEvents: eventsData.filter((e: any) => new Date(e.start_time) >= now && !["cancelled", "no_show"].includes(e.status)).length,
+        completedEvents: eventsData.filter((e: any) => e.status === "completed").length,
         reviewRequests: reviewsData.length,
         avgRating: rated.length > 0 ? rated.reduce((s: number, r: any) => s + r.rating, 0) / rated.length : 0,
         ratingCount: rated.length,

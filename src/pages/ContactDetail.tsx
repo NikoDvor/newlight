@@ -60,11 +60,12 @@ export default function ContactDetail() {
       supabase.from("crm_contacts").select("*").eq("id", contactId).single(),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(50),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("start_time", { ascending: false }),
+      supabase.from("appointments").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("start_time", { ascending: false }),
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(20),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
-    ]).then(([c, a, d, ap, n, e, t]) => {
+      supabase.from("review_requests" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
+    ]).then(([c, a, d, ap, n, e, t, rv]) => {
       setContact(c.data);
       setActivities(a.data || []);
       setDeals(d.data || []);
@@ -72,6 +73,7 @@ export default function ContactDetail() {
       setNotes(n.data || []);
       setEmails(e.data || []);
       setTasks(t.data || []);
+      setReviews(rv.data || []);
       setLoading(false);
     });
   }, [contactId, activeClientId]);
@@ -244,15 +246,21 @@ export default function ContactDetail() {
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Location</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
                   </tr></thead>
                   <tbody>
                     {appointments.map(ap => (
                       <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                         <td className="text-sm font-medium py-3 pr-4">{ap.title}</td>
                         <td className="text-sm text-muted-foreground py-3 pr-4">{new Date(ap.start_time).toLocaleString()}</td>
-                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
-                        <td className="text-sm text-muted-foreground py-3">{ap.location || "—"}</td>
+                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
+                        <td className="text-xs text-muted-foreground py-3 pr-4">{ap.booking_source || "—"}</td>
+                        <td className="py-3">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/appointments/${ap.id}`)}>
+                            <ArrowUpRight className="h-3 w-3 mr-1" />View
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -260,6 +268,24 @@ export default function ContactDetail() {
               </div>
             )}
           </DataCard>
+
+          {/* Review Requests linked to contact */}
+          {reviews.length > 0 && (
+            <DataCard title="Review Requests" className="mt-4">
+              <div className="space-y-2">
+                {reviews.map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-sm">{r.customer_name}</span>
+                      {r.rating && <Badge variant="outline" className="text-[10px]">{r.rating}★</Badge>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            </DataCard>
+          )}
         </TabsContent>
 
         <TabsContent value="deals" className="mt-4">
