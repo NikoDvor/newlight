@@ -87,6 +87,10 @@ import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
 import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
+import ContentPlanner from "./pages/ContentPlanner";
+import Proposals from "./pages/Proposals";
+import HelpDesk from "./pages/HelpDesk";
+import KnowledgeBase from "./pages/KnowledgeBase";
 
 const queryClient = new QueryClient();
 
