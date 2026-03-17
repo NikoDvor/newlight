@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
