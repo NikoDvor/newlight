@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CalendarConfig } from "@/components/activation/activationTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { STEPS, defaultFormState, type ActivationFormState } from "@/components/activation/activationTypes";
+import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig } from "@/components/activation/activationTypes";
 import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
