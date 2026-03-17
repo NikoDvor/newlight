@@ -186,14 +186,22 @@ export default function CompanyDetail() {
                   <thead><tr className="border-b border-border">
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
                   </tr></thead>
                   <tbody>
                     {appointments.map(ap => (
-                      <tr key={ap.id} className="border-b border-border last:border-0">
+                      <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                         <td className="text-sm font-medium py-3 pr-4">{ap.title}</td>
                         <td className="text-sm text-muted-foreground py-3 pr-4">{new Date(ap.start_time).toLocaleString()}</td>
-                        <td className="py-3"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
+                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
+                        <td className="text-xs text-muted-foreground py-3 pr-4">{ap.booking_source || "—"}</td>
+                        <td className="py-3">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/appointments/${ap.id}`)}>
+                            <ArrowUpRight className="h-3 w-3 mr-1" />View
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

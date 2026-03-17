@@ -191,6 +191,7 @@ const App = () => (
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/calendar-management" element={<CalendarManagement />} />
               <Route path="/calendar-management/:calendarId" element={<CalendarDetail />} />
+              <Route path="/appointments/:appointmentId" element={<AppointmentDetail />} />
               <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />

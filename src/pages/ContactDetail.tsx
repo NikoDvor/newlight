@@ -246,15 +246,21 @@ export default function ContactDetail() {
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Location</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
                   </tr></thead>
                   <tbody>
                     {appointments.map(ap => (
                       <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                         <td className="text-sm font-medium py-3 pr-4">{ap.title}</td>
                         <td className="text-sm text-muted-foreground py-3 pr-4">{new Date(ap.start_time).toLocaleString()}</td>
-                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
-                        <td className="text-sm text-muted-foreground py-3">{ap.location || "—"}</td>
+                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
+                        <td className="text-xs text-muted-foreground py-3 pr-4">{ap.booking_source || "—"}</td>
+                        <td className="py-3">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/appointments/${ap.id}`)}>
+                            <ArrowUpRight className="h-3 w-3 mr-1" />View
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -262,6 +268,24 @@ export default function ContactDetail() {
               </div>
             )}
           </DataCard>
+
+          {/* Review Requests linked to contact */}
+          {reviews.length > 0 && (
+            <DataCard title="Review Requests" className="mt-4">
+              <div className="space-y-2">
+                {reviews.map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-sm">{r.customer_name}</span>
+                      {r.rating && <Badge variant="outline" className="text-[10px]">{r.rating}★</Badge>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            </DataCard>
+          )}
         </TabsContent>
 
         <TabsContent value="deals" className="mt-4">
