@@ -35,7 +35,7 @@ export default function CompanyDetail() {
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }).limit(30),
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("created_at", { ascending: false }),
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("start_time", { ascending: false }),
+      supabase.from("appointments").select("*").eq("client_id", activeClientId).eq("company_id", companyId).order("start_time", { ascending: false }),
     ]).then(([co, c, d, a, n, ap]) => {
       setCompany(co.data);
       setContacts(c.data || []);
