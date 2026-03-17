@@ -73,6 +73,7 @@ import AdminClientSetup from "./pages/admin/AdminClientSetup";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import AdminWelcome from "./pages/admin/AdminWelcome";
 import AdminAppSettings from "./pages/admin/AdminAppSettings";
+import AdminMasterActivation from "./pages/admin/AdminMasterActivation";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -125,6 +126,7 @@ const App = () => (
               <Route path="reports" element={<AdminReports />} />
               <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
               <Route path="activation" element={<AdminActivation />} />
+              <Route path="master-activation" element={<AdminMasterActivation />} />
               <Route path="demo-builds" element={<AdminDemoBuilds />} />
               <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
               <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
