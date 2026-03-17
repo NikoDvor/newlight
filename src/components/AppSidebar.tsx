@@ -5,7 +5,7 @@ import {
   TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
   ChevronLeft, ChevronDown, Wallet, Mail, HelpCircle, HardHat,
-  MessageSquare, Bell
+  MessageSquare, Bell, Palette, PenTool, Headphones, BookOpen
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
