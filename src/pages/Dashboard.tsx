@@ -48,7 +48,7 @@ export default function Dashboard() {
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       supabase.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", activeClientId),
-      supabase.from("calendar_events").select("id, calendar_status, start_time").eq("client_id", activeClientId),
+      supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
       supabase.from("review_requests" as any).select("rating").eq("client_id", activeClientId),
       supabase.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("status", "open"),
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
