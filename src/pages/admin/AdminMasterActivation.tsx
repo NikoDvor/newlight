@@ -89,7 +89,8 @@ export default function AdminMasterActivation() {
         owner_name: form.owner_name || null,
         owner_email: form.owner_email,
         crm_mode: form.crm_mode === "external" ? "external" : "native",
-      }).select().single();
+        onboarding_stage: "activation",
+      } as any).select().single();
 
       if (clientErr || !client) throw new Error(clientErr?.message || "Failed to create client");
 
