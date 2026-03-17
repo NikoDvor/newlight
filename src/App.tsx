@@ -94,6 +94,7 @@ import HelpDesk from "./pages/HelpDesk";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import CalendarManagement from "./pages/CalendarManagement";
 import CalendarDetail from "./pages/CalendarDetail";
+import AppointmentDetail from "./pages/AppointmentDetail";
 
 const queryClient = new QueryClient();
 
