@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
@@ -129,6 +130,8 @@ export default function SocialDashboard() {
           </Button>
         </div>
       </PageHeader>
+
+      <ModuleHelpPanel moduleName="Social Media" description="Manage social accounts, create and schedule posts, track engagement metrics, and manage content approvals. Connect your accounts or manage content manually." tips={["Add social accounts to track followers and engagement", "Create posts with draft, schedule, and approval workflows", "Demo platform data shows until accounts are connected"]} />
 
       {!hasRealData && (
         <SetupBanner

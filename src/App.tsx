@@ -87,6 +87,10 @@ import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
 import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
+import ContentPlanner from "./pages/ContentPlanner";
+import Proposals from "./pages/Proposals";
+import HelpDesk from "./pages/HelpDesk";
+import KnowledgeBase from "./pages/KnowledgeBase";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +190,10 @@ const App = () => (
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/workforce" element={<Workforce />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/content-planner" element={<ContentPlanner />} />
+              <Route path="/proposals" element={<Proposals />} />
+              <Route path="/help-desk" element={<HelpDesk />} />
+              <Route path="/knowledge-base" element={<KnowledgeBase />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

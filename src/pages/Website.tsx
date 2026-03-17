@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
@@ -123,6 +124,8 @@ export default function Website() {
           </Button>
         </div>
       </PageHeader>
+
+      <ModuleHelpPanel moduleName="Website" description="Monitor page performance, track conversions, and identify website issues. Pages can be added manually or synced from Google Analytics." tips={["Track visits and conversions per page", "Log website issues for prioritized fixes", "Demo traffic data shows until analytics are connected"]} />
 
       {!hasRealData && (
         <SetupBanner

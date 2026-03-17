@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
@@ -102,6 +103,8 @@ export default function PaidAds() {
           <Plus className="h-4 w-4" /> Add Campaign
         </Button>
       </PageHeader>
+
+      <ModuleHelpPanel moduleName="Paid Ads" description="Track campaign performance, spend, cost-per-lead, and ROAS across Google, Meta, LinkedIn, and more. Campaigns can be added manually or synced from ad platforms." tips={["Add campaigns manually or connect ad platforms from Integrations", "AI recommendations suggest budget optimizations", "Demo data shows until real campaigns are added"]} />
 
       {!hasRealData && (
         <SetupBanner
