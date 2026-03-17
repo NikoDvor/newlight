@@ -1,3 +1,57 @@
+export interface CalendarConfig {
+  calendar_name: string;
+  calendar_type: string; // single | team | round_robin | department | staff | internal
+  description: string;
+  owner_user: string;
+  assigned_users: string;
+  appointment_types: string;
+  default_duration: string;
+  buffer_before: string;
+  buffer_after: string;
+  availability_days: string;
+  availability_hours_start: string;
+  availability_hours_end: string;
+  slot_interval: string;
+  booking_link_slug: string;
+  location_type: string;
+  meeting_link_type: string;
+  confirmation_message: string;
+  reminders_enabled: string;
+  active: string;
+  // Round robin extras
+  staff_pool: string;
+  distribution_method: string;
+  fallback_owner: string;
+  // Department extras
+  department_name: string;
+}
+
+export const defaultCalendarConfig = (): CalendarConfig => ({
+  calendar_name: "",
+  calendar_type: "single",
+  description: "",
+  owner_user: "",
+  assigned_users: "",
+  appointment_types: "Consultation",
+  default_duration: "30",
+  buffer_before: "0",
+  buffer_after: "0",
+  availability_days: "1,2,3,4,5",
+  availability_hours_start: "09:00",
+  availability_hours_end: "17:00",
+  slot_interval: "30",
+  booking_link_slug: "",
+  location_type: "virtual",
+  meeting_link_type: "zoom",
+  confirmation_message: "",
+  reminders_enabled: "yes",
+  active: "yes",
+  staff_pool: "",
+  distribution_method: "round_robin",
+  fallback_owner: "",
+  department_name: "",
+});
+
 export interface ActivationFormState {
   // Step 1: Deal Close
   business_name_confirmed: string;
@@ -81,6 +135,13 @@ export interface ActivationFormState {
   booking_page_branded: string;
   round_robin: string;
   team_assignment_logic: string;
+  // New calendar fields
+  different_booking_links: string;
+  need_department_calendars: string;
+  default_reminder_preference: string;
+  default_cancellation_policy: string;
+  default_reschedule_policy: string;
+  calendar_configs: CalendarConfig[];
 
   // Step 5: Email
   use_native_email: string;
@@ -245,6 +306,45 @@ export const defaultIntegrations = (): ActivationFormState["integrations"] => {
   return result;
 };
 
+export const INDUSTRY_CALENDAR_SUGGESTIONS: Record<string, { name: string; type: string; types: string }[]> = {
+  "salon": [
+    { name: "Consultation", type: "single", types: "Consultation" },
+    { name: "Staff Calendars", type: "staff", types: "Haircut, Color, Style" },
+  ],
+  "spa": [
+    { name: "Consultation", type: "single", types: "Consultation" },
+    { name: "Staff Calendars", type: "staff", types: "Massage, Facial, Body Treatment" },
+  ],
+  "med spa": [
+    { name: "Consultation", type: "single", types: "Consultation" },
+    { name: "Follow-Up", type: "single", types: "Follow-Up" },
+    { name: "Provider Calendars", type: "staff", types: "Botox, Filler, Laser" },
+  ],
+  "agency": [
+    { name: "Sales Calendar", type: "single", types: "Discovery Call, Demo" },
+    { name: "Onboarding Calendar", type: "single", types: "Kickoff, Setup" },
+    { name: "Support Calendar", type: "team", types: "Support Call" },
+  ],
+  "home service": [
+    { name: "Estimate Calendar", type: "single", types: "Estimate, Walkthrough" },
+    { name: "Service Calendar", type: "team", types: "Service Appointment" },
+    { name: "Team Calendar", type: "round_robin", types: "Service Call" },
+  ],
+  "professional service": [
+    { name: "Consultation", type: "single", types: "Consultation, Strategy Session" },
+    { name: "Team Calendar", type: "team", types: "Meeting" },
+    { name: "Support Calendar", type: "single", types: "Support Call" },
+  ],
+  "dental": [
+    { name: "New Patient", type: "single", types: "New Patient Exam" },
+    { name: "Provider Calendars", type: "staff", types: "Cleaning, Filling, Crown" },
+  ],
+  "fitness": [
+    { name: "Consultation", type: "single", types: "Free Consultation, Assessment" },
+    { name: "Trainer Calendars", type: "staff", types: "Personal Training, Group Class" },
+  ],
+};
+
 export const defaultFormState = (): ActivationFormState => ({
   business_name_confirmed: "", legal_business_name: "", display_name: "",
   owner_name: "", owner_email: "", owner_phone: "",
@@ -275,6 +375,10 @@ export const defaultFormState = (): ActivationFormState => ({
   num_calendars: "1", use_native_calendar: "yes", external_calendar_sync: "no",
   default_timezone: "America/Los_Angeles", default_meeting_types: "",
   booking_page_branded: "yes", round_robin: "no", team_assignment_logic: "",
+  different_booking_links: "no", need_department_calendars: "no",
+  default_reminder_preference: "email", default_cancellation_policy: "",
+  default_reschedule_policy: "",
+  calendar_configs: [defaultCalendarConfig()],
 
   use_native_email: "yes", email_provider: "", main_inbox: "", shared_inbox: "no",
   shared_inbox_users: "", sender_name: "", reply_to_email: "", template_categories: "",

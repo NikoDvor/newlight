@@ -1576,6 +1576,7 @@ export type Database = {
           crm_mode: string
           id: string
           industry: string | null
+          onboarding_stage: string
           owner_email: string | null
           owner_name: string | null
           primary_location: string | null
@@ -1591,6 +1592,7 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
           primary_location?: string | null
@@ -1606,6 +1608,7 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
           primary_location?: string | null
