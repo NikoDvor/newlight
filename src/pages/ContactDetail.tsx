@@ -60,11 +60,12 @@ export default function ContactDetail() {
       supabase.from("crm_contacts").select("*").eq("id", contactId).single(),
       supabase.from("crm_activities").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(50),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("start_time", { ascending: false }),
+      supabase.from("appointments").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("start_time", { ascending: false }),
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(20),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
-    ]).then(([c, a, d, ap, n, e, t]) => {
+      supabase.from("review_requests" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
+    ]).then(([c, a, d, ap, n, e, t, rv]) => {
       setContact(c.data);
       setActivities(a.data || []);
       setDeals(d.data || []);
@@ -72,6 +73,7 @@ export default function ContactDetail() {
       setNotes(n.data || []);
       setEmails(e.data || []);
       setTasks(t.data || []);
+      setReviews(rv.data || []);
       setLoading(false);
     });
   }, [contactId, activeClientId]);
