@@ -231,15 +231,17 @@ export default function BookingPage() {
       if (reminderRules?.length && appt) {
         // Create notification entries for each reminder rule
         for (const rule of reminderRules) {
-          await supabase.from("notifications" as any).insert({
-            client_id: client.id,
-            type: `reminder_${rule.reminder_type}`,
-            title: `Reminder: ${selectedType?.name || "Appointment"} with ${name}`,
-            message: `${rule.reminder_type} reminder via ${rule.channel} — ${rule.offset_minutes} minutes`,
-            module: "calendar",
-            related_id: appt.id,
-            status: "pending",
-          }).catch(() => { /* notifications table may not exist yet */ });
+          try {
+            await supabase.from("notifications" as any).insert({
+              client_id: client.id,
+              type: `reminder_${rule.reminder_type}`,
+              title: `Reminder: ${selectedType?.name || "Appointment"} with ${name}`,
+              message: `${rule.reminder_type} reminder via ${rule.channel} — ${rule.offset_minutes} minutes`,
+              module: "calendar",
+              related_id: appt.id,
+              status: "pending",
+            });
+          } catch { /* notifications table may not exist yet */ }
         }
       }
 
