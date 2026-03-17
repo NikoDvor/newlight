@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { BackArrow } from "@/components/BackArrow";
 import { DataCard } from "@/components/DataCard";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Building2, Globe, Phone, Mail, Users, Briefcase, StickyNote, Activity, DollarSign } from "lucide-react";
+import { Building2, Globe, Phone, Mail, Users, Briefcase, StickyNote, Activity, DollarSign, Calendar, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function CompanyDetail() {
