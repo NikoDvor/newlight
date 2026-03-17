@@ -59,15 +59,16 @@ export default function AppointmentDetail() {
     if (!a) { setLoading(false); return; }
     setAppt(a);
 
+    const p = (b: any) => Promise.resolve(b);
     const promises: Promise<any>[] = [
-      supabase.from("crm_activities").select("*").eq("client_id", activeClientId)
-        .eq("related_id", appointmentId).order("created_at", { ascending: false }).limit(20),
-      supabase.from("calendars").select("calendar_name").eq("id", a.calendar_id).maybeSingle(),
+      p(supabase.from("crm_activities").select("*").eq("client_id", activeClientId)
+        .eq("related_id", appointmentId).order("created_at", { ascending: false }).limit(20)),
+      p(supabase.from("calendars").select("calendar_name").eq("id", a.calendar_id).maybeSingle()),
     ];
-    if (a.contact_id) promises.push(supabase.from("crm_contacts").select("full_name, email, phone, id").eq("id", a.contact_id).maybeSingle());
-    if (a.company_id) promises.push(supabase.from("crm_companies").select("company_name, id").eq("id", a.company_id).maybeSingle());
-    if (a.appointment_type_id) promises.push(supabase.from("calendar_appointment_types").select("name").eq("id", a.appointment_type_id).maybeSingle());
-    promises.push(supabase.from("review_requests" as any).select("*").eq("appointment_id", appointmentId));
+    if (a.contact_id) promises.push(p(supabase.from("crm_contacts").select("full_name, email, phone, id").eq("id", a.contact_id).maybeSingle()));
+    if (a.company_id) promises.push(p(supabase.from("crm_companies").select("company_name, id").eq("id", a.company_id).maybeSingle()));
+    if (a.appointment_type_id) promises.push(p(supabase.from("calendar_appointment_types").select("name").eq("id", a.appointment_type_id).maybeSingle()));
+    promises.push(p(supabase.from("review_requests" as any).select("*").eq("appointment_id", appointmentId)));
 
     const results = await Promise.all(promises);
     setActivities(results[0].data || []);
