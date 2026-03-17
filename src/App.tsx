@@ -190,6 +190,10 @@ const App = () => (
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/workforce" element={<Workforce />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/content-planner" element={<ContentPlanner />} />
+              <Route path="/proposals" element={<Proposals />} />
+              <Route path="/help-desk" element={<HelpDesk />} />
+              <Route path="/knowledge-base" element={<KnowledgeBase />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

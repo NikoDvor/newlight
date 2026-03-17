@@ -77,8 +77,10 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     ],
   },
   {
-    type: "group", label: "Training",
+    type: "group", label: "Training & Support",
     items: [
+      { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
+      { title: "Help Desk", url: "/help-desk", icon: Headphones },
       { title: "Courses", url: "/training", icon: GraduationCap },
       { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
