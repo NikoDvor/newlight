@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { Bell, Building2, LogOut } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
