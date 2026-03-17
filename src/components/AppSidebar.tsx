@@ -52,6 +52,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     items: [
       { title: "Finance", url: "/finance", icon: Wallet },
       { title: "Workforce", url: "/workforce", icon: HardHat },
+      { title: "Team & Users", url: "/team", icon: Users },
       { title: "Calendar", url: "/calendar", icon: Calendar },
       { title: "Manage Calendars", url: "/calendar-management", icon: Settings2 },
       { title: "Email", url: "/email", icon: Mail },

@@ -202,6 +202,7 @@ const App = () => (
               <Route path="/proposals" element={<Proposals />} />
               <Route path="/help-desk" element={<HelpDesk />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
+              <Route path="/team" element={<TeamManagement />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
