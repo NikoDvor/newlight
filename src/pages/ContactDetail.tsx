@@ -236,38 +236,52 @@ export default function ContactDetail() {
         </TabsContent>
 
         <TabsContent value="appointments" className="mt-4">
-          <DataCard title="Appointments">
-            {appointments.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No appointments linked to this contact.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead><tr className="border-b border-border">
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Title</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Date</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Source</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Actions</th>
-                  </tr></thead>
-                  <tbody>
-                    {appointments.map(ap => (
-                      <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                        <td className="text-sm font-medium py-3 pr-4">{ap.title}</td>
-                        <td className="text-sm text-muted-foreground py-3 pr-4">{new Date(ap.start_time).toLocaleString()}</td>
-                        <td className="py-3 pr-4"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
-                        <td className="text-xs text-muted-foreground py-3 pr-4">{ap.booking_source || "—"}</td>
-                        <td className="py-3">
-                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => navigate(`/appointments/${ap.id}`)}>
-                            <ArrowUpRight className="h-3 w-3 mr-1" />View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </DataCard>
+          {(() => {
+            const now = new Date();
+            const upcoming = appointments.filter(a => new Date(a.start_time) >= now && !["cancelled", "no_show", "completed"].includes(a.status));
+            const past = appointments.filter(a => new Date(a.start_time) < now || ["cancelled", "no_show", "completed"].includes(a.status));
+
+            const renderApptTable = (list: any[], label: string) => (
+              <DataCard title={label} className={label === "Past Appointments" ? "mt-4" : ""}>
+                {list.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">No {label.toLowerCase()}.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead><tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Title</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Date</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Status</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Source</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Location</th>
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3"></th>
+                      </tr></thead>
+                      <tbody>
+                        {list.map(ap => (
+                          <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/appointments/${ap.id}`)}>
+                            <td className="text-sm font-medium py-3 pr-3">{ap.title}</td>
+                            <td className="text-sm text-muted-foreground py-3 pr-3 whitespace-nowrap">{new Date(ap.start_time).toLocaleString()}</td>
+                            <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{ap.status}</Badge></td>
+                            <td className="text-xs text-muted-foreground py-3 pr-3">{ap.booking_source || "—"}</td>
+                            <td className="text-xs text-muted-foreground py-3 pr-3">{ap.location || "—"}</td>
+                            <td className="py-3"><ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </DataCard>
+            );
+
+            return (
+              <>
+                {renderApptTable(upcoming, "Upcoming Appointments")}
+                {renderApptTable(past, "Past Appointments")}
+              </>
+            );
+          })()}
 
           {/* Review Requests linked to contact */}
           {reviews.length > 0 && (
