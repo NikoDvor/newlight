@@ -129,6 +129,114 @@ export type Database = {
           },
         ]
       }
+      appointments: {
+        Row: {
+          appointment_type_id: string | null
+          assigned_user_id: string | null
+          booking_source: string | null
+          calendar_id: string
+          cancellation_reason: string | null
+          client_id: string
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          customer_notes: string | null
+          description: string | null
+          end_time: string
+          id: string
+          internal_notes: string | null
+          location: string | null
+          reschedule_reason: string | null
+          start_time: string
+          status: string
+          timezone: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_type_id?: string | null
+          assigned_user_id?: string | null
+          booking_source?: string | null
+          calendar_id: string
+          cancellation_reason?: string | null
+          client_id: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          internal_notes?: string | null
+          location?: string | null
+          reschedule_reason?: string | null
+          start_time: string
+          status?: string
+          timezone?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_type_id?: string | null
+          assigned_user_id?: string | null
+          booking_source?: string | null
+          calendar_id?: string
+          cancellation_reason?: string | null
+          client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          internal_notes?: string | null
+          location?: string | null
+          reschedule_reason?: string | null
+          start_time?: string
+          status?: string
+          timezone?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_appointment_type_id_fkey"
+            columns: ["appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -562,6 +670,228 @@ export type Database = {
           },
         ]
       }
+      calendar_appointment_types: {
+        Row: {
+          buffer_after: number
+          buffer_before: number
+          calendar_id: string
+          client_id: string
+          confirmation_message: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          location_type: string
+          meeting_link_type: string | null
+          name: string
+          reminders_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          buffer_after?: number
+          buffer_before?: number
+          calendar_id: string
+          client_id: string
+          confirmation_message?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_type?: string
+          meeting_link_type?: string | null
+          name: string
+          reminders_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          buffer_after?: number
+          buffer_before?: number
+          calendar_id?: string
+          client_id?: string
+          confirmation_message?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          location_type?: string
+          meeting_link_type?: string | null
+          name?: string
+          reminders_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_appointment_types_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_appointment_types_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_availability: {
+        Row: {
+          calendar_id: string
+          client_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean
+          slot_interval_minutes: number
+          start_time: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          slot_interval_minutes?: number
+          start_time?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          slot_interval_minutes?: number
+          start_time?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_availability_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_availability_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_blackout_dates: {
+        Row: {
+          calendar_id: string
+          client_id: string
+          created_at: string
+          end_datetime: string
+          id: string
+          reason: string | null
+          start_datetime: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          end_datetime: string
+          id?: string
+          reason?: string | null
+          start_datetime: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          end_datetime?: string
+          id?: string
+          reason?: string | null
+          start_datetime?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_blackout_dates_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_blackout_dates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_booking_links: {
+        Row: {
+          calendar_id: string
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_public: boolean
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_booking_links_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_booking_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           assigned_user: string | null
@@ -681,15 +1011,110 @@ export type Database = {
           },
         ]
       }
+      calendar_reminder_rules: {
+        Row: {
+          calendar_id: string
+          channel: string
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          offset_minutes: number
+          reminder_type: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          channel?: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          offset_minutes?: number
+          reminder_type?: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          channel?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          offset_minutes?: number
+          reminder_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_reminder_rules_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_reminder_rules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_users: {
+        Row: {
+          calendar_id: string
+          client_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_users_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendars: {
         Row: {
           calendar_name: string
           calendar_type: string
           client_id: string
+          color: string | null
           created_at: string
           default_location: string | null
           description: string | null
           id: string
+          is_active: boolean
           owner_user_id: string | null
           status: string
           timezone: string | null
@@ -699,10 +1124,12 @@ export type Database = {
           calendar_name: string
           calendar_type?: string
           client_id: string
+          color?: string | null
           created_at?: string
           default_location?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean
           owner_user_id?: string | null
           status?: string
           timezone?: string | null
@@ -712,10 +1139,12 @@ export type Database = {
           calendar_name?: string
           calendar_type?: string
           client_id?: string
+          color?: string | null
           created_at?: string
           default_location?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean
           owner_user_id?: string | null
           status?: string
           timezone?: string | null
