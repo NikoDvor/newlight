@@ -92,6 +92,8 @@ import ContentPlanner from "./pages/ContentPlanner";
 import Proposals from "./pages/Proposals";
 import HelpDesk from "./pages/HelpDesk";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import CalendarManagement from "./pages/CalendarManagement";
+import CalendarDetail from "./pages/CalendarDetail";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +188,8 @@ const App = () => (
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/calendar-management" element={<CalendarManagement />} />
+              <Route path="/calendar-management/:calendarId" element={<CalendarDetail />} />
               <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
