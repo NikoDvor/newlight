@@ -170,50 +170,108 @@ export default function ReviewsDashboard() {
 
           <TabsContent value="requests" className="mt-4">
             <DataCard title="Review Request Tracking">
-              {requests.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Send className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No review requests yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Send your first review request to start collecting customer feedback.</p>
-                  <Button size="sm" onClick={() => setRequestOpen(true)}><Send className="h-4 w-4 mr-1" /> Send First Request</Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Customer</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Channel</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Platform</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Sent</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {requests.map((r) => (
-                        <tr key={r.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                          <td className="text-sm font-medium py-3 pr-4">{r.customer_name}</td>
-                          <td className="py-3 pr-4">
-                            <span className="text-xs flex items-center gap-1">
-                              {r.channel === "sms" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
-                              {r.channel.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="text-xs text-muted-foreground py-3 pr-4 capitalize">{r.platform}</td>
-                          <td className="py-3 pr-4">
-                            <Badge className={`text-[10px] ${STATUS_STYLE[r.status] || "bg-secondary text-muted-foreground"}`}>
-                              {STATUS_LABEL[r.status] || r.status}
-                            </Badge>
-                          </td>
-                          <td className="text-xs text-muted-foreground py-3">{new Date(r.created_at).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Filters */}
+              {requests.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="feedback_submitted">Feedback</SelectItem>
+                      <SelectItem value="recovery_needed">Recovery</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="public_review_left">Public Review</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterRating} onValueChange={setFilterRating}>
+                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Rating" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Ratings</SelectItem>
+                      <SelectItem value="5">5★</SelectItem>
+                      <SelectItem value="4">4★</SelectItem>
+                      <SelectItem value="3">3★</SelectItem>
+                      <SelectItem value="2">2★</SelectItem>
+                      <SelectItem value="1">1★</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterRecovery} onValueChange={setFilterRecovery}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Recovery" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="yes">Recovery Needed</SelectItem>
+                      <SelectItem value="no">No Recovery</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
+              {(() => {
+                let filtered = requests;
+                if (filterStatus !== "all") filtered = filtered.filter(r => r.status === filterStatus);
+                if (filterRating !== "all") filtered = filtered.filter(r => r.rating === Number(filterRating));
+                if (filterRecovery === "yes") filtered = filtered.filter(r => r.recovery_needed);
+                if (filterRecovery === "no") filtered = filtered.filter(r => !r.recovery_needed);
+
+                if (filtered.length === 0 && requests.length === 0) return (
+                  <div className="py-8 text-center">
+                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                      <Send className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                    </div>
+                    <p className="text-sm font-medium text-foreground mb-1">No review requests yet</p>
+                    <p className="text-xs text-muted-foreground mb-4">Send your first review request to start collecting customer feedback.</p>
+                    <Button size="sm" onClick={() => setRequestOpen(true)}><Send className="h-4 w-4 mr-1" /> Send First Request</Button>
+                  </div>
+                );
+
+                if (filtered.length === 0) return <p className="py-6 text-center text-sm text-muted-foreground">No requests match filters.</p>;
+
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Customer</th>
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Appointment</th>
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Channel</th>
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Rating</th>
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">Status</th>
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Sent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((r) => {
+                          const appt = (r as any).appointments;
+                          return (
+                            <tr key={r.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                              <td className="text-sm font-medium py-3 pr-3">{r.customer_name}</td>
+                              <td className="text-xs text-muted-foreground py-3 pr-3">
+                                {appt ? <span className="text-primary cursor-pointer hover:underline">{appt.title}</span> : "—"}
+                              </td>
+                              <td className="py-3 pr-3">
+                                <span className="text-xs flex items-center gap-1">
+                                  {r.channel === "sms" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                                  {r.channel.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="py-3 pr-3">
+                                {r.rating ? (
+                                  <span className="text-xs font-medium">{r.rating}★</span>
+                                ) : <span className="text-xs text-muted-foreground">—</span>}
+                              </td>
+                              <td className="py-3 pr-3">
+                                <Badge className={`text-[10px] ${STATUS_STYLE[r.status] || "bg-secondary text-muted-foreground"}`}>
+                                  {STATUS_LABEL[r.status] || r.status}
+                                </Badge>
+                              </td>
+                              <td className="text-xs text-muted-foreground py-3">{new Date(r.created_at).toLocaleDateString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </DataCard>
           </TabsContent>
 
