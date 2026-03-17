@@ -141,6 +141,7 @@ export function AppLayout() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-primary/5 hover:shadow-[0_0_14px_-3px_hsla(211,96%,60%,.22)] relative group">
                 <Bell className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
