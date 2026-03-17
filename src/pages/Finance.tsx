@@ -90,6 +90,17 @@ export default function Finance() {
     <div>
       <PageHeader title="Finance" description="Revenue tracking, payroll, tax operations, and financial management" />
 
+      <ModuleHelpPanel
+        moduleName="Finance"
+        description="Track revenue, manage payroll runs, log manual adjustments, and monitor filing readiness — all in one place. Revenue and payroll data flows automatically from the Workforce module. Manual adjustments are fully audited."
+        tips={[
+          "Revenue entries track income from deals, services, and manual sources",
+          "Payroll runs are generated from approved timesheets in Workforce",
+          "Manual adjustments (bonuses, deductions, refunds) are logged with audit trails",
+          "Filing Readiness tracks tax-prep documents and compliance checklist items",
+        ]}
+      />
+
       {!hasData && (
         <SetupBanner icon={DollarSign} title="Set Up Financial Tracking"
           description="Track revenue, manage payroll, and prepare for tax filing. Add adjustments and payroll runs to get started."
