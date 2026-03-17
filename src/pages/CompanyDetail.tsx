@@ -87,7 +87,7 @@ export default function CompanyDetail() {
             </div>
             {address && <p className="text-xs text-muted-foreground mt-1">{address}</p>}
           </div>
-          <div className="grid grid-cols-3 gap-3 shrink-0 text-center">
+          <div className="grid grid-cols-4 gap-3 shrink-0 text-center">
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold">{contacts.length}</p>
               <p className="text-[10px] text-muted-foreground">Contacts</p>
@@ -95,6 +95,10 @@ export default function CompanyDetail() {
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold">{deals.length}</p>
               <p className="text-[10px] text-muted-foreground">Deals</p>
+            </div>
+            <div className="p-3 rounded-xl bg-secondary/50">
+              <p className="text-lg font-bold">{appointments.length}</p>
+              <p className="text-[10px] text-muted-foreground">Appointments</p>
             </div>
             <div className="p-3 rounded-xl bg-secondary/50">
               <p className="text-lg font-bold tabular-nums">${totalRevenue.toLocaleString()}</p>
