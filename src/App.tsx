@@ -186,6 +186,8 @@ const App = () => (
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/calendar-management" element={<CalendarManagement />} />
+              <Route path="/calendar-management/:calendarId" element={<CalendarDetail />} />
               <Route path="/email" element={<EmailPage />} />
               <Route path="/branding-settings" element={<BrandingSettings />} />
               <Route path="/welcome" element={<Welcome />} />
