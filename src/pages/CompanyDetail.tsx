@@ -14,6 +14,7 @@ import { Building2, Globe, Phone, Mail, Users, Briefcase, StickyNote, Activity, 
 import { Link } from "react-router-dom";
 
 export default function CompanyDetail() {
+  const navigate = useNavigate();
   const { companyId } = useParams();
   const { activeClientId } = useWorkspace();
   const [company, setCompany] = useState<any>(null);
