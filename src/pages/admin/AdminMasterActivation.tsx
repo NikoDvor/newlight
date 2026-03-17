@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import type { CalendarConfig } from "@/components/activation/activationTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
