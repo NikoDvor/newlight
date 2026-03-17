@@ -95,8 +95,7 @@ export default function TeamManagement() {
     <div className="space-y-6">
       <PageHeader
         title="Team & Users"
-        subtitle="Manage team members, roles, and permissions for this workspace"
-        icon={<Users className="h-5 w-5" />}
+        description="Manage team members, roles, and permissions for this workspace"
       />
 
       {/* Stats */}
