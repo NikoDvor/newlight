@@ -40,7 +40,7 @@ const stepIcons: Record<number, React.ReactNode> = {
 export default function AdminMasterActivation() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<ActivationFormState>(defaultFormState);
+  const [form, setForm] = useState<ActivationFormState>(defaultFormState());
   const [submitting, setSubmitting] = useState(false);
   const [activated, setActivated] = useState(false);
 
