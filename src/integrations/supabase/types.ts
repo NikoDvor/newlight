@@ -1062,6 +1062,64 @@ export type Database = {
           },
         ]
       }
+      calendar_user_access: {
+        Row: {
+          calendar_id: string
+          can_be_booked: boolean
+          can_edit: boolean
+          can_view: boolean
+          client_id: string
+          created_at: string
+          id: string
+          receives_notifications: boolean
+          workspace_user_id: string
+        }
+        Insert: {
+          calendar_id: string
+          can_be_booked?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          client_id: string
+          created_at?: string
+          id?: string
+          receives_notifications?: boolean
+          workspace_user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          can_be_booked?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          client_id?: string
+          created_at?: string
+          id?: string
+          receives_notifications?: boolean
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_user_access_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_user_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_user_access_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_users: {
         Row: {
           calendar_id: string
@@ -3044,6 +3102,60 @@ export type Database = {
           },
         ]
       }
+      meeting_intelligence_access: {
+        Row: {
+          can_view_ai_actions: boolean
+          can_view_recordings: boolean
+          can_view_summaries: boolean
+          can_view_transcripts: boolean
+          client_id: string
+          created_at: string
+          id: string
+          scope_type: string
+          updated_at: string
+          workspace_user_id: string
+        }
+        Insert: {
+          can_view_ai_actions?: boolean
+          can_view_recordings?: boolean
+          can_view_summaries?: boolean
+          can_view_transcripts?: boolean
+          client_id: string
+          created_at?: string
+          id?: string
+          scope_type?: string
+          updated_at?: string
+          workspace_user_id: string
+        }
+        Update: {
+          can_view_ai_actions?: boolean
+          can_view_recordings?: boolean
+          can_view_summaries?: boolean
+          can_view_transcripts?: boolean
+          client_id?: string
+          created_at?: string
+          id?: string
+          scope_type?: string
+          updated_at?: string
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_intelligence_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_intelligence_access_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_reminders: {
         Row: {
           channel: string
@@ -4596,6 +4708,120 @@ export type Database = {
           },
         ]
       }
+      training_user_access: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          required_courses: Json | null
+          training_scope: string
+          updated_at: string
+          workspace_user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          required_courses?: Json | null
+          training_scope?: string
+          updated_at?: string
+          workspace_user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          required_courses?: Json | null
+          training_scope?: string
+          updated_at?: string
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_user_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_user_access_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notification_preferences: {
+        Row: {
+          booking_notifications: boolean
+          cancellation_notifications: boolean
+          channel_email: boolean
+          channel_in_app: boolean
+          channel_sms: boolean
+          client_id: string
+          created_at: string
+          id: string
+          lead_notifications: boolean
+          payroll_notifications: boolean
+          review_notifications: boolean
+          support_notifications: boolean
+          task_notifications: boolean
+          updated_at: string
+          workspace_user_id: string
+        }
+        Insert: {
+          booking_notifications?: boolean
+          cancellation_notifications?: boolean
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_sms?: boolean
+          client_id: string
+          created_at?: string
+          id?: string
+          lead_notifications?: boolean
+          payroll_notifications?: boolean
+          review_notifications?: boolean
+          support_notifications?: boolean
+          task_notifications?: boolean
+          updated_at?: string
+          workspace_user_id: string
+        }
+        Update: {
+          booking_notifications?: boolean
+          cancellation_notifications?: boolean
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_sms?: boolean
+          client_id?: string
+          created_at?: string
+          id?: string
+          lead_notifications?: boolean
+          payroll_notifications?: boolean
+          review_notifications?: boolean
+          support_notifications?: boolean
+          task_notifications?: boolean
+          updated_at?: string
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_preferences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notification_preferences_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: true
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           client_id: string | null
@@ -4861,6 +5087,129 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_permissions: {
+        Row: {
+          access_level: string
+          client_id: string
+          created_at: string
+          id: string
+          module_key: string
+          updated_at: string
+          workspace_user_id: string
+        }
+        Insert: {
+          access_level?: string
+          client_id: string
+          created_at?: string
+          id?: string
+          module_key: string
+          updated_at?: string
+          workspace_user_id: string
+        }
+        Update: {
+          access_level?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          module_key?: string
+          updated_at?: string
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_permissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_permissions_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_users: {
+        Row: {
+          client_id: string
+          commission_rate: number | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          internal_notes: string | null
+          is_bookable_staff: boolean
+          job_title: string | null
+          last_active_at: string | null
+          manager_user_id: string | null
+          phone: string | null
+          role_preset: string
+          status: string
+          tags: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id: string
+          commission_rate?: number | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name: string
+          id?: string
+          internal_notes?: string | null
+          is_bookable_staff?: boolean
+          job_title?: string | null
+          last_active_at?: string | null
+          manager_user_id?: string | null
+          phone?: string | null
+          role_preset?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          commission_rate?: number | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          internal_notes?: string | null
+          is_bookable_staff?: boolean
+          job_title?: string | null
+          last_active_at?: string | null
+          manager_user_id?: string | null
+          phone?: string | null
+          role_preset?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_users_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_users"
             referencedColumns: ["id"]
           },
         ]
