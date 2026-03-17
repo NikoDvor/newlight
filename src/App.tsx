@@ -92,6 +92,8 @@ import ContentPlanner from "./pages/ContentPlanner";
 import Proposals from "./pages/Proposals";
 import HelpDesk from "./pages/HelpDesk";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import CalendarManagement from "./pages/CalendarManagement";
+import CalendarDetail from "./pages/CalendarDetail";
 
 const queryClient = new QueryClient();
 

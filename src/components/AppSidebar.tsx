@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Sparkles, Heart, DollarSign, ListChecks, Activity, Brain,
-  Globe, Search, Megaphone, Share2, Users, Star,
+  Globe, Search, Megaphone, Share2, Users, Star, Settings2,
   TrendingUp, Eye, Calendar, Workflow, Plug, Image,
   GraduationCap, FileText, Settings, CreditCard,
   ChevronLeft, ChevronDown, Wallet, Mail, HelpCircle, HardHat,
