@@ -1,15 +1,18 @@
 import { PageHeader } from "@/components/PageHeader";
+import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { MetricCard } from "@/components/MetricCard";
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { DemoDataLabel } from "@/components/SetupBanner";
 import { motion } from "framer-motion";
 import {
   Brain, Sparkles, TrendingUp, AlertCircle, Target,
   Zap, ArrowUpRight, BarChart3, RefreshCw, Mail,
   MessageSquare, Star, Globe, Search, Megaphone, Users
 } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const insights = [
   { insight: "Your competitors are posting 4x more content on Instagram. Increase frequency to maintain visibility.", icon: Target, impact: "High", action: "Schedule 12 more posts this month" },
@@ -54,9 +57,35 @@ const urgencyStyle = (u: string) =>
     : { bg: "hsla(210,40%,94%,.6)", text: "hsl(215 16% 50%)" };
 
 export default function AIInsights() {
+  const { activeClientId } = useWorkspace();
+
+  if (!activeClientId) {
+    return (
+      <div>
+        <PageHeader title="AI Insights" description="Your AI-powered business intelligence center" />
+        <div className="card-widget p-8 rounded-2xl text-center mt-6">
+          <p className="text-muted-foreground">Select a workspace to view AI Insights.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader title="AI Insights" description="Your AI-powered business intelligence center" />
+
+      <ModuleHelpPanel
+        moduleName="AI Insights"
+        description="AI Insights analyzes your CRM, Calendar, Reviews, Website, SEO, Ads, Social, and Finance data to surface growth opportunities, revenue risks, and recommended actions. Insights are prioritized by estimated revenue impact."
+        tips={[
+          "Insights are generated from live workspace data across all modules",
+          "Priority actions show estimated revenue impact to help you focus",
+          "Automation suggestions identify where you can save time with workflows",
+          "Use Ask AI for deeper questions about any insight",
+        ]}
+      />
+
+      <DemoDataLabel />
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard label="AI Insights Generated" value="24" change="6 critical findings" changeType="positive" icon={Brain} />
