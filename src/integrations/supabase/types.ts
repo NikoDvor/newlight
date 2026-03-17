@@ -1639,9 +1639,11 @@ export type Database = {
           owner_name: string | null
           primary_location: string | null
           service_package: string | null
+          source_appointment_id: string | null
           status: string
           timezone: string | null
           updated_at: string
+          workspace_access_url: string | null
           workspace_slug: string
         }
         Insert: {
@@ -1655,9 +1657,11 @@ export type Database = {
           owner_name?: string | null
           primary_location?: string | null
           service_package?: string | null
+          source_appointment_id?: string | null
           status?: string
           timezone?: string | null
           updated_at?: string
+          workspace_access_url?: string | null
           workspace_slug: string
         }
         Update: {
@@ -1671,9 +1675,11 @@ export type Database = {
           owner_name?: string | null
           primary_location?: string | null
           service_package?: string | null
+          source_appointment_id?: string | null
           status?: string
           timezone?: string | null
           updated_at?: string
+          workspace_access_url?: string | null
           workspace_slug?: string
         }
         Relationships: []

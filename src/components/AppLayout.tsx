@@ -10,6 +10,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 function Particles() {
   const particles = Array.from({ length: 18 }, (_, i) => ({
@@ -198,6 +199,7 @@ export function AppLayout() {
           </main>
         </div>
         <AIAssistant />
+        {activeClientId && <PWAInstallPrompt />}
       </div>
     </SidebarProvider>
   );
