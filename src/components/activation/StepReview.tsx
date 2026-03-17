@@ -86,8 +86,15 @@ export function StepReview({ form }: StepProps) {
 
       <SummarySection title="Calendar">
         <SummaryRow label="Native Calendar" value={form.use_native_calendar} />
-        <SummaryRow label="Calendars" value={form.num_calendars} />
+        <SummaryRow label="Calendars" value={String(form.calendar_configs?.length || form.num_calendars)} />
         <SummaryRow label="Timezone" value={form.default_timezone} />
+        {form.use_native_calendar === "yes" && form.calendar_configs?.map((cfg, i) => (
+          <div key={i} className="flex items-center gap-2 text-[11px] mt-1">
+            <CheckCircle2 className="h-3 w-3 text-emerald-400/60" />
+            <span className="text-white/70">{cfg.calendar_name || `Calendar ${i + 1}`}</span>
+            <span className="text-white/30 text-[10px]">({cfg.calendar_type})</span>
+          </div>
+        ))}
       </SummarySection>
 
       <SummarySection title="Email + Messaging">
