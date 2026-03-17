@@ -126,6 +126,7 @@ const App = () => (
               <Route path="reports" element={<AdminReports />} />
               <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
               <Route path="activation" element={<AdminActivation />} />
+              <Route path="master-activation" element={<AdminMasterActivation />} />
               <Route path="demo-builds" element={<AdminDemoBuilds />} />
               <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
               <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />

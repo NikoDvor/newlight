@@ -18,6 +18,7 @@ const navItems = [
   { title: "Team & Users", url: "/admin/team", icon: Shield },
   { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
   { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
+  { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
   { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
   { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
