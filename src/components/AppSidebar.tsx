@@ -43,6 +43,8 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
       { title: "Social Media", url: "/social-media", icon: Share2 },
       { title: "CRM", url: "/crm", icon: Users },
       { title: "Reviews", url: "/reviews", icon: Star },
+      { title: "Content Planner", url: "/content-planner", icon: Palette },
+      { title: "Proposals", url: "/proposals", icon: PenTool },
     ],
   },
   {
