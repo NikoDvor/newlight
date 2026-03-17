@@ -45,12 +45,16 @@ export default function ReviewsDashboard() {
   const [loading, setLoading] = useState(true);
   const [requestOpen, setRequestOpen] = useState(false);
   const [newReq, setNewReq] = useState({ customer_name: "", customer_email: "", customer_phone: "", channel: "sms", platform: "google" });
+  // Filters
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterRating, setFilterRating] = useState("all");
+  const [filterRecovery, setFilterRecovery] = useState("all");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
     const [rRes, rcRes] = await Promise.all([
-      supabase.from("review_requests").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("review_requests").select("*, appointments(title, start_time)").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("review_recovery_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setRequests(rRes.data || []);
