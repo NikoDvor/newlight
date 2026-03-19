@@ -244,6 +244,9 @@ const App = () => (
               <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
               <Route path="/success-center" element={<ClientSuccessCenter />} />
               <Route path="/support-tickets" element={<SupportTickets />} />
+              <Route path="/conversations" element={<ConversationsPage title="Conversations" />} />
+              <Route path="/follow-ups" element={<FollowUpQueue />} />
+              <Route path="/message-templates" element={<MessageTemplates />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
