@@ -169,6 +169,9 @@ const App = () => (
               <Route path="executive" element={<AdminExecutiveDashboard />} />
               <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
               <Route path="client-success" element={<AdminClientSuccess />} />
+              <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
+              <Route path="follow-ups" element={<FollowUpQueue />} />
+              <Route path="message-templates" element={<MessageTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
