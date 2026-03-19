@@ -56,6 +56,16 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
+    type: "group", label: "Communications",
+    items: [
+      { title: "Conversations", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
+      { title: "Inbox", url: "/inbox", icon: Mail, moduleKey: "messaging" },
+      { title: "Follow-Up Queue", url: "/follow-ups", icon: ListChecks },
+      { title: "Message Templates", url: "/message-templates", icon: FileText },
+      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
+    ],
+  },
+  {
     type: "group", label: "Enterprise Services",
     items: [
       { title: "Finance", url: "/finance", icon: Wallet, moduleKey: "finance" },
@@ -66,7 +76,6 @@ const navStructure: NavEntry[] = [
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
       { title: "Calendar Sync", url: "/calendar-integrations", icon: Plug, moduleKey: "calendar" },
       { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
-      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
       { title: "Notifications", url: "/notifications", icon: Bell },
     ],
   },
