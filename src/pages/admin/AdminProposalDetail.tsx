@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { onProposalSent } from "@/lib/salesAutomation";
 import {
   ArrowLeft, FileText, DollarSign, Send, Copy, Archive,
-  CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus
+  CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus,
+  Link2, PenTool, Trash2, ExternalLink
 } from "lucide-react";
 
 const STATUS_STYLE: Record<string, string> = {
