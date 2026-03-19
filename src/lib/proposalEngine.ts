@@ -154,6 +154,10 @@ export async function onProposalAccepted(proposalId: string) {
     } as any).eq("id", proposal.deal_id);
   }
 
+  // Create billing records automatically
+  const { createBillingFromProposal } = await import("@/lib/billingEngine");
+  await createBillingFromProposal(proposalId);
+
   // Create audit trail
   await supabase.from("audit_logs").insert({
     action: "proposal_accepted_automation",

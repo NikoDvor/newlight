@@ -80,6 +80,7 @@ import AdminMeetingDetail from "./pages/admin/AdminMeetingDetail";
 import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
+import AdminBilling from "./pages/admin/AdminBilling";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
               <Route path="proposal-templates" element={<AdminProposalTemplates />} />
               <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
+              <Route path="billing" element={<AdminBilling />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
