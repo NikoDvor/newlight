@@ -92,6 +92,13 @@ export default function AdminSalesDemoCreator() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessData | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<{ id: string; template_name: string; industry_type: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("workspace_templates" as any).select("id, template_name, industry_type").eq("is_active", true).order("template_name").then(({ data }) => {
+      setTemplates((data as any[]) || []);
+    });
+  }, []);
 
   const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }));
   const toggleNeed = (n: string) =>
