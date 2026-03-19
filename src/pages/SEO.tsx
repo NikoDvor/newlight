@@ -39,13 +39,19 @@ export default function SEO() {
   const [keywords, setKeywords] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
+  const [contentOpps, setContentOpps] = useState<any[]>([]);
+  const [localItems, setLocalItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [kwOpen, setKwOpen] = useState(false);
   const [compOpen, setCompOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [contentOpen, setContentOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
   const [newKw, setNewKw] = useState({ keyword: "", position: "", search_volume: "" });
   const [newComp, setNewComp] = useState({ domain: "", authority_score: "", keywords_count: "", estimated_traffic: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", category: "technical", severity: "medium", recommendation: "" });
+  const [newContent, setNewContent] = useState({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
+  const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
