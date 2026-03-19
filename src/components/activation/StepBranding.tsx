@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Building2, Palette } from "lucide-react";
+import { LogoUploader } from "@/components/LogoUploader";
 import { ActivationHelp } from "./ActivationHelp";
 import type { StepProps } from "./activationTypes";
 
