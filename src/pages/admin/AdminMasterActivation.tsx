@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle2, ArrowLeft, ArrowRight, Loader2, Save, Zap,
   Palette, Users, Calendar, Mail, Star, UserPlus, DollarSign,
-  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck
+  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,25 +15,25 @@ import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
 import { StepCalendar } from "@/components/activation/StepCalendar";
+import { StepBookingForms } from "@/components/activation/StepBookingForms";
 import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
+import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepWorkforce } from "@/components/activation/StepWorkforce";
 import { StepFinance } from "@/components/activation/StepFinance";
 import { StepMarketing } from "@/components/activation/StepMarketing";
-import { StepProposals } from "@/components/activation/StepProposals";
 import { StepSupport } from "@/components/activation/StepSupport";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
-import { StepNotifications } from "@/components/activation/StepNotifications";
 import { StepReview } from "@/components/activation/StepReview";
 
 const stepIcons: Record<number, React.ReactNode> = {
   1: <Zap className="h-3.5 w-3.5" />, 2: <Palette className="h-3.5 w-3.5" />,
   3: <Users className="h-3.5 w-3.5" />, 4: <Calendar className="h-3.5 w-3.5" />,
-  5: <Mail className="h-3.5 w-3.5" />, 6: <Star className="h-3.5 w-3.5" />,
-  7: <UserPlus className="h-3.5 w-3.5" />, 8: <DollarSign className="h-3.5 w-3.5" />,
-  9: <TrendingUp className="h-3.5 w-3.5" />, 10: <FileText className="h-3.5 w-3.5" />,
-  11: <Headphones className="h-3.5 w-3.5" />, 12: <Link2 className="h-3.5 w-3.5" />,
-  13: <Bell className="h-3.5 w-3.5" />, 14: <ClipboardCheck className="h-3.5 w-3.5" />,
+  5: <ClipboardList className="h-3.5 w-3.5" />, 6: <Mail className="h-3.5 w-3.5" />,
+  7: <Star className="h-3.5 w-3.5" />, 8: <UserPlus className="h-3.5 w-3.5" />,
+  9: <DollarSign className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
+  11: <TrendingUp className="h-3.5 w-3.5" />, 12: <Headphones className="h-3.5 w-3.5" />,
+  13: <Link2 className="h-3.5 w-3.5" />, 14: <ClipboardCheck className="h-3.5 w-3.5" />,
 };
 
 export default function AdminMasterActivation() {
@@ -271,15 +271,15 @@ export default function AdminMasterActivation() {
       case 2: return <StepBranding {...stepProps} />;
       case 3: return <StepCRM {...stepProps} />;
       case 4: return <StepCalendar {...stepProps} />;
-      case 5: return <StepEmail {...stepProps} />;
-      case 6: return <StepReviews {...stepProps} />;
-      case 7: return <StepWorkforce {...stepProps} />;
-      case 8: return <StepFinance {...stepProps} />;
-      case 9: return <StepMarketing {...stepProps} />;
-      case 10: return <StepProposals {...stepProps} />;
-      case 11: return <StepSupport {...stepProps} />;
-      case 12: return <StepIntegrations {...stepProps} />;
-      case 13: return <StepNotifications {...stepProps} />;
+      case 5: return <StepBookingForms {...stepProps} />;
+      case 6: return <StepEmail {...stepProps} />;
+      case 7: return <StepReviews {...stepProps} />;
+      case 8: return <StepTeamSetup {...stepProps} />;
+      case 9: return <StepWorkforce {...stepProps} />;
+      case 10: return <StepFinance {...stepProps} />;
+      case 11: return <StepMarketing {...stepProps} />;
+      case 12: return <StepSupport {...stepProps} />;
+      case 13: return <StepIntegrations {...stepProps} />;
       case 14: return <StepReview {...stepProps} />;
       default: return null;
     }

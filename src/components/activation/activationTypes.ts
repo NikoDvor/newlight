@@ -52,6 +52,37 @@ export const defaultCalendarConfig = (): CalendarConfig => ({
   department_name: "",
 });
 
+export interface TeamMemberConfig {
+  full_name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  department: string;
+  role_preset: string;
+  calendar_access: string;
+  bookable_staff: string;
+  crm_access: string;
+  training_access: string;
+  assigned_calendars: string;
+}
+
+export const defaultTeamMemberConfig = (): TeamMemberConfig => ({
+  full_name: "", email: "", phone: "", job_title: "", department: "",
+  role_preset: "", calendar_access: "no", bookable_staff: "no",
+  crm_access: "no", training_access: "no", assigned_calendars: "",
+});
+
+export const ROLE_PRESET_OPTIONS = [
+  { value: "workspace_admin", label: "Workspace Admin" },
+  { value: "manager", label: "Manager" },
+  { value: "front_desk", label: "Front Desk" },
+  { value: "sales_rep", label: "Sales Rep" },
+  { value: "service_provider", label: "Service Provider" },
+  { value: "support_staff", label: "Support Staff" },
+  { value: "marketing_staff", label: "Marketing Staff" },
+  { value: "custom", label: "Custom" },
+];
+
 export interface ActivationFormState {
   // Step 1: Deal Close
   business_name_confirmed: string;
@@ -143,7 +174,22 @@ export interface ActivationFormState {
   default_reschedule_policy: string;
   calendar_configs: CalendarConfig[];
 
-  // Step 5: Email
+  // Step 5: Booking Forms
+  use_native_forms: string;
+  need_booking_form: string;
+  need_intake_form: string;
+  need_quote_form: string;
+  need_support_form: string;
+  need_contact_form: string;
+  form_calendar_link: string;
+  form_creates_contact: string;
+  form_triggers_reminders: string;
+  form_notification_owner: string;
+  form_tone: string;
+  need_custom_fields: string;
+  form_notes: string;
+
+  // Step 6: Email
   use_native_email: string;
   email_provider: string;
   main_inbox: string;
@@ -180,7 +226,14 @@ export interface ActivationFormState {
   reputation_goal: string;
   reputation_notes: string;
 
-  // Step 7: Workforce
+  // Step 8: Team / Employee
+  need_team_now: string;
+  num_team_members: string;
+  need_training_access: string;
+  need_meeting_intel_access: string;
+  team_member_configs: TeamMemberConfig[];
+
+  // Step 9: Workforce
   use_workforce: string;
   need_payroll: string;
   num_workers: string;
@@ -280,15 +333,15 @@ export const STEPS = [
   { id: 2, title: "Business Identity + Branding", icon: "Palette" },
   { id: 3, title: "CRM Setup", icon: "Users" },
   { id: 4, title: "Calendar Setup", icon: "Calendar" },
-  { id: 5, title: "Email + Messaging", icon: "Mail" },
-  { id: 6, title: "Reviews + Reputation", icon: "Star" },
-  { id: 7, title: "Team + Workforce", icon: "UserPlus" },
-  { id: 8, title: "Finance + Payroll Ops", icon: "DollarSign" },
-  { id: 9, title: "Marketing Systems", icon: "TrendingUp" },
-  { id: 10, title: "Proposals / Signers", icon: "FileText" },
-  { id: 11, title: "Support / Help Desk", icon: "Headphones" },
-  { id: 12, title: "Integrations + Access", icon: "Link" },
-  { id: 13, title: "Notifications + Permissions", icon: "Bell" },
+  { id: 5, title: "Booking Forms", icon: "ClipboardList" },
+  { id: 6, title: "Email + Messaging", icon: "Mail" },
+  { id: 7, title: "Reviews + Reputation", icon: "Star" },
+  { id: 8, title: "Team / Employee Setup", icon: "UserPlus" },
+  { id: 9, title: "Workforce + Payroll", icon: "DollarSign" },
+  { id: 10, title: "Finance Ops", icon: "DollarSign" },
+  { id: 11, title: "Marketing Systems", icon: "TrendingUp" },
+  { id: 12, title: "Support / Help Desk", icon: "Headphones" },
+  { id: 13, title: "Integrations + Access", icon: "Link" },
   { id: 14, title: "Review + Activate", icon: "CheckCircle" },
 ] as const;
 
@@ -380,6 +433,12 @@ export const defaultFormState = (): ActivationFormState => ({
   default_reschedule_policy: "",
   calendar_configs: [defaultCalendarConfig()],
 
+  use_native_forms: "yes", need_booking_form: "yes", need_intake_form: "no",
+  need_quote_form: "no", need_support_form: "no", need_contact_form: "no",
+  form_calendar_link: "primary", form_creates_contact: "yes",
+  form_triggers_reminders: "yes", form_notification_owner: "",
+  form_tone: "professional", need_custom_fields: "no", form_notes: "",
+
   use_native_email: "yes", email_provider: "", main_inbox: "", shared_inbox: "no",
   shared_inbox_users: "", sender_name: "", reply_to_email: "", template_categories: "",
   sales_inbox: "no", support_inbox: "no", review_messaging: "yes",
@@ -393,6 +452,10 @@ export const defaultFormState = (): ActivationFormState => ({
   recovery_owner: "", review_templates_needed: "yes",
   auto_send_after_appointment: "yes", service_recovery_enabled: "yes",
   public_review_prompt: "yes", reputation_goal: "", reputation_notes: "",
+
+  need_team_now: "no", num_team_members: "0",
+  need_training_access: "no", need_meeting_intel_access: "no",
+  team_member_configs: [defaultTeamMemberConfig()],
 
   use_workforce: "no", need_payroll: "no", num_workers: "", departments: "",
   labor_categories: "", require_timesheet_approval: "yes",
