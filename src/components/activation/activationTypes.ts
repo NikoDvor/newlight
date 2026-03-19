@@ -174,7 +174,22 @@ export interface ActivationFormState {
   default_reschedule_policy: string;
   calendar_configs: CalendarConfig[];
 
-  // Step 5: Email
+  // Step 5: Booking Forms
+  use_native_forms: string;
+  need_booking_form: string;
+  need_intake_form: string;
+  need_quote_form: string;
+  need_support_form: string;
+  need_contact_form: string;
+  form_calendar_link: string;
+  form_creates_contact: string;
+  form_triggers_reminders: string;
+  form_notification_owner: string;
+  form_tone: string;
+  need_custom_fields: string;
+  form_notes: string;
+
+  // Step 6: Email
   use_native_email: string;
   email_provider: string;
   main_inbox: string;
