@@ -278,27 +278,80 @@ export type Database = {
           },
         ]
       }
+      automation_action_logs: {
+        Row: {
+          action_key: string
+          action_status: string
+          action_type: string
+          automation_run_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          result_summary: string | null
+        }
+        Insert: {
+          action_key: string
+          action_status?: string
+          action_type: string
+          automation_run_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          result_summary?: string | null
+        }
+        Update: {
+          action_key?: string
+          action_status?: string
+          action_type?: string
+          automation_run_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          result_summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_action_logs_automation_run_id_fkey"
+            columns: ["automation_run_id"]
+            isOneToOne: false
+            referencedRelation: "automation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_events: {
         Row: {
           client_id: string
           created_at: string
           event_data: Json | null
+          event_key: string | null
+          event_name: string | null
           event_type: string
           id: string
+          related_id: string | null
+          related_type: string | null
         }
         Insert: {
           client_id: string
           created_at?: string
           event_data?: Json | null
+          event_key?: string | null
+          event_name?: string | null
           event_type: string
           id?: string
+          related_id?: string | null
+          related_type?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string
           event_data?: Json | null
+          event_key?: string | null
+          event_name?: string | null
           event_type?: string
           id?: string
+          related_id?: string | null
+          related_type?: string | null
         }
         Relationships: [
           {
@@ -362,9 +415,12 @@ export type Database = {
           completed_at: string | null
           error: string | null
           id: string
+          related_id: string | null
+          related_type: string | null
           result: Json | null
           started_at: string
           status: string
+          trigger_payload: Json | null
         }
         Insert: {
           automation_id: string
@@ -372,9 +428,12 @@ export type Database = {
           completed_at?: string | null
           error?: string | null
           id?: string
+          related_id?: string | null
+          related_type?: string | null
           result?: Json | null
           started_at?: string
           status?: string
+          trigger_payload?: Json | null
         }
         Update: {
           automation_id?: string
@@ -382,9 +441,12 @@ export type Database = {
           completed_at?: string | null
           error?: string | null
           id?: string
+          related_id?: string | null
+          related_type?: string | null
           result?: Json | null
           started_at?: string
           status?: string
+          trigger_payload?: Json | null
         }
         Relationships: [
           {
@@ -407,35 +469,47 @@ export type Database = {
         Row: {
           action_config: Json | null
           action_type: string
+          automation_category: string | null
+          automation_key: string | null
           client_id: string
           created_at: string
+          created_by: string | null
           enabled: boolean
           id: string
           name: string
           trigger_event: string
           updated_at: string
+          workspace_scope_type: string | null
         }
         Insert: {
           action_config?: Json | null
           action_type: string
+          automation_category?: string | null
+          automation_key?: string | null
           client_id: string
           created_at?: string
+          created_by?: string | null
           enabled?: boolean
           id?: string
           name: string
           trigger_event: string
           updated_at?: string
+          workspace_scope_type?: string | null
         }
         Update: {
           action_config?: Json | null
           action_type?: string
+          automation_category?: string | null
+          automation_key?: string | null
           client_id?: string
           created_at?: string
+          created_by?: string | null
           enabled?: boolean
           id?: string
           name?: string
           trigger_event?: string
           updated_at?: string
+          workspace_scope_type?: string | null
         }
         Relationships: [
           {
