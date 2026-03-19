@@ -56,14 +56,18 @@ export default function SEO() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [kRes, cRes, iRes] = await Promise.all([
+    const [kRes, cRes, iRes, coRes, lRes] = await Promise.all([
       supabase.from("seo_keywords").select("*").eq("client_id", activeClientId).order("position", { ascending: true }),
       supabase.from("seo_competitors").select("*").eq("client_id", activeClientId).order("authority_score", { ascending: false }),
       supabase.from("seo_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("seo_content_opportunities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("seo_local_visibility").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setKeywords(kRes.data || []);
     setCompetitors(cRes.data || []);
     setIssues(iRes.data || []);
+    setContentOpps(coRes.data || []);
+    setLocalItems(lRes.data || []);
     setLoading(false);
   };
 
