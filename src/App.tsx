@@ -103,6 +103,7 @@ import CalendarDetail from "./pages/CalendarDetail";
 import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
+import ProposalView from "./pages/ProposalView";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -119,6 +120,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
             <Route path="/book/:slug" element={<BookingPage />} />
+            <Route path="/proposal/:token" element={<ProposalView />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>

@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { onProposalSent } from "@/lib/salesAutomation";
 import {
   ArrowLeft, FileText, DollarSign, Send, Copy, Archive,
-  CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus
+  CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus,
+  Link2, PenTool, Trash2, ExternalLink
 } from "lucide-react";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -35,7 +36,10 @@ export default function AdminProposalDetail() {
   const [sections, setSections] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<any[]>([]);
+  const [lineItems, setLineItems] = useState<any[]>([]);
+  const [signatures, setSignatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newItem, setNewItem] = useState({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
 
@@ -46,12 +50,16 @@ export default function AdminProposalDetail() {
       supabase.from("proposal_sections").select("*").eq("proposal_id", proposalId).order("section_order"),
       supabase.from("proposal_recipients").select("*").eq("proposal_id", proposalId),
       supabase.from("email_delivery_records").select("*").eq("proposal_id", proposalId).order("created_at", { ascending: false }),
-    ]).then(([pRes, sRes, rRes, dRes]) => {
+      supabase.from("proposal_line_items").select("*").eq("proposal_id", proposalId).order("sort_order"),
+      supabase.from("proposal_signatures").select("*").eq("proposal_id", proposalId).order("signed_at", { ascending: false }),
+    ]).then(([pRes, sRes, rRes, dRes, liRes, sigRes]) => {
       setProposal(pRes.data);
       setForm(pRes.data || {});
       setSections(sRes.data || []);
       setRecipients(rRes.data || []);
       setDeliveries(dRes.data || []);
+      setLineItems(liRes.data || []);
+      setSignatures(sigRes.data || []);
       setLoading(false);
     });
   }, [proposalId]);
@@ -110,6 +118,33 @@ export default function AdminProposalDetail() {
   const company = proposal.crm_companies;
   const deal = proposal.crm_deals;
 
+  const addLineItem = async () => {
+    if (!newItem.item_name) { toast.error("Item name required"); return; }
+    const total = newItem.quantity * newItem.unit_price;
+    const { data } = await supabase.from("proposal_line_items").insert({
+      proposal_id: proposal.id,
+      item_name: newItem.item_name,
+      item_description: newItem.item_description || null,
+      quantity: newItem.quantity,
+      unit_price: newItem.unit_price,
+      total_price: total,
+      sort_order: lineItems.length,
+    }).select().single();
+    if (data) setLineItems([...lineItems, data]);
+    setNewItem({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
+    toast.success("Line item added");
+  };
+
+  const removeLineItem = async (id: string) => {
+    await supabase.from("proposal_line_items").delete().eq("id", id);
+    setLineItems(lineItems.filter(i => i.id !== id));
+  };
+
+  const shareUrl = proposal.share_token ? `${window.location.origin}/proposal/${proposal.share_token}` : null;
+  const copyShareLink = () => {
+    if (shareUrl) { navigator.clipboard.writeText(shareUrl); toast.success("Link copied"); }
+  };
+
   return (
     <div className="space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors">
@@ -140,6 +175,11 @@ export default function AdminProposalDetail() {
           <Button size="sm" variant="outline" className="border-white/10 text-white/50 hover:bg-white/10" onClick={() => updateStatus("archived")}>
             <Archive className="h-3.5 w-3.5 mr-1" /> Archive
           </Button>
+          {shareUrl && (
+            <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={copyShareLink}>
+              <Link2 className="h-3.5 w-3.5 mr-1" /> Copy Link
+            </Button>
+          )}
         </div>
       </div>
 
@@ -162,8 +202,8 @@ export default function AdminProposalDetail() {
 
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList className="bg-white/[0.04] border border-white/[0.06]">
-          {["details", "sections", "recipients", "delivery"].map(t => (
-            <TabsTrigger key={t} value={t} className="text-white/60 data-[state=active]:text-white data-[state=active]:bg-white/10 capitalize text-xs">{t}</TabsTrigger>
+          {["details", "line_items", "sections", "signatures", "recipients", "delivery"].map(t => (
+            <TabsTrigger key={t} value={t} className="text-white/60 data-[state=active]:text-white data-[state=active]:bg-white/10 capitalize text-xs">{t.replace(/_/g, " ")}</TabsTrigger>
           ))}
         </TabsList>
 
@@ -244,6 +284,66 @@ export default function AdminProposalDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="line_items">
+          <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Line Items</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {lineItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03]">
+                  <div>
+                    <p className="text-xs text-white font-medium">{item.item_name}</p>
+                    {item.item_description && <p className="text-[10px] text-white/40">{item.item_description}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-white/50">{item.quantity} × ${Number(item.unit_price || 0).toLocaleString()}</span>
+                    <span className="text-xs font-semibold text-white">${Number(item.total_price || 0).toLocaleString()}</span>
+                    <button onClick={() => removeLineItem(item.id)} className="text-white/20 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                </div>
+              ))}
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-dashed border-white/10 space-y-2">
+                <p className="text-[10px] text-white/40 uppercase">Add Line Item</p>
+                <div className="grid grid-cols-4 gap-2">
+                  <Input value={newItem.item_name} onChange={e => setNewItem({ ...newItem, item_name: e.target.value })} placeholder="Name" className="bg-white/5 border-white/10 text-white text-xs col-span-2" />
+                  <Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) })} placeholder="Qty" className="bg-white/5 border-white/10 text-white text-xs" />
+                  <Input type="number" value={newItem.unit_price} onChange={e => setNewItem({ ...newItem, unit_price: Number(e.target.value) })} placeholder="Price" className="bg-white/5 border-white/10 text-white text-xs" />
+                </div>
+                <Button size="sm" className="bg-[hsl(var(--nl-electric))] text-xs h-7" onClick={addLineItem}><Plus className="h-3 w-3 mr-1" /> Add</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="signatures">
+          <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Signatures</CardTitle></CardHeader>
+            <CardContent>
+              {signatures.length === 0 ? (
+                <p className="text-xs text-white/30 text-center py-6">No signatures yet</p>
+              ) : signatures.map(sig => (
+                <div key={sig.id} className="p-3 rounded-lg bg-white/[0.03] mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs text-white font-medium">{sig.signer_name}</p>
+                      <p className="text-[10px] text-white/40">{sig.signer_email}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge className="bg-emerald-500/20 text-emerald-400 text-[9px]">Signed</Badge>
+                      <p className="text-[9px] text-white/30 mt-0.5">{new Date(sig.signed_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {sig.signature_data && (
+                    <div className="rounded bg-white/5 p-2">
+                      <img src={sig.signature_data} alt="Signature" className="h-12 object-contain" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
 
         <TabsContent value="recipients">
           <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
