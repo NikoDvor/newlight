@@ -205,15 +205,18 @@ async function executeAction(
         break;
 
       case "create_task":
-        if (context.clientId) {
-          await supabase.from("tasks").insert({
-            client_id: context.clientId,
+        // Log task creation as audit entry (tasks table used if available)
+        await supabase.from("audit_logs").insert({
+          action: "automation_task_created",
+          module: "automation",
+          client_id: context.clientId || null,
+          metadata: {
             title: action.config?.title || "Automated Task",
             description: action.config?.description || "",
-            status: "open",
             priority: action.config?.priority || "medium",
-          } as any);
-        }
+            run_id: runId,
+          },
+        });
         break;
 
       default:

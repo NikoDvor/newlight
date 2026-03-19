@@ -154,6 +154,7 @@ const App = () => (
               <Route path="proposal-templates" element={<AdminProposalTemplates />} />
               <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
               <Route path="billing" element={<AdminBilling />} />
+              <Route path="automations" element={<AdminAutomations />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
