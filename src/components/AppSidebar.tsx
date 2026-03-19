@@ -92,6 +92,8 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Training & Support",
     items: [
+      { title: "Success Center", url: "/success-center", icon: Heart },
+      { title: "Support Tickets", url: "/support-tickets", icon: Headphones, moduleKey: "helpdesk" },
       { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
       { title: "Help Desk", url: "/help-desk", icon: Headphones, moduleKey: "helpdesk" },
       { title: "Courses", url: "/training", icon: GraduationCap, moduleKey: "training" },

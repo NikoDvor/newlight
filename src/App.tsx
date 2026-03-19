@@ -236,6 +236,8 @@ const App = () => (
               <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarIntegrations /></PermissionGuard>} />
               <Route path="/setup-center" element={<SetupCenter />} />
               <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
+              <Route path="/success-center" element={<ClientSuccessCenter />} />
+              <Route path="/support-tickets" element={<SupportTickets />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
