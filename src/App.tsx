@@ -108,6 +108,8 @@ import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
+import SetupCenter from "./pages/SetupCenter";
+import ServiceManager from "./pages/ServiceManager";
 const queryClient = new QueryClient();
 
 const App = () => (
