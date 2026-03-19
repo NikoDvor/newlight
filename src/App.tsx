@@ -81,6 +81,7 @@ import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
 import AdminBilling from "./pages/admin/AdminBilling";
+import AdminAutomations from "./pages/admin/AdminAutomations";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -153,6 +154,7 @@ const App = () => (
               <Route path="proposal-templates" element={<AdminProposalTemplates />} />
               <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
               <Route path="billing" element={<AdminBilling />} />
+              <Route path="automations" element={<AdminAutomations />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
