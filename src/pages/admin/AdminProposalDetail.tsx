@@ -285,6 +285,66 @@ export default function AdminProposalDetail() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="line_items">
+          <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Line Items</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {lineItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03]">
+                  <div>
+                    <p className="text-xs text-white font-medium">{item.item_name}</p>
+                    {item.item_description && <p className="text-[10px] text-white/40">{item.item_description}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-white/50">{item.quantity} × ${Number(item.unit_price || 0).toLocaleString()}</span>
+                    <span className="text-xs font-semibold text-white">${Number(item.total_price || 0).toLocaleString()}</span>
+                    <button onClick={() => removeLineItem(item.id)} className="text-white/20 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                </div>
+              ))}
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-dashed border-white/10 space-y-2">
+                <p className="text-[10px] text-white/40 uppercase">Add Line Item</p>
+                <div className="grid grid-cols-4 gap-2">
+                  <Input value={newItem.item_name} onChange={e => setNewItem({ ...newItem, item_name: e.target.value })} placeholder="Name" className="bg-white/5 border-white/10 text-white text-xs col-span-2" />
+                  <Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) })} placeholder="Qty" className="bg-white/5 border-white/10 text-white text-xs" />
+                  <Input type="number" value={newItem.unit_price} onChange={e => setNewItem({ ...newItem, unit_price: Number(e.target.value) })} placeholder="Price" className="bg-white/5 border-white/10 text-white text-xs" />
+                </div>
+                <Button size="sm" className="bg-[hsl(var(--nl-electric))] text-xs h-7" onClick={addLineItem}><Plus className="h-3 w-3 mr-1" /> Add</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="signatures">
+          <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Signatures</CardTitle></CardHeader>
+            <CardContent>
+              {signatures.length === 0 ? (
+                <p className="text-xs text-white/30 text-center py-6">No signatures yet</p>
+              ) : signatures.map(sig => (
+                <div key={sig.id} className="p-3 rounded-lg bg-white/[0.03] mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs text-white font-medium">{sig.signer_name}</p>
+                      <p className="text-[10px] text-white/40">{sig.signer_email}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge className="bg-emerald-500/20 text-emerald-400 text-[9px]">Signed</Badge>
+                      <p className="text-[9px] text-white/30 mt-0.5">{new Date(sig.signed_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {sig.signature_data && (
+                    <div className="rounded bg-white/5 p-2">
+                      <img src={sig.signature_data} alt="Signature" className="h-12 object-contain" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+
         <TabsContent value="recipients">
           <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
             <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Recipients</CardTitle></CardHeader>
