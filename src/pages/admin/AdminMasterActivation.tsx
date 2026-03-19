@@ -271,15 +271,15 @@ export default function AdminMasterActivation() {
       case 2: return <StepBranding {...stepProps} />;
       case 3: return <StepCRM {...stepProps} />;
       case 4: return <StepCalendar {...stepProps} />;
-      case 5: return <StepEmail {...stepProps} />;
-      case 6: return <StepReviews {...stepProps} />;
-      case 7: return <StepWorkforce {...stepProps} />;
-      case 8: return <StepFinance {...stepProps} />;
-      case 9: return <StepMarketing {...stepProps} />;
-      case 10: return <StepProposals {...stepProps} />;
-      case 11: return <StepSupport {...stepProps} />;
-      case 12: return <StepIntegrations {...stepProps} />;
-      case 13: return <StepNotifications {...stepProps} />;
+      case 5: return <StepBookingForms {...stepProps} />;
+      case 6: return <StepEmail {...stepProps} />;
+      case 7: return <StepReviews {...stepProps} />;
+      case 8: return <StepTeamSetup {...stepProps} />;
+      case 9: return <StepWorkforce {...stepProps} />;
+      case 10: return <StepFinance {...stepProps} />;
+      case 11: return <StepMarketing {...stepProps} />;
+      case 12: return <StepSupport {...stepProps} />;
+      case 13: return <StepIntegrations {...stepProps} />;
       case 14: return <StepReview {...stepProps} />;
       default: return null;
     }
