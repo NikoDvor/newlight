@@ -114,6 +114,9 @@ import ServiceManager from "./pages/ServiceManager";
 import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
 import ClientSuccessCenter from "./pages/ClientSuccessCenter";
 import SupportTickets from "./pages/SupportTickets";
+import ConversationsPage from "./pages/ConversationsPage";
+import FollowUpQueue from "./pages/FollowUpQueue";
+import MessageTemplates from "./pages/MessageTemplates";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -166,6 +169,9 @@ const App = () => (
               <Route path="executive" element={<AdminExecutiveDashboard />} />
               <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
               <Route path="client-success" element={<AdminClientSuccess />} />
+              <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
+              <Route path="follow-ups" element={<FollowUpQueue />} />
+              <Route path="message-templates" element={<MessageTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
@@ -238,6 +244,9 @@ const App = () => (
               <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
               <Route path="/success-center" element={<ClientSuccessCenter />} />
               <Route path="/support-tickets" element={<SupportTickets />} />
+              <Route path="/conversations" element={<ConversationsPage title="Conversations" />} />
+              <Route path="/follow-ups" element={<FollowUpQueue />} />
+              <Route path="/message-templates" element={<MessageTemplates />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

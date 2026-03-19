@@ -49,6 +49,14 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Communications",
+    items: [
+      { title: "Conversations", url: "/admin/conversations", icon: Calendar },
+      { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: ListChecks },
+      { title: "Message Templates", url: "/admin/message-templates", icon: FileText },
+    ],
+  },
+  {
     label: "Revenue & Ops",
     items: [
       { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
