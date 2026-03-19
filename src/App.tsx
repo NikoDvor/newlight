@@ -216,6 +216,7 @@ const App = () => (
               <Route path="/help-desk" element={<HelpDesk />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/team" element={<TeamManagement />} />
+              <Route path="/calendar-integrations" element={<CalendarIntegrations />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
