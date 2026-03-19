@@ -73,7 +73,7 @@ export default function AdminTemplates() {
   useEffect(() => { load(); }, [load]);
 
   const loadComponents = async (templateId: string) => {
-    const { data } = await supabase.from("template_components").select("*").eq("template_id", templateId).order("component_order");
+    const { data } = await supabase.from("template_components" as any).select("*").eq("template_id", templateId).order("component_order");
     setComponents((data as Component[]) || []);
   };
 
@@ -115,10 +115,10 @@ export default function AdminTemplates() {
     setSaving(true);
     const payload = { template_name: form.name, template_key: form.key, industry_type: form.industry, service_package_type: form.package, description: form.description || null, is_active: form.is_active };
     if (editing) {
-      const { error } = await supabase.from("workspace_templates").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("workspace_templates" as any).update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); } else { toast.success("Template updated"); }
     } else {
-      const { error } = await supabase.from("workspace_templates").insert(payload);
+      const { error } = await supabase.from("workspace_templates" as any).insert(payload);
       if (error) { toast.error(error.message); } else { toast.success("Template created"); }
     }
     setSaving(false);
@@ -130,10 +130,10 @@ export default function AdminTemplates() {
     setSaving(true);
     const payload = { snapshot_name: snapForm.name, snapshot_key: snapForm.key, snapshot_type: snapForm.type, snapshot_scope: snapForm.scope, source_workspace_id: snapForm.source_workspace_id || null, source_template_id: snapForm.source_template_id || null, is_active: snapForm.is_active, snapshot_payload: {} };
     if (editing) {
-      const { error } = await supabase.from("snapshot_records").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("snapshot_records" as any).update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); } else { toast.success("Snapshot updated"); }
     } else {
-      const { error } = await supabase.from("snapshot_records").insert(payload);
+      const { error } = await supabase.from("snapshot_records" as any).insert(payload);
       if (error) { toast.error(error.message); } else { toast.success("Snapshot created"); }
     }
     setSaving(false);
@@ -142,7 +142,7 @@ export default function AdminTemplates() {
   };
 
   const duplicateTemplate = async (t: Template) => {
-    const { error } = await supabase.from("workspace_templates").insert({
+    const { error } = await supabase.from("workspace_templates" as any).insert({
       template_name: `${t.template_name} (Copy)`,
       template_key: `${t.template_key}_copy_${Date.now()}`,
       industry_type: t.industry_type,
@@ -162,7 +162,7 @@ export default function AdminTemplates() {
     if (!deployTarget.template_id || !deployTarget.workspace_id) { toast.error("Select a workspace"); return; }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("template_deployments").insert({
+    const { error } = await supabase.from("template_deployments" as any).insert({
       template_id: deployTarget.template_id,
       workspace_id: deployTarget.workspace_id,
       deployed_by: user?.id,
@@ -180,7 +180,7 @@ export default function AdminTemplates() {
   };
 
   const addComponent = async (templateId: string, type: string) => {
-    const { error } = await supabase.from("template_components").insert({
+    const { error } = await supabase.from("template_components" as any).insert({
       template_id: templateId,
       component_type: type,
       component_key: type.toLowerCase().replace(/\s+/g, "_"),
@@ -191,7 +191,7 @@ export default function AdminTemplates() {
   };
 
   const removeComponent = async (id: string, templateId: string) => {
-    await supabase.from("template_components").delete().eq("id", id);
+    await supabase.from("template_components" as any).delete().eq("id", id);
     loadComponents(templateId);
   };
 
