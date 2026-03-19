@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -18,6 +19,9 @@ export default function AdminDashboard() {
   const [autoActive, setAutoActive] = useState(0);
   const [autoFailed, setAutoFailed] = useState(0);
   const [autoTotal, setAutoTotal] = useState(0);
+  const [pipelineStages, setPipelineStages] = useState<Record<string, number>>({});
+  const [templateCount, setTemplateCount] = useState(0);
+  const [deploymentCount, setDeploymentCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -36,6 +40,13 @@ export default function AdminDashboard() {
       supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
         setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
       }),
+      supabase.from("crm_deals").select("pipeline_stage").then(({ data }) => {
+        const stages: Record<string, number> = {};
+        (data ?? []).forEach((d: any) => { stages[d.pipeline_stage] = (stages[d.pipeline_stage] || 0) + 1; });
+        setPipelineStages(stages);
+      }),
+      supabase.from("workspace_templates" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setTemplateCount(count ?? 0)),
+      supabase.from("template_deployments" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setDeploymentCount(count ?? 0)),
     ]);
   }, []);
 
