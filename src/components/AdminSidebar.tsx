@@ -14,6 +14,7 @@ import {
 
 const navItems = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Executive Dashboard", url: "/admin/executive", icon: BarChart3 },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
   { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
   { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
