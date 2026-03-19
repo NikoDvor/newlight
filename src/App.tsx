@@ -114,6 +114,9 @@ import ServiceManager from "./pages/ServiceManager";
 import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
 import ClientSuccessCenter from "./pages/ClientSuccessCenter";
 import SupportTickets from "./pages/SupportTickets";
+import ConversationsPage from "./pages/ConversationsPage";
+import FollowUpQueue from "./pages/FollowUpQueue";
+import MessageTemplates from "./pages/MessageTemplates";
 const queryClient = new QueryClient();
 
 const App = () => (
