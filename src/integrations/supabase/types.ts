@@ -3831,6 +3831,50 @@ export type Database = {
           },
         ]
       }
+      kpi_definitions: {
+        Row: {
+          client_id: string | null
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          kpi_key: string
+          kpi_name: string
+          scope_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kpi_key: string
+          kpi_name: string
+          scope_type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kpi_key?: string
+          kpi_name?: string
+          scope_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labor_cost_records: {
         Row: {
           client_id: string
@@ -4360,6 +4404,56 @@ export type Database = {
             foreignKeyName: "onboarding_progress_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_records: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          estimated_value: number | null
+          id: string
+          opportunity_type: string
+          related_id: string | null
+          related_type: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          opportunity_type: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          opportunity_type?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
@@ -5262,6 +5356,44 @@ export type Database = {
           },
         ]
       }
+      report_snapshots: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          report_scope_type: string
+          report_type: string
+          snapshot_date: string
+          snapshot_payload: Json | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          report_scope_type?: string
+          report_type: string
+          snapshot_date?: string
+          snapshot_payload?: Json | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          report_scope_type?: string
+          report_type?: string
+          snapshot_date?: string
+          snapshot_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_opportunities: {
         Row: {
           category: string | null
@@ -5302,6 +5434,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_simulations: {
+        Row: {
+          assumptions_payload: Json | null
+          base_payload: Json | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          projected_impact_summary: string | null
+          projected_revenue_amount: number | null
+          simulation_name: string
+          updated_at: string
+        }
+        Insert: {
+          assumptions_payload?: Json | null
+          base_payload?: Json | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          projected_impact_summary?: string | null
+          projected_revenue_amount?: number | null
+          simulation_name?: string
+          updated_at?: string
+        }
+        Update: {
+          assumptions_payload?: Json | null
+          base_payload?: Json | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          projected_impact_summary?: string | null
+          projected_revenue_amount?: number | null
+          simulation_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_simulations_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
