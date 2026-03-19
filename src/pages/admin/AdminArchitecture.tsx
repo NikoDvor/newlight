@@ -194,7 +194,7 @@ export default function AdminArchitecture() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Platform Architecture" subtitle="System map, module readiness, and integration boundaries." />
+      <PageHeader title="Platform Architecture" description="System map, module readiness, and integration boundaries." />
 
       <SummaryCards />
 
