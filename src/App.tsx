@@ -111,6 +111,9 @@ import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import SetupCenter from "./pages/SetupCenter";
 import ServiceManager from "./pages/ServiceManager";
+import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
+import ClientSuccessCenter from "./pages/ClientSuccessCenter";
+import SupportTickets from "./pages/SupportTickets";
 const queryClient = new QueryClient();
 
 const App = () => (
