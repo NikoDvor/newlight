@@ -468,6 +468,70 @@ export default function SEO() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <Sheet open={contentOpen} onOpenChange={setContentOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Content Opportunity</SheetTitle><SheetDescription>Plan content for SEO growth</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Topic Title *</Label><Input value={newContent.topic_title} onChange={e => setNewContent(p => ({ ...p, topic_title: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Target Keyword</Label><Input value={newContent.target_keyword} onChange={e => setNewContent(p => ({ ...p, target_keyword: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={newContent.opportunity_type} onValueChange={v => setNewContent(p => ({ ...p, opportunity_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blog_post">Blog Post</SelectItem>
+                  <SelectItem value="new_page">New Page</SelectItem>
+                  <SelectItem value="location_page">Location Page</SelectItem>
+                  <SelectItem value="faq">FAQ</SelectItem>
+                  <SelectItem value="optimization">Optimization</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newContent.priority} onValueChange={v => setNewContent(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setContentOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addContentOpp}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={localOpen} onOpenChange={setLocalOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Location</SheetTitle><SheetDescription>Track local SEO visibility</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Location Name *</Label><Input placeholder="e.g. Downtown Office" value={newLocal.location_name} onChange={e => setNewLocal(p => ({ ...p, location_name: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Visibility Status</Label>
+              <Select value={newLocal.visibility_status} onValueChange={v => setNewLocal(p => ({ ...p, visibility_status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visible">Visible</SelectItem>
+                  <SelectItem value="partially_visible">Partially Visible</SelectItem>
+                  <SelectItem value="not_visible">Not Visible</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Notes</Label><Input value={newLocal.notes} onChange={e => setNewLocal(p => ({ ...p, notes: e.target.value }))} /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setLocalOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addLocalItem}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
