@@ -4252,6 +4252,56 @@ export type Database = {
           },
         ]
       }
+      proposal_line_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_description: string | null
+          item_name: string
+          item_type: string | null
+          proposal_id: string
+          quantity: number | null
+          sort_order: number | null
+          total_price: number | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_description?: string | null
+          item_name: string
+          item_type?: string | null
+          proposal_id: string
+          quantity?: number | null
+          sort_order?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_description?: string | null
+          item_name?: string
+          item_type?: string | null
+          proposal_id?: string
+          quantity?: number | null
+          sort_order?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_line_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_recipients: {
         Row: {
           accepted_at: string | null
@@ -4340,6 +4390,47 @@ export type Database = {
           },
         ]
       }
+      proposal_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          proposal_id: string
+          signature_data: string | null
+          signed_at: string
+          signer_email: string
+          signer_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          proposal_id: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_email: string
+          signer_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          proposal_id?: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_email?: string
+          signer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_signatures_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_templates: {
         Row: {
           created_at: string
@@ -4388,6 +4479,7 @@ export type Database = {
       proposals: {
         Row: {
           accepted_at: string | null
+          ad_spend_commitment: number | null
           assigned_operator_user_id: string | null
           assigned_salesman_user_id: string | null
           client_id: string | null
@@ -4402,13 +4494,18 @@ export type Database = {
           id: string
           internal_summary: string | null
           monthly_fee: number | null
+          notes_client: string | null
           offer_summary: string | null
+          pricing_model: string | null
           proposal_status: string
           proposal_title: string
           proposal_type: string
           prospect_id: string | null
+          rejection_reason: string | null
           sent_at: string | null
+          service_package_type: string | null
           setup_fee: number | null
+          share_token: string | null
           template_id: string | null
           updated_at: string
           version_number: number | null
@@ -4416,6 +4513,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          ad_spend_commitment?: number | null
           assigned_operator_user_id?: string | null
           assigned_salesman_user_id?: string | null
           client_id?: string | null
@@ -4430,13 +4528,18 @@ export type Database = {
           id?: string
           internal_summary?: string | null
           monthly_fee?: number | null
+          notes_client?: string | null
           offer_summary?: string | null
+          pricing_model?: string | null
           proposal_status?: string
           proposal_title: string
           proposal_type?: string
           prospect_id?: string | null
+          rejection_reason?: string | null
           sent_at?: string | null
+          service_package_type?: string | null
           setup_fee?: number | null
+          share_token?: string | null
           template_id?: string | null
           updated_at?: string
           version_number?: number | null
@@ -4444,6 +4547,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          ad_spend_commitment?: number | null
           assigned_operator_user_id?: string | null
           assigned_salesman_user_id?: string | null
           client_id?: string | null
@@ -4458,13 +4562,18 @@ export type Database = {
           id?: string
           internal_summary?: string | null
           monthly_fee?: number | null
+          notes_client?: string | null
           offer_summary?: string | null
+          pricing_model?: string | null
           proposal_status?: string
           proposal_title?: string
           proposal_type?: string
           prospect_id?: string | null
+          rejection_reason?: string | null
           sent_at?: string | null
+          service_package_type?: string | null
           setup_fee?: number | null
+          share_token?: string | null
           template_id?: string | null
           updated_at?: string
           version_number?: number | null
