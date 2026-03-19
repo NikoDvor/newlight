@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -18,6 +19,9 @@ export default function AdminDashboard() {
   const [autoActive, setAutoActive] = useState(0);
   const [autoFailed, setAutoFailed] = useState(0);
   const [autoTotal, setAutoTotal] = useState(0);
+  const [pipelineStages, setPipelineStages] = useState<Record<string, number>>({});
+  const [templateCount, setTemplateCount] = useState(0);
+  const [deploymentCount, setDeploymentCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -36,6 +40,13 @@ export default function AdminDashboard() {
       supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
         setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
       }),
+      supabase.from("crm_deals").select("pipeline_stage").then(({ data }) => {
+        const stages: Record<string, number> = {};
+        (data ?? []).forEach((d: any) => { stages[d.pipeline_stage] = (stages[d.pipeline_stage] || 0) + 1; });
+        setPipelineStages(stages);
+      }),
+      supabase.from("workspace_templates" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setTemplateCount(count ?? 0)),
+      supabase.from("template_deployments" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setDeploymentCount(count ?? 0)),
     ]);
   }, []);
 
@@ -122,6 +133,54 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* Pipeline Health + Templates */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
+            <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/sales-pipeline")}>
+              View Pipeline <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.keys(pipelineStages).length === 0 ? (
+              <p className="text-xs text-white/30 py-4 text-center">No deals in pipeline</p>
+            ) : (
+              Object.entries(pipelineStages).map(([stage, count]) => (
+                <div key={stage} className="flex items-center justify-between py-1.5">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
+                    <span className="text-xs text-white/70 capitalize">{stage.replace(/_/g, " ")}</span>
+                  </div>
+                  <Badge className="bg-white/10 text-white border-0 text-[10px]">{count}</Badge>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-white/80">Templates & Deployment</CardTitle>
+            <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/templates")}>
+              Manage <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">{templateCount}</p>
+                <p className="text-[10px] text-white/40 mt-1">Active Templates</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">{deploymentCount}</p>
+                <p className="text-[10px] text-white/40 mt-1">Deployments</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
           <CardHeader className="pb-3">
@@ -156,9 +215,9 @@ export default function AdminDashboard() {
               { label: "Client Activation", path: "/admin/activation" },
               { label: "View Prospects", path: "/admin/prospects" },
               { label: "Provision Queue", path: "/admin/provision" },
+              { label: "Deploy Template", path: "/admin/templates" },
               { label: "Review Fix Now Items", path: "/admin/fix-now" },
-              { label: "System Audit Logs", path: "/admin/audit-logs" },
-              { label: "View All Clients", path: "/admin/clients" },
+              { label: "Executive Dashboard", path: "/admin/executive" },
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}

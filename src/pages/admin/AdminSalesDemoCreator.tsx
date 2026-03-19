@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ type FormState = {
   meeting_date: string;
   meeting_time: string;
   timezone: string;
+  template_id: string;
 };
 
 const INITIAL: FormState = {
@@ -49,6 +50,7 @@ const INITIAL: FormState = {
   secondary_color: "#06B6D4", assigned_salesman: "", assigned_operator: "",
   lead_source: "cold_call", internal_tags: "", meeting_type: "discovery_call",
   meeting_date: "", meeting_time: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  template_id: "",
 };
 
 const NEED_OPTIONS = [
@@ -90,6 +92,13 @@ export default function AdminSalesDemoCreator() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessData | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<{ id: string; template_name: string; industry_type: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("workspace_templates" as any).select("id, template_name, industry_type").eq("is_active", true).order("template_name").then(({ data }) => {
+      setTemplates((data as any[]) || []);
+    });
+  }, []);
 
   const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }));
   const toggleNeed = (n: string) =>
@@ -337,6 +346,15 @@ export default function AdminSalesDemoCreator() {
               <div><Label className={labelCls}>Business Name *</Label><div className="relative"><Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" /><Input value={form.business_name} onChange={e => set("business_name", e.target.value)} placeholder="Acme Corp" className={`${inputCls} pl-9`} disabled={submitting} /></div></div>
               <div><Label className={labelCls}>Website</Label><div className="relative"><Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" /><Input value={form.website} onChange={e => set("website", e.target.value)} placeholder="https://example.com" className={`${inputCls} pl-9`} disabled={submitting} /></div></div>
               <div><Label className={labelCls}>Industry / Niche</Label><Input value={form.industry} onChange={e => set("industry", e.target.value)} placeholder="e.g. Dental, Salon, Auto" className={inputCls} disabled={submitting} /></div>
+              <div><Label className={labelCls}>Deploy Template</Label>
+                <Select value={form.template_id} onValueChange={v => set("template_id", v)}>
+                  <SelectTrigger className={inputCls}><SelectValue placeholder="Auto-select or choose template" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Template</SelectItem>
+                    {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.template_name} ({t.industry_type})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="sm:col-span-2"><Label className={labelCls}>City / Location</Label><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" /><Input value={form.location} onChange={e => set("location", e.target.value)} placeholder="Los Angeles, CA" className={`${inputCls} pl-9`} disabled={submitting} /></div></div>
             </div>
           </div>
