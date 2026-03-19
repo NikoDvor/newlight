@@ -36,7 +36,10 @@ export default function AdminProposalDetail() {
   const [sections, setSections] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<any[]>([]);
+  const [lineItems, setLineItems] = useState<any[]>([]);
+  const [signatures, setSignatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newItem, setNewItem] = useState({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
 
