@@ -4470,6 +4470,50 @@ export type Database = {
           },
         ]
       }
+      offer_catalog: {
+        Row: {
+          client_id: string
+          created_at: string
+          display_order: number
+          display_status: string
+          id: string
+          offer_description: string | null
+          offer_name: string
+          offer_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          display_order?: number
+          display_status?: string
+          id?: string
+          offer_description?: string | null
+          offer_name: string
+          offer_type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          display_order?: number
+          display_status?: string
+          id?: string
+          offer_description?: string | null
+          offer_name?: string
+          offer_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_catalog_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_progress: {
         Row: {
           ad_account_connected: boolean
@@ -4941,6 +4985,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pipeline_stages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_catalog: {
+        Row: {
+          client_id: string
+          created_at: string
+          display_order: number
+          display_price_text: string | null
+          id: string
+          product_description: string | null
+          product_name: string
+          product_slug: string | null
+          product_status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          display_order?: number
+          display_price_text?: string | null
+          id?: string
+          product_description?: string | null
+          product_name: string
+          product_slug?: string | null
+          product_status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          display_order?: number
+          display_price_text?: string | null
+          id?: string
+          product_description?: string | null
+          product_name?: string
+          product_slug?: string | null
+          product_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_catalog_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -6106,6 +6197,73 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_catalog: {
+        Row: {
+          client_id: string
+          created_at: string
+          display_order: number
+          display_price_text: string | null
+          id: string
+          linked_appointment_type_id: string | null
+          linked_calendar_id: string | null
+          service_description: string | null
+          service_name: string
+          service_slug: string | null
+          service_status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          display_order?: number
+          display_price_text?: string | null
+          id?: string
+          linked_appointment_type_id?: string | null
+          linked_calendar_id?: string | null
+          service_description?: string | null
+          service_name: string
+          service_slug?: string | null
+          service_status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          display_order?: number
+          display_price_text?: string | null
+          id?: string
+          linked_appointment_type_id?: string | null
+          linked_calendar_id?: string | null
+          service_description?: string | null
+          service_name?: string
+          service_slug?: string | null
+          service_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_catalog_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_catalog_linked_appointment_type_id_fkey"
+            columns: ["linked_appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_catalog_linked_calendar_id_fkey"
+            columns: ["linked_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
             referencedColumns: ["id"]
           },
         ]
