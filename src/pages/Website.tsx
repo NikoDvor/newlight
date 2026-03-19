@@ -43,11 +43,14 @@ export default function Website() {
   const [pages, setPages] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageOpen, setPageOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [recOpen, setRecOpen] = useState(false);
   const [newPage, setNewPage] = useState({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
+  const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
