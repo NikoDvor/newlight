@@ -57,8 +57,14 @@ export default function PaidAds() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase.from("ad_campaigns").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false });
-    setCampaigns(data || []);
+    const [cRes, pRes, rRes] = await Promise.all([
+      supabase.from("ad_campaigns").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("ad_performance_records").select("*").eq("client_id", activeClientId).order("metric_date", { ascending: false }).limit(50),
+      supabase.from("ad_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+    ]);
+    setCampaigns(cRes.data || []);
+    setPerfRecords(pRes.data || []);
+    setAdRecs(rRes.data || []);
     setLoading(false);
   };
 
