@@ -68,6 +68,7 @@ const navGroups: NavGroup[] = [
   {
     label: "System",
     items: [
+      { title: "Architecture", url: "/admin/architecture", icon: Map },
       { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
       { title: "Templates", url: "/admin/templates", icon: FileCode },
       { title: "Package Access", url: "/admin/packages", icon: Package },

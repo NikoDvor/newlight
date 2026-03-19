@@ -176,6 +176,7 @@ const App = () => (
               <Route path="follow-ups" element={<FollowUpQueue />} />
               <Route path="message-templates" element={<MessageTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
+              <Route path="architecture" element={<AdminArchitecture />} />
             </Route>
 
             {/* Client Workspace */}
