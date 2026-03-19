@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { NextBestActions } from "@/components/NextBestActions";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
@@ -139,6 +140,8 @@ export default function Dashboard() {
           </div>
         </motion.div>
       )}
+
+      <NextBestActions />
 
       <div className="flex flex-wrap gap-2 mb-6">
         <CTAButton variant="complete-setup" size="sm" />
