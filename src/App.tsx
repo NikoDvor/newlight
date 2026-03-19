@@ -147,6 +147,7 @@ const App = () => (
               <Route path="meetings/:meetingId" element={<AdminMeetingDetail />} />
               <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
               <Route path="proposal-templates" element={<AdminProposalTemplates />} />
+              <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 

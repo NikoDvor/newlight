@@ -16,6 +16,7 @@ const navItems = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
   { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
+  { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
   { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
   { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
   { title: "Clients", url: "/admin/clients", icon: Users },
