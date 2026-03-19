@@ -226,7 +226,14 @@ export interface ActivationFormState {
   reputation_goal: string;
   reputation_notes: string;
 
-  // Step 7: Workforce
+  // Step 8: Team / Employee
+  need_team_now: string;
+  num_team_members: string;
+  need_training_access: string;
+  need_meeting_intel_access: string;
+  team_member_configs: TeamMemberConfig[];
+
+  // Step 9: Workforce
   use_workforce: string;
   need_payroll: string;
   num_workers: string;
