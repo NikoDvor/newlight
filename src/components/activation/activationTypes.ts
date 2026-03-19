@@ -453,6 +453,10 @@ export const defaultFormState = (): ActivationFormState => ({
   auto_send_after_appointment: "yes", service_recovery_enabled: "yes",
   public_review_prompt: "yes", reputation_goal: "", reputation_notes: "",
 
+  need_team_now: "no", num_team_members: "0",
+  need_training_access: "no", need_meeting_intel_access: "no",
+  team_member_configs: [defaultTeamMemberConfig()],
+
   use_workforce: "no", need_payroll: "no", num_workers: "", departments: "",
   labor_categories: "", require_timesheet_approval: "yes",
   default_pay_frequency: "biweekly", overtime_enabled: "no",
