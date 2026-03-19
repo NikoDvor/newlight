@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [awaitingClosing, setAwaitingClosing] = useState(0);
   const [provisioningCount, setProvisioningCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [autoActive, setAutoActive] = useState(0);
+  const [autoFailed, setAutoFailed] = useState(0);
+  const [autoTotal, setAutoTotal] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -25,6 +28,14 @@ export default function AdminDashboard() {
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "awaiting_closing").then(({ count }) => setAwaitingClosing(count ?? 0)),
       supabase.from("provision_queue").select("id", { count: "exact", head: true }).eq("provision_status", "provisioning").then(({ count }) => setProvisioningCount(count ?? 0)),
       supabase.from("audit_logs").select("action, module, created_at, metadata").order("created_at", { ascending: false }).limit(8).then(({ data }) => setRecentActivity(data ?? [])),
+      supabase.from("automations").select("id, enabled").then(({ data }) => {
+        const d = data ?? [];
+        setAutoTotal(d.length);
+        setAutoActive(d.filter((a: any) => a.enabled).length);
+      }),
+      supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
+        setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
+      }),
     ]);
   }, []);
 
@@ -78,6 +89,38 @@ export default function AdminDashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Automation Health */}
+      <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold text-white/80">Automation Health</CardTitle>
+          <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/automations")}>
+            View All <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{autoActive}</p>
+              <p className="text-[10px] text-white/40 mt-1">Active Automations</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{autoTotal}</p>
+              <p className="text-[10px] text-white/40 mt-1">Total Configured</p>
+            </div>
+            <div className="text-center">
+              <p className={`text-2xl font-bold ${autoFailed > 0 ? "text-red-400" : "text-white"}`}>{autoFailed}</p>
+              <p className="text-[10px] text-white/40 mt-1">Failed Runs</p>
+            </div>
+          </div>
+          {autoFailed > 0 && (
+            <div className="mt-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              <p className="text-xs text-red-300">{autoFailed} failed automation run{autoFailed > 1 ? "s" : ""} require attention</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
