@@ -97,7 +97,26 @@ export default function Website() {
     fetchData();
   };
 
-  const hasRealData = pages.length > 0 || issues.length > 0;
+  const addRecommendation = async () => {
+    if (!activeClientId || !newRec.title) return;
+    const { error } = await supabase.from("website_recommendations").insert({
+      client_id: activeClientId, title: newRec.title,
+      description: newRec.description || null, recommendation_type: newRec.recommendation_type,
+      priority: newRec.priority,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Recommendation Added" });
+    setNewRec({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+    setRecOpen(false);
+    fetchData();
+  };
+
+  const resolveRecommendation = async (id: string) => {
+    await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
+    fetchData();
+  };
+
+  const hasRealData = pages.length > 0 || issues.length > 0 || recommendations.length > 0;
   const totalVisits = pages.reduce((s, p) => s + (p.visits || 0), 0);
   const totalLeads = pages.reduce((s, p) => s + (p.leads_generated || 0), 0);
   const avgCvr = totalVisits > 0 ? (totalLeads / totalVisits * 100).toFixed(1) : "0";
