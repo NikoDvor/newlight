@@ -39,25 +39,35 @@ export default function SEO() {
   const [keywords, setKeywords] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
+  const [contentOpps, setContentOpps] = useState<any[]>([]);
+  const [localItems, setLocalItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [kwOpen, setKwOpen] = useState(false);
   const [compOpen, setCompOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [contentOpen, setContentOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
   const [newKw, setNewKw] = useState({ keyword: "", position: "", search_volume: "" });
   const [newComp, setNewComp] = useState({ domain: "", authority_score: "", keywords_count: "", estimated_traffic: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", category: "technical", severity: "medium", recommendation: "" });
+  const [newContent, setNewContent] = useState({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
+  const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [kRes, cRes, iRes] = await Promise.all([
+    const [kRes, cRes, iRes, coRes, lRes] = await Promise.all([
       supabase.from("seo_keywords").select("*").eq("client_id", activeClientId).order("position", { ascending: true }),
       supabase.from("seo_competitors").select("*").eq("client_id", activeClientId).order("authority_score", { ascending: false }),
       supabase.from("seo_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("seo_content_opportunities").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("seo_local_visibility").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setKeywords(kRes.data || []);
     setCompetitors(cRes.data || []);
     setIssues(iRes.data || []);
+    setContentOpps(coRes.data || []);
+    setLocalItems(lRes.data || []);
     setLoading(false);
   };
 
@@ -106,7 +116,34 @@ export default function SEO() {
     fetchData();
   };
 
-  const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0;
+  const addContentOpp = async () => {
+    if (!activeClientId || !newContent.topic_title) return;
+    const { error } = await supabase.from("seo_content_opportunities").insert({
+      client_id: activeClientId, topic_title: newContent.topic_title,
+      target_keyword: newContent.target_keyword || null, opportunity_type: newContent.opportunity_type,
+      priority: newContent.priority,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Content Opportunity Added" });
+    setNewContent({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
+    setContentOpen(false);
+    fetchData();
+  };
+
+  const addLocalItem = async () => {
+    if (!activeClientId || !newLocal.location_name) return;
+    const { error } = await supabase.from("seo_local_visibility").insert({
+      client_id: activeClientId, location_name: newLocal.location_name,
+      visibility_status: newLocal.visibility_status, notes: newLocal.notes || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Location Added" });
+    setNewLocal({ location_name: "", visibility_status: "unknown", notes: "" });
+    setLocalOpen(false);
+    fetchData();
+  };
+
+  const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0 || contentOpps.length > 0 || localItems.length > 0;
   const rankedKws = keywords.filter(k => k.position);
   const openIssues = issues.filter(i => i.status === "open").length;
 
@@ -292,59 +329,72 @@ export default function SEO() {
           </TabsContent>
 
           <TabsContent value="content" className="mt-4">
-            <DataCard title="Content Opportunities">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Suggested content ideas based on industry best practices</span>
-              </div>
-              <div className="space-y-3">
-                {DEMO_CONTENT.map((c, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+            <DataCard title="Content Opportunities" action={<Button size="sm" variant="outline" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {contentOpps.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <FileText className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No content opportunities logged</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add topics and keywords to plan your content strategy.</p>
+                  <Button size="sm" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Opportunity</Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {contentOpps.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{c.topic_title}</p>
+                          <p className="text-xs text-muted-foreground">{c.target_keyword ? `Target: ${c.target_keyword}` : c.opportunity_type}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">Target: {c.keyword}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${c.priority === "high" ? "bg-blue-50 text-blue-700" : c.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{c.priority}</Badge>
+                        <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
                       </div>
                     </div>
-                    <Badge className="text-[10px] bg-blue-50 text-blue-700">{c.potential}</Badge>
-                  </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
 
           <TabsContent value="local" className="mt-4">
-            <DataCard title="Local SEO Readiness">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Connect Google Business Profile for live data</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { item: "Google Business Profile", status: "Not Connected", icon: MapPin },
-                  { item: "NAP Consistency", status: "Needs Review", icon: Target },
-                  { item: "Local Citations", status: "Setup Needed", icon: FileText },
-                  { item: "Review Management", status: "Active", icon: Eye },
-                ].map((item, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, y: 4 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <item.icon className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+            <DataCard title="Local SEO Visibility" action={<Button size="sm" variant="outline" onClick={() => setLocalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {localItems.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <MapPin className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No local visibility data</p>
+                  <p className="text-xs text-muted-foreground mb-4">Track your local SEO presence across different locations.</p>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" onClick={() => setLocalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Location</Button>
+                    <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}>Connect Google Business</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {localItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <MapPin className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{item.location_name}</p>
+                          {item.notes && <p className="text-xs text-muted-foreground">{item.notes}</p>}
+                        </div>
                       </div>
-                      <p className="text-sm font-medium">{item.item}</p>
+                      <Badge className={`text-[10px] ${item.visibility_status === "visible" ? "bg-emerald-50 text-emerald-700" : item.visibility_status === "partially_visible" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{item.visibility_status}</Badge>
                     </div>
-                    <Badge className={`text-[10px] ${item.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{item.status}</Badge>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="text-center mt-4">
-                <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}>Connect Google Business</Button>
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
         </Tabs>
@@ -414,6 +464,70 @@ export default function SEO() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setIssueOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addIssue}>Log Issue</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={contentOpen} onOpenChange={setContentOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Content Opportunity</SheetTitle><SheetDescription>Plan content for SEO growth</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Topic Title *</Label><Input value={newContent.topic_title} onChange={e => setNewContent(p => ({ ...p, topic_title: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Target Keyword</Label><Input value={newContent.target_keyword} onChange={e => setNewContent(p => ({ ...p, target_keyword: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={newContent.opportunity_type} onValueChange={v => setNewContent(p => ({ ...p, opportunity_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blog_post">Blog Post</SelectItem>
+                  <SelectItem value="new_page">New Page</SelectItem>
+                  <SelectItem value="location_page">Location Page</SelectItem>
+                  <SelectItem value="faq">FAQ</SelectItem>
+                  <SelectItem value="optimization">Optimization</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newContent.priority} onValueChange={v => setNewContent(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setContentOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addContentOpp}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={localOpen} onOpenChange={setLocalOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Location</SheetTitle><SheetDescription>Track local SEO visibility</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Location Name *</Label><Input placeholder="e.g. Downtown Office" value={newLocal.location_name} onChange={e => setNewLocal(p => ({ ...p, location_name: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Visibility Status</Label>
+              <Select value={newLocal.visibility_status} onValueChange={v => setNewLocal(p => ({ ...p, visibility_status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visible">Visible</SelectItem>
+                  <SelectItem value="partially_visible">Partially Visible</SelectItem>
+                  <SelectItem value="not_visible">Not Visible</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Notes</Label><Input value={newLocal.notes} onChange={e => setNewLocal(p => ({ ...p, notes: e.target.value }))} /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setLocalOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addLocalItem}>Add</Button>
             </div>
           </div>
         </SheetContent>

@@ -43,23 +43,28 @@ export default function Website() {
   const [pages, setPages] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageOpen, setPageOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [recOpen, setRecOpen] = useState(false);
   const [newPage, setNewPage] = useState({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
+  const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [pRes, iRes, tRes] = await Promise.all([
+    const [pRes, iRes, tRes, rRes] = await Promise.all([
       supabase.from("website_pages").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
       supabase.from("website_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("website_traffic_sources").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
+      supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setPages(pRes.data || []);
     setIssues(iRes.data || []);
     setTrafficSources(tRes.data || []);
+    setRecommendations(rRes.data || []);
     setLoading(false);
   };
 
@@ -95,7 +100,26 @@ export default function Website() {
     fetchData();
   };
 
-  const hasRealData = pages.length > 0 || issues.length > 0;
+  const addRecommendation = async () => {
+    if (!activeClientId || !newRec.title) return;
+    const { error } = await supabase.from("website_recommendations").insert({
+      client_id: activeClientId, title: newRec.title,
+      description: newRec.description || null, recommendation_type: newRec.recommendation_type,
+      priority: newRec.priority,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Recommendation Added" });
+    setNewRec({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+    setRecOpen(false);
+    fetchData();
+  };
+
+  const resolveRecommendation = async (id: string) => {
+    await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
+    fetchData();
+  };
+
+  const hasRealData = pages.length > 0 || issues.length > 0 || recommendations.length > 0;
   const totalVisits = pages.reduce((s, p) => s + (p.visits || 0), 0);
   const totalLeads = pages.reduce((s, p) => s + (p.leads_generated || 0), 0);
   const avgCvr = totalVisits > 0 ? (totalLeads / totalVisits * 100).toFixed(1) : "0";
@@ -182,7 +206,7 @@ export default function Website() {
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic Sources</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="opportunities" className="rounded-md text-sm">Opportunities</TabsTrigger>
+            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recommendations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pages" className="mt-4">
@@ -283,29 +307,42 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="opportunities" className="mt-4">
-            <DataCard title="Conversion Opportunities">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Strategic recommendations based on best practices</span>
-              </div>
-              <div className="space-y-3">
-                {DEMO_OPPORTUNITIES.map((opp, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+          <TabsContent value="recommendations" className="mt-4">
+            <DataCard title="Recommendations" action={<Button size="sm" variant="outline" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {recommendations.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Zap className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No recommendations yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add optimization recommendations to track website improvements.</p>
+                  <Button size="sm" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Recommendation</Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recommendations.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{r.title}</p>
+                          <p className="text-xs text-muted-foreground">{r.description || r.recommendation_type}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{opp.title}</p>
-                        <p className="text-xs" style={{ color: "hsl(197 92% 48%)" }}>{opp.impact}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${r.priority === "high" ? "bg-blue-50 text-blue-700" : r.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{r.priority}</Badge>
+                        {r.status === "open" ? (
+                          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => resolveRecommendation(r.id)}>Resolve</Button>
+                        ) : (
+                          <Badge className="text-[10px] bg-emerald-50 text-emerald-700">Resolved</Badge>
+                        )}
                       </div>
                     </div>
-                    <Badge className={`text-[10px] ${opp.severity === "high" ? "bg-blue-50 text-blue-700" : opp.severity === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{opp.severity}</Badge>
-                  </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
         </Tabs>
@@ -347,6 +384,43 @@ export default function Website() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setIssueOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addIssue}>Log Issue</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={recOpen} onOpenChange={setRecOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Recommendation</SheetTitle><SheetDescription>Track a website optimization recommendation</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Title *</Label><Input value={newRec.title} onChange={e => setNewRec(p => ({ ...p, title: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Description</Label><Input value={newRec.description} onChange={e => setNewRec(p => ({ ...p, description: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={newRec.recommendation_type} onValueChange={v => setNewRec(p => ({ ...p, recommendation_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="optimization">Optimization</SelectItem>
+                  <SelectItem value="conversion">Conversion</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="ux">UX/Design</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newRec.priority} onValueChange={v => setNewRec(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setRecOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addRecommendation}>Add</Button>
             </div>
           </div>
         </SheetContent>

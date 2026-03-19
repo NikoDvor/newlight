@@ -44,15 +44,27 @@ export default function PaidAds() {
   const { activeClientId } = useWorkspace();
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [perfRecords, setPerfRecords] = useState<any[]>([]);
+  const [adRecs, setAdRecs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [perfOpen, setPerfOpen] = useState(false);
+  const [recOpen, setRecOpen] = useState(false);
   const [newCamp, setNewCamp] = useState({ campaign_name: "", platform: "google_ads", budget: "", spend: "", leads: "", roas: "" });
+  const [newPerf, setNewPerf] = useState({ campaign_id: "", metric_date: "", spend_amount: "", clicks: "", leads: "", impressions: "", conversions: "", roas: "" });
+  const [newAdRec, setNewAdRec] = useState({ title: "", description: "", priority: "medium", campaign_id: "" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase.from("ad_campaigns").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false });
-    setCampaigns(data || []);
+    const [cRes, pRes, rRes] = await Promise.all([
+      supabase.from("ad_campaigns").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("ad_performance_records").select("*").eq("client_id", activeClientId).order("metric_date", { ascending: false }).limit(50),
+      supabase.from("ad_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+    ]);
+    setCampaigns(cRes.data || []);
+    setPerfRecords(pRes.data || []);
+    setAdRecs(rRes.data || []);
     setLoading(false);
   };
 
@@ -72,6 +84,43 @@ export default function PaidAds() {
     toast({ title: "Campaign Added" });
     setNewCamp({ campaign_name: "", platform: "google_ads", budget: "", spend: "", leads: "", roas: "" });
     setCampaignOpen(false);
+    fetchData();
+  };
+
+  const addPerfRecord = async () => {
+    if (!activeClientId || !newPerf.campaign_id) return;
+    const spend = parseFloat(newPerf.spend_amount) || 0;
+    const leads = parseInt(newPerf.leads) || 0;
+    const { error } = await supabase.from("ad_performance_records").insert({
+      client_id: activeClientId, campaign_id: newPerf.campaign_id,
+      metric_date: newPerf.metric_date || new Date().toISOString().split("T")[0],
+      spend_amount: spend, clicks: parseInt(newPerf.clicks) || 0, leads,
+      impressions: parseInt(newPerf.impressions) || 0, conversions: parseInt(newPerf.conversions) || 0,
+      roas: parseFloat(newPerf.roas) || 0, cpl: leads > 0 ? Math.round(spend / leads * 100) / 100 : 0,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Performance Record Added" });
+    setNewPerf({ campaign_id: "", metric_date: "", spend_amount: "", clicks: "", leads: "", impressions: "", conversions: "", roas: "" });
+    setPerfOpen(false);
+    fetchData();
+  };
+
+  const addAdRecommendation = async () => {
+    if (!activeClientId || !newAdRec.title) return;
+    const { error } = await supabase.from("ad_recommendations").insert({
+      client_id: activeClientId, title: newAdRec.title,
+      description: newAdRec.description || null, priority: newAdRec.priority,
+      campaign_id: newAdRec.campaign_id || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Recommendation Added" });
+    setNewAdRec({ title: "", description: "", priority: "medium", campaign_id: "" });
+    setRecOpen(false);
+    fetchData();
+  };
+
+  const resolveAdRec = async (id: string) => {
+    await supabase.from("ad_recommendations").update({ status: "resolved" }).eq("id", id);
     fetchData();
   };
 
