@@ -538,6 +538,128 @@ export type Database = {
           },
         ]
       }
+      billing_accounts: {
+        Row: {
+          billing_email: string | null
+          billing_owner_user_id: string | null
+          billing_status: string
+          client_id: string
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          default_currency: string | null
+          id: string
+          proposal_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          billing_owner_user_id?: string | null
+          billing_status?: string
+          client_id: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          default_currency?: string | null
+          id?: string
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          billing_owner_user_id?: string | null
+          billing_status?: string
+          client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          default_currency?: string | null
+          id?: string
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_events: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          event_note: string | null
+          event_type: string
+          id: string
+          related_id: string | null
+          related_type: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          event_note?: string | null
+          event_type: string
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_note?: string | null
+          event_type?: string
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blackout_dates: {
         Row: {
           calendar_id: string | null
@@ -1845,6 +1967,76 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_records: {
+        Row: {
+          auto_renew: boolean | null
+          client_id: string
+          contract_length_months: number | null
+          contract_status: string
+          created_at: string
+          end_date: string | null
+          enforcement_mode: string | null
+          id: string
+          proposal_id: string | null
+          signed_at: string | null
+          start_date: string | null
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          client_id: string
+          contract_length_months?: number | null
+          contract_status?: string
+          created_at?: string
+          end_date?: string | null
+          enforcement_mode?: string | null
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          client_id?: string
+          contract_length_months?: number | null
+          contract_status?: string
+          created_at?: string
+          end_date?: string | null
+          enforcement_mode?: string | null
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_records_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_records_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -3426,6 +3618,145 @@ export type Database = {
           },
         ]
       }
+      invoice_line_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          item_description: string | null
+          item_name: string
+          item_type: string | null
+          quantity: number | null
+          total_price: number | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          item_description?: string | null
+          item_name: string
+          item_type?: string | null
+          quantity?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          item_description?: string | null
+          item_name?: string
+          item_type?: string | null
+          quantity?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_paid: number | null
+          billing_account_id: string
+          client_id: string
+          created_at: string
+          due_date: string | null
+          failed_at: string | null
+          id: string
+          invoice_number: string
+          invoice_status: string
+          invoice_type: string
+          issued_at: string | null
+          paid_at: string | null
+          proposal_id: string | null
+          subscription_id: string | null
+          subtotal_amount: number | null
+          tax_amount: number | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          billing_account_id: string
+          client_id: string
+          created_at?: string
+          due_date?: string | null
+          failed_at?: string | null
+          id?: string
+          invoice_number: string
+          invoice_status?: string
+          invoice_type?: string
+          issued_at?: string | null
+          paid_at?: string | null
+          proposal_id?: string | null
+          subscription_id?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number | null
+          billing_account_id?: string
+          client_id?: string
+          created_at?: string
+          due_date?: string | null
+          failed_at?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_status?: string
+          invoice_type?: string
+          issued_at?: string | null
+          paid_at?: string | null
+          proposal_id?: string | null
+          subscription_id?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_billing_account_id_fkey"
+            columns: ["billing_account_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labor_cost_records: {
         Row: {
           client_id: string
@@ -3956,6 +4287,89 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: true
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_records: {
+        Row: {
+          amount: number | null
+          billing_account_id: string
+          client_id: string
+          created_at: string
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          invoice_id: string | null
+          paid_at: string | null
+          payment_method_type: string | null
+          payment_provider: string | null
+          payment_status: string
+          subscription_id: string | null
+          transaction_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          billing_account_id: string
+          client_id: string
+          created_at?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          payment_method_type?: string | null
+          payment_provider?: string | null
+          payment_status?: string
+          subscription_id?: string | null
+          transaction_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          billing_account_id?: string
+          client_id?: string
+          created_at?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          payment_method_type?: string | null
+          payment_provider?: string | null
+          payment_status?: string
+          subscription_id?: string | null
+          transaction_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_billing_account_id_fkey"
+            columns: ["billing_account_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -5352,6 +5766,94 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          ad_spend_commitment_amount: number | null
+          auto_renew: boolean | null
+          billing_account_id: string
+          billing_frequency: string
+          client_id: string
+          contract_end_date: string | null
+          contract_length_months: number | null
+          contract_start_date: string | null
+          created_at: string
+          id: string
+          last_invoice_date: string | null
+          monthly_amount: number | null
+          next_invoice_date: string | null
+          proposal_id: string | null
+          service_package_type: string | null
+          setup_fee_amount: number | null
+          subscription_name: string
+          subscription_status: string
+          updated_at: string
+        }
+        Insert: {
+          ad_spend_commitment_amount?: number | null
+          auto_renew?: boolean | null
+          billing_account_id: string
+          billing_frequency?: string
+          client_id: string
+          contract_end_date?: string | null
+          contract_length_months?: number | null
+          contract_start_date?: string | null
+          created_at?: string
+          id?: string
+          last_invoice_date?: string | null
+          monthly_amount?: number | null
+          next_invoice_date?: string | null
+          proposal_id?: string | null
+          service_package_type?: string | null
+          setup_fee_amount?: number | null
+          subscription_name: string
+          subscription_status?: string
+          updated_at?: string
+        }
+        Update: {
+          ad_spend_commitment_amount?: number | null
+          auto_renew?: boolean | null
+          billing_account_id?: string
+          billing_frequency?: string
+          client_id?: string
+          contract_end_date?: string | null
+          contract_length_months?: number | null
+          contract_start_date?: string | null
+          created_at?: string
+          id?: string
+          last_invoice_date?: string | null
+          monthly_amount?: number | null
+          next_invoice_date?: string | null
+          proposal_id?: string | null
+          service_package_type?: string | null
+          setup_fee_amount?: number | null
+          subscription_name?: string
+          subscription_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_billing_account_id_fkey"
+            columns: ["billing_account_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
