@@ -11,7 +11,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
-const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
+export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
