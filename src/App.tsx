@@ -79,6 +79,7 @@ import AdminDealDetail from "./pages/admin/AdminDealDetail";
 import AdminMeetingDetail from "./pages/admin/AdminMeetingDetail";
 import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
+import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
