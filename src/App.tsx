@@ -102,6 +102,7 @@ import CalendarManagement from "./pages/CalendarManagement";
 import CalendarDetail from "./pages/CalendarDetail";
 import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
+import CalendarIntegrations from "./pages/CalendarIntegrations";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -215,6 +216,7 @@ const App = () => (
               <Route path="/help-desk" element={<HelpDesk />} />
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/team" element={<TeamManagement />} />
+              <Route path="/calendar-integrations" element={<CalendarIntegrations />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

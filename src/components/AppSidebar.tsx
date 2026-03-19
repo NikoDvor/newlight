@@ -55,6 +55,8 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
       { title: "Team & Users", url: "/team", icon: Users },
       { title: "Calendar", url: "/calendar", icon: Calendar },
       { title: "Manage Calendars", url: "/calendar-management", icon: Settings2 },
+      { title: "Forms", url: "/forms", icon: FileText },
+      { title: "Calendar Sync", url: "/calendar-integrations", icon: Plug },
       { title: "Email", url: "/email", icon: Mail },
       { title: "Chat", url: "/chat", icon: MessageSquare },
       { title: "Notifications", url: "/notifications", icon: Bell },
