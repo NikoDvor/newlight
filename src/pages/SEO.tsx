@@ -329,59 +329,72 @@ export default function SEO() {
           </TabsContent>
 
           <TabsContent value="content" className="mt-4">
-            <DataCard title="Content Opportunities">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Suggested content ideas based on industry best practices</span>
-              </div>
-              <div className="space-y-3">
-                {DEMO_CONTENT.map((c, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+            <DataCard title="Content Opportunities" action={<Button size="sm" variant="outline" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {contentOpps.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <FileText className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No content opportunities logged</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add topics and keywords to plan your content strategy.</p>
+                  <Button size="sm" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Opportunity</Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {contentOpps.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{c.topic_title}</p>
+                          <p className="text-xs text-muted-foreground">{c.target_keyword ? `Target: ${c.target_keyword}` : c.opportunity_type}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">Target: {c.keyword}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${c.priority === "high" ? "bg-blue-50 text-blue-700" : c.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{c.priority}</Badge>
+                        <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
                       </div>
                     </div>
-                    <Badge className="text-[10px] bg-blue-50 text-blue-700">{c.potential}</Badge>
-                  </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
 
           <TabsContent value="local" className="mt-4">
-            <DataCard title="Local SEO Readiness">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Connect Google Business Profile for live data</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { item: "Google Business Profile", status: "Not Connected", icon: MapPin },
-                  { item: "NAP Consistency", status: "Needs Review", icon: Target },
-                  { item: "Local Citations", status: "Setup Needed", icon: FileText },
-                  { item: "Review Management", status: "Active", icon: Eye },
-                ].map((item, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, y: 4 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <item.icon className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+            <DataCard title="Local SEO Visibility" action={<Button size="sm" variant="outline" onClick={() => setLocalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {localItems.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <MapPin className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No local visibility data</p>
+                  <p className="text-xs text-muted-foreground mb-4">Track your local SEO presence across different locations.</p>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" onClick={() => setLocalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Location</Button>
+                    <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}>Connect Google Business</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {localItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <MapPin className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{item.location_name}</p>
+                          {item.notes && <p className="text-xs text-muted-foreground">{item.notes}</p>}
+                        </div>
                       </div>
-                      <p className="text-sm font-medium">{item.item}</p>
+                      <Badge className={`text-[10px] ${item.visibility_status === "visible" ? "bg-emerald-50 text-emerald-700" : item.visibility_status === "partially_visible" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{item.visibility_status}</Badge>
                     </div>
-                    <Badge className={`text-[10px] ${item.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{item.status}</Badge>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="text-center mt-4">
-                <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}>Connect Google Business</Button>
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
         </Tabs>
