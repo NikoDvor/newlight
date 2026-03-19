@@ -85,6 +85,7 @@ import AdminBilling from "./pages/admin/AdminBilling";
 import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminLaunchChecklist from "./pages/admin/AdminLaunchChecklist";
+import AdminPackageDetail from "./pages/admin/AdminPackageDetail";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="audit-logs" element={<AdminAuditLogs />} />
               <Route path="templates" element={<AdminTemplates />} />
               <Route path="packages" element={<AdminPackages />} />
+              <Route path="packages/:id" element={<AdminPackageDetail />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />

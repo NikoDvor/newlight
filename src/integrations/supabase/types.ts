@@ -5076,6 +5076,63 @@ export type Database = {
           },
         ]
       }
+      offer_packages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_ad_spend_commitment: number | null
+          default_contract_length_months: number | null
+          default_monthly_fee: number | null
+          default_setup_fee: number | null
+          description: string | null
+          id: string
+          is_active: boolean
+          package_category: string
+          package_key: string
+          package_name: string
+          package_status: string
+          pricing_model: string
+          service_focus: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_ad_spend_commitment?: number | null
+          default_contract_length_months?: number | null
+          default_monthly_fee?: number | null
+          default_setup_fee?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          package_category?: string
+          package_key: string
+          package_name: string
+          package_status?: string
+          pricing_model?: string
+          service_focus?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_ad_spend_commitment?: number | null
+          default_contract_length_months?: number | null
+          default_monthly_fee?: number | null
+          default_setup_fee?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          package_category?: string
+          package_key?: string
+          package_name?: string
+          package_status?: string
+          pricing_model?: string
+          service_focus?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onboarding_progress: {
         Row: {
           ad_account_connected: boolean
@@ -5175,6 +5232,260 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_activation_defaults: {
+        Row: {
+          activation_defaults_json: Json | null
+          created_at: string
+          default_snapshot_id: string | null
+          default_template_id: string | null
+          id: string
+          package_id: string
+          updated_at: string
+        }
+        Insert: {
+          activation_defaults_json?: Json | null
+          created_at?: string
+          default_snapshot_id?: string | null
+          default_template_id?: string | null
+          id?: string
+          package_id: string
+          updated_at?: string
+        }
+        Update: {
+          activation_defaults_json?: Json | null
+          created_at?: string
+          default_snapshot_id?: string | null
+          default_template_id?: string | null
+          id?: string
+          package_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_activation_defaults_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_billing_defaults: {
+        Row: {
+          ad_spend_default: number | null
+          auto_renew_default: boolean
+          billing_frequency: string
+          contract_term_default: number | null
+          created_at: string
+          id: string
+          monthly_fee_default: number | null
+          package_id: string
+          setup_fee_default: number | null
+          updated_at: string
+        }
+        Insert: {
+          ad_spend_default?: number | null
+          auto_renew_default?: boolean
+          billing_frequency?: string
+          contract_term_default?: number | null
+          created_at?: string
+          id?: string
+          monthly_fee_default?: number | null
+          package_id: string
+          setup_fee_default?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ad_spend_default?: number | null
+          auto_renew_default?: boolean
+          billing_frequency?: string
+          contract_term_default?: number | null
+          created_at?: string
+          id?: string
+          monthly_fee_default?: number | null
+          package_id?: string
+          setup_fee_default?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_billing_defaults_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_deliverables: {
+        Row: {
+          created_at: string
+          deliverable_category: string
+          deliverable_name: string
+          description: string | null
+          display_order: number
+          id: string
+          is_included_by_default: boolean
+          package_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_category?: string
+          deliverable_name: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_included_by_default?: boolean
+          package_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_category?: string
+          deliverable_name?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_included_by_default?: boolean
+          package_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_deliverables_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_feature_flags: {
+        Row: {
+          config_json: Json | null
+          created_at: string
+          feature_enabled: boolean
+          feature_key: string
+          feature_name: string
+          id: string
+          package_id: string
+          updated_at: string
+        }
+        Insert: {
+          config_json?: Json | null
+          created_at?: string
+          feature_enabled?: boolean
+          feature_key: string
+          feature_name: string
+          id?: string
+          package_id: string
+          updated_at?: string
+        }
+        Update: {
+          config_json?: Json | null
+          created_at?: string
+          feature_enabled?: boolean
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          package_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_feature_flags_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_proposal_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          package_id: string
+          proposal_template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          package_id: string
+          proposal_template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          package_id?: string
+          proposal_template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_proposal_links_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_proposal_links_proposal_template_id_fkey"
+            columns: ["proposal_template_id"]
+            isOneToOne: false
+            referencedRelation: "proposal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          related_package_id: string
+          relationship_type: string
+          source_package_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          related_package_id: string
+          relationship_type?: string
+          source_package_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          related_package_id?: string
+          relationship_type?: string
+          source_package_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_relationships_related_package_id_fkey"
+            columns: ["related_package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_relationships_source_package_id_fkey"
+            columns: ["source_package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
             referencedColumns: ["id"]
           },
         ]
