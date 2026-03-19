@@ -197,7 +197,7 @@ export default function FormBuilder() {
       </PageHeader>
 
       <ModuleHelpPanel
-        title="Forms & Lead Capture"
+        moduleName="Forms & Lead Capture"
         description="Create custom forms to capture leads, book appointments, and collect customer information. Forms connect directly to your CRM and calendar system."
         tips={[
           "Start with a template for the fastest setup",

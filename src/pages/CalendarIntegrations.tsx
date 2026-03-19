@@ -136,7 +136,7 @@ export default function CalendarIntegrations() {
       <PageHeader title="Calendar Integrations" description="Connect external calendars to prevent double booking and sync events" />
 
       <ModuleHelpPanel
-        title="External Calendar Sync"
+        moduleName="External Calendar Sync"
         description="Connect Google Calendar or Outlook to your workspace so your team's external availability is automatically checked when customers book appointments. Events can be pushed to external calendars too."
         tips={[
           "External availability prevents double booking across systems",
