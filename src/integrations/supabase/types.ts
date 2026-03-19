@@ -6110,6 +6110,66 @@ export type Database = {
           },
         ]
       }
+      snapshot_records: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          snapshot_key: string
+          snapshot_name: string
+          snapshot_payload: Json | null
+          snapshot_scope: string
+          snapshot_type: string
+          source_template_id: string | null
+          source_workspace_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          snapshot_key: string
+          snapshot_name: string
+          snapshot_payload?: Json | null
+          snapshot_scope?: string
+          snapshot_type?: string
+          source_template_id?: string | null
+          source_workspace_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          snapshot_key?: string
+          snapshot_name?: string
+          snapshot_payload?: Json | null
+          snapshot_scope?: string
+          snapshot_type?: string
+          source_template_id?: string | null
+          source_workspace_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshot_records_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "snapshot_records_source_workspace_id_fkey"
+            columns: ["source_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_accounts: {
         Row: {
           client_id: string
@@ -6502,6 +6562,98 @@ export type Database = {
           {
             foreignKeyName: "team_members_client_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_components: {
+        Row: {
+          component_config: Json | null
+          component_key: string
+          component_order: number
+          component_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          component_config?: Json | null
+          component_key: string
+          component_order?: number
+          component_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          component_config?: Json | null
+          component_key?: string
+          component_order?: number
+          component_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_components_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_deployments: {
+        Row: {
+          created_at: string
+          deployed_at: string | null
+          deployed_by: string | null
+          deployment_status: string
+          id: string
+          template_id: string | null
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deployed_at?: string | null
+          deployed_by?: string | null
+          deployment_status?: string
+          id?: string
+          template_id?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deployed_at?: string | null
+          deployed_by?: string | null
+          deployment_status?: string
+          id?: string
+          template_id?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_deployments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_deployments_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -7275,6 +7427,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workspace_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          industry_type: string
+          is_active: boolean
+          service_package_type: string
+          template_key: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry_type?: string
+          is_active?: boolean
+          service_package_type?: string
+          template_key: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry_type?: string
+          is_active?: boolean
+          service_package_type?: string
+          template_key?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       workspace_users: {
         Row: {
