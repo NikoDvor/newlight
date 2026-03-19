@@ -44,9 +44,15 @@ export default function PaidAds() {
   const { activeClientId } = useWorkspace();
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [perfRecords, setPerfRecords] = useState<any[]>([]);
+  const [adRecs, setAdRecs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [perfOpen, setPerfOpen] = useState(false);
+  const [recOpen, setRecOpen] = useState(false);
   const [newCamp, setNewCamp] = useState({ campaign_name: "", platform: "google_ads", budget: "", spend: "", leads: "", roas: "" });
+  const [newPerf, setNewPerf] = useState({ campaign_id: "", metric_date: "", spend_amount: "", clicks: "", leads: "", impressions: "", conversions: "", roas: "" });
+  const [newAdRec, setNewAdRec] = useState({ title: "", description: "", priority: "medium", campaign_id: "" });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
