@@ -52,6 +52,37 @@ export const defaultCalendarConfig = (): CalendarConfig => ({
   department_name: "",
 });
 
+export interface TeamMemberConfig {
+  full_name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  department: string;
+  role_preset: string;
+  calendar_access: string;
+  bookable_staff: string;
+  crm_access: string;
+  training_access: string;
+  assigned_calendars: string;
+}
+
+export const defaultTeamMemberConfig = (): TeamMemberConfig => ({
+  full_name: "", email: "", phone: "", job_title: "", department: "",
+  role_preset: "", calendar_access: "no", bookable_staff: "no",
+  crm_access: "no", training_access: "no", assigned_calendars: "",
+});
+
+export const ROLE_PRESET_OPTIONS = [
+  { value: "workspace_admin", label: "Workspace Admin" },
+  { value: "manager", label: "Manager" },
+  { value: "front_desk", label: "Front Desk" },
+  { value: "sales_rep", label: "Sales Rep" },
+  { value: "service_provider", label: "Service Provider" },
+  { value: "support_staff", label: "Support Staff" },
+  { value: "marketing_staff", label: "Marketing Staff" },
+  { value: "custom", label: "Custom" },
+];
+
 export interface ActivationFormState {
   // Step 1: Deal Close
   business_name_confirmed: string;
