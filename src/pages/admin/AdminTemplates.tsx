@@ -154,7 +154,7 @@ export default function AdminTemplates() {
   };
 
   const toggleActive = async (table: string, id: string, val: boolean) => {
-    const { error } = await supabase.from(table).update({ is_active: val }).eq("id", id);
+    const { error } = await (supabase.from(table as any) as any).update({ is_active: val }).eq("id", id);
     if (error) toast.error(error.message); else load();
   };
 
