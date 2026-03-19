@@ -80,6 +80,7 @@ import AdminMeetingDetail from "./pages/admin/AdminMeetingDetail";
 import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
+import AdminBilling from "./pages/admin/AdminBilling";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
