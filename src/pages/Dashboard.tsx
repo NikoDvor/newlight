@@ -141,6 +141,8 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      <NextBestActions />
+
       <div className="flex flex-wrap gap-2 mb-6">
         <CTAButton variant="complete-setup" size="sm" />
         <CTAButton variant="connect-accounts" size="sm" />

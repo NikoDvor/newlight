@@ -228,6 +228,8 @@ const App = () => (
               <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/team" element={<PermissionGuard moduleKey="settings"><TeamManagement /></PermissionGuard>} />
               <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarIntegrations /></PermissionGuard>} />
+              <Route path="/setup-center" element={<SetupCenter />} />
+              <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

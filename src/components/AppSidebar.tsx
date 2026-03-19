@@ -82,7 +82,8 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Setup & Integrations",
     items: [
-      { title: "Complete Setup", url: "/client-setup", icon: Plug },
+      { title: "Setup Center", url: "/setup-center", icon: Plug },
+      { title: "Services & Products", url: "/services", icon: Settings2, moduleKey: "website" },
       { title: "Brand Assets", url: "/brand-assets", icon: Image },
       { title: "Integrations", url: "/integrations", icon: Plug, moduleKey: "settings" },
       { title: "Onboarding", url: "/onboarding", icon: Workflow },
