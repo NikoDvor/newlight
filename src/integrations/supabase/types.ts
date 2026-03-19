@@ -2396,6 +2396,60 @@ export type Database = {
           },
         ]
       }
+      contact_communication_preferences: {
+        Row: {
+          allow_email: boolean | null
+          allow_inapp: boolean | null
+          allow_sms: boolean | null
+          client_id: string | null
+          contact_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          preferred_channel: string
+          updated_at: string | null
+        }
+        Insert: {
+          allow_email?: boolean | null
+          allow_inapp?: boolean | null
+          allow_sms?: boolean | null
+          client_id?: string | null
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          preferred_channel?: string
+          updated_at?: string | null
+        }
+        Update: {
+          allow_email?: boolean | null
+          allow_inapp?: boolean | null
+          allow_sms?: boolean | null
+          client_id?: string | null
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          preferred_channel?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_communication_preferences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_communication_preferences_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_records: {
         Row: {
           auto_renew: boolean | null
@@ -2462,6 +2516,171 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_messages: {
+        Row: {
+          client_id: string | null
+          conversation_id: string
+          created_at: string | null
+          delivered_at: string | null
+          delivery_status: string
+          direction: string
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          message_body: string
+          message_channel: string
+          read_at: string | null
+          recipient_type: string
+          sender_type: string
+          sender_user_id: string | null
+          sent_at: string | null
+          subject: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          conversation_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string
+          direction?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_body?: string
+          message_channel?: string
+          read_at?: string | null
+          recipient_type?: string
+          sender_type?: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          conversation_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string
+          direction?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_body?: string
+          message_channel?: string
+          read_at?: string | null
+          recipient_type?: string
+          sender_type?: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          assigned_user_id: string | null
+          client_id: string | null
+          company_id: string | null
+          contact_id: string | null
+          conversation_type: string
+          created_at: string | null
+          deal_id: string | null
+          id: string
+          last_message_at: string | null
+          status: string
+          subject: string
+          ticket_id: string | null
+          updated_at: string | null
+          workspace_scope_type: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          client_id?: string | null
+          company_id?: string | null
+          contact_id?: string | null
+          conversation_type?: string
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          subject?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+          workspace_scope_type?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          client_id?: string | null
+          company_id?: string | null
+          contact_id?: string | null
+          conversation_type?: string
+          created_at?: string | null
+          deal_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          subject?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+          workspace_scope_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "crm_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -3746,6 +3965,59 @@ export type Database = {
           },
         ]
       }
+      follow_up_queues: {
+        Row: {
+          assigned_user_id: string | null
+          client_id: string | null
+          created_at: string | null
+          due_at: string | null
+          id: string
+          notes: string | null
+          priority: string
+          queue_type: string
+          related_id: string | null
+          related_type: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          queue_type?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_user_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          queue_type?: string
+          related_id?: string | null
+          related_type?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_queues_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_fields: {
         Row: {
           client_id: string
@@ -4656,6 +4928,59 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          body_template: string
+          channel: string
+          client_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          subject_template: string | null
+          template_category: string
+          template_name: string
+          template_scope_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          body_template?: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          subject_template?: string | null
+          template_category?: string
+          template_name: string
+          template_scope_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          body_template?: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          subject_template?: string | null
+          template_category?: string
+          template_name?: string
+          template_scope_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
