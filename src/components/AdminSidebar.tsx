@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
   ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
-  Briefcase, Calendar, FileText, PenTool, DollarSign
+  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -11,32 +11,63 @@ import {
   SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
+import { useState } from "react";
 
-const navItems = [
-  { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Executive Dashboard", url: "/admin/executive", icon: BarChart3 },
-  { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-  { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
-  { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
-  { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
-  { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
-  { title: "Clients", url: "/admin/clients", icon: Users },
-  { title: "Team & Users", url: "/admin/team", icon: Shield },
-  { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
-  { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
-  { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
-  { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
-  { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
-  { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
-  { title: "Templates", url: "/admin/templates", icon: FileCode },
-  { title: "Package Access", url: "/admin/packages", icon: Package },
-  { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
-  { title: "Automations", url: "/admin/automations", icon: Zap },
-  { title: "Reports", url: "/admin/reports", icon: BarChart3 },
-  { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
-  { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
-  { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
-  { title: "System Settings", url: "/admin/settings", icon: Settings },
+interface NavGroup {
+  label: string;
+  items: { title: string; url: string; icon: any }[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
+      { title: "Executive Dashboard", url: "/admin/executive", icon: BarChart3 },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
+      { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
+      { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
+      { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
+      { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
+    ],
+  },
+  {
+    label: "Clients & Team",
+    items: [
+      { title: "Clients", url: "/admin/clients", icon: Users },
+      { title: "Team & Users", url: "/admin/team", icon: Shield },
+      { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
+      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
+      { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
+      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
+    ],
+  },
+  {
+    label: "Revenue & Ops",
+    items: [
+      { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
+      { title: "Automations", url: "/admin/automations", icon: Zap },
+      { title: "Reports", url: "/admin/reports", icon: BarChart3 },
+      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
+      { title: "Templates", url: "/admin/templates", icon: FileCode },
+      { title: "Package Access", url: "/admin/packages", icon: Package },
+      { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
+      { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
+      { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
+      { title: "System Settings", url: "/admin/settings", icon: Settings },
+    ],
+  },
 ];
 
 export function AdminSidebar() {
@@ -48,6 +79,20 @@ export function AdminSidebar() {
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(path);
+  };
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    navGroups.forEach((g) => {
+      init[g.label] = g.items.some((i) => isActive(i.url));
+    });
+    // Always open Overview
+    init["Overview"] = true;
+    return init;
+  });
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
   return (
@@ -86,42 +131,58 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 relative z-10">
-        <SidebarGroup className="py-0.5">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={collapsed ? item.title : undefined}
-                      className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
-                        active
-                          ? "text-white font-semibold"
-                          : "text-white/60 hover:text-white hover:bg-white/[0.08]"
-                      }`}
-                      style={active ? {
-                        background: "hsla(211,96%,60%,.18)",
-                        boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
-                      } : undefined}
-                    >
-                      <Link to={item.url}>
-                        <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
-                          active
-                            ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
-                            : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
-                        }`} />
-                        {!collapsed && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navGroups.map((group) => {
+          const isOpen = openGroups[group.label] ?? false;
+          return (
+            <SidebarGroup key={group.label} className="py-0.5">
+              {!collapsed && (
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
+                </button>
+              )}
+              {(collapsed || isOpen) && (
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => {
+                      const active = isActive(item.url);
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={active}
+                            tooltip={collapsed ? item.title : undefined}
+                            className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
+                              active
+                                ? "text-white font-semibold"
+                                : "text-white/60 hover:text-white hover:bg-white/[0.08]"
+                            }`}
+                            style={active ? {
+                              background: "hsla(211,96%,60%,.18)",
+                              boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
+                            } : undefined}
+                          >
+                            <Link to={item.url}>
+                              <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
+                                active
+                                  ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
+                                  : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
+                              }`} />
+                              {!collapsed && <span>{item.title}</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              )}
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3 relative z-10">
