@@ -74,6 +74,11 @@ import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import AdminWelcome from "./pages/admin/AdminWelcome";
 import AdminAppSettings from "./pages/admin/AdminAppSettings";
 import AdminMasterActivation from "./pages/admin/AdminMasterActivation";
+import AdminSalesPipeline from "./pages/admin/AdminSalesPipeline";
+import AdminDealDetail from "./pages/admin/AdminDealDetail";
+import AdminMeetingDetail from "./pages/admin/AdminMeetingDetail";
+import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
+import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -136,6 +141,11 @@ const App = () => (
               <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
               <Route path="welcome" element={<AdminWelcome />} />
               <Route path="app-settings" element={<AdminAppSettings />} />
+              <Route path="sales-pipeline" element={<AdminSalesPipeline />} />
+              <Route path="deals/:dealId" element={<AdminDealDetail />} />
+              <Route path="meetings/:meetingId" element={<AdminMeetingDetail />} />
+              <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
+              <Route path="proposal-templates" element={<AdminProposalTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 

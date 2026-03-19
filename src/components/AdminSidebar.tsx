@@ -1,7 +1,8 @@
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
-  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle
+  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
+  Briefcase, Calendar, FileText, PenTool
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -14,9 +15,11 @@ import {
 const navItems = [
   { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+  { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
+  { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
+  { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
   { title: "Clients", url: "/admin/clients", icon: Users },
   { title: "Team & Users", url: "/admin/team", icon: Shield },
-  { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
   { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
   { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
   { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
