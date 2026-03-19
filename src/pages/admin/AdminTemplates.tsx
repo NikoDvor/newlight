@@ -63,9 +63,9 @@ export default function AdminTemplates() {
       supabase.from("template_deployments" as any).select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("clients").select("id, business_name").order("business_name"),
     ]);
-    setTemplates((tRes.data as Template[]) || []);
-    setSnapshots((sRes.data as Snapshot[]) || []);
-    setDeployments((dRes.data as Deployment[]) || []);
+    setTemplates((tRes.data as any as Template[]) || []);
+    setSnapshots((sRes.data as any as Snapshot[]) || []);
+    setDeployments((dRes.data as any as Deployment[]) || []);
     setWorkspaces((wRes.data as any[]) || []);
     setLoading(false);
   }, []);
