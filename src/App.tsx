@@ -161,6 +161,7 @@ const App = () => (
               <Route path="billing" element={<AdminBilling />} />
               <Route path="automations" element={<AdminAutomations />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
+              <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
