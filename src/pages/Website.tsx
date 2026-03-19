@@ -388,6 +388,43 @@ export default function Website() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <Sheet open={recOpen} onOpenChange={setRecOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Recommendation</SheetTitle><SheetDescription>Track a website optimization recommendation</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Title *</Label><Input value={newRec.title} onChange={e => setNewRec(p => ({ ...p, title: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Description</Label><Input value={newRec.description} onChange={e => setNewRec(p => ({ ...p, description: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={newRec.recommendation_type} onValueChange={v => setNewRec(p => ({ ...p, recommendation_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="optimization">Optimization</SelectItem>
+                  <SelectItem value="conversion">Conversion</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="ux">UX/Design</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newRec.priority} onValueChange={v => setNewRec(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setRecOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addRecommendation}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
