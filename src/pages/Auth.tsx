@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
-const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
+export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -94,7 +94,6 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
 
   return (
     <div
-      ref={ref}
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
@@ -251,6 +250,4 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       </motion.div>
     </div>
   );
-});
-
-export default Auth;
+}

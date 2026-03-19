@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
   ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
-  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown
+  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
       { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
       { title: "Templates", url: "/admin/templates", icon: FileCode },
       { title: "Package Access", url: "/admin/packages", icon: Package },
+      { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
       { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
       { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
       { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
