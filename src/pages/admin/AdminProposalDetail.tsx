@@ -118,6 +118,33 @@ export default function AdminProposalDetail() {
   const company = proposal.crm_companies;
   const deal = proposal.crm_deals;
 
+  const addLineItem = async () => {
+    if (!newItem.item_name) { toast.error("Item name required"); return; }
+    const total = newItem.quantity * newItem.unit_price;
+    const { data } = await supabase.from("proposal_line_items").insert({
+      proposal_id: proposal.id,
+      item_name: newItem.item_name,
+      item_description: newItem.item_description || null,
+      quantity: newItem.quantity,
+      unit_price: newItem.unit_price,
+      total_price: total,
+      sort_order: lineItems.length,
+    }).select().single();
+    if (data) setLineItems([...lineItems, data]);
+    setNewItem({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
+    toast.success("Line item added");
+  };
+
+  const removeLineItem = async (id: string) => {
+    await supabase.from("proposal_line_items").delete().eq("id", id);
+    setLineItems(lineItems.filter(i => i.id !== id));
+  };
+
+  const shareUrl = proposal.share_token ? `${window.location.origin}/proposal/${proposal.share_token}` : null;
+  const copyShareLink = () => {
+    if (shareUrl) { navigator.clipboard.writeText(shareUrl); toast.success("Link copied"); }
+  };
+
   return (
     <div className="space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors">
