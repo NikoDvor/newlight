@@ -1901,6 +1901,72 @@ export type Database = {
           },
         ]
       }
+      client_health_records: {
+        Row: {
+          adoption_score: number | null
+          billing_health_score: number | null
+          booking_health_score: number | null
+          calculated_at: string | null
+          client_id: string
+          created_at: string | null
+          engagement_score: number | null
+          health_score_total: number | null
+          id: string
+          retention_health_score: number | null
+          review_health_score: number | null
+          support_health_score: number | null
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          adoption_score?: number | null
+          billing_health_score?: number | null
+          booking_health_score?: number | null
+          calculated_at?: string | null
+          client_id: string
+          created_at?: string | null
+          engagement_score?: number | null
+          health_score_total?: number | null
+          id?: string
+          retention_health_score?: number | null
+          review_health_score?: number | null
+          support_health_score?: number | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          adoption_score?: number | null
+          billing_health_score?: number | null
+          booking_health_score?: number | null
+          calculated_at?: string | null
+          client_id?: string
+          created_at?: string | null
+          engagement_score?: number | null
+          health_score_total?: number | null
+          id?: string
+          retention_health_score?: number | null
+          review_health_score?: number | null
+          support_health_score?: number | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_health_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_health_records_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_health_scores: {
         Row: {
           ads_score: number
@@ -2039,6 +2105,177 @@ export type Database = {
           {
             foreignKeyName: "client_reports_client_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_risk_records: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          description: string | null
+          detected_at: string | null
+          id: string
+          resolved_at: string | null
+          risk_type: string
+          severity: string
+          status: string
+          title: string
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          risk_type?: string
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          risk_type?: string
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_risk_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_risk_records_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_success_milestones: {
+        Row: {
+          assigned_user_id: string | null
+          client_id: string
+          completed_at: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          milestone_key: string
+          milestone_name: string
+          milestone_status: string
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          milestone_key: string
+          milestone_name: string
+          milestone_status?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          assigned_user_id?: string | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          milestone_key?: string
+          milestone_name?: string
+          milestone_status?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_success_milestones_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_success_milestones_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_success_playbook_runs: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          playbook_key: string
+          playbook_name: string
+          run_status: string
+          started_at: string | null
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          playbook_key: string
+          playbook_name: string
+          run_status?: string
+          started_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          playbook_key?: string
+          playbook_name?: string
+          run_status?: string
+          started_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_success_playbook_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_success_playbook_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -5520,6 +5757,80 @@ export type Database = {
           },
         ]
       }
+      renewal_records: {
+        Row: {
+          client_id: string
+          contract_record_id: string | null
+          created_at: string | null
+          id: string
+          months_remaining: number | null
+          notes: string | null
+          renewal_date: string | null
+          renewal_owner_user_id: string | null
+          renewal_status: string
+          subscription_id: string | null
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id: string
+          contract_record_id?: string | null
+          created_at?: string | null
+          id?: string
+          months_remaining?: number | null
+          notes?: string | null
+          renewal_date?: string | null
+          renewal_owner_user_id?: string | null
+          renewal_status?: string
+          subscription_id?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          contract_record_id?: string | null
+          created_at?: string | null
+          id?: string
+          months_remaining?: number | null
+          notes?: string | null
+          renewal_date?: string | null
+          renewal_owner_user_id?: string | null
+          renewal_status?: string
+          subscription_id?: string | null
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renewal_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewal_records_contract_record_id_fkey"
+            columns: ["contract_record_id"]
+            isOneToOne: false
+            referencedRelation: "contract_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewal_records_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewal_records_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_schedules: {
         Row: {
           client_id: string
@@ -6576,6 +6887,127 @@ export type Database = {
           },
         ]
       }
+      support_comments: {
+        Row: {
+          author_user_id: string | null
+          client_id: string
+          comment_body: string
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          author_user_id?: string | null
+          client_id: string
+          comment_body: string
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          author_user_id?: string | null
+          client_id?: string
+          comment_body?: string
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_comments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_comments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_user_id: string | null
+          client_id: string
+          created_at: string | null
+          created_by_user_id: string | null
+          id: string
+          resolution_summary: string | null
+          resolved_at: string | null
+          ticket_category: string
+          ticket_description: string | null
+          ticket_priority: string
+          ticket_status: string
+          ticket_subject: string
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          client_id: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          ticket_category?: string
+          ticket_description?: string | null
+          ticket_priority?: string
+          ticket_status?: string
+          ticket_subject: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          assigned_user_id?: string | null
+          client_id?: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          ticket_category?: string
+          ticket_description?: string | null
+          ticket_priority?: string
+          ticket_status?: string
+          ticket_subject?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_deadlines: {
         Row: {
           client_id: string
@@ -7097,6 +7529,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      upsell_opportunities: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          description: string | null
+          estimated_value: number | null
+          id: string
+          opportunity_type: string
+          status: string
+          title: string
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          opportunity_type?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          description?: string | null
+          estimated_value?: number | null
+          id?: string
+          opportunity_type?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsell_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_opportunities_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_calendar_integrations: {
         Row: {
