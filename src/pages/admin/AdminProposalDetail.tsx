@@ -202,8 +202,8 @@ export default function AdminProposalDetail() {
 
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList className="bg-white/[0.04] border border-white/[0.06]">
-          {["details", "sections", "recipients", "delivery"].map(t => (
-            <TabsTrigger key={t} value={t} className="text-white/60 data-[state=active]:text-white data-[state=active]:bg-white/10 capitalize text-xs">{t}</TabsTrigger>
+          {["details", "line_items", "sections", "signatures", "recipients", "delivery"].map(t => (
+            <TabsTrigger key={t} value={t} className="text-white/60 data-[state=active]:text-white data-[state=active]:bg-white/10 capitalize text-xs">{t.replace(/_/g, " ")}</TabsTrigger>
           ))}
         </TabsList>
 
