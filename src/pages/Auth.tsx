@@ -95,7 +95,6 @@ export default function Auth() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
       }}
