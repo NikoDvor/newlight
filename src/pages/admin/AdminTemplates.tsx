@@ -74,7 +74,7 @@ export default function AdminTemplates() {
 
   const loadComponents = async (templateId: string) => {
     const { data } = await supabase.from("template_components" as any).select("*").eq("template_id", templateId).order("component_order");
-    setComponents((data as Component[]) || []);
+    setComponents((data as any as Component[]) || []);
   };
 
   const openCreate = (mode: "template" | "snapshot") => {
