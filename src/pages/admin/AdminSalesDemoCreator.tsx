@@ -40,6 +40,7 @@ type FormState = {
   meeting_date: string;
   meeting_time: string;
   timezone: string;
+  template_id: string;
 };
 
 const INITIAL: FormState = {
