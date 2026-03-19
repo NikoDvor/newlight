@@ -50,12 +50,16 @@ export default function AdminProposalDetail() {
       supabase.from("proposal_sections").select("*").eq("proposal_id", proposalId).order("section_order"),
       supabase.from("proposal_recipients").select("*").eq("proposal_id", proposalId),
       supabase.from("email_delivery_records").select("*").eq("proposal_id", proposalId).order("created_at", { ascending: false }),
-    ]).then(([pRes, sRes, rRes, dRes]) => {
+      supabase.from("proposal_line_items").select("*").eq("proposal_id", proposalId).order("sort_order"),
+      supabase.from("proposal_signatures").select("*").eq("proposal_id", proposalId).order("signed_at", { ascending: false }),
+    ]).then(([pRes, sRes, rRes, dRes, liRes, sigRes]) => {
       setProposal(pRes.data);
       setForm(pRes.data || {});
       setSections(sRes.data || []);
       setRecipients(rRes.data || []);
       setDeliveries(dRes.data || []);
+      setLineItems(liRes.data || []);
+      setSignatures(sigRes.data || []);
       setLoading(false);
     });
   }, [proposalId]);
