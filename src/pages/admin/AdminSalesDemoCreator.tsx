@@ -50,6 +50,7 @@ const INITIAL: FormState = {
   secondary_color: "#06B6D4", assigned_salesman: "", assigned_operator: "",
   lead_source: "cold_call", internal_tags: "", meeting_type: "discovery_call",
   meeting_date: "", meeting_time: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  template_id: "",
 };
 
 const NEED_OPTIONS = [
