@@ -97,7 +97,7 @@ export default function SupportTickets() {
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-5xl mx-auto">
-      <PageHeader title="Support Tickets" subtitle="Submit and track support requests" />
+      <PageHeader title="Support Tickets" description="Submit and track support requests" />
 
       <div className="flex gap-2">
         <div className="relative flex-1">

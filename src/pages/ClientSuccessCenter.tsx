@@ -53,7 +53,7 @@ export default function ClientSuccessCenter() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-      <PageHeader title="Success Center" subtitle="Track your progress, get help, and stay on track" />
+      <PageHeader title="Success Center" description="Track your progress, get help, and stay on track" />
 
       {/* Health + Progress */}
       <div className="grid md:grid-cols-2 gap-4">
