@@ -58,9 +58,9 @@ export default function AdminTemplates() {
   const load = useCallback(async () => {
     setLoading(true);
     const [tRes, sRes, dRes, wRes] = await Promise.all([
-      supabase.from("workspace_templates").select("*").order("updated_at", { ascending: false }),
-      supabase.from("snapshot_records").select("*").order("updated_at", { ascending: false }),
-      supabase.from("template_deployments").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("workspace_templates" as any).select("*").order("updated_at", { ascending: false }),
+      supabase.from("snapshot_records" as any).select("*").order("updated_at", { ascending: false }),
+      supabase.from("template_deployments" as any).select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("clients").select("id, business_name").order("business_name"),
     ]);
     setTemplates((tRes.data as Template[]) || []);
