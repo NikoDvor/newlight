@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [awaitingClosing, setAwaitingClosing] = useState(0);
   const [provisioningCount, setProvisioningCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [autoActive, setAutoActive] = useState(0);
+  const [autoFailed, setAutoFailed] = useState(0);
+  const [autoTotal, setAutoTotal] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -25,6 +28,14 @@ export default function AdminDashboard() {
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "awaiting_closing").then(({ count }) => setAwaitingClosing(count ?? 0)),
       supabase.from("provision_queue").select("id", { count: "exact", head: true }).eq("provision_status", "provisioning").then(({ count }) => setProvisioningCount(count ?? 0)),
       supabase.from("audit_logs").select("action, module, created_at, metadata").order("created_at", { ascending: false }).limit(8).then(({ data }) => setRecentActivity(data ?? [])),
+      supabase.from("automations").select("id, enabled").then(({ data }) => {
+        const d = data ?? [];
+        setAutoTotal(d.length);
+        setAutoActive(d.filter((a: any) => a.enabled).length);
+      }),
+      supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
+        setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
+      }),
     ]);
   }, []);
 
