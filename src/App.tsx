@@ -148,6 +148,7 @@ const App = () => (
               <Route path="audit-logs" element={<AdminAuditLogs />} />
               <Route path="templates" element={<AdminTemplates />} />
               <Route path="packages" element={<AdminPackages />} />
+              <Route path="packages/:id" element={<AdminPackageDetail />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
