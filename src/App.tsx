@@ -82,6 +82,7 @@ import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminAutomations from "./pages/admin/AdminAutomations";
+import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
