@@ -103,6 +103,7 @@ import CalendarDetail from "./pages/CalendarDetail";
 import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
+import ProposalView from "./pages/ProposalView";
 const queryClient = new QueryClient();
 
 const App = () => (
