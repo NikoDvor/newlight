@@ -120,6 +120,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
             <Route path="/book/:slug" element={<BookingPage />} />
+            <Route path="/proposal/:token" element={<ProposalView />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>
