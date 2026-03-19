@@ -15,21 +15,29 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
+import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
-interface NavGroup {
-  label: string;
-  items: { title: string; url: string; icon: any }[];
+interface NavEntry {
+  type: "item" | "group";
+  title?: string;
+  url?: string;
+  icon?: any;
+  label?: string;
+  /** Module key for permission filtering. Omit = always visible. */
+  moduleKey?: string;
+  items?: { title: string; url: string; icon: any; moduleKey?: string }[];
 }
 
-const navStructure: ({ type: "item"; title: string; url: string; icon: any } | { type: "group"; label: string; items: { title: string; url: string; icon: any }[] })[] = [
+const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles },
-  { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain },
+  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+  { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
     type: "group", label: "Client Overview",
     items: [
-      { title: "Business Health", url: "/business-health", icon: Heart },
-      { title: "Revenue Opportunities", url: "/revenue-opportunities", icon: DollarSign },
+      { title: "Business Health", url: "/business-health", icon: Heart, moduleKey: "reports" },
+      { title: "Revenue Opportunities", url: "/revenue-opportunities", icon: DollarSign, moduleKey: "reports" },
       { title: "Priority Actions", url: "/priority-actions", icon: ListChecks },
       { title: "Live Activity Feed", url: "/live-activity", icon: Activity },
     ],
@@ -37,37 +45,37 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
   {
     type: "group", label: "Growth Systems",
     items: [
-      { title: "Website", url: "/website", icon: Globe },
-      { title: "SEO", url: "/seo", icon: Search },
-      { title: "Ads", url: "/paid-ads", icon: Megaphone },
-      { title: "Social Media", url: "/social-media", icon: Share2 },
-      { title: "CRM", url: "/crm", icon: Users },
-      { title: "Reviews", url: "/reviews", icon: Star },
-      { title: "Content Planner", url: "/content-planner", icon: Palette },
-      { title: "Proposals", url: "/proposals", icon: PenTool },
+      { title: "Website", url: "/website", icon: Globe, moduleKey: "website" },
+      { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
+      { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
+      { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
+      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
+      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
+      { title: "Content Planner", url: "/content-planner", icon: Palette, moduleKey: "content" },
+      { title: "Proposals", url: "/proposals", icon: PenTool, moduleKey: "proposals" },
     ],
   },
   {
     type: "group", label: "Enterprise Services",
     items: [
-      { title: "Finance", url: "/finance", icon: Wallet },
-      { title: "Workforce", url: "/workforce", icon: HardHat },
-      { title: "Team & Users", url: "/team", icon: Users },
-      { title: "Calendar", url: "/calendar", icon: Calendar },
-      { title: "Manage Calendars", url: "/calendar-management", icon: Settings2 },
-      { title: "Forms", url: "/forms", icon: FileText },
-      { title: "Calendar Sync", url: "/calendar-integrations", icon: Plug },
-      { title: "Email", url: "/email", icon: Mail },
-      { title: "Chat", url: "/chat", icon: MessageSquare },
+      { title: "Finance", url: "/finance", icon: Wallet, moduleKey: "finance" },
+      { title: "Workforce", url: "/workforce", icon: HardHat, moduleKey: "workforce" },
+      { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
+      { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "Manage Calendars", url: "/calendar-management", icon: Settings2, moduleKey: "calendar" },
+      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
+      { title: "Calendar Sync", url: "/calendar-integrations", icon: Plug, moduleKey: "calendar" },
+      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
       { title: "Notifications", url: "/notifications", icon: Bell },
     ],
   },
   {
     type: "group", label: "Business Intelligence",
     items: [
-      { title: "Market Research", url: "/market-research", icon: TrendingUp },
-      { title: "Competitor Tracking", url: "/competitor-tracking", icon: Eye },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Calendar },
+      { title: "Market Research", url: "/market-research", icon: TrendingUp, moduleKey: "reports" },
+      { title: "Competitor Tracking", url: "/competitor-tracking", icon: Eye, moduleKey: "reports" },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Calendar, moduleKey: "meeting_intel" },
       { title: "Automation Workflows", url: "/automations", icon: Workflow },
     ],
   },
@@ -76,7 +84,7 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     items: [
       { title: "Complete Setup", url: "/client-setup", icon: Plug },
       { title: "Brand Assets", url: "/brand-assets", icon: Image },
-      { title: "Integrations", url: "/integrations", icon: Plug },
+      { title: "Integrations", url: "/integrations", icon: Plug, moduleKey: "settings" },
       { title: "Onboarding", url: "/onboarding", icon: Workflow },
     ],
   },
@@ -84,12 +92,12 @@ const navStructure: ({ type: "item"; title: string; url: string; icon: any } | {
     type: "group", label: "Training & Support",
     items: [
       { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
-      { title: "Help Desk", url: "/help-desk", icon: Headphones },
-      { title: "Courses", url: "/training", icon: GraduationCap },
+      { title: "Help Desk", url: "/help-desk", icon: Headphones, moduleKey: "helpdesk" },
+      { title: "Courses", url: "/training", icon: GraduationCap, moduleKey: "training" },
       { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
-  { type: "item", title: "Reports", url: "/reports", icon: FileText },
+  { type: "item", title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
 ];
 
 const bottomItems = [
@@ -101,18 +109,24 @@ export function AppSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const { hasAccess } = useWorkspacePermissions();
+  const { isAdmin } = useWorkspace();
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
 
-  // Track which groups are open
+  const canSee = (moduleKey?: string) => {
+    if (!moduleKey || isAdmin) return true;
+    return hasAccess(moduleKey, "view");
+  };
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navStructure.forEach((entry) => {
-      if (entry.type === "group") {
-        init[entry.label] = entry.items.some((i) => isActive(i.url));
+      if (entry.type === "group" && entry.items) {
+        init[entry.label!] = entry.items.some((i) => isActive(i.url));
       }
     });
     return init;
@@ -177,6 +191,7 @@ export function AppSidebar() {
       <SidebarContent className="px-2 relative z-10">
         {navStructure.map((entry, idx) => {
           if (entry.type === "item") {
+            if (!canSee(entry.moduleKey)) return null;
             return (
               <SidebarGroup key={idx} className="py-0.5">
                 <SidebarGroupContent>
@@ -188,14 +203,17 @@ export function AppSidebar() {
             );
           }
 
-          const group = entry as { type: "group"; label: string; items: any[] };
-          const isOpen = openGroups[group.label] ?? false;
+          const group = entry as NavEntry & { items: any[] };
+          const visibleItems = group.items!.filter(i => canSee(i.moduleKey));
+          if (visibleItems.length === 0) return null;
+
+          const isOpen = openGroups[group.label!] ?? false;
 
           return (
             <SidebarGroup key={idx} className="py-0.5">
               {!collapsed && (
                 <button
-                  onClick={() => toggleGroup(group.label)}
+                  onClick={() => toggleGroup(group.label!)}
                   className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/50 hover:text-white/70 transition-colors"
                 >
                   <span>{group.label}</span>
@@ -205,7 +223,7 @@ export function AppSidebar() {
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {group.items.map((item: any) => (
+                    {visibleItems.map((item: any) => (
                       <NavItem key={item.title} item={item} />
                     ))}
                   </SidebarMenu>
