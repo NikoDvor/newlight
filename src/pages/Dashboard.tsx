@@ -27,6 +27,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { NextBestActions } from "@/components/NextBestActions";
+import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
