@@ -206,7 +206,7 @@ export default function Website() {
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic Sources</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="opportunities" className="rounded-md text-sm">Opportunities</TabsTrigger>
+            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recommendations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pages" className="mt-4">
