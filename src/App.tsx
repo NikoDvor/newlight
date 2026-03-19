@@ -86,6 +86,7 @@ import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminLaunchChecklist from "./pages/admin/AdminLaunchChecklist";
 import AdminPackageDetail from "./pages/admin/AdminPackageDetail";
+import AdminArchitecture from "./pages/admin/AdminArchitecture";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -175,6 +176,7 @@ const App = () => (
               <Route path="follow-ups" element={<FollowUpQueue />} />
               <Route path="message-templates" element={<MessageTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
+              <Route path="architecture" element={<AdminArchitecture />} />
             </Route>
 
             {/* Client Workspace */}
