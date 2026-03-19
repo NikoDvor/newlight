@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { PermissionGuard } from "@/components/PermissionGuard";
 import Dashboard from "./pages/Dashboard";
 import CRM from "./pages/CRM";
 import ContactDetail from "./pages/ContactDetail";
