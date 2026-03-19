@@ -79,6 +79,120 @@ export type Database = {
           },
         ]
       }
+      ad_performance_records: {
+        Row: {
+          campaign_id: string | null
+          clicks: number | null
+          client_id: string
+          conversions: number | null
+          cpl: number | null
+          created_at: string
+          id: string
+          impressions: number | null
+          leads: number | null
+          metric_date: string
+          roas: number | null
+          spend_amount: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicks?: number | null
+          client_id: string
+          conversions?: number | null
+          cpl?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          metric_date?: string
+          roas?: number | null
+          spend_amount?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          clicks?: number | null
+          client_id?: string
+          conversions?: number | null
+          cpl?: number | null
+          created_at?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          metric_date?: string
+          roas?: number | null
+          spend_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_performance_records_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_performance_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_recommendations: {
+        Row: {
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+          recommendation_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_recommendations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_recommendations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_business_insights: {
         Row: {
           category: string | null
@@ -5823,6 +5937,50 @@ export type Database = {
           },
         ]
       }
+      seo_content_opportunities: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          opportunity_type: string
+          priority: string
+          status: string
+          target_keyword: string | null
+          topic_title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          opportunity_type?: string
+          priority?: string
+          status?: string
+          target_keyword?: string | null
+          topic_title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          opportunity_type?: string
+          priority?: string
+          status?: string
+          target_keyword?: string | null
+          topic_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_content_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_issues: {
         Row: {
           category: string | null
@@ -5914,6 +6072,44 @@ export type Database = {
           },
         ]
       }
+      seo_local_visibility: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          location_name: string
+          notes: string | null
+          updated_at: string
+          visibility_status: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          location_name: string
+          notes?: string | null
+          updated_at?: string
+          visibility_status?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          location_name?: string
+          notes?: string | null
+          updated_at?: string
+          visibility_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_local_visibility_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_accounts: {
         Row: {
           client_id: string
@@ -5954,6 +6150,57 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_metrics: {
+        Row: {
+          client_id: string
+          content_item_id: string | null
+          created_at: string
+          engagement_rate: number | null
+          id: string
+          metric_date: string
+          platform_name: string
+          posts_count: number | null
+          reach: number | null
+        }
+        Insert: {
+          client_id: string
+          content_item_id?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          metric_date?: string
+          platform_name: string
+          posts_count?: number | null
+          reach?: number | null
+        }
+        Update: {
+          client_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          metric_date?: string
+          platform_name?: string
+          posts_count?: number | null
+          reach?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_metrics_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -6790,6 +7037,60 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_recommendations: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          page_id: string | null
+          priority: string
+          recommendation_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          page_id?: string | null
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          page_id?: string | null
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_recommendations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_recommendations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "website_pages"
             referencedColumns: ["id"]
           },
         ]
