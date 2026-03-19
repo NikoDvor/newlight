@@ -175,6 +175,11 @@ export default function AdminProposalDetail() {
           <Button size="sm" variant="outline" className="border-white/10 text-white/50 hover:bg-white/10" onClick={() => updateStatus("archived")}>
             <Archive className="h-3.5 w-3.5 mr-1" /> Archive
           </Button>
+          {shareUrl && (
+            <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={copyShareLink}>
+              <Link2 className="h-3.5 w-3.5 mr-1" /> Copy Link
+            </Button>
+          )}
         </div>
       </div>
 
