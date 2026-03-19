@@ -307,29 +307,42 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="opportunities" className="mt-4">
-            <DataCard title="Conversion Opportunities">
-              <div className="flex items-center gap-2 mb-4">
-                <DemoDataLabel />
-                <span className="text-[10px] text-muted-foreground">Strategic recommendations based on best practices</span>
-              </div>
-              <div className="space-y-3">
-                {DEMO_OPPORTUNITIES.map((opp, i) => (
-                  <motion.div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                    initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                        <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+          <TabsContent value="recommendations" className="mt-4">
+            <DataCard title="Recommendations" action={<Button size="sm" variant="outline" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
+              {recommendations.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Zap className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No recommendations yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add optimization recommendations to track website improvements.</p>
+                  <Button size="sm" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Recommendation</Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recommendations.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                          <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{r.title}</p>
+                          <p className="text-xs text-muted-foreground">{r.description || r.recommendation_type}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{opp.title}</p>
-                        <p className="text-xs" style={{ color: "hsl(197 92% 48%)" }}>{opp.impact}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${r.priority === "high" ? "bg-blue-50 text-blue-700" : r.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{r.priority}</Badge>
+                        {r.status === "open" ? (
+                          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => resolveRecommendation(r.id)}>Resolve</Button>
+                        ) : (
+                          <Badge className="text-[10px] bg-emerald-50 text-emerald-700">Resolved</Badge>
+                        )}
                       </div>
                     </div>
-                    <Badge className={`text-[10px] ${opp.severity === "high" ? "bg-blue-50 text-blue-700" : opp.severity === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{opp.severity}</Badge>
-                  </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </DataCard>
           </TabsContent>
         </Tabs>
