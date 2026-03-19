@@ -87,6 +87,43 @@ export default function PaidAds() {
     fetchData();
   };
 
+  const addPerfRecord = async () => {
+    if (!activeClientId || !newPerf.campaign_id) return;
+    const spend = parseFloat(newPerf.spend_amount) || 0;
+    const leads = parseInt(newPerf.leads) || 0;
+    const { error } = await supabase.from("ad_performance_records").insert({
+      client_id: activeClientId, campaign_id: newPerf.campaign_id,
+      metric_date: newPerf.metric_date || new Date().toISOString().split("T")[0],
+      spend_amount: spend, clicks: parseInt(newPerf.clicks) || 0, leads,
+      impressions: parseInt(newPerf.impressions) || 0, conversions: parseInt(newPerf.conversions) || 0,
+      roas: parseFloat(newPerf.roas) || 0, cpl: leads > 0 ? Math.round(spend / leads * 100) / 100 : 0,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Performance Record Added" });
+    setNewPerf({ campaign_id: "", metric_date: "", spend_amount: "", clicks: "", leads: "", impressions: "", conversions: "", roas: "" });
+    setPerfOpen(false);
+    fetchData();
+  };
+
+  const addAdRecommendation = async () => {
+    if (!activeClientId || !newAdRec.title) return;
+    const { error } = await supabase.from("ad_recommendations").insert({
+      client_id: activeClientId, title: newAdRec.title,
+      description: newAdRec.description || null, priority: newAdRec.priority,
+      campaign_id: newAdRec.campaign_id || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Recommendation Added" });
+    setNewAdRec({ title: "", description: "", priority: "medium", campaign_id: "" });
+    setRecOpen(false);
+    fetchData();
+  };
+
+  const resolveAdRec = async (id: string) => {
+    await supabase.from("ad_recommendations").update({ status: "resolved" }).eq("id", id);
+    fetchData();
+  };
+
   const hasRealData = campaigns.length > 0;
   const displayCampaigns = hasRealData ? campaigns : [];
   const totalSpend = campaigns.reduce((s, c) => s + (Number(c.spend) || 0), 0);
