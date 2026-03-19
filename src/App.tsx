@@ -111,6 +111,9 @@ import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import SetupCenter from "./pages/SetupCenter";
 import ServiceManager from "./pages/ServiceManager";
+import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
+import ClientSuccessCenter from "./pages/ClientSuccessCenter";
+import SupportTickets from "./pages/SupportTickets";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -162,6 +165,7 @@ const App = () => (
               <Route path="automations" element={<AdminAutomations />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
               <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
+              <Route path="client-success" element={<AdminClientSuccess />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
@@ -232,6 +236,8 @@ const App = () => (
               <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarIntegrations /></PermissionGuard>} />
               <Route path="/setup-center" element={<SetupCenter />} />
               <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
+              <Route path="/success-center" element={<ClientSuccessCenter />} />
+              <Route path="/support-tickets" element={<SupportTickets />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

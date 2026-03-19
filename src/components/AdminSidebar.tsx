@@ -37,9 +37,10 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Clients & Team",
+    label: "Clients & Success",
     items: [
       { title: "Clients", url: "/admin/clients", icon: Users },
+      { title: "Client Success", url: "/admin/client-success", icon: Shield },
       { title: "Team & Users", url: "/admin/team", icon: Shield },
       { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
       { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
