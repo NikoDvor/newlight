@@ -141,6 +141,11 @@ const App = () => (
               <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
               <Route path="welcome" element={<AdminWelcome />} />
               <Route path="app-settings" element={<AdminAppSettings />} />
+              <Route path="sales-pipeline" element={<AdminSalesPipeline />} />
+              <Route path="deals/:dealId" element={<AdminDealDetail />} />
+              <Route path="meetings/:meetingId" element={<AdminMeetingDetail />} />
+              <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
+              <Route path="proposal-templates" element={<AdminProposalTemplates />} />
               <Route path="how-it-works" element={<HowItWorks />} />
             </Route>
 
