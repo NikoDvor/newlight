@@ -1011,6 +1011,53 @@ export type Database = {
           },
         ]
       }
+      calendar_integrations: {
+        Row: {
+          account_email: string | null
+          client_id: string
+          connected_at: string | null
+          connected_by: string | null
+          connection_status: string
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          provider_name: string
+          updated_at: string
+        }
+        Insert: {
+          account_email?: string | null
+          client_id: string
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          provider_name: string
+          updated_at?: string
+        }
+        Update: {
+          account_email?: string | null
+          client_id?: string
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          provider_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_integrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_reminder_rules: {
         Row: {
           calendar_id: string
@@ -1058,6 +1105,67 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_sync_settings: {
+        Row: {
+          calendar_id: string
+          client_id: string
+          created_at: string
+          id: string
+          push_bookings_to_external: boolean
+          sync_cancellations: boolean
+          sync_reschedules: boolean
+          updated_at: string
+          use_external_availability: boolean
+          workspace_user_id: string | null
+        }
+        Insert: {
+          calendar_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          push_bookings_to_external?: boolean
+          sync_cancellations?: boolean
+          sync_reschedules?: boolean
+          updated_at?: string
+          use_external_availability?: boolean
+          workspace_user_id?: string | null
+        }
+        Update: {
+          calendar_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          push_bookings_to_external?: boolean
+          sync_cancellations?: boolean
+          sync_reschedules?: boolean
+          updated_at?: string
+          use_external_availability?: boolean
+          workspace_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_sync_settings_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_sync_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_sync_settings_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_users"
             referencedColumns: ["id"]
           },
         ]
@@ -3017,6 +3125,256 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_fields: {
+        Row: {
+          client_id: string
+          conditional_logic_json: Json | null
+          created_at: string
+          field_key: string
+          field_label: string
+          field_order: number
+          field_type: string
+          form_id: string
+          help_text: string | null
+          id: string
+          is_required: boolean
+          options_json: Json | null
+          placeholder_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          conditional_logic_json?: Json | null
+          created_at?: string
+          field_key: string
+          field_label: string
+          field_order?: number
+          field_type?: string
+          form_id: string
+          help_text?: string | null
+          id?: string
+          is_required?: boolean
+          options_json?: Json | null
+          placeholder_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          conditional_logic_json?: Json | null
+          created_at?: string
+          field_key?: string
+          field_label?: string
+          field_order?: number
+          field_type?: string
+          form_id?: string
+          help_text?: string | null
+          id?: string
+          is_required?: boolean
+          options_json?: Json | null
+          placeholder_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          appointment_id: string | null
+          client_id: string
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          form_id: string
+          id: string
+          submission_data: Json
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          client_id: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          form_id: string
+          id?: string
+          submission_data?: Json
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          client_id?: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          form_id?: string
+          id?: string
+          submission_data?: Json
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          created_at: string
+          form_type: string
+          id: string
+          is_active: boolean
+          template_config: Json
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          form_type?: string
+          id?: string
+          is_active?: boolean
+          template_config?: Json
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          form_type?: string
+          id?: string
+          is_active?: boolean
+          template_config?: Json
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      forms: {
+        Row: {
+          booking_mode: string | null
+          button_text: string | null
+          client_id: string
+          collect_notes: boolean
+          confirmation_message: string | null
+          create_contact_on_submit: boolean
+          create_task_on_submit: boolean
+          created_at: string
+          description: string | null
+          form_name: string
+          form_type: string
+          id: string
+          intro_text: string | null
+          is_active: boolean
+          linked_appointment_type_id: string | null
+          linked_calendar_id: string | null
+          linked_notification_owner_id: string | null
+          linked_pipeline_stage_id: string | null
+          page_title: string | null
+          show_logo: boolean
+          show_timezone: boolean
+          update_existing_contact: boolean
+          updated_at: string
+        }
+        Insert: {
+          booking_mode?: string | null
+          button_text?: string | null
+          client_id: string
+          collect_notes?: boolean
+          confirmation_message?: string | null
+          create_contact_on_submit?: boolean
+          create_task_on_submit?: boolean
+          created_at?: string
+          description?: string | null
+          form_name: string
+          form_type?: string
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean
+          linked_appointment_type_id?: string | null
+          linked_calendar_id?: string | null
+          linked_notification_owner_id?: string | null
+          linked_pipeline_stage_id?: string | null
+          page_title?: string | null
+          show_logo?: boolean
+          show_timezone?: boolean
+          update_existing_contact?: boolean
+          updated_at?: string
+        }
+        Update: {
+          booking_mode?: string | null
+          button_text?: string | null
+          client_id?: string
+          collect_notes?: boolean
+          confirmation_message?: string | null
+          create_contact_on_submit?: boolean
+          create_task_on_submit?: boolean
+          created_at?: string
+          description?: string | null
+          form_name?: string
+          form_type?: string
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean
+          linked_appointment_type_id?: string | null
+          linked_calendar_id?: string | null
+          linked_notification_owner_id?: string | null
+          linked_pipeline_stage_id?: string | null
+          page_title?: string | null
+          show_logo?: boolean
+          show_timezone?: boolean
+          update_existing_contact?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forms_linked_appointment_type_id_fkey"
+            columns: ["linked_appointment_type_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_appointment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forms_linked_calendar_id_fkey"
+            columns: ["linked_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
             referencedColumns: ["id"]
           },
         ]
@@ -5318,6 +5676,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_calendar_integrations: {
+        Row: {
+          client_id: string
+          connection_status: string
+          created_at: string
+          external_calendar_id: string | null
+          id: string
+          provider_name: string
+          sync_direction: string
+          updated_at: string
+          workspace_user_id: string
+        }
+        Insert: {
+          client_id: string
+          connection_status?: string
+          created_at?: string
+          external_calendar_id?: string | null
+          id?: string
+          provider_name: string
+          sync_direction?: string
+          updated_at?: string
+          workspace_user_id: string
+        }
+        Update: {
+          client_id?: string
+          connection_status?: string
+          created_at?: string
+          external_calendar_id?: string | null
+          id?: string
+          provider_name?: string
+          sync_direction?: string
+          updated_at?: string
+          workspace_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_calendar_integrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_calendar_integrations_workspace_user_id_fkey"
+            columns: ["workspace_user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notification_preferences: {
         Row: {
