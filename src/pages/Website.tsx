@@ -52,14 +52,16 @@ export default function Website() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [pRes, iRes, tRes] = await Promise.all([
+    const [pRes, iRes, tRes, rRes] = await Promise.all([
       supabase.from("website_pages").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
       supabase.from("website_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("website_traffic_sources").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
+      supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
     ]);
     setPages(pRes.data || []);
     setIssues(iRes.data || []);
     setTrafficSources(tRes.data || []);
+    setRecommendations(rRes.data || []);
     setLoading(false);
   };
 
