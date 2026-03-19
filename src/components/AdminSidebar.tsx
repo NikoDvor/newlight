@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
   ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
-  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket, Map
+  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket, Map, Sparkles
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -60,6 +60,7 @@ const navGroups: NavGroup[] = [
     label: "Revenue & Ops",
     items: [
       { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
+      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: Sparkles },
       { title: "Automations", url: "/admin/automations", icon: Zap },
       { title: "Reports", url: "/admin/reports", icon: BarChart3 },
       { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },

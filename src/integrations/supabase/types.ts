@@ -6393,6 +6393,75 @@ export type Database = {
           },
         ]
       }
+      recommended_services: {
+        Row: {
+          client_id: string
+          confidence_score: number | null
+          created_at: string
+          fit_score: number | null
+          id: string
+          priority_rank: number
+          projected_annual_revenue_impact: number | null
+          projected_monthly_revenue_impact: number | null
+          reason_summary: string | null
+          recommendation_status: string
+          recommended_package_id: string | null
+          service_key: string
+          service_name: string
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          client_id: string
+          confidence_score?: number | null
+          created_at?: string
+          fit_score?: number | null
+          id?: string
+          priority_rank?: number
+          projected_annual_revenue_impact?: number | null
+          projected_monthly_revenue_impact?: number | null
+          reason_summary?: string | null
+          recommendation_status?: string
+          recommended_package_id?: string | null
+          service_key: string
+          service_name: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          client_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          fit_score?: number | null
+          id?: string
+          priority_rank?: number
+          projected_annual_revenue_impact?: number | null
+          projected_monthly_revenue_impact?: number | null
+          reason_summary?: string | null
+          recommendation_status?: string
+          recommended_package_id?: string | null
+          service_key?: string
+          service_name?: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommended_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommended_services_recommended_package_id_fkey"
+            columns: ["recommended_package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       renewal_records: {
         Row: {
           client_id: string
@@ -6586,6 +6655,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "revenue_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_projection_models: {
+        Row: {
+          baseline_payload_json: Json | null
+          client_id: string
+          created_at: string
+          id: string
+          market_assumptions_json: Json | null
+          model_type: string
+          projected_payload_json: Json | null
+          updated_at: string
+        }
+        Insert: {
+          baseline_payload_json?: Json | null
+          client_id: string
+          created_at?: string
+          id?: string
+          market_assumptions_json?: Json | null
+          model_type: string
+          projected_payload_json?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          baseline_payload_json?: Json | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          market_assumptions_json?: Json | null
+          model_type?: string
+          projected_payload_json?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_projection_models_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -7211,6 +7321,47 @@ export type Database = {
             columns: ["linked_calendar_id"]
             isOneToOne: false
             referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_recommendation_signals: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          signal_key: string
+          signal_type: string
+          signal_value: number | null
+          signal_weight: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          signal_key: string
+          signal_type: string
+          signal_value?: number | null
+          signal_weight?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          signal_key?: string
+          signal_type?: string
+          signal_value?: number | null
+          signal_weight?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_recommendation_signals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

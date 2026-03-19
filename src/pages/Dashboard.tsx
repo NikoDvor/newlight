@@ -27,6 +27,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { NextBestActions } from "@/components/NextBestActions";
+import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
@@ -148,6 +149,11 @@ export default function Dashboard() {
         <CTAButton variant="connect-accounts" size="sm" />
         <CTAButton variant="upload-assets" size="sm" />
         <CTAButton variant="book-kickoff" size="sm" />
+      </div>
+
+      {/* Recommended Services — Top Revenue Opportunity */}
+      <div className="mb-6">
+        <RecommendedServicesWidget />
       </div>
 
       {/* Money Meter */}
