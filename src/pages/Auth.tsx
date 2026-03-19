@@ -251,6 +251,4 @@ export default function Auth() {
       </motion.div>
     </div>
   );
-});
-
-export default Auth;
+}
