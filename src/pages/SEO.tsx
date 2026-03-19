@@ -116,7 +116,34 @@ export default function SEO() {
     fetchData();
   };
 
-  const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0;
+  const addContentOpp = async () => {
+    if (!activeClientId || !newContent.topic_title) return;
+    const { error } = await supabase.from("seo_content_opportunities").insert({
+      client_id: activeClientId, topic_title: newContent.topic_title,
+      target_keyword: newContent.target_keyword || null, opportunity_type: newContent.opportunity_type,
+      priority: newContent.priority,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Content Opportunity Added" });
+    setNewContent({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
+    setContentOpen(false);
+    fetchData();
+  };
+
+  const addLocalItem = async () => {
+    if (!activeClientId || !newLocal.location_name) return;
+    const { error } = await supabase.from("seo_local_visibility").insert({
+      client_id: activeClientId, location_name: newLocal.location_name,
+      visibility_status: newLocal.visibility_status, notes: newLocal.notes || null,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Location Added" });
+    setNewLocal({ location_name: "", visibility_status: "unknown", notes: "" });
+    setLocalOpen(false);
+    fetchData();
+  };
+
+  const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0 || contentOpps.length > 0 || localItems.length > 0;
   const rankedKws = keywords.filter(k => k.position);
   const openIssues = issues.filter(i => i.status === "open").length;
 
