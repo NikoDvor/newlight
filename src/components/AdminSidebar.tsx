@@ -29,6 +29,7 @@ const navItems = [
   { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
   { title: "Templates", url: "/admin/templates", icon: FileCode },
   { title: "Package Access", url: "/admin/packages", icon: Package },
+  { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
   { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
