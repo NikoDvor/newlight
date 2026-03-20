@@ -6503,6 +6503,47 @@ export type Database = {
           },
         ]
       }
+      recommendation_runs: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          run_status: string
+          run_summary: string | null
+          top_projected_monthly_revenue_impact: number | null
+          top_service_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          run_status?: string
+          run_summary?: string | null
+          top_projected_monthly_revenue_impact?: number | null
+          top_service_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          run_status?: string
+          run_summary?: string | null
+          top_projected_monthly_revenue_impact?: number | null
+          top_service_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommended_services: {
         Row: {
           client_id: string
@@ -6512,6 +6553,9 @@ export type Database = {
           id: string
           priority_rank: number
           projected_annual_revenue_impact: number | null
+          projected_booking_impact: number | null
+          projected_conversion_impact: number | null
+          projected_lead_impact: number | null
           projected_monthly_revenue_impact: number | null
           reason_summary: string | null
           recommendation_status: string
@@ -6529,6 +6573,9 @@ export type Database = {
           id?: string
           priority_rank?: number
           projected_annual_revenue_impact?: number | null
+          projected_booking_impact?: number | null
+          projected_conversion_impact?: number | null
+          projected_lead_impact?: number | null
           projected_monthly_revenue_impact?: number | null
           reason_summary?: string | null
           recommendation_status?: string
@@ -6546,6 +6593,9 @@ export type Database = {
           id?: string
           priority_rank?: number
           projected_annual_revenue_impact?: number | null
+          projected_booking_impact?: number | null
+          projected_conversion_impact?: number | null
+          projected_lead_impact?: number | null
           projected_monthly_revenue_impact?: number | null
           reason_summary?: string | null
           recommendation_status?: string
