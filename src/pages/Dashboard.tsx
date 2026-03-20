@@ -39,7 +39,7 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState({
     contacts: 0, openDeals: 0, pipelineValue: 0, wonValue: 0,
     upcomingEvents: 0, completedEvents: 0, reviewRequests: 0,
-    avgRating: 0, ratingCount: 0, openTasks: 0,
+    avgRating: 0, ratingCount: 0, openTasks: 0, overdueFollowUps: 0,
   });
   const [activities, setActivities] = useState<any[]>([]);
 
