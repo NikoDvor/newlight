@@ -52,6 +52,13 @@ export default function Website() {
   const [newPage, setNewPage] = useState({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
   const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+  const [contentBlocks, setContentBlocks] = useState<any[]>([]);
+  const [editingBlock, setEditingBlock] = useState<any | null>(null);
+  const [blockForm, setBlockForm] = useState<any>({});
+  const [contentPage, setContentPage] = useState("homepage");
+
+  const CONTENT_PAGES = ["homepage", "services", "about", "contact", "booking", "offers"];
+  const BLOCK_TYPES = ["Hero", "RichText", "CTA", "FAQ", "ServiceList", "Testimonial", "ContactBlock", "BookingBlock", "Image"];
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
