@@ -289,6 +289,26 @@ export default function AdminMasterActivation() {
         }),
       ]);
 
+      // 8. Auto-provision any missing defaults (safe merge)
+      await provisionWorkspaceDefaults(client.id, {
+        industry: form.industry,
+        timezone: form.default_timezone,
+        skipIfExists: true,
+      });
+
+      // 9. Update onboarding stage & emit events
+      await syncOnboardingStage(client.id, "active");
+      await emitEvent({
+        eventKey: "activation_form_submitted",
+        clientId: client.id,
+        payload: { package: form.service_package, crm_mode: form.crm_mode },
+      });
+      await emitEvent({
+        eventKey: "workspace_activated",
+        clientId: client.id,
+        payload: { business_name: form.business_name_confirmed },
+      });
+
       setActivated(true);
       toast.success(`${form.business_name_confirmed} activated successfully!`);
     } catch (err: any) {
