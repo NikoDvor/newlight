@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DemoDataLabel } from "@/components/SetupBanner";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
@@ -89,6 +90,7 @@ export default function Reports() {
   return (
     <div>
       <PageHeader title="Reports" description="Automated performance reports and analytics">
+        <DemoDataLabel />
         <div className="flex gap-2">
           <Select value={reportType} onValueChange={setReportType}>
             <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>

@@ -20,7 +20,6 @@ import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { PredictiveGrowth } from "@/components/PredictiveGrowth";
 import { RevenueCalculator } from "@/components/RevenueCalculator";
 import { GrowthAdvisorCard } from "@/components/GrowthAdvisorCard";
-import { CTAButton } from "@/components/CTAButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -28,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { NextBestActions } from "@/components/NextBestActions";
 import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
+import { WorkspaceReadiness } from "@/components/WorkspaceReadiness";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
@@ -44,7 +44,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (!activeClientId) return;
 
-    // Fetch all real metrics in parallel
     Promise.all([
       supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
@@ -67,9 +66,6 @@ export default function Dashboard() {
       const now = new Date();
       const reviewsData = (reviews.data || []) as any[];
       const rated = reviewsData.filter((r: any) => r.rating);
-
-      const cancelledCount = eventsData.filter((e: any) => e.status === "cancelled").length;
-      const noShowCount = eventsData.filter((e: any) => e.status === "no_show").length;
 
       setMetrics({
         contacts: contacts.count || 0,
@@ -111,6 +107,7 @@ export default function Dashboard() {
 
   return (
     <div>
+      {/* Welcome Header */}
       <div className="flex items-start justify-between mb-2">
         <PageHeader title={branding.welcome_message || "Dashboard"} description="Your AI-powered business command center" />
         <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate("/welcome")}>
@@ -118,6 +115,7 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* Setup Progress Banner — only for new clients */}
       {isNewClient && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 p-5 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.04] to-transparent">
@@ -135,21 +133,15 @@ export default function Dashboard() {
           </div>
           <Progress value={setupPercentage} className="h-2 mb-4" />
           <div className="flex flex-wrap gap-2">
-            <Link to="/client-setup"><Button size="sm" className="btn-gradient h-8 text-[11px]"><Upload className="h-3 w-3 mr-1" /> Complete Setup</Button></Link>
+            <Link to="/setup-center"><Button size="sm" className="btn-gradient h-8 text-[11px]"><Upload className="h-3 w-3 mr-1" /> Complete Setup</Button></Link>
             <Link to="/integrations"><Button size="sm" variant="outline" className="h-8 text-[11px]"><Plug className="h-3 w-3 mr-1" /> Connect Accounts ({integrationStats.connected}/{integrationStats.total})</Button></Link>
             <Link to="/onboarding"><Button size="sm" variant="outline" className="h-8 text-[11px]"><Calendar className="h-3 w-3 mr-1" /> Book Kickoff</Button></Link>
           </div>
         </motion.div>
       )}
 
+      {/* Next Best Actions */}
       <NextBestActions />
-
-      <div className="flex flex-wrap gap-2 mb-6">
-        <CTAButton variant="complete-setup" size="sm" />
-        <CTAButton variant="connect-accounts" size="sm" />
-        <CTAButton variant="upload-assets" size="sm" />
-        <CTAButton variant="book-kickoff" size="sm" />
-      </div>
 
       {/* Recommended Services — Top Revenue Opportunity */}
       <div className="mb-6">
@@ -165,6 +157,7 @@ export default function Dashboard() {
         <MoneyMeter />
       </div>
 
+      {/* Health + Onboarding */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <HealthScoreWidget score={73} />
         <div className="lg:col-span-2">
@@ -182,6 +175,12 @@ export default function Dashboard() {
         <MetricCard label="Open Tasks" value={hasData ? String(metrics.openTasks) : "—"} change="" changeType="neutral" icon={CheckSquare} />
       </WidgetGrid>
 
+      {/* Workspace Readiness */}
+      <div className="mt-6">
+        <WorkspaceReadiness />
+      </div>
+
+      {/* System Status */}
       <div className="mt-6">
         <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <Brain className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 56%)" }} />
@@ -190,26 +189,33 @@ export default function Dashboard() {
         <SystemStatusBar />
       </div>
 
+      {/* AI Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <GrowthAdvisorCard />
         <GrowthAutopilot />
         <LeadScoringPanel />
       </div>
 
-      {/* Reactivation Engine */}
+      {/* Reactivation */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <ReactivationEngine />
       </div>
 
-      {/* Real Activity Feed */}
+      {/* Activity + Quick Links */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <DataCard title="Recent Activity">
           {activities.length === 0 ? (
-            <div className="py-6 text-center"><p className="text-sm text-muted-foreground">Activity will appear as you use the platform.</p></div>
+            <div className="py-6 text-center">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                <Activity className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">No activity yet</p>
+              <p className="text-xs text-muted-foreground">Activity will appear as you use the platform — adding contacts, booking appointments, and completing tasks.</p>
+            </div>
           ) : (
             <div className="space-y-2">
               {activities.map((a, i) => (
-                <motion.div key={a.id} className="flex items-start gap-2.5 py-1.5"
+                <motion.div key={a.id || i} className="flex items-start gap-2.5 py-1.5"
                   initial={{ opacity: 0, x: -4 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.03 }}>
                   <div className="mt-0.5 h-6 w-6 rounded-md flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <Activity className="h-3 w-3" style={{ color: "hsl(211 96% 56%)" }} />
@@ -245,7 +251,7 @@ export default function Dashboard() {
         </DataCard>
       </div>
 
-      {/* Campaign Engine */}
+      {/* Campaign + Revenue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <CampaignEngine />
         <RevenueCalculator />
