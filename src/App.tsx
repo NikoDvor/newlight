@@ -182,6 +182,7 @@ const App = () => (
               <Route path="architecture" element={<AdminArchitecture />} />
               <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
               <Route path="implementation-requests" element={<AdminImplementationRequests />} />
+              <Route path="clients/:clientId/handoff" element={<AdminHandoffChecklist />} />
             </Route>
 
             {/* Client Workspace */}
