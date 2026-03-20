@@ -127,9 +127,9 @@ export default function AdminHandoffChecklist() {
         { key: "crm", label: "CRM Ready", status: s(contactCount > 0 && dealCount > 0, contactCount > 0 || dealCount > 0), detail: `${contactCount} contact(s), ${dealCount} deal(s)`, link: "/crm" },
         { key: "team", label: "Team Ready", status: s(teamCount >= 2, teamCount > 0), detail: teamCount > 0 ? `${teamCount} member(s)` : "No team members", link: "/team" },
         { key: "integrations", label: "Integrations Reviewed", status: s(connectedIntgs >= 3, connectedIntgs > 0), detail: `${connectedIntgs} connected of ${intgs.length}`, link: "/integrations" },
-        { key: "recommendation", label: "Recommendation Active", status: s(recCount > 0, false), detail: recCount > 0 ? "Recommendations generated" : "No recommendations yet", link: "/" },
-        { key: "request_path", label: "Request Path Working", status: s(irCount > 0, false), detail: irCount > 0 ? `${irCount} request(s) submitted` : "No requests yet — verify CTA", link: "/" },
-        { key: "proposal", label: "Proposal Ready", status: s(hasAcceptedProposal, hasSentProposal || proposalCount > 0), detail: hasAcceptedProposal ? "Proposal accepted" : hasSentProposal ? "Proposal sent — awaiting response" : proposalCount > 0 ? `${proposalCount} draft(s) — send to client` : "No proposal created", link: "/proposals" },
+        { key: "recommendation", label: "Recommendation Active", status: s(recCount > 0, false), detail: recCount > 0 ? "Recommendations generated" : "No recommendations yet — visit client dashboard", link: "/" },
+        { key: "request_path", label: "Request Path Working", status: s(irCount > 0, false), detail: irCount > 0 ? `${irCount} request(s) submitted` : "No requests yet — test the Get Started CTA on client dashboard", link: "/" },
+        { key: "proposal", label: "Proposal Ready", status: s(hasAcceptedProposal, hasSentProposal || proposalCount > 0), detail: hasAcceptedProposal ? "Proposal accepted" : hasSentProposal ? "Proposal sent — awaiting response" : proposalCount > 0 ? `${proposalCount} draft(s) — send to client` : "No proposal created — create from implementation request", link: "/admin/implementation-requests" },
         { key: "billing", label: "Billing Ready", status: s(hasActiveSub, hasBillingAccount), detail: hasActiveSub ? "Active subscription" : hasBillingAccount ? `Billing account: ${billingStatus}` : "No billing account set up", link: "/billing" },
       ]);
 
