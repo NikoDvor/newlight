@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle2, ArrowLeft, ArrowRight, Loader2, Save, Zap,
   Palette, Users, Calendar, Mail, Star, UserPlus, DollarSign,
-  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList
+  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList, ShoppingBag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig } from "@/components/activation/activationTypes";
+import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
 import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
 import { StepCalendar } from "@/components/activation/StepCalendar";
+import { StepServices } from "@/components/activation/StepServices";
 import { StepBookingForms } from "@/components/activation/StepBookingForms";
 import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
@@ -26,14 +27,17 @@ import { StepSupport } from "@/components/activation/StepSupport";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepReview } from "@/components/activation/StepReview";
 
+const TOTAL_STEPS = STEPS.length;
+
 const stepIcons: Record<number, React.ReactNode> = {
   1: <Zap className="h-3.5 w-3.5" />, 2: <Palette className="h-3.5 w-3.5" />,
   3: <Users className="h-3.5 w-3.5" />, 4: <Calendar className="h-3.5 w-3.5" />,
-  5: <ClipboardList className="h-3.5 w-3.5" />, 6: <Mail className="h-3.5 w-3.5" />,
-  7: <Star className="h-3.5 w-3.5" />, 8: <UserPlus className="h-3.5 w-3.5" />,
-  9: <DollarSign className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
-  11: <TrendingUp className="h-3.5 w-3.5" />, 12: <Headphones className="h-3.5 w-3.5" />,
-  13: <Link2 className="h-3.5 w-3.5" />, 14: <ClipboardCheck className="h-3.5 w-3.5" />,
+  5: <ShoppingBag className="h-3.5 w-3.5" />, 6: <ClipboardList className="h-3.5 w-3.5" />,
+  7: <Mail className="h-3.5 w-3.5" />, 8: <Star className="h-3.5 w-3.5" />,
+  9: <UserPlus className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
+  11: <DollarSign className="h-3.5 w-3.5" />, 12: <TrendingUp className="h-3.5 w-3.5" />,
+  13: <Headphones className="h-3.5 w-3.5" />, 14: <Link2 className="h-3.5 w-3.5" />,
+  15: <ClipboardCheck className="h-3.5 w-3.5" />,
 };
 
 export default function AdminMasterActivation() {
@@ -43,7 +47,7 @@ export default function AdminMasterActivation() {
   const [submitting, setSubmitting] = useState(false);
   const [activated, setActivated] = useState(false);
 
-  const set = useCallback((key: string, value: string) => {
+  const set = useCallback((key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -60,7 +64,20 @@ export default function AdminMasterActivation() {
   const stepProps = { form, set, setIntegration, submitting };
 
   const handleSaveDraft = async () => {
-    toast.success("Draft saved");
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      const draftName = form.business_name_confirmed || form.display_name || "Untitled Draft";
+      await supabase.from("activation_drafts" as any).upsert({
+        created_by: user.user?.id || null,
+        draft_name: draftName,
+        form_data: form as any,
+        current_step: step,
+        draft_status: "draft",
+      }, { onConflict: "id" });
+      toast.success("Draft saved successfully");
+    } catch {
+      toast.error("Failed to save draft");
+    }
   };
 
   const handleActivate = async () => {
@@ -226,7 +243,21 @@ export default function AdminMasterActivation() {
         });
       }
 
-      // 6. Finalize provision
+      // 6. Service catalog
+      const serviceConfigs: ServiceConfig[] = form.service_configs || [];
+      for (const svc of serviceConfigs) {
+        if (!svc.service_name) continue;
+        await supabase.from("service_catalog" as any).insert({
+          client_id: client.id,
+          service_name: svc.service_name,
+          service_description: svc.service_description || null,
+          display_price_text: svc.display_price_text || null,
+          service_status: svc.service_status || "draft",
+          display_order: 0,
+        });
+      }
+
+      // 7. Finalize provision
       await Promise.all([
         supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
         supabase.from("audit_logs").insert({
@@ -271,16 +302,17 @@ export default function AdminMasterActivation() {
       case 2: return <StepBranding {...stepProps} />;
       case 3: return <StepCRM {...stepProps} />;
       case 4: return <StepCalendar {...stepProps} />;
-      case 5: return <StepBookingForms {...stepProps} />;
-      case 6: return <StepEmail {...stepProps} />;
-      case 7: return <StepReviews {...stepProps} />;
-      case 8: return <StepTeamSetup {...stepProps} />;
-      case 9: return <StepWorkforce {...stepProps} />;
-      case 10: return <StepFinance {...stepProps} />;
-      case 11: return <StepMarketing {...stepProps} />;
-      case 12: return <StepSupport {...stepProps} />;
-      case 13: return <StepIntegrations {...stepProps} />;
-      case 14: return <StepReview {...stepProps} />;
+      case 5: return <StepServices {...stepProps} />;
+      case 6: return <StepBookingForms {...stepProps} />;
+      case 7: return <StepEmail {...stepProps} />;
+      case 8: return <StepReviews {...stepProps} />;
+      case 9: return <StepTeamSetup {...stepProps} />;
+      case 10: return <StepWorkforce {...stepProps} />;
+      case 11: return <StepFinance {...stepProps} />;
+      case 12: return <StepMarketing {...stepProps} />;
+      case 13: return <StepSupport {...stepProps} />;
+      case 14: return <StepIntegrations {...stepProps} />;
+      case 15: return <StepReview {...stepProps} />;
       default: return null;
     }
   };
@@ -371,9 +403,9 @@ export default function AdminMasterActivation() {
 
             <div className="flex-1" />
 
-            {step < 14 ? (
+            {step < TOTAL_STEPS ? (
               <Button
-                onClick={() => setStep(Math.min(14, step + 1))}
+                onClick={() => setStep(Math.min(TOTAL_STEPS, step + 1))}
                 disabled={submitting}
                 className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
               >

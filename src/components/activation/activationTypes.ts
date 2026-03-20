@@ -1,6 +1,19 @@
+export interface ServiceConfig {
+  service_name: string;
+  service_description: string;
+  display_price_text: string;
+  service_status: string;
+  bookable: string;
+}
+
+export const defaultServiceConfig = (): ServiceConfig => ({
+  service_name: "", service_description: "", display_price_text: "",
+  service_status: "draft", bookable: "no",
+});
+
 export interface CalendarConfig {
   calendar_name: string;
-  calendar_type: string; // single | team | round_robin | department | staff | internal
+  calendar_type: string;
   description: string;
   owner_user: string;
   assigned_users: string;
@@ -18,11 +31,9 @@ export interface CalendarConfig {
   confirmation_message: string;
   reminders_enabled: string;
   active: string;
-  // Round robin extras
   staff_pool: string;
   distribution_method: string;
   fallback_owner: string;
-  // Department extras
   department_name: string;
 }
 
@@ -174,7 +185,11 @@ export interface ActivationFormState {
   default_reschedule_policy: string;
   calendar_configs: CalendarConfig[];
 
-  // Step 5: Booking Forms
+  // Step 5: Services & Products
+  service_configs: ServiceConfig[];
+  services_notes: string;
+
+  // Step 6: Booking Forms
   use_native_forms: string;
   need_booking_form: string;
   need_intake_form: string;
@@ -333,16 +348,17 @@ export const STEPS = [
   { id: 2, title: "Business Identity + Branding", icon: "Palette" },
   { id: 3, title: "CRM Setup", icon: "Users" },
   { id: 4, title: "Calendar Setup", icon: "Calendar" },
-  { id: 5, title: "Booking Forms", icon: "ClipboardList" },
-  { id: 6, title: "Email + Messaging", icon: "Mail" },
-  { id: 7, title: "Reviews + Reputation", icon: "Star" },
-  { id: 8, title: "Team / Employee Setup", icon: "UserPlus" },
-  { id: 9, title: "Workforce + Payroll", icon: "DollarSign" },
-  { id: 10, title: "Finance Ops", icon: "DollarSign" },
-  { id: 11, title: "Marketing Systems", icon: "TrendingUp" },
-  { id: 12, title: "Support / Help Desk", icon: "Headphones" },
-  { id: 13, title: "Integrations + Access", icon: "Link" },
-  { id: 14, title: "Review + Activate", icon: "CheckCircle" },
+  { id: 5, title: "Services & Products", icon: "ShoppingBag" },
+  { id: 6, title: "Booking Forms", icon: "ClipboardList" },
+  { id: 7, title: "Email + Messaging", icon: "Mail" },
+  { id: 8, title: "Reviews + Reputation", icon: "Star" },
+  { id: 9, title: "Team / Employee Setup", icon: "UserPlus" },
+  { id: 10, title: "Workforce + Payroll", icon: "DollarSign" },
+  { id: 11, title: "Finance Ops", icon: "DollarSign" },
+  { id: 12, title: "Marketing Systems", icon: "TrendingUp" },
+  { id: 13, title: "Support / Help Desk", icon: "Headphones" },
+  { id: 14, title: "Integrations + Access", icon: "Link" },
+  { id: 15, title: "Review + Activate", icon: "CheckCircle" },
 ] as const;
 
 export const INTEGRATION_KEYS = [
@@ -433,6 +449,9 @@ export const defaultFormState = (): ActivationFormState => ({
   default_reschedule_policy: "",
   calendar_configs: [defaultCalendarConfig()],
 
+  service_configs: [defaultServiceConfig()],
+  services_notes: "",
+
   use_native_forms: "yes", need_booking_form: "yes", need_intake_form: "no",
   need_quote_form: "no", need_support_form: "no", need_contact_form: "no",
   form_calendar_link: "primary", form_creates_contact: "yes",
@@ -497,7 +516,7 @@ export const defaultFormState = (): ActivationFormState => ({
 
 export interface StepProps {
   form: ActivationFormState;
-  set: (key: string, value: string) => void;
+  set: (key: string, value: any) => void;
   setIntegration: (name: string, field: string, value: string) => void;
   submitting: boolean;
 }
