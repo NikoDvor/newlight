@@ -117,11 +117,27 @@ export default function Proposals() {
       });
     }
 
-    await supabase.from("audit_logs").insert({ action: "proposal_created", module: "sales", metadata: { proposal_id: data?.id }, client_id: activeClientId });
+    // Link to implementation request if present
+    if (form.request_id && data) {
+      await Promise.all([
+        supabase.from("implementation_requests").update({ request_status: "Proposal Needed", related_deal_id: data.id as any }).eq("id", form.request_id),
+        supabase.from("implementation_request_events").insert({
+          client_id: activeClientId, request_id: form.request_id,
+          event_type: "Proposal Drafted", event_summary: `Proposal "${form.title}" created`,
+          created_by: user?.id,
+        }),
+      ]);
+    }
 
-    toast({ title: "Proposal created" });
+    await supabase.from("audit_logs").insert({
+      action: "proposal_created", module: "sales",
+      metadata: { proposal_id: data?.id, linked_request_id: form.request_id || null },
+      client_id: activeClientId,
+    });
+
+    toast({ title: form.request_id ? "Proposal created from request" : "Proposal created" });
     setCreateOpen(false);
-    setForm({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "" });
+    setForm({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "", request_id: "" });
     setCreating(false);
     fetchProposals();
   };
