@@ -236,10 +236,11 @@ export interface WorkspaceReadinessResult {
 }
 
 export async function computeWorkspaceReadiness(clientId: string): Promise<WorkspaceReadinessResult> {
-  const [brandRes, calRes, formRes, teamRes, intgRes, clientRes] = await Promise.all([
+  const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, clientRes] = await Promise.all([
     supabase.from("client_branding").select("logo_url, primary_color").eq("client_id", clientId).maybeSingle(),
     supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId),
     supabase.from("client_forms").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("forms").select("id", { count: "exact", head: true }).eq("client_id", clientId),
     supabase.from("workspace_users").select("id", { count: "exact", head: true }).eq("client_id", clientId),
     supabase.from("client_integrations").select("status").eq("client_id", clientId),
     supabase.from("clients").select("onboarding_stage").eq("id", clientId).single(),
@@ -247,7 +248,7 @@ export async function computeWorkspaceReadiness(clientId: string): Promise<Works
 
   const brandingComplete = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
   const calendarReady = (calRes.count || 0) > 0;
-  const formsReady = (formRes.count || 0) > 0;
+  const formsReady = ((formRes.count || 0) + (formRes2.count || 0)) > 0;
   const teamReady = (teamRes.count || 0) > 1;
   const intgs = intgRes.data || [];
   const integrationsReviewed = intgs.length > 0 && intgs.some((i: any) => i.status !== "not_started");

@@ -30,12 +30,13 @@ export function WorkspaceReadiness() {
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
       supabase.from("subscriptions").select("subscription_status").eq("client_id", activeClientId).limit(1).maybeSingle(),
       supabase.from("client_forms" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
-    ]).then(([cal, team, intg, sub, forms]) => {
+      supabase.from("forms").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+    ]).then(([cal, team, intg, sub, forms1, forms2]) => {
       const calCount = cal.count || 0;
       const teamCount = team.count || 0;
       const intgs = intg.data || [];
       const connected = intgs.filter((i: any) => i.status === "connected").length;
-      const formCount = forms.count || 0;
+      const formCount = (forms1.count || 0) + (forms2.count || 0);
 
       setItems([
         {
