@@ -51,6 +51,8 @@ export default function ContactDetail() {
   const [emails, setEmails] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [followUps, setFollowUps] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +68,9 @@ export default function ContactDetail() {
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(20),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
       supabase.from("review_requests" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
-    ]).then(([c, a, d, ap, n, e, t, rv]) => {
+      supabase.from("follow_up_queues" as any).select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
+      supabase.from("conversations" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("last_message_at", { ascending: false }),
+    ]).then(([c, a, d, ap, n, e, t, rv, fu, conv]) => {
       setContact(c.data);
       setActivities(a.data || []);
       setDeals(d.data || []);
@@ -75,6 +79,8 @@ export default function ContactDetail() {
       setEmails(e.data || []);
       setTasks(t.data || []);
       setReviews(rv.data || []);
+      setFollowUps(fu.data || []);
+      setConversations(conv.data || []);
       setLoading(false);
     });
   }, [contactId, activeClientId]);
