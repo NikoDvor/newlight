@@ -63,8 +63,9 @@ export default function Dashboard() {
       supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
-    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks, fuRes]) => {
+    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks, fuRes]) => {
       setOnboardingData(onb.data);
+      setOnboardingStage((clientStage.data as any)?.onboarding_stage || "lead");
       if (intg.data) {
         setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
       }
