@@ -281,10 +281,10 @@ export default function ServiceManager() {
                       </SelectContent>
                     </Select></div>
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Intake / Booking Form</label>
-                    <Select value={form.linked_form_id || ""} onValueChange={v => setForm({ ...form, linked_form_id: v })}>
+                    <Select value={form.linked_form_id || "__none__"} onValueChange={v => setForm({ ...form, linked_form_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {forms.map(f => <SelectItem key={f.id} value={f.id}>{f.form_name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
