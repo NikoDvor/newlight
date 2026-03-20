@@ -439,7 +439,7 @@ export default function AdminClients() {
                        <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
                          <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
                        </button>
-                       <button onClick={() => { setViewMode("workspace"); setActiveClientId(c.id); navigate("/setup-center"); }} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open Setup Center">
+                       <button onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Handoff Checklist">
                          <CheckCircle2 className="h-3.5 w-3.5 text-white/40 hover:text-emerald-400" />
                        </button>
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace dashboard">
