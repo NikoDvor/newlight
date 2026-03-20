@@ -140,25 +140,43 @@ export default function SetupCenter() {
 
   return (
     <div>
-      <PageHeader title="Setup Center" description="Complete your workspace setup to unlock your full growth system" />
+      <PageHeader
+        title={isLive ? "Setup Center" : "Setup Center"}
+        description={isLive ? "Your workspace is live — review and refine your setup anytime" : "Complete your workspace setup to unlock your full growth system"}
+      />
 
       {/* Overall Progress */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="mb-8 p-6 rounded-2xl border border-primary/10"
-        style={{ background: "linear-gradient(135deg, hsla(211,96%,56%,.04), hsla(197,92%,58%,.02))" }}>
+        className="mb-8 p-6 rounded-2xl border"
+        style={{
+          borderColor: isLive ? "hsla(152,60%,44%,.15)" : "hsla(211,96%,56%,.1)",
+          background: isLive
+            ? "linear-gradient(135deg, hsla(152,60%,44%,.04), hsla(152,60%,44%,.01))"
+            : "linear-gradient(135deg, hsla(211,96%,56%,.04), hsla(197,92%,58%,.02))",
+        }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.1)" }}>
-              <Rocket className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{
+              background: isLive ? "hsla(152,60%,44%,.12)" : "hsla(211,96%,56%,.1)",
+            }}>
+              {isLive
+                ? <CheckCircle2 className="h-6 w-6" style={{ color: "hsl(152 60% 44%)" }} />
+                : <Rocket className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />}
             </div>
             <div>
-              <p className="text-base font-bold text-foreground">Workspace Setup</p>
-              <p className="text-xs text-muted-foreground">{completedCount} of {totalCount} sections complete</p>
+              <p className="text-base font-bold text-foreground">
+                {isLive ? "Your workspace is live" : "Workspace Setup"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isLive ? "All core systems are operational" : `${completedCount} of ${totalCount} sections complete`}
+              </p>
             </div>
           </div>
-          <span className="text-3xl font-bold" style={{ color: "hsl(211 96% 56%)" }}>{percentage}%</span>
+          <span className="text-3xl font-bold" style={{ color: isLive ? "hsl(152 60% 44%)" : "hsl(211 96% 56%)" }}>
+            {isLive ? "✓" : `${percentage}%`}
+          </span>
         </div>
-        <Progress value={percentage} className="h-2.5" />
+        {!isLive && <Progress value={percentage} className="h-2.5" />}
       </motion.div>
 
       {/* Section Cards */}
