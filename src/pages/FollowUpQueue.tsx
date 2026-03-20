@@ -65,17 +65,13 @@ export default function FollowUpQueue() {
     let q = supabase.from("follow_up_queues" as any).select("*").order("due_at", { ascending: true }).limit(100);
     if (!isAdmin && clientId) q = q.eq("client_id", clientId);
 
-    const promises: Promise<any>[] = [q];
-    if (clientId) {
-      promises.push(
-        supabase.from("crm_contacts").select("id, full_name, email").eq("client_id", clientId).limit(500),
-        supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", clientId),
-      );
-    }
-    const results = await Promise.all(promises);
-    const { data } = results[0];
-    setContacts(results[1]?.data || []);
-    setTeamMembers(results[2]?.data || []);
+    const [fuRes, cRes, tmRes] = await Promise.all([
+      q,
+      clientId ? supabase.from("crm_contacts").select("id, full_name, email").eq("client_id", clientId).limit(500) : Promise.resolve({ data: [] }),
+      clientId ? supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", clientId) : Promise.resolve({ data: [] }),
+    ]);
+    setContacts(cRes.data || []);
+    setTeamMembers(tmRes.data || []);
 
     const now = new Date();
     setItems((data ?? []).map((i: any) => ({
