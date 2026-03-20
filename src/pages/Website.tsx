@@ -240,11 +240,12 @@ export default function Website() {
 
       <div className="mt-6">
         <Tabs defaultValue="pages">
-          <TabsList className="bg-secondary h-10 rounded-lg">
+          <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
-            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic Sources</TabsTrigger>
+            <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
+            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recommendations</TabsTrigger>
+            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pages" className="mt-4">
