@@ -77,6 +77,7 @@ export default function AdminMasterActivation() {
         draft_status: "draft",
       }, { onConflict: "id" });
       toast.success("Draft saved successfully");
+      await emitEvent({ eventKey: "onboarding_form_saved", payload: { step, draft_name: draftName } });
     } catch {
       toast.error("Failed to save draft");
     }
