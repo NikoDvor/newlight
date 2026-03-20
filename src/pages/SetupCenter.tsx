@@ -63,6 +63,8 @@ export default function SetupCenter() {
         supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
         supabase.from("follow_up_queues" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       ]);
+      const clientStage = (clientRes.data as any)?.onboarding_stage;
+      setIsLive(clientStage === "active");
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const calCount = calRes.data?.length || 0;
