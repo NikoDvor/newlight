@@ -63,6 +63,24 @@ export default function Proposals() {
 
   useEffect(() => { fetchProposals(); }, [activeClientId]);
 
+  // Auto-open create sheet when navigating from implementation request with prefill params
+  useEffect(() => {
+    const title = searchParams.get("title");
+    const requestId = searchParams.get("request_id");
+    if (title || requestId) {
+      setForm(f => ({
+        ...f,
+        title: title || f.title,
+        setup_fee: searchParams.get("setup_fee") || f.setup_fee,
+        monthly_fee: searchParams.get("monthly_fee") || f.monthly_fee,
+        request_id: requestId || "",
+      }));
+      setCreateOpen(true);
+      // Clear params so refresh doesn't re-trigger
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
+
   const filtered = filter === "all" ? proposals : proposals.filter(p => p.proposal_status === filter);
   const totalValue = proposals.reduce((s, p) => s + Number(p.monthly_fee || 0) + Number(p.setup_fee || 0), 0);
   const signedValue = proposals.filter(p => ["accepted", "signed"].includes(p.proposal_status)).reduce((s, p) => s + Number(p.monthly_fee || 0) + Number(p.setup_fee || 0), 0);
