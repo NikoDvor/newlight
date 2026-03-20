@@ -92,7 +92,32 @@ export function ImplementationStatusWidget() {
     load();
   }, [activeClientId]);
 
-  if (loading || items.length === 0) return null;
+  if (loading) return null;
+
+  if (items.length === 0) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <Card className="border border-border/50 shadow-sm">
+          <CardHeader className="pb-2 bg-primary/[0.03]">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Rocket className="h-4 w-4 text-primary" /> Implementation Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 pb-5">
+            <div className="text-center py-4">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                <Inbox className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
+              </div>
+              <p className="text-xs font-semibold text-foreground mb-1">No active requests</p>
+              <p className="text-[10px] text-muted-foreground max-w-[200px] mx-auto">
+                When you request a service, your progress and proposal status will appear here.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>

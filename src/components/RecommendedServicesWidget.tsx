@@ -241,7 +241,7 @@ export function RecommendedServicesWidget() {
           )}
 
           {/* Signals bar + CTAs */}
-          <div className="flex items-center gap-3 flex-wrap pt-1 border-t border-border/50">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap pt-1 border-t border-border/50">
             <div className="flex items-center gap-4 text-[11px]">
               <span className="flex items-center gap-1">
                 <Target className="h-3 w-3 text-primary" />
@@ -253,23 +253,23 @@ export function RecommendedServicesWidget() {
               </span>
             </div>
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setDetailSheet(top)}>
-                See What's Included
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+              <Button size="sm" variant="outline" className="h-8 text-xs flex-1 sm:flex-initial" onClick={() => setDetailSheet(top)}>
+                Details
               </Button>
               {isAdmin ? (
-                <Link to="/revenue-opportunities">
-                  <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
-                    <DollarSign className="h-3.5 w-3.5" /> Create Proposal <ArrowRight className="h-3 w-3" />
+                <Link to="/revenue-opportunities" className="flex-1 sm:flex-initial">
+                  <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md w-full">
+                    <DollarSign className="h-3.5 w-3.5" /> Create Proposal
                   </Button>
                 </Link>
               ) : activeRequests[top.key] ? (
                 <Badge className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5">
-                  ✓ Request {activeRequests[top.key]}
+                  ✓ {activeRequests[top.key] === "New" ? "Request Submitted" : `Request ${activeRequests[top.key]}`}
                 </Badge>
               ) : (
-                <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={() => handleRequestImplementation(top)}>
-                  <Phone className="h-3.5 w-3.5" /> Request Implementation
+                <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md flex-1 sm:flex-initial" onClick={() => handleRequestImplementation(top)}>
+                  <Phone className="h-3.5 w-3.5" /> Get Started
                 </Button>
               )}
             </div>

@@ -75,7 +75,7 @@ export function WorkspaceReadiness() {
           key: "billing",
           label: "Billing",
           icon: CreditCard,
-          status: sub.data?.subscription_status === "Active" ? "ready" : "needs_setup",
+          status: sub.data?.subscription_status === "active" || sub.data?.subscription_status === "Active" ? "ready" : "needs_setup",
           detail: sub.data ? sub.data.subscription_status : "Not set up",
           link: "/billing",
         },
