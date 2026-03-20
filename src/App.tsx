@@ -180,6 +180,7 @@ const App = () => (
               <Route path="how-it-works" element={<HowItWorks />} />
               <Route path="architecture" element={<AdminArchitecture />} />
               <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
+              <Route path="implementation-requests" element={<AdminImplementationRequests />} />
             </Route>
 
             {/* Client Workspace */}

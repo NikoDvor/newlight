@@ -479,6 +479,18 @@ function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest, activeRequests 
               </Button>
             </Link>
           </>
+        ) : activeRequests[rec.key] ? (
+          <>
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
+              <p className="text-sm font-semibold text-emerald-700">✓ Request Submitted</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Status: {activeRequests[rec.key]}</p>
+            </div>
+            <a href="tel:+18058363557" className="block">
+              <Button variant="outline" className="w-full h-10 gap-2">
+                <Phone className="h-4 w-4" /> Call (805) 836-3557
+              </Button>
+            </a>
+          </>
         ) : (
           <>
             <Button className="w-full h-10 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => onRequest(rec)}>
