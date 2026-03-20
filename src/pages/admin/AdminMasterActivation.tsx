@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { emitEvent } from "@/lib/automationEngine";
+import { provisionWorkspaceDefaults, syncOnboardingStage } from "@/lib/workspaceProvisioner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

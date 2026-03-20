@@ -428,7 +428,7 @@ export default function AdminClients() {
                       {c.owner_email && <p className="text-[10px] text-white/30">{c.owner_email}</p>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-white/40 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
+                  
                   <td className="px-4 py-3">
                      <div className="flex items-center gap-1">
                       {c.owner_email && (
