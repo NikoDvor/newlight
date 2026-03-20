@@ -129,6 +129,34 @@ export default function Website() {
     fetchData();
   };
 
+  const openNewBlock = () => {
+    setBlockForm({ block_key: "", block_type: "RichText", block_label: "", content_json: { heading: "", body: "" }, page_key: contentPage, is_active: true });
+    setEditingBlock("new");
+  };
+
+  const openEditBlock = (b: any) => {
+    setBlockForm({ ...b, content_json: typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || { heading: "", body: "" }) });
+    setEditingBlock(b);
+  };
+
+  const saveBlock = async () => {
+    if (!activeClientId || !blockForm.block_key) return;
+    const payload = { client_id: activeClientId, block_key: blockForm.block_key, block_type: blockForm.block_type, block_label: blockForm.block_label || blockForm.block_key, content_json: blockForm.content_json, page_key: blockForm.page_key || contentPage, is_active: blockForm.is_active ?? true, display_order: blockForm.display_order || 0 };
+    const { error } = editingBlock === "new"
+      ? await supabase.from("website_content_blocks" as any).insert(payload)
+      : await supabase.from("website_content_blocks" as any).update(payload).eq("id", editingBlock.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: editingBlock === "new" ? "Block created" : "Block updated" });
+    setEditingBlock(null);
+    fetchData();
+  };
+
+  const deleteBlock = async (id: string) => {
+    await supabase.from("website_content_blocks" as any).delete().eq("id", id);
+    toast({ title: "Block deleted" });
+    fetchData();
+  };
+
   const hasRealData = pages.length > 0 || issues.length > 0 || recommendations.length > 0;
   const totalVisits = pages.reduce((s, p) => s + (p.visits || 0), 0);
   const totalLeads = pages.reduce((s, p) => s + (p.leads_generated || 0), 0);
