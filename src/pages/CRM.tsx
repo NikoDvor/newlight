@@ -170,6 +170,7 @@ export default function CRM() {
       pipeline_stage: newDeal.pipeline_stage,
       contact_id: newDeal.contact_id || null,
       close_probability: parseInt(newDeal.close_probability) || 50,
+      assigned_user: newDeal.assigned_user || null,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
@@ -177,7 +178,7 @@ export default function CRM() {
       activity_note: `Deal "${newDeal.deal_name}" created — $${parseFloat(newDeal.deal_value) || 0}`,
     });
     toast({ title: "Deal Added" });
-    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
+    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
     setDealOpen(false);
     fetchData();
   };
