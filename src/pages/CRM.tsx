@@ -799,7 +799,16 @@ export default function CRM() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
+             </div>
+            {teamMembers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assigned Owner</Label>
+                <Select value={newContact.contact_owner} onValueChange={v => setNewContact(p => ({ ...p, contact_owner: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
@@ -830,6 +839,15 @@ export default function CRM() {
                 <Select value={newDeal.contact_id} onValueChange={v => setNewDeal(p => ({ ...p, contact_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            {teamMembers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assigned Owner</Label>
+                <Select value={newDeal.assigned_user} onValueChange={v => setNewDeal(p => ({ ...p, assigned_user: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
