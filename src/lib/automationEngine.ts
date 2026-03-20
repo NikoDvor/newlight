@@ -16,10 +16,19 @@ export const EVENT_REGISTRY = {
   proposal_rejected: { category: "Proposal", name: "Proposal Rejected" },
   deal_closed_won: { category: "Sales", name: "Deal Closed Won" },
   deal_closed_lost: { category: "Sales", name: "Deal Closed Lost" },
-  // Activation
+  // Activation & Onboarding
   demo_workspace_created: { category: "Activation", name: "Demo Workspace Created" },
   activation_form_submitted: { category: "Activation", name: "Activation Form Submitted" },
   workspace_activated: { category: "Activation", name: "Workspace Activated" },
+  workspace_created: { category: "Onboarding", name: "Workspace Created" },
+  onboarding_started: { category: "Onboarding", name: "Onboarding Started" },
+  onboarding_form_saved: { category: "Onboarding", name: "Onboarding Form Saved" },
+  onboarding_section_completed: { category: "Onboarding", name: "Onboarding Section Completed" },
+  manual_onboarding_completed: { category: "Onboarding", name: "Manual Onboarding Completed" },
+  first_calendar_created: { category: "Onboarding", name: "First Calendar Created" },
+  first_form_published: { category: "Onboarding", name: "First Form Published" },
+  first_team_member_added: { category: "Onboarding", name: "First Team Member Added" },
+  integrations_reviewed: { category: "Onboarding", name: "Integrations Reviewed" },
   setup_progress_updated: { category: "Activation", name: "Setup Progress Updated" },
   integration_status_changed: { category: "Integrations", name: "Integration Status Changed" },
   // Client Booking
