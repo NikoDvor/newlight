@@ -110,7 +110,7 @@ export default function ServiceManager() {
   };
 
   const openEdit = (type: string, item: any) => {
-    setForm({ ...item, linked_calendar_id: item.linked_calendar_id || "", linked_appointment_type_id: item.linked_appointment_type_id || "", linked_form_id: item.linked_form_id || "" });
+    setForm({ ...item, linked_calendar_id: item.linked_calendar_id || "__none__", linked_appointment_type_id: item.linked_appointment_type_id || "__none__", linked_form_id: item.linked_form_id || "__none__", service_category: item.service_category || "__none__", product_category: item.product_category || "__none__" });
     setEditSheet({ type, item });
   };
 
