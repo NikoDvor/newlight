@@ -54,6 +54,8 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
 
   const effectiveScope = scopeType || (isAdmin ? "admin_global" : "client_workspace");
 
+  const [contacts, setContacts] = useState<any[]>([]);
+
   const load = async () => {
     let q = supabase.from("conversations" as any).select("*").order("last_message_at", { ascending: false }).limit(100);
     if (effectiveScope === "client_workspace" && activeClientId) {
@@ -61,9 +63,15 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
     } else if (effectiveScope === "admin_sales") {
       q = q.eq("workspace_scope_type", "admin_sales");
     }
-    const { data } = await q;
-    setConversations(data ?? []);
+    const [convRes, cRes] = await Promise.all([
+      q,
+      activeClientId ? supabase.from("crm_contacts").select("id, full_name").eq("client_id", activeClientId).limit(500) : Promise.resolve({ data: [] }),
+    ]);
+    setConversations(convRes.data ?? []);
+    setContacts(cRes.data || []);
   };
+
+  const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || null;
 
   useEffect(() => { load(); }, [activeClientId, effectiveScope]);
 
@@ -154,6 +162,11 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
                     <TIcon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground truncate">{c.subject || "No subject"}</p>
+                      {c.contact_id && getContactName(c.contact_id) && (
+                        <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                          <User className="h-3 w-3" />{getContactName(c.contact_id)}
+                        </p>
+                      )}
                       <div className="flex gap-1 mt-1">
                         <Badge variant="outline" className="text-[10px] h-4">{c.conversation_type}</Badge>
                         <Badge className={`text-[10px] h-4 ${STATUS_STYLE[c.status] || "bg-secondary"}`}>{c.status}</Badge>
