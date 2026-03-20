@@ -432,6 +432,7 @@ export default function ContactDetail() {
           </DataCard>
         </TabsContent>
 
+        <TabsContent value="notes" className="mt-4">
           <DataCard title="Notes">
             <div className="flex gap-2 mb-4">
               <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a note…" className="min-h-[44px] flex-1 resize-none" rows={2} />
