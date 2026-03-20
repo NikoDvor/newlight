@@ -121,12 +121,12 @@ export default function ServiceManager() {
     const table = tableMap[type];
     const payload = { ...form, client_id: activeClientId };
     delete payload.id; delete payload.created_at; delete payload.updated_at;
-    // Clean empty FK refs
+    // Clean sentinel and empty FK refs
     ["linked_calendar_id", "linked_appointment_type_id", "linked_form_id", "linked_page_id"].forEach(k => {
-      if (payload[k] === "") payload[k] = null;
+      if (payload[k] === "__none__" || payload[k] === "") payload[k] = null;
     });
-    if (payload.service_category === "") payload.service_category = null;
-    if (payload.product_category === "") payload.product_category = null;
+    if (payload.service_category === "__none__" || payload.service_category === "") payload.service_category = null;
+    if (payload.product_category === "__none__" || payload.product_category === "") payload.product_category = null;
 
     const { error } = item
       ? await supabase.from(table as any).update(payload).eq("id", item.id)
