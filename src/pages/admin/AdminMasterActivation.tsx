@@ -389,9 +389,9 @@ export default function AdminMasterActivation() {
 
             <div className="flex-1" />
 
-            {step < 14 ? (
+            {step < TOTAL_STEPS ? (
               <Button
-                onClick={() => setStep(Math.min(14, step + 1))}
+                onClick={() => setStep(Math.min(TOTAL_STEPS, step + 1))}
                 disabled={submitting}
                 className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
               >
