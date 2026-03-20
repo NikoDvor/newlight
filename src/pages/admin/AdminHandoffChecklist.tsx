@@ -167,6 +167,8 @@ export default function AdminHandoffChecklist() {
 
   const isActive = onboardingStage === "active";
   const canLaunch = percentage >= 60 && !isActive;
+
+  const handleReProvision = async () => {
     if (!clientId) return;
     setProvisioning(true);
     try {
