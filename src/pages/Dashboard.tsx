@@ -214,7 +214,7 @@ export default function Dashboard() {
       )}
 
       {/* Scheduling Readiness — show when setup is incomplete */}
-      {(schedulingReady.calendars === 0 || schedulingReady.apptTypes === 0 || schedulingReady.availability === 0 || schedulingReady.bookingLinks === 0) && (
+      {!isLive && (schedulingReady.calendars === 0 || schedulingReady.apptTypes === 0 || schedulingReady.availability === 0 || schedulingReady.bookingLinks === 0) && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 p-4 rounded-2xl border border-border bg-card">
           <div className="flex items-center gap-3 mb-3">
