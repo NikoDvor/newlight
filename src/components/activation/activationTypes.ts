@@ -185,7 +185,11 @@ export interface ActivationFormState {
   default_reschedule_policy: string;
   calendar_configs: CalendarConfig[];
 
-  // Step 5: Booking Forms
+  // Step 5: Services & Products
+  service_configs: ServiceConfig[];
+  services_notes: string;
+
+  // Step 6: Booking Forms
   use_native_forms: string;
   need_booking_form: string;
   need_intake_form: string;
