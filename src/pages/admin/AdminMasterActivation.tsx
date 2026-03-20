@@ -243,7 +243,21 @@ export default function AdminMasterActivation() {
         });
       }
 
-      // 6. Finalize provision
+      // 6. Service catalog
+      const serviceConfigs: ServiceConfig[] = form.service_configs || [];
+      for (const svc of serviceConfigs) {
+        if (!svc.service_name) continue;
+        await supabase.from("service_catalog" as any).insert({
+          client_id: client.id,
+          service_name: svc.service_name,
+          service_description: svc.service_description || null,
+          display_price_text: svc.display_price_text || null,
+          service_status: svc.service_status || "draft",
+          display_order: 0,
+        });
+      }
+
+      // 7. Finalize provision
       await Promise.all([
         supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
         supabase.from("audit_logs").insert({
