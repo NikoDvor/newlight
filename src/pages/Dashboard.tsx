@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { NextBestActions } from "@/components/NextBestActions";
 import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 import { WorkspaceReadiness } from "@/components/WorkspaceReadiness";
+import { ClientPackageView } from "@/components/ClientPackageView";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
