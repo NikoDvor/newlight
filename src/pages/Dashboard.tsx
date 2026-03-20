@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { NextBestActions } from "@/components/NextBestActions";
 import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 import { WorkspaceReadiness } from "@/components/WorkspaceReadiness";
+import { ClientPackageView } from "@/components/ClientPackageView";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
@@ -174,6 +175,11 @@ export default function Dashboard() {
         <MetricCard label="Avg Rating" value={metrics.ratingCount > 0 ? metrics.avgRating.toFixed(1) + "★" : "—"} change={metrics.ratingCount > 0 ? `${metrics.reviewRequests} requests` : "Send requests"} changeType="neutral" icon={Star} />
         <MetricCard label="Open Tasks" value={hasData ? String(metrics.openTasks) : "—"} change="" changeType="neutral" icon={CheckSquare} />
       </WidgetGrid>
+
+      {/* Your Plan */}
+      <div className="mt-6">
+        <ClientPackageView />
+      </div>
 
       {/* Workspace Readiness */}
       <div className="mt-6">
