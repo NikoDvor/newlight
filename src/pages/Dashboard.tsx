@@ -140,6 +140,23 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* Live workspace banner */}
+      {isLive && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-2xl border"
+          style={{ borderColor: "hsla(152,60%,44%,.15)", background: "hsla(152,60%,44%,.04)" }}>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(152,60%,44%,.12)" }}>
+              <CheckSquare className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Your workspace is live</p>
+              <p className="text-xs text-muted-foreground">You can now manage your business from this dashboard</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Setup Progress Banner — only for new clients */}
       {isNewClient && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
