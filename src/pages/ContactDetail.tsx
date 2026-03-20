@@ -14,7 +14,8 @@ import { motion } from "framer-motion";
 import {
   Mail, Phone, MapPin, Building2, Tag, Activity,
   Calendar, Briefcase, Star, StickyNote, DollarSign,
-  Clock, User, ArrowUpRight
+  Clock, User, ArrowUpRight, MessageSquare, CheckCircle2,
+  AlarmClock, SkipForward
 } from "lucide-react";
 
 const STAGE_LABELS: Record<string, string> = {
