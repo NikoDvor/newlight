@@ -236,7 +236,7 @@ export default function AdminPackages() {
             </TableHeader>
             <TableBody>
               {filtered.map((pkg, i) => (
-                <motion.tr key={pkg.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="border-white/10 hover:bg-white/[0.04] cursor-pointer" onClick={() => openEdit(pkg)}>
+                <motion.tr key={pkg.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="border-white/10 hover:bg-white/[0.04] cursor-pointer" onClick={() => navigate(`/admin/packages/${pkg.id}`)}>
                   <TableCell className="text-white font-medium text-sm">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,60%,.12)" }}>
