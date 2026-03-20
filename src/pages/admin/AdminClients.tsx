@@ -385,7 +385,7 @@ export default function AdminClients() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["Client Name", "Industry", "Package", "Status", "Owner", "Created", ""].map(h => (
+                {["Client Name", "Industry", "Package", "Readiness", "Status", "Owner", ""].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
