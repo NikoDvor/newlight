@@ -29,6 +29,7 @@ interface Client {
 
 export default function AdminClients() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [readiness, setReadiness] = useState<Record<string, WorkspaceReadinessResult>>({});
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
