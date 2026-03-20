@@ -71,6 +71,7 @@ export default function CRM() {
   const [notes, setNotes] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [emails, setEmails] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
@@ -83,16 +84,16 @@ export default function CRM() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
-    lead_source: "", pipeline_stage: "new_lead", company_id: "",
+    lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "",
   });
-  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
+  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
   const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes] = await Promise.all([
+    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes, tmRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_companies").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
@@ -104,6 +105,7 @@ export default function CRM() {
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: false }).limit(50),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", activeClientId),
     ]);
     setContacts(cRes.data || []);
     setCompanies(coRes.data || []);
@@ -114,6 +116,7 @@ export default function CRM() {
     setNotes(notesRes.data || []);
     setAppointments(apRes.data || []);
     setEmails(emRes.data || []);
+    setTeamMembers(tmRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
@@ -149,11 +152,12 @@ export default function CRM() {
       lead_source: newContact.lead_source || null,
       pipeline_stage: newContact.pipeline_stage,
       company_id: newContact.company_id || null,
+      contact_owner: newContact.contact_owner || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
-    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "" });
+    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "" });
     setContactOpen(false);
     fetchData();
   };
@@ -166,6 +170,7 @@ export default function CRM() {
       pipeline_stage: newDeal.pipeline_stage,
       contact_id: newDeal.contact_id || null,
       close_probability: parseInt(newDeal.close_probability) || 50,
+      assigned_user: newDeal.assigned_user || null,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
@@ -173,7 +178,7 @@ export default function CRM() {
       activity_note: `Deal "${newDeal.deal_name}" created — $${parseFloat(newDeal.deal_value) || 0}`,
     });
     toast({ title: "Deal Added" });
-    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
+    setNewDeal({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
     setDealOpen(false);
     fetchData();
   };
@@ -256,6 +261,7 @@ export default function CRM() {
 
   const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || "—";
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.company_name || "—";
+  const getOwnerName = (userId: string) => teamMembers.find(t => t.user_id === userId)?.full_name || "—";
 
   if (!activeClientId) {
     return (
@@ -415,28 +421,26 @@ export default function CRM() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
-                        {["Name", "Email", "Phone", "Company", "Stage", "Source", "Score", "Revenue", "Status"].map(h => (
-                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredContacts.map(c => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/crm/contacts/${c.id}`)}>
-                          <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.company_id ? getCompanyName(c.company_id) : "—"}</td>
-                          <td className="py-3 pr-3">
-                            {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
-                          </td>
-                          <td className="text-xs text-muted-foreground py-3 pr-3">{c.lead_source || "—"}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">{c.lead_score || 0}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">${Number(c.lifetime_revenue || 0).toLocaleString()}</td>
-                          <td className="py-3">
-                            <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
+                       <tr className="border-b border-border">
+                         {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status"].map(h => (
+                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                         ))}
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {filteredContacts.map(c => (
+                         <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                           onClick={() => navigate(`/crm/contacts/${c.id}`)}>
+                           <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.contact_owner ? getOwnerName(c.contact_owner) : "—"}</td>
+                           <td className="py-3 pr-3">
+                             {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
+                           </td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.last_interaction_date ? new Date(c.last_interaction_date).toLocaleDateString() : "—"}</td>
+                           <td className="py-3">
+                             <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
                           </td>
                         </tr>
                       ))}
@@ -515,38 +519,38 @@ export default function CRM() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
-                        {["Deal", "Contact", "Stage", "Value", "Probability", "Expected Close", "Status", "Action"].map(h => (
-                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDeals.map(d => (
-                        <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                          <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                            onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
-                            {d.contact_id ? getContactName(d.contact_id) : "—"}
-                          </td>
-                          <td className="py-3 pr-3">
-                            <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
-                              {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
-                            </Badge>
-                          </td>
-                          <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{d.expected_close_date || "—"}</td>
-                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
-                          <td className="py-3">
-                            {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
-                              <Select onValueChange={v => moveDealStage(d.id, v)}>
-                                <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
-                                <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
-                              </Select>
-                            )}
-                          </td>
-                        </tr>
+                       <tr className="border-b border-border">
+                         {["Deal", "Contact", "Owner", "Stage", "Value", "Probability", "Status", "Action"].map(h => (
+                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                         ))}
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {filteredDeals.map(d => (
+                         <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                           <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                             onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                             {d.contact_id ? getContactName(d.contact_id) : "—"}
+                           </td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{d.assigned_user ? getOwnerName(d.assigned_user) : "—"}</td>
+                           <td className="py-3 pr-3">
+                             <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
+                               {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
+                             </Badge>
+                           </td>
+                           <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
+                           <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
+                           <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                           <td className="py-3">
+                             {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
+                               <Select onValueChange={v => moveDealStage(d.id, v)}>
+                                 <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
+                                 <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                               </Select>
+                             )}
+                           </td>
+                         </tr>
                       ))}
                     </tbody>
                   </table>
@@ -795,7 +799,16 @@ export default function CRM() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
+             </div>
+            {teamMembers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assigned Owner</Label>
+                <Select value={newContact.contact_owner} onValueChange={v => setNewContact(p => ({ ...p, contact_owner: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
@@ -826,6 +839,15 @@ export default function CRM() {
                 <Select value={newDeal.contact_id} onValueChange={v => setNewDeal(p => ({ ...p, contact_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            {teamMembers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assigned Owner</Label>
+                <Select value={newDeal.assigned_user} onValueChange={v => setNewDeal(p => ({ ...p, assigned_user: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}

@@ -14,7 +14,8 @@ import { motion } from "framer-motion";
 import {
   Mail, Phone, MapPin, Building2, Tag, Activity,
   Calendar, Briefcase, Star, StickyNote, DollarSign,
-  Clock, User, ArrowUpRight
+  Clock, User, ArrowUpRight, MessageSquare, CheckCircle2,
+  AlarmClock, SkipForward
 } from "lucide-react";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -50,6 +51,8 @@ export default function ContactDetail() {
   const [emails, setEmails] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [followUps, setFollowUps] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +68,9 @@ export default function ContactDetail() {
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }).limit(20),
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
       supabase.from("review_requests" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("created_at", { ascending: false }),
-    ]).then(([c, a, d, ap, n, e, t, rv]) => {
+      supabase.from("follow_up_queues" as any).select("*").eq("client_id", activeClientId).eq("related_id", contactId).order("created_at", { ascending: false }),
+      supabase.from("conversations" as any).select("*").eq("client_id", activeClientId).eq("contact_id", contactId).order("last_message_at", { ascending: false }),
+    ]).then(([c, a, d, ap, n, e, t, rv, fu, conv]) => {
       setContact(c.data);
       setActivities(a.data || []);
       setDeals(d.data || []);
@@ -74,6 +79,8 @@ export default function ContactDetail() {
       setEmails(e.data || []);
       setTasks(t.data || []);
       setReviews(rv.data || []);
+      setFollowUps(fu.data || []);
+      setConversations(conv.data || []);
       setLoading(false);
     });
   }, [contactId, activeClientId]);
@@ -163,6 +170,8 @@ export default function ContactDetail() {
           <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
           <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
           <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
+          <TabsTrigger value="follow_ups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
+          <TabsTrigger value="conversations" className="rounded-md text-sm">Conversations</TabsTrigger>
           <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
         </TabsList>
 
@@ -365,6 +374,57 @@ export default function ContactDetail() {
                       <p className="text-xs text-muted-foreground">{e.direction === "inbound" ? "From" : "To"}: {e.direction === "inbound" ? e.from_address : e.to_address}</p>
                       <p className="text-[10px] text-muted-foreground">{e.sent_at ? new Date(e.sent_at).toLocaleString() : new Date(e.created_at).toLocaleString()}</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataCard>
+        </TabsContent>
+
+        <TabsContent value="follow_ups" className="mt-4">
+          <DataCard title="Follow-Ups">
+            {followUps.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No follow-ups linked to this contact.</p>
+            ) : (
+              <div className="space-y-2">
+                {followUps.map((fu: any) => (
+                  <div key={fu.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{fu.queue_type}</p>
+                        {fu.notes && <p className="text-xs text-muted-foreground truncate">{fu.notes}</p>}
+                        {fu.due_at && <p className="text-[10px] text-muted-foreground">Due: {new Date(fu.due_at).toLocaleDateString()}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="text-[10px]">{fu.priority}</Badge>
+                      <Badge variant="outline" className={`text-[10px] ${fu.status === "Completed" ? "text-emerald-600" : fu.status === "Overdue" ? "text-red-600" : ""}`}>{fu.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataCard>
+        </TabsContent>
+
+        <TabsContent value="conversations" className="mt-4">
+          <DataCard title="Conversations">
+            {conversations.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No conversations linked to this contact.</p>
+            ) : (
+              <div className="space-y-2">
+                {conversations.map((conv: any) => (
+                  <div key={conv.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 cursor-pointer hover:bg-secondary/50 transition-colors"
+                    onClick={() => navigate("/conversations")}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{conv.subject || "No subject"}</p>
+                        <p className="text-[10px] text-muted-foreground">{conv.conversation_type} · {conv.last_message_at ? new Date(conv.last_message_at).toLocaleDateString() : ""}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">{conv.status}</Badge>
                   </div>
                 ))}
               </div>

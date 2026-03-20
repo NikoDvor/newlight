@@ -39,7 +39,7 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState({
     contacts: 0, openDeals: 0, pipelineValue: 0, wonValue: 0,
     upcomingEvents: 0, completedEvents: 0, reviewRequests: 0,
-    avgRating: 0, ratingCount: 0, openTasks: 0,
+    avgRating: 0, ratingCount: 0, openTasks: 0, overdueFollowUps: 0,
   });
   const [activities, setActivities] = useState<any[]>([]);
 
@@ -59,7 +59,8 @@ export default function Dashboard() {
       supabase.from("calendar_appointment_types").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
-    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks]) => {
+      supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
+    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks, fuRes]) => {
       setOnboardingData(onb.data);
       if (intg.data) {
         setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
@@ -79,6 +80,9 @@ export default function Dashboard() {
       const reviewsData = (reviews.data || []) as any[];
       const rated = reviewsData.filter((r: any) => r.rating);
 
+      const fuData = fuRes.data || [];
+      const overdueFollowUps = fuData.filter((f: any) => f.due_at && new Date(f.due_at) < now).length;
+
       setMetrics({
         contacts: contacts.count || 0,
         openDeals: openDeals.length,
@@ -90,6 +94,7 @@ export default function Dashboard() {
         avgRating: rated.length > 0 ? rated.reduce((s: number, r: any) => s + r.rating, 0) / rated.length : 0,
         ratingCount: rated.length,
         openTasks: tasks.count || 0,
+        overdueFollowUps,
       });
       setActivities(acts.data || []);
     });
@@ -219,6 +224,7 @@ export default function Dashboard() {
         <MetricCard label="Upcoming Appts" value={hasData ? String(metrics.upcomingEvents) : "—"} change={hasData ? `${metrics.completedEvents} completed` : "Book first"} changeType="neutral" icon={Calendar} />
         <MetricCard label="Avg Rating" value={metrics.ratingCount > 0 ? metrics.avgRating.toFixed(1) + "★" : "—"} change={metrics.ratingCount > 0 ? `${metrics.reviewRequests} requests` : "Send requests"} changeType="neutral" icon={Star} />
         <MetricCard label="Open Tasks" value={hasData ? String(metrics.openTasks) : "—"} change="" changeType="neutral" icon={CheckSquare} />
+        <MetricCard label="Overdue Follow-Ups" value={String(metrics.overdueFollowUps)} change={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} changeType={metrics.overdueFollowUps > 0 ? "negative" : "neutral"} icon={Activity} />
       </WidgetGrid>
 
       {/* Your Plan */}

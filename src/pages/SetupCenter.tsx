@@ -42,7 +42,7 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -58,6 +58,9 @@ export default function SetupCenter() {
         supabase.from("calendar_appointment_types").select("id").eq("client_id", activeClientId).eq("is_active", true),
         supabase.from("calendar_booking_links").select("id").eq("client_id", activeClientId).eq("is_active", true),
         supabase.from("calendar_users").select("id").eq("client_id", activeClientId),
+        supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("follow_up_queues" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       ]);
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
@@ -71,6 +74,9 @@ export default function SetupCenter() {
       const apptTypeCount = apptTypeRes.data?.length || 0;
       const bookingLinkCount = bookingLinkRes.data?.length || 0;
       const calUsersCount = calUsersRes.data?.length || 0;
+      const contactCount = contactsRes.count || 0;
+      const dealCount = dealsRes.count || 0;
+      const fuCount = fuRes.count || 0;
       const intgs = intgRes.data || [];
       const connectedIntgs = intgs.filter((i: any) => i.status === "connected").length;
       const needsAccess = intgs.some((i: any) => ["access_needed", "awaiting_client"].includes(i.status));
@@ -82,12 +88,10 @@ export default function SetupCenter() {
         return "not_started";
       };
 
-      // Determine branding status more precisely
       const brandingHasLogo = !!brandRes.data?.logo_url;
       const brandingHasColor = !!(brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const brandingStatus: SectionStatus = hasBrand ? "completed" : (brandingHasLogo || brandingHasColor) ? "in_progress" : "not_started";
 
-      // Calendar scheduling readiness — completed when all pieces are in place
       const calSetupParts = [calCount > 0, apptTypeCount > 0, availCount > 0, bookingLinkCount > 0];
       const calCompleted = calSetupParts.filter(Boolean).length;
       const calStatus: SectionStatus = calCompleted >= 4 ? "completed" : calCompleted > 0 ? "in_progress" : "not_started";
@@ -97,8 +101,15 @@ export default function SetupCenter() {
           ? `${calCount} calendar(s), ${apptTypeCount} type(s), ${bookingLinkCount} link(s)`
           : `${calCount} calendar(s) — ${apptTypeCount === 0 ? "add appointment types" : availCount === 0 ? "set availability" : "create booking link"}`;
 
+      // CRM readiness
+      const crmParts = [contactCount > 0, dealCount > 0];
+      const crmCompleted = crmParts.filter(Boolean).length;
+      const crmStatus: SectionStatus = crmCompleted >= 2 ? "completed" : crmCompleted > 0 ? "in_progress" : "not_started";
+      const crmDetails = contactCount === 0 ? "Add your first contact" : dealCount === 0 ? `${contactCount} contact(s) — create your first deal` : `${contactCount} contact(s), ${dealCount} deal(s)`;
+
       setSections([
         { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
+        { key: "crm", title: "CRM & Contacts", description: "Contacts, deals, and follow-up queue", icon: Users, status: crmStatus, link: "/crm", details: crmDetails },
         { key: "calendars", title: "Scheduling & Booking", description: "Calendars, appointment types, availability, and booking links", icon: Calendar, status: calStatus, link: "/calendar-management", details: calDetails },
         { key: "forms", title: "Booking Forms", description: "Intake, booking, and contact forms", icon: FileText, status: s(false, formCount, 1), link: "/forms", details: formCount > 0 ? `${formCount} form(s) created` : "Create your first form" },
         { key: "services", title: "Services & Products", description: "Manage your service and product catalog", icon: ShoppingBag, status: s(false, svcCount, 1), link: "/services", details: svcCount > 0 ? `${svcCount} service(s) listed${faqCount > 0 ? `, ${faqCount} FAQ(s)` : ""}` : "Add your services" },
