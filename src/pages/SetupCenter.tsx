@@ -42,7 +42,7 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -54,6 +54,10 @@ export default function SetupCenter() {
         supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
         supabase.from("faq_records" as any).select("id").eq("client_id", activeClientId),
         supabase.from("website_content_blocks" as any).select("id").eq("client_id", activeClientId),
+        supabase.from("calendar_availability").select("id").eq("client_id", activeClientId).eq("is_active", true),
+        supabase.from("calendar_appointment_types").select("id").eq("client_id", activeClientId).eq("is_active", true),
+        supabase.from("calendar_booking_links").select("id").eq("client_id", activeClientId).eq("is_active", true),
+        supabase.from("calendar_users").select("id").eq("client_id", activeClientId),
       ]);
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
@@ -63,11 +67,14 @@ export default function SetupCenter() {
       const svcCount = svcRes.data?.length || 0;
       const faqCount = faqRes.data?.length || 0;
       const wcbCount = wcbRes.data?.length || 0;
+      const availCount = availRes.data?.length || 0;
+      const apptTypeCount = apptTypeRes.data?.length || 0;
+      const bookingLinkCount = bookingLinkRes.data?.length || 0;
+      const calUsersCount = calUsersRes.data?.length || 0;
       const intgs = intgRes.data || [];
       const connectedIntgs = intgs.filter((i: any) => i.status === "connected").length;
       const needsAccess = intgs.some((i: any) => ["access_needed", "awaiting_client"].includes(i.status));
       const onb = onbRes.data;
-      const onboardingStage = clientRes.data?.onboarding_stage || "lead";
 
       const s = (has: boolean, count?: number, threshold?: number): SectionStatus => {
         if (has || (count !== undefined && threshold !== undefined && count >= threshold)) return "completed";
@@ -80,12 +87,22 @@ export default function SetupCenter() {
       const brandingHasColor = !!(brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const brandingStatus: SectionStatus = hasBrand ? "completed" : (brandingHasLogo || brandingHasColor) ? "in_progress" : "not_started";
 
+      // Calendar scheduling readiness — completed when all pieces are in place
+      const calSetupParts = [calCount > 0, apptTypeCount > 0, availCount > 0, bookingLinkCount > 0];
+      const calCompleted = calSetupParts.filter(Boolean).length;
+      const calStatus: SectionStatus = calCompleted >= 4 ? "completed" : calCompleted > 0 ? "in_progress" : "not_started";
+      const calDetails = calCount === 0
+        ? "Create your first calendar"
+        : calCompleted >= 4
+          ? `${calCount} calendar(s), ${apptTypeCount} type(s), ${bookingLinkCount} link(s)`
+          : `${calCount} calendar(s) — ${apptTypeCount === 0 ? "add appointment types" : availCount === 0 ? "set availability" : "create booking link"}`;
+
       setSections([
         { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
-        { key: "calendars", title: "Calendars", description: "Set up appointment calendars", icon: Calendar, status: s(false, calCount, 1), link: "/calendar-management", details: calCount > 0 ? `${calCount} calendar(s) active` : "Create your first calendar" },
+        { key: "calendars", title: "Scheduling & Booking", description: "Calendars, appointment types, availability, and booking links", icon: Calendar, status: calStatus, link: "/calendar-management", details: calDetails },
         { key: "forms", title: "Booking Forms", description: "Intake, booking, and contact forms", icon: FileText, status: s(false, formCount, 1), link: "/forms", details: formCount > 0 ? `${formCount} form(s) created` : "Create your first form" },
         { key: "services", title: "Services & Products", description: "Manage your service and product catalog", icon: ShoppingBag, status: s(false, svcCount, 1), link: "/services", details: svcCount > 0 ? `${svcCount} service(s) listed${faqCount > 0 ? `, ${faqCount} FAQ(s)` : ""}` : "Add your services" },
-        { key: "team", title: "Team & Staff", description: "Add team members and assign roles", icon: Users, status: s(false, teamCount, 2), link: "/team", details: teamCount > 1 ? `${teamCount} team members` : "Invite your team" },
+        { key: "team", title: "Team & Staff", description: "Add team members and assign calendar roles", icon: Users, status: s(false, teamCount, 2), link: "/team", details: teamCount > 1 ? `${teamCount} team members${calUsersCount > 0 ? `, ${calUsersCount} calendar assignment(s)` : ""}` : "Invite your team" },
         { key: "integrations", title: "Integrations", description: "Connect Google, Meta, Stripe, and more", icon: Plug, status: needsAccess ? "needs_access" : s(false, connectedIntgs, 3), link: "/integrations", details: connectedIntgs > 0 ? `${connectedIntgs} connected` : "Connect your accounts" },
         { key: "website", title: "Website Content", description: "Pages, content blocks, and SEO", icon: Globe, status: s(false, wcbCount, 1), link: "/website", details: wcbCount > 0 ? `${wcbCount} content block(s)` : "Set up your website content" },
         { key: "reviews", title: "Reviews", description: "Review requests and reputation", icon: Star, status: onb?.review_platform_connected ? "completed" : "not_started", link: "/reviews", details: onb?.review_platform_connected ? "Review platform linked" : "Connect review platform" },
