@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { MetricCard } from "@/components/MetricCard";
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText, Plus, CheckCircle, Clock, Send, DollarSign,
-  PenTool, Eye, FileSignature, AlertCircle, Copy, ExternalLink, Loader2
+  PenTool, Eye, FileSignature, AlertCircle, Copy, ExternalLink, Loader2, LinkIcon
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,14 +39,15 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function Proposals() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, user } = useWorkspace();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState("all");
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "" });
+  const [form, setForm] = useState({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "", request_id: "" });
 
   const fetchProposals = async () => {
     if (!activeClientId) { setLoading(false); return; }
