@@ -49,7 +49,7 @@ export default function AdminHandoffChecklist() {
         clientRes, brandRes, svcRes, calRes, apptRes, availRes, blinkRes,
         formRes, formRes2, teamRes, intgRes, contactRes, dealRes, recRes, irRes,
       ] = await Promise.all([
-        supabase.from("clients").select("business_name").eq("id", clientId).single(),
+        supabase.from("clients").select("business_name, industry").eq("id", clientId).single(),
         supabase.from("client_branding").select("logo_url, primary_color, company_name").eq("client_id", clientId).maybeSingle(),
         supabase.from("service_catalog" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId).eq("is_active", true),
@@ -67,6 +67,20 @@ export default function AdminHandoffChecklist() {
       ]);
 
       setClientName(clientRes.data?.business_name || "Client");
+      setClientIndustry((clientRes.data as any)?.industry || null);
+
+      // Check for auto-provisioning log
+      const { data: provLog } = await supabase.from("audit_logs")
+        .select("metadata, created_at")
+        .eq("client_id", clientId)
+        .eq("action", "starter_template_applied")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (provLog) {
+        const meta = provLog.metadata as any;
+        setAutoProvisionLog(`Template "${meta?.template || "General"}" applied on ${new Date(provLog.created_at).toLocaleDateString()} — ${meta?.items?.length || 0} item(s)`);
+      }
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const brandPartial = !!(brandRes.data?.logo_url || (brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6"));
