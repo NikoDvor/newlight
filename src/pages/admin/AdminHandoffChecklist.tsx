@@ -52,7 +52,7 @@ export default function AdminHandoffChecklist() {
         formRes, formRes2, teamRes, intgRes, contactRes, dealRes, recRes, irRes,
         proposalRes, subRes, billingRes,
       ] = await Promise.all([
-        supabase.from("clients").select("business_name, industry").eq("id", clientId).single(),
+        supabase.from("clients").select("business_name, industry, onboarding_stage").eq("id", clientId).single(),
         supabase.from("client_branding").select("logo_url, primary_color, company_name").eq("client_id", clientId).maybeSingle(),
         supabase.from("service_catalog" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId).eq("is_active", true),
