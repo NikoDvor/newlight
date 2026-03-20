@@ -35,6 +35,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
+  const [schedulingReady, setSchedulingReady] = useState({ calendars: 0, apptTypes: 0, availability: 0, bookingLinks: 0 });
   const [metrics, setMetrics] = useState({
     contacts: 0, openDeals: 0, pipelineValue: 0, wonValue: 0,
     upcomingEvents: 0, completedEvents: 0, reviewRequests: 0,
