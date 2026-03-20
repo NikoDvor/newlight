@@ -55,6 +55,8 @@ export default function CalendarDetail() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addBlackoutOpen, setAddBlackoutOpen] = useState(false);
   const [addTypeOpen, setAddTypeOpen] = useState(false);
+  const [editTypeOpen, setEditTypeOpen] = useState(false);
+  const [editingType, setEditingType] = useState<any>(null);
   const [addReminderOpen, setAddReminderOpen] = useState(false);
   const [addLinkOpen, setAddLinkOpen] = useState(false);
 
