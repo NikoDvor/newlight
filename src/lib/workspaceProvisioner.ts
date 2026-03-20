@@ -268,6 +268,66 @@ export async function syncOnboardingStage(clientId: string, stage: string) {
   });
 }
 
+// ─── Launch / Activate Workspace ────────────────────────────────────
+
+export interface LaunchResult {
+  success: boolean;
+  blockers: string[];
+}
+
+export async function launchWorkspace(clientId: string): Promise<LaunchResult> {
+  // Evaluate handoff readiness using the same checks as the checklist
+  const [
+    brandRes, svcRes, calRes, formRes, formRes2, contactRes,
+    proposalRes, subRes,
+  ] = await Promise.all([
+    supabase.from("client_branding").select("logo_url, primary_color").eq("client_id", clientId).maybeSingle(),
+    supabase.from("service_catalog" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId).eq("is_active", true),
+    supabase.from("client_forms" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("forms").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("proposals").select("proposal_status").eq("client_id", clientId),
+    supabase.from("subscriptions").select("subscription_status").eq("client_id", clientId),
+  ]);
+
+  const blockers: string[] = [];
+  const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
+  if (!hasBrand) blockers.push("Branding incomplete — add logo and brand colors");
+  if ((svcRes.count || 0) === 0) blockers.push("No services or products added");
+  if ((calRes.count || 0) === 0) blockers.push("No active calendar created");
+  const formCount = (formRes.count || 0) + (formRes2.count || 0);
+  if (formCount === 0) blockers.push("No booking forms created");
+
+  if (blockers.length > 0) {
+    return { success: false, blockers };
+  }
+
+  // All minimum checks pass — launch
+  await supabase.from("clients").update({ onboarding_stage: "active" } as any).eq("id", clientId);
+
+  await Promise.all([
+    supabase.from("audit_logs").insert({
+      action: "workspace_launched",
+      client_id: clientId,
+      module: "activation",
+      metadata: { launched_at: new Date().toISOString() },
+    }),
+    supabase.from("crm_activities").insert({
+      client_id: clientId,
+      activity_type: "milestone",
+      activity_note: "Workspace launched and marked active",
+    }),
+    emitEvent({
+      eventKey: "workspace_created",
+      clientId,
+      payload: { stage: "active", launched: true },
+    }),
+  ]);
+
+  return { success: true, blockers: [] };
+}
+
 // ─── Compute Readiness for Admin View ────────────────────────────────
 
 export interface WorkspaceReadinessResult {

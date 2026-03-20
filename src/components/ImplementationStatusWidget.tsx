@@ -22,16 +22,30 @@ export function ImplementationStatusWidget() {
   useEffect(() => {
     if (!activeClientId) { setLoading(false); return; }
     const load = async () => {
-      const [reqRes, propRes, subRes] = await Promise.all([
+      const [reqRes, propRes, subRes, clientRes] = await Promise.all([
         supabase.from("implementation_requests").select("request_status, recommendation_name, package_name, created_at")
           .eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(3),
         supabase.from("proposals").select("proposal_title, proposal_status, created_at")
           .eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(3),
         supabase.from("subscriptions").select("subscription_name, subscription_status")
           .eq("client_id", activeClientId).eq("subscription_status", "active").limit(1).maybeSingle(),
+        supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
       ]);
 
+      const stage = (clientRes.data as any)?.onboarding_stage;
+
       const result: StatusItem[] = [];
+
+      // Workspace live state
+      if (stage === "active") {
+        result.push({
+          label: "Workspace Status",
+          status: "Live",
+          detail: "Your workspace is live and operational",
+          icon: CheckCircle2,
+          color: "hsl(152 60% 44%)",
+        });
+      }
 
       // Active subscription
       if (subRes.data) {

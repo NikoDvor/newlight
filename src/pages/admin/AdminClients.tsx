@@ -441,7 +441,12 @@ export default function AdminClients() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
+                      {c.onboarding_stage === "active" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Live</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div>

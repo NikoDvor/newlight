@@ -35,6 +35,7 @@ export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
   const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [onboardingStage, setOnboardingStage] = useState<string>("lead");
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
   const [schedulingReady, setSchedulingReady] = useState({ calendars: 0, apptTypes: 0, availability: 0, bookingLinks: 0 });
   const [metrics, setMetrics] = useState({
@@ -50,6 +51,7 @@ export default function Dashboard() {
     Promise.all([
       supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
+      supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       supabase.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", activeClientId),
       supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
@@ -61,8 +63,9 @@ export default function Dashboard() {
       supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
-    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks, fuRes]) => {
+    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks, fuRes]) => {
       setOnboardingData(onb.data);
+      setOnboardingStage((clientStage.data as any)?.onboarding_stage || "lead");
       if (intg.data) {
         setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
       }
@@ -110,7 +113,8 @@ export default function Dashboard() {
   const completedSteps = Object.values(onboardingSteps).filter(v => v === true).length;
   const totalSteps = 8;
   const setupPercentage = Math.round((completedSteps / totalSteps) * 100);
-  const isNewClient = setupPercentage < 50;
+  const isNewClient = setupPercentage < 50 && onboardingStage !== "active";
+  const isLive = onboardingStage === "active";
 
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
 
@@ -135,6 +139,23 @@ export default function Dashboard() {
           <Play className="h-3.5 w-3.5" /> Replay Intro
         </Button>
       </div>
+
+      {/* Live workspace banner */}
+      {isLive && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-2xl border"
+          style={{ borderColor: "hsla(152,60%,44%,.15)", background: "hsla(152,60%,44%,.04)" }}>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(152,60%,44%,.12)" }}>
+              <CheckSquare className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Your workspace is live</p>
+              <p className="text-xs text-muted-foreground">You can now manage your business from this dashboard</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Setup Progress Banner — only for new clients */}
       {isNewClient && (
