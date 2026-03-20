@@ -42,7 +42,7 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -52,6 +52,8 @@ export default function SetupCenter() {
         supabase.from("service_catalog" as any).select("id").eq("client_id", activeClientId),
         supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
+        supabase.from("faq_records" as any).select("id").eq("client_id", activeClientId),
+        supabase.from("website_content_blocks" as any).select("id").eq("client_id", activeClientId),
       ]);
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
@@ -59,6 +61,8 @@ export default function SetupCenter() {
       const formCount = (formRes.data?.length || 0) + (formRes2.data?.length || 0);
       const teamCount = teamRes.data?.length || 0;
       const svcCount = svcRes.data?.length || 0;
+      const faqCount = faqRes.data?.length || 0;
+      const wcbCount = wcbRes.data?.length || 0;
       const intgs = intgRes.data || [];
       const connectedIntgs = intgs.filter((i: any) => i.status === "connected").length;
       const needsAccess = intgs.some((i: any) => ["access_needed", "awaiting_client"].includes(i.status));
@@ -80,10 +84,10 @@ export default function SetupCenter() {
         { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
         { key: "calendars", title: "Calendars", description: "Set up appointment calendars", icon: Calendar, status: s(false, calCount, 1), link: "/calendar-management", details: calCount > 0 ? `${calCount} calendar(s) active` : "Create your first calendar" },
         { key: "forms", title: "Booking Forms", description: "Intake, booking, and contact forms", icon: FileText, status: s(false, formCount, 1), link: "/forms", details: formCount > 0 ? `${formCount} form(s) created` : "Create your first form" },
-        { key: "services", title: "Services & Products", description: "Manage your service and product catalog", icon: ShoppingBag, status: s(false, svcCount, 1), link: "/services", details: svcCount > 0 ? `${svcCount} service(s) listed` : "Add your services" },
+        { key: "services", title: "Services & Products", description: "Manage your service and product catalog", icon: ShoppingBag, status: s(false, svcCount, 1), link: "/services", details: svcCount > 0 ? `${svcCount} service(s) listed${faqCount > 0 ? `, ${faqCount} FAQ(s)` : ""}` : "Add your services" },
         { key: "team", title: "Team & Staff", description: "Add team members and assign roles", icon: Users, status: s(false, teamCount, 2), link: "/team", details: teamCount > 1 ? `${teamCount} team members` : "Invite your team" },
         { key: "integrations", title: "Integrations", description: "Connect Google, Meta, Stripe, and more", icon: Plug, status: needsAccess ? "needs_access" : s(false, connectedIntgs, 3), link: "/integrations", details: connectedIntgs > 0 ? `${connectedIntgs} connected` : "Connect your accounts" },
-        { key: "website", title: "Website Content", description: "Pages, SEO, and content", icon: Globe, status: onb?.website_connected ? "completed" : "not_started", link: "/website", details: onb?.website_connected ? "Website linked" : "Set up your website" },
+        { key: "website", title: "Website Content", description: "Pages, content blocks, and SEO", icon: Globe, status: s(false, wcbCount, 1), link: "/website", details: wcbCount > 0 ? `${wcbCount} content block(s)` : "Set up your website content" },
         { key: "reviews", title: "Reviews", description: "Review requests and reputation", icon: Star, status: onb?.review_platform_connected ? "completed" : "not_started", link: "/reviews", details: onb?.review_platform_connected ? "Review platform linked" : "Connect review platform" },
         { key: "billing", title: "Billing & Plan", description: "Subscription and payment status", icon: CreditCard, status: "ready", link: "/billing", details: "View your plan" },
         { key: "training", title: "Training & Help", description: "Courses and knowledge base", icon: GraduationCap, status: "ready", link: "/training", details: "Browse available courses" },

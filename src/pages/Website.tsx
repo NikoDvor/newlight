@@ -12,10 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug } from "lucide-react";
+import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug, FileEdit, Pencil, Trash2, Save } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
@@ -51,20 +52,29 @@ export default function Website() {
   const [newPage, setNewPage] = useState({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
   const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+  const [contentBlocks, setContentBlocks] = useState<any[]>([]);
+  const [editingBlock, setEditingBlock] = useState<any | null>(null);
+  const [blockForm, setBlockForm] = useState<any>({});
+  const [contentPage, setContentPage] = useState("homepage");
+
+  const CONTENT_PAGES = ["homepage", "services", "about", "contact", "booking", "offers"];
+  const BLOCK_TYPES = ["Hero", "RichText", "CTA", "FAQ", "ServiceList", "Testimonial", "ContactBlock", "BookingBlock", "Image"];
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [pRes, iRes, tRes, rRes] = await Promise.all([
+    const [pRes, iRes, tRes, rRes, cbRes] = await Promise.all([
       supabase.from("website_pages").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
       supabase.from("website_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("website_traffic_sources").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
       supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
+      supabase.from("website_content_blocks" as any).select("*").eq("client_id", activeClientId).order("display_order"),
     ]);
     setPages(pRes.data || []);
     setIssues(iRes.data || []);
     setTrafficSources(tRes.data || []);
     setRecommendations(rRes.data || []);
+    setContentBlocks((cbRes.data || []) as any);
     setLoading(false);
   };
 
@@ -116,6 +126,34 @@ export default function Website() {
 
   const resolveRecommendation = async (id: string) => {
     await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
+    fetchData();
+  };
+
+  const openNewBlock = () => {
+    setBlockForm({ block_key: "", block_type: "RichText", block_label: "", content_json: { heading: "", body: "" }, page_key: contentPage, is_active: true });
+    setEditingBlock("new");
+  };
+
+  const openEditBlock = (b: any) => {
+    setBlockForm({ ...b, content_json: typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || { heading: "", body: "" }) });
+    setEditingBlock(b);
+  };
+
+  const saveBlock = async () => {
+    if (!activeClientId || !blockForm.block_key) return;
+    const payload = { client_id: activeClientId, block_key: blockForm.block_key, block_type: blockForm.block_type, block_label: blockForm.block_label || blockForm.block_key, content_json: blockForm.content_json, page_key: blockForm.page_key || contentPage, is_active: blockForm.is_active ?? true, display_order: blockForm.display_order || 0 };
+    const { error } = editingBlock === "new"
+      ? await supabase.from("website_content_blocks" as any).insert(payload)
+      : await supabase.from("website_content_blocks" as any).update(payload).eq("id", editingBlock.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: editingBlock === "new" ? "Block created" : "Block updated" });
+    setEditingBlock(null);
+    fetchData();
+  };
+
+  const deleteBlock = async (id: string) => {
+    await supabase.from("website_content_blocks" as any).delete().eq("id", id);
+    toast({ title: "Block deleted" });
     fetchData();
   };
 
@@ -202,11 +240,12 @@ export default function Website() {
 
       <div className="mt-6">
         <Tabs defaultValue="pages">
-          <TabsList className="bg-secondary h-10 rounded-lg">
+          <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
-            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic Sources</TabsTrigger>
+            <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
+            <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recommendations</TabsTrigger>
+            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pages" className="mt-4">
@@ -244,6 +283,50 @@ export default function Website() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── Content Blocks Tab ─── */}
+          <TabsContent value="content" className="mt-4">
+            <DataCard title="Website Content Blocks" action={<Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>}>
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {CONTENT_PAGES.map(p => (
+                  <Button key={p} size="sm" variant={contentPage === p ? "default" : "outline"} className="text-xs capitalize h-7"
+                    onClick={() => setContentPage(p)}>{p}</Button>
+                ))}
+              </div>
+              {contentBlocks.filter(b => b.page_key === contentPage).length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <FileEdit className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No content blocks for {contentPage}</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add headings, text, CTAs, and more to build this page's content.</p>
+                  <Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {contentBlocks.filter(b => b.page_key === contentPage).map(b => {
+                    const cj = typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || {});
+                    return (
+                      <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 transition-colors group">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[9px]">{b.block_type}</Badge>
+                            <span className="text-sm font-medium text-foreground truncate">{b.block_label || b.block_key}</span>
+                            {!b.is_active && <Badge variant="outline" className="text-[9px] text-muted-foreground">Hidden</Badge>}
+                          </div>
+                          {cj.heading && <p className="text-xs text-muted-foreground truncate mt-0.5">{cj.heading}</p>}
+                        </div>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBlock(b)}><Pencil className="h-3 w-3" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(b.id)}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </DataCard>
           </TabsContent>
@@ -421,6 +504,42 @@ export default function Website() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setRecOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addRecommendation}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Block Editor Sheet */}
+      <Sheet open={!!editingBlock} onOpenChange={() => setEditingBlock(null)}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>{editingBlock === "new" ? "Add" : "Edit"} Content Block</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Block Key *</Label><Input value={blockForm.block_key || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") }))} placeholder="e.g. hero_heading" /></div>
+            <div className="space-y-2"><Label>Label</Label><Input value={blockForm.block_label || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_label: e.target.value }))} placeholder="Display label" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={blockForm.block_type || "RichText"} onValueChange={v => setBlockForm((p: any) => ({ ...p, block_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BLOCK_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Page</Label>
+                <Select value={blockForm.page_key || "homepage"} onValueChange={v => setBlockForm((p: any) => ({ ...p, page_key: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CONTENT_PAGES.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2"><Label>Heading</Label><Input value={blockForm.content_json?.heading || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, heading: e.target.value } }))} /></div>
+            <div className="space-y-2"><Label>Body</Label><Textarea value={blockForm.content_json?.body || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, body: e.target.value } }))} rows={4} /></div>
+            {(blockForm.block_type === "CTA" || blockForm.block_type === "BookingBlock") && (
+              <div className="space-y-2"><Label>Button Text</Label><Input value={blockForm.content_json?.buttonText || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, buttonText: e.target.value } }))} placeholder="e.g. Book Now" /></div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEditingBlock(null)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveBlock}><Save className="h-4 w-4 mr-1" /> Save</Button>
             </div>
           </div>
         </SheetContent>

@@ -3949,6 +3949,47 @@ export type Database = {
           },
         ]
       }
+      faq_records: {
+        Row: {
+          answer: string
+          client_id: string
+          created_at: string
+          display_order: number
+          id: string
+          question: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: string
+          client_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          client_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       filing_readiness: {
         Row: {
           assigned_to: string | null
@@ -5149,8 +5190,10 @@ export type Database = {
           display_order: number
           display_status: string
           id: string
+          linked_page_id: string | null
           offer_description: string | null
           offer_name: string
+          offer_slug: string | null
           offer_type: string
           updated_at: string
         }
@@ -5160,8 +5203,10 @@ export type Database = {
           display_order?: number
           display_status?: string
           id?: string
+          linked_page_id?: string | null
           offer_description?: string | null
           offer_name: string
+          offer_slug?: string | null
           offer_type?: string
           updated_at?: string
         }
@@ -5171,8 +5216,10 @@ export type Database = {
           display_order?: number
           display_status?: string
           id?: string
+          linked_page_id?: string | null
           offer_description?: string | null
           offer_name?: string
+          offer_slug?: string | null
           offer_type?: string
           updated_at?: string
         }
@@ -5982,6 +6029,9 @@ export type Database = {
           display_order: number
           display_price_text: string | null
           id: string
+          internal_product_key: string | null
+          linked_page_id: string | null
+          product_category: string | null
           product_description: string | null
           product_name: string
           product_slug: string | null
@@ -5994,6 +6044,9 @@ export type Database = {
           display_order?: number
           display_price_text?: string | null
           id?: string
+          internal_product_key?: string | null
+          linked_page_id?: string | null
+          product_category?: string | null
           product_description?: string | null
           product_name: string
           product_slug?: string | null
@@ -6006,6 +6059,9 @@ export type Database = {
           display_order?: number
           display_price_text?: string | null
           id?: string
+          internal_product_key?: string | null
+          linked_page_id?: string | null
+          product_category?: string | null
           product_description?: string | null
           product_name?: string
           product_slug?: string | null
@@ -7463,8 +7519,12 @@ export type Database = {
           display_order: number
           display_price_text: string | null
           id: string
+          internal_service_key: string | null
           linked_appointment_type_id: string | null
           linked_calendar_id: string | null
+          linked_form_id: string | null
+          linked_page_id: string | null
+          service_category: string | null
           service_description: string | null
           service_name: string
           service_slug: string | null
@@ -7477,8 +7537,12 @@ export type Database = {
           display_order?: number
           display_price_text?: string | null
           id?: string
+          internal_service_key?: string | null
           linked_appointment_type_id?: string | null
           linked_calendar_id?: string | null
+          linked_form_id?: string | null
+          linked_page_id?: string | null
+          service_category?: string | null
           service_description?: string | null
           service_name: string
           service_slug?: string | null
@@ -7491,8 +7555,12 @@ export type Database = {
           display_order?: number
           display_price_text?: string | null
           id?: string
+          internal_service_key?: string | null
           linked_appointment_type_id?: string | null
           linked_calendar_id?: string | null
+          linked_form_id?: string | null
+          linked_page_id?: string | null
+          service_category?: string | null
           service_description?: string | null
           service_name?: string
           service_slug?: string | null
@@ -8711,6 +8779,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_content_blocks: {
+        Row: {
+          block_key: string
+          block_label: string | null
+          block_type: string
+          client_id: string
+          content_json: Json
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          page_key: string
+          updated_at: string
+        }
+        Insert: {
+          block_key: string
+          block_label?: string | null
+          block_type?: string
+          client_id: string
+          content_json?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          page_key?: string
+          updated_at?: string
+        }
+        Update: {
+          block_key?: string
+          block_label?: string | null
+          block_type?: string
+          client_id?: string
+          content_json?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          page_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_content_blocks_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
