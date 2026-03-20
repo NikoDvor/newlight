@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ export default function AdminClients() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   const [form, setForm] = useState({
@@ -201,6 +202,26 @@ export default function AdminClients() {
     });
     toast.success(`${client.business_name} ${newStatus === "suspended" ? "suspended" : "reactivated"}`);
     fetchClients();
+  };
+
+  const handleReProvision = async (client: Client) => {
+    setProvisioning(client.id);
+    try {
+      const result = await provisionWorkspaceDefaults(client.id, {
+        industry: client.industry,
+        skipIfExists: true,
+      });
+      if (result.provisionedItems.length > 0) {
+        toast.success(`Applied starter template: ${result.provisionedItems.length} item(s) created`);
+      } else {
+        toast.info("Workspace already has starter content — nothing new to create");
+      }
+      fetchClients();
+    } catch (err: any) {
+      toast.error(err.message || "Provisioning failed");
+    } finally {
+      setProvisioning(null);
+    }
   };
 
   const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
@@ -436,6 +457,9 @@ export default function AdminClients() {
                           <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
                          </button>
                        )}
+                       <button onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Apply / Re-run Starter Template">
+                         {provisioning === c.id ? <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-white/40 hover:text-purple-400" />}
+                       </button>
                        <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
                          <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
                        </button>
