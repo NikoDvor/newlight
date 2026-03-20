@@ -54,6 +54,8 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
 
   const effectiveScope = scopeType || (isAdmin ? "admin_global" : "client_workspace");
 
+  const [contacts, setContacts] = useState<any[]>([]);
+
   const load = async () => {
     let q = supabase.from("conversations" as any).select("*").order("last_message_at", { ascending: false }).limit(100);
     if (effectiveScope === "client_workspace" && activeClientId) {
@@ -61,9 +63,15 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
     } else if (effectiveScope === "admin_sales") {
       q = q.eq("workspace_scope_type", "admin_sales");
     }
-    const { data } = await q;
-    setConversations(data ?? []);
+    const [convRes, cRes] = await Promise.all([
+      q,
+      activeClientId ? supabase.from("crm_contacts").select("id, full_name").eq("client_id", activeClientId).limit(500) : Promise.resolve({ data: [] }),
+    ]);
+    setConversations(convRes.data ?? []);
+    setContacts(cRes.data || []);
   };
+
+  const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || null;
 
   useEffect(() => { load(); }, [activeClientId, effectiveScope]);
 
