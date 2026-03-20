@@ -121,6 +121,7 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
   const tz = options.timezone || "America/Los_Angeles";
   const defaults = matchIndustry(options.industry) || FALLBACK_DEFAULTS;
   const skip = options.skipIfExists !== false;
+  const templateName = options.industry || "General";
 
   // Check existing records to avoid duplicates
   const [calRes, svcRes, formRes] = await Promise.all([
@@ -132,6 +133,8 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
   const hasCalendars = (calRes.count || 0) > 0;
   const hasServices = (svcRes.count || 0) > 0;
   const hasForms = (formRes.count || 0) > 0;
+
+  const provisionedItems: string[] = [];
 
   // 1. Auto-create starter calendars
   if (!hasCalendars || !skip) {
@@ -183,6 +186,8 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
           { client_id: clientId, calendar_id: cal.id, reminder_type: "confirmation", channel: "email", offset_minutes: 0, is_active: true },
           { client_id: clientId, calendar_id: cal.id, reminder_type: "reminder", channel: "email", offset_minutes: 1440, is_active: true },
         ]);
+
+        provisionedItems.push(`Calendar: ${calDef.name}`);
       }
     }
   }
@@ -199,6 +204,7 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
         service_status: "active",
         display_order: i,
       });
+      provisionedItems.push(`Service: ${svc.name}`);
     }
   }
 
@@ -212,17 +218,35 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
         form_status: "draft",
         intake_questions: formDef.questions.map((q, i) => ({ id: `q${i + 1}`, label: q, type: "text", required: false })),
       });
+      provisionedItems.push(`Form: ${formDef.name}`);
     }
   }
 
-  // 4. Emit events
+  // 4. Log provisioning audit trail
+  if (provisionedItems.length > 0) {
+    await Promise.all([
+      supabase.from("crm_activities").insert({
+        client_id: clientId,
+        activity_type: "auto_provisioned",
+        activity_note: `Starter template "${templateName}" applied — ${provisionedItems.length} item(s) created: ${provisionedItems.join(", ")}`,
+      }),
+      supabase.from("audit_logs").insert({
+        action: "starter_template_applied",
+        client_id: clientId,
+        module: "onboarding",
+        metadata: { template: templateName, items: provisionedItems, auto: true },
+      }),
+    ]);
+  }
+
+  // 5. Emit events
   await emitEvent({
     eventKey: "workspace_created",
     clientId,
-    payload: { industry: options.industry, auto_provisioned: true },
+    payload: { industry: options.industry, auto_provisioned: true, items_created: provisionedItems.length },
   });
 
-  return { calendarsCreated: !hasCalendars, servicesCreated: !hasServices, formsCreated: !hasForms };
+  return { calendarsCreated: !hasCalendars, servicesCreated: !hasServices, formsCreated: !hasForms, provisionedItems };
 }
 
 // ─── Setup Status Sync ──────────────────────────────────────────────
