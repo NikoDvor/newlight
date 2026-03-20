@@ -94,7 +94,7 @@ export default function SetupCenter() {
     evaluate();
   }, [activeClientId]);
 
-  const completedCount = sections.filter(s => s.status === "completed").length;
+  const completedCount = sections.filter(s => s.status === "completed" || s.status === "ready").length;
   const totalCount = sections.length;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
