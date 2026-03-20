@@ -410,6 +410,16 @@ export default function AdminClients() {
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.1)] text-[hsl(var(--nl-neon))] capitalize">{c.service_package}</span>
                   </td>
                   <td className="px-4 py-3">
+                    {readiness[c.id] ? (
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <Progress value={readiness[c.id].percentage} className="h-1.5 flex-1" />
+                        <span className="text-[10px] text-white/50 shrink-0">{readiness[c.id].percentage}%</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-white/30">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
                   </td>
                   <td className="px-4 py-3">
