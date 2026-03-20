@@ -166,6 +166,7 @@ export default function CalendarDetail() {
 
   const addApptType = async () => {
     if (!newType.name.trim()) { toast.error("Name required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("calendar_appointment_types").insert({
       client_id: activeClientId, calendar_id: calendarId,
       name: newType.name, description: newType.description || null,
@@ -176,9 +177,54 @@ export default function CalendarDetail() {
       confirmation_message: newType.confirmation_message || null,
       reminders_enabled: newType.reminders_enabled,
     });
+    await supabase.from("audit_logs").insert({
+      client_id: activeClientId, action: "appointment_type_created", module: "calendar",
+      user_id: user?.id || null, metadata: { calendar_id: calendarId, name: newType.name },
+    });
     toast.success("Appointment type created");
     setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true });
     setAddTypeOpen(false);
+    fetchAll();
+  };
+
+  const openEditType = (t: any) => {
+    setEditingType({
+      ...t,
+      duration_minutes: String(t.duration_minutes),
+      buffer_before: String(t.buffer_before),
+      buffer_after: String(t.buffer_after),
+    });
+    setEditTypeOpen(true);
+  };
+
+  const saveEditType = async () => {
+    if (!editingType) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("calendar_appointment_types").update({
+      name: editingType.name,
+      description: editingType.description || null,
+      duration_minutes: parseInt(editingType.duration_minutes),
+      buffer_before: parseInt(editingType.buffer_before),
+      buffer_after: parseInt(editingType.buffer_after),
+      location_type: editingType.location_type,
+      meeting_link_type: editingType.meeting_link_type,
+      confirmation_message: editingType.confirmation_message || null,
+      reminders_enabled: editingType.reminders_enabled,
+      is_active: editingType.is_active,
+    }).eq("id", editingType.id);
+    await supabase.from("audit_logs").insert({
+      client_id: activeClientId, action: "appointment_type_updated", module: "calendar",
+      user_id: user?.id || null, metadata: { calendar_id: calendarId, name: editingType.name },
+    });
+    toast.success("Appointment type updated");
+    setEditTypeOpen(false);
+    setEditingType(null);
+    fetchAll();
+  };
+
+  const toggleApptTypeActive = async (id: string, currentActive: boolean) => {
+    await supabase.from("calendar_appointment_types").update({ is_active: !currentActive }).eq("id", id);
+    toast.success(currentActive ? "Appointment type deactivated" : "Appointment type activated");
     fetchAll();
   };
 
