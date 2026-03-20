@@ -42,7 +42,7 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -58,6 +58,9 @@ export default function SetupCenter() {
         supabase.from("calendar_appointment_types").select("id").eq("client_id", activeClientId).eq("is_active", true),
         supabase.from("calendar_booking_links").select("id").eq("client_id", activeClientId).eq("is_active", true),
         supabase.from("calendar_users").select("id").eq("client_id", activeClientId),
+        supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("follow_up_queues" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       ]);
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
