@@ -90,6 +90,7 @@ export default function Reports() {
   return (
     <div>
       <PageHeader title="Reports" description="Automated performance reports and analytics">
+        <DemoDataLabel />
         <div className="flex gap-2">
           <Select value={reportType} onValueChange={setReportType}>
             <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
