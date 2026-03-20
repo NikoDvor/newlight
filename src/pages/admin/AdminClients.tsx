@@ -401,18 +401,21 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3 text-white/40 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                     <div className="flex items-center gap-1">
                       {c.owner_email && (
-                        <button onClick={() => handleResendInvite(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Resend invite">
+                        <button onClick={() => handleResendInvite(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Resend invite email">
                           <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
                          </button>
                        )}
-                       <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open Setup Form">
+                       <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
                          <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
                        </button>
-                       <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
+                       <button onClick={() => { setViewMode("workspace"); setActiveClientId(c.id); navigate("/setup-center"); }} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open Setup Center">
+                         <CheckCircle2 className="h-3.5 w-3.5 text-white/40 hover:text-emerald-400" />
+                       </button>
+                       <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace dashboard">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-                      </button>
+                       </button>
                       <button onClick={() => handleSuspend(c)} className="p-1.5 rounded-lg hover:bg-yellow-500/10 transition-colors" title={c.status === "suspended" ? "Reactivate" : "Suspend"}>
                         {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-white/30 hover:text-yellow-400" />}
                       </button>
