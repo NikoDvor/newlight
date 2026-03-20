@@ -161,9 +161,8 @@ export function RecommendedServicesWidget() {
   const topPkg = packageLinks.find(l => l.service_key === top.key && l.is_primary);
 
   const handleRequestImplementation = (rec: ServiceRecommendation) => {
-    toast.success("Implementation request sent! Our team will reach out shortly.", {
-      description: `Service: ${rec.name} — Projected: $${rec.projectedMonthly.toLocaleString()}/mo`,
-    });
+    const recPkg = packageLinks.find(l => l.service_key === rec.key && l.is_primary);
+    setRequestModal({ rec, pkg: recPkg });
   };
 
   return (
