@@ -39,6 +39,8 @@ export default function AdminHandoffChecklist() {
   const [checks, setChecks] = useState<CheckItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [provisioning, setProvisioning] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [onboardingStage, setOnboardingStage] = useState<string>("lead");
   const [autoProvisionLog, setAutoProvisionLog] = useState<string | null>(null);
 
   useEffect(() => {
