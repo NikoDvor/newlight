@@ -60,6 +60,8 @@ export function RecommendedServicesWidget() {
   const [loading, setLoading] = useState(true);
   const [packageLinks, setPackageLinks] = useState<PackageLink[]>([]);
   const [detailSheet, setDetailSheet] = useState<ServiceRecommendation | null>(null);
+  const [requestModal, setRequestModal] = useState<{ rec: ServiceRecommendation; pkg?: PackageLink } | null>(null);
+  const [activeRequests, setActiveRequests] = useState<Record<string, string>>({}); // recommendation_key -> status
 
   const runEngine = useCallback(async () => {
     if (!activeClientId) return;
