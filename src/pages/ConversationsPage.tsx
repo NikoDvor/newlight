@@ -162,6 +162,11 @@ export default function ConversationsPage({ scopeType, title = "Conversations" }
                     <TIcon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground truncate">{c.subject || "No subject"}</p>
+                      {c.contact_id && getContactName(c.contact_id) && (
+                        <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                          <User className="h-3 w-3" />{getContactName(c.contact_id)}
+                        </p>
+                      )}
                       <div className="flex gap-1 mt-1">
                         <Badge variant="outline" className="text-[10px] h-4">{c.conversation_type}</Badge>
                         <Badge className={`text-[10px] h-4 ${STATUS_STYLE[c.status] || "bg-secondary"}`}>{c.status}</Badge>

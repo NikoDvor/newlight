@@ -542,7 +542,8 @@ export default function CRM() {
                            </td>
                            <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
                            <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
-                           <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                            <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                            <td className="text-[10px] text-muted-foreground py-3 pr-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}</td>
                            <td className="py-3">
                              {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
                                <Select onValueChange={v => moveDealStage(d.id, v)}>

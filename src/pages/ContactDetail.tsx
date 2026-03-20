@@ -225,22 +225,69 @@ export default function ContactDetail() {
 
         <TabsContent value="activity" className="mt-4">
           <DataCard title="Activity Timeline">
-            {activities.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No activity recorded yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {activities.map((a, i) => (
-                  <motion.div key={a.id} className="flex gap-3 py-2 border-b border-border last:border-0"
-                    initial={{ opacity: 0, x: -4 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.02 }}>
-                    <div className="h-2 w-2 rounded-full mt-2 shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
-                    <div>
-                      <p className="text-sm">{a.activity_note || a.activity_type}</p>
-                      <p className="text-[10px] text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+            {(() => {
+              // Build unified timeline from all sources
+              const timelineItems: { id: string; type: string; label: string; detail?: string; date: string; icon: any }[] = [];
+
+              activities.forEach(a => timelineItems.push({
+                id: `act-${a.id}`, type: "activity", label: a.activity_note || a.activity_type,
+                date: a.created_at, icon: Activity,
+              }));
+
+              appointments.forEach(a => timelineItems.push({
+                id: `apt-${a.id}`, type: "booking",
+                label: `Appointment: ${a.title}`,
+                detail: `Status: ${a.status}${a.location ? ` · ${a.location}` : ""}`,
+                date: a.start_time || a.created_at, icon: Calendar,
+              }));
+
+              deals.forEach(d => timelineItems.push({
+                id: `deal-${d.id}`, type: "deal",
+                label: `Deal: ${d.deal_name}`,
+                detail: `Stage: ${STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage} · $${Number(d.deal_value || 0).toLocaleString()}`,
+                date: d.created_at, icon: Briefcase,
+              }));
+
+              followUps.forEach((fu: any) => timelineItems.push({
+                id: `fu-${fu.id}`, type: "follow_up",
+                label: `Follow-up: ${fu.queue_type}`,
+                detail: `${fu.status}${fu.due_at ? ` · Due ${new Date(fu.due_at).toLocaleDateString()}` : ""}`,
+                date: fu.created_at, icon: Clock,
+              }));
+
+              timelineItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              if (timelineItems.length === 0) {
+                return <p className="py-6 text-center text-sm text-muted-foreground">No activity recorded yet.</p>;
+              }
+
+              const typeColors: Record<string, string> = {
+                activity: "hsl(211 96% 56%)", booking: "hsl(152 60% 44%)",
+                deal: "hsl(38 92% 50%)", follow_up: "hsl(280 60% 55%)",
+              };
+
+              return (
+                <div className="space-y-1">
+                  {timelineItems.map((item, i) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <motion.div key={item.id} className="flex gap-3 py-2.5 border-b border-border last:border-0"
+                        initial={{ opacity: 0, x: -4 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.015 }}>
+                        <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                          style={{ background: `${typeColors[item.type]}15` }}>
+                          <ItemIcon className="h-3.5 w-3.5" style={{ color: typeColors[item.type] }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground">{item.label}</p>
+                          {item.detail && <p className="text-xs text-muted-foreground mt-0.5">{item.detail}</p>}
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(item.date).toLocaleString()}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </DataCard>
         </TabsContent>
 
