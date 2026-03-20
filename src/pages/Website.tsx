@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug } from "lucide-react";
+import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug, FileEdit, Pencil, Trash2, Save } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
