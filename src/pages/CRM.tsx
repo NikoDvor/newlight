@@ -439,9 +439,10 @@ export default function CRM() {
                              {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
                            </td>
                            <td className="text-xs text-muted-foreground py-3 pr-3">{c.last_interaction_date ? new Date(c.last_interaction_date).toLocaleDateString() : "—"}</td>
-                           <td className="py-3">
-                             <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
-                          </td>
+                            <td className="py-3 pr-3">
+                              <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
+                           </td>
+                           <td className="text-[10px] text-muted-foreground py-3">{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "—"}</td>
                         </tr>
                       ))}
                     </tbody>
