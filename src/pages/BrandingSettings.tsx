@@ -85,12 +85,26 @@ export default function BrandingSettings() {
       ...form,
     } as any, { onConflict: "client_id" });
     if (error) { toast.error(error.message); return; }
+
     // Audit log
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("audit_logs").insert({
       user_id: user?.id, client_id: activeClientId, action: "branding_updated",
       module: "branding", metadata: { updated_fields: Object.keys(form) },
     });
+
+    // Emit event for automation + setup center sync
+    const hasBrand = !!(form.logo_url && form.primary_color && form.primary_color !== "#3B82F6");
+    await emitEvent({
+      eventKey: hasBrand ? "onboarding_section_completed" : "onboarding_form_saved",
+      clientId: activeClientId,
+      payload: { section: "branding", complete: hasBrand },
+    });
+
+    // Force workspace context to re-fetch branding
+    setActiveClientId(null);
+    setTimeout(() => setActiveClientId(activeClientId), 50);
+
     toast.success("Branding settings saved!");
   };
 
