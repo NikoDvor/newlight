@@ -10,9 +10,10 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   CheckCircle2, Circle, AlertTriangle, Rocket, Palette, ShoppingBag,
   Calendar, FileText, Users, Plug, Star, Globe, CreditCard,
-  ExternalLink, ArrowLeft, ClipboardCheck, Package, Wand2, Loader2
+  ExternalLink, ArrowLeft, ClipboardCheck, Package, Wand2, Loader2, Zap
 } from "lucide-react";
-import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
+import { provisionWorkspaceDefaults, launchWorkspace } from "@/lib/workspaceProvisioner";
+import { toast } from "sonner";
 
 type ItemStatus = "ready" | "partial" | "missing";
 
@@ -167,6 +168,8 @@ export default function AdminHandoffChecklist() {
 
   const isActive = onboardingStage === "active";
   const canLaunch = percentage >= 60 && !isActive;
+
+  const handleReProvision = async () => {
     if (!clientId) return;
     setProvisioning(true);
     try {
