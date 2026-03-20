@@ -261,6 +261,7 @@ export default function CRM() {
 
   const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || "—";
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.company_name || "—";
+  const getOwnerName = (userId: string) => teamMembers.find(t => t.user_id === userId)?.full_name || "—";
 
   if (!activeClientId) {
     return (
