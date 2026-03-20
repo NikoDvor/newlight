@@ -35,6 +35,7 @@ export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
   const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [onboardingStage, setOnboardingStage] = useState<string>("lead");
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
   const [schedulingReady, setSchedulingReady] = useState({ calendars: 0, apptTypes: 0, availability: 0, bookingLinks: 0 });
   const [metrics, setMetrics] = useState({
