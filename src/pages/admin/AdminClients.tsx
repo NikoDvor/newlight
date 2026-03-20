@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -11,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
-
+import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 interface Client {
   id: string;
   business_name: string;
@@ -22,10 +24,12 @@ interface Client {
   owner_name: string | null;
   owner_email: string | null;
   created_at: string;
+  onboarding_stage: string;
 }
 
 export default function AdminClients() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [readiness, setReadiness] = useState<Record<string, WorkspaceReadinessResult>>({});
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -39,8 +43,16 @@ export default function AdminClients() {
   const { setViewMode, setActiveClientId } = useWorkspace();
   const navigate = useNavigate();
 
-  const fetchClients = () => {
-    supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
+  const fetchClients = async () => {
+    const { data } = await supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false });
+    const list = (data ?? []) as Client[];
+    setClients(list);
+    // Fetch readiness for all clients in parallel
+    const results: Record<string, WorkspaceReadinessResult> = {};
+    await Promise.all(list.map(async (c) => {
+      results[c.id] = await computeWorkspaceReadiness(c.id);
+    }));
+    setReadiness(results);
   };
 
   useEffect(() => { fetchClients(); }, []);
@@ -92,6 +104,13 @@ export default function AdminClients() {
         }),
         supabase.from("client_health_scores").insert({ client_id: data.id }),
       ]);
+
+      // 2b. Auto-provision industry-aware starter content
+      await provisionWorkspaceDefaults(data.id, {
+        industry: form.industry,
+        timezone: form.timezone,
+        skipIfExists: true,
+      });
 
       // 3. Auto-create auth account for client owner
       try {
@@ -366,7 +385,7 @@ export default function AdminClients() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["Client Name", "Industry", "Package", "Status", "Owner", "Created", ""].map(h => (
+                {["Client Name", "Industry", "Package", "Readiness", "Status", "Owner", ""].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
@@ -391,6 +410,16 @@ export default function AdminClients() {
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.1)] text-[hsl(var(--nl-neon))] capitalize">{c.service_package}</span>
                   </td>
                   <td className="px-4 py-3">
+                    {readiness[c.id] ? (
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <Progress value={readiness[c.id].percentage} className="h-1.5 flex-1" />
+                        <span className="text-[10px] text-white/50 shrink-0">{readiness[c.id].percentage}%</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-white/30">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
                   </td>
                   <td className="px-4 py-3">
@@ -399,7 +428,7 @@ export default function AdminClients() {
                       {c.owner_email && <p className="text-[10px] text-white/30">{c.owner_email}</p>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-white/40 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
+                  
                   <td className="px-4 py-3">
                      <div className="flex items-center gap-1">
                       {c.owner_email && (

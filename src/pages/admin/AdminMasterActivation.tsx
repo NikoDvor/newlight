@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { emitEvent } from "@/lib/automationEngine";
+import { provisionWorkspaceDefaults, syncOnboardingStage } from "@/lib/workspaceProvisioner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,6 +77,7 @@ export default function AdminMasterActivation() {
         draft_status: "draft",
       }, { onConflict: "id" });
       toast.success("Draft saved successfully");
+      await emitEvent({ eventKey: "onboarding_form_saved", payload: { step, draft_name: draftName } });
     } catch {
       toast.error("Failed to save draft");
     }
@@ -286,6 +289,26 @@ export default function AdminMasterActivation() {
           status: "open",
         }),
       ]);
+
+      // 8. Auto-provision any missing defaults (safe merge)
+      await provisionWorkspaceDefaults(client.id, {
+        industry: form.industry,
+        timezone: form.default_timezone,
+        skipIfExists: true,
+      });
+
+      // 9. Update onboarding stage & emit events
+      await syncOnboardingStage(client.id, "active");
+      await emitEvent({
+        eventKey: "activation_form_submitted",
+        clientId: client.id,
+        payload: { package: form.service_package, crm_mode: form.crm_mode },
+      });
+      await emitEvent({
+        eventKey: "workspace_activated",
+        clientId: client.id,
+        payload: { business_name: form.business_name_confirmed },
+      });
 
       setActivated(true);
       toast.success(`${form.business_name_confirmed} activated successfully!`);
