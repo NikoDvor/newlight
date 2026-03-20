@@ -6503,6 +6503,44 @@ export type Database = {
           },
         ]
       }
+      recommendation_package_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          package_id: string
+          priority_order: number
+          recommendation_service_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          package_id: string
+          priority_order?: number
+          recommendation_service_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          package_id?: string
+          priority_order?: number
+          recommendation_service_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_package_links_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendation_runs: {
         Row: {
           client_id: string
