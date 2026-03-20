@@ -90,13 +90,13 @@ export const systemModules: SystemModule[] = [
   // ── Revenue Systems ──
   {
     key: "proposals",
-    name: "Proposal Engine",
+    name: "Proposal & E-Sign Engine",
     category: "Revenue Systems",
     status: "Operational",
     dependency: "Native",
-    description: "Proposal creation, templates, e-sign flow, and deal linkage.",
-    routes: ["/proposals", "/admin/proposal-templates"],
-    dataModels: ["proposals", "proposal_templates", "proposal_sections"],
+    description: "Proposal creation, templates, native e-sign with canvas signature, IP logging, and deal linkage.",
+    routes: ["/proposals", "/admin/proposal-templates", "/proposal/:token"],
+    dataModels: ["proposals", "proposal_templates", "proposal_sections", "proposal_line_items", "proposal_signatures"],
     feedsInto: ["billing", "activation", "packages"],
     receivesFrom: ["crm", "packages"],
   },
