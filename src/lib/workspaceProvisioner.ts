@@ -70,6 +70,28 @@ const INDUSTRY_DEFAULTS: Record<string, IndustryDefaults> = {
     ],
     forms: [{ name: "Client Intake", type: "intake", questions: ["Nature of your inquiry?", "Timeline or urgency?", "Budget range?"] }],
   },
+  retail: {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["In-Store Appointment", "Personal Shopping"], duration: 30 }],
+    services: [
+      { name: "Personal Shopping", description: "Guided shopping experience", price: "Complimentary" },
+      { name: "Gift Registry", description: "Custom gift registry setup", price: "Free" },
+    ],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["What are you looking for?", "Preferred contact method?"] }],
+  },
+  "local business": {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
+    services: [
+      { name: "Standard Service", description: "Our core service offering", price: "Contact for pricing" },
+    ],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?", "Best time to reach you?"] }],
+  },
+  general: {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
+    services: [
+      { name: "Core Service", description: "Primary service offering", price: "Contact for pricing" },
+    ],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
+  },
 };
 
 function matchIndustry(industry: string | null | undefined): IndustryDefaults | null {
@@ -78,7 +100,6 @@ function matchIndustry(industry: string | null | undefined): IndustryDefaults | 
   for (const [key, val] of Object.entries(INDUSTRY_DEFAULTS)) {
     if (lower.includes(key)) return val;
   }
-  // Fallback: professional service for unknown
   return null;
 }
 
