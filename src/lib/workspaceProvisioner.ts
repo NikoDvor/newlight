@@ -319,9 +319,9 @@ export async function launchWorkspace(clientId: string): Promise<LaunchResult> {
       activity_note: "Workspace launched and marked active",
     }),
     emitEvent({
-      eventKey: "workspace_launched",
+      eventKey: "workspace_created",
       clientId,
-      payload: { stage: "active" },
+      payload: { stage: "active", launched: true },
     }),
   ]);
 
