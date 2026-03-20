@@ -241,10 +241,52 @@ export default function AdminHandoffChecklist() {
           </span>
         </div>
         <Progress value={percentage} className="h-2.5" />
-        {percentage === 100 && (
-          <p className="text-xs text-emerald-400 mt-3 font-medium">✓ This workspace is ready for client handoff</p>
-        )}
+        {isActive ? (
+          <div className="flex items-center gap-2 mt-3">
+            <CheckCircle2 className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
+            <p className="text-xs font-medium" style={{ color: "hsl(152 60% 55%)" }}>This workspace is live</p>
+          </div>
+        ) : percentage === 100 ? (
+          <p className="text-xs mt-3 font-medium" style={{ color: "hsl(152 60% 55%)" }}>✓ This workspace is ready for client handoff</p>
+        ) : null}
       </Card>
+
+      {/* Launch Action */}
+      {!isActive && (
+        <Card className="p-5 border-0" style={{
+          background: canLaunch ? "hsla(152,60%,44%,.06)" : "hsla(0,0%,100%,.02)",
+          borderColor: canLaunch ? "hsla(152,60%,44%,.12)" : "hsla(0,0%,100%,.06)",
+        }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: canLaunch ? "hsla(152,60%,44%,.15)" : "hsla(0,0%,100%,.06)" }}>
+                <Zap className="h-5 w-5" style={{ color: canLaunch ? "hsl(152 60% 55%)" : "hsl(var(--muted-foreground))" }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">
+                  {canLaunch ? "Ready to launch" : "Not ready yet"}
+                </p>
+                <p className="text-xs text-white/40">
+                  {canLaunch
+                    ? "Mark this workspace as live for the client"
+                    : `${checks.filter(c => c.status !== "ready").length} item(s) still need attention`}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleLaunch}
+              disabled={!canLaunch || launching}
+              size="sm"
+              className={canLaunch
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-white/[0.06] text-white/30 cursor-not-allowed"}
+            >
+              {launching ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Zap className="h-3.5 w-3.5 mr-1.5" />}
+              {launching ? "Launching…" : "Launch Client"}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Items */}
       <div className="space-y-2">
