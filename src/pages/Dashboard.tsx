@@ -59,11 +59,17 @@ export default function Dashboard() {
       supabase.from("calendar_appointment_types").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
       supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
-    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts]) => {
+    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks]) => {
       setOnboardingData(onb.data);
       if (intg.data) {
         setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
       }
+      setSchedulingReady({
+        calendars: cals.count || 0,
+        apptTypes: apptTypes.count || 0,
+        availability: avail.count || 0,
+        bookingLinks: bLinks.count || 0,
+      });
 
       const dealsData = deals.data || [];
       const openDeals = dealsData.filter((d: any) => d.status === "open");
