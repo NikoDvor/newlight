@@ -176,6 +176,11 @@ export default function Dashboard() {
         <MetricCard label="Open Tasks" value={hasData ? String(metrics.openTasks) : "—"} change="" changeType="neutral" icon={CheckSquare} />
       </WidgetGrid>
 
+      {/* Your Plan */}
+      <div className="mt-6">
+        <ClientPackageView />
+      </div>
+
       {/* Workspace Readiness */}
       <div className="mt-6">
         <WorkspaceReadiness />
