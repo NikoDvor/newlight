@@ -42,8 +42,16 @@ export default function AdminClients() {
   const { setViewMode, setActiveClientId } = useWorkspace();
   const navigate = useNavigate();
 
-  const fetchClients = () => {
-    supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false }).then(({ data }) => setClients(data ?? []));
+  const fetchClients = async () => {
+    const { data } = await supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false });
+    const list = (data ?? []) as Client[];
+    setClients(list);
+    // Fetch readiness for all clients in parallel
+    const results: Record<string, WorkspaceReadinessResult> = {};
+    await Promise.all(list.map(async (c) => {
+      results[c.id] = await computeWorkspaceReadiness(c.id);
+    }));
+    setReadiness(results);
   };
 
   useEffect(() => { fetchClients(); }, []);
