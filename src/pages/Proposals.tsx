@@ -140,11 +140,15 @@ export default function Proposals() {
         ]}
       />
 
-      <SetupBanner
-        moduleName="Proposals"
-        isConfigured={proposals.length > 0}
-        instructions="Create your first proposal to start tracking service agreements and close deals."
-      />
+      {proposals.length === 0 && !loading && (
+        <SetupBanner
+          icon={FileSignature}
+          title="No Proposals Yet"
+          description="Create your first proposal to start tracking service agreements and close deals."
+          actionLabel="Create Proposal"
+          onAction={() => setCreateOpen(true)}
+        />
+      )}
 
       <WidgetGrid columns="repeat(auto-fit, minmax(160px, 1fr))">
         <MetricCard label="Total Proposals" value={String(proposals.length)} change="All time" icon={FileText} />
