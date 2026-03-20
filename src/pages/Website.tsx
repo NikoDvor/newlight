@@ -287,6 +287,50 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
+          {/* ─── Content Blocks Tab ─── */}
+          <TabsContent value="content" className="mt-4">
+            <DataCard title="Website Content Blocks" action={<Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>}>
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {CONTENT_PAGES.map(p => (
+                  <Button key={p} size="sm" variant={contentPage === p ? "default" : "outline"} className="text-xs capitalize h-7"
+                    onClick={() => setContentPage(p)}>{p}</Button>
+                ))}
+              </div>
+              {contentBlocks.filter(b => b.page_key === contentPage).length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <FileEdit className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No content blocks for {contentPage}</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add headings, text, CTAs, and more to build this page's content.</p>
+                  <Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {contentBlocks.filter(b => b.page_key === contentPage).map(b => {
+                    const cj = typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || {});
+                    return (
+                      <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 transition-colors group">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[9px]">{b.block_type}</Badge>
+                            <span className="text-sm font-medium text-foreground truncate">{b.block_label || b.block_key}</span>
+                            {!b.is_active && <Badge variant="outline" className="text-[9px] text-muted-foreground">Hidden</Badge>}
+                          </div>
+                          {cj.heading && <p className="text-xs text-muted-foreground truncate mt-0.5">{cj.heading}</p>}
+                        </div>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBlock(b)}><Pencil className="h-3 w-3" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(b.id)}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
           <TabsContent value="traffic" className="mt-4">
             <DataCard title="Traffic Sources">
               {trafficSources.length === 0 ? (
