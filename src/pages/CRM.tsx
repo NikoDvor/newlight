@@ -71,6 +71,7 @@ export default function CRM() {
   const [notes, setNotes] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [emails, setEmails] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
@@ -83,16 +84,16 @@ export default function CRM() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
-    lead_source: "", pipeline_stage: "new_lead", company_id: "",
+    lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "",
   });
-  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50" });
+  const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
   const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes] = await Promise.all([
+    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes, tmRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_companies").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
@@ -104,6 +105,7 @@ export default function CRM() {
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: false }).limit(50),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", activeClientId),
     ]);
     setContacts(cRes.data || []);
     setCompanies(coRes.data || []);
@@ -114,6 +116,7 @@ export default function CRM() {
     setNotes(notesRes.data || []);
     setAppointments(apRes.data || []);
     setEmails(emRes.data || []);
+    setTeamMembers(tmRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
