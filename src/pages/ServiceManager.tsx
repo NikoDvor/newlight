@@ -265,10 +265,10 @@ export default function ServiceManager() {
                 <p className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5"><Link2 className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 56%)" }} /> Booking Connection</p>
                 <div className="space-y-3">
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Linked Calendar</label>
-                    <Select value={form.linked_calendar_id || ""} onValueChange={v => setForm({ ...form, linked_calendar_id: v })}>
+                    <Select value={form.linked_calendar_id || "__none__"} onValueChange={v => setForm({ ...form, linked_calendar_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {calendars.map(c => <SelectItem key={c.id} value={c.id}>{c.calendar_name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
