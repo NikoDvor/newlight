@@ -4466,6 +4466,155 @@ export type Database = {
           },
         ]
       }
+      implementation_request_events: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          event_summary: string | null
+          event_type: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          event_summary?: string | null
+          event_type: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_summary?: string | null
+          event_type?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_request_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "implementation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_requests: {
+        Row: {
+          assigned_admin_user_id: string | null
+          client_id: string
+          created_at: string
+          default_monthly_fee: number | null
+          default_setup_fee: number | null
+          id: string
+          internal_notes: string | null
+          package_id: string | null
+          package_name: string | null
+          projected_annual: number | null
+          projected_monthly: number | null
+          recommendation_id: string | null
+          recommendation_key: string | null
+          recommendation_name: string | null
+          related_contact_id: string | null
+          related_deal_id: string | null
+          request_message: string | null
+          request_status: string
+          request_type: string
+          requested_by_user_id: string | null
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          assigned_admin_user_id?: string | null
+          client_id: string
+          created_at?: string
+          default_monthly_fee?: number | null
+          default_setup_fee?: number | null
+          id?: string
+          internal_notes?: string | null
+          package_id?: string | null
+          package_name?: string | null
+          projected_annual?: number | null
+          projected_monthly?: number | null
+          recommendation_id?: string | null
+          recommendation_key?: string | null
+          recommendation_name?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          request_message?: string | null
+          request_status?: string
+          request_type?: string
+          requested_by_user_id?: string | null
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          assigned_admin_user_id?: string | null
+          client_id?: string
+          created_at?: string
+          default_monthly_fee?: number | null
+          default_setup_fee?: number | null
+          id?: string
+          internal_notes?: string | null
+          package_id?: string | null
+          package_name?: string | null
+          projected_annual?: number | null
+          projected_monthly?: number | null
+          recommendation_id?: string | null
+          recommendation_key?: string | null
+          recommendation_name?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          request_message?: string | null
+          request_status?: string
+          request_type?: string
+          requested_by_user_id?: string | null
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_requests_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_requests_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_requests_related_deal_id_fkey"
+            columns: ["related_deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_line_items: {
         Row: {
           created_at: string

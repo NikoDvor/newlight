@@ -21,6 +21,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { RequestImplementationModal } from "@/components/RequestImplementationModal";
 
 const urgencyStyles: Record<string, { bg: string; text: string; border: string }> = {
   Critical: { bg: "hsla(0,70%,50%,.08)", text: "hsl(0 70% 45%)", border: "hsla(0,70%,50%,.2)" },
@@ -59,6 +60,8 @@ export function RecommendedServicesWidget() {
   const [loading, setLoading] = useState(true);
   const [packageLinks, setPackageLinks] = useState<PackageLink[]>([]);
   const [detailSheet, setDetailSheet] = useState<ServiceRecommendation | null>(null);
+  const [requestModal, setRequestModal] = useState<{ rec: ServiceRecommendation; pkg?: PackageLink } | null>(null);
+  const [activeRequests, setActiveRequests] = useState<Record<string, string>>({}); // recommendation_key -> status
 
   const runEngine = useCallback(async () => {
     if (!activeClientId) return;
@@ -125,6 +128,16 @@ export function RecommendedServicesWidget() {
 
     setLoading(false);
     persistRecommendations(activeClientId, results, ctx).catch(console.error);
+
+    // Load active implementation requests for this client
+    const { data: irData } = await supabase
+      .from("implementation_requests")
+      .select("recommendation_key, request_status")
+      .eq("client_id", activeClientId)
+      .not("request_status", "in", '("Closed","Rejected")');
+    const irMap: Record<string, string> = {};
+    (irData || []).forEach((ir: any) => { if (ir.recommendation_key) irMap[ir.recommendation_key] = ir.request_status; });
+    setActiveRequests(irMap);
   }, [activeClientId]);
 
   useEffect(() => { runEngine(); }, [runEngine]);
@@ -148,9 +161,8 @@ export function RecommendedServicesWidget() {
   const topPkg = packageLinks.find(l => l.service_key === top.key && l.is_primary);
 
   const handleRequestImplementation = (rec: ServiceRecommendation) => {
-    toast.success("Implementation request sent! Our team will reach out shortly.", {
-      description: `Service: ${rec.name} — Projected: $${rec.projectedMonthly.toLocaleString()}/mo`,
-    });
+    const recPkg = packageLinks.find(l => l.service_key === rec.key && l.is_primary);
+    setRequestModal({ rec, pkg: recPkg });
   };
 
   return (
@@ -251,6 +263,10 @@ export function RecommendedServicesWidget() {
                     <DollarSign className="h-3.5 w-3.5" /> Create Proposal <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>
+              ) : activeRequests[top.key] ? (
+                <Badge className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5">
+                  ✓ Request {activeRequests[top.key]}
+                </Badge>
               ) : (
                 <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={() => handleRequestImplementation(top)}>
                   <Phone className="h-3.5 w-3.5" /> Request Implementation
@@ -312,18 +328,34 @@ export function RecommendedServicesWidget() {
       {/* Detail Sheet */}
       <Sheet open={!!detailSheet} onOpenChange={() => setDetailSheet(null)}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
-          {detailSheet && <RecDetailPanel rec={detailSheet} packageLinks={packageLinks} isAdmin={isAdmin} onRequest={handleRequestImplementation} />}
+          {detailSheet && <RecDetailPanel rec={detailSheet} packageLinks={packageLinks} isAdmin={isAdmin} onRequest={handleRequestImplementation} activeRequests={activeRequests} />}
         </SheetContent>
       </Sheet>
+
+      {/* Request Implementation Modal */}
+      <RequestImplementationModal
+        open={!!requestModal}
+        onOpenChange={open => !open && setRequestModal(null)}
+        recommendationName={requestModal?.rec.name}
+        recommendationKey={requestModal?.rec.key}
+        packageId={requestModal?.pkg?.package_id}
+        packageName={requestModal?.pkg?.package_name}
+        projectedMonthly={requestModal?.rec.projectedMonthly}
+        projectedAnnual={requestModal?.rec.projectedAnnual}
+        defaultSetupFee={requestModal?.pkg?.default_setup_fee}
+        defaultMonthlyFee={requestModal?.pkg?.default_monthly_fee}
+        deliverables={requestModal?.pkg?.deliverables.map(d => d.deliverable_name)}
+      />
     </motion.div>
   );
 }
 
-function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest }: {
+function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest, activeRequests = {} }: {
   rec: ServiceRecommendation;
   packageLinks: PackageLink[];
   isAdmin: boolean;
   onRequest: (r: ServiceRecommendation) => void;
+  activeRequests?: Record<string, string>;
 }) {
   const style = urgencyStyles[rec.urgency] || urgencyStyles.Medium;
   const Icon = serviceIcons[rec.key] || Sparkles;
@@ -446,6 +478,18 @@ function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest }: {
                 <Package className="h-4 w-4" /> Manage Package
               </Button>
             </Link>
+          </>
+        ) : activeRequests[rec.key] ? (
+          <>
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
+              <p className="text-sm font-semibold text-emerald-700">✓ Request Submitted</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Status: {activeRequests[rec.key]}</p>
+            </div>
+            <a href="tel:+18058363557" className="block">
+              <Button variant="outline" className="w-full h-10 gap-2">
+                <Phone className="h-4 w-4" /> Call (805) 836-3557
+              </Button>
+            </a>
           </>
         ) : (
           <>

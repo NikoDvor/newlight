@@ -88,6 +88,7 @@ import AdminLaunchChecklist from "./pages/admin/AdminLaunchChecklist";
 import AdminPackageDetail from "./pages/admin/AdminPackageDetail";
 import AdminArchitecture from "./pages/admin/AdminArchitecture";
 import AdminRevenueExpansion from "./pages/admin/AdminRevenueExpansion";
+import AdminImplementationRequests from "./pages/admin/AdminImplementationRequests";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -179,6 +180,7 @@ const App = () => (
               <Route path="how-it-works" element={<HowItWorks />} />
               <Route path="architecture" element={<AdminArchitecture />} />
               <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
+              <Route path="implementation-requests" element={<AdminImplementationRequests />} />
             </Route>
 
             {/* Client Workspace */}
