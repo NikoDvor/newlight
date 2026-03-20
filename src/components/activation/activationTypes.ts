@@ -516,7 +516,7 @@ export const defaultFormState = (): ActivationFormState => ({
 
 export interface StepProps {
   form: ActivationFormState;
-  set: (key: string, value: string) => void;
+  set: (key: string, value: any) => void;
   setIntegration: (name: string, field: string, value: string) => void;
   submitting: boolean;
 }

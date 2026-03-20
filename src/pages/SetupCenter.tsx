@@ -45,7 +45,7 @@ export default function SetupCenter() {
       const [brandRes, calRes, formRes, teamRes, intgRes, svcRes, onbRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
-        supabase.from("client_forms" as any).select("id").eq("client_id", activeClientId),
+        supabase.from("client_forms").select("id").eq("client_id", activeClientId),
         supabase.from("workspace_users").select("id").eq("client_id", activeClientId),
         supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
         supabase.from("service_catalog" as any).select("id").eq("client_id", activeClientId),
