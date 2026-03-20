@@ -10,8 +10,9 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   CheckCircle2, Circle, AlertTriangle, Rocket, Palette, ShoppingBag,
   Calendar, FileText, Users, Plug, Star, Globe, CreditCard,
-  ExternalLink, ArrowLeft, ClipboardCheck, Package
+  ExternalLink, ArrowLeft, ClipboardCheck, Package, Wand2, Loader2
 } from "lucide-react";
+import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
 
 type ItemStatus = "ready" | "partial" | "missing";
 
