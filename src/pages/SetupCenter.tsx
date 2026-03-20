@@ -37,6 +37,7 @@ export default function SetupCenter() {
   const { activeClientId, branding, userRole } = useWorkspace();
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     if (!activeClientId) return;
