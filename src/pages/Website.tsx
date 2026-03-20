@@ -508,6 +508,42 @@ export default function Website() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Block Editor Sheet */}
+      <Sheet open={!!editingBlock} onOpenChange={() => setEditingBlock(null)}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>{editingBlock === "new" ? "Add" : "Edit"} Content Block</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Block Key *</Label><Input value={blockForm.block_key || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") }))} placeholder="e.g. hero_heading" /></div>
+            <div className="space-y-2"><Label>Label</Label><Input value={blockForm.block_label || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_label: e.target.value }))} placeholder="Display label" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={blockForm.block_type || "RichText"} onValueChange={v => setBlockForm((p: any) => ({ ...p, block_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BLOCK_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Page</Label>
+                <Select value={blockForm.page_key || "homepage"} onValueChange={v => setBlockForm((p: any) => ({ ...p, page_key: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CONTENT_PAGES.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2"><Label>Heading</Label><Input value={blockForm.content_json?.heading || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, heading: e.target.value } }))} /></div>
+            <div className="space-y-2"><Label>Body</Label><Textarea value={blockForm.content_json?.body || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, body: e.target.value } }))} rows={4} /></div>
+            {(blockForm.block_type === "CTA" || blockForm.block_type === "BookingBlock") && (
+              <div className="space-y-2"><Label>Button Text</Label><Input value={blockForm.content_json?.buttonText || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, buttonText: e.target.value } }))} placeholder="e.g. Book Now" /></div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEditingBlock(null)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveBlock}><Save className="h-4 w-4 mr-1" /> Save</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
