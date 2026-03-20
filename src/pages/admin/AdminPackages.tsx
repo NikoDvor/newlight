@@ -68,6 +68,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminPackages() {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState<OfferPackage[]>([]);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [relationships, setRelationships] = useState<PkgRelationship[]>([]);
