@@ -55,6 +55,10 @@ export default function Dashboard() {
       supabase.from("review_requests" as any).select("rating").eq("client_id", activeClientId),
       supabase.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("status", "open"),
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
+      supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_appointment_types").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
     ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts]) => {
       setOnboardingData(onb.data);
       if (intg.data) {
