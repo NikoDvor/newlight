@@ -295,6 +295,12 @@ export default function AdminImplementationRequests() {
                 <Button size="sm" className="gap-1.5" onClick={() => createProposalFromRequest(selected)}>
                   <FileText className="h-3.5 w-3.5" /> Create Proposal
                 </Button>
+                {selected.request_status === "Proposal Needed" && (
+                  <Button size="sm" variant="outline" className="gap-1.5"
+                    onClick={() => updateStatus(selected.id, "Proposal Sent")}>
+                    <Send className="h-3.5 w-3.5" /> Mark Proposal Sent
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" className="gap-1.5"
                   onClick={() => updateStatus(selected.id, "Approved")}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Approve
