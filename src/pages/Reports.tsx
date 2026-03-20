@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DemoDataLabel } from "@/components/SetupBanner";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
