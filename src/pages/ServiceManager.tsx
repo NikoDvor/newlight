@@ -273,11 +273,11 @@ export default function ServiceManager() {
                       </SelectContent>
                     </Select></div>
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Appointment Type</label>
-                    <Select value={form.linked_appointment_type_id || ""} onValueChange={v => setForm({ ...form, linked_appointment_type_id: v })}>
+                    <Select value={form.linked_appointment_type_id || "__none__"} onValueChange={v => setForm({ ...form, linked_appointment_type_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
-                        {appointmentTypes.filter(a => !form.linked_calendar_id || a.calendar_id === form.linked_calendar_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                        <SelectItem value="__none__">None</SelectItem>
+                        {appointmentTypes.filter(a => !form.linked_calendar_id || form.linked_calendar_id === "__none__" || a.calendar_id === form.linked_calendar_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Intake / Booking Form</label>
