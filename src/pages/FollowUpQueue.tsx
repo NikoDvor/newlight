@@ -74,7 +74,7 @@ export default function FollowUpQueue() {
     setTeamMembers(tmRes.data || []);
 
     const now = new Date();
-    setItems((data ?? []).map((i: any) => ({
+    setItems((fuRes.data ?? []).map((i: any) => ({
       ...i,
       status: i.status === "Pending" && i.due_at && new Date(i.due_at) < now ? "Overdue" : i.status,
     })));
