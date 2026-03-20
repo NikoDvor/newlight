@@ -42,25 +42,28 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, teamRes, intgRes, svcRes, onbRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
+        supabase.from("forms").select("id").eq("client_id", activeClientId),
         supabase.from("workspace_users").select("id").eq("client_id", activeClientId),
         supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
         supabase.from("service_catalog" as any).select("id").eq("client_id", activeClientId),
         supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
+        supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
       ]);
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const calCount = calRes.data?.length || 0;
-      const formCount = formRes.data?.length || 0;
+      const formCount = (formRes.data?.length || 0) + (formRes2.data?.length || 0);
       const teamCount = teamRes.data?.length || 0;
       const svcCount = svcRes.data?.length || 0;
       const intgs = intgRes.data || [];
       const connectedIntgs = intgs.filter((i: any) => i.status === "connected").length;
       const needsAccess = intgs.some((i: any) => ["access_needed", "awaiting_client"].includes(i.status));
       const onb = onbRes.data;
+      const onboardingStage = clientRes.data?.onboarding_stage || "lead";
 
       const s = (has: boolean, count?: number, threshold?: number): SectionStatus => {
         if (has || (count !== undefined && threshold !== undefined && count >= threshold)) return "completed";
@@ -68,8 +71,13 @@ export default function SetupCenter() {
         return "not_started";
       };
 
+      // Determine branding status more precisely
+      const brandingHasLogo = !!brandRes.data?.logo_url;
+      const brandingHasColor = !!(brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
+      const brandingStatus: SectionStatus = hasBrand ? "completed" : (brandingHasLogo || brandingHasColor) ? "in_progress" : "not_started";
+
       setSections([
-        { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: hasBrand ? "completed" : "not_started", link: "/branding-settings", details: hasBrand ? "Brand configured" : "Upload logo and set colors" },
+        { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
         { key: "calendars", title: "Calendars", description: "Set up appointment calendars", icon: Calendar, status: s(false, calCount, 1), link: "/calendar-management", details: calCount > 0 ? `${calCount} calendar(s) active` : "Create your first calendar" },
         { key: "forms", title: "Booking Forms", description: "Intake, booking, and contact forms", icon: FileText, status: s(false, formCount, 1), link: "/forms", details: formCount > 0 ? `${formCount} form(s) created` : "Create your first form" },
         { key: "services", title: "Services & Products", description: "Manage your service and product catalog", icon: ShoppingBag, status: s(false, svcCount, 1), link: "/services", details: svcCount > 0 ? `${svcCount} service(s) listed` : "Add your services" },
