@@ -260,6 +260,14 @@ export default function Proposals() {
             <SheetDescription>Create a new proposal or service agreement.</SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-4">
+            {form.request_id && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
+                <LinkIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  Linked to implementation request — proposal will update request status automatically
+                </p>
+              </div>
+            )}
             <div className="space-y-2"><Label>Title *</Label><Input placeholder="Proposal title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2"><Label>Setup Fee ($)</Label><Input type="number" placeholder="0" value={form.setup_fee} onChange={e => setForm(f => ({ ...f, setup_fee: e.target.value }))} /></div>
@@ -278,7 +286,8 @@ export default function Proposals() {
             </div>
             <div className="space-y-2"><Label>Description</Label><Textarea placeholder="Outline the services, deliverables, and terms..." className="min-h-[100px]" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
             <Button className="w-full gap-1.5" onClick={createProposal} disabled={creating}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenTool className="h-4 w-4" />} Create Proposal
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenTool className="h-4 w-4" />}
+              {form.request_id ? "Create Proposal from Request" : "Create Proposal"}
             </Button>
           </div>
         </SheetContent>

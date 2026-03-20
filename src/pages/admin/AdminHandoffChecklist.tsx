@@ -64,6 +64,9 @@ export default function AdminHandoffChecklist() {
         supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("recommendation_snapshots" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("implementation_requests").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+        supabase.from("proposals").select("id, proposal_status", { count: "exact" }).eq("client_id", clientId),
+        supabase.from("subscriptions").select("id, subscription_status", { count: "exact" }).eq("client_id", clientId),
+        supabase.from("billing_accounts").select("id, billing_status").eq("client_id", clientId).maybeSingle(),
       ]);
 
       setClientName(clientRes.data?.business_name || "Client");
