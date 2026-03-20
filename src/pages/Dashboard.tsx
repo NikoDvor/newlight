@@ -29,6 +29,7 @@ import { NextBestActions } from "@/components/NextBestActions";
 import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 import { WorkspaceReadiness } from "@/components/WorkspaceReadiness";
 import { ClientPackageView } from "@/components/ClientPackageView";
+import { ImplementationStatusWidget } from "@/components/ImplementationStatusWidget";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
