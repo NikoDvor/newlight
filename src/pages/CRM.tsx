@@ -421,28 +421,26 @@ export default function CRM() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
-                        {["Name", "Email", "Phone", "Company", "Stage", "Source", "Score", "Revenue", "Status"].map(h => (
-                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredContacts.map(c => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/crm/contacts/${c.id}`)}>
-                          <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{c.company_id ? getCompanyName(c.company_id) : "—"}</td>
-                          <td className="py-3 pr-3">
-                            {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
-                          </td>
-                          <td className="text-xs text-muted-foreground py-3 pr-3">{c.lead_source || "—"}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">{c.lead_score || 0}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">${Number(c.lifetime_revenue || 0).toLocaleString()}</td>
-                          <td className="py-3">
-                            <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
+                       <tr className="border-b border-border">
+                         {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status"].map(h => (
+                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                         ))}
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {filteredContacts.map(c => (
+                         <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                           onClick={() => navigate(`/crm/contacts/${c.id}`)}>
+                           <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.contact_owner ? getOwnerName(c.contact_owner) : "—"}</td>
+                           <td className="py-3 pr-3">
+                             {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
+                           </td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.last_interaction_date ? new Date(c.last_interaction_date).toLocaleDateString() : "—"}</td>
+                           <td className="py-3">
+                             <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
                           </td>
                         </tr>
                       ))}
