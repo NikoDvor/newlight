@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_drafts: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          current_step: number
+          draft_name: string
+          draft_status: string
+          form_data: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_step?: number
+          draft_name?: string
+          draft_status?: string
+          form_data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_step?: number
+          draft_name?: string
+          draft_status?: string
+          form_data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_drafts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_campaigns: {
         Row: {
           budget: number | null
@@ -1897,6 +1941,72 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: true
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_forms: {
+        Row: {
+          client_id: string
+          confirmation_message: string | null
+          created_at: string
+          display_order: number
+          form_name: string
+          form_settings: Json | null
+          form_status: string
+          form_type: string
+          id: string
+          intake_questions: Json | null
+          linked_calendar_id: string | null
+          notification_owner: string | null
+          required_fields: Json | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          confirmation_message?: string | null
+          created_at?: string
+          display_order?: number
+          form_name: string
+          form_settings?: Json | null
+          form_status?: string
+          form_type?: string
+          id?: string
+          intake_questions?: Json | null
+          linked_calendar_id?: string | null
+          notification_owner?: string | null
+          required_fields?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          confirmation_message?: string | null
+          created_at?: string
+          display_order?: number
+          form_name?: string
+          form_settings?: Json | null
+          form_status?: string
+          form_type?: string
+          id?: string
+          intake_questions?: Json | null
+          linked_calendar_id?: string | null
+          notification_owner?: string | null
+          required_fields?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_forms_linked_calendar_id_fkey"
+            columns: ["linked_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
             referencedColumns: ["id"]
           },
         ]
