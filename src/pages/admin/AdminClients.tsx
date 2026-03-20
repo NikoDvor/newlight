@@ -105,6 +105,13 @@ export default function AdminClients() {
         supabase.from("client_health_scores").insert({ client_id: data.id }),
       ]);
 
+      // 2b. Auto-provision industry-aware starter content
+      await provisionWorkspaceDefaults(data.id, {
+        industry: form.industry,
+        timezone: form.timezone,
+        skipIfExists: true,
+      });
+
       // 3. Auto-create auth account for client owner
       try {
         const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-user", {
