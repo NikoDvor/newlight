@@ -421,8 +421,8 @@ export default function CRM() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                       <tr className="border-b border-border">
-                         {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status"].map(h => (
+                     <tr className="border-b border-border">
+                         {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status", "Updated"].map(h => (
                            <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
                          ))}
                        </tr>
