@@ -1,6 +1,19 @@
+export interface ServiceConfig {
+  service_name: string;
+  service_description: string;
+  display_price_text: string;
+  service_status: string;
+  bookable: string;
+}
+
+export const defaultServiceConfig = (): ServiceConfig => ({
+  service_name: "", service_description: "", display_price_text: "",
+  service_status: "draft", bookable: "no",
+});
+
 export interface CalendarConfig {
   calendar_name: string;
-  calendar_type: string; // single | team | round_robin | department | staff | internal
+  calendar_type: string;
   description: string;
   owner_user: string;
   assigned_users: string;
@@ -18,11 +31,9 @@ export interface CalendarConfig {
   confirmation_message: string;
   reminders_enabled: string;
   active: string;
-  // Round robin extras
   staff_pool: string;
   distribution_method: string;
   fallback_owner: string;
-  // Department extras
   department_name: string;
 }
 
