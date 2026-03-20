@@ -224,6 +224,7 @@ export default function Dashboard() {
         <MetricCard label="Upcoming Appts" value={hasData ? String(metrics.upcomingEvents) : "—"} change={hasData ? `${metrics.completedEvents} completed` : "Book first"} changeType="neutral" icon={Calendar} />
         <MetricCard label="Avg Rating" value={metrics.ratingCount > 0 ? metrics.avgRating.toFixed(1) + "★" : "—"} change={metrics.ratingCount > 0 ? `${metrics.reviewRequests} requests` : "Send requests"} changeType="neutral" icon={Star} />
         <MetricCard label="Open Tasks" value={hasData ? String(metrics.openTasks) : "—"} change="" changeType="neutral" icon={CheckSquare} />
+        <MetricCard label="Overdue Follow-Ups" value={String(metrics.overdueFollowUps)} change={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} changeType={metrics.overdueFollowUps > 0 ? "negative" : "neutral"} icon={Activity} />
       </WidgetGrid>
 
       {/* Your Plan */}
