@@ -61,6 +61,8 @@ export default function SetupCenter() {
       const formCount = (formRes.data?.length || 0) + (formRes2.data?.length || 0);
       const teamCount = teamRes.data?.length || 0;
       const svcCount = svcRes.data?.length || 0;
+      const faqCount = faqRes.data?.length || 0;
+      const wcbCount = wcbRes.data?.length || 0;
       const intgs = intgRes.data || [];
       const connectedIntgs = intgs.filter((i: any) => i.status === "connected").length;
       const needsAccess = intgs.some((i: any) => ["access_needed", "awaiting_client"].includes(i.status));
