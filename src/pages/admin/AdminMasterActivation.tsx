@@ -47,7 +47,7 @@ export default function AdminMasterActivation() {
   const [submitting, setSubmitting] = useState(false);
   const [activated, setActivated] = useState(false);
 
-  const set = useCallback((key: string, value: string) => {
+  const set = useCallback((key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -64,7 +64,20 @@ export default function AdminMasterActivation() {
   const stepProps = { form, set, setIntegration, submitting };
 
   const handleSaveDraft = async () => {
-    toast.success("Draft saved");
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      const draftName = form.business_name_confirmed || form.display_name || "Untitled Draft";
+      await supabase.from("activation_drafts" as any).upsert({
+        created_by: user.user?.id || null,
+        draft_name: draftName,
+        form_data: form as any,
+        current_step: step,
+        draft_status: "draft",
+      }, { onConflict: "id" });
+      toast.success("Draft saved successfully");
+    } catch {
+      toast.error("Failed to save draft");
+    }
   };
 
   const handleActivate = async () => {
