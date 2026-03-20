@@ -519,38 +519,38 @@ export default function CRM() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
-                        {["Deal", "Contact", "Stage", "Value", "Probability", "Expected Close", "Status", "Action"].map(h => (
-                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDeals.map(d => (
-                        <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                          <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                            onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
-                            {d.contact_id ? getContactName(d.contact_id) : "—"}
-                          </td>
-                          <td className="py-3 pr-3">
-                            <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
-                              {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
-                            </Badge>
-                          </td>
-                          <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
-                          <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{d.expected_close_date || "—"}</td>
-                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
-                          <td className="py-3">
-                            {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
-                              <Select onValueChange={v => moveDealStage(d.id, v)}>
-                                <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
-                                <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
-                              </Select>
-                            )}
-                          </td>
-                        </tr>
+                       <tr className="border-b border-border">
+                         {["Deal", "Contact", "Owner", "Stage", "Value", "Probability", "Status", "Action"].map(h => (
+                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                         ))}
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {filteredDeals.map(d => (
+                         <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                           <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
+                           <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                             onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                             {d.contact_id ? getContactName(d.contact_id) : "—"}
+                           </td>
+                           <td className="text-xs text-muted-foreground py-3 pr-3">{d.assigned_user ? getOwnerName(d.assigned_user) : "—"}</td>
+                           <td className="py-3 pr-3">
+                             <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
+                               {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
+                             </Badge>
+                           </td>
+                           <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
+                           <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
+                           <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                           <td className="py-3">
+                             {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
+                               <Select onValueChange={v => moveDealStage(d.id, v)}>
+                                 <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
+                                 <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                               </Select>
+                             )}
+                           </td>
+                         </tr>
                       ))}
                     </tbody>
                   </table>
