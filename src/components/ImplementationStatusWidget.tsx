@@ -36,6 +36,17 @@ export function ImplementationStatusWidget() {
 
       const result: StatusItem[] = [];
 
+      // Workspace live state
+      if (stage === "active") {
+        result.push({
+          label: "Workspace Status",
+          status: "Live",
+          detail: "Your workspace is live and operational",
+          icon: CheckCircle2,
+          color: "hsl(152 60% 44%)",
+        });
+      }
+
       // Active subscription
       if (subRes.data) {
         result.push({
