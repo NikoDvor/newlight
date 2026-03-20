@@ -48,6 +48,7 @@ export default function AdminHandoffChecklist() {
       const [
         clientRes, brandRes, svcRes, calRes, apptRes, availRes, blinkRes,
         formRes, formRes2, teamRes, intgRes, contactRes, dealRes, recRes, irRes,
+        proposalRes, subRes, billingRes,
       ] = await Promise.all([
         supabase.from("clients").select("business_name, industry").eq("id", clientId).single(),
         supabase.from("client_branding").select("logo_url, primary_color, company_name").eq("client_id", clientId).maybeSingle(),
@@ -64,6 +65,9 @@ export default function AdminHandoffChecklist() {
         supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("recommendation_snapshots" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("implementation_requests").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+        supabase.from("proposals").select("id, proposal_status", { count: "exact" }).eq("client_id", clientId),
+        supabase.from("subscriptions").select("id, subscription_status", { count: "exact" }).eq("client_id", clientId),
+        supabase.from("billing_accounts").select("id, billing_status").eq("client_id", clientId).maybeSingle(),
       ]);
 
       setClientName(clientRes.data?.business_name || "Client");
@@ -97,6 +101,14 @@ export default function AdminHandoffChecklist() {
       const dealCount = dealRes.count || 0;
       const recCount = recRes.count || 0;
       const irCount = irRes.count || 0;
+      const proposalData = proposalRes.data || [];
+      const proposalCount = proposalData.length;
+      const hasSentProposal = proposalData.some((p: any) => ["sent", "viewed", "accepted", "signed"].includes(p.proposal_status));
+      const hasAcceptedProposal = proposalData.some((p: any) => ["accepted", "signed"].includes(p.proposal_status));
+      const subData = subRes.data || [];
+      const hasActiveSub = subData.some((s: any) => s.subscription_status === "active");
+      const hasBillingAccount = !!billingRes.data;
+      const billingStatus = billingRes.data?.billing_status;
 
       const calParts = [calCount > 0, apptCount > 0, availCount > 0, blinkCount > 0];
       const calReady = calParts.filter(Boolean).length;
@@ -113,6 +125,8 @@ export default function AdminHandoffChecklist() {
         { key: "integrations", label: "Integrations Reviewed", status: s(connectedIntgs >= 3, connectedIntgs > 0), detail: `${connectedIntgs} connected of ${intgs.length}`, link: "/integrations" },
         { key: "recommendation", label: "Recommendation Active", status: s(recCount > 0, false), detail: recCount > 0 ? "Recommendations generated" : "No recommendations yet", link: "/" },
         { key: "request_path", label: "Request Path Working", status: s(irCount > 0, false), detail: irCount > 0 ? `${irCount} request(s) submitted` : "No requests yet — verify CTA", link: "/" },
+        { key: "proposal", label: "Proposal Ready", status: s(hasAcceptedProposal, hasSentProposal || proposalCount > 0), detail: hasAcceptedProposal ? "Proposal accepted" : hasSentProposal ? "Proposal sent — awaiting response" : proposalCount > 0 ? `${proposalCount} draft(s) — send to client` : "No proposal created", link: "/proposals" },
+        { key: "billing", label: "Billing Ready", status: s(hasActiveSub, hasBillingAccount), detail: hasActiveSub ? "Active subscription" : hasBillingAccount ? `Billing account: ${billingStatus}` : "No billing account set up", link: "/billing" },
       ]);
 
       setLoading(false);

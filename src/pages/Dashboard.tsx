@@ -29,6 +29,7 @@ import { NextBestActions } from "@/components/NextBestActions";
 import { RecommendedServicesWidget } from "@/components/RecommendedServicesWidget";
 import { WorkspaceReadiness } from "@/components/WorkspaceReadiness";
 import { ClientPackageView } from "@/components/ClientPackageView";
+import { ImplementationStatusWidget } from "@/components/ImplementationStatusWidget";
 
 export default function Dashboard() {
   const { activeClientId, branding } = useWorkspace();
@@ -230,8 +231,9 @@ export default function Dashboard() {
         <MetricCard label="Overdue Follow-Ups" value={String(metrics.overdueFollowUps)} change={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} changeType={metrics.overdueFollowUps > 0 ? "negative" : "neutral"} icon={Activity} />
       </WidgetGrid>
 
-      {/* Your Plan */}
-      <div className="mt-6">
+      {/* Implementation Status + Your Plan */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <ImplementationStatusWidget />
         <ClientPackageView />
       </div>
 

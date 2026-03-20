@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { MetricCard } from "@/components/MetricCard";
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText, Plus, CheckCircle, Clock, Send, DollarSign,
-  PenTool, Eye, FileSignature, AlertCircle, Copy, ExternalLink, Loader2
+  PenTool, Eye, FileSignature, AlertCircle, Copy, ExternalLink, Loader2, LinkIcon
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,14 +39,15 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function Proposals() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, user } = useWorkspace();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState("all");
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "" });
+  const [form, setForm] = useState({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "", request_id: "" });
 
   const fetchProposals = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -61,6 +62,24 @@ export default function Proposals() {
   };
 
   useEffect(() => { fetchProposals(); }, [activeClientId]);
+
+  // Auto-open create sheet when navigating from implementation request with prefill params
+  useEffect(() => {
+    const title = searchParams.get("title");
+    const requestId = searchParams.get("request_id");
+    if (title || requestId) {
+      setForm(f => ({
+        ...f,
+        title: title || f.title,
+        setup_fee: searchParams.get("setup_fee") || f.setup_fee,
+        monthly_fee: searchParams.get("monthly_fee") || f.monthly_fee,
+        request_id: requestId || "",
+      }));
+      setCreateOpen(true);
+      // Clear params so refresh doesn't re-trigger
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
 
   const filtered = filter === "all" ? proposals : proposals.filter(p => p.proposal_status === filter);
   const totalValue = proposals.reduce((s, p) => s + Number(p.monthly_fee || 0) + Number(p.setup_fee || 0), 0);
@@ -98,11 +117,27 @@ export default function Proposals() {
       });
     }
 
-    await supabase.from("audit_logs").insert({ action: "proposal_created", module: "sales", metadata: { proposal_id: data?.id }, client_id: activeClientId });
+    // Link to implementation request if present
+    if (form.request_id && data) {
+      await Promise.all([
+        supabase.from("implementation_requests").update({ request_status: "Proposal Needed", related_deal_id: data.id as any }).eq("id", form.request_id),
+        supabase.from("implementation_request_events").insert({
+          client_id: activeClientId, request_id: form.request_id,
+          event_type: "Proposal Drafted", event_summary: `Proposal "${form.title}" created`,
+          created_by: user?.id,
+        }),
+      ]);
+    }
 
-    toast({ title: "Proposal created" });
+    await supabase.from("audit_logs").insert({
+      action: "proposal_created", module: "sales",
+      metadata: { proposal_id: data?.id, linked_request_id: form.request_id || null },
+      client_id: activeClientId,
+    });
+
+    toast({ title: form.request_id ? "Proposal created from request" : "Proposal created" });
     setCreateOpen(false);
-    setForm({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "" });
+    setForm({ title: "", setup_fee: "", monthly_fee: "", contract_term: "6 months", description: "", request_id: "" });
     setCreating(false);
     fetchProposals();
   };
@@ -225,6 +260,14 @@ export default function Proposals() {
             <SheetDescription>Create a new proposal or service agreement.</SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-4">
+            {form.request_id && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
+                <LinkIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  Linked to implementation request — proposal will update request status automatically
+                </p>
+              </div>
+            )}
             <div className="space-y-2"><Label>Title *</Label><Input placeholder="Proposal title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2"><Label>Setup Fee ($)</Label><Input type="number" placeholder="0" value={form.setup_fee} onChange={e => setForm(f => ({ ...f, setup_fee: e.target.value }))} /></div>
@@ -243,7 +286,8 @@ export default function Proposals() {
             </div>
             <div className="space-y-2"><Label>Description</Label><Textarea placeholder="Outline the services, deliverables, and terms..." className="min-h-[100px]" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
             <Button className="w-full gap-1.5" onClick={createProposal} disabled={creating}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenTool className="h-4 w-4" />} Create Proposal
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenTool className="h-4 w-4" />}
+              {form.request_id ? "Create Proposal from Request" : "Create Proposal"}
             </Button>
           </div>
         </SheetContent>

@@ -232,22 +232,42 @@ export default function AdminImplementationRequests() {
                 <Badge className={URGENCY_STYLE[selected.urgency_level] || ""}>{selected.urgency_level}</Badge>
               </div>
 
-              {/* Revenue context */}
-              {(selected.projected_monthly > 0 || selected.default_monthly_fee > 0) && (
-                <div className="grid grid-cols-2 gap-3">
-                  {selected.projected_monthly > 0 && (
-                    <div className="p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
-                      <p className="text-[10px] text-muted-foreground">Projected Revenue</p>
-                      <p className="text-lg font-bold">${Number(selected.projected_monthly).toLocaleString()}/mo</p>
+              {/* Revenue + Billing context */}
+              {(selected.projected_monthly > 0 || selected.default_monthly_fee > 0 || selected.default_setup_fee > 0) && (
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase mb-2">Revenue & Billing Context</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selected.projected_monthly > 0 && (
+                      <div className="p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
+                        <p className="text-[10px] text-muted-foreground">Projected Revenue</p>
+                        <p className="text-lg font-bold">${Number(selected.projected_monthly).toLocaleString()}/mo</p>
+                      </div>
+                    )}
+                    {selected.default_monthly_fee > 0 && (
+                      <div className="p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
+                        <p className="text-[10px] text-muted-foreground">Monthly Fee</p>
+                        <p className="text-lg font-bold">${Number(selected.default_monthly_fee).toLocaleString()}/mo</p>
+                      </div>
+                    )}
+                    {selected.default_setup_fee > 0 && (
+                      <div className="p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
+                        <p className="text-[10px] text-muted-foreground">Setup Fee</p>
+                        <p className="text-lg font-bold">${Number(selected.default_setup_fee).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Billing readiness summary */}
+                  <div className="mt-3 p-3 rounded-lg border border-border bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1.5">Billing Readiness</p>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Setup Fee</span><span className="font-medium">{selected.default_setup_fee ? `$${Number(selected.default_setup_fee).toLocaleString()}` : "Not set"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Monthly Fee</span><span className="font-medium">{selected.default_monthly_fee ? `$${Number(selected.default_monthly_fee).toLocaleString()}/mo` : "Not set"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Contract Term</span><span className="font-medium">6 months default</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Billing Status</span>
+                        <Badge variant="outline" className="text-[9px] h-4">{selected.default_monthly_fee ? "Ready for proposal" : "Needs pricing"}</Badge>
+                      </div>
                     </div>
-                  )}
-                  {selected.default_monthly_fee > 0 && (
-                    <div className="p-3 rounded-lg bg-primary/[0.04] border border-primary/10">
-                      <p className="text-[10px] text-muted-foreground">Package Fee</p>
-                      <p className="text-lg font-bold">${Number(selected.default_monthly_fee).toLocaleString()}/mo</p>
-                      {selected.default_setup_fee > 0 && <p className="text-[10px] text-muted-foreground">${Number(selected.default_setup_fee).toLocaleString()} setup</p>}
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
 
@@ -275,6 +295,12 @@ export default function AdminImplementationRequests() {
                 <Button size="sm" className="gap-1.5" onClick={() => createProposalFromRequest(selected)}>
                   <FileText className="h-3.5 w-3.5" /> Create Proposal
                 </Button>
+                {selected.request_status === "Proposal Needed" && (
+                  <Button size="sm" variant="outline" className="gap-1.5"
+                    onClick={() => updateStatus(selected.id, "Proposal Sent")}>
+                    <Send className="h-3.5 w-3.5" /> Mark Proposal Sent
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" className="gap-1.5"
                   onClick={() => updateStatus(selected.id, "Approved")}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Approve
