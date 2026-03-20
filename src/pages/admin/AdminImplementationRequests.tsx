@@ -40,8 +40,7 @@ const URGENCY_STYLE: Record<string, string> = {
 const STATUSES = ["New", "In Review", "Proposal Needed", "Proposal Sent", "Approved", "Rejected", "Closed"];
 
 export default function AdminImplementationRequests() {
-  const navigate = useNavigate();
-  const { user } = useWorkspace();
+  const { user, setViewMode, setActiveClientId } = useWorkspace();
   const [requests, setRequests] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
