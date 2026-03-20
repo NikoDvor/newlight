@@ -318,7 +318,15 @@ export default function AdminHandoffChecklist() {
               </Badge>
               {check.status !== "ready" && (
                 <button
-                  onClick={() => { setViewMode("workspace"); setActiveClientId(clientId!); navigate(check.link); }}
+                  onClick={() => {
+                    if (check.link.startsWith("/admin")) {
+                      navigate(check.link);
+                    } else {
+                      setViewMode("workspace");
+                      setActiveClientId(clientId!);
+                      navigate(check.link);
+                    }
+                  }}
                   className="text-[10px] font-medium px-2.5 py-1 rounded-lg shrink-0 transition-colors"
                   style={{ background: "hsla(211,96%,60%,.1)", color: "hsl(var(--nl-sky))" }}
                 >
