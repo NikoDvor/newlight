@@ -136,7 +136,6 @@ export default function AdminImplementationRequests() {
     updateStatus(r.id, "Proposal Needed");
 
     // Switch to workspace context so /proposals route works
-    const { setViewMode, setActiveClientId } = useWorkspaceRef.current;
     setViewMode("workspace");
     setActiveClientId(r.client_id);
     navigate(`/proposals?${params.toString()}`);
