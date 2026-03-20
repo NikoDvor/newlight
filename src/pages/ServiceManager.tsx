@@ -100,8 +100,8 @@ export default function ServiceManager() {
 
   const openNew = (type: string) => {
     const defaults: Record<string, any> = {
-      service: { service_name: "", service_description: "", display_price_text: "", service_status: "draft", service_category: "", linked_calendar_id: "", linked_appointment_type_id: "", linked_form_id: "" },
-      product: { product_name: "", product_description: "", display_price_text: "", product_status: "draft", product_category: "" },
+      service: { service_name: "", service_description: "", display_price_text: "", service_status: "draft", service_category: "__none__", linked_calendar_id: "__none__", linked_appointment_type_id: "__none__", linked_form_id: "__none__" },
+      product: { product_name: "", product_description: "", display_price_text: "", product_status: "draft", product_category: "__none__" },
       offer: { offer_name: "", offer_description: "", offer_type: "promotion", display_status: "draft" },
       faq: { question: "", answer: "", status: "draft" },
     };
