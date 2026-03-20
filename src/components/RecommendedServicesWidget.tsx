@@ -263,6 +263,10 @@ export function RecommendedServicesWidget() {
                     <DollarSign className="h-3.5 w-3.5" /> Create Proposal <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>
+              ) : activeRequests[top.key] ? (
+                <Badge className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5">
+                  ✓ Request {activeRequests[top.key]}
+                </Badge>
               ) : (
                 <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" onClick={() => handleRequestImplementation(top)}>
                   <Phone className="h-3.5 w-3.5" /> Request Implementation
