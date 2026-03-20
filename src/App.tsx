@@ -89,6 +89,7 @@ import AdminPackageDetail from "./pages/admin/AdminPackageDetail";
 import AdminArchitecture from "./pages/admin/AdminArchitecture";
 import AdminRevenueExpansion from "./pages/admin/AdminRevenueExpansion";
 import AdminImplementationRequests from "./pages/admin/AdminImplementationRequests";
+import AdminHandoffChecklist from "./pages/admin/AdminHandoffChecklist";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
