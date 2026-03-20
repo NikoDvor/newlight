@@ -55,6 +55,8 @@ export default function CalendarDetail() {
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addBlackoutOpen, setAddBlackoutOpen] = useState(false);
   const [addTypeOpen, setAddTypeOpen] = useState(false);
+  const [editTypeOpen, setEditTypeOpen] = useState(false);
+  const [editingType, setEditingType] = useState<any>(null);
   const [addReminderOpen, setAddReminderOpen] = useState(false);
   const [addLinkOpen, setAddLinkOpen] = useState(false);
 
@@ -164,6 +166,7 @@ export default function CalendarDetail() {
 
   const addApptType = async () => {
     if (!newType.name.trim()) { toast.error("Name required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("calendar_appointment_types").insert({
       client_id: activeClientId, calendar_id: calendarId,
       name: newType.name, description: newType.description || null,
@@ -174,9 +177,54 @@ export default function CalendarDetail() {
       confirmation_message: newType.confirmation_message || null,
       reminders_enabled: newType.reminders_enabled,
     });
+    await supabase.from("audit_logs").insert({
+      client_id: activeClientId, action: "appointment_type_created", module: "calendar",
+      user_id: user?.id || null, metadata: { calendar_id: calendarId, name: newType.name },
+    });
     toast.success("Appointment type created");
     setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true });
     setAddTypeOpen(false);
+    fetchAll();
+  };
+
+  const openEditType = (t: any) => {
+    setEditingType({
+      ...t,
+      duration_minutes: String(t.duration_minutes),
+      buffer_before: String(t.buffer_before),
+      buffer_after: String(t.buffer_after),
+    });
+    setEditTypeOpen(true);
+  };
+
+  const saveEditType = async () => {
+    if (!editingType) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("calendar_appointment_types").update({
+      name: editingType.name,
+      description: editingType.description || null,
+      duration_minutes: parseInt(editingType.duration_minutes),
+      buffer_before: parseInt(editingType.buffer_before),
+      buffer_after: parseInt(editingType.buffer_after),
+      location_type: editingType.location_type,
+      meeting_link_type: editingType.meeting_link_type,
+      confirmation_message: editingType.confirmation_message || null,
+      reminders_enabled: editingType.reminders_enabled,
+      is_active: editingType.is_active,
+    }).eq("id", editingType.id);
+    await supabase.from("audit_logs").insert({
+      client_id: activeClientId, action: "appointment_type_updated", module: "calendar",
+      user_id: user?.id || null, metadata: { calendar_id: calendarId, name: editingType.name },
+    });
+    toast.success("Appointment type updated");
+    setEditTypeOpen(false);
+    setEditingType(null);
+    fetchAll();
+  };
+
+  const toggleApptTypeActive = async (id: string, currentActive: boolean) => {
+    await supabase.from("calendar_appointment_types").update({ is_active: !currentActive }).eq("id", id);
+    toast.success(currentActive ? "Appointment type deactivated" : "Appointment type activated");
     fetchAll();
   };
 
@@ -470,12 +518,12 @@ export default function CalendarDetail() {
             </Dialog>
           }>
             {apptTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No appointment types configured.</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">No appointment types configured. Add your first one to enable bookings.</p>
             ) : (
               <div className="divide-y divide-border">
                 {apptTypes.map(t => (
                   <div key={t.id} className="flex items-center justify-between py-3">
-                    <div>
+                    <div className="cursor-pointer flex-1" onClick={() => openEditType(t)}>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{t.name}</p>
                         <Badge variant="secondary" className="text-[10px]">{t.duration_minutes} min</Badge>
@@ -487,14 +535,64 @@ export default function CalendarDetail() {
                         {t.buffer_after > 0 && ` · ${t.buffer_after}min buffer after`}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteApptType(t.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditType(t)}>
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleApptTypeActive(t.id, t.is_active)}>
+                        {t.is_active ? <Ban className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteApptType(t.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </DataCard>
+
+          {/* Edit Appointment Type Dialog */}
+          <Dialog open={editTypeOpen} onOpenChange={setEditTypeOpen}>
+            <DialogContent className="bg-card border-border max-h-[85vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Edit Appointment Type</DialogTitle></DialogHeader>
+              {editingType && (
+                <div className="space-y-3 pt-2">
+                  <div><Label>Name *</Label><Input value={editingType.name} onChange={e => setEditingType((p: any) => ({ ...p, name: e.target.value }))} className="bg-background border-border" /></div>
+                  <div><Label>Description</Label><Textarea value={editingType.description || ""} onChange={e => setEditingType((p: any) => ({ ...p, description: e.target.value }))} className="bg-background border-border min-h-[50px]" /></div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><Label>Duration (min)</Label><Input type="number" value={editingType.duration_minutes} onChange={e => setEditingType((p: any) => ({ ...p, duration_minutes: e.target.value }))} className="bg-background border-border" /></div>
+                    <div><Label>Buffer Before</Label><Input type="number" value={editingType.buffer_before} onChange={e => setEditingType((p: any) => ({ ...p, buffer_before: e.target.value }))} className="bg-background border-border" /></div>
+                    <div><Label>Buffer After</Label><Input type="number" value={editingType.buffer_after} onChange={e => setEditingType((p: any) => ({ ...p, buffer_after: e.target.value }))} className="bg-background border-border" /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label>Location Type</Label>
+                      <Select value={editingType.location_type} onValueChange={v => setEditingType((p: any) => ({ ...p, location_type: v }))}>
+                        <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>{LOC_TYPES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Meeting Link</Label>
+                      <Select value={editingType.meeting_link_type} onValueChange={v => setEditingType((p: any) => ({ ...p, meeting_link_type: v }))}>
+                        <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>{LINK_TYPES.map(l => <SelectItem key={l} value={l}><span className="capitalize">{l.replace("_", " ")}</span></SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div><Label>Confirmation Message</Label><Textarea value={editingType.confirmation_message || ""} onChange={e => setEditingType((p: any) => ({ ...p, confirmation_message: e.target.value }))} placeholder="Message shown after booking" className="bg-background border-border min-h-[50px]" /></div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editingType.is_active} onCheckedChange={v => setEditingType((p: any) => ({ ...p, is_active: v }))} />
+                    <Label>Active</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editingType.reminders_enabled} onCheckedChange={v => setEditingType((p: any) => ({ ...p, reminders_enabled: v }))} />
+                    <Label>Reminders Enabled</Label>
+                  </div>
+                  <Button className="w-full" onClick={saveEditType}>Save Changes</Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* ── BOOKING LINKS ── */}

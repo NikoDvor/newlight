@@ -35,6 +35,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [integrationStats, setIntegrationStats] = useState({ connected: 0, total: 0 });
+  const [schedulingReady, setSchedulingReady] = useState({ calendars: 0, apptTypes: 0, availability: 0, bookingLinks: 0 });
   const [metrics, setMetrics] = useState({
     contacts: 0, openDeals: 0, pipelineValue: 0, wonValue: 0,
     upcomingEvents: 0, completedEvents: 0, reviewRequests: 0,
@@ -54,11 +55,21 @@ export default function Dashboard() {
       supabase.from("review_requests" as any).select("rating").eq("client_id", activeClientId),
       supabase.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("status", "open"),
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
-    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts]) => {
+      supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_appointment_types").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_availability").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+      supabase.from("calendar_booking_links").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("is_active", true),
+    ]).then(([onb, intg, contacts, deals, events, reviews, tasks, acts, cals, apptTypes, avail, bLinks]) => {
       setOnboardingData(onb.data);
       if (intg.data) {
         setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
       }
+      setSchedulingReady({
+        calendars: cals.count || 0,
+        apptTypes: apptTypes.count || 0,
+        availability: avail.count || 0,
+        bookingLinks: bLinks.count || 0,
+      });
 
       const dealsData = deals.data || [];
       const openDeals = dealsData.filter((d: any) => d.status === "open");
@@ -165,6 +176,40 @@ export default function Dashboard() {
           <OnboardingProgress steps={onboardingSteps} />
         </div>
       </div>
+
+      {/* Scheduling Readiness — show when setup is incomplete */}
+      {(schedulingReady.calendars === 0 || schedulingReady.apptTypes === 0 || schedulingReady.availability === 0 || schedulingReady.bookingLinks === 0) && (
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-2xl border border-border bg-card">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.1)" }}>
+              <Calendar className="h-4.5 w-4.5" style={{ color: "hsl(211 96% 56%)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Scheduling Setup</p>
+              <p className="text-[11px] text-muted-foreground">Complete these steps to accept online bookings</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { done: schedulingReady.calendars > 0, label: "Calendar", link: "/calendar-management" },
+              { done: schedulingReady.apptTypes > 0, label: "Appt Types", link: "/calendar-management" },
+              { done: schedulingReady.availability > 0, label: "Availability", link: "/calendar-management" },
+              { done: schedulingReady.bookingLinks > 0, label: "Booking Link", link: "/calendar-management" },
+            ].map(step => (
+              <Link key={step.label} to={step.link}>
+                <div className={`p-2.5 rounded-xl border text-center text-[11px] font-medium transition-colors ${
+                  step.done
+                    ? "border-primary/20 bg-primary/5 text-primary"
+                    : "border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+                }`}>
+                  {step.done ? "✓" : "○"} {step.label}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Real Metrics */}
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
