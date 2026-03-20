@@ -113,7 +113,8 @@ export default function Dashboard() {
   const completedSteps = Object.values(onboardingSteps).filter(v => v === true).length;
   const totalSteps = 8;
   const setupPercentage = Math.round((completedSteps / totalSteps) * 100);
-  const isNewClient = setupPercentage < 50;
+  const isNewClient = setupPercentage < 50 && onboardingStage !== "active";
+  const isLive = onboardingStage === "active";
 
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
 
