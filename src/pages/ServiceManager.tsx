@@ -246,10 +246,10 @@ export default function ServiceManager() {
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Display Price</label>
                   <Input value={form.display_price_text || ""} onChange={e => setForm({ ...form, display_price_text: e.target.value })} placeholder="e.g. Starting at $99" className="h-9 text-sm" /></div>
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Category</label>
-                  <Select value={form.service_category || ""} onValueChange={v => setForm({ ...form, service_category: v })}>
+                  <Select value={form.service_category || "__none__"} onValueChange={v => setForm({ ...form, service_category: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {SVC_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select></div>
