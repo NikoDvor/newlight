@@ -170,6 +170,8 @@ export default function ContactDetail() {
           <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
           <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
           <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
+          <TabsTrigger value="follow_ups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
+          <TabsTrigger value="conversations" className="rounded-md text-sm">Conversations</TabsTrigger>
           <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
         </TabsList>
 
