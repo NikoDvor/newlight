@@ -124,6 +124,13 @@ export default function AdminHandoffChecklist() {
   const readyCount = checks.filter(c => c.status === "ready").length;
   const percentage = checks.length > 0 ? Math.round((readyCount / checks.length) * 100) : 0;
 
+  const openWorkspace = () => {
+    if (!clientId) return;
+    setViewMode("workspace");
+    setActiveClientId(clientId);
+    navigate("/");
+  };
+
   const handleReProvision = async () => {
     if (!clientId) return;
     setProvisioning(true);
