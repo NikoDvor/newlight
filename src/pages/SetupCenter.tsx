@@ -117,8 +117,8 @@ export default function SetupCenter() {
         { key: "integrations", title: "Integrations", description: "Connect Google, Meta, Stripe, and more", icon: Plug, status: needsAccess ? "needs_access" : s(false, connectedIntgs, 3), link: "/integrations", details: connectedIntgs > 0 ? `${connectedIntgs} connected` : "Connect your accounts" },
         { key: "website", title: "Website Content", description: "Pages, content blocks, and SEO", icon: Globe, status: s(false, wcbCount, 1), link: "/website", details: wcbCount > 0 ? `${wcbCount} content block(s)` : "Set up your website content" },
         { key: "reviews", title: "Reviews", description: "Review requests and reputation", icon: Star, status: onb?.review_platform_connected ? "completed" : "not_started", link: "/reviews", details: onb?.review_platform_connected ? "Review platform linked" : "Connect review platform" },
-        { key: "billing", title: "Billing & Plan", description: "Subscription and payment status", icon: CreditCard, status: "ready", link: "/billing", details: "View your plan" },
-        { key: "training", title: "Training & Help", description: "Courses and knowledge base", icon: GraduationCap, status: "ready", link: "/training", details: "Browse available courses" },
+        { key: "billing", title: "Billing & Plan", description: "Subscription and payment status", icon: CreditCard, status: "ready" as SectionStatus, link: "/billing", details: "View your plan" },
+        { key: "training", title: "Training & Help", description: "Courses and knowledge base", icon: GraduationCap, status: "ready" as SectionStatus, link: "/training", details: "Browse available courses" },
       ]);
       setLoading(false);
     };
