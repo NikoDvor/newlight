@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle2, ArrowLeft, ArrowRight, Loader2, Save, Zap,
   Palette, Users, Calendar, Mail, Star, UserPlus, DollarSign,
-  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList
+  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList, ShoppingBag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig } from "@/components/activation/activationTypes";
+import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
 import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
 import { StepCalendar } from "@/components/activation/StepCalendar";
+import { StepServices } from "@/components/activation/StepServices";
 import { StepBookingForms } from "@/components/activation/StepBookingForms";
 import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
@@ -26,14 +27,17 @@ import { StepSupport } from "@/components/activation/StepSupport";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepReview } from "@/components/activation/StepReview";
 
+const TOTAL_STEPS = STEPS.length;
+
 const stepIcons: Record<number, React.ReactNode> = {
   1: <Zap className="h-3.5 w-3.5" />, 2: <Palette className="h-3.5 w-3.5" />,
   3: <Users className="h-3.5 w-3.5" />, 4: <Calendar className="h-3.5 w-3.5" />,
-  5: <ClipboardList className="h-3.5 w-3.5" />, 6: <Mail className="h-3.5 w-3.5" />,
-  7: <Star className="h-3.5 w-3.5" />, 8: <UserPlus className="h-3.5 w-3.5" />,
-  9: <DollarSign className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
-  11: <TrendingUp className="h-3.5 w-3.5" />, 12: <Headphones className="h-3.5 w-3.5" />,
-  13: <Link2 className="h-3.5 w-3.5" />, 14: <ClipboardCheck className="h-3.5 w-3.5" />,
+  5: <ShoppingBag className="h-3.5 w-3.5" />, 6: <ClipboardList className="h-3.5 w-3.5" />,
+  7: <Mail className="h-3.5 w-3.5" />, 8: <Star className="h-3.5 w-3.5" />,
+  9: <UserPlus className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
+  11: <DollarSign className="h-3.5 w-3.5" />, 12: <TrendingUp className="h-3.5 w-3.5" />,
+  13: <Headphones className="h-3.5 w-3.5" />, 14: <Link2 className="h-3.5 w-3.5" />,
+  15: <ClipboardCheck className="h-3.5 w-3.5" />,
 };
 
 export default function AdminMasterActivation() {
