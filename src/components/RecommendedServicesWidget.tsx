@@ -128,6 +128,16 @@ export function RecommendedServicesWidget() {
 
     setLoading(false);
     persistRecommendations(activeClientId, results, ctx).catch(console.error);
+
+    // Load active implementation requests for this client
+    const { data: irData } = await supabase
+      .from("implementation_requests")
+      .select("recommendation_key, request_status")
+      .eq("client_id", activeClientId)
+      .not("request_status", "in", '("Closed","Rejected")');
+    const irMap: Record<string, string> = {};
+    (irData || []).forEach((ir: any) => { if (ir.recommendation_key) irMap[ir.recommendation_key] = ir.request_status; });
+    setActiveRequests(irMap);
   }, [activeClientId]);
 
   useEffect(() => { runEngine(); }, [runEngine]);
