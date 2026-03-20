@@ -350,11 +350,12 @@ export function RecommendedServicesWidget() {
   );
 }
 
-function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest }: {
+function RecDetailPanel({ rec, packageLinks, isAdmin, onRequest, activeRequests = {} }: {
   rec: ServiceRecommendation;
   packageLinks: PackageLink[];
   isAdmin: boolean;
   onRequest: (r: ServiceRecommendation) => void;
+  activeRequests?: Record<string, string>;
 }) {
   const style = urgencyStyles[rec.urgency] || urgencyStyles.Medium;
   const Icon = serviceIcons[rec.key] || Sparkles;
