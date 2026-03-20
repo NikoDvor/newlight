@@ -58,7 +58,7 @@ const defaultForm = {
 };
 
 export default function BrandingSettings() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, setActiveClientId } = useWorkspace();
   const [form, setForm] = useState(defaultForm);
   const [showPreview, setShowPreview] = useState(false);
 
