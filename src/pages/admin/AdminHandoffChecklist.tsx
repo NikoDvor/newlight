@@ -74,6 +74,7 @@ export default function AdminHandoffChecklist() {
 
       setClientName(clientRes.data?.business_name || "Client");
       setClientIndustry((clientRes.data as any)?.industry || null);
+      setOnboardingStage((clientRes.data as any)?.onboarding_stage || "lead");
 
       // Check for auto-provisioning log
       const { data: provLog } = await supabase.from("audit_logs")
