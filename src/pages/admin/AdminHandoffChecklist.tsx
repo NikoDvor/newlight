@@ -35,8 +35,11 @@ export default function AdminHandoffChecklist() {
   const navigate = useNavigate();
   const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientName, setClientName] = useState("");
+  const [clientIndustry, setClientIndustry] = useState<string | null>(null);
   const [checks, setChecks] = useState<CheckItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [provisioning, setProvisioning] = useState(false);
+  const [autoProvisionLog, setAutoProvisionLog] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clientId) return;
