@@ -100,8 +100,8 @@ export default function ServiceManager() {
 
   const openNew = (type: string) => {
     const defaults: Record<string, any> = {
-      service: { service_name: "", service_description: "", display_price_text: "", service_status: "draft", service_category: "", linked_calendar_id: "", linked_appointment_type_id: "", linked_form_id: "" },
-      product: { product_name: "", product_description: "", display_price_text: "", product_status: "draft", product_category: "" },
+      service: { service_name: "", service_description: "", display_price_text: "", service_status: "draft", service_category: "__none__", linked_calendar_id: "__none__", linked_appointment_type_id: "__none__", linked_form_id: "__none__" },
+      product: { product_name: "", product_description: "", display_price_text: "", product_status: "draft", product_category: "__none__" },
       offer: { offer_name: "", offer_description: "", offer_type: "promotion", display_status: "draft" },
       faq: { question: "", answer: "", status: "draft" },
     };
@@ -110,7 +110,7 @@ export default function ServiceManager() {
   };
 
   const openEdit = (type: string, item: any) => {
-    setForm({ ...item, linked_calendar_id: item.linked_calendar_id || "", linked_appointment_type_id: item.linked_appointment_type_id || "", linked_form_id: item.linked_form_id || "" });
+    setForm({ ...item, linked_calendar_id: item.linked_calendar_id || "__none__", linked_appointment_type_id: item.linked_appointment_type_id || "__none__", linked_form_id: item.linked_form_id || "__none__", service_category: item.service_category || "__none__", product_category: item.product_category || "__none__" });
     setEditSheet({ type, item });
   };
 
@@ -121,12 +121,12 @@ export default function ServiceManager() {
     const table = tableMap[type];
     const payload = { ...form, client_id: activeClientId };
     delete payload.id; delete payload.created_at; delete payload.updated_at;
-    // Clean empty FK refs
+    // Clean sentinel and empty FK refs
     ["linked_calendar_id", "linked_appointment_type_id", "linked_form_id", "linked_page_id"].forEach(k => {
-      if (payload[k] === "") payload[k] = null;
+      if (payload[k] === "__none__" || payload[k] === "") payload[k] = null;
     });
-    if (payload.service_category === "") payload.service_category = null;
-    if (payload.product_category === "") payload.product_category = null;
+    if (payload.service_category === "__none__" || payload.service_category === "") payload.service_category = null;
+    if (payload.product_category === "__none__" || payload.product_category === "") payload.product_category = null;
 
     const { error } = item
       ? await supabase.from(table as any).update(payload).eq("id", item.id)
@@ -246,10 +246,10 @@ export default function ServiceManager() {
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Display Price</label>
                   <Input value={form.display_price_text || ""} onChange={e => setForm({ ...form, display_price_text: e.target.value })} placeholder="e.g. Starting at $99" className="h-9 text-sm" /></div>
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Category</label>
-                  <Select value={form.service_category || ""} onValueChange={v => setForm({ ...form, service_category: v })}>
+                  <Select value={form.service_category || "__none__"} onValueChange={v => setForm({ ...form, service_category: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {SVC_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select></div>
@@ -265,26 +265,26 @@ export default function ServiceManager() {
                 <p className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5"><Link2 className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 56%)" }} /> Booking Connection</p>
                 <div className="space-y-3">
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Linked Calendar</label>
-                    <Select value={form.linked_calendar_id || ""} onValueChange={v => setForm({ ...form, linked_calendar_id: v })}>
+                    <Select value={form.linked_calendar_id || "__none__"} onValueChange={v => setForm({ ...form, linked_calendar_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {calendars.map(c => <SelectItem key={c.id} value={c.id}>{c.calendar_name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Appointment Type</label>
-                    <Select value={form.linked_appointment_type_id || ""} onValueChange={v => setForm({ ...form, linked_appointment_type_id: v })}>
+                    <Select value={form.linked_appointment_type_id || "__none__"} onValueChange={v => setForm({ ...form, linked_appointment_type_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
-                        {appointmentTypes.filter(a => !form.linked_calendar_id || a.calendar_id === form.linked_calendar_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                        <SelectItem value="__none__">None</SelectItem>
+                        {appointmentTypes.filter(a => !form.linked_calendar_id || form.linked_calendar_id === "__none__" || a.calendar_id === form.linked_calendar_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
                   <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Intake / Booking Form</label>
-                    <Select value={form.linked_form_id || ""} onValueChange={v => setForm({ ...form, linked_form_id: v })}>
+                    <Select value={form.linked_form_id || "__none__"} onValueChange={v => setForm({ ...form, linked_form_id: v })}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {forms.map(f => <SelectItem key={f.id} value={f.id}>{f.form_name}</SelectItem>)}
                       </SelectContent>
                     </Select></div>
@@ -302,10 +302,10 @@ export default function ServiceManager() {
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Display Price</label>
                   <Input value={form.display_price_text || ""} onChange={e => setForm({ ...form, display_price_text: e.target.value })} className="h-9 text-sm" /></div>
                 <div><label className="text-xs font-semibold text-muted-foreground block mb-1">Category</label>
-                  <Select value={form.product_category || ""} onValueChange={v => setForm({ ...form, product_category: v })}>
+                  <Select value={form.product_category || "__none__"} onValueChange={v => setForm({ ...form, product_category: v })}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {SVC_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select></div>
