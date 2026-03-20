@@ -449,6 +449,9 @@ export const defaultFormState = (): ActivationFormState => ({
   default_reschedule_policy: "",
   calendar_configs: [defaultCalendarConfig()],
 
+  service_configs: [defaultServiceConfig()],
+  services_notes: "",
+
   use_native_forms: "yes", need_booking_form: "yes", need_intake_form: "no",
   need_quote_form: "no", need_support_form: "no", need_contact_form: "no",
   form_calendar_link: "primary", form_creates_contact: "yes",
