@@ -148,7 +148,25 @@ export default function AdminHandoffChecklist() {
     navigate("/");
   };
 
-  const handleReProvision = async () => {
+  const handleLaunch = async () => {
+    if (!clientId) return;
+    setLaunching(true);
+    try {
+      const result = await launchWorkspace(clientId);
+      if (result.success) {
+        setOnboardingStage("active");
+        toast.success(`${clientName} is now live!`);
+      } else {
+        toast.error("Launch blocked: " + result.blockers[0]);
+      }
+    } catch {
+      toast.error("Launch failed");
+    }
+    setLaunching(false);
+  };
+
+  const isActive = onboardingStage === "active";
+  const canLaunch = percentage >= 60 && !isActive;
     if (!clientId) return;
     setProvisioning(true);
     try {
