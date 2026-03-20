@@ -33,6 +33,7 @@ export default function AdminClients() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   const [form, setForm] = useState({
