@@ -204,6 +204,26 @@ export default function AdminClients() {
     fetchClients();
   };
 
+  const handleReProvision = async (client: Client) => {
+    setProvisioning(client.id);
+    try {
+      const result = await provisionWorkspaceDefaults(client.id, {
+        industry: client.industry,
+        skipIfExists: true,
+      });
+      if (result.provisionedItems.length > 0) {
+        toast.success(`Applied starter template: ${result.provisionedItems.length} item(s) created`);
+      } else {
+        toast.info("Workspace already has starter content — nothing new to create");
+      }
+      fetchClients();
+    } catch (err: any) {
+      toast.error(err.message || "Provisioning failed");
+    } finally {
+      setProvisioning(null);
+    }
+  };
+
   const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
 
   const statusColor = (s: string) => {
