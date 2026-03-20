@@ -328,9 +328,24 @@ export function RecommendedServicesWidget() {
       {/* Detail Sheet */}
       <Sheet open={!!detailSheet} onOpenChange={() => setDetailSheet(null)}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
-          {detailSheet && <RecDetailPanel rec={detailSheet} packageLinks={packageLinks} isAdmin={isAdmin} onRequest={handleRequestImplementation} />}
+          {detailSheet && <RecDetailPanel rec={detailSheet} packageLinks={packageLinks} isAdmin={isAdmin} onRequest={handleRequestImplementation} activeRequests={activeRequests} />}
         </SheetContent>
       </Sheet>
+
+      {/* Request Implementation Modal */}
+      <RequestImplementationModal
+        open={!!requestModal}
+        onOpenChange={open => !open && setRequestModal(null)}
+        recommendationName={requestModal?.rec.name}
+        recommendationKey={requestModal?.rec.key}
+        packageId={requestModal?.pkg?.package_id}
+        packageName={requestModal?.pkg?.package_name}
+        projectedMonthly={requestModal?.rec.projectedMonthly}
+        projectedAnnual={requestModal?.rec.projectedAnnual}
+        defaultSetupFee={requestModal?.pkg?.default_setup_fee}
+        defaultMonthlyFee={requestModal?.pkg?.default_monthly_fee}
+        deliverables={requestModal?.pkg?.deliverables.map(d => d.deliverable_name)}
+      />
     </motion.div>
   );
 }
