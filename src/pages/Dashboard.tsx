@@ -80,6 +80,9 @@ export default function Dashboard() {
       const reviewsData = (reviews.data || []) as any[];
       const rated = reviewsData.filter((r: any) => r.rating);
 
+      const fuData = fuRes.data || [];
+      const overdueFollowUps = fuData.filter((f: any) => f.due_at && new Date(f.due_at) < now).length;
+
       setMetrics({
         contacts: contacts.count || 0,
         openDeals: openDeals.length,
@@ -91,6 +94,7 @@ export default function Dashboard() {
         avgRating: rated.length > 0 ? rated.reduce((s: number, r: any) => s + r.rating, 0) / rated.length : 0,
         ratingCount: rated.length,
         openTasks: tasks.count || 0,
+        overdueFollowUps,
       });
       setActivities(acts.data || []);
     });
