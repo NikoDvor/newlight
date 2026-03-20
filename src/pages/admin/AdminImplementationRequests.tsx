@@ -41,7 +41,7 @@ const STATUSES = ["New", "In Review", "Proposal Needed", "Proposal Sent", "Appro
 
 export default function AdminImplementationRequests() {
   const navigate = useNavigate();
-  const { user } = useWorkspace();
+  const { user, setViewMode, setActiveClientId } = useWorkspace();
   const [requests, setRequests] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -135,6 +135,10 @@ export default function AdminImplementationRequests() {
 
     // Update status
     updateStatus(r.id, "Proposal Needed");
+
+    // Switch to workspace context so /proposals route works
+    setViewMode("workspace");
+    setActiveClientId(r.client_id);
     navigate(`/proposals?${params.toString()}`);
   };
 

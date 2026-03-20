@@ -199,16 +199,22 @@ export default function Dashboard() {
         <MoneyMeter />
       </div>
 
-      {/* Health + Onboarding */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <HealthScoreWidget score={73} />
-        <div className="lg:col-span-2">
-          <OnboardingProgress steps={onboardingSteps} />
+      {/* Health + Onboarding — hide onboarding when live */}
+      {isLive ? (
+        <div className="mb-6">
+          <HealthScoreWidget score={73} />
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <HealthScoreWidget score={73} />
+          <div className="lg:col-span-2">
+            <OnboardingProgress steps={onboardingSteps} />
+          </div>
+        </div>
+      )}
 
       {/* Scheduling Readiness — show when setup is incomplete */}
-      {(schedulingReady.calendars === 0 || schedulingReady.apptTypes === 0 || schedulingReady.availability === 0 || schedulingReady.bookingLinks === 0) && (
+      {!isLive && (schedulingReady.calendars === 0 || schedulingReady.apptTypes === 0 || schedulingReady.availability === 0 || schedulingReady.bookingLinks === 0) && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 p-4 rounded-2xl border border-border bg-card">
           <div className="flex items-center gap-3 mb-3">
