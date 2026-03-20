@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
-
 interface Client {
   id: string;
   business_name: string;
@@ -25,6 +24,7 @@ interface Client {
   owner_name: string | null;
   owner_email: string | null;
   created_at: string;
+  onboarding_stage: string;
 }
 
 export default function AdminClients() {
