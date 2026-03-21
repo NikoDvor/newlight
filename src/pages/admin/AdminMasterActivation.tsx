@@ -174,63 +174,25 @@ export default function AdminMasterActivation() {
   const handleActivateExisting = async () => {
     if (!clientId) return;
     const paymentPending = form.payment_confirmed !== "confirmed";
-    const paymentAwaiting = form.payment_confirmed === "awaiting_confirmation";
     if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
 
-    // Determine workspace stage based on payment
     const targetStage = paymentPending ? "awaiting_payment" : "active";
-    const billingStatus = form.payment_confirmed === "confirmed" ? "active" : paymentAwaiting ? "awaiting_confirmation" : "pending_payment";
 
     setSubmitting(true);
     try {
-      // 1. Update client branding
-      await supabase.from("client_branding").upsert({
-        client_id: clientId,
-        company_name: form.company_name || form.business_name_confirmed,
-        display_name: form.display_name || null,
-        logo_url: form.logo_url || null,
-        primary_color: form.primary_color,
-        secondary_color: form.secondary_color,
-        accent_color: form.accent_color || null,
-        welcome_message: form.welcome_message || "Welcome to your business dashboard",
-        tagline: form.tagline || null,
-        app_display_name: form.app_display_name || null,
-        workspace_header_name: form.workspace_header_name || null,
-        calendar_title: form.calendar_title || null,
-        finance_dashboard_title: form.finance_dashboard_title || null,
-        report_header_title: form.report_header_title || null,
-        login_branding_text: form.login_branding_text || null,
-        dashboard_title: form.dashboard_title || null,
-      }, { onConflict: "client_id" });
-
-      // 2. Update billing with wire/payment data
-      await supabase.from("billing_accounts").upsert({
-        client_id: clientId,
-        billing_status: billingStatus,
-        billing_email: form.owner_email || null,
-      }, { onConflict: "client_id" });
-
-      // 3. Service catalog from configs
-      const serviceConfigs: ServiceConfig[] = form.service_configs || [];
-      for (const svc of serviceConfigs) {
-        if (!svc.service_name) continue;
-        await supabase.from("service_catalog" as any).upsert({
-          client_id: clientId,
-          service_name: svc.service_name,
-          service_description: svc.service_description || null,
-          display_price_text: svc.display_price_text || null,
-          service_status: svc.service_status || "draft",
-          display_order: 0,
-        }, { onConflict: "client_id,service_name" as any }).select();
+      // 1. Run full hydration sync — writes all form data to canonical records
+      const hydrationResult = await hydrateWorkspaceFromActivation(clientId, form);
+      if (hydrationResult.errors.length > 0) {
+        console.warn("Hydration errors:", hydrationResult.errors);
+        toast.warning(`Some fields had sync issues: ${hydrationResult.errors.length} error(s)`);
       }
 
-      // 4. Calendar setup from configs (if any new ones)
+      // 2. Calendar setup from configs (if any new ones)
       if (form.use_native_calendar === "yes") {
         const configs: CalendarConfig[] = form.calendar_configs || [];
         for (const cfg of configs) {
           if (!cfg.calendar_name) continue;
           const tz = form.default_timezone || "America/Los_Angeles";
-          // Check if calendar already exists
           const { data: existingCal } = await supabase.from("calendars")
             .select("id").eq("client_id", clientId).eq("calendar_name", cfg.calendar_name).maybeSingle();
           if (existingCal) continue;
@@ -272,7 +234,7 @@ export default function AdminMasterActivation() {
         }
       }
 
-      // 5. Full-app provisioning (idempotent)
+      // 3. Full-app provisioning (idempotent)
       await provisionWorkspaceDefaults(clientId, {
         industry: form.industry,
         timezone: form.default_timezone,
@@ -281,7 +243,7 @@ export default function AdminMasterActivation() {
         ownerName: form.owner_name,
       });
 
-      // 6. Advance workspace — payment-aware
+      // 4. Advance workspace — payment-aware
       await supabase.from("clients").update({
         onboarding_stage: targetStage,
         status: targetStage === "active" ? "active" : "activation_in_progress",
@@ -291,7 +253,7 @@ export default function AdminMasterActivation() {
         provision_status: "ready_for_kickoff",
       }).eq("client_id", clientId);
 
-      // 7. Audit + activity
+      // 5. Audit + activity
       await Promise.all([
         supabase.from("audit_logs").insert({
           action: "client_activated_via_master_form",
@@ -303,6 +265,8 @@ export default function AdminMasterActivation() {
             setup_fee: form.setup_fee || null,
             account_manager: form.assigned_account_manager || null,
             package: form.service_package,
+            hydration_synced: hydrationResult.synced.length,
+            hydration_errors: hydrationResult.errors.length,
           },
         }),
         supabase.from("crm_activities").insert({
@@ -312,7 +276,7 @@ export default function AdminMasterActivation() {
         }),
       ]);
 
-      // 8. Update draft status
+      // 6. Update draft status
       if (draftId) {
         await supabase.from("activation_drafts").update({
           draft_status: "activated",
@@ -331,7 +295,7 @@ export default function AdminMasterActivation() {
         });
       }
 
-      // 9. Sync stage + emit events
+      // 7. Sync stage + emit events
       await syncOnboardingStage(clientId, targetStage);
       await emitEvent({
         eventKey: "activation_form_submitted",
@@ -350,6 +314,26 @@ export default function AdminMasterActivation() {
       toast.error(err.message || "Activation failed");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ── Manual re-sync for backfill ──
+  const handleResync = async () => {
+    if (!clientId) return;
+    setSyncing(true);
+    try {
+      const result = await hydrateWorkspaceFromActivation(clientId, form);
+      const status = await checkSyncStatus(clientId);
+      setSyncStatus(status);
+      if (result.errors.length > 0) {
+        toast.warning(`Sync completed with ${result.errors.length} error(s)`);
+      } else {
+        toast.success(`Data sync complete — ${result.synced.length} items synced`);
+      }
+    } catch (e: any) {
+      toast.error("Sync failed: " + e.message);
+    } finally {
+      setSyncing(false);
     }
   };
 

@@ -48,7 +48,6 @@ export default function Billing() {
       supabase.from("subscriptions").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setSub(r.data)),
       supabase.from("invoices").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
       supabase.from("contract_records").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setContract(r.data)),
-      supabase.from("activation_drafts").select("form_data, draft_status").eq("client_id", activeClientId).order("updated_at", { ascending: false }).limit(1).maybeSingle().then(r => setActivationData(r.data)),
     ]).finally(() => setLoading(false));
   }, [activeClientId]);
 
