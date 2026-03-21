@@ -209,11 +209,20 @@ export default function AdminClients() {
   const resetForm = () => {
     setShowCreate(false);
     setInviteResult(null);
+    setCreatedClient(null);
     setForm({
       business_name: "", workspace_slug: "", industry: "", primary_location: "",
       timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
       logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
     });
+  };
+
+  const openCreatedWorkspace = () => {
+    if (!createdClient) return;
+    setViewMode("workspace");
+    setActiveClientId(createdClient.id);
+    resetForm();
+    navigate("/");
   };
 
   const openWorkspace = (client: Client) => {
