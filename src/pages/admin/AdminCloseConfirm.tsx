@@ -159,9 +159,10 @@ export default function AdminCloseConfirm() {
         setInviteResult({ sent: false, link: null });
       }
 
-      // 4. Update provision queue + demo build
+      // 4. Update provision queue + demo build + advance to active
       await Promise.all([
         supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
+        supabase.from("clients").update({ onboarding_stage: "active", status: "active" } as any).eq("id", client.id),
         supabase.from("demo_builds").update({ status: "closed", client_id: client.id } as any).eq("id", buildId!),
         supabase.from("audit_logs").insert({
           action: "client_activated_from_demo",
@@ -169,12 +170,10 @@ export default function AdminCloseConfirm() {
           module: "activation",
           metadata: { demo_build_id: buildId, kickoff_contact: form.kickoff_contact, notes: form.internal_notes },
         }),
-        supabase.from("fix_now_items").insert({
+        supabase.from("crm_activities").insert({
           client_id: client.id,
-          issue: "Review new client provisioning and confirm integrations",
-          module: "activation",
-          severity: "low",
-          status: "open",
+          activity_type: "client_activated",
+          activity_note: `${form.business_name_confirmed} activated from closing meeting — payment via ${form.payment_method}`,
         }),
       ]);
 
