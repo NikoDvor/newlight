@@ -58,6 +58,8 @@ export default function AdminClients() {
 
   useEffect(() => { fetchClients(); }, []);
 
+  const [createdClient, setCreatedClient] = useState<Client | null>(null);
+
   const handleCreate = async () => {
     if (!form.business_name || !form.workspace_slug) {
       toast.error("Business name and workspace slug are required");
@@ -69,6 +71,14 @@ export default function AdminClients() {
     }
     setCreating(true);
     const slug = form.workspace_slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+
+    // Check slug uniqueness
+    const { data: slugCheck } = await supabase.from("clients").select("id").eq("workspace_slug", slug).maybeSingle();
+    if (slugCheck) {
+      toast.error("A workspace with this slug already exists. Choose a different slug.");
+      setCreating(false);
+      return;
+    }
 
     // 1. Create client record
     const { data, error } = await supabase.from("clients").insert({
@@ -83,69 +93,89 @@ export default function AdminClients() {
     }).select().single();
 
     if (error) {
-      toast.error(error.message);
+      toast.error(`Workspace creation failed: ${error.message}`);
       setCreating(false);
       return;
     }
 
-    if (data) {
-      // 2. Provision workspace resources in parallel
-      const integrations = ["Google Analytics", "Google Search Console", "Google Business Profile", "Meta / Instagram", "Twilio", "Stripe", "Zoom"];
-      await Promise.all([
-        supabase.from("provision_queue").insert({ client_id: data.id }),
-        supabase.from("client_integrations").insert(integrations.map(name => ({ client_id: data.id, integration_name: name }))),
-        supabase.from("onboarding_progress").insert({ client_id: data.id }),
-        supabase.from("client_branding").insert({
-          client_id: data.id,
-          company_name: form.business_name,
-          logo_url: form.logo_url || null,
-          primary_color: form.primary_color || "#3B82F6",
-          secondary_color: form.secondary_color || "#06B6D4",
-          welcome_message: form.welcome_message || "Welcome to your business dashboard",
-        }),
-        supabase.from("client_health_scores").insert({ client_id: data.id }),
-      ]);
+    if (!data) {
+      toast.error("Workspace creation failed: no data returned");
+      setCreating(false);
+      return;
+    }
 
-      // 2b. Auto-provision industry-aware starter content
-      await provisionWorkspaceDefaults(data.id, {
+    // 2. Provision workspace base resources in parallel
+    const integrations = ["Google Analytics", "Google Search Console", "Google Business Profile", "Meta / Instagram", "Twilio", "Stripe", "Zoom"];
+    await Promise.all([
+      supabase.from("provision_queue").insert({ client_id: data.id }),
+      supabase.from("client_integrations").insert(integrations.map(name => ({ client_id: data.id, integration_name: name }))),
+      supabase.from("onboarding_progress").insert({ client_id: data.id }),
+      supabase.from("client_branding").insert({
+        client_id: data.id,
+        company_name: form.business_name,
+        logo_url: form.logo_url || null,
+        primary_color: form.primary_color || "#3B82F6",
+        secondary_color: form.secondary_color || "#06B6D4",
+        welcome_message: form.welcome_message || "Welcome to your business dashboard",
+      }),
+      supabase.from("client_health_scores").insert({ client_id: data.id }),
+    ]);
+
+
+    // 3. Full app provisioning — creates calendars, services, forms, content blocks, workspace user, billing stub, recommendations
+    try {
+      const result = await provisionWorkspaceDefaults(data.id, {
         industry: form.industry,
         timezone: form.timezone,
         skipIfExists: true,
+        ownerEmail: form.owner_email,
+        ownerName: form.owner_name,
+      });
+      if (result.provisionedItems.length > 0) {
+        console.log(`Full app provisioned: ${result.provisionedItems.length} items`);
+      }
+    } catch (provErr: any) {
+      toast.error(`Workspace created but full provisioning failed: ${provErr.message}`);
+    }
+
+    // 4. Auto-create auth account for client owner
+    try {
+      const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: form.owner_email,
+          role: "client_owner",
+          client_id: data.id,
+        },
       });
 
-      // 3. Auto-create auth account for client owner
-      try {
-        const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-user", {
-          body: {
-            email: form.owner_email,
-            role: "client_owner",
-            client_id: data.id,
-          },
-        });
-
-        if (inviteError) {
-          toast.error(`Workspace created but invite failed: ${inviteError.message}`);
-          setInviteResult({ email: form.owner_email, sent: false, link: null });
-        } else if (inviteData) {
-          if (inviteData.invite_email_sent) {
-            toast.success("Workspace created! Invite email sent to client.");
-            setInviteResult({ email: form.owner_email, sent: true, link: null });
-          } else if (inviteData.setup_link) {
-            toast.success("Workspace created! Copy the setup link below for the client.");
-            setInviteResult({ email: form.owner_email, sent: false, link: inviteData.setup_link });
-          } else {
-            toast.success("Workspace created and user account linked!");
-            setInviteResult({ email: form.owner_email, sent: false, link: null });
-          }
-        }
-      } catch (err: any) {
-        toast.error(`Workspace created but invite failed: ${err.message}`);
+      if (inviteError) {
+        toast.error(`Workspace created but invite failed: ${inviteError.message}`);
         setInviteResult({ email: form.owner_email, sent: false, link: null });
+      } else if (inviteData) {
+        if (inviteData.already_existed) {
+          toast.success("Workspace created! Existing user linked to this new workspace.");
+          setInviteResult({ email: form.owner_email, sent: false, link: null });
+        } else if (inviteData.invite_email_sent) {
+          toast.success("Workspace created! Invite email sent to client.");
+          setInviteResult({ email: form.owner_email, sent: true, link: null });
+        } else if (inviteData.setup_link) {
+          toast.success("Workspace created! Copy the setup link below for the client.");
+          setInviteResult({ email: form.owner_email, sent: false, link: inviteData.setup_link });
+        } else {
+          toast.success("Workspace created and user account linked!");
+          setInviteResult({ email: form.owner_email, sent: false, link: null });
+        }
       }
-
-      // 4. Update provision status
-      await supabase.from("provision_queue").update({ provision_status: "setup_in_progress" }).eq("client_id", data.id);
+    } catch (err: any) {
+      toast.error(`Workspace created but invite failed: ${err.message}`);
+      setInviteResult({ email: form.owner_email, sent: false, link: null });
     }
+
+    // 5. Update provision status
+    await supabase.from("provision_queue").update({ provision_status: "setup_in_progress" }).eq("client_id", data.id);
+
+    // Store created client for post-create actions
+    setCreatedClient(data as Client);
 
     setCreating(false);
     fetchClients();
@@ -179,11 +209,20 @@ export default function AdminClients() {
   const resetForm = () => {
     setShowCreate(false);
     setInviteResult(null);
+    setCreatedClient(null);
     setForm({
       business_name: "", workspace_slug: "", industry: "", primary_location: "",
       timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
       logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
     });
+  };
+
+  const openCreatedWorkspace = () => {
+    if (!createdClient) return;
+    setViewMode("workspace");
+    setActiveClientId(createdClient.id);
+    resetForm();
+    navigate("/");
   };
 
   const openWorkspace = (client: Client) => {
@@ -306,9 +345,16 @@ export default function AdminClients() {
                     </div>
                   </div>
                 )}
-                <Button onClick={resetForm} className="w-full mt-3 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
-                  Done
-                </Button>
+                <div className="flex gap-2 mt-3">
+                  {createdClient && (
+                    <Button onClick={openCreatedWorkspace} className="flex-1 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Workspace
+                    </Button>
+                  )}
+                  <Button onClick={resetForm} variant={createdClient ? "outline" : "default"} className={createdClient ? "border-white/10 text-white hover:bg-white/10" : "flex-1 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"}>
+                    Done
+                  </Button>
+                </div>
               </div>
             )}
 
