@@ -121,10 +121,6 @@ export default function AdminClients() {
       supabase.from("client_health_scores").insert({ client_id: data.id }),
     ]);
 
-    const baseErrors = [provQErr, intErr, onbErr, brandErr, healthErr].filter(Boolean);
-    if (baseErrors.length > 0) {
-      console.warn("Non-critical provisioning warnings:", baseErrors);
-    }
 
     // 3. Full app provisioning — creates calendars, services, forms, content blocks, workspace user, billing stub, recommendations
     try {
