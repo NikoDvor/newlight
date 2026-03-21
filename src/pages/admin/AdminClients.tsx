@@ -106,7 +106,7 @@ export default function AdminClients() {
 
     // 2. Provision workspace base resources in parallel
     const integrations = ["Google Analytics", "Google Search Console", "Google Business Profile", "Meta / Instagram", "Twilio", "Stripe", "Zoom"];
-    const [provQErr, intErr, onbErr, brandErr, healthErr] = await Promise.all([
+    await Promise.all([
       supabase.from("provision_queue").insert({ client_id: data.id }),
       supabase.from("client_integrations").insert(integrations.map(name => ({ client_id: data.id, integration_name: name }))),
       supabase.from("onboarding_progress").insert({ client_id: data.id }),
@@ -119,7 +119,7 @@ export default function AdminClients() {
         welcome_message: form.welcome_message || "Welcome to your business dashboard",
       }),
       supabase.from("client_health_scores").insert({ client_id: data.id }),
-    ].map(p => p.then(() => null).catch((e: any) => e.message)));
+    ]);
 
     const baseErrors = [provQErr, intErr, onbErr, brandErr, healthErr].filter(Boolean);
     if (baseErrors.length > 0) {
