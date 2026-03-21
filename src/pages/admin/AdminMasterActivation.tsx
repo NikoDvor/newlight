@@ -272,10 +272,10 @@ export default function AdminMasterActivation() {
         ownerName: form.owner_name,
       });
 
-      // 6. Advance workspace to active
+      // 6. Advance workspace — payment-aware
       await supabase.from("clients").update({
-        onboarding_stage: "active",
-        status: "active",
+        onboarding_stage: targetStage,
+        status: targetStage === "active" ? "active" : "activation_in_progress",
       } as any).eq("id", clientId);
 
       await supabase.from("provision_queue").update({
