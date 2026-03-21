@@ -189,8 +189,8 @@ export default function GetStarted() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-lg w-full text-center"
         >
-          <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
             {result.already_exists ? "Workspace Ready!" : "Your Workspace Has Been Created!"}
