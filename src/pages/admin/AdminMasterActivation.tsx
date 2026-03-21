@@ -59,6 +59,8 @@ export default function AdminMasterActivation() {
   const [draftId, setDraftId] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<DraftStatus>("not_started");
   const [clientName, setClientName] = useState("");
+  const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // ── Existing-client mode: load client data + existing draft ──
   useEffect(() => {
