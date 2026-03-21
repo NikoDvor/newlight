@@ -36,6 +36,7 @@ const provisionChecklist = [
 export default function AdminCloseConfirm() {
   const { buildId } = useParams<{ buildId: string }>();
   const navigate = useNavigate();
+  const { setViewMode, setActiveClientId } = useWorkspace();
   const [demoBuild, setDemoBuild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<ActivationStatus>("idle");
