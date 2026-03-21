@@ -505,6 +505,11 @@ export default function AdminClients() {
                   
                   <td className="px-4 py-3">
                      <div className="flex items-center gap-1">
+                      {c.onboarding_stage !== "active" && (
+                        <button onClick={() => setActivateClient(c)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
+                          <Zap className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
+                        </button>
+                      )}
                       {c.owner_email && (
                         <button onClick={() => handleResendInvite(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Resend invite email">
                           <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
