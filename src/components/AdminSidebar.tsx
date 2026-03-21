@@ -32,6 +32,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
+      { title: "Onboarding Form", url: "/get-started", icon: Rocket },
       { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
     ],

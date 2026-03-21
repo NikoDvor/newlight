@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
+import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -244,9 +245,17 @@ export default function Auth() {
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-white/20 mt-6 tracking-wide">
-          Powered by <span className="font-semibold">NewLight</span>
-        </p>
+        <div className="text-center mt-6 space-y-2">
+          <Link
+            to="/get-started"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(211,96%,56%)] hover:text-white transition-colors"
+          >
+            <Rocket className="h-3.5 w-3.5" /> New business? Get Started
+          </Link>
+          <p className="text-[10px] text-white/20 tracking-wide">
+            Powered by <span className="font-semibold">NewLight</span>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
