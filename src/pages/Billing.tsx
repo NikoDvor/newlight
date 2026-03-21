@@ -56,15 +56,16 @@ export default function Billing() {
   const billingStatus = billingAccount?.billing_status || "Not Set Up";
   const displayStatus = statusLabel[billingStatus] || billingStatus;
 
-  // Extract activation form payment data
-  const actForm = activationData?.form_data as any;
-  const paymentMethod = actForm?.payment_method || sub?.billing_frequency || "—";
-  const setupFee = actForm?.setup_fee || (sub ? sub.setup_fee_amount : null);
-  const monthlyFee = actForm?.monthly_fee || (sub ? sub.monthly_amount : null);
-  const contractTerm = actForm?.contract_term || (contract ? `${contract.contract_length_months}mo` : null);
-  const wireRef = actForm?.wire_reference || null;
-  const receiptUrl = actForm?.payment_receipt_url || null;
-  const internalNotes = actForm?.internal_payment_notes || null;
+  // Read payment data from canonical billing_accounts columns
+  const ba = billingAccount as any;
+  const paymentMethod = ba?.payment_method || sub?.billing_frequency || "—";
+  const setupFee = ba?.setup_fee || (sub ? sub.setup_fee_amount : null);
+  const monthlyFee = ba?.monthly_fee || (sub ? sub.monthly_amount : null);
+  const contractTerm = ba?.contract_term || (contract ? `${contract.contract_length_months}mo` : null);
+  const wireRef = ba?.wire_reference || null;
+  const receiptUrl = ba?.payment_receipt_url || null;
+  const internalNotes = ba?.internal_payment_notes || null;
+  const servicePackage = ba?.service_package || sub?.subscription_name || null;
 
   const monthlyAmount = monthlyFee ? `$${Number(monthlyFee).toLocaleString()}` : "—";
   const subStatus = sub?.subscription_status || "—";
