@@ -165,7 +165,12 @@ export default function AdminMasterActivation() {
   const handleActivateExisting = async () => {
     if (!clientId) return;
     const paymentPending = form.payment_confirmed !== "confirmed";
+    const paymentAwaiting = form.payment_confirmed === "awaiting_confirmation";
     if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
+
+    // Determine workspace stage based on payment
+    const targetStage = paymentPending ? "awaiting_payment" : "active";
+    const billingStatus = form.payment_confirmed === "confirmed" ? "active" : paymentAwaiting ? "awaiting_confirmation" : "pending_payment";
 
     setSubmitting(true);
     try {
@@ -189,10 +194,11 @@ export default function AdminMasterActivation() {
         dashboard_title: form.dashboard_title || null,
       }, { onConflict: "client_id" });
 
-      // 2. Update billing
+      // 2. Update billing with wire/payment data
       await supabase.from("billing_accounts").upsert({
         client_id: clientId,
-        billing_status: paymentPending ? "pending_payment" : "active",
+        billing_status: billingStatus,
+        billing_email: form.owner_email || null,
       }, { onConflict: "client_id" });
 
       // 3. Service catalog from configs
