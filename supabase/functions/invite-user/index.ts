@@ -90,10 +90,12 @@ Deno.serve(async (req) => {
     let userId: string;
     let inviteEmailSent = false;
     let setupLink: string | null = null;
+    let alreadyExisted = false;
 
     if (existingUser) {
-      // User already exists — just assign the role
+      // User already exists — link them to the new workspace without removing other roles
       userId = existingUser.id;
+      alreadyExisted = true;
     } else {
       // Try invite first (sends password setup email)
       const { data: inviteData, error: inviteError } =
@@ -125,7 +127,6 @@ Deno.serve(async (req) => {
         }
 
         userId = linkData.user.id;
-        // Build the setup link from the generated token properties
         const actionLink = linkData.properties?.action_link;
         if (actionLink) {
           setupLink = actionLink;
@@ -136,20 +137,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Remove any existing roles for this user (to avoid duplicates)
-    await adminClient
-      .from("user_roles")
-      .delete()
-      .eq("user_id", userId);
+    // For client-scoped roles, ADD a new role for the new client_id
+    // without removing existing roles for other workspaces.
+    // For admin/operator roles (no client_id), replace existing roles.
+    const clientRoles = ["client_owner", "client_team", "read_only"];
+    const isClientRole = clientRoles.includes(role);
+    const targetClientId = isClientRole ? client_id || null : null;
+
+    if (isClientRole && targetClientId) {
+      // Only remove roles for THIS specific client_id to avoid duplicates
+      // but preserve roles for other workspaces
+      await adminClient
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("client_id", targetClientId);
+    } else if (!isClientRole) {
+      // Admin/operator: remove all existing roles and assign the new one
+      await adminClient
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+    }
 
     // Assign role
-    const clientRoles = ["client_owner", "client_team", "read_only"];
     const { error: roleError } = await adminClient
       .from("user_roles")
       .insert({
         user_id: userId,
         role,
-        client_id: clientRoles.includes(role) ? client_id || null : null,
+        client_id: targetClientId,
       });
 
     if (roleError) {
@@ -165,6 +182,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         invite_email_sent: inviteEmailSent,
         setup_link: setupLink,
+        already_existed: alreadyExisted,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -5,7 +5,7 @@ import { emitEvent } from "./automationEngine";
 
 interface IndustryDefaults {
   calendars: { name: string; type: string; apptTypes: string[]; duration: number }[];
-  services: { name: string; description: string; price: string }[];
+  services: { name: string; description: string; price: string; category?: string }[];
   forms: { name: string; type: string; questions: string[] }[];
 }
 
@@ -111,12 +111,24 @@ const FALLBACK_DEFAULTS: IndustryDefaults = {
   forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
 };
 
+// ─── Website Content Block Defaults ──────────────────────────────────
+
+const DEFAULT_CONTENT_BLOCKS = [
+  { page_key: "home", block_key: "hero", block_type: "hero", block_label: "Hero Banner", display_order: 0, content_json: { headline: "", subheadline: "", cta_text: "Get Started", cta_url: "" }, is_active: true },
+  { page_key: "home", block_key: "services", block_type: "services", block_label: "Services Overview", display_order: 1, content_json: { title: "Our Services", items: [] }, is_active: true },
+  { page_key: "home", block_key: "about", block_type: "text", block_label: "About Us", display_order: 2, content_json: { title: "About Us", body: "" }, is_active: true },
+  { page_key: "home", block_key: "testimonials", block_type: "testimonials", block_label: "Testimonials", display_order: 3, content_json: { title: "What Our Clients Say", items: [] }, is_active: true },
+  { page_key: "home", block_key: "contact", block_type: "contact", block_label: "Contact", display_order: 4, content_json: { title: "Get In Touch", phone: "", email: "", address: "" }, is_active: true },
+];
+
 // ─── Provisioner ─────────────────────────────────────────────────────
 
 export async function provisionWorkspaceDefaults(clientId: string, options: {
   industry?: string | null;
   timezone?: string;
   skipIfExists?: boolean;
+  ownerEmail?: string | null;
+  ownerName?: string | null;
 }) {
   const tz = options.timezone || "America/Los_Angeles";
   const defaults = matchIndustry(options.industry) || FALLBACK_DEFAULTS;
@@ -124,19 +136,27 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
   const templateName = options.industry || "General";
 
   // Check existing records to avoid duplicates
-  const [calRes, svcRes, formRes] = await Promise.all([
+  const [calRes, svcRes, formRes, contentRes, wsUserRes, billingRes, recRes] = await Promise.all([
     supabase.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId),
     supabase.from("service_catalog" as any).select("id", { count: "exact", head: true }).eq("client_id", clientId),
     supabase.from("client_forms").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("website_content_blocks").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("workspace_users").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("billing_accounts").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    supabase.from("ai_business_insights").select("id", { count: "exact", head: true }).eq("client_id", clientId),
   ]);
 
   const hasCalendars = (calRes.count || 0) > 0;
   const hasServices = (svcRes.count || 0) > 0;
   const hasForms = (formRes.count || 0) > 0;
+  const hasContent = (contentRes.count || 0) > 0;
+  const hasWsUsers = (wsUserRes.count || 0) > 0;
+  const hasBilling = (billingRes.count || 0) > 0;
+  const hasRecommendations = (recRes.count || 0) > 0;
 
   const provisionedItems: string[] = [];
 
-  // 1. Auto-create starter calendars
+  // 1. Auto-create starter calendars + availability + appointment types + booking links + reminders
   if (!hasCalendars || !skip) {
     for (const calDef of defaults.calendars) {
       const { data: cal } = await supabase.from("calendars").insert({
@@ -148,7 +168,6 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
       }).select().single();
 
       if (cal) {
-        // Availability: Mon-Fri 9-5
         const dayInserts = [1, 2, 3, 4, 5].map(day => ({
           client_id: clientId,
           calendar_id: cal.id,
@@ -160,7 +179,6 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
         }));
         await supabase.from("calendar_availability").insert(dayInserts);
 
-        // Appointment types
         for (const typeName of calDef.apptTypes) {
           await supabase.from("calendar_appointment_types").insert({
             client_id: clientId,
@@ -171,7 +189,6 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
           });
         }
 
-        // Booking link
         const linkSlug = calDef.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
         await supabase.from("calendar_booking_links").insert({
           client_id: clientId,
@@ -181,7 +198,6 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
           is_public: true,
         });
 
-        // Default reminder rules
         await supabase.from("calendar_reminder_rules").insert([
           { client_id: clientId, calendar_id: cal.id, reminder_type: "confirmation", channel: "email", offset_minutes: 0, is_active: true },
           { client_id: clientId, calendar_id: cal.id, reminder_type: "reminder", channel: "email", offset_minutes: 1440, is_active: true },
@@ -222,16 +238,75 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
     }
   }
 
-  // 4. Log provisioning audit trail
+  // 4. Auto-create website content blocks scaffold
+  if (!hasContent || !skip) {
+    for (const block of DEFAULT_CONTENT_BLOCKS) {
+      await supabase.from("website_content_blocks").insert({
+        client_id: clientId,
+        ...block,
+      });
+    }
+    provisionedItems.push("Website content structure (5 blocks)");
+  }
+
+  // 5. Auto-create workspace owner user record
+  if ((!hasWsUsers || !skip) && options.ownerEmail) {
+    await supabase.from("workspace_users").insert({
+      client_id: clientId,
+      email: options.ownerEmail,
+      full_name: options.ownerName || options.ownerEmail.split("@")[0],
+      role_preset: "owner",
+      status: "active",
+      is_bookable_staff: false,
+    });
+    provisionedItems.push("Workspace owner user");
+  }
+
+  // 6. Auto-create billing account stub
+  if (!hasBilling || !skip) {
+    await supabase.from("billing_accounts").insert({
+      client_id: clientId,
+      billing_status: "pending_setup",
+    });
+    provisionedItems.push("Billing account");
+  }
+
+  // 7. Auto-create starter recommendation / growth insight
+  if (!hasRecommendations || !skip) {
+    const industryLabel = options.industry || "your business";
+    await supabase.from("ai_business_insights").insert([
+      {
+        client_id: clientId,
+        title: "Optimize your online visibility",
+        category: "growth",
+        severity: "medium",
+        status: "active",
+        explanation: `Based on ${industryLabel} industry benchmarks, optimizing your Google Business Profile and local SEO can increase new customer inquiries by 20-40%.`,
+        recommended_action: "Complete your Google Business Profile and request a local SEO audit.",
+      },
+      {
+        client_id: clientId,
+        title: "Automate booking confirmations",
+        category: "efficiency",
+        severity: "low",
+        status: "active",
+        explanation: "Automated confirmation and reminder emails reduce no-shows by up to 30% and save staff time.",
+        recommended_action: "Enable automated email reminders in your calendar settings.",
+      },
+    ]);
+    provisionedItems.push("Growth recommendations (2)");
+  }
+
+  // 8. Log provisioning audit trail
   if (provisionedItems.length > 0) {
     await Promise.all([
       supabase.from("crm_activities").insert({
         client_id: clientId,
         activity_type: "auto_provisioned",
-        activity_note: `Starter template "${templateName}" applied — ${provisionedItems.length} item(s) created: ${provisionedItems.join(", ")}`,
+        activity_note: `Full app template "${templateName}" applied — ${provisionedItems.length} item(s) created: ${provisionedItems.join(", ")}`,
       }),
       supabase.from("audit_logs").insert({
-        action: "starter_template_applied",
+        action: "full_app_template_applied",
         client_id: clientId,
         module: "onboarding",
         metadata: { template: templateName, items: provisionedItems, auto: true },
@@ -239,7 +314,7 @@ export async function provisionWorkspaceDefaults(clientId: string, options: {
     ]);
   }
 
-  // 5. Emit events
+  // 9. Emit events
   await emitEvent({
     eventKey: "workspace_created",
     clientId,
@@ -276,7 +351,6 @@ export interface LaunchResult {
 }
 
 export async function launchWorkspace(clientId: string): Promise<LaunchResult> {
-  // Evaluate handoff readiness using the same checks as the checklist
   const [
     brandRes, svcRes, calRes, formRes, formRes2, contactRes,
     proposalRes, subRes,
@@ -303,7 +377,6 @@ export async function launchWorkspace(clientId: string): Promise<LaunchResult> {
     return { success: false, blockers };
   }
 
-  // All minimum checks pass — launch
   await supabase.from("clients").update({ onboarding_stage: "active" } as any).eq("id", clientId);
 
   await Promise.all([
@@ -354,7 +427,7 @@ export async function computeWorkspaceReadiness(clientId: string): Promise<Works
   const brandingComplete = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
   const calendarReady = (calRes.count || 0) > 0;
   const formsReady = ((formRes.count || 0) + (formRes2.count || 0)) > 0;
-  const teamReady = (teamRes.count || 0) > 1;
+  const teamReady = (teamRes.count || 0) > 0;
   const intgs = intgRes.data || [];
   const integrationsReviewed = intgs.length > 0 && intgs.some((i: any) => i.status !== "not_started");
 
