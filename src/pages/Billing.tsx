@@ -38,7 +38,6 @@ export default function Billing() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [contract, setContract] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
-  const [activationData, setActivationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +47,6 @@ export default function Billing() {
       supabase.from("subscriptions").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setSub(r.data)),
       supabase.from("invoices").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
       supabase.from("contract_records").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setContract(r.data)),
-      supabase.from("activation_drafts").select("form_data, draft_status").eq("client_id", activeClientId).order("updated_at", { ascending: false }).limit(1).maybeSingle().then(r => setActivationData(r.data)),
     ]).finally(() => setLoading(false));
   }, [activeClientId]);
 
@@ -58,15 +56,16 @@ export default function Billing() {
   const billingStatus = billingAccount?.billing_status || "Not Set Up";
   const displayStatus = statusLabel[billingStatus] || billingStatus;
 
-  // Extract activation form payment data
-  const actForm = activationData?.form_data as any;
-  const paymentMethod = actForm?.payment_method || sub?.billing_frequency || "—";
-  const setupFee = actForm?.setup_fee || (sub ? sub.setup_fee_amount : null);
-  const monthlyFee = actForm?.monthly_fee || (sub ? sub.monthly_amount : null);
-  const contractTerm = actForm?.contract_term || (contract ? `${contract.contract_length_months}mo` : null);
-  const wireRef = actForm?.wire_reference || null;
-  const receiptUrl = actForm?.payment_receipt_url || null;
-  const internalNotes = actForm?.internal_payment_notes || null;
+  // Read payment data from canonical billing_accounts columns
+  const ba = billingAccount as any;
+  const paymentMethod = ba?.payment_method || sub?.billing_frequency || "—";
+  const setupFee = ba?.setup_fee || (sub ? sub.setup_fee_amount : null);
+  const monthlyFee = ba?.monthly_fee || (sub ? sub.monthly_amount : null);
+  const contractTerm = ba?.contract_term || (contract ? `${contract.contract_length_months}mo` : null);
+  const wireRef = ba?.wire_reference || null;
+  const receiptUrl = ba?.payment_receipt_url || null;
+  const internalNotes = ba?.internal_payment_notes || null;
+  const servicePackage = ba?.service_package || sub?.subscription_name || null;
 
   const monthlyAmount = monthlyFee ? `$${Number(monthlyFee).toLocaleString()}` : "—";
   const subStatus = sub?.subscription_status || "—";
@@ -100,11 +99,11 @@ export default function Billing() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Current Plan */}
         <DataCard title="Current Plan">
-          {(sub || actForm) ? (
+          {(sub || hasData) ? (
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-sm text-muted-foreground">Package</span>
-                <span className="text-sm font-medium">{sub?.subscription_name || actForm?.service_package || "—"}</span>
+                <span className="text-sm font-medium">{servicePackage || sub?.subscription_name || "—"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-sm text-muted-foreground">Billing Status</span>

@@ -778,12 +778,20 @@ export type Database = {
           client_id: string
           company_id: string | null
           contact_id: string | null
+          contract_term: string | null
           created_at: string
           deal_id: string | null
           default_currency: string | null
           id: string
+          internal_payment_notes: string | null
+          monthly_fee: number | null
+          payment_method: string | null
+          payment_receipt_url: string | null
           proposal_id: string | null
+          service_package: string | null
+          setup_fee: number | null
           updated_at: string
+          wire_reference: string | null
         }
         Insert: {
           billing_email?: string | null
@@ -792,12 +800,20 @@ export type Database = {
           client_id: string
           company_id?: string | null
           contact_id?: string | null
+          contract_term?: string | null
           created_at?: string
           deal_id?: string | null
           default_currency?: string | null
           id?: string
+          internal_payment_notes?: string | null
+          monthly_fee?: number | null
+          payment_method?: string | null
+          payment_receipt_url?: string | null
           proposal_id?: string | null
+          service_package?: string | null
+          setup_fee?: number | null
           updated_at?: string
+          wire_reference?: string | null
         }
         Update: {
           billing_email?: string | null
@@ -806,12 +822,20 @@ export type Database = {
           client_id?: string
           company_id?: string | null
           contact_id?: string | null
+          contract_term?: string | null
           created_at?: string
           deal_id?: string | null
           default_currency?: string | null
           id?: string
+          internal_payment_notes?: string | null
+          monthly_fee?: number | null
+          payment_method?: string | null
+          payment_receipt_url?: string | null
           proposal_id?: string | null
+          service_package?: string | null
+          setup_fee?: number | null
           updated_at?: string
+          wire_reference?: string | null
         }
         Relationships: [
           {
@@ -2399,15 +2423,21 @@ export type Database = {
           crm_mode: string
           id: string
           industry: string | null
+          legal_business_name: string | null
           onboarding_stage: string
           owner_email: string | null
           owner_name: string | null
+          owner_phone: string | null
           primary_location: string | null
+          secondary_contact_email: string | null
+          secondary_contact_name: string | null
+          secondary_contact_phone: string | null
           service_package: string | null
           source_appointment_id: string | null
           status: string
           timezone: string | null
           updated_at: string
+          website_url: string | null
           workspace_access_url: string | null
           workspace_slug: string
         }
@@ -2417,15 +2447,21 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
+          owner_phone?: string | null
           primary_location?: string | null
+          secondary_contact_email?: string | null
+          secondary_contact_name?: string | null
+          secondary_contact_phone?: string | null
           service_package?: string | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null
           updated_at?: string
+          website_url?: string | null
           workspace_access_url?: string | null
           workspace_slug: string
         }
@@ -2435,15 +2471,21 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
+          owner_phone?: string | null
           primary_location?: string | null
+          secondary_contact_email?: string | null
+          secondary_contact_name?: string | null
+          secondary_contact_phone?: string | null
           service_package?: string | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null
           updated_at?: string
+          website_url?: string | null
           workspace_access_url?: string | null
           workspace_slug?: string
         }
