@@ -323,16 +323,20 @@ export default function AdminMasterActivation() {
       }
 
       // 9. Sync stage + emit events
-      await syncOnboardingStage(clientId, "active");
+      await syncOnboardingStage(clientId, targetStage);
       await emitEvent({
         eventKey: "activation_form_submitted",
         clientId,
-        payload: { package: form.service_package },
+        payload: { package: form.service_package, payment_status: form.payment_confirmed },
       });
 
       setActivated(true);
       setDraftStatus("activated");
-      toast.success(`${form.business_name_confirmed || clientName} is now live!`);
+      if (paymentPending) {
+        toast.success(`${form.business_name_confirmed || clientName} activated — awaiting payment confirmation`);
+      } else {
+        toast.success(`${form.business_name_confirmed || clientName} is now live!`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Activation failed");
     } finally {
