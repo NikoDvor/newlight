@@ -37,6 +37,7 @@ export default function AdminClients() {
   const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
+  const [activateClient, setActivateClient] = useState<Client | null>(null);
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", primary_location: "",
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
