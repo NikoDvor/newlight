@@ -164,10 +164,8 @@ export default function AdminMasterActivation() {
   // ── Activate (existing client mode) ──
   const handleActivateExisting = async () => {
     if (!clientId) return;
-    if (form.payment_confirmed !== "confirmed") {
-      toast.error("Payment must be confirmed before activation");
-      return;
-    }
+    const paymentPending = form.payment_confirmed !== "confirmed";
+
 
     setSubmitting(true);
     try {
