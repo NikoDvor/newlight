@@ -116,6 +116,12 @@ export default function AdminMasterActivation() {
     })();
   }, [clientId, navigate]);
 
+  // Check sync status for existing clients
+  useEffect(() => {
+    if (!clientId) return;
+    checkSyncStatus(clientId).then(setSyncStatus).catch(() => {});
+  }, [clientId, activated]);
+
   const set = useCallback((key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
     if (draftStatus === "not_started") setDraftStatus("in_progress");
