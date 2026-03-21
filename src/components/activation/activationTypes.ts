@@ -122,6 +122,11 @@ export interface ActivationFormState {
   activation_priority: string;
   requested_launch_date: string;
   immediate_activation: string;
+  // Wire transfer fields
+  wire_reference: string;
+  wire_notes: string;
+  payment_receipt_url: string;
+  internal_payment_notes: string;
 
   // Step 2: Branding
   company_name: string;
