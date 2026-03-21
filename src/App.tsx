@@ -102,6 +102,7 @@ import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
+import GetStarted from "./pages/GetStarted";
 import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
 import ContentPlanner from "./pages/ContentPlanner";
