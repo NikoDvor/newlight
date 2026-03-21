@@ -523,9 +523,13 @@ export default function AdminClients() {
                   
                   <td className="px-4 py-3">
                      <div className="flex items-center gap-1">
-                      {c.onboarding_stage !== "active" && (
-                        <button onClick={() => setActivateClient(c)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
+                      {c.onboarding_stage !== "active" ? (
+                        <button onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
                           <Zap className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
+                        </button>
+                      ) : (
+                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Open Workspace (Active)">
+                          <Activity className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
                         </button>
                       )}
                       {c.owner_email && (
