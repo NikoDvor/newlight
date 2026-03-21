@@ -192,7 +192,7 @@ export default function AdminMasterActivation() {
       // 2. Update billing
       await supabase.from("billing_accounts").upsert({
         client_id: clientId,
-        billing_status: "active",
+        billing_status: paymentPending ? "pending_payment" : "active",
       }, { onConflict: "client_id" });
 
       // 3. Service catalog from configs

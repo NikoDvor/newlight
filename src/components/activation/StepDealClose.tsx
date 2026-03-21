@@ -57,8 +57,13 @@ export function StepDealClose({ form, set, submitting }: StepProps) {
 
       <div className={sectionCls} style={sectionStyle}>
         <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">Payment + Terms</p>
+        {form.payment_confirmed !== "confirmed" && (
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300">
+            ⚠ Payment confirmation is optional for activation. You can activate now and confirm payment later.
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div><label className={labelCls}>Payment Confirmed *</label>
+          <div><label className={labelCls}>Payment Confirmed</label>
             <select value={form.payment_confirmed} onChange={e => set("payment_confirmed", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3" disabled={submitting}>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
