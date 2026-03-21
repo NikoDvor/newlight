@@ -290,6 +290,25 @@ export default function AdminClients() {
 
   return (
     <div className="space-y-6">
+      {/* Share onboarding link banner */}
+      <div className="rounded-xl p-3 flex items-center justify-between flex-wrap gap-3" style={{
+        background: "hsla(211,96%,60%,.08)",
+        border: "1px solid hsla(211,96%,60%,.15)",
+      }}>
+        <div className="flex items-center gap-2 min-w-0">
+          <ExternalLink className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0" />
+          <span className="text-sm text-white/70">Public onboarding form:</span>
+          <code className="text-xs text-white/50 truncate">{window.location.origin}/get-started</code>
+        </div>
+        <Button
+          size="sm"
+          className="bg-white/10 hover:bg-white/20 text-white shrink-0"
+          onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/get-started`); toast.success("Onboarding link copied!"); }}
+        >
+          <Copy className="h-3.5 w-3.5 mr-1" /> Copy Link
+        </Button>
+      </div>
+
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Clients</h1>
