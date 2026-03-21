@@ -139,6 +139,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
             <Route path="/book/:slug" element={<BookingPage />} />
+            <Route path="/get-started" element={<GetStarted />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
 
             {/* Admin Portal */}
