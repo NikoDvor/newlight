@@ -103,7 +103,7 @@ export default function AdminCloseConfirm() {
       markStep("Client record");
       markStep("Workspace slug");
 
-      // 2. Provision all resources
+      // 2. Provision base resources
       const integrations = [
         "Google Analytics", "Google Search Console", "Google Business Profile",
         "Meta / Instagram", "Google Ads", "Stripe", "Twilio", "Zoom", "Domain / Website"
@@ -122,13 +122,20 @@ export default function AdminCloseConfirm() {
           welcome_message: "Welcome to your business dashboard",
         }),
         supabase.from("client_health_scores").insert({ client_id: client.id }),
-        supabase.from("revenue_opportunities").insert({
-          client_id: client.id,
-          title: "Initial setup review",
-          status: "open",
-          category: "onboarding",
-        }),
       ]);
+
+      // 2b. Full-app provisioning (calendars, services, forms, content, billing, recommendations)
+      try {
+        await provisionWorkspaceDefaults(client.id, {
+          industry: demoBuild?.business_type || null,
+          timezone: "America/Los_Angeles",
+          skipIfExists: true,
+          ownerEmail: form.owner_email,
+          ownerName: form.owner_name,
+        });
+      } catch (provErr) {
+        console.warn("Full provisioning partial failure:", provErr);
+      }
 
       provisionChecklist.slice(4).forEach(s => markStep(s));
 
