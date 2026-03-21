@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
 import { Button } from "@/components/ui/button";
 import {
   Smartphone, Download, CheckCircle2, Loader2, Copy, ExternalLink,
@@ -66,6 +67,21 @@ export function BookingWorkspaceProvisioner({
 
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
+
+      // Run full-app provisioning on the newly created workspace
+      if (data?.client_id && !data?.already_exists) {
+        try {
+          await provisionWorkspaceDefaults(data.client_id, {
+            industry: industry || null,
+            timezone: "America/Los_Angeles",
+            skipIfExists: true,
+            ownerEmail: contactEmail,
+            ownerName: contactName,
+          });
+        } catch (provErr) {
+          console.warn("Full provisioning partial failure:", provErr);
+        }
+      }
 
       setResult(data);
       setState("done");

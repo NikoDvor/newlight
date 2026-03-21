@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         primary_location: location || null,
         owner_name: contact_name || null,
         owner_email: contact_email,
-        onboarding_stage: "lead",
+        onboarding_stage: "discovery",
         status: "active",
         source_appointment_id: appointment_id || null,
       })

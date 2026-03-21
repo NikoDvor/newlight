@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, AlertCircle, Copy, Loader2, Zap, UserPlus,
-  ClipboardCheck, Mail, Phone, ArrowLeft
+  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type ActivationStatus = "idle" | "pending_payment" | "provisioning" | "invite_sent" | "ready_for_kickoff" | "error";
 
@@ -34,6 +36,7 @@ const provisionChecklist = [
 export default function AdminCloseConfirm() {
   const { buildId } = useParams<{ buildId: string }>();
   const navigate = useNavigate();
+  const { setViewMode, setActiveClientId } = useWorkspace();
   const [demoBuild, setDemoBuild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<ActivationStatus>("idle");
@@ -94,13 +97,14 @@ export default function AdminCloseConfirm() {
         service_package: "enterprise",
         owner_name: form.owner_name || null,
         owner_email: form.owner_email,
-      }).select().single();
+        onboarding_stage: "activation",
+      } as any).select().single();
 
       if (clientErr || !client) throw new Error(clientErr?.message || "Failed to create client");
       markStep("Client record");
       markStep("Workspace slug");
 
-      // 2. Provision all resources
+      // 2. Provision base resources
       const integrations = [
         "Google Analytics", "Google Search Console", "Google Business Profile",
         "Meta / Instagram", "Google Ads", "Stripe", "Twilio", "Zoom", "Domain / Website"
@@ -119,13 +123,20 @@ export default function AdminCloseConfirm() {
           welcome_message: "Welcome to your business dashboard",
         }),
         supabase.from("client_health_scores").insert({ client_id: client.id }),
-        supabase.from("revenue_opportunities").insert({
-          client_id: client.id,
-          title: "Initial setup review",
-          status: "open",
-          category: "onboarding",
-        }),
       ]);
+
+      // 2b. Full-app provisioning (calendars, services, forms, content, billing, recommendations)
+      try {
+        await provisionWorkspaceDefaults(client.id, {
+          industry: demoBuild?.business_type || null,
+          timezone: "America/Los_Angeles",
+          skipIfExists: true,
+          ownerEmail: form.owner_email,
+          ownerName: form.owner_name,
+        });
+      } catch (provErr) {
+        console.warn("Full provisioning partial failure:", provErr);
+      }
 
       provisionChecklist.slice(4).forEach(s => markStep(s));
 
@@ -148,9 +159,10 @@ export default function AdminCloseConfirm() {
         setInviteResult({ sent: false, link: null });
       }
 
-      // 4. Update provision queue + demo build
+      // 4. Update provision queue + demo build + advance to active
       await Promise.all([
         supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
+        supabase.from("clients").update({ onboarding_stage: "active", status: "active" } as any).eq("id", client.id),
         supabase.from("demo_builds").update({ status: "closed", client_id: client.id } as any).eq("id", buildId!),
         supabase.from("audit_logs").insert({
           action: "client_activated_from_demo",
@@ -158,12 +170,10 @@ export default function AdminCloseConfirm() {
           module: "activation",
           metadata: { demo_build_id: buildId, kickoff_contact: form.kickoff_contact, notes: form.internal_notes },
         }),
-        supabase.from("fix_now_items").insert({
+        supabase.from("crm_activities").insert({
           client_id: client.id,
-          issue: "Review new client provisioning and confirm integrations",
-          module: "activation",
-          severity: "low",
-          status: "open",
+          activity_type: "client_activated",
+          activity_note: `${form.business_name_confirmed} activated from closing meeting — payment via ${form.payment_method}`,
         }),
       ]);
 
@@ -310,9 +320,23 @@ export default function AdminCloseConfirm() {
                   {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Activating…</> : status === "ready_for_kickoff" ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Activated</> : <><Zap className="h-4 w-4 mr-2" /> Activate Client</>}
                 </Button>
                 {status === "ready_for_kickoff" && (
-                  <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-                    Back to Builds
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={() => {
+                      // Find the client we just created and open it
+                      supabase.from("clients").select("id").eq("owner_email", form.owner_email).order("created_at", { ascending: false }).limit(1).single().then(({ data: c }) => {
+                        if (c) {
+                          setViewMode("workspace");
+                          setActiveClientId(c.id);
+                          navigate("/");
+                        }
+                      });
+                    }} className="bg-[hsl(var(--nl-sky))] hover:bg-[hsl(var(--nl-electric))] text-white">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Workspace
+                    </Button>
+                    <Button onClick={() => navigate("/admin/clients")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+                      View Clients
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>
