@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
-import { ActivateClientDialog } from "@/components/ActivateClientDialog";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 interface Client {
   id: string;
@@ -37,7 +36,7 @@ export default function AdminClients() {
   const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
-  const [activateClient, setActivateClient] = useState<Client | null>(null);
+  
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", primary_location: "",
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
@@ -524,9 +523,13 @@ export default function AdminClients() {
                   
                   <td className="px-4 py-3">
                      <div className="flex items-center gap-1">
-                      {c.onboarding_stage !== "active" && (
-                        <button onClick={() => setActivateClient(c)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
+                      {c.onboarding_stage !== "active" ? (
+                        <button onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
                           <Zap className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
+                        </button>
+                      ) : (
+                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Open Workspace (Active)">
+                          <Activity className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
                         </button>
                       )}
                       {c.owner_email && (
@@ -571,12 +574,6 @@ export default function AdminClients() {
         onComplete={fetchClients}
       />
 
-      <ActivateClientDialog
-        open={!!activateClient}
-        onOpenChange={(open) => { if (!open) setActivateClient(null); }}
-        client={activateClient}
-        onComplete={() => { setActivateClient(null); fetchClients(); }}
-      />
     </div>
   );
 }
