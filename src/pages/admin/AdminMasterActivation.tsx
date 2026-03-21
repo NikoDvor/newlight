@@ -341,7 +341,7 @@ export default function AdminMasterActivation() {
       return;
     }
     const paymentPending = form.payment_confirmed !== "confirmed";
-
+    if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
 
     setSubmitting(true);
     const slug = (form.display_name || form.business_name_confirmed).toLowerCase().replace(/[^a-z0-9]+/g, "-");
