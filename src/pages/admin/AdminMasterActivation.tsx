@@ -454,6 +454,9 @@ export default function AdminMasterActivation() {
         }),
       ]);
 
+      // Run full hydration to sync all remaining fields (billing, team, integrations, etc.)
+      await hydrateWorkspaceFromActivation(client.id, form);
+
       await provisionWorkspaceDefaults(client.id, {
         industry: form.industry, timezone: form.default_timezone, skipIfExists: true,
       });
