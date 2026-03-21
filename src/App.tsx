@@ -102,6 +102,7 @@ import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
+import GetStarted from "./pages/GetStarted";
 import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
 import ContentPlanner from "./pages/ContentPlanner";
@@ -138,6 +139,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
             <Route path="/book/:slug" element={<BookingPage />} />
+            <Route path="/get-started" element={<GetStarted />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
 
             {/* Admin Portal */}
