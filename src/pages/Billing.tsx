@@ -38,7 +38,6 @@ export default function Billing() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [contract, setContract] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
-  const [activationData, setActivationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
