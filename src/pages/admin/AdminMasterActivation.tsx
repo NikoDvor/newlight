@@ -164,10 +164,8 @@ export default function AdminMasterActivation() {
   // ── Activate (existing client mode) ──
   const handleActivateExisting = async () => {
     if (!clientId) return;
-    if (form.payment_confirmed !== "confirmed") {
-      toast.error("Payment must be confirmed before activation");
-      return;
-    }
+    const paymentPending = form.payment_confirmed !== "confirmed";
+    if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
 
     setSubmitting(true);
     try {
@@ -194,7 +192,7 @@ export default function AdminMasterActivation() {
       // 2. Update billing
       await supabase.from("billing_accounts").upsert({
         client_id: clientId,
-        billing_status: "active",
+        billing_status: paymentPending ? "pending_payment" : "active",
       }, { onConflict: "client_id" });
 
       // 3. Service catalog from configs
@@ -342,10 +340,8 @@ export default function AdminMasterActivation() {
       toast.error("Business name and owner email are required");
       return;
     }
-    if (form.payment_confirmed !== "confirmed") {
-      toast.error("Payment must be confirmed before activation");
-      return;
-    }
+    const paymentPending = form.payment_confirmed !== "confirmed";
+    if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
 
     setSubmitting(true);
     const slug = (form.display_name || form.business_name_confirmed).toLowerCase().replace(/[^a-z0-9]+/g, "-");

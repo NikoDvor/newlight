@@ -73,10 +73,9 @@ export default function AdminCloseConfirm() {
       toast.error("Business name and owner email are required");
       return;
     }
-    if (form.payment_confirmed !== "confirmed") {
-      setStatus("pending_payment");
-      toast.error("Payment must be confirmed before activation");
-      return;
+    const paymentPending = form.payment_confirmed !== "confirmed";
+    if (paymentPending) {
+      toast.warning("Activating with pending payment — billing status will be set to Pending Payment");
     }
 
     setSubmitting(true);

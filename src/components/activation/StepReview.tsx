@@ -62,7 +62,7 @@ export function StepReview({ form }: StepProps) {
       <SummarySection title="Deal + Activation">
         <SummaryRow label="Business Name" value={form.business_name_confirmed} />
         <SummaryRow label="Owner" value={`${form.owner_name} — ${form.owner_email}`} />
-        <SummaryRow label="Payment" value={form.payment_confirmed === "confirmed" ? "✓ Confirmed" : "⏳ Pending"} />
+        <SummaryRow label="Payment" value={form.payment_confirmed === "confirmed" ? "✓ Confirmed" : "⚠ Pending Payment — activation allowed"} />
         <SummaryRow label="Package" value={form.service_package} />
         <SummaryRow label="Monthly Fee" value={form.monthly_fee} />
         <SummaryRow label="Priority" value={form.activation_priority} />
