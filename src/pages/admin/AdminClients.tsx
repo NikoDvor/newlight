@@ -551,6 +551,13 @@ export default function AdminClients() {
         client={deleteClient}
         onComplete={fetchClients}
       />
+
+      <ActivateClientDialog
+        open={!!activateClient}
+        onOpenChange={(open) => { if (!open) setActivateClient(null); }}
+        client={activateClient}
+        onComplete={() => { setActivateClient(null); fetchClients(); }}
+      />
     </div>
   );
 }
