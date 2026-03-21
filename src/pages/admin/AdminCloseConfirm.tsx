@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, AlertCircle, Copy, Loader2, Zap, UserPlus,
-  ClipboardCheck, Mail, Phone, ArrowLeft
+  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type ActivationStatus = "idle" | "pending_payment" | "provisioning" | "invite_sent" | "ready_for_kickoff" | "error";
 
