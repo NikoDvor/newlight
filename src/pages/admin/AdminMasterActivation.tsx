@@ -165,7 +165,7 @@ export default function AdminMasterActivation() {
   const handleActivateExisting = async () => {
     if (!clientId) return;
     const paymentPending = form.payment_confirmed !== "confirmed";
-
+    if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
 
     setSubmitting(true);
     try {
