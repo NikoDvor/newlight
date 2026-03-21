@@ -320,9 +320,23 @@ export default function AdminCloseConfirm() {
                   {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Activating…</> : status === "ready_for_kickoff" ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Activated</> : <><Zap className="h-4 w-4 mr-2" /> Activate Client</>}
                 </Button>
                 {status === "ready_for_kickoff" && (
-                  <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-                    Back to Builds
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={() => {
+                      // Find the client we just created and open it
+                      supabase.from("clients").select("id").eq("owner_email", form.owner_email).order("created_at", { ascending: false }).limit(1).single().then(({ data: c }) => {
+                        if (c) {
+                          setViewMode("workspace");
+                          setActiveClientId(c.id);
+                          navigate("/");
+                        }
+                      });
+                    }} className="bg-[hsl(var(--nl-sky))] hover:bg-[hsl(var(--nl-electric))] text-white">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Workspace
+                    </Button>
+                    <Button onClick={() => navigate("/admin/clients")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+                      View Clients
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>
