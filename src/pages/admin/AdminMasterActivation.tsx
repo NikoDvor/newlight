@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { emitEvent } from "@/lib/automationEngine";
 import { provisionWorkspaceDefaults, syncOnboardingStage } from "@/lib/workspaceProvisioner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { STEPS, defaultFormState, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
+import { Badge } from "@/components/ui/badge";
+import { STEPS, defaultFormState, defaultIntegrations, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
 import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
@@ -28,6 +29,7 @@ import { StepMarketing } from "@/components/activation/StepMarketing";
 import { StepSupport } from "@/components/activation/StepSupport";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepReview } from "@/components/activation/StepReview";
+import { StepNotifications } from "@/components/activation/StepNotifications";
 
 const TOTAL_STEPS = STEPS.length;
 
@@ -42,16 +44,79 @@ const stepIcons: Record<number, React.ReactNode> = {
   15: <ClipboardCheck className="h-3.5 w-3.5" />,
 };
 
+type DraftStatus = "not_started" | "in_progress" | "submitted" | "activated";
+
 export default function AdminMasterActivation() {
   const navigate = useNavigate();
+  const { clientId } = useParams<{ clientId?: string }>();
+
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<ActivationFormState>(defaultFormState());
   const [submitting, setSubmitting] = useState(false);
   const [activated, setActivated] = useState(false);
+  const [loading, setLoading] = useState(!!clientId);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<DraftStatus>("not_started");
+  const [clientName, setClientName] = useState("");
+
+  // ── Existing-client mode: load client data + existing draft ──
+  useEffect(() => {
+    if (!clientId) return;
+    (async () => {
+      setLoading(true);
+      try {
+        // Load client record
+        const { data: client } = await supabase.from("clients").select("*").eq("id", clientId).single();
+        if (!client) { toast.error("Client not found"); navigate("/admin/clients"); return; }
+
+        setClientName(client.business_name);
+
+        // Check for existing draft
+        const { data: drafts } = await supabase
+          .from("activation_drafts")
+          .select("*")
+          .eq("client_id", clientId)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (drafts && drafts.length > 0) {
+          const draft = drafts[0];
+          const saved = draft.form_data as any;
+          if (saved && typeof saved === "object") {
+            // Merge with defaults to handle any new fields
+            setForm({ ...defaultFormState(), ...saved, integrations: { ...defaultIntegrations(), ...(saved.integrations || {}) } });
+          }
+          setStep(draft.current_step || 1);
+          setDraftId(draft.id);
+          setDraftStatus((draft.draft_status || "in_progress") as DraftStatus);
+          if (draft.draft_status === "activated") setActivated(true);
+        } else {
+          // Pre-populate from client record
+          setForm(prev => ({
+            ...prev,
+            business_name_confirmed: client.business_name || "",
+            display_name: client.business_name || "",
+            owner_name: (client as any).owner_name || "",
+            owner_email: (client as any).owner_email || "",
+            industry: (client as any).industry || "",
+            primary_location: (client as any).primary_location || "",
+            default_timezone: (client as any).timezone || "America/Los_Angeles",
+            service_package: (client as any).service_package || "enterprise",
+            company_name: client.business_name || "",
+          }));
+        }
+      } catch (err: any) {
+        toast.error("Failed to load client data");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [clientId, navigate]);
 
   const set = useCallback((key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
-  }, []);
+    if (draftStatus === "not_started") setDraftStatus("in_progress");
+  }, [draftStatus]);
 
   const setIntegration = useCallback((name: string, field: string, value: string) => {
     setForm(prev => ({
@@ -61,29 +126,218 @@ export default function AdminMasterActivation() {
         [name]: { ...prev.integrations[name], [field]: value },
       },
     }));
-  }, []);
+    if (draftStatus === "not_started") setDraftStatus("in_progress");
+  }, [draftStatus]);
 
   const stepProps = { form, set, setIntegration, submitting };
 
+  // ── Save Draft ──
   const handleSaveDraft = async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
-      const draftName = form.business_name_confirmed || form.display_name || "Untitled Draft";
-      await supabase.from("activation_drafts" as any).upsert({
+      const draftName = form.business_name_confirmed || form.display_name || clientName || "Untitled Draft";
+
+      const draftPayload: any = {
         created_by: user.user?.id || null,
+        client_id: clientId || null,
         draft_name: draftName,
         form_data: form as any,
         current_step: step,
-        draft_status: "draft",
-      }, { onConflict: "id" });
+        draft_status: draftStatus === "not_started" ? "in_progress" : draftStatus,
+      };
+
+      if (draftId) {
+        await supabase.from("activation_drafts").update(draftPayload).eq("id", draftId);
+      } else {
+        const { data: newDraft } = await supabase.from("activation_drafts").insert(draftPayload).select().single();
+        if (newDraft) setDraftId(newDraft.id);
+      }
+
+      if (draftStatus === "not_started") setDraftStatus("in_progress");
       toast.success("Draft saved successfully");
-      await emitEvent({ eventKey: "onboarding_form_saved", payload: { step, draft_name: draftName } });
+      await emitEvent({ eventKey: "onboarding_form_saved", payload: { step, draft_name: draftName, client_id: clientId } });
     } catch {
       toast.error("Failed to save draft");
     }
   };
 
-  const handleActivate = async () => {
+  // ── Activate (existing client mode) ──
+  const handleActivateExisting = async () => {
+    if (!clientId) return;
+    if (form.payment_confirmed !== "confirmed") {
+      toast.error("Payment must be confirmed before activation");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // 1. Update client branding
+      await supabase.from("client_branding").upsert({
+        client_id: clientId,
+        company_name: form.company_name || form.business_name_confirmed,
+        display_name: form.display_name || null,
+        logo_url: form.logo_url || null,
+        primary_color: form.primary_color,
+        secondary_color: form.secondary_color,
+        accent_color: form.accent_color || null,
+        welcome_message: form.welcome_message || "Welcome to your business dashboard",
+        tagline: form.tagline || null,
+        app_display_name: form.app_display_name || null,
+        workspace_header_name: form.workspace_header_name || null,
+        calendar_title: form.calendar_title || null,
+        finance_dashboard_title: form.finance_dashboard_title || null,
+        report_header_title: form.report_header_title || null,
+        login_branding_text: form.login_branding_text || null,
+        dashboard_title: form.dashboard_title || null,
+      }, { onConflict: "client_id" });
+
+      // 2. Update billing
+      await supabase.from("billing_accounts").upsert({
+        client_id: clientId,
+        billing_status: "active",
+      }, { onConflict: "client_id" });
+
+      // 3. Service catalog from configs
+      const serviceConfigs: ServiceConfig[] = form.service_configs || [];
+      for (const svc of serviceConfigs) {
+        if (!svc.service_name) continue;
+        await supabase.from("service_catalog" as any).upsert({
+          client_id: clientId,
+          service_name: svc.service_name,
+          service_description: svc.service_description || null,
+          display_price_text: svc.display_price_text || null,
+          service_status: svc.service_status || "draft",
+          display_order: 0,
+        }, { onConflict: "client_id,service_name" as any }).select();
+      }
+
+      // 4. Calendar setup from configs (if any new ones)
+      if (form.use_native_calendar === "yes") {
+        const configs: CalendarConfig[] = form.calendar_configs || [];
+        for (const cfg of configs) {
+          if (!cfg.calendar_name) continue;
+          const tz = form.default_timezone || "America/Los_Angeles";
+          // Check if calendar already exists
+          const { data: existingCal } = await supabase.from("calendars")
+            .select("id").eq("client_id", clientId).eq("calendar_name", cfg.calendar_name).maybeSingle();
+          if (existingCal) continue;
+
+          const { data: cal } = await supabase.from("calendars").insert({
+            client_id: clientId,
+            calendar_name: cfg.calendar_name,
+            calendar_type: cfg.calendar_type === "single" ? "booking" : cfg.calendar_type,
+            timezone: tz,
+            description: cfg.description || null,
+            default_location: cfg.location_type || null,
+          }).select().single();
+          if (!cal) continue;
+
+          const days = (cfg.availability_days || "1,2,3,4,5").split(",").map(d => parseInt(d.trim())).filter(d => !isNaN(d));
+          for (const day of days) {
+            await supabase.from("calendar_availability").insert({
+              client_id: clientId, calendar_id: cal.id, day_of_week: day,
+              start_time: cfg.availability_hours_start || "09:00",
+              end_time: cfg.availability_hours_end || "17:00",
+              slot_interval_minutes: parseInt(cfg.slot_interval) || 30, is_active: true,
+            });
+          }
+
+          const typeNames = (cfg.appointment_types || "Consultation").split(",").map(t => t.trim()).filter(Boolean);
+          for (const typeName of typeNames) {
+            await supabase.from("calendar_appointment_types").insert({
+              client_id: clientId, calendar_id: cal.id, name: typeName,
+              duration_minutes: parseInt(cfg.default_duration) || 30,
+              buffer_before: parseInt(cfg.buffer_before) || 0,
+              buffer_after: parseInt(cfg.buffer_after) || 0,
+              location_type: cfg.location_type || "virtual",
+              meeting_link_type: cfg.meeting_link_type || null,
+              confirmation_message: cfg.confirmation_message || null,
+              reminders_enabled: cfg.reminders_enabled !== "no",
+              is_active: cfg.active !== "no",
+            });
+          }
+        }
+      }
+
+      // 5. Full-app provisioning (idempotent)
+      await provisionWorkspaceDefaults(clientId, {
+        industry: form.industry,
+        timezone: form.default_timezone,
+        skipIfExists: true,
+        ownerEmail: form.owner_email,
+        ownerName: form.owner_name,
+      });
+
+      // 6. Advance workspace to active
+      await supabase.from("clients").update({
+        onboarding_stage: "active",
+        status: "active",
+      } as any).eq("id", clientId);
+
+      await supabase.from("provision_queue").update({
+        provision_status: "ready_for_kickoff",
+      }).eq("client_id", clientId);
+
+      // 7. Audit + activity
+      await Promise.all([
+        supabase.from("audit_logs").insert({
+          action: "client_activated_via_master_form",
+          client_id: clientId,
+          module: "activation",
+          metadata: {
+            payment_method: form.payment_method,
+            monthly_fee: form.monthly_fee || null,
+            setup_fee: form.setup_fee || null,
+            account_manager: form.assigned_account_manager || null,
+            package: form.service_package,
+          },
+        }),
+        supabase.from("crm_activities").insert({
+          client_id: clientId,
+          activity_type: "client_activated",
+          activity_note: `${form.business_name_confirmed || clientName} activated via master activation form`,
+        }),
+      ]);
+
+      // 8. Update draft status
+      if (draftId) {
+        await supabase.from("activation_drafts").update({
+          draft_status: "activated",
+          form_data: form as any,
+          current_step: step,
+        }).eq("id", draftId);
+      } else {
+        const { data: user } = await supabase.auth.getUser();
+        await supabase.from("activation_drafts").insert({
+          client_id: clientId,
+          created_by: user.user?.id || null,
+          draft_name: form.business_name_confirmed || clientName,
+          form_data: form as any,
+          current_step: step,
+          draft_status: "activated",
+        });
+      }
+
+      // 9. Sync stage + emit events
+      await syncOnboardingStage(clientId, "active");
+      await emitEvent({
+        eventKey: "activation_form_submitted",
+        clientId,
+        payload: { package: form.service_package },
+      });
+
+      setActivated(true);
+      setDraftStatus("activated");
+      toast.success(`${form.business_name_confirmed || clientName} is now live!`);
+    } catch (err: any) {
+      toast.error(err.message || "Activation failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ── Activate (new client / standalone mode – original behavior) ──
+  const handleActivateNew = async () => {
     if (!form.business_name_confirmed || !form.owner_email) {
       toast.error("Business name and owner email are required");
       return;
@@ -97,7 +351,6 @@ export default function AdminMasterActivation() {
     const slug = (form.display_name || form.business_name_confirmed).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     try {
-      // 1. Create client
       const { data: client, error: clientErr } = await supabase.from("clients").insert({
         business_name: form.business_name_confirmed,
         workspace_slug: slug,
@@ -113,7 +366,6 @@ export default function AdminMasterActivation() {
 
       if (clientErr || !client) throw new Error(clientErr?.message || "Failed to create client");
 
-      // 2. Provision resources
       const integrationNames = [
         "Google Analytics", "Google Search Console", "Google Business Profile",
         "Meta / Instagram", "Google Ads", "Stripe", "Twilio", "Zoom", "Domain / Website",
@@ -142,173 +394,72 @@ export default function AdminMasterActivation() {
           dashboard_title: form.dashboard_title || null,
         }),
         supabase.from("client_health_scores").insert({ client_id: client.id }),
-        supabase.from("revenue_opportunities").insert({
-          client_id: client.id, title: "Initial setup review", status: "open", category: "onboarding",
-        }),
       ]);
 
-      // 3. Create owner account
       await supabase.functions.invoke("invite-user", {
         body: { email: form.owner_email, role: "client_owner", client_id: client.id },
       });
 
-      // 4. CRM setup
-      if (form.crm_mode === "external" && form.crm_provider) {
-        await supabase.from("crm_connections").insert({
-          client_id: client.id,
-          crm_provider_name: form.crm_provider,
-          connection_status: "pending",
-        });
-      }
-
-      // 5. Calendar setup from configs
+      // Calendar setup from configs
       if (form.use_native_calendar === "yes") {
         const configs: CalendarConfig[] = form.calendar_configs || [];
         for (const cfg of configs) {
           if (!cfg.calendar_name) continue;
           const tz = form.default_timezone || "America/Los_Angeles";
-
-          // Create calendar
           const { data: cal } = await supabase.from("calendars").insert({
-            client_id: client.id,
-            calendar_name: cfg.calendar_name,
+            client_id: client.id, calendar_name: cfg.calendar_name,
             calendar_type: cfg.calendar_type === "single" ? "booking" : cfg.calendar_type,
-            timezone: tz,
-            description: cfg.description || null,
-            default_location: cfg.location_type || null,
+            timezone: tz, description: cfg.description || null, default_location: cfg.location_type || null,
           }).select().single();
-
           if (!cal) continue;
 
-          // Create availability rules
           const days = (cfg.availability_days || "1,2,3,4,5").split(",").map(d => parseInt(d.trim())).filter(d => !isNaN(d));
           for (const day of days) {
             await supabase.from("calendar_availability").insert({
-              client_id: client.id,
-              calendar_id: cal.id,
-              day_of_week: day,
-              start_time: cfg.availability_hours_start || "09:00",
-              end_time: cfg.availability_hours_end || "17:00",
-              slot_interval_minutes: parseInt(cfg.slot_interval) || 30,
-              is_active: true,
+              client_id: client.id, calendar_id: cal.id, day_of_week: day,
+              start_time: cfg.availability_hours_start || "09:00", end_time: cfg.availability_hours_end || "17:00",
+              slot_interval_minutes: parseInt(cfg.slot_interval) || 30, is_active: true,
             });
           }
-
-          // Create appointment types
           const typeNames = (cfg.appointment_types || "Consultation").split(",").map(t => t.trim()).filter(Boolean);
           for (const typeName of typeNames) {
             await supabase.from("calendar_appointment_types").insert({
-              client_id: client.id,
-              calendar_id: cal.id,
-              name: typeName,
+              client_id: client.id, calendar_id: cal.id, name: typeName,
               duration_minutes: parseInt(cfg.default_duration) || 30,
-              buffer_before: parseInt(cfg.buffer_before) || 0,
-              buffer_after: parseInt(cfg.buffer_after) || 0,
-              location_type: cfg.location_type || "virtual",
-              meeting_link_type: cfg.meeting_link_type || null,
+              buffer_before: parseInt(cfg.buffer_before) || 0, buffer_after: parseInt(cfg.buffer_after) || 0,
+              location_type: cfg.location_type || "virtual", meeting_link_type: cfg.meeting_link_type || null,
               confirmation_message: cfg.confirmation_message || null,
-              reminders_enabled: cfg.reminders_enabled !== "no",
-              is_active: cfg.active !== "no",
+              reminders_enabled: cfg.reminders_enabled !== "no", is_active: cfg.active !== "no",
             });
           }
-
-          // Create booking link
-          const linkSlug = cfg.booking_link_slug || cfg.calendar_name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-          await supabase.from("calendar_booking_links").insert({
-            client_id: client.id,
-            calendar_id: cal.id,
-            slug: `${slug}-${linkSlug}`,
-            is_active: cfg.active !== "no",
-            is_public: cfg.calendar_type !== "internal",
-          });
-
-          // Create reminder rules if enabled
-          if (cfg.reminders_enabled !== "no") {
-            const channel = form.default_reminder_preference || "email";
-            await Promise.all([
-              supabase.from("calendar_reminder_rules").insert({
-                client_id: client.id, calendar_id: cal.id,
-                reminder_type: "confirmation", channel, offset_minutes: 0, is_active: true,
-              }),
-              supabase.from("calendar_reminder_rules").insert({
-                client_id: client.id, calendar_id: cal.id,
-                reminder_type: "reminder", channel, offset_minutes: 1440, is_active: true,
-              }),
-            ]);
-          }
         }
-      } else if (form.use_native_calendar === "no") {
-        // External calendar — create integration task
-        await supabase.from("client_integrations").insert({
-          client_id: client.id,
-          integration_name: "External Calendar",
-          status: "access_needed",
-        });
       }
 
-      // 6. Service catalog
+      // Service catalog
       const serviceConfigs: ServiceConfig[] = form.service_configs || [];
       for (const svc of serviceConfigs) {
         if (!svc.service_name) continue;
         await supabase.from("service_catalog" as any).insert({
-          client_id: client.id,
-          service_name: svc.service_name,
+          client_id: client.id, service_name: svc.service_name,
           service_description: svc.service_description || null,
           display_price_text: svc.display_price_text || null,
-          service_status: svc.service_status || "draft",
-          display_order: 0,
+          service_status: svc.service_status || "draft", display_order: 0,
         });
       }
 
-      // 7. Finalize provision
       await Promise.all([
         supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
         supabase.from("audit_logs").insert({
-          action: "master_activation_completed",
-          client_id: client.id,
-          module: "activation",
-          metadata: {
-            package: form.service_package,
-            crm_mode: form.crm_mode,
-            modules_enabled: {
-              workforce: form.use_workforce === "yes",
-              reviews: form.use_native_reviews === "yes",
-              seo: form.use_seo === "yes",
-              ads: form.use_ads === "yes",
-              social: form.use_social === "yes",
-              helpdesk: form.use_helpdesk === "yes",
-              proposals: form.use_proposals === "yes",
-            },
-          },
-        }),
-        supabase.from("fix_now_items").insert({
-          client_id: client.id,
-          issue: "Review master activation and confirm all integrations",
-          module: "activation",
-          severity: "low",
-          status: "open",
+          action: "master_activation_completed", client_id: client.id, module: "activation",
+          metadata: { package: form.service_package, crm_mode: form.crm_mode },
         }),
       ]);
 
-      // 8. Auto-provision any missing defaults (safe merge)
       await provisionWorkspaceDefaults(client.id, {
-        industry: form.industry,
-        timezone: form.default_timezone,
-        skipIfExists: true,
+        industry: form.industry, timezone: form.default_timezone, skipIfExists: true,
       });
-
-      // 9. Update onboarding stage & emit events
       await syncOnboardingStage(client.id, "active");
-      await emitEvent({
-        eventKey: "activation_form_submitted",
-        clientId: client.id,
-        payload: { package: form.service_package, crm_mode: form.crm_mode },
-      });
-      await emitEvent({
-        eventKey: "workspace_activated",
-        clientId: client.id,
-        payload: { business_name: form.business_name_confirmed },
-      });
+      await emitEvent({ eventKey: "activation_form_submitted", clientId: client.id, payload: { package: form.service_package } });
 
       setActivated(true);
       toast.success(`${form.business_name_confirmed} activated successfully!`);
@@ -318,6 +469,8 @@ export default function AdminMasterActivation() {
       setSubmitting(false);
     }
   };
+
+  const handleActivate = clientId ? handleActivateExisting : handleActivateNew;
 
   const renderStep = () => {
     switch (step) {
@@ -340,15 +493,37 @@ export default function AdminMasterActivation() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 text-white/40 animate-spin" />
+      </div>
+    );
+  }
+
+  const draftStatusLabel: Record<DraftStatus, { text: string; cls: string }> = {
+    not_started: { text: "Not Started", cls: "bg-white/10 text-white/50" },
+    in_progress: { text: "In Progress", cls: "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]" },
+    submitted: { text: "Submitted", cls: "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]" },
+    activated: { text: "Activated", cls: "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" },
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <button onClick={() => navigate("/admin/activation")} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
-            <ArrowLeft className="h-3 w-3" /> Back to Activation
+          <button onClick={() => navigate(clientId ? "/admin/clients" : "/admin/activation")} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
+            <ArrowLeft className="h-3 w-3" /> {clientId ? "Back to Clients" : "Back to Activation"}
           </button>
-          <h1 className="text-xl font-bold text-white">Master Activation Form</h1>
-          <p className="text-xs text-white/50 mt-0.5">Full workspace setup — Step {step} of {STEPS.length}</p>
+          <h1 className="text-xl font-bold text-white">
+            {clientId ? `Activate — ${clientName}` : "Master Activation Form"}
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs text-white/50">Step {step} of {STEPS.length}</p>
+            <Badge className={`text-[10px] px-2 py-0 ${draftStatusLabel[draftStatus].cls} border-0`}>
+              {draftStatusLabel[draftStatus].text}
+            </Badge>
+          </div>
         </div>
         {activated && (
           <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
@@ -405,7 +580,7 @@ export default function AdminMasterActivation() {
           </Card>
 
           {/* Navigation */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="outline"
               onClick={() => setStep(Math.max(1, step - 1))}
@@ -418,7 +593,7 @@ export default function AdminMasterActivation() {
             <Button
               variant="outline"
               onClick={handleSaveDraft}
-              disabled={submitting}
+              disabled={submitting || activated}
               className="border-white/10 text-white hover:bg-white/10"
             >
               <Save className="h-4 w-4 mr-1" /> Save Draft
