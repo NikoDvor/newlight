@@ -165,7 +165,12 @@ export default function AdminMasterActivation() {
   const handleActivateExisting = async () => {
     if (!clientId) return;
     const paymentPending = form.payment_confirmed !== "confirmed";
+    const paymentAwaiting = form.payment_confirmed === "awaiting_confirmation";
     if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
+
+    // Determine workspace stage based on payment
+    const targetStage = paymentPending ? "awaiting_payment" : "active";
+    const billingStatus = form.payment_confirmed === "confirmed" ? "active" : paymentAwaiting ? "awaiting_confirmation" : "pending_payment";
 
     setSubmitting(true);
     try {
@@ -189,10 +194,11 @@ export default function AdminMasterActivation() {
         dashboard_title: form.dashboard_title || null,
       }, { onConflict: "client_id" });
 
-      // 2. Update billing
+      // 2. Update billing with wire/payment data
       await supabase.from("billing_accounts").upsert({
         client_id: clientId,
-        billing_status: paymentPending ? "pending_payment" : "active",
+        billing_status: billingStatus,
+        billing_email: form.owner_email || null,
       }, { onConflict: "client_id" });
 
       // 3. Service catalog from configs
@@ -266,10 +272,10 @@ export default function AdminMasterActivation() {
         ownerName: form.owner_name,
       });
 
-      // 6. Advance workspace to active
+      // 6. Advance workspace — payment-aware
       await supabase.from("clients").update({
-        onboarding_stage: "active",
-        status: "active",
+        onboarding_stage: targetStage,
+        status: targetStage === "active" ? "active" : "activation_in_progress",
       } as any).eq("id", clientId);
 
       await supabase.from("provision_queue").update({
@@ -317,16 +323,20 @@ export default function AdminMasterActivation() {
       }
 
       // 9. Sync stage + emit events
-      await syncOnboardingStage(clientId, "active");
+      await syncOnboardingStage(clientId, targetStage);
       await emitEvent({
         eventKey: "activation_form_submitted",
         clientId,
-        payload: { package: form.service_package },
+        payload: { package: form.service_package, payment_status: form.payment_confirmed },
       });
 
       setActivated(true);
       setDraftStatus("activated");
-      toast.success(`${form.business_name_confirmed || clientName} is now live!`);
+      if (paymentPending) {
+        toast.success(`${form.business_name_confirmed || clientName} activated — awaiting payment confirmation`);
+      } else {
+        toast.success(`${form.business_name_confirmed || clientName} is now live!`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Activation failed");
     } finally {

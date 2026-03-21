@@ -62,9 +62,19 @@ export function StepReview({ form }: StepProps) {
       <SummarySection title="Deal + Activation">
         <SummaryRow label="Business Name" value={form.business_name_confirmed} />
         <SummaryRow label="Owner" value={`${form.owner_name} — ${form.owner_email}`} />
-        <SummaryRow label="Payment" value={form.payment_confirmed === "confirmed" ? "✓ Confirmed" : "⚠ Pending Payment — activation allowed"} />
         <SummaryRow label="Package" value={form.service_package} />
-        <SummaryRow label="Monthly Fee" value={form.monthly_fee} />
+        <SummaryRow label="Setup Fee" value={form.setup_fee ? `$${Number(form.setup_fee).toLocaleString()}` : ""} />
+        <SummaryRow label="Monthly Fee" value={form.monthly_fee ? `$${Number(form.monthly_fee).toLocaleString()}/mo` : ""} />
+        <SummaryRow label="Contract" value={form.contract_term} />
+        <SummaryRow label="Payment Method" value={form.payment_method === "wire_transfer" ? "Wire Transfer" : form.payment_method === "ach" ? "ACH" : form.payment_method === "check" ? "Check" : form.payment_method} />
+        <SummaryRow label="Payment Status" value={form.payment_confirmed === "confirmed" ? "✓ Confirmed" : form.payment_confirmed === "awaiting_confirmation" ? "⏳ Awaiting Wire Confirmation" : "⚠ Awaiting Payment — activation allowed"} />
+        {form.wire_reference && <SummaryRow label="Wire Reference" value={form.wire_reference} />}
+        {form.payment_receipt_url && (
+          <div className="flex items-start gap-2 text-[11px]">
+            <span className="text-white/40 min-w-[130px] shrink-0">Receipt</span>
+            <a href={form.payment_receipt_url} target="_blank" rel="noreferrer" className="text-[hsl(var(--nl-sky))] underline">View uploaded receipt</a>
+          </div>
+        )}
         <SummaryRow label="Priority" value={form.activation_priority} />
       </SummarySection>
 
