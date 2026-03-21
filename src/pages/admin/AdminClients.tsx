@@ -345,9 +345,16 @@ export default function AdminClients() {
                     </div>
                   </div>
                 )}
-                <Button onClick={resetForm} className="w-full mt-3 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
-                  Done
-                </Button>
+                <div className="flex gap-2 mt-3">
+                  {createdClient && (
+                    <Button onClick={openCreatedWorkspace} className="flex-1 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Workspace
+                    </Button>
+                  )}
+                  <Button onClick={resetForm} variant={createdClient ? "outline" : "default"} className={createdClient ? "border-white/10 text-white hover:bg-white/10" : "flex-1 bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"}>
+                    Done
+                  </Button>
+                </div>
               </div>
             )}
 
