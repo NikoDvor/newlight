@@ -340,10 +340,8 @@ export default function AdminMasterActivation() {
       toast.error("Business name and owner email are required");
       return;
     }
-    if (form.payment_confirmed !== "confirmed") {
-      toast.error("Payment must be confirmed before activation");
-      return;
-    }
+    const paymentPending = form.payment_confirmed !== "confirmed";
+
 
     setSubmitting(true);
     const slug = (form.display_name || form.business_name_confirmed).toLowerCase().replace(/[^a-z0-9]+/g, "-");
