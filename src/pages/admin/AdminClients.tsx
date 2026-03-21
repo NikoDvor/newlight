@@ -574,12 +574,6 @@ export default function AdminClients() {
         onComplete={fetchClients}
       />
 
-      <ActivateClientDialog
-        open={!!activateClient}
-        onOpenChange={(open) => { if (!open) setActivateClient(null); }}
-        client={activateClient}
-        onComplete={() => { setActivateClient(null); fetchClients(); }}
-      />
     </div>
   );
 }
