@@ -99,11 +99,11 @@ export default function Billing() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Current Plan */}
         <DataCard title="Current Plan">
-          {(sub || actForm) ? (
+          {(sub || hasData) ? (
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-sm text-muted-foreground">Package</span>
-                <span className="text-sm font-medium">{sub?.subscription_name || actForm?.service_package || "—"}</span>
+                <span className="text-sm font-medium">{servicePackage || sub?.subscription_name || "—"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-sm text-muted-foreground">Billing Status</span>
