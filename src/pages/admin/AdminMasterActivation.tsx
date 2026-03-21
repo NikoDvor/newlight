@@ -531,6 +531,25 @@ export default function AdminMasterActivation() {
         )}
       </div>
 
+      {/* Data Sync Status */}
+      {clientId && syncStatus && (
+        <div className={`rounded-xl p-3 flex items-center justify-between ${syncStatus.complete ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
+          <div className="flex items-center gap-2">
+            {syncStatus.complete ? (
+              <><CheckCircle2 className="h-4 w-4 text-emerald-400" /><span className="text-xs font-medium text-emerald-300">Data Sync Complete</span></>
+            ) : (
+              <><Loader2 className="h-4 w-4 text-amber-400" /><span className="text-xs font-medium text-amber-300">Missing Mapped Fields: {syncStatus.missing.join(", ")}</span></>
+            )}
+          </div>
+          {!syncStatus.complete && (
+            <Button size="sm" variant="ghost" onClick={handleResync} disabled={syncing}
+              className="text-[10px] h-6 text-amber-300 hover:bg-amber-500/10">
+              {syncing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Syncing…</> : "Sync Now"}
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4">
         {/* Step Navigation */}
         <Card className="border-0 bg-white/[0.03] backdrop-blur-sm lg:sticky lg:top-4 lg:self-start" style={{ borderColor: "hsla(211,96%,60%,.06)" }}>
