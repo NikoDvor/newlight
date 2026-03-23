@@ -23,7 +23,11 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && userRole) {
-      if (isAdmin) {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect && redirect.startsWith("/")) {
+        navigate(redirect, { replace: true });
+      } else if (isAdmin) {
         navigate("/admin", { replace: true });
       } else {
         navigate("/", { replace: true });
