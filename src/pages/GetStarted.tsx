@@ -13,6 +13,7 @@ import {
   ChevronRight, ChevronLeft, CheckCircle2, Loader2, Rocket,
   ExternalLink, ArrowRight, Sparkles, Clock
 } from "lucide-react";
+import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 
 const TIMEZONES = [
   "America/New_York", "America/Chicago", "America/Denver",
