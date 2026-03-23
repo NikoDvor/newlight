@@ -184,53 +184,14 @@ export default function GetStarted() {
   // ─── Success ───────────────────────────────────────────────────────
   if (pageState === "success" && result) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-lg w-full text-center"
-        >
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            {result.already_exists ? "Workspace Ready!" : "Your Workspace Has Been Created!"}
-          </h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            {result.invite_sent
-              ? "Check your email for login instructions to access your new workspace."
-              : "Your personalized business dashboard is ready to use."}
-          </p>
-
-          <div className="space-y-3">
-            {result.workspace_url && (
-              <a href={result.workspace_url} className="block">
-                <Button className="w-full gap-2 h-12 text-sm" size="lg">
-                  <ExternalLink className="h-4 w-4" />
-                  Open Workspace
-                </Button>
-              </a>
-            )}
-            <a href={result.workspace_url || "/"}>
-              <Button variant="outline" className="w-full gap-2 h-12 text-sm" size="lg">
-                <ArrowRight className="h-4 w-4" />
-                Continue Setup
-              </Button>
-            </a>
-          </div>
-
-          {result.workspace_url && (
-            <div className="mt-6 p-4 rounded-xl border bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-1">Your workspace link</p>
-              <p className="text-sm font-mono text-foreground break-all">{result.workspace_url}</p>
-            </div>
-          )}
-
-          <p className="text-xs text-muted-foreground mt-6">
-            Tip: Open this link on your phone and tap "Add to Home Screen" for the full app experience.
-          </p>
-        </motion.div>
-      </div>
+      <WorkspaceHandoff
+        businessName={businessName}
+        workspaceUrl={result.workspace_url || "/"}
+        workspaceSlug={result.workspace_slug || slug}
+        setupLink={result.setup_link}
+        inviteSent={result.invite_sent}
+        alreadyExists={result.already_exists}
+      />
     );
   }
 

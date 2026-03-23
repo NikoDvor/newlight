@@ -141,6 +141,7 @@ const App = () => (
             <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
             <Route path="/book/:slug" element={<BookingPage />} />
             <Route path="/get-started" element={<GetStarted />} />
+            <Route path="/w/:slug" element={<WorkspaceEntry />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
 
             {/* Admin Portal */}
