@@ -216,8 +216,7 @@ Deno.serve(async (req) => {
     ]);
 
     // Build the workspace access URL
-    const appUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
-    const workspaceUrl = appUrl;
+    const workspaceUrl = `/w/${slug}`;
 
     // Store the access URL
     await adminClient
