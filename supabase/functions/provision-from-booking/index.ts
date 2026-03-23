@@ -47,13 +47,12 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingClient) {
-      const appUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
       return new Response(
         JSON.stringify({
           success: true,
           already_exists: true,
           client_id: existingClient.id,
-          workspace_url: `${appUrl}`,
+          workspace_url: `/w/${existingClient.workspace_slug}`,
           workspace_slug: existingClient.workspace_slug,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -217,8 +216,7 @@ Deno.serve(async (req) => {
     ]);
 
     // Build the workspace access URL
-    const appUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
-    const workspaceUrl = appUrl;
+    const workspaceUrl = `/w/${slug}`;
 
     // Store the access URL
     await adminClient
