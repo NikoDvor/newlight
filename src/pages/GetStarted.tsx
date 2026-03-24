@@ -290,10 +290,13 @@ export default function GetStarted() {
         alreadyExists={result.already_exists || result.existing_user}
         inviteWarning={result.invite_warning}
         ownerEmail={ownerEmail}
+        ownerPhone={phone || null}
         clientId={result.client_id}
         inviteStatus={result.invite_status}
         emailDeliveryStatus={result.email_delivery_status}
         smsDeliveryStatus={result.sms_delivery_status}
+        preferredContactMethod={preferredContact}
+        smsConsent={smsConsent}
       />
     );
   }
