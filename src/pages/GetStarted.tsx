@@ -46,6 +46,8 @@ export default function GetStarted() {
   const [logoUrl, setLogoUrl] = useState("");
   const [mainGoal, setMainGoal] = useState("");
   const [interestedService, setInterestedService] = useState("");
+  const [preferredContact, setPreferredContact] = useState("email");
+  const [smsConsent, setSmsConsent] = useState(false);
 
   // Slug
   const [slug, setSlug] = useState("");
