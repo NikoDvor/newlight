@@ -87,18 +87,24 @@ export default function Auth() {
       toast.error("Please verify your email before signing in.");
     } else {
       toast.success("Welcome back!");
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", signInData.user.id)
-        .limit(1)
-        .maybeSingle();
-      if (roleData?.role === "admin") {
-        navigate("/admin");
-      } else if (roleData?.role === "operator") {
-        navigate("/admin/clients");
+      // Check for redirect param first (workspace entry links)
+      const redirectPath = getRedirectAwareNav();
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
       } else {
-        navigate("/");
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", signInData.user.id)
+          .limit(1)
+          .maybeSingle();
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else if (roleData?.role === "operator") {
+          navigate("/admin/clients");
+        } else {
+          navigate("/");
+        }
       }
     }
     setLoading(false);
