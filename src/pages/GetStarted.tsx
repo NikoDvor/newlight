@@ -291,6 +291,7 @@ export default function GetStarted() {
         inviteWarning={result.invite_warning}
         ownerEmail={ownerEmail}
         clientId={result.client_id}
+        inviteStatus={result.invite_status}
       />
     );
   }
