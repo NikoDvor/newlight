@@ -585,7 +585,7 @@ export default function AdminClients() {
                           <Phone className="h-2.5 w-2.5" />{c.owner_phone}
                         </p>
                       )}
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                         {c.preferred_contact_method && c.preferred_contact_method !== "email" && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30 flex items-center gap-0.5">
                             <MessageSquare className="h-2 w-2" />{c.preferred_contact_method}
@@ -599,6 +599,24 @@ export default function AdminClients() {
                             "bg-white/5 text-white/30"
                           }`}>
                             {c.invite_status.replace(/_/g, " ")}
+                          </span>
+                        )}
+                        {c.email_delivery_status && c.email_delivery_status !== "not_attempted" && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                            c.email_delivery_status === "sent" ? "bg-emerald-500/10 text-emerald-400" :
+                            c.email_delivery_status === "failed" ? "bg-red-500/10 text-red-400" :
+                            "bg-white/5 text-white/30"
+                          }`}>
+                            <Mail className="h-2 w-2" />{c.email_delivery_status === "not_configured" ? "no email" : c.email_delivery_status}
+                          </span>
+                        )}
+                        {c.sms_delivery_status && c.sms_delivery_status !== "not_attempted" && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                            c.sms_delivery_status === "sent" ? "bg-emerald-500/10 text-emerald-400" :
+                            c.sms_delivery_status === "failed" ? "bg-red-500/10 text-red-400" :
+                            "bg-white/5 text-white/30"
+                          }`}>
+                            <MessageSquare className="h-2 w-2" />{c.sms_delivery_status === "not_configured" ? "no sms" : c.sms_delivery_status}
                           </span>
                         )}
                       </div>
