@@ -19,11 +19,13 @@ interface WorkspaceHandoffProps {
   ownerEmail?: string;
   clientId?: string;
   inviteStatus?: string | null;
+  emailDeliveryStatus?: string | null;
+  smsDeliveryStatus?: string | null;
 }
 
 export function WorkspaceHandoff({
   businessName, workspaceUrl, workspaceSlug, setupLink, inviteSent, alreadyExists,
-  inviteWarning, ownerEmail, clientId, inviteStatus,
+  inviteWarning, ownerEmail, clientId, inviteStatus, emailDeliveryStatus, smsDeliveryStatus,
 }: WorkspaceHandoffProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSetup, setCopiedSetup] = useState(false);
@@ -97,15 +99,37 @@ export function WorkspaceHandoff({
               ? "Your account has been linked to this workspace. Sign in to access it."
               : "Your workspace has been created and is ready to use."}
           </p>
-          {/* Invite status badge */}
-          {inviteStatus && (
-            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
-              {inviteStatus === "invite_sent" && <Mail className="h-3 w-3" />}
-              {inviteStatus === "invite_failed" && <AlertTriangle className="h-3 w-3" />}
-              {inviteStatus === "access_link_generated" && <CheckCircle2 className="h-3 w-3" />}
-              {inviteStatus.replace(/_/g, " ")}
-            </div>
-          )}
+          {/* Delivery status badges */}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+            {inviteStatus && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
+                {inviteStatus === "invite_sent" && <Mail className="h-3 w-3" />}
+                {inviteStatus === "invite_failed" && <AlertTriangle className="h-3 w-3" />}
+                {inviteStatus === "access_link_generated" && <CheckCircle2 className="h-3 w-3" />}
+                Invite: {inviteStatus.replace(/_/g, " ")}
+              </span>
+            )}
+            {emailDeliveryStatus && emailDeliveryStatus !== "not_attempted" && (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                emailDeliveryStatus === "sent" ? "bg-primary/10 text-primary" :
+                emailDeliveryStatus === "failed" ? "bg-destructive/10 text-destructive" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                <Mail className="h-3 w-3" />
+                Email: {emailDeliveryStatus === "not_configured" ? "not configured" : emailDeliveryStatus}
+              </span>
+            )}
+            {smsDeliveryStatus && smsDeliveryStatus !== "not_attempted" && (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                smsDeliveryStatus === "sent" ? "bg-primary/10 text-primary" :
+                smsDeliveryStatus === "failed" ? "bg-destructive/10 text-destructive" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                <Share className="h-3 w-3" />
+                SMS: {smsDeliveryStatus === "not_configured" ? "not configured" : smsDeliveryStatus}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Invite issue banner */}

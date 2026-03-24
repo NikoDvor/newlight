@@ -292,6 +292,8 @@ export default function GetStarted() {
         ownerEmail={ownerEmail}
         clientId={result.client_id}
         inviteStatus={result.invite_status}
+        emailDeliveryStatus={result.email_delivery_status}
+        smsDeliveryStatus={result.sms_delivery_status}
       />
     );
   }

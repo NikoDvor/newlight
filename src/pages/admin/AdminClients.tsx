@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ interface Client {
   owner_phone: string | null;
   preferred_contact_method: string | null;
   invite_status: string | null;
+  email_delivery_status: string | null;
+  sms_delivery_status: string | null;
   created_at: string;
   onboarding_stage: string;
 }
@@ -583,7 +585,7 @@ export default function AdminClients() {
                           <Phone className="h-2.5 w-2.5" />{c.owner_phone}
                         </p>
                       )}
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                         {c.preferred_contact_method && c.preferred_contact_method !== "email" && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30 flex items-center gap-0.5">
                             <MessageSquare className="h-2 w-2" />{c.preferred_contact_method}
@@ -597,6 +599,24 @@ export default function AdminClients() {
                             "bg-white/5 text-white/30"
                           }`}>
                             {c.invite_status.replace(/_/g, " ")}
+                          </span>
+                        )}
+                        {c.email_delivery_status && c.email_delivery_status !== "not_attempted" && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                            c.email_delivery_status === "sent" ? "bg-emerald-500/10 text-emerald-400" :
+                            c.email_delivery_status === "failed" ? "bg-red-500/10 text-red-400" :
+                            "bg-white/5 text-white/30"
+                          }`}>
+                            <Mail className="h-2 w-2" />{c.email_delivery_status === "not_configured" ? "no email" : c.email_delivery_status}
+                          </span>
+                        )}
+                        {c.sms_delivery_status && c.sms_delivery_status !== "not_attempted" && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                            c.sms_delivery_status === "sent" ? "bg-emerald-500/10 text-emerald-400" :
+                            c.sms_delivery_status === "failed" ? "bg-red-500/10 text-red-400" :
+                            "bg-white/5 text-white/30"
+                          }`}>
+                            <MessageSquare className="h-2 w-2" />{c.sms_delivery_status === "not_configured" ? "no sms" : c.sms_delivery_status}
                           </span>
                         )}
                       </div>
@@ -626,15 +646,22 @@ export default function AdminClients() {
                        >
                          <Copy className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
                        </button>
+                       <button
+                         onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-center`); toast.success("Setup link copied!"); }}
+                         className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+                         title="Copy continue setup link"
+                       >
+                         <Link2 className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
+                       </button>
                        <button onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Apply / Re-run Starter Template">
-                         {provisioning === c.id ? <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-white/40 hover:text-purple-400" />}
-                       </button>
-                       <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
-                         <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
-                       </button>
-                       <button onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Handoff Checklist">
-                         <CheckCircle2 className="h-3.5 w-3.5 text-white/40 hover:text-emerald-400" />
-                       </button>
+                          {provisioning === c.id ? <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-white/40 hover:text-purple-400" />}
+                        </button>
+                        <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
+                          <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
+                        </button>
+                        <button onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Handoff Checklist">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-white/40 hover:text-emerald-400" />
+                        </button>
                        <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace dashboard">
                          <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                        </button>
