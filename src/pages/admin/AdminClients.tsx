@@ -624,8 +624,8 @@ export default function AdminClients() {
                     </div>
                   </td>
                   
-                  <td className="px-4 py-3">
-                     <div className="flex items-center gap-1">
+                   <td className="px-4 py-3">
+                     <div className="flex items-center gap-1 justify-end">
                       {c.onboarding_stage !== "active" ? (
                         <button onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Activate Client">
                           <Zap className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
@@ -635,43 +635,47 @@ export default function AdminClients() {
                           <Activity className="h-3.5 w-3.5 text-emerald-400 hover:text-emerald-300" />
                         </button>
                       )}
-                      {c.owner_email && (
-                        <button onClick={() => handleResendInvite(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Resend invite email">
-                          <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
-                         </button>
-                       )}
-                       <button
-                         onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }}
-                         className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
-                         title="Copy workspace link"
-                       >
-                         <Copy className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
-                       </button>
-                       <button
-                         onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-center`); toast.success("Setup link copied!"); }}
-                         className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
-                         title="Copy continue setup link"
-                       >
-                         <Link2 className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
-                       </button>
-                       <button onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Apply / Re-run Starter Template">
-                          {provisioning === c.id ? <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-white/40 hover:text-purple-400" />}
-                        </button>
-                        <button onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open master setup form">
-                          <Settings className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-neon))]" />
-                        </button>
-                        <button onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Handoff Checklist">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-white/40 hover:text-emerald-400" />
-                        </button>
-                       <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace dashboard">
-                         <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-                       </button>
-                      <button onClick={() => handleSuspend(c)} className="p-1.5 rounded-lg hover:bg-yellow-500/10 transition-colors" title={c.status === "suspended" ? "Reactivate" : "Suspend"}>
-                        {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-white/30 hover:text-yellow-400" />}
+                      <button onClick={() => openWorkspace(c)} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Open workspace">
+                        <ExternalLink className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                       </button>
-                      <button onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Delete / Archive">
-                        <Trash2 className="h-3.5 w-3.5 text-white/30 hover:text-red-400" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="More actions">
+                            <MoreVertical className="h-3.5 w-3.5 text-white/40" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-[hsl(218,35%,12%)] border-white/10 text-white min-w-[180px]">
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Copy className="h-3.5 w-3.5" /> Copy Workspace Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-center`); toast.success("Setup link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Link2 className="h-3.5 w-3.5" /> Copy Setup Link
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-white/10" />
+                          {c.owner_email && (
+                            <DropdownMenuItem onClick={() => handleResendInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                              <Mail className="h-3.5 w-3.5" /> Resend Invite
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Wand2 className="h-3.5 w-3.5" /> Re-run Starter Template
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Settings className="h-3.5 w-3.5" /> Master Setup Form
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-white/10" />
+                          <DropdownMenuItem onClick={() => handleSuspend(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-yellow-400 cursor-pointer">
+                            {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-yellow-400" />}
+                            {c.status === "suspended" ? "Reactivate" : "Suspend"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteClient({ id: c.id, business_name: c.business_name })} className="text-xs gap-2 focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer">
+                            <Trash2 className="h-3.5 w-3.5" /> Archive / Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </motion.tr>
