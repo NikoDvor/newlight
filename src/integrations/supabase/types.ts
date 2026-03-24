@@ -2421,9 +2421,11 @@ export type Database = {
           business_name: string
           created_at: string
           crm_mode: string
+          email_delivery_status: string | null
           id: string
           industry: string | null
           invite_status: string | null
+          last_handoff_sent_at: string | null
           legal_business_name: string | null
           onboarding_stage: string
           owner_email: string | null
@@ -2436,6 +2438,7 @@ export type Database = {
           secondary_contact_phone: string | null
           service_package: string | null
           sms_consent: boolean | null
+          sms_delivery_status: string | null
           source_appointment_id: string | null
           status: string
           timezone: string | null
@@ -2448,9 +2451,11 @@ export type Database = {
           business_name: string
           created_at?: string
           crm_mode?: string
+          email_delivery_status?: string | null
           id?: string
           industry?: string | null
           invite_status?: string | null
+          last_handoff_sent_at?: string | null
           legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
@@ -2463,6 +2468,7 @@ export type Database = {
           secondary_contact_phone?: string | null
           service_package?: string | null
           sms_consent?: boolean | null
+          sms_delivery_status?: string | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null
@@ -2475,9 +2481,11 @@ export type Database = {
           business_name?: string
           created_at?: string
           crm_mode?: string
+          email_delivery_status?: string | null
           id?: string
           industry?: string | null
           invite_status?: string | null
+          last_handoff_sent_at?: string | null
           legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
@@ -2490,6 +2498,7 @@ export type Database = {
           secondary_contact_phone?: string | null
           service_package?: string | null
           sms_consent?: boolean | null
+          sms_delivery_status?: string | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null
