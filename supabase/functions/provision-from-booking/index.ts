@@ -240,8 +240,18 @@ Deno.serve(async (req) => {
       inviteError = (e as Error).message || "Invite failed unexpectedly";
     }
 
-    // 4. Activity + audit
+    // 4. Update invite status on client record
+    const finalInviteStatus = inviteSent
+      ? "invite_sent"
+      : existingUser
+      ? "access_link_generated"
+      : inviteError
+      ? "invite_failed"
+      : "invite_attempted";
+
+    // 5. Activity + audit
     await Promise.all([
+      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
       adminClient.from("crm_activities").insert({
         client_id: client.id,
         activity_type: "workspace_created",
@@ -254,6 +264,9 @@ Deno.serve(async (req) => {
         metadata: {
           contact_email,
           contact_name,
+          contact_phone,
+          preferred_contact_method,
+          sms_consent,
           appointment_id,
           industry,
           main_goal: main_goal || null,
@@ -261,6 +274,7 @@ Deno.serve(async (req) => {
           source: appointment_id ? "booking_auto_provision" : "onboarding_form",
           invite_sent: inviteSent,
           invite_error: inviteError,
+          invite_status: finalInviteStatus,
           existing_user: existingUser,
         },
       }),
