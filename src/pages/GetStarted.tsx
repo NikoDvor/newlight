@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { LogoUploader } from "@/components/LogoUploader";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Building2, User, Globe, MapPin, Phone, Mail, Briefcase,
   ChevronRight, ChevronLeft, CheckCircle2, Loader2, Rocket,
-  ExternalLink, ArrowRight, Sparkles, Clock
+  ExternalLink, ArrowRight, Sparkles, Clock, MessageSquare
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 
