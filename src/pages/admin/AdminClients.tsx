@@ -310,6 +310,7 @@ export default function AdminClients() {
     { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
     { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
     { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
+    { label: "Owner Phone", key: "owner_phone", placeholder: "(555) 123-4567", type: "tel" },
   ];
 
   const brandingFields = [
