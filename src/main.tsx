@@ -17,3 +17,6 @@ createRoot(document.getElementById("root")!).render(<App />);
 requestAnimationFrame(() => {
   setTimeout(hideSplash, 300);
 });
+
+// Safety: force-hide splash if still visible after 4s (covers slow mobile loads)
+setTimeout(hideSplash, 4000);
