@@ -444,10 +444,51 @@ export default function GetStarted() {
                     <Input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://acme.com" />
                   </div>
                   <div>
-                    <Label className="text-xs mb-1.5 block">Phone</Label>
-                    <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 123-4567" />
+                    <Label className="text-xs mb-1.5 block">Phone Number</Label>
+                    <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" />
                   </div>
                 </div>
+
+                {/* Contact Preference */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Preferred Contact Method</Label>
+                  <div className="flex items-center gap-4">
+                    {[
+                      { value: "email", label: "Email", icon: Mail },
+                      { value: "sms", label: "SMS", icon: MessageSquare },
+                      { value: "both", label: "Both", icon: Phone },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setPreferredContact(opt.value)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs transition-colors ${
+                          preferredContact === opt.value
+                            ? "border-primary bg-primary/10 text-foreground font-medium"
+                            : "border-input bg-background text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <opt.icon className="h-3.5 w-3.5" />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SMS Consent */}
+                {(preferredContact === "sms" || preferredContact === "both") && (
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="sms-consent"
+                      checked={smsConsent}
+                      onCheckedChange={(checked) => setSmsConsent(!!checked)}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor="sms-consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to receive onboarding and setup reminder texts from NewLight Marketing. Message & data rates may apply.
+                    </label>
+                  </div>
+                )}
 
                 <div>
                   <Label className="text-xs mb-1.5 block">Main Goal</Label>
