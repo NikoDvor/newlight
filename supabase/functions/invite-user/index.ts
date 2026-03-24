@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
     // Verify caller identity
     const callerClient = createClient(supabaseUrl, anonKey, {
@@ -80,45 +80,55 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUsers } =
-      await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u: any) => u.email === email
-    );
-
-    let userId: string;
+    // Attempt to invite — handles both new and existing users robustly
+    let userId: string = "";
     let inviteEmailSent = false;
     let setupLink: string | null = null;
     let alreadyExisted = false;
 
-    if (existingUser) {
-      // User already exists — link them to the new workspace without removing other roles
-      userId = existingUser.id;
-      alreadyExisted = true;
-    } else {
-      // Try invite first (sends password setup email)
-      const { data: inviteData, error: inviteError } =
-        await adminClient.auth.admin.inviteUserByEmail(email, {
-          data: { full_name: email.split("@")[0] },
-          redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth`,
+    // Try invite first — if user exists, this will fail with a known error
+    const { data: inviteData, error: inviteError } =
+      await adminClient.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: email.split("@")[0] },
+      });
+
+    if (inviteError) {
+      const errMsg = inviteError.message?.toLowerCase() || "";
+      const isExistingUser = errMsg.includes("already") || errMsg.includes("registered") || errMsg.includes("exists") || errMsg.includes("duplicate");
+
+      if (isExistingUser) {
+        // User exists — look them up via generateLink (reliable, no pagination)
+        const { data: linkData } = await adminClient.auth.admin.generateLink({
+          type: "magiclink",
+          email,
         });
 
-      if (inviteError) {
-        // Fallback: generate a magic link that admin can share manually
+        if (linkData?.user?.id) {
+          userId = linkData.user.id;
+          alreadyExisted = true;
+        } else {
+          return new Response(
+            JSON.stringify({ error: "User exists but could not be found for linking" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      } else {
+        // Invite genuinely failed — try generateLink fallback
         const { data: linkData, error: linkError } =
           await adminClient.auth.admin.generateLink({
             type: "invite",
             email,
             options: {
               data: { full_name: email.split("@")[0] },
-              redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth`,
             },
           });
 
-        if (linkError) {
+        if (linkError || !linkData?.user?.id) {
           return new Response(
-            JSON.stringify({ error: linkError.message }),
+            JSON.stringify({ error: linkError?.message || inviteError.message }),
             {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -127,40 +137,43 @@ Deno.serve(async (req) => {
         }
 
         userId = linkData.user.id;
-        const actionLink = linkData.properties?.action_link;
-        if (actionLink) {
-          setupLink = actionLink;
-        }
-      } else {
-        userId = inviteData.user.id;
-        inviteEmailSent = true;
+        setupLink = linkData.properties?.action_link || null;
       }
+    } else if (inviteData?.user?.id) {
+      userId = inviteData.user.id;
+      inviteEmailSent = true;
     }
 
-    // For client-scoped roles, ADD a new role for the new client_id
-    // without removing existing roles for other workspaces.
-    // For admin/operator roles (no client_id), replace existing roles.
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Could not create or find user account" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Assign role — scope by client_id for client roles
     const clientRoles = ["client_owner", "client_team", "read_only"];
     const isClientRole = clientRoles.includes(role);
     const targetClientId = isClientRole ? client_id || null : null;
 
     if (isClientRole && targetClientId) {
-      // Only remove roles for THIS specific client_id to avoid duplicates
-      // but preserve roles for other workspaces
+      // Remove only this client's role for this user (avoid duplicates)
       await adminClient
         .from("user_roles")
         .delete()
         .eq("user_id", userId)
         .eq("client_id", targetClientId);
     } else if (!isClientRole) {
-      // Admin/operator: remove all existing roles and assign the new one
+      // Admin/operator: remove all existing roles
       await adminClient
         .from("user_roles")
         .delete()
         .eq("user_id", userId);
     }
 
-    // Assign role
     const { error: roleError } = await adminClient
       .from("user_roles")
       .insert({

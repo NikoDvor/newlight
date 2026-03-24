@@ -101,6 +101,14 @@ export default function GetStarted() {
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
 
+      // Track invite status for the handoff page (don't fail the flow)
+      const inviteWarning = data?.invite_error
+        ? `Invite could not be sent: ${data.invite_error}`
+        : null;
+      if (inviteWarning) {
+        console.warn("Invite issue (non-blocking):", inviteWarning);
+      }
+
       // 2. Run full-app provisioning if newly created
       if (data?.client_id && !data?.already_exists) {
         try {
@@ -208,7 +216,10 @@ export default function GetStarted() {
         });
       }
 
-      setResult(data);
+      setResult({
+        ...data,
+        invite_warning: data?.invite_error || null,
+      });
       setPageState("success");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -260,7 +271,10 @@ export default function GetStarted() {
         workspaceSlug={result.workspace_slug || slug}
         setupLink={result.setup_link}
         inviteSent={result.invite_sent}
-        alreadyExists={result.already_exists}
+        alreadyExists={result.already_exists || result.existing_user}
+        inviteWarning={result.invite_warning}
+        ownerEmail={ownerEmail}
+        clientId={result.client_id}
       />
     );
   }

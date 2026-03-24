@@ -70,6 +70,8 @@ Deno.serve(async (req) => {
             client_id: existingByOwner.id,
             workspace_url: `/w/${existingByOwner.workspace_slug}`,
             workspace_slug: existingByOwner.workspace_slug,
+            invite_sent: false,
+            invite_error: null,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -138,7 +140,6 @@ Deno.serve(async (req) => {
           status: "pending",
         }))
       ),
-      // Create CRM contact for the owner
       adminClient.from("crm_contacts").insert({
         client_id: client.id,
         full_name: contact_name || contact_email.split("@")[0],
@@ -151,66 +152,86 @@ Deno.serve(async (req) => {
       }),
     ]);
 
-    // 3. Invite the user as client_owner (append role, don't replace)
-    let inviteResult: any = {};
+    // 3. Invite the user as client_owner — robust lookup, no listUsers()
+    let inviteSent = false;
+    let setupLink: string | null = null;
+    let inviteError: string | null = null;
+    let existingUser = false;
+    let linkedUserId: string | null = null;
+
     try {
-      const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(
-        (u: any) => u.email === contact_email
-      );
+      // Try to create/invite the user. First, attempt invite directly.
+      // If user already exists, inviteUserByEmail will fail, then we look them up.
+      const { data: inviteData, error: invErr } =
+        await adminClient.auth.admin.inviteUserByEmail(contact_email, {
+          data: { full_name: contact_name || contact_email.split("@")[0] },
+        });
 
-      let userId: string;
-      let setupLink: string | null = null;
-
-      if (existingUser) {
-        userId = existingUser.id;
-        // ADD the new client_owner role for this workspace (don't touch other roles)
-        const { data: existingRole } = await adminClient
-          .from("user_roles")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("client_id", client.id)
-          .maybeSingle();
-
-        if (!existingRole) {
-          await adminClient.from("user_roles").insert({
-            user_id: userId,
-            role: "client_owner",
-            client_id: client.id,
-          });
-        }
-        inviteResult = { user_id: userId, existing: true };
-      } else {
-        // Try to invite
-        const { data: inviteData, error: inviteError } =
-          await adminClient.auth.admin.inviteUserByEmail(contact_email, {
-            data: { full_name: contact_name || contact_email.split("@")[0] },
-          });
-
-        if (inviteError) {
-          // Fallback: generate link
+      if (invErr) {
+        const errMsg = invErr.message?.toLowerCase() || "";
+        // User already exists — look them up by iterating with filter or catching the known error
+        if (errMsg.includes("already") || errMsg.includes("registered") || errMsg.includes("exists") || errMsg.includes("duplicate")) {
+          // Find existing user: use listUsers with per_page to search
+          // Since we can't filter by email in listUsers, use a workaround:
+          // Try createUser which will also fail but give us info, or generate a link
           const { data: linkData } = await adminClient.auth.admin.generateLink({
+            type: "magiclink",
+            email: contact_email,
+          });
+
+          if (linkData?.user?.id) {
+            linkedUserId = linkData.user.id;
+            existingUser = true;
+            // Link to the new workspace — don't touch other workspace roles
+            const { data: existingRole } = await adminClient
+              .from("user_roles")
+              .select("id")
+              .eq("user_id", linkedUserId)
+              .eq("client_id", client.id)
+              .maybeSingle();
+
+            if (!existingRole) {
+              await adminClient.from("user_roles").insert({
+                user_id: linkedUserId,
+                role: "client_owner",
+                client_id: client.id,
+              });
+            }
+          } else {
+            inviteError = "Could not link existing user account";
+          }
+        } else {
+          // Invite truly failed — try generateLink as fallback
+          const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
             type: "invite",
             email: contact_email,
             options: { data: { full_name: contact_name || contact_email.split("@")[0] } },
           });
-          userId = linkData?.user?.id || "";
-          setupLink = linkData?.properties?.action_link || null;
-        } else {
-          userId = inviteData.user.id;
-        }
 
-        if (userId) {
-          await adminClient.from("user_roles").insert({
-            user_id: userId,
-            role: "client_owner",
-            client_id: client.id,
-          });
+          if (linkErr || !linkData?.user?.id) {
+            inviteError = linkErr?.message || invErr.message || "Invite failed";
+          } else {
+            linkedUserId = linkData.user.id;
+            setupLink = linkData.properties?.action_link || null;
+            await adminClient.from("user_roles").insert({
+              user_id: linkedUserId,
+              role: "client_owner",
+              client_id: client.id,
+            });
+          }
         }
-        inviteResult = { user_id: userId, setup_link: setupLink };
+      } else if (inviteData?.user?.id) {
+        // Invite succeeded — new user
+        linkedUserId = inviteData.user.id;
+        inviteSent = true;
+        await adminClient.from("user_roles").insert({
+          user_id: linkedUserId,
+          role: "client_owner",
+          client_id: client.id,
+        });
       }
     } catch (e) {
-      inviteResult = { error: (e as Error).message };
+      inviteError = (e as Error).message || "Invite failed unexpectedly";
     }
 
     // 4. Activity + audit
@@ -232,27 +253,32 @@ Deno.serve(async (req) => {
           main_goal: main_goal || null,
           interested_service: interested_service || null,
           source: appointment_id ? "booking_auto_provision" : "onboarding_form",
+          invite_sent: inviteSent,
+          invite_error: inviteError,
+          existing_user: existingUser,
         },
       }),
-      // Mark provision ready
       adminClient
         .from("provision_queue")
         .update({ provision_status: "ready_for_kickoff" })
         .eq("client_id", client.id),
     ]);
 
-    // Build the workspace access URL
     const workspaceUrl = `/w/${slug}`;
 
+    // Always return 200 — workspace was created successfully
+    // Invite status is reported separately so the client can handle it
     return new Response(
       JSON.stringify({
         success: true,
         client_id: client.id,
         workspace_slug: slug,
         workspace_url: workspaceUrl,
-        setup_link: inviteResult.setup_link || null,
-        invite_sent: !inviteResult.setup_link && !inviteResult.error && !inviteResult.existing,
-        existing_user: !!inviteResult.existing,
+        setup_link: setupLink,
+        invite_sent: inviteSent,
+        existing_user: existingUser,
+        invite_error: inviteError,
+        linked_user_id: linkedUserId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
