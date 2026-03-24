@@ -26,11 +26,22 @@ interface Client {
   owner_email: string | null;
   owner_phone: string | null;
   preferred_contact_method: string | null;
+  sms_consent: boolean | null;
   invite_status: string | null;
   email_delivery_status: string | null;
   sms_delivery_status: string | null;
   created_at: string;
   onboarding_stage: string;
+}
+
+interface ActivationInfo {
+  draft_status: string;
+  client_id: string;
+}
+
+interface BillingInfo {
+  billing_status: string;
+  client_id: string;
 }
 
 export default function AdminClients() {
