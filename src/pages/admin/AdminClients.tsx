@@ -195,14 +195,19 @@ export default function AdminClients() {
     });
     if (error) {
       toast.error(error.message);
+      await supabase.from("clients").update({ invite_status: "invite_failed" }).eq("id", client.id);
     } else if (data?.invite_email_sent) {
       toast.success("Invite resent!");
+      await supabase.from("clients").update({ invite_status: "invite_sent" }).eq("id", client.id);
     } else if (data?.setup_link) {
       navigator.clipboard.writeText(data.setup_link);
       toast.success("Setup link copied to clipboard");
+      await supabase.from("clients").update({ invite_status: "access_link_generated" }).eq("id", client.id);
     } else {
       toast.success("User account already exists and is linked");
+      await supabase.from("clients").update({ invite_status: "access_link_generated" }).eq("id", client.id);
     }
+    fetchClients();
   };
 
   const copyLink = (link: string) => {
