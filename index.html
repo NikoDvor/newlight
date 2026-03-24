@@ -44,14 +44,32 @@
         0%, 100% { box-shadow: 0 4px 30px -4px hsla(211,96%,56%,.4); }
         50% { box-shadow: 0 4px 50px -4px hsla(211,96%,56%,.7); }
       }
+      #splash-fallback { display: none; margin-top: 24px; }
+      #splash-fallback a {
+        display: inline-block; padding: 10px 28px; border-radius: 12px; font-size: 14px;
+        font-family: system-ui; font-weight: 600; color: #fff; text-decoration: none;
+        background: linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%));
+        box-shadow: 0 4px 20px -4px hsla(211,96%,56%,.4);
+      }
     </style>
+    <script>
+      // Safety timeout: if splash is still visible after 6s, show a fallback link
+      setTimeout(function() {
+        var s = document.getElementById("splash-screen");
+        var f = document.getElementById("splash-fallback");
+        if (s && !s.classList.contains("hide") && f) { f.style.display = "block"; }
+      }, 6000);
+    </script>
   </head>
   <body>
     <div id="splash-screen">
       <div id="splash-logo">
-        <img src="/newlight-logo.jpg" alt="NewLight" />
+        <img src="/newlight-logo.jpg" alt="NewLight" onerror="this.style.display='none'" />
       </div>
       <div id="splash-text">New Eyes To ROI</div>
+      <div id="splash-fallback">
+        <a href="/">Open App</a>
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
