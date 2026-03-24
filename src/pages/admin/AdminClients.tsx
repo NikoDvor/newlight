@@ -620,9 +620,6 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3 text-white/60">{c.industry || "—"}</td>
                   <td className="px-4 py-3">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.1)] text-[hsl(var(--nl-neon))] capitalize">{c.service_package}</span>
-                  </td>
-                  <td className="px-4 py-3">
                     {readiness[c.id] ? (
                       <div className="flex items-center gap-2 min-w-[100px]">
                         <Progress value={readiness[c.id].percentage} className="h-1.5 flex-1" />
@@ -634,6 +631,25 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3">
                     <OnboardingStageCell stage={c.onboarding_stage} />
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const s = activationMap[c.id];
+                      if (!s || s === "not_started") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">Not Started</span>;
+                      if (s === "in_progress") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]">In Progress</span>;
+                      if (s === "submitted") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]">Submitted</span>;
+                      if (s === "activated") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Activated</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{s.replace(/_/g, " ")}</span>;
+                    })()}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const b = billingMap[c.id];
+                      if (!b) return <span className="text-[10px] text-white/20">—</span>;
+                      if (b === "active" || b === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] capitalize">{b}</span>;
+                      if (b === "awaiting_payment" || b === "awaiting_wire") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{b.replace(/_/g, " ")}</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{b.replace(/_/g, " ")}</span>;
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
