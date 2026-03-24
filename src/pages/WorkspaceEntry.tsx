@@ -8,13 +8,13 @@ import { Loader2 } from "lucide-react";
  * Public workspace entry route: /w/:slug
  * Looks up the client by workspace_slug, sets workspace context, and redirects to dashboard.
  * Works for both authenticated and unauthenticated users.
+ * Preserves workspace context through auth redirects.
  */
 export default function WorkspaceEntry() {
   const { slug } = useParams<{ slug: string }>();
-  const { setActiveClientId, setViewMode, user } = useWorkspace();
+  const { setActiveClientId, setViewMode, user, userRole } = useWorkspace();
   const navigate = useNavigate();
   const [state, setState] = useState<"loading" | "not_found" | "ready">("loading");
-  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) { setState("not_found"); return; }
@@ -22,13 +22,13 @@ export default function WorkspaceEntry() {
     const lookup = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("id")
+        .select("id, status")
         .eq("workspace_slug", slug)
         .maybeSingle();
 
       if (!data) { setState("not_found"); return; }
 
-      setClientId(data.id);
+      // Set workspace context immediately
       setActiveClientId(data.id);
       setViewMode("workspace");
       setState("ready");
@@ -40,13 +40,15 @@ export default function WorkspaceEntry() {
     if (state !== "ready") return;
 
     if (!user) {
-      // Not logged in → send to auth with return path to this workspace
+      // Not logged in → send to auth with return path back here
       navigate(`/auth?redirect=/w/${slug}`, { replace: true });
-    } else {
-      // Logged in → go to workspace dashboard
+    } else if (userRole) {
+      // Logged in and role loaded → go to workspace dashboard
+      // Context is already set above, so "/" will render the correct workspace
       navigate("/", { replace: true });
     }
-  }, [state, user, slug, navigate]);
+    // If user exists but userRole is still loading, wait
+  }, [state, user, userRole, slug, navigate]);
 
   if (state === "not_found") {
     return <Navigate to="/get-started" replace />;

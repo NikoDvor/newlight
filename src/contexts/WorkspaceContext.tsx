@@ -68,23 +68,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setActiveClientId(null);
   };
 
-  // Fetch user role from user_roles table
+  // Fetch user role from user_roles table — supports multi-workspace users
   const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
+    // Fetch ALL roles for this user (multi-workspace support)
+    const { data: roles } = await supabase
       .from("user_roles")
       .select("role, client_id")
-      .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
+      .eq("user_id", userId);
 
-    if (data) {
-      setUserRole(data.role);
+    if (roles && roles.length > 0) {
       const adminRoles = ["admin", "operator"];
-      setIsAdmin(adminRoles.includes(data.role));
-      // If client role, auto-set their client
-      if (data.client_id && !adminRoles.includes(data.role)) {
-        setActiveClientId(data.client_id);
-        setViewMode("workspace");
+      const hasAdmin = roles.some(r => adminRoles.includes(r.role));
+
+      if (hasAdmin) {
+        const adminRole = roles.find(r => adminRoles.includes(r.role));
+        setUserRole(adminRole?.role || "admin");
+        setIsAdmin(true);
+      } else {
+        // Client user — pick the first role
+        setUserRole(roles[0].role);
+        setIsAdmin(false);
+        // Only auto-set client if none is already set (e.g. from /w/:slug)
+        if (!activeClientId && roles[0].client_id) {
+          setActiveClientId(roles[0].client_id);
+          setViewMode("workspace");
+        }
       }
     } else {
       // No role found — keep as non-admin, wait for role assignment

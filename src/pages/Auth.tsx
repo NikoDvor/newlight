@@ -35,6 +35,13 @@ export default function Auth() {
     }
   }, [user, isAdmin, userRole, navigate]);
 
+  // After sign-in, if redirect is a /w/:slug path, navigate there to set workspace context
+  const getRedirectAwareNav = () => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    return redirect && redirect.startsWith("/") ? redirect : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -80,18 +87,24 @@ export default function Auth() {
       toast.error("Please verify your email before signing in.");
     } else {
       toast.success("Welcome back!");
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", signInData.user.id)
-        .limit(1)
-        .maybeSingle();
-      if (roleData?.role === "admin") {
-        navigate("/admin");
-      } else if (roleData?.role === "operator") {
-        navigate("/admin/clients");
+      // Check for redirect param first (workspace entry links)
+      const redirectPath = getRedirectAwareNav();
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
       } else {
-        navigate("/");
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", signInData.user.id)
+          .limit(1)
+          .maybeSingle();
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else if (roleData?.role === "operator") {
+          navigate("/admin/clients");
+        } else {
+          navigate("/");
+        }
       }
     }
     setLoading(false);

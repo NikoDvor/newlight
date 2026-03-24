@@ -556,6 +556,13 @@ export default function AdminClients() {
                           <Mail className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
                          </button>
                        )}
+                       <button
+                         onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }}
+                         className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+                         title="Copy workspace link"
+                       >
+                         <Copy className="h-3.5 w-3.5 text-white/40 hover:text-[hsl(var(--nl-sky))]" />
+                       </button>
                        <button onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors" title="Apply / Re-run Starter Template">
                          {provisioning === c.id ? <Loader2 className="h-3.5 w-3.5 text-white/40 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-white/40 hover:text-purple-400" />}
                        </button>
