@@ -93,5 +93,5 @@ export function useClientManifest() {
         URL.revokeObjectURL(oldHref);
       }
     };
-  }, [activeClientId, branding]);
+  }
 }
