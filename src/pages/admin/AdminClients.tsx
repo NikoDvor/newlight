@@ -43,6 +43,7 @@ export default function AdminClients() {
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", primary_location: "",
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
+    owner_phone: "", preferred_contact_method: "email", sms_consent: false,
     logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
   });
   const { setViewMode, setActiveClientId } = useWorkspace();
@@ -94,6 +95,9 @@ export default function AdminClients() {
       service_package: form.service_package,
       owner_name: form.owner_name || null,
       owner_email: form.owner_email,
+      owner_phone: form.owner_phone || null,
+      preferred_contact_method: form.preferred_contact_method || "email",
+      sms_consent: form.sms_consent,
     }).select().single();
 
     if (error) {
@@ -222,6 +226,7 @@ export default function AdminClients() {
     setForm({
       business_name: "", workspace_slug: "", industry: "", primary_location: "",
       timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
+      owner_phone: "", preferred_contact_method: "email", sms_consent: false,
       logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
     });
   };
@@ -305,6 +310,7 @@ export default function AdminClients() {
     { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
     { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
     { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
+    { label: "Owner Phone", key: "owner_phone", placeholder: "(555) 123-4567", type: "tel" },
   ];
 
   const brandingFields = [
@@ -416,6 +422,33 @@ export default function AdminClients() {
                     />
                   </div>
                 ))}
+                {/* Preferred Contact Method */}
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Preferred Contact Method</label>
+                  <select
+                    value={form.preferred_contact_method}
+                    onChange={e => setForm(prev => ({ ...prev, preferred_contact_method: e.target.value }))}
+                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                  >
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+
+                {/* SMS Consent */}
+                {(form.preferred_contact_method === "sms" || form.preferred_contact_method === "both") && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.sms_consent}
+                      onChange={e => setForm(prev => ({ ...prev, sms_consent: e.target.checked }))}
+                      className="h-4 w-4 rounded border-white/20 bg-white/[0.06] accent-[hsl(var(--nl-electric))]"
+                    />
+                    <span className="text-xs text-white/60">OK to receive onboarding texts</span>
+                  </label>
+                )}
+
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Timezone</label>
                   <select
