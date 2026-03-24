@@ -47,6 +47,8 @@ interface BillingInfo {
 export default function AdminClients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [readiness, setReadiness] = useState<Record<string, WorkspaceReadinessResult>>({});
+  const [activationMap, setActivationMap] = useState<Record<string, string>>({});
+  const [billingMap, setBillingMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
