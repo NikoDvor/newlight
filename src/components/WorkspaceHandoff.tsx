@@ -92,11 +92,20 @@ export function WorkspaceHandoff({
             {hasInviteIssue
               ? "Your workspace was created successfully. The invite email could not be sent automatically — use the links below to access your workspace."
               : inviteSent
-              ? "Check your email for login instructions."
+              ? "We've attempted to send login instructions to your email. Check your inbox (and spam folder)."
               : alreadyExists
               ? "Your account has been linked to this workspace. Sign in to access it."
               : "Your workspace has been created and is ready to use."}
           </p>
+          {/* Invite status badge */}
+          {inviteStatus && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
+              {inviteStatus === "invite_sent" && <Mail className="h-3 w-3" />}
+              {inviteStatus === "invite_failed" && <AlertTriangle className="h-3 w-3" />}
+              {inviteStatus === "access_link_generated" && <CheckCircle2 className="h-3 w-3" />}
+              {inviteStatus.replace(/_/g, " ")}
+            </div>
+          )}
         </div>
 
         {/* Invite issue banner */}
