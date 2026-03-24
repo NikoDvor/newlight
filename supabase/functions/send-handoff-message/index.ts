@@ -130,40 +130,11 @@ Deno.serve(async (req) => {
 
     // ── EMAIL ────────────────────────────────────────────────────────
     if (shouldEmail) {
-      // Check if transactional email infrastructure exists
-      const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-      
-      if (lovableApiKey) {
-        // Try using the transactional email system if available
-        try {
-          const { error: fnErr } = await adminClient.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "workspace-handoff",
-              recipientEmail: owner_email,
-              idempotencyKey: `handoff-${client_id}`,
-              templateData: {
-                businessName: business_name,
-                workspaceUrl,
-                setupUrl,
-              },
-            },
-          });
-          
-          if (fnErr) {
-            // Transactional email system not set up — fall back to noting it
-            result.email_status = "not_configured";
-            result.email_error = "Email delivery system not fully configured yet";
-          } else {
-            result.email_status = "sent";
-          }
-        } catch {
-          result.email_status = "not_configured";
-          result.email_error = "Email delivery system not available";
-        }
-      } else {
-        result.email_status = "not_configured";
-        result.email_error = "Email delivery not configured";
-      }
+      // Use Supabase Auth invite as the email mechanism (already sent by provision-from-booking)
+      // The invite email is the real delivery channel — handoff message is supplementary
+      // For now, mark honestly: email provider (transactional email infra) is not yet configured
+      result.email_status = "not_configured";
+      result.email_error = "Email delivery system not configured — set up an email domain in Cloud to enable";
     }
 
     // ── SMS ──────────────────────────────────────────────────────────
