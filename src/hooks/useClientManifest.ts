@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Dynamically updates the web app manifest, theme-color, and apple-touch-icon
@@ -44,13 +45,30 @@ export function useClientManifest() {
     }
     touchIcon.href = iconUrl;
 
-    // Build and inject a dynamic manifest blob
+    // Resolve start_url: use workspace slug if client is active
+    let startUrl = "/";
+    if (isClient) {
+      // Fetch workspace slug for PWA start_url
+      supabase.from("clients").select("workspace_slug").eq("id", activeClientId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.workspace_slug) {
+            injectManifest(appName, themeColor, iconUrl, `/w/${data.workspace_slug}`);
+          }
+        });
+      // Inject immediately with "/" first, then update with slug
+    }
+
+    const cleanup = injectManifest(appName, themeColor, iconUrl, startUrl);
+    return cleanup;
+  }, [activeClientId, branding]);
+
+  function injectManifest(appName: string, themeColor: string, iconUrl: string, startUrl: string) {
     const manifest = {
       name: appName,
       short_name: appName.substring(0, 12),
-      start_url: "/",
-      display: "standalone",
-      background_color: "#ffffff",
+      start_url: startUrl,
+      display: "standalone" as const,
+      background_color: "#030712",
       theme_color: themeColor,
       icons: [
         { src: iconUrl, sizes: "192x192", type: "image/png" },
@@ -75,5 +93,5 @@ export function useClientManifest() {
         URL.revokeObjectURL(oldHref);
       }
     };
-  }, [activeClientId, branding]);
+  }
 }
