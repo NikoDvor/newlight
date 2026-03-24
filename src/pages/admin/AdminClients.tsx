@@ -95,6 +95,9 @@ export default function AdminClients() {
       service_package: form.service_package,
       owner_name: form.owner_name || null,
       owner_email: form.owner_email,
+      owner_phone: form.owner_phone || null,
+      preferred_contact_method: form.preferred_contact_method || "email",
+      sms_consent: form.sms_consent,
     }).select().single();
 
     if (error) {
