@@ -76,7 +76,7 @@ export function WorkspaceHandoff({
         {/* Success header */}
         <div className="text-center mb-6">
           <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
-            hasInviteIssue ? "bg-amber-500/10" : "bg-primary/10"
+            hasInviteIssue ? "bg-destructive/10" : "bg-primary/10"
           }`}>
             {hasInviteIssue ? (
               <AlertTriangle className="h-8 w-8 text-amber-500" />
