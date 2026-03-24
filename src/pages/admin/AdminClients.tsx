@@ -563,7 +563,7 @@ export default function AdminClients() {
                 </motion.tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-white/30">No clients found</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-white/30">No clients found</td></tr>
               )}
             </tbody>
           </table>
