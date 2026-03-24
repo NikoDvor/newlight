@@ -79,7 +79,7 @@ export function WorkspaceHandoff({
             hasInviteIssue ? "bg-destructive/10" : "bg-primary/10"
           }`}>
             {hasInviteIssue ? (
-              <AlertTriangle className="h-8 w-8 text-amber-500" />
+              <AlertTriangle className="h-8 w-8 text-destructive" />
             ) : (
               <CheckCircle2 className="h-8 w-8 text-primary" />
             )}
