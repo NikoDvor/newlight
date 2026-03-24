@@ -18,6 +18,7 @@ interface WorkspaceHandoffProps {
   inviteWarning?: string | null;
   ownerEmail?: string;
   clientId?: string;
+  inviteStatus?: string | null;
 }
 
 export function WorkspaceHandoff({
