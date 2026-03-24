@@ -57,54 +57,23 @@ export function DeleteClientDialog({ open, onOpenChange, client, onComplete }: D
     if (!client || confirmText !== client.business_name) return;
     setProcessing(true);
     try {
-      // Delete related records
-      await Promise.all([
-        supabase.from("client_branding").delete().eq("client_id", client.id),
-        supabase.from("client_health_scores").delete().eq("client_id", client.id),
-        supabase.from("client_integrations").delete().eq("client_id", client.id),
-        supabase.from("fix_now_items").delete().eq("client_id", client.id),
-        supabase.from("ai_business_insights").delete().eq("client_id", client.id),
-        supabase.from("growth_projections").delete().eq("client_id", client.id),
-        supabase.from("automation_events").delete().eq("client_id", client.id),
-        supabase.from("client_reports").delete().eq("client_id", client.id),
-        supabase.from("meeting_intelligence").delete().eq("client_id", client.id),
-        supabase.from("user_roles").delete().eq("client_id", client.id),
-        supabase.from("crm_notes").delete().eq("client_id", client.id),
-        supabase.from("crm_activities").delete().eq("client_id", client.id),
-        supabase.from("crm_tasks").delete().eq("client_id", client.id),
-        supabase.from("crm_deals").delete().eq("client_id", client.id),
-        supabase.from("crm_leads").delete().eq("client_id", client.id),
-        supabase.from("crm_contacts").delete().eq("client_id", client.id),
-        supabase.from("crm_companies").delete().eq("client_id", client.id),
-        supabase.from("pipeline_stages").delete().eq("client_id", client.id),
-        supabase.from("calendar_events").delete().eq("client_id", client.id),
-        supabase.from("email_messages").delete().eq("client_id", client.id),
-        supabase.from("email_threads").delete().eq("client_id", client.id),
-        supabase.from("email_connections").delete().eq("client_id", client.id),
-        supabase.from("review_requests").delete().eq("client_id", client.id),
-        supabase.from("crm_field_mappings").delete().eq("client_id", client.id),
-        supabase.from("crm_sync_logs").delete().eq("client_id", client.id),
-        supabase.from("crm_connections").delete().eq("client_id", client.id),
-        supabase.from("availability_settings").delete().eq("client_id", client.id),
-        supabase.from("event_types").delete().eq("client_id", client.id),
-        supabase.from("ad_campaigns").delete().eq("client_id", client.id),
-        supabase.from("autopilot_rules").delete().eq("client_id", client.id),
-        supabase.from("marketing_campaigns").delete().eq("client_id", client.id),
-      ]);
-
-      // Log before deleting client
+      // Log before deleting — audit_logs FK uses SET NULL so this survives
       await supabase.from("audit_logs").insert({
         action: "client_permanently_deleted",
         module: "clients",
         metadata: { business_name: client.business_name, client_id: client.id, deletion_type: "permanent", reason: reason || null },
       });
 
-      await supabase.from("clients").delete().eq("id", client.id);
+      // Delete the client row — CASCADE constraints handle all 140+ child tables
+      const { error: deleteError } = await supabase.from("clients").delete().eq("id", client.id);
+      if (deleteError) {
+        throw new Error(deleteError.message);
+      }
       toast.success(`${client.business_name} permanently deleted`);
       handleOpenChange(false);
       onComplete();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(`Delete failed: ${err.message}`);
     } finally {
       setProcessing(false);
     }
