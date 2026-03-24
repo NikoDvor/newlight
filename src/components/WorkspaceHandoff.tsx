@@ -23,7 +23,7 @@ interface WorkspaceHandoffProps {
 
 export function WorkspaceHandoff({
   businessName, workspaceUrl, workspaceSlug, setupLink, inviteSent, alreadyExists,
-  inviteWarning, ownerEmail, clientId,
+  inviteWarning, ownerEmail, clientId, inviteStatus,
 }: WorkspaceHandoffProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSetup, setCopiedSetup] = useState(false);
