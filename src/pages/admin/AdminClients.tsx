@@ -26,6 +26,7 @@ interface Client {
   owner_email: string | null;
   owner_phone: string | null;
   preferred_contact_method: string | null;
+  sms_consent: boolean | null;
   invite_status: string | null;
   email_delivery_status: string | null;
   sms_delivery_status: string | null;
@@ -33,9 +34,21 @@ interface Client {
   onboarding_stage: string;
 }
 
+interface ActivationInfo {
+  draft_status: string;
+  client_id: string;
+}
+
+interface BillingInfo {
+  billing_status: string;
+  client_id: string;
+}
+
 export default function AdminClients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [readiness, setReadiness] = useState<Record<string, WorkspaceReadinessResult>>({});
+  const [activationMap, setActivationMap] = useState<Record<string, string>>({});
+  const [billingMap, setBillingMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -56,12 +69,37 @@ export default function AdminClients() {
     const { data } = await supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false });
     const list = (data ?? []) as Client[];
     setClients(list);
-    // Fetch readiness for all clients in parallel
+    // Fetch readiness, activation drafts, and billing in parallel
     const results: Record<string, WorkspaceReadinessResult> = {};
-    await Promise.all(list.map(async (c) => {
-      results[c.id] = await computeWorkspaceReadiness(c.id);
-    }));
+    const clientIds = list.map(c => c.id);
+
+    const [, activationRes, billingRes] = await Promise.all([
+      Promise.all(list.map(async (c) => {
+        results[c.id] = await computeWorkspaceReadiness(c.id);
+      })),
+      clientIds.length > 0
+        ? supabase.from("activation_drafts").select("client_id, draft_status").in("client_id", clientIds).order("updated_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
+      clientIds.length > 0
+        ? supabase.from("billing_accounts").select("client_id, billing_status").in("client_id", clientIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
     setReadiness(results);
+
+    // Build activation map (latest draft per client)
+    const aMap: Record<string, string> = {};
+    for (const row of (activationRes?.data || []) as ActivationInfo[]) {
+      if (!aMap[row.client_id]) aMap[row.client_id] = row.draft_status;
+    }
+    setActivationMap(aMap);
+
+    // Build billing map
+    const bMap: Record<string, string> = {};
+    for (const row of (billingRes?.data || []) as BillingInfo[]) {
+      if (!bMap[row.client_id]) bMap[row.client_id] = row.billing_status;
+    }
+    setBillingMap(bMap);
   };
 
   useEffect(() => { fetchClients(); }, []);
@@ -219,7 +257,35 @@ export default function AdminClients() {
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);
-    toast.success("Setup link copied!");
+    toast.success("Link copied!");
+  };
+
+  const handleResendSms = async (client: Client) => {
+    if (!client.owner_phone || !client.sms_consent) {
+      toast.error("No phone number or SMS consent on file");
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("send-handoff-message", {
+      body: {
+        client_id: client.id,
+        business_name: client.business_name,
+        owner_email: client.owner_email || "",
+        owner_phone: client.owner_phone,
+        preferred_contact_method: "sms",
+        sms_consent: true,
+        workspace_slug: client.workspace_slug,
+        base_url: window.location.origin,
+      },
+    });
+    if (error) {
+      toast.error("SMS resend failed");
+    } else if (data?.sms_status === "sent") {
+      toast.success("SMS resent!");
+      await supabase.from("clients").update({ sms_delivery_status: "sent" }).eq("id", client.id);
+    } else {
+      toast.error(data?.sms_error || "SMS could not be sent");
+    }
+    fetchClients();
   };
 
   const resetForm = () => {
@@ -532,7 +598,7 @@ export default function AdminClients() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["Client Name", "Industry", "Package", "Readiness", "Onboarding", "Status", "Owner", ""].map(h => (
+                {["Client Name", "Industry", "Readiness", "Onboarding", "Form 2", "Payment", "Status", "Owner", ""].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
@@ -554,9 +620,6 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3 text-white/60">{c.industry || "—"}</td>
                   <td className="px-4 py-3">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.1)] text-[hsl(var(--nl-neon))] capitalize">{c.service_package}</span>
-                  </td>
-                  <td className="px-4 py-3">
                     {readiness[c.id] ? (
                       <div className="flex items-center gap-2 min-w-[100px]">
                         <Progress value={readiness[c.id].percentage} className="h-1.5 flex-1" />
@@ -568,6 +631,25 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3">
                     <OnboardingStageCell stage={c.onboarding_stage} />
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const s = activationMap[c.id];
+                      if (!s || s === "not_started") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">Not Started</span>;
+                      if (s === "in_progress") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]">In Progress</span>;
+                      if (s === "submitted") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]">Submitted</span>;
+                      if (s === "activated") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Activated</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{s.replace(/_/g, " ")}</span>;
+                    })()}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const b = billingMap[c.id];
+                      if (!b) return <span className="text-[10px] text-white/20">—</span>;
+                      if (b === "active" || b === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] capitalize">{b}</span>;
+                      if (b === "awaiting_payment" || b === "awaiting_wire") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{b.replace(/_/g, " ")}</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{b.replace(/_/g, " ")}</span>;
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
@@ -655,6 +737,11 @@ export default function AdminClients() {
                           {c.owner_email && (
                             <DropdownMenuItem onClick={() => handleResendInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                               <Mail className="h-3.5 w-3.5" /> Resend Invite
+                            </DropdownMenuItem>
+                          )}
+                          {c.owner_phone && c.sms_consent && (
+                            <DropdownMenuItem onClick={() => handleResendSms(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                              <MessageSquare className="h-3.5 w-3.5" /> Resend SMS
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">

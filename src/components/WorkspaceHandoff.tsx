@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2, ExternalLink, ArrowRight, Smartphone, Share,
-  Copy, Check, Download, AlertTriangle, Mail, RefreshCw
+  Copy, Check, Download, AlertTriangle, Mail, RefreshCw, MessageSquare
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,20 +17,25 @@ interface WorkspaceHandoffProps {
   alreadyExists?: boolean;
   inviteWarning?: string | null;
   ownerEmail?: string;
+  ownerPhone?: string | null;
   clientId?: string;
   inviteStatus?: string | null;
   emailDeliveryStatus?: string | null;
   smsDeliveryStatus?: string | null;
+  preferredContactMethod?: string | null;
+  smsConsent?: boolean;
 }
 
 export function WorkspaceHandoff({
   businessName, workspaceUrl, workspaceSlug, setupLink, inviteSent, alreadyExists,
-  inviteWarning, ownerEmail, clientId, inviteStatus, emailDeliveryStatus, smsDeliveryStatus,
+  inviteWarning, ownerEmail, ownerPhone, clientId, inviteStatus, emailDeliveryStatus,
+  smsDeliveryStatus, preferredContactMethod, smsConsent,
 }: WorkspaceHandoffProps) {
   const [copied, setCopied] = useState(false);
   const [copiedSetup, setCopiedSetup] = useState(false);
   const [showInstall, setShowInstall] = useState(false);
   const [resending, setResending] = useState(false);
+  const [resendingSms, setResendingSms] = useState(false);
 
   const fullUrl = `${window.location.origin}/w/${workspaceSlug}`;
   const continueSetupUrl = `${window.location.origin}/auth?redirect=/setup-center`;
@@ -64,10 +69,42 @@ export function WorkspaceHandoff({
     setResending(false);
   };
 
+  const handleResendSms = async () => {
+    if (!clientId || !workspaceSlug) return;
+    setResendingSms(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-handoff-message", {
+        body: {
+          client_id: clientId,
+          business_name: businessName,
+          owner_email: ownerEmail || "",
+          owner_phone: ownerPhone || null,
+          preferred_contact_method: "sms",
+          sms_consent: true,
+          workspace_slug: workspaceSlug,
+          base_url: window.location.origin,
+        },
+      });
+      if (error) {
+        toast.error("SMS resend failed.");
+      } else if (data?.sms_status === "sent") {
+        toast.success("SMS resent!");
+      } else if (data?.sms_status === "not_configured") {
+        toast.error("SMS provider not configured.");
+      } else {
+        toast.error(data?.sms_error || "SMS could not be sent.");
+      }
+    } catch {
+      toast.error("SMS resend failed.");
+    }
+    setResendingSms(false);
+  };
+
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isAndroid = /Android/.test(navigator.userAgent);
 
   const hasInviteIssue = !!inviteWarning && !inviteSent && !alreadyExists;
+  const canResendSms = !!(ownerPhone && clientId && smsConsent && (preferredContactMethod === "sms" || preferredContactMethod === "both"));
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -94,7 +131,7 @@ export function WorkspaceHandoff({
             {hasInviteIssue
               ? "Your workspace was created successfully. The invite email could not be sent automatically — use the links below to access your workspace."
               : inviteSent
-              ? "We've attempted to send login instructions to your email. Check your inbox (and spam folder)."
+              ? "We've sent login instructions to your email. Check your inbox (and spam folder)."
               : alreadyExists
               ? "Your account has been linked to this workspace. Sign in to access it."
               : "Your workspace has been created and is ready to use."}
@@ -125,7 +162,7 @@ export function WorkspaceHandoff({
                 smsDeliveryStatus === "failed" ? "bg-destructive/10 text-destructive" :
                 "bg-muted text-muted-foreground"
               }`}>
-                <Share className="h-3 w-3" />
+                <MessageSquare className="h-3 w-3" />
                 SMS: {smsDeliveryStatus === "not_configured" ? "not configured" : smsDeliveryStatus}
               </span>
             )}
@@ -142,23 +179,52 @@ export function WorkspaceHandoff({
                 <p className="text-[11px] text-muted-foreground mb-3">
                   You can still access your workspace using the links below, or we can try sending the invite again.
                 </p>
-                {ownerEmail && clientId && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleResendInvite}
-                    disabled={resending}
-                    className="gap-1.5 text-xs h-8"
-                  >
-                    {resending ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Mail className="h-3 w-3" />
-                    )}
-                    {resending ? "Sending…" : "Resend Invite"}
-                  </Button>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {ownerEmail && clientId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleResendInvite}
+                      disabled={resending}
+                      className="gap-1.5 text-xs h-8"
+                    >
+                      {resending ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                      {resending ? "Sending…" : "Resend Invite"}
+                    </Button>
+                  )}
+                  {canResendSms && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleResendSms}
+                      disabled={resendingSms}
+                      className="gap-1.5 text-xs h-8"
+                    >
+                      {resendingSms ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3" />}
+                      {resendingSms ? "Sending…" : "Resend SMS"}
+                    </Button>
+                  )}
+                </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Resend actions when no invite issue but SMS available */}
+        {!hasInviteIssue && canResendSms && smsDeliveryStatus !== "sent" && (
+          <div className="rounded-2xl border bg-card p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">SMS not delivered?</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleResendSms}
+                disabled={resendingSms}
+                className="gap-1.5 text-xs h-7"
+              >
+                {resendingSms ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3" />}
+                {resendingSms ? "Sending…" : "Resend SMS"}
+              </Button>
             </div>
           </div>
         )}

@@ -14,7 +14,7 @@ interface HandoffRequest {
   preferred_contact_method?: string; // "email" | "sms" | "both"
   sms_consent?: boolean;
   workspace_slug: string;
-  base_url: string; // e.g. https://newlight.lovable.app
+  base_url: string;
 }
 
 function buildEmailHtml(p: {
@@ -130,25 +130,25 @@ Deno.serve(async (req) => {
 
     // ── EMAIL ────────────────────────────────────────────────────────
     if (shouldEmail) {
-      // Use Supabase Auth invite as the email mechanism (already sent by provision-from-booking)
-      // The invite email is the real delivery channel — handoff message is supplementary
-      // For now, mark honestly: email provider (transactional email infra) is not yet configured
+      // Email delivery requires a configured email domain (Lovable Cloud Emails).
+      // The invite email from Supabase Auth is the primary delivery channel.
+      // This handoff message is supplementary — mark honestly.
       result.email_status = "not_configured";
-      result.email_error = "Email delivery system not configured — set up an email domain in Cloud to enable";
+      result.email_error = "Transactional email not configured — set up an email domain in Cloud to enable branded handoff emails";
     }
 
     // ── SMS ──────────────────────────────────────────────────────────
     if (shouldSms) {
-      // Check for Twilio connector
       const twilioApiKey = Deno.env.get("TWILIO_API_KEY");
       const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
       if (twilioApiKey && lovableApiKey) {
         try {
-          const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio/api";
+          // Twilio connector gateway — path auto-prefixes /2010-04-01/Accounts/{AccountSid}
+          const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
           const smsText = buildSmsText({ businessName: business_name, workspaceUrl, setupUrl });
-          
-          const smsResponse = await fetch(`${GATEWAY_URL}/2010-04-01/Accounts/me/Messages.json`, {
+
+          const smsResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${lovableApiKey}`,
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
         }
       } else {
         result.sms_status = "not_configured";
-        result.sms_error = "SMS provider not connected";
+        result.sms_error = "SMS provider not connected — link a Twilio connector to enable";
       }
     } else if ((preferred_contact_method === "sms" || preferred_contact_method === "both") && !sms_consent) {
       result.sms_status = "not_attempted";
@@ -206,7 +206,6 @@ Deno.serve(async (req) => {
       }),
     ]);
 
-    // Build the email HTML for embedding in response (for fallback display)
     const emailHtml = buildEmailHtml({ businessName: business_name, workspaceUrl, setupUrl });
 
     return new Response(
