@@ -271,7 +271,10 @@ export default function GetStarted() {
         workspaceSlug={result.workspace_slug || slug}
         setupLink={result.setup_link}
         inviteSent={result.invite_sent}
-        alreadyExists={result.already_exists}
+        alreadyExists={result.already_exists || result.existing_user}
+        inviteWarning={result.invite_warning}
+        ownerEmail={ownerEmail}
+        clientId={result.client_id}
       />
     );
   }

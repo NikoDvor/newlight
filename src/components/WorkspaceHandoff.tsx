@@ -100,9 +100,9 @@ export function WorkspaceHandoff({
 
         {/* Invite issue banner */}
         {hasInviteIssue && (
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 mb-4">
+          <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 mb-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div className="flex-1">
                 <p className="text-xs font-medium text-foreground mb-1">Invite email was not sent</p>
                 <p className="text-[11px] text-muted-foreground mb-3">
