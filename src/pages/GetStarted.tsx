@@ -216,7 +216,10 @@ export default function GetStarted() {
         });
       }
 
-      setResult(data);
+      setResult({
+        ...data,
+        invite_warning: data?.invite_error || null,
+      });
       setPageState("success");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
