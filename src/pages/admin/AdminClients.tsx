@@ -23,6 +23,9 @@ interface Client {
   status: string;
   owner_name: string | null;
   owner_email: string | null;
+  owner_phone: string | null;
+  preferred_contact_method: string | null;
+  invite_status: string | null;
   created_at: string;
   onboarding_stage: string;
 }
