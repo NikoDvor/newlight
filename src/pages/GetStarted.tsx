@@ -97,6 +97,8 @@ export default function GetStarted() {
             appointment_id: null,
             calendar_client_id: null,
             custom_slug: slug || null,
+            preferred_contact_method: preferredContact,
+            sms_consent: smsConsent,
           },
         }
       );
