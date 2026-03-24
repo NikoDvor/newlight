@@ -28,8 +28,12 @@ Deno.serve(async (req) => {
       industry,
       location,
       website,
+      timezone,
+      main_goal,
+      interested_service,
       appointment_id,
       calendar_client_id,
+      custom_slug,
     } = await req.json();
 
     if (!contact_email || !business_name) {
@@ -39,28 +43,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if workspace already exists for this email
-    const { data: existingClient } = await adminClient
+    const displayName = company_name || business_name;
+    let slug = (custom_slug || displayName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+    // Check if workspace with this exact slug already exists
+    const { data: existingBySlug } = await adminClient
       .from("clients")
       .select("id, workspace_slug")
-      .eq("owner_email", contact_email)
+      .eq("workspace_slug", slug)
       .maybeSingle();
 
-    if (existingClient) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          already_exists: true,
-          client_id: existingClient.id,
-          workspace_url: `/w/${existingClient.workspace_slug}`,
-          workspace_slug: existingClient.workspace_slug,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (existingBySlug) {
+      // Check if same owner — if so, return existing workspace
+      const { data: existingByOwner } = await adminClient
+        .from("clients")
+        .select("id, workspace_slug")
+        .eq("workspace_slug", slug)
+        .eq("owner_email", contact_email)
+        .maybeSingle();
 
-    const displayName = company_name || business_name;
-    const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      if (existingByOwner) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            already_exists: true,
+            client_id: existingByOwner.id,
+            workspace_url: `/w/${existingByOwner.workspace_slug}`,
+            workspace_slug: existingByOwner.workspace_slug,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Different owner, same slug — append a suffix
+      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+    }
 
     // 1. Create client workspace
     const { data: client, error: clientErr } = await adminClient
@@ -72,9 +89,11 @@ Deno.serve(async (req) => {
         primary_location: location || null,
         owner_name: contact_name || null,
         owner_email: contact_email,
-        onboarding_stage: "discovery",
+        onboarding_stage: "provisioned",
         status: "active",
         source_appointment_id: appointment_id || null,
+        website_url: website || null,
+        timezone: timezone || "America/Los_Angeles",
       })
       .select()
       .single();
@@ -119,31 +138,22 @@ Deno.serve(async (req) => {
           status: "pending",
         }))
       ),
-      // Create a default calendar
-      adminClient.from("calendars").insert({
-        client_id: client.id,
-        calendar_name: "Main Calendar",
-        calendar_type: "booking",
-        timezone: "America/Los_Angeles",
-        is_active: true,
-      }),
-      // Create CRM contact
+      // Create CRM contact for the owner
       adminClient.from("crm_contacts").insert({
         client_id: client.id,
         full_name: contact_name || contact_email.split("@")[0],
         email: contact_email.toLowerCase(),
         phone: contact_phone || null,
-        lead_source: "booking",
+        lead_source: appointment_id ? "booking" : "onboarding_form",
         pipeline_stage: "new_lead",
         first_contact_date: new Date().toISOString(),
         last_interaction_date: new Date().toISOString(),
       }),
     ]);
 
-    // 3. Invite the user as client_owner
+    // 3. Invite the user as client_owner (append role, don't replace)
     let inviteResult: any = {};
     try {
-      // Check if user already exists
       const { data: existingUsers } = await adminClient.auth.admin.listUsers();
       const existingUser = existingUsers?.users?.find(
         (u: any) => u.email === contact_email
@@ -154,6 +164,22 @@ Deno.serve(async (req) => {
 
       if (existingUser) {
         userId = existingUser.id;
+        // ADD the new client_owner role for this workspace (don't touch other roles)
+        const { data: existingRole } = await adminClient
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("client_id", client.id)
+          .maybeSingle();
+
+        if (!existingRole) {
+          await adminClient.from("user_roles").insert({
+            user_id: userId,
+            role: "client_owner",
+            client_id: client.id,
+          });
+        }
+        inviteResult = { user_id: userId, existing: true };
       } else {
         // Try to invite
         const { data: inviteData, error: inviteError } =
@@ -173,19 +199,16 @@ Deno.serve(async (req) => {
         } else {
           userId = inviteData.user.id;
         }
-      }
 
-      if (userId) {
-        // Remove existing roles, assign client_owner
-        await adminClient.from("user_roles").delete().eq("user_id", userId);
-        await adminClient.from("user_roles").insert({
-          user_id: userId,
-          role: "client_owner",
-          client_id: client.id,
-        });
+        if (userId) {
+          await adminClient.from("user_roles").insert({
+            user_id: userId,
+            role: "client_owner",
+            client_id: client.id,
+          });
+        }
+        inviteResult = { user_id: userId, setup_link: setupLink };
       }
-
-      inviteResult = { user_id: userId, setup_link: setupLink };
     } catch (e) {
       inviteResult = { error: (e as Error).message };
     }
@@ -195,17 +218,20 @@ Deno.serve(async (req) => {
       adminClient.from("crm_activities").insert({
         client_id: client.id,
         activity_type: "workspace_created",
-        activity_note: `Workspace auto-created from booking for ${contact_name || contact_email}`,
+        activity_note: `Workspace created for ${contact_name || contact_email}${main_goal ? ` — Goal: ${main_goal}` : ""}${interested_service ? ` — Interest: ${interested_service}` : ""}`,
       }),
       adminClient.from("audit_logs").insert({
         action: "workspace_auto_provisioned",
         client_id: client.id,
-        module: "booking",
+        module: "onboarding",
         metadata: {
           contact_email,
           contact_name,
           appointment_id,
-          source: "booking_auto_provision",
+          industry,
+          main_goal: main_goal || null,
+          interested_service: interested_service || null,
+          source: appointment_id ? "booking_auto_provision" : "onboarding_form",
         },
       }),
       // Mark provision ready
@@ -218,12 +244,6 @@ Deno.serve(async (req) => {
     // Build the workspace access URL
     const workspaceUrl = `/w/${slug}`;
 
-    // Store the access URL
-    await adminClient
-      .from("clients")
-      .update({ workspace_access_url: workspaceUrl })
-      .eq("id", client.id);
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -231,7 +251,8 @@ Deno.serve(async (req) => {
         workspace_slug: slug,
         workspace_url: workspaceUrl,
         setup_link: inviteResult.setup_link || null,
-        invite_sent: !inviteResult.setup_link && !inviteResult.error,
+        invite_sent: !inviteResult.setup_link && !inviteResult.error && !inviteResult.existing,
+        existing_user: !!inviteResult.existing,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

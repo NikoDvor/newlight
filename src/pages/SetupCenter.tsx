@@ -133,10 +133,27 @@ export default function SetupCenter() {
   const totalCount = sections.length;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
+  // Check activation form status
+  const [activationStatus, setActivationStatus] = useState<string | null>(null);
+  useEffect(() => {
+    if (!activeClientId) return;
+    supabase.from("activation_drafts")
+      .select("draft_status")
+      .eq("client_id", activeClientId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setActivationStatus(data?.draft_status || "not_started");
+      });
+  }, [activeClientId]);
+
   // Role-based filtering
   const isStaff = userRole && !["admin", "operator", "client_owner", "workspace_admin", "manager"].includes(userRole);
   const staffKeys = ["calendars", "training"];
   const visibleSections = isStaff ? sections.filter(s => staffKeys.includes(s.key)) : sections;
+
+  const showActivationCard = !isLive && !isStaff && activationStatus !== "activated";
 
   return (
     <div>
@@ -144,6 +161,44 @@ export default function SetupCenter() {
         title={isLive ? "Setup Center" : "Setup Center"}
         description={isLive ? "Your workspace is live — review and refine your setup anytime" : "Complete your workspace setup to unlock your full growth system"}
       />
+
+      {/* Continue Activation Card */}
+      {showActivationCard && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-5 rounded-2xl border"
+          style={{
+            borderColor: "hsla(40,96%,60%,.15)",
+            background: "linear-gradient(135deg, hsla(40,96%,60%,.06), hsla(40,96%,60%,.02))",
+          }}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-xl flex items-center justify-center" style={{ background: "hsla(40,96%,60%,.12)" }}>
+                <Rocket className="h-5 w-5" style={{ color: "hsl(40 96% 50%)" }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {activationStatus === "in_progress" ? "Continue Your Setup" : "Complete Your Activation"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {activationStatus === "in_progress"
+                    ? "You have a setup form in progress — pick up where you left off."
+                    : "Finalize your workspace configuration, choose your package, and activate."}
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5" style={{
+              color: activationStatus === "in_progress" ? "hsl(40 96% 50%)" : "hsl(var(--muted-foreground))",
+              background: activationStatus === "in_progress" ? "hsla(40,96%,60%,.12)" : "hsla(210,40%,94%,.6)",
+              borderColor: "transparent",
+            }}>
+              {activationStatus === "in_progress" ? "In Progress" : activationStatus === "submitted" ? "Submitted" : "Not Started"}
+            </Badge>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-3">
+            Your workspace is provisioned but not yet fully activated. Complete the activation form to unlock your full growth system.
+          </p>
+        </motion.div>
+      )}
 
       {/* Overall Progress */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}

@@ -266,6 +266,22 @@ export default function AdminClients() {
 
   const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
 
+  const onboardingStageColor = (stage: string) => {
+    switch (stage) {
+      case "active": return "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]";
+      case "awaiting_payment": return "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]";
+      case "activation": case "activation_in_progress": return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]";
+      case "provisioned": case "discovery": return "bg-[hsla(270,60%,60%,.15)] text-[hsl(270,60%,68%)]";
+      default: return "bg-white/5 text-white/40";
+    }
+  };
+
+  const OnboardingStageCell = ({ stage }: { stage: string }) => (
+    <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize whitespace-nowrap ${onboardingStageColor(stage)}`}>
+      {stage.replace(/_/g, " ")}
+    </span>
+  );
+
   const statusColor = (s: string) => {
     if (s === "active") return "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]";
     if (s === "provisioning") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-neon))]";
@@ -472,7 +488,7 @@ export default function AdminClients() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["Client Name", "Industry", "Package", "Readiness", "Status", "Owner", ""].map(h => (
+                {["Client Name", "Industry", "Package", "Readiness", "Onboarding", "Status", "Owner", ""].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
@@ -505,6 +521,9 @@ export default function AdminClients() {
                     ) : (
                       <span className="text-[10px] text-white/30">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <OnboardingStageCell stage={c.onboarding_stage} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
@@ -560,7 +579,7 @@ export default function AdminClients() {
                 </motion.tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-white/30">No clients found</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-white/30">No clients found</td></tr>
               )}
             </tbody>
           </table>

@@ -5,7 +5,6 @@ import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { LogoUploader } from "@/components/LogoUploader";
 import {
@@ -89,8 +88,12 @@ export default function GetStarted() {
             industry: industry || null,
             location: location || null,
             website: website || null,
+            timezone,
+            main_goal: mainGoal || null,
+            interested_service: interestedService || null,
             appointment_id: null,
             calendar_client_id: null,
+            custom_slug: slug || null,
           },
         }
       );
@@ -115,20 +118,87 @@ export default function GetStarted() {
         // Update slug if custom
         if (slug && slug !== data.workspace_slug) {
           await supabase.from("clients").update({ workspace_slug: slug }).eq("id", data.client_id);
+          data.workspace_slug = slug;
+          data.workspace_url = `/w/${slug}`;
         }
 
-        // Set initial stage
-        await supabase.from("clients").update({
-          onboarding_stage: "discovery",
-          status: "active",
-        }).eq("id", data.client_id);
+        // 3. Create a discovery appointment on the first available calendar
+        try {
+          const { data: calendars } = await supabase.from("calendars")
+            .select("id")
+            .eq("client_id", data.client_id)
+            .eq("is_active", true)
+            .limit(1);
 
-        // Audit
+          if (calendars && calendars.length > 0) {
+            const startTime = new Date();
+            startTime.setDate(startTime.getDate() + 3); // 3 days from now
+            startTime.setHours(10, 0, 0, 0);
+            const endTime = new Date(startTime.getTime() + 30 * 60000);
+
+            await supabase.from("calendar_events").insert({
+              client_id: data.client_id,
+              calendar_id: calendars[0].id,
+              title: "Discovery / Kickoff Call",
+              description: `Onboarding kickoff for ${businessName}. Goal: ${mainGoal || "Discuss needs"}. Interest: ${interestedService || "TBD"}.`,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              timezone,
+              contact_name: ownerName,
+              contact_email: ownerEmail,
+              contact_phone: phone || null,
+              calendar_status: "scheduled",
+              booking_source: "onboarding_form",
+            });
+          }
+        } catch (calErr) {
+          console.warn("Discovery appointment creation skipped:", calErr);
+        }
+
+        // 4. Create onboarding reminder automations
+        try {
+          await supabase.from("automations").insert([
+            {
+              client_id: data.client_id,
+              name: "Continue Setup Reminder",
+              trigger_event: "onboarding_form_saved",
+              action_type: "notification",
+              action_config: { type: "continue_setup_reminder", delay_hours: 24 },
+              automation_category: "onboarding",
+              automation_key: "onboarding_continue_setup",
+              enabled: true,
+            },
+            {
+              client_id: data.client_id,
+              name: "Activation Incomplete Reminder",
+              trigger_event: "setup_progress_updated",
+              action_type: "notification",
+              action_config: { type: "activation_incomplete", delay_hours: 72 },
+              automation_category: "onboarding",
+              automation_key: "onboarding_activation_reminder",
+              enabled: true,
+            },
+            {
+              client_id: data.client_id,
+              name: "Payment Pending Reminder",
+              trigger_event: "activation_form_submitted",
+              action_type: "notification",
+              action_config: { type: "payment_pending", delay_hours: 48, condition: "payment_not_confirmed" },
+              automation_category: "onboarding",
+              automation_key: "onboarding_payment_reminder",
+              enabled: true,
+            },
+          ]);
+        } catch (autoErr) {
+          console.warn("Onboarding automations creation skipped:", autoErr);
+        }
+
+        // 5. Audit
         await supabase.from("audit_logs").insert({
           client_id: data.client_id,
           action: "workspace_created_via_onboarding_form",
           module: "onboarding",
-          metadata: { businessName, industry, ownerEmail, source: "get-started-form" },
+          metadata: { businessName, industry, ownerEmail, source: "get-started-form", main_goal: mainGoal, interested_service: interestedService },
         });
 
         await supabase.from("crm_activities").insert({

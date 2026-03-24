@@ -7,12 +7,13 @@ import { Loader2 } from "lucide-react";
 /**
  * Public workspace entry route: /w/:slug
  * Looks up the client by workspace_slug, sets workspace context, and redirects to dashboard.
+ * Works for both authenticated and unauthenticated users.
  */
 export default function WorkspaceEntry() {
   const { slug } = useParams<{ slug: string }>();
   const { setActiveClientId, setViewMode, user } = useWorkspace();
   const navigate = useNavigate();
-  const [state, setState] = useState<"loading" | "not_found" | "redirect">("loading");
+  const [state, setState] = useState<"loading" | "not_found" | "ready">("loading");
   const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,21 +31,22 @@ export default function WorkspaceEntry() {
       setClientId(data.id);
       setActiveClientId(data.id);
       setViewMode("workspace");
-      setState("redirect");
+      setState("ready");
     };
     lookup();
   }, [slug]);
 
   useEffect(() => {
-    if (state === "redirect") {
-      // If not logged in, redirect to auth with a return path
-      if (!user) {
-        navigate(`/auth?redirect=/w/${slug}`, { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+    if (state !== "ready") return;
+
+    if (!user) {
+      // Not logged in → send to auth with return path to this workspace
+      navigate(`/auth?redirect=/w/${slug}`, { replace: true });
+    } else {
+      // Logged in → go to workspace dashboard
+      navigate("/", { replace: true });
     }
-  }, [state, user]);
+  }, [state, user, slug, navigate]);
 
   if (state === "not_found") {
     return <Navigate to="/get-started" replace />;
