@@ -234,6 +234,7 @@ export default function GetStarted() {
       setResult({
         ...data,
         invite_warning: data?.invite_error || null,
+        invite_status: data?.invite_sent ? "invite_sent" : data?.invite_error ? "invite_failed" : data?.existing_user ? "access_link_generated" : "invite_attempted",
       });
       setPageState("success");
     } catch (err: any) {
