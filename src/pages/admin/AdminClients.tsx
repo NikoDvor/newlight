@@ -257,7 +257,35 @@ export default function AdminClients() {
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);
-    toast.success("Setup link copied!");
+    toast.success("Link copied!");
+  };
+
+  const handleResendSms = async (client: Client) => {
+    if (!client.owner_phone || !client.sms_consent) {
+      toast.error("No phone number or SMS consent on file");
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("send-handoff-message", {
+      body: {
+        client_id: client.id,
+        business_name: client.business_name,
+        owner_email: client.owner_email || "",
+        owner_phone: client.owner_phone,
+        preferred_contact_method: "sms",
+        sms_consent: true,
+        workspace_slug: client.workspace_slug,
+        base_url: window.location.origin,
+      },
+    });
+    if (error) {
+      toast.error("SMS resend failed");
+    } else if (data?.sms_status === "sent") {
+      toast.success("SMS resent!");
+      await supabase.from("clients").update({ sms_delivery_status: "sent" }).eq("id", client.id);
+    } else {
+      toast.error(data?.sms_error || "SMS could not be sent");
+    }
+    fetchClients();
   };
 
   const resetForm = () => {
