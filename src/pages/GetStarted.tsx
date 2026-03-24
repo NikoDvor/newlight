@@ -101,6 +101,14 @@ export default function GetStarted() {
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
 
+      // Track invite status for the handoff page (don't fail the flow)
+      const inviteWarning = data?.invite_error
+        ? `Invite could not be sent: ${data.invite_error}`
+        : null;
+      if (inviteWarning) {
+        console.warn("Invite issue (non-blocking):", inviteWarning);
+      }
+
       // 2. Run full-app provisioning if newly created
       if (data?.client_id && !data?.already_exists) {
         try {
