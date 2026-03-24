@@ -34,6 +34,8 @@ Deno.serve(async (req) => {
       appointment_id,
       calendar_client_id,
       custom_slug,
+      preferred_contact_method,
+      sms_consent,
     } = await req.json();
 
     if (!contact_email || !business_name) {
@@ -91,6 +93,10 @@ Deno.serve(async (req) => {
         primary_location: location || null,
         owner_name: contact_name || null,
         owner_email: contact_email,
+        owner_phone: contact_phone || null,
+        preferred_contact_method: preferred_contact_method || "email",
+        sms_consent: sms_consent || false,
+        invite_status: "invite_not_attempted",
         onboarding_stage: "provisioned",
         status: "active",
         source_appointment_id: appointment_id || null,
@@ -234,8 +240,18 @@ Deno.serve(async (req) => {
       inviteError = (e as Error).message || "Invite failed unexpectedly";
     }
 
-    // 4. Activity + audit
+    // 4. Update invite status on client record
+    const finalInviteStatus = inviteSent
+      ? "invite_sent"
+      : existingUser
+      ? "access_link_generated"
+      : inviteError
+      ? "invite_failed"
+      : "invite_attempted";
+
+    // 5. Activity + audit
     await Promise.all([
+      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
       adminClient.from("crm_activities").insert({
         client_id: client.id,
         activity_type: "workspace_created",
@@ -248,6 +264,9 @@ Deno.serve(async (req) => {
         metadata: {
           contact_email,
           contact_name,
+          contact_phone,
+          preferred_contact_method,
+          sms_consent,
           appointment_id,
           industry,
           main_goal: main_goal || null,
@@ -255,6 +274,7 @@ Deno.serve(async (req) => {
           source: appointment_id ? "booking_auto_provision" : "onboarding_form",
           invite_sent: inviteSent,
           invite_error: inviteError,
+          invite_status: finalInviteStatus,
           existing_user: existingUser,
         },
       }),

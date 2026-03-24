@@ -2423,16 +2423,19 @@ export type Database = {
           crm_mode: string
           id: string
           industry: string | null
+          invite_status: string | null
           legal_business_name: string | null
           onboarding_stage: string
           owner_email: string | null
           owner_name: string | null
           owner_phone: string | null
+          preferred_contact_method: string | null
           primary_location: string | null
           secondary_contact_email: string | null
           secondary_contact_name: string | null
           secondary_contact_phone: string | null
           service_package: string | null
+          sms_consent: boolean | null
           source_appointment_id: string | null
           status: string
           timezone: string | null
@@ -2447,16 +2450,19 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          invite_status?: string | null
           legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          preferred_contact_method?: string | null
           primary_location?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
           service_package?: string | null
+          sms_consent?: boolean | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null
@@ -2471,16 +2477,19 @@ export type Database = {
           crm_mode?: string
           id?: string
           industry?: string | null
+          invite_status?: string | null
           legal_business_name?: string | null
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          preferred_contact_method?: string | null
           primary_location?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
           service_package?: string | null
+          sms_consent?: boolean | null
           source_appointment_id?: string | null
           status?: string
           timezone?: string | null

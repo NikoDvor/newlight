@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,9 @@ interface Client {
   status: string;
   owner_name: string | null;
   owner_email: string | null;
+  owner_phone: string | null;
+  preferred_contact_method: string | null;
+  invite_status: string | null;
   created_at: string;
   onboarding_stage: string;
 }
@@ -192,14 +195,19 @@ export default function AdminClients() {
     });
     if (error) {
       toast.error(error.message);
+      await supabase.from("clients").update({ invite_status: "invite_failed" }).eq("id", client.id);
     } else if (data?.invite_email_sent) {
       toast.success("Invite resent!");
+      await supabase.from("clients").update({ invite_status: "invite_sent" }).eq("id", client.id);
     } else if (data?.setup_link) {
       navigator.clipboard.writeText(data.setup_link);
       toast.success("Setup link copied to clipboard");
+      await supabase.from("clients").update({ invite_status: "access_link_generated" }).eq("id", client.id);
     } else {
       toast.success("User account already exists and is linked");
+      await supabase.from("clients").update({ invite_status: "access_link_generated" }).eq("id", client.id);
     }
+    fetchClients();
   };
 
   const copyLink = (link: string) => {
@@ -537,6 +545,28 @@ export default function AdminClients() {
                     <div>
                       <span className="text-white/60">{c.owner_name || "—"}</span>
                       {c.owner_email && <p className="text-[10px] text-white/30">{c.owner_email}</p>}
+                      {c.owner_phone && (
+                        <p className="text-[10px] text-white/25 flex items-center gap-1 mt-0.5">
+                          <Phone className="h-2.5 w-2.5" />{c.owner_phone}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {c.preferred_contact_method && c.preferred_contact_method !== "email" && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30 flex items-center gap-0.5">
+                            <MessageSquare className="h-2 w-2" />{c.preferred_contact_method}
+                          </span>
+                        )}
+                        {c.invite_status && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                            c.invite_status === "invite_sent" ? "bg-emerald-500/10 text-emerald-400" :
+                            c.invite_status === "invite_failed" ? "bg-red-500/10 text-red-400" :
+                            c.invite_status === "access_link_generated" ? "bg-blue-500/10 text-blue-400" :
+                            "bg-white/5 text-white/30"
+                          }`}>
+                            {c.invite_status.replace(/_/g, " ")}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   
