@@ -286,6 +286,32 @@ Deno.serve(async (req) => {
 
     const workspaceUrl = `/w/${slug}`;
 
+    // 6. Send handoff message (email + SMS) — non-blocking
+    let handoffResult: Record<string, unknown> = {};
+    try {
+      // Determine base_url from request origin or fallback
+      const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "";
+      const baseUrl = origin || "https://newlight.lovable.app";
+
+      const handoffResp = await adminClient.functions.invoke("send-handoff-message", {
+        body: {
+          client_id: client.id,
+          business_name: displayName,
+          owner_email: contact_email,
+          owner_phone: contact_phone || null,
+          preferred_contact_method: preferred_contact_method || "email",
+          sms_consent: sms_consent || false,
+          workspace_slug: slug,
+          base_url: baseUrl,
+        },
+      });
+      if (handoffResp.data) {
+        handoffResult = handoffResp.data as Record<string, unknown>;
+      }
+    } catch (handoffErr) {
+      console.warn("Handoff message send failed (non-blocking):", handoffErr);
+    }
+
     // Always return 200 — workspace was created successfully
     // Invite status is reported separately so the client can handle it
     return new Response(
@@ -299,6 +325,8 @@ Deno.serve(async (req) => {
         existing_user: existingUser,
         invite_error: inviteError,
         linked_user_id: linkedUserId,
+        email_delivery_status: handoffResult.email_status || "not_attempted",
+        sms_delivery_status: handoffResult.sms_status || "not_attempted",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -19,6 +19,8 @@ interface WorkspaceHandoffProps {
   ownerEmail?: string;
   clientId?: string;
   inviteStatus?: string | null;
+  emailDeliveryStatus?: string | null;
+  smsDeliveryStatus?: string | null;
 }
 
 export function WorkspaceHandoff({
