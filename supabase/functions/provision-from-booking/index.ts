@@ -34,6 +34,8 @@ Deno.serve(async (req) => {
       appointment_id,
       calendar_client_id,
       custom_slug,
+      preferred_contact_method,
+      sms_consent,
     } = await req.json();
 
     if (!contact_email || !business_name) {
