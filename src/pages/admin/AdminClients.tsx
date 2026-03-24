@@ -507,6 +507,9 @@ export default function AdminClients() {
                     )}
                   </td>
                   <td className="px-4 py-3">
+                    <OnboardingStageCell stage={c.onboarding_stage} />
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${statusColor(c.status)}`}>{c.status.replace(/_/g, " ")}</span>
                       {c.onboarding_stage === "active" && (
