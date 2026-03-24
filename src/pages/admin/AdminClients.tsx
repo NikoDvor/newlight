@@ -739,6 +739,11 @@ export default function AdminClients() {
                               <Mail className="h-3.5 w-3.5" /> Resend Invite
                             </DropdownMenuItem>
                           )}
+                          {c.owner_phone && c.sms_consent && (
+                            <DropdownMenuItem onClick={() => handleResendSms(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                              <MessageSquare className="h-3.5 w-3.5" /> Resend SMS
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Wand2 className="h-3.5 w-3.5" /> Re-run Starter Template
                           </DropdownMenuItem>
