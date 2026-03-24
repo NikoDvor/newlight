@@ -35,6 +35,13 @@ export default function Auth() {
     }
   }, [user, isAdmin, userRole, navigate]);
 
+  // After sign-in, if redirect is a /w/:slug path, navigate there to set workspace context
+  const getRedirectAwareNav = () => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    return redirect && redirect.startsWith("/") ? redirect : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
