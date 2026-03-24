@@ -114,6 +114,16 @@ export default function GetStarted() {
         console.warn("Invite issue (non-blocking):", inviteWarning);
       }
 
+      // Persist phone/contact prefs to canonical client record
+      if (data?.client_id) {
+        await supabase.from("clients").update({
+          owner_phone: phone || null,
+          preferred_contact_method: preferredContact,
+          sms_consent: smsConsent,
+          invite_status: data?.invite_sent ? "invite_sent" : data?.invite_error ? "invite_failed" : data?.existing_user ? "access_link_generated" : "invite_attempted",
+        }).eq("id", data.client_id);
+      }
+
       // 2. Run full-app provisioning if newly created
       if (data?.client_id && !data?.already_exists) {
         try {
