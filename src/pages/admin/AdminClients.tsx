@@ -69,12 +69,37 @@ export default function AdminClients() {
     const { data } = await supabase.from("clients").select("*").neq("status", "archived").order("created_at", { ascending: false });
     const list = (data ?? []) as Client[];
     setClients(list);
-    // Fetch readiness for all clients in parallel
+    // Fetch readiness, activation drafts, and billing in parallel
     const results: Record<string, WorkspaceReadinessResult> = {};
-    await Promise.all(list.map(async (c) => {
-      results[c.id] = await computeWorkspaceReadiness(c.id);
-    }));
+    const clientIds = list.map(c => c.id);
+
+    const [, activationRes, billingRes] = await Promise.all([
+      Promise.all(list.map(async (c) => {
+        results[c.id] = await computeWorkspaceReadiness(c.id);
+      })),
+      clientIds.length > 0
+        ? supabase.from("activation_drafts").select("client_id, draft_status").in("client_id", clientIds).order("updated_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
+      clientIds.length > 0
+        ? supabase.from("billing_accounts").select("client_id, billing_status").in("client_id", clientIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
     setReadiness(results);
+
+    // Build activation map (latest draft per client)
+    const aMap: Record<string, string> = {};
+    for (const row of (activationRes?.data || []) as ActivationInfo[]) {
+      if (!aMap[row.client_id]) aMap[row.client_id] = row.draft_status;
+    }
+    setActivationMap(aMap);
+
+    // Build billing map
+    const bMap: Record<string, string> = {};
+    for (const row of (billingRes?.data || []) as BillingInfo[]) {
+      if (!bMap[row.client_id]) bMap[row.client_id] = row.billing_status;
+    }
+    setBillingMap(bMap);
   };
 
   useEffect(() => { fetchClients(); }, []);
