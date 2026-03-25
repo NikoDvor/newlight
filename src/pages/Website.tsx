@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
-  Upload, Palette, Search, FileText, Pencil, CheckCircle,
+  Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,8 @@ import { WebsiteThemeEditor } from "@/components/website/WebsiteThemeEditor";
 import { WebsiteSeoPanel } from "@/components/website/WebsiteSeoPanel";
 import { WebsitePreviewFrame } from "@/components/website/WebsitePreviewFrame";
 import { WebsitePublishPanel } from "@/components/website/WebsitePublishPanel";
+import { WebsiteModeSwitcher } from "@/components/website/WebsiteModeSwitcher";
+import { WebsiteExportPanel } from "@/components/website/WebsiteExportPanel";
 
 // Hooks
 import { useWebsiteSite } from "@/hooks/useWebsiteSite";
@@ -119,6 +121,7 @@ export default function Website() {
 
   const openIssues = issues.filter(i => i.status === "open").length;
   const draftPages = pages.filter(p => p.publish_status !== "published").length;
+  const isExternal = site?.website_mode === "external";
 
   if (!activeClientId) {
     return (
@@ -133,8 +136,13 @@ export default function Website() {
 
   return (
     <div>
-      <PageHeader title="Website" description="Build, edit, and publish your website">
-        <div className="flex gap-2">
+      <PageHeader title="Website" description={isExternal ? "Manage content for your external website" : "Build, edit, and publish your website"}>
+        <div className="flex gap-2 items-center">
+          {isExternal && (
+            <Badge variant="outline" className="text-xs border-primary/30 text-primary gap-1">
+              <ExternalLink className="h-3 w-3" /> External Site
+            </Badge>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <AlertTriangle className="h-4 w-4" /> Log Issue
           </Button>
@@ -158,6 +166,8 @@ export default function Website() {
             <TabsTrigger value="seo" className="rounded-md text-sm">SEO</TabsTrigger>
             <TabsTrigger value="preview" className="rounded-md text-sm">Preview</TabsTrigger>
             <TabsTrigger value="publish" className="rounded-md text-sm">Publish</TabsTrigger>
+            {isExternal && <TabsTrigger value="export" className="rounded-md text-sm">Export</TabsTrigger>}
+            <TabsTrigger value="settings" className="rounded-md text-sm">Settings</TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
             <TabsTrigger value="recs" className="rounded-md text-sm">Recs</TabsTrigger>
@@ -173,6 +183,7 @@ export default function Website() {
                 onCreatePage={createPage}
                 onDeletePage={deletePage}
                 onUpdatePage={updatePage}
+                websiteMode={site?.website_mode}
               />
             </DataCard>
           </TabsContent>
@@ -259,6 +270,30 @@ export default function Website() {
           <TabsContent value="publish" className="mt-4">
             <DataCard title="Publish">
               <WebsitePublishPanel site={site} pages={pages} onPublish={() => { refetchSite(); refetchPages(); }} />
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── Export Tab (External mode only) ─── */}
+          {isExternal && (
+            <TabsContent value="export" className="mt-4">
+              <DataCard title="Export & Sync">
+                <WebsiteExportPanel
+                  sections={sections}
+                  site={site}
+                  pageName={selectedPage?.page_name || "No page selected"}
+                />
+              </DataCard>
+            </TabsContent>
+          )}
+
+          {/* ─── Settings Tab ─── */}
+          <TabsContent value="settings" className="mt-4">
+            <DataCard title="Website Mode & Settings">
+              {site ? (
+                <WebsiteModeSwitcher site={site} onSave={updateSite} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">Loading...</p>
+              )}
             </DataCard>
           </TabsContent>
 

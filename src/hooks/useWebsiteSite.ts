@@ -30,6 +30,12 @@ export interface WebsiteSite {
   publish_status: string;
   last_published_at: string | null;
   last_published_by: string | null;
+  // External bridge fields
+  website_mode: "hosted" | "external";
+  external_url: string;
+  external_domain: string;
+  external_platform: string;
+  external_notes: string;
 }
 
 const defaults: Omit<WebsiteSite, "id" | "client_id"> = {
@@ -41,6 +47,8 @@ const defaults: Omit<WebsiteSite, "id" | "client_id"> = {
   global_cta_url: "", nav_items: [], footer_content: {},
   custom_domain: "", publish_status: "draft",
   last_published_at: null, last_published_by: null,
+  website_mode: "hosted", external_url: "", external_domain: "",
+  external_platform: "unknown", external_notes: "",
 };
 
 export function useWebsiteSite() {
@@ -59,7 +67,6 @@ export function useWebsiteSite() {
     if (data) {
       setSite({ ...defaults, ...data, nav_items: data.nav_items as any[] ?? [], footer_content: data.footer_content ?? {} } as WebsiteSite);
     } else {
-      // Auto-create site record
       const { data: created } = await supabase
         .from("website_sites")
         .insert({ client_id: activeClientId })

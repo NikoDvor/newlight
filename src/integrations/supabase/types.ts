@@ -9004,8 +9004,10 @@ export type Database = {
           content_json: Json
           created_at: string
           display_order: number
+          export_status: string
           id: string
           is_active: boolean
+          last_exported_at: string | null
           page_key: string
           updated_at: string
         }
@@ -9017,8 +9019,10 @@ export type Database = {
           content_json?: Json
           created_at?: string
           display_order?: number
+          export_status?: string
           id?: string
           is_active?: boolean
+          last_exported_at?: string | null
           page_key?: string
           updated_at?: string
         }
@@ -9030,8 +9034,10 @@ export type Database = {
           content_json?: Json
           created_at?: string
           display_order?: number
+          export_status?: string
           id?: string
           is_active?: boolean
+          last_exported_at?: string | null
           page_key?: string
           updated_at?: string
         }
@@ -9102,15 +9108,18 @@ export type Database = {
           conversion_rate: number | null
           conversions: number | null
           created_at: string
+          external_page_url: string | null
           id: string
           leads_generated: number | null
           noindex: boolean | null
           og_image_url: string | null
           page_name: string
+          page_source: string
           page_template: string | null
           page_type: string | null
           page_url: string | null
           publish_status: string | null
+          publish_target: string
           seo_description: string | null
           seo_title: string | null
           slug: string | null
@@ -9124,15 +9133,18 @@ export type Database = {
           conversion_rate?: number | null
           conversions?: number | null
           created_at?: string
+          external_page_url?: string | null
           id?: string
           leads_generated?: number | null
           noindex?: boolean | null
           og_image_url?: string | null
           page_name: string
+          page_source?: string
           page_template?: string | null
           page_type?: string | null
           page_url?: string | null
           publish_status?: string | null
+          publish_target?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string | null
@@ -9146,15 +9158,18 @@ export type Database = {
           conversion_rate?: number | null
           conversions?: number | null
           created_at?: string
+          external_page_url?: string | null
           id?: string
           leads_generated?: number | null
           noindex?: boolean | null
           og_image_url?: string | null
           page_name?: string
+          page_source?: string
           page_template?: string | null
           page_type?: string | null
           page_url?: string | null
           publish_status?: string | null
+          publish_target?: string
           seo_description?: string | null
           seo_title?: string | null
           slug?: string | null
@@ -9272,6 +9287,10 @@ export type Database = {
           contact_phone: string | null
           created_at: string | null
           custom_domain: string | null
+          external_domain: string | null
+          external_notes: string | null
+          external_platform: string | null
+          external_url: string | null
           favicon_url: string | null
           font_preset: string | null
           footer_content: Json | null
@@ -9292,6 +9311,7 @@ export type Database = {
           social_youtube: string | null
           tagline: string | null
           updated_at: string | null
+          website_mode: string
         }
         Insert: {
           address?: string | null
@@ -9302,6 +9322,10 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string | null
           custom_domain?: string | null
+          external_domain?: string | null
+          external_notes?: string | null
+          external_platform?: string | null
+          external_url?: string | null
           favicon_url?: string | null
           font_preset?: string | null
           footer_content?: Json | null
@@ -9322,6 +9346,7 @@ export type Database = {
           social_youtube?: string | null
           tagline?: string | null
           updated_at?: string | null
+          website_mode?: string
         }
         Update: {
           address?: string | null
@@ -9332,6 +9357,10 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string | null
           custom_domain?: string | null
+          external_domain?: string | null
+          external_notes?: string | null
+          external_platform?: string | null
+          external_url?: string | null
           favicon_url?: string | null
           font_preset?: string | null
           footer_content?: Json | null
@@ -9352,6 +9381,7 @@ export type Database = {
           social_youtube?: string | null
           tagline?: string | null
           updated_at?: string | null
+          website_mode?: string
         }
         Relationships: [
           {

@@ -9,26 +9,31 @@ import { Plus, Globe, Pencil, Trash2, GripVertical, Eye, EyeOff } from "lucide-r
 import { motion } from "framer-motion";
 import type { WebsitePage } from "@/hooks/useWebsitePages";
 import { PAGE_TEMPLATES } from "@/hooks/useWebsitePages";
+import { Switch } from "@/components/ui/switch";
 
 interface Props {
   pages: WebsitePage[];
   onSelectPage: (page: WebsitePage) => void;
-  onCreatePage: (name: string, slug: string, template: string) => Promise<any>;
+  onCreatePage: (name: string, slug: string, template: string, pageSource?: "hosted" | "external", externalUrl?: string) => Promise<any>;
   onDeletePage: (id: string) => void;
   onUpdatePage: (id: string, updates: Partial<WebsitePage>) => void;
   selectedPageId?: string | null;
+  websiteMode?: "hosted" | "external";
 }
 
-export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePage, onUpdatePage, selectedPageId }: Props) {
+export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePage, onUpdatePage, selectedPageId, websiteMode = "hosted" }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [newTemplate, setNewTemplate] = useState("blank");
+  const [newPageSource, setNewPageSource] = useState<"hosted" | "external">(websiteMode === "external" ? "external" : "hosted");
+  const [newExternalUrl, setNewExternalUrl] = useState("");
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    await onCreatePage(newName, newSlug, newTemplate);
-    setNewName(""); setNewSlug(""); setNewTemplate("blank");
+    await onCreatePage(newName, newSlug, newTemplate, newPageSource, newExternalUrl);
+    setNewName(""); setNewSlug(""); setNewTemplate("blank"); setNewExternalUrl("");
+    setNewPageSource(websiteMode === "external" ? "external" : "hosted");
     setCreateOpen(false);
   };
 
@@ -68,13 +73,20 @@ export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePag
             >
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 cursor-grab" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium truncate">{page.page_name}</span>
                   <Badge variant="outline" className="text-[9px] shrink-0">
                     {page.publish_status === "published" ? "Published" : "Draft"}
                   </Badge>
+                  {page.page_source === "external" && (
+                    <Badge variant="outline" className="text-[9px] shrink-0 border-primary/30 text-primary">External</Badge>
+                  )}
                 </div>
-                <p className="text-[10px] text-muted-foreground">/{page.slug || page.page_name?.toLowerCase().replace(/\s+/g, "-")}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {page.page_source === "external" && page.external_page_url
+                    ? page.external_page_url
+                    : `/${page.slug || page.page_name?.toLowerCase().replace(/\s+/g, "-")}`}
+                </p>
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onSelectPage(page); }}>
@@ -117,6 +129,27 @@ export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePag
               <Input value={newSlug} onChange={e => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="about-us" />
               <p className="text-[10px] text-muted-foreground">Auto-generated from name if left blank</p>
             </div>
+            {websiteMode === "external" && (
+              <div className="space-y-2">
+                <Label>Page Source</Label>
+                <div className="flex items-center gap-3">
+                  <button
+                    className={`text-xs px-3 py-1.5 rounded-lg border ${newPageSource === "hosted" ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                    onClick={() => setNewPageSource("hosted")}
+                  >NewLight Hosted</button>
+                  <button
+                    className={`text-xs px-3 py-1.5 rounded-lg border ${newPageSource === "external" ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                    onClick={() => setNewPageSource("external")}
+                  >External Reference</button>
+                </div>
+              </div>
+            )}
+            {newPageSource === "external" && (
+              <div className="space-y-2">
+                <Label>External Page URL</Label>
+                <Input value={newExternalUrl} onChange={e => setNewExternalUrl(e.target.value)} placeholder="https://www.example.com/about" />
+              </div>
+            )}
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={handleCreate} disabled={!newName.trim()}>Create Page</Button>

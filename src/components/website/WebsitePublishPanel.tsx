@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Clock, User, RotateCcw, CheckCircle } from "lucide-react";
+import { Upload, Clock, User, RotateCcw, CheckCircle, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
@@ -87,6 +87,9 @@ export function WebsitePublishPanel({ site, onPublish, pages }: Props) {
   };
 
   const draftPages = pages.filter(p => p.publish_status !== "published").length;
+  const isExternal = site?.website_mode === "external";
+  const hostedPages = pages.filter((p: any) => (p.page_source || "hosted") === "hosted");
+  const externalPages = pages.filter((p: any) => (p.page_source || "hosted") === "external");
 
   return (
     <div className="space-y-6">
@@ -107,9 +110,37 @@ export function WebsitePublishPanel({ site, onPublish, pages }: Props) {
           {draftPages > 0 ? `${draftPages} page(s) with unpublished changes` : "All pages are up to date"}
         </p>
         <Button onClick={handlePublish} disabled={publishing} className="w-full gap-1.5">
-          <Upload className="h-4 w-4" /> {publishing ? "Publishing..." : "Publish Website"}
+          <Upload className="h-4 w-4" /> {publishing ? "Publishing..." : "Publish to NewLight Site"}
         </Button>
       </div>
+
+      {/* External mode status */}
+      {isExternal && (
+        <div className="p-5 rounded-2xl border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <ExternalLink className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">External Site Sync</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Content managed here is your canonical source. Use the Export tab to copy content for your external site.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-secondary/50 text-center">
+              <p className="text-lg font-bold">{hostedPages.length}</p>
+              <p className="text-[10px] text-muted-foreground">Hosted Pages</p>
+            </div>
+            <div className="p-3 rounded-xl bg-secondary/50 text-center">
+              <p className="text-lg font-bold">{externalPages.length}</p>
+              <p className="text-[10px] text-muted-foreground">External References</p>
+            </div>
+          </div>
+          {site?.external_url && (
+            <a href={site.external_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary mt-3 flex items-center gap-1 hover:underline">
+              <ExternalLink className="h-3 w-3" /> {site.external_url}
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Version History */}
       <div>
