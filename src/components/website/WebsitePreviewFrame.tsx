@@ -34,7 +34,8 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           )}
         </div>
       );
-    case "RichText":
+    case "richtext":
+    case "text":
       return (
         <div className="py-8 px-6">
           {cj.heading && <h2 className="text-lg font-semibold mb-2">{cj.heading}</h2>}
