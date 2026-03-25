@@ -129,6 +129,27 @@ export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePag
               <Input value={newSlug} onChange={e => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="about-us" />
               <p className="text-[10px] text-muted-foreground">Auto-generated from name if left blank</p>
             </div>
+            {websiteMode === "external" && (
+              <div className="space-y-2">
+                <Label>Page Source</Label>
+                <div className="flex items-center gap-3">
+                  <button
+                    className={`text-xs px-3 py-1.5 rounded-lg border ${newPageSource === "hosted" ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                    onClick={() => setNewPageSource("hosted")}
+                  >NewLight Hosted</button>
+                  <button
+                    className={`text-xs px-3 py-1.5 rounded-lg border ${newPageSource === "external" ? "border-primary bg-primary/10 text-primary" : "border-border"}`}
+                    onClick={() => setNewPageSource("external")}
+                  >External Reference</button>
+                </div>
+              </div>
+            )}
+            {newPageSource === "external" && (
+              <div className="space-y-2">
+                <Label>External Page URL</Label>
+                <Input value={newExternalUrl} onChange={e => setNewExternalUrl(e.target.value)} placeholder="https://www.example.com/about" />
+              </div>
+            )}
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={handleCreate} disabled={!newName.trim()}>Create Page</Button>
