@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Monitor, Smartphone, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { WebsiteSection } from "@/hooks/useWebsiteSections";
 import type { WebsiteSite } from "@/hooks/useWebsiteSite";
 
@@ -8,6 +10,7 @@ interface Props {
   sections: WebsiteSection[];
   site: WebsiteSite | null;
   pageName: string;
+  pageSlug?: string;
 }
 
 function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
