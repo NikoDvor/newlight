@@ -136,8 +136,13 @@ export default function Website() {
 
   return (
     <div>
-      <PageHeader title="Website" description="Build, edit, and publish your website">
-        <div className="flex gap-2">
+      <PageHeader title="Website" description={isExternal ? "Manage content for your external website" : "Build, edit, and publish your website"}>
+        <div className="flex gap-2 items-center">
+          {isExternal && (
+            <Badge variant="outline" className="text-xs border-primary/30 text-primary gap-1">
+              <ExternalLink className="h-3 w-3" /> External Site
+            </Badge>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <AlertTriangle className="h-4 w-4" /> Log Issue
           </Button>
