@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
@@ -12,14 +11,29 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, MousePointerClick, Users, TrendingUp, Plus, AlertTriangle, Zap, Target, BarChart3, Plug, FileEdit, Pencil, Trash2, Save } from "lucide-react";
+import {
+  Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
+  Upload, Palette, Search, FileText, Pencil, CheckCircle,
+} from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
+
+// Website editor components
+import { WebsitePageList } from "@/components/website/WebsitePageList";
+import { WebsiteSectionEditor } from "@/components/website/WebsiteSectionEditor";
+import { WebsiteThemeEditor } from "@/components/website/WebsiteThemeEditor";
+import { WebsiteSeoPanel } from "@/components/website/WebsiteSeoPanel";
+import { WebsitePreviewFrame } from "@/components/website/WebsitePreviewFrame";
+import { WebsitePublishPanel } from "@/components/website/WebsitePublishPanel";
+
+// Hooks
+import { useWebsiteSite } from "@/hooks/useWebsiteSite";
+import { useWebsitePages, type WebsitePage } from "@/hooks/useWebsitePages";
+import { useWebsiteSections } from "@/hooks/useWebsiteSections";
 
 const DEMO_TRAFFIC = [
   { name: "Mon", visitors: 1200, leads: 32 },
@@ -31,144 +45,87 @@ const DEMO_TRAFFIC = [
   { name: "Sun", visitors: 1400, leads: 30 },
 ];
 
-const DEMO_OPPORTUNITIES = [
-  { title: "Improve page load speed", impact: "Est. +12% conversion lift", severity: "high" },
-  { title: "Add lead capture form to services page", impact: "Est. 15 new leads/mo", severity: "high" },
-  { title: "Optimize mobile checkout flow", impact: "Est. +8% mobile CVR", severity: "medium" },
-  { title: "Add social proof to landing page", impact: "Est. +5% trust factor", severity: "low" },
-];
-
 export default function Website() {
   const { activeClientId } = useWorkspace();
   const navigate = useNavigate();
-  const [pages, setPages] = useState<any[]>([]);
+
+  // Website CMS hooks
+  const { site, loading: siteLoading, updateSite, refetch: refetchSite } = useWebsiteSite();
+  const { pages, loading: pagesLoading, createPage, updatePage, deletePage, refetch: refetchPages } = useWebsitePages();
+  const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
+  const pageKey = selectedPage?.slug || selectedPage?.page_name?.toLowerCase().replace(/\s+/g, "-") || null;
+  const { sections, loading: sectionsLoading, addSection, updateSection, deleteSection, refetch: refetchSections } = useWebsiteSections(pageKey);
+
+  // Analytics data (existing)
   const [issues, setIssues] = useState<any[]>([]);
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pageOpen, setPageOpen] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  // Sheets for analytics
   const [issueOpen, setIssueOpen] = useState(false);
   const [recOpen, setRecOpen] = useState(false);
-  const [newPage, setNewPage] = useState({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
   const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
-  const [contentBlocks, setContentBlocks] = useState<any[]>([]);
-  const [editingBlock, setEditingBlock] = useState<any | null>(null);
-  const [blockForm, setBlockForm] = useState<any>({});
-  const [contentPage, setContentPage] = useState("homepage");
 
-  const CONTENT_PAGES = ["homepage", "services", "about", "contact", "booking", "offers"];
-  const BLOCK_TYPES = ["Hero", "RichText", "CTA", "FAQ", "ServiceList", "Testimonial", "ContactBlock", "BookingBlock", "Image"];
+  // Auto-select first page
+  useEffect(() => {
+    if (pages.length > 0 && !selectedPage) {
+      setSelectedPage(pages[0]);
+    }
+  }, [pages]);
 
-  const fetchData = async () => {
-    if (!activeClientId) { setLoading(false); return; }
-    setLoading(true);
-    const [pRes, iRes, tRes, rRes, cbRes] = await Promise.all([
-      supabase.from("website_pages").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
+  // Load analytics data
+  useEffect(() => {
+    if (!activeClientId) { setAnalyticsLoading(false); return; }
+    setAnalyticsLoading(true);
+    Promise.all([
       supabase.from("website_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("website_traffic_sources").select("*").eq("client_id", activeClientId).order("visits", { ascending: false }),
       supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("website_content_blocks" as any).select("*").eq("client_id", activeClientId).order("display_order"),
-    ]);
-    setPages(pRes.data || []);
-    setIssues(iRes.data || []);
-    setTrafficSources(tRes.data || []);
-    setRecommendations(rRes.data || []);
-    setContentBlocks((cbRes.data || []) as any);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchData(); }, [activeClientId]);
-
-  const addPage = async () => {
-    if (!activeClientId || !newPage.page_name) return;
-    const visits = parseInt(newPage.visits) || 0;
-    const conversions = parseInt(newPage.conversions) || 0;
-    const { error } = await supabase.from("website_pages").insert({
-      client_id: activeClientId, page_name: newPage.page_name, page_url: newPage.page_url || null,
-      page_type: newPage.page_type, visits, conversions,
-      conversion_rate: visits > 0 ? Math.round(conversions / visits * 1000) / 10 : 0,
-      leads_generated: conversions,
+    ]).then(([iRes, tRes, rRes]) => {
+      setIssues(iRes.data || []);
+      setTrafficSources(tRes.data || []);
+      setRecommendations(rRes.data || []);
+      setAnalyticsLoading(false);
     });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Page Added" });
-    setNewPage({ page_name: "", page_url: "", page_type: "page", visits: "", conversions: "" });
-    setPageOpen(false);
-    fetchData();
-  };
+  }, [activeClientId]);
 
   const addIssue = async () => {
     if (!activeClientId || !newIssue.issue_title) return;
-    const { error } = await supabase.from("website_issues").insert({
-      client_id: activeClientId, issue_title: newIssue.issue_title,
-      description: newIssue.description || null, severity: newIssue.severity,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("website_issues").insert({ client_id: activeClientId, issue_title: newIssue.issue_title, description: newIssue.description || null, severity: newIssue.severity });
     toast({ title: "Issue Logged" });
     setNewIssue({ issue_title: "", description: "", severity: "medium" });
     setIssueOpen(false);
-    fetchData();
+    const { data } = await supabase.from("website_issues").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false });
+    setIssues(data || []);
   };
 
   const addRecommendation = async () => {
     if (!activeClientId || !newRec.title) return;
-    const { error } = await supabase.from("website_recommendations").insert({
-      client_id: activeClientId, title: newRec.title,
-      description: newRec.description || null, recommendation_type: newRec.recommendation_type,
-      priority: newRec.priority,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("website_recommendations").insert({ client_id: activeClientId, title: newRec.title, description: newRec.description || null, recommendation_type: newRec.recommendation_type, priority: newRec.priority });
     toast({ title: "Recommendation Added" });
     setNewRec({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
     setRecOpen(false);
-    fetchData();
+    const { data } = await supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false });
+    setRecommendations(data || []);
   };
 
   const resolveRecommendation = async (id: string) => {
     await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
-    fetchData();
+    const { data } = await supabase.from("website_recommendations").select("*").eq("client_id", activeClientId!).order("created_at", { ascending: false });
+    setRecommendations(data || []);
   };
 
-  const openNewBlock = () => {
-    setBlockForm({ block_key: "", block_type: "RichText", block_label: "", content_json: { heading: "", body: "" }, page_key: contentPage, is_active: true });
-    setEditingBlock("new");
-  };
-
-  const openEditBlock = (b: any) => {
-    setBlockForm({ ...b, content_json: typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || { heading: "", body: "" }) });
-    setEditingBlock(b);
-  };
-
-  const saveBlock = async () => {
-    if (!activeClientId || !blockForm.block_key) return;
-    const payload = { client_id: activeClientId, block_key: blockForm.block_key, block_type: blockForm.block_type, block_label: blockForm.block_label || blockForm.block_key, content_json: blockForm.content_json, page_key: blockForm.page_key || contentPage, is_active: blockForm.is_active ?? true, display_order: blockForm.display_order || 0 };
-    const { error } = editingBlock === "new"
-      ? await supabase.from("website_content_blocks" as any).insert(payload)
-      : await supabase.from("website_content_blocks" as any).update(payload).eq("id", editingBlock.id);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: editingBlock === "new" ? "Block created" : "Block updated" });
-    setEditingBlock(null);
-    fetchData();
-  };
-
-  const deleteBlock = async (id: string) => {
-    await supabase.from("website_content_blocks" as any).delete().eq("id", id);
-    toast({ title: "Block deleted" });
-    fetchData();
-  };
-
-  const hasRealData = pages.length > 0 || issues.length > 0 || recommendations.length > 0;
-  const totalVisits = pages.reduce((s, p) => s + (p.visits || 0), 0);
-  const totalLeads = pages.reduce((s, p) => s + (p.leads_generated || 0), 0);
-  const avgCvr = totalVisits > 0 ? (totalLeads / totalVisits * 100).toFixed(1) : "0";
   const openIssues = issues.filter(i => i.status === "open").length;
+  const draftPages = pages.filter(p => p.publish_status !== "published").length;
 
   if (!activeClientId) {
     return (
       <div>
-        <PageHeader title="Website" description="Monitor website health, traffic, and conversions" />
+        <PageHeader title="Website" description="Build and manage your workspace website" />
         <div className="card-widget p-8 rounded-2xl text-center mt-6">
-          <p className="text-muted-foreground">Select a workspace to view Website data.</p>
+          <p className="text-muted-foreground">Select a workspace to manage your website.</p>
         </div>
       </div>
     );
@@ -176,171 +133,163 @@ export default function Website() {
 
   return (
     <div>
-      <PageHeader title="Website" description="Monitor website health, traffic, and conversions">
+      <PageHeader title="Website" description="Build, edit, and publish your website">
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <AlertTriangle className="h-4 w-4" /> Log Issue
           </Button>
-          <Button className="gap-1.5" onClick={() => setPageOpen(true)}>
-            <Plus className="h-4 w-4" /> Add Page
-          </Button>
         </div>
       </PageHeader>
 
-      <ModuleHelpPanel moduleName="Website" description="Monitor page performance, track conversions, and identify website issues. Pages can be added manually or synced from Google Analytics." tips={["Track visits and conversions per page", "Log website issues for prioritized fixes", "Demo traffic data shows until analytics are connected"]} />
-
-      {!hasRealData && (
-        <SetupBanner
-          icon={Globe}
-          title="Connect Your Website Analytics"
-          description="Add your website pages and connect analytics to unlock live traffic data, conversion tracking, and optimization recommendations."
-          actionLabel="Add Website Pages"
-          onAction={() => setPageOpen(true)}
-          secondaryLabel="Connect Analytics"
-          onSecondary={() => navigate("/integrations")}
-        />
-      )}
-
-      <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Tracked Pages" value={hasRealData ? String(pages.length) : "—"} change={hasRealData ? `${pages.filter(p => p.status === "active").length} active` : "Add pages to track"} changeType={hasRealData ? "neutral" : "neutral"} icon={Globe} />
-        <MetricCard label="Conversion Rate" value={hasRealData ? `${avgCvr}%` : "—"} change={hasRealData ? `${totalLeads} leads total` : "Connect to measure"} changeType={hasRealData ? "positive" : "neutral"} icon={MousePointerClick} />
-        <MetricCard label="Total Traffic" value={hasRealData ? totalVisits.toLocaleString() : "—"} change={hasRealData ? "All tracked pages" : "Connect analytics"} changeType="neutral" icon={Users} />
-        <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Log issues to track"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
+      {/* Status bar */}
+      <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
+        <MetricCard label="Pages" value={String(pages.length)} change={draftPages > 0 ? `${draftPages} draft` : "All published"} changeType={draftPages > 0 ? "neutral" : "positive"} icon={FileText} />
+        <MetricCard label="Site Status" value={site?.publish_status === "published" ? "Published" : "Draft"} change={site?.last_published_at ? `Last: ${new Date(site.last_published_at).toLocaleDateString()}` : "Not yet published"} changeType={site?.publish_status === "published" ? "positive" : "neutral"} icon={site?.publish_status === "published" ? CheckCircle : Globe} />
+        <MetricCard label="Open Issues" value={String(openIssues)} change={`${issues.length} total`} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
+        <MetricCard label="Sections" value={String(sections.length)} change={selectedPage ? `On ${selectedPage.page_name}` : "Select a page"} changeType="neutral" icon={Pencil} />
       </WidgetGrid>
-
-      {/* Traffic Chart - demo or real */}
-      <DataCard title={hasRealData ? "Traffic Overview" : "Traffic Overview"} className="mt-6">
-        {!hasRealData && (
-          <div className="flex items-center gap-2 mb-3">
-            <DemoDataLabel />
-            <span className="text-[10px] text-muted-foreground">Connect analytics to see your real traffic data</span>
-          </div>
-        )}
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={hasRealData ? pages.map(p => ({ name: p.page_name?.substring(0, 12), visitors: p.visits || 0, leads: p.leads_generated || 0 })) : DEMO_TRAFFIC}>
-            <defs>
-              <linearGradient id="wVisitors" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(211 96% 56%)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="hsl(211 96% 56%)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="wLeads" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(197 92% 58%)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="hsl(197 92% 58%)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,56%,.06)" />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: "hsl(215 16% 50%)" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "hsla(210,50%,99%,.95)", border: "1px solid hsla(211,96%,56%,.12)", borderRadius: "12px", fontSize: "12px" }} />
-            <Area type="monotone" dataKey="visitors" stroke="hsl(211 96% 56%)" fill="url(#wVisitors)" strokeWidth={2} />
-            <Area type="monotone" dataKey="leads" stroke="hsl(197 92% 58%)" fill="url(#wLeads)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </DataCard>
 
       <div className="mt-6">
         <Tabs defaultValue="pages">
           <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
             <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
+            <TabsTrigger value="theme" className="rounded-md text-sm">Theme</TabsTrigger>
+            <TabsTrigger value="seo" className="rounded-md text-sm">SEO</TabsTrigger>
+            <TabsTrigger value="preview" className="rounded-md text-sm">Preview</TabsTrigger>
+            <TabsTrigger value="publish" className="rounded-md text-sm">Publish</TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="recommendations" className="rounded-md text-sm">Recs</TabsTrigger>
+            <TabsTrigger value="recs" className="rounded-md text-sm">Recs</TabsTrigger>
           </TabsList>
 
+          {/* ─── Pages Tab ─── */}
           <TabsContent value="pages" className="mt-4">
-            <DataCard title="Landing Pages">
-              {pages.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Globe className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No pages tracked yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add your website pages to start tracking performance and conversions.</p>
-                  <Button size="sm" onClick={() => setPageOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Page</Button>
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Page</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Visits</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">CVR</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Leads</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pages.map((p) => (
-                      <tr key={p.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="py-3">
-                          <p className="text-sm font-medium">{p.page_name}</p>
-                          {p.page_url && <p className="text-[10px] text-muted-foreground">{p.page_url}</p>}
-                        </td>
-                        <td className="text-sm text-right py-3 tabular-nums">{(p.visits || 0).toLocaleString()}</td>
-                        <td className="text-sm text-right py-3 tabular-nums">{p.conversion_rate || 0}%</td>
-                        <td className="text-sm font-medium text-right py-3 tabular-nums">{p.leads_generated || 0}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <DataCard title="Website Pages">
+              <WebsitePageList
+                pages={pages}
+                selectedPageId={selectedPage?.id}
+                onSelectPage={setSelectedPage}
+                onCreatePage={createPage}
+                onDeletePage={deletePage}
+                onUpdatePage={updatePage}
+              />
             </DataCard>
           </TabsContent>
 
-          {/* ─── Content Blocks Tab ─── */}
+          {/* ─── Content Tab ─── */}
           <TabsContent value="content" className="mt-4">
-            <DataCard title="Website Content Blocks" action={<Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>}>
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                {CONTENT_PAGES.map(p => (
-                  <Button key={p} size="sm" variant={contentPage === p ? "default" : "outline"} className="text-xs capitalize h-7"
-                    onClick={() => setContentPage(p)}>{p}</Button>
-                ))}
-              </div>
-              {contentBlocks.filter(b => b.page_key === contentPage).length === 0 ? (
+            <DataCard title={selectedPage ? `Editing: ${selectedPage.page_name}` : "Select a page"}>
+              {!selectedPage ? (
                 <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <FileEdit className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  <p className="text-sm text-muted-foreground mb-4">Select a page from the Pages tab to edit its content.</p>
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    {pages.slice(0, 5).map(p => (
+                      <Button key={p.id} size="sm" variant="outline" onClick={() => setSelectedPage(p)}>{p.page_name}</Button>
+                    ))}
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No content blocks for {contentPage}</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add headings, text, CTAs, and more to build this page's content.</p>
-                  <Button size="sm" onClick={openNewBlock}><Plus className="h-4 w-4 mr-1" /> Add Block</Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {contentBlocks.filter(b => b.page_key === contentPage).map(b => {
-                    const cj = typeof b.content_json === "string" ? JSON.parse(b.content_json) : (b.content_json || {});
-                    return (
-                      <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 transition-colors group">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[9px]">{b.block_type}</Badge>
-                            <span className="text-sm font-medium text-foreground truncate">{b.block_label || b.block_key}</span>
-                            {!b.is_active && <Badge variant="outline" className="text-[9px] text-muted-foreground">Hidden</Badge>}
-                          </div>
-                          {cj.heading && <p className="text-xs text-muted-foreground truncate mt-0.5">{cj.heading}</p>}
-                        </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBlock(b)}><Pencil className="h-3 w-3" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteBlock(b.id)}><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <>
+                  {/* Page selector */}
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    {pages.map(p => (
+                      <Button key={p.id} size="sm" variant={selectedPage?.id === p.id ? "default" : "outline"} className="text-xs h-7"
+                        onClick={() => setSelectedPage(p)}>{p.page_name}</Button>
+                    ))}
+                  </div>
+                  <WebsiteSectionEditor
+                    sections={sections}
+                    pageKey={pageKey!}
+                    onAdd={addSection}
+                    onUpdate={updateSection}
+                    onDelete={deleteSection}
+                    clientId={activeClientId!}
+                  />
+                </>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── Theme Tab ─── */}
+          <TabsContent value="theme" className="mt-4">
+            <DataCard title="Theme & Branding">
+              {site ? (
+                <WebsiteThemeEditor site={site} onSave={updateSite} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">Loading site settings...</p>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── SEO Tab ─── */}
+          <TabsContent value="seo" className="mt-4">
+            <DataCard title="SEO Settings">
+              {selectedPage ? (
+                <WebsiteSeoPanel page={selectedPage} onSave={(id, updates) => { updatePage(id, updates); setSelectedPage(p => p ? { ...p, ...updates } : p); }} clientId={activeClientId!} />
+              ) : (
+                <div className="py-8 text-center">
+                  <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Select a page to manage its SEO settings.</p>
+                  <div className="flex gap-2 justify-center flex-wrap mt-3">
+                    {pages.slice(0, 5).map(p => (
+                      <Button key={p.id} size="sm" variant="outline" onClick={() => setSelectedPage(p)}>{p.page_name}</Button>
+                    ))}
+                  </div>
                 </div>
               )}
             </DataCard>
           </TabsContent>
 
+          {/* ─── Preview Tab ─── */}
+          <TabsContent value="preview" className="mt-4">
+            <DataCard title="Website Preview">
+              {selectedPage ? (
+                <WebsitePreviewFrame sections={sections} site={site} pageName={selectedPage.page_name} />
+              ) : (
+                <div className="py-8 text-center">
+                  <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Select a page to preview.</p>
+                </div>
+              )}
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── Publish Tab ─── */}
+          <TabsContent value="publish" className="mt-4">
+            <DataCard title="Publish">
+              <WebsitePublishPanel site={site} pages={pages} onPublish={() => { refetchSite(); refetchPages(); }} />
+            </DataCard>
+          </TabsContent>
+
+          {/* ─── Traffic Tab ─── */}
           <TabsContent value="traffic" className="mt-4">
-            <DataCard title="Traffic Sources">
+            <DataCard title="Traffic Overview">
               {trafficSources.length === 0 ? (
                 <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <BarChart3 className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <BarChart3 className="h-6 w-6 text-primary" />
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No traffic source data yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Connect your analytics to see where your visitors are coming from.</p>
-                  <Button size="sm" variant="outline" onClick={() => navigate("/integrations")}><Plug className="h-4 w-4 mr-1" /> Connect Analytics</Button>
+                  <DemoDataLabel />
+                  <p className="text-xs text-muted-foreground mt-2 mb-4">Connect analytics to see real traffic data. Website editing works without analytics.</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <AreaChart data={DEMO_TRAFFIC}>
+                      <defs>
+                        <linearGradient id="wVis" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsla(var(--primary),.06)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="visitors" stroke="hsl(var(--primary))" fill="url(#wVis)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  <Button size="sm" variant="outline" className="mt-4" onClick={() => navigate("/integrations")}>
+                    <Plug className="h-4 w-4 mr-1" /> Connect Analytics
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -351,7 +300,7 @@ export default function Website() {
                         <span className="text-muted-foreground tabular-nums">{(s.visits || 0).toLocaleString()}</span>
                       </div>
                       <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${s.percentage || 0}%`, background: "linear-gradient(90deg, hsl(211 96% 56%), hsl(197 92% 58%))" }} />
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${s.percentage || 0}%` }} />
                       </div>
                     </div>
                   ))}
@@ -360,16 +309,16 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
+          {/* ─── Issues Tab ─── */}
           <TabsContent value="issues" className="mt-4">
-            <DataCard title="Website Issues">
+            <DataCard title="Website Issues" action={<Button size="sm" variant="outline" onClick={() => setIssueOpen(true)}><Plus className="h-4 w-4 mr-1" /> Log Issue</Button>}>
               {issues.length === 0 ? (
                 <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <AlertTriangle className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <AlertTriangle className="h-6 w-6 text-primary" />
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No issues logged</p>
-                  <p className="text-xs text-muted-foreground mb-4">Log issues to track website problems and optimization opportunities.</p>
-                  <Button size="sm" onClick={() => setIssueOpen(true)}><AlertTriangle className="h-4 w-4 mr-1" /> Log Issue</Button>
+                  <p className="text-sm font-medium mb-1">No issues logged</p>
+                  <p className="text-xs text-muted-foreground mb-4">Track website problems and fixes here.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -380,8 +329,8 @@ export default function Website() {
                         <p className="text-xs text-muted-foreground">{i.description || "No description"}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[10px] ${i.severity === "high" ? "bg-red-50 text-red-600" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{i.severity}</Badge>
-                        <Badge className={`text-[10px] ${i.status === "open" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>{i.status}</Badge>
+                        <Badge className={`text-[10px] ${i.severity === "high" ? "bg-destructive/10 text-destructive" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{i.severity}</Badge>
+                        <Badge className={`text-[10px] ${i.status === "open" ? "bg-primary/10 text-primary" : "bg-emerald-50 text-emerald-700"}`}>{i.status}</Badge>
                       </div>
                     </div>
                   ))}
@@ -390,24 +339,24 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="recommendations" className="mt-4">
+          {/* ─── Recs Tab ─── */}
+          <TabsContent value="recs" className="mt-4">
             <DataCard title="Recommendations" action={<Button size="sm" variant="outline" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}>
               {recommendations.length === 0 ? (
                 <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Zap className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Zap className="h-6 w-6 text-primary" />
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No recommendations yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add optimization recommendations to track website improvements.</p>
-                  <Button size="sm" onClick={() => setRecOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Recommendation</Button>
+                  <p className="text-sm font-medium mb-1">No recommendations yet</p>
+                  <p className="text-xs text-muted-foreground">Track optimization recommendations here.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {recommendations.map((r) => (
                     <div key={r.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                          <Zap className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Zap className="h-4 w-4 text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">{r.title}</p>
@@ -415,7 +364,7 @@ export default function Website() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[10px] ${r.priority === "high" ? "bg-blue-50 text-blue-700" : r.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{r.priority}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{r.priority}</Badge>
                         {r.status === "open" ? (
                           <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => resolveRecommendation(r.id)}>Resolve</Button>
                         ) : (
@@ -431,22 +380,7 @@ export default function Website() {
         </Tabs>
       </div>
 
-      <Sheet open={pageOpen} onOpenChange={setPageOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle>Add Page</SheetTitle><SheetDescription>Track a website page</SheetDescription></SheetHeader>
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2"><Label>Page Name *</Label><Input value={newPage.page_name} onChange={e => setNewPage(p => ({ ...p, page_name: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>URL</Label><Input value={newPage.page_url} onChange={e => setNewPage(p => ({ ...p, page_url: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Visits</Label><Input type="number" value={newPage.visits} onChange={e => setNewPage(p => ({ ...p, visits: e.target.value }))} /></div>
-            <div className="space-y-2"><Label>Conversions</Label><Input type="number" value={newPage.conversions} onChange={e => setNewPage(p => ({ ...p, conversions: e.target.value }))} /></div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setPageOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={addPage}>Add Page</Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
+      {/* Issue Sheet */}
       <Sheet open={issueOpen} onOpenChange={setIssueOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader><SheetTitle>Log Issue</SheetTitle><SheetDescription>Report a website issue</SheetDescription></SheetHeader>
@@ -472,9 +406,10 @@ export default function Website() {
         </SheetContent>
       </Sheet>
 
+      {/* Recommendation Sheet */}
       <Sheet open={recOpen} onOpenChange={setRecOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle>Add Recommendation</SheetTitle><SheetDescription>Track a website optimization recommendation</SheetDescription></SheetHeader>
+          <SheetHeader><SheetTitle>Add Recommendation</SheetTitle></SheetHeader>
           <div className="mt-6 space-y-4">
             <div className="space-y-2"><Label>Title *</Label><Input value={newRec.title} onChange={e => setNewRec(p => ({ ...p, title: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Description</Label><Input value={newRec.description} onChange={e => setNewRec(p => ({ ...p, description: e.target.value }))} /></div>
@@ -504,42 +439,6 @@ export default function Website() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setRecOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addRecommendation}>Add</Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Block Editor Sheet */}
-      <Sheet open={!!editingBlock} onOpenChange={() => setEditingBlock(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle>{editingBlock === "new" ? "Add" : "Edit"} Content Block</SheetTitle></SheetHeader>
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2"><Label>Block Key *</Label><Input value={blockForm.block_key || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") }))} placeholder="e.g. hero_heading" /></div>
-            <div className="space-y-2"><Label>Label</Label><Input value={blockForm.block_label || ""} onChange={e => setBlockForm((p: any) => ({ ...p, block_label: e.target.value }))} placeholder="Display label" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select value={blockForm.block_type || "RichText"} onValueChange={v => setBlockForm((p: any) => ({ ...p, block_type: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{BLOCK_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Page</Label>
-                <Select value={blockForm.page_key || "homepage"} onValueChange={v => setBlockForm((p: any) => ({ ...p, page_key: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{CONTENT_PAGES.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2"><Label>Heading</Label><Input value={blockForm.content_json?.heading || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, heading: e.target.value } }))} /></div>
-            <div className="space-y-2"><Label>Body</Label><Textarea value={blockForm.content_json?.body || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, body: e.target.value } }))} rows={4} /></div>
-            {(blockForm.block_type === "CTA" || blockForm.block_type === "BookingBlock") && (
-              <div className="space-y-2"><Label>Button Text</Label><Input value={blockForm.content_json?.buttonText || ""} onChange={e => setBlockForm((p: any) => ({ ...p, content_json: { ...p.content_json, buttonText: e.target.value } }))} placeholder="e.g. Book Now" /></div>
-            )}
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setEditingBlock(null)}>Cancel</Button>
-              <Button className="flex-1" onClick={saveBlock}><Save className="h-4 w-4 mr-1" /> Save</Button>
             </div>
           </div>
         </SheetContent>

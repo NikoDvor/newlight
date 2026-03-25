@@ -124,6 +124,7 @@ import SupportTickets from "./pages/SupportTickets";
 import ConversationsPage from "./pages/ConversationsPage";
 import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
+import PublicSite from "./pages/PublicSite";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -143,6 +144,8 @@ const App = () => (
             <Route path="/get-started" element={<GetStarted />} />
             <Route path="/w/:slug" element={<WorkspaceEntry />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
+            <Route path="/site/:clientSlug" element={<PublicSite />} />
+            <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
             {/* Admin Portal */}
             <Route path="/admin" element={<AdminLayout />}>

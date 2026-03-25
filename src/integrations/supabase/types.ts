@@ -9104,9 +9104,17 @@ export type Database = {
           created_at: string
           id: string
           leads_generated: number | null
+          noindex: boolean | null
+          og_image_url: string | null
           page_name: string
+          page_template: string | null
           page_type: string | null
           page_url: string | null
+          publish_status: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string | null
+          sort_order: number | null
           status: string | null
           updated_at: string
           visits: number | null
@@ -9118,9 +9126,17 @@ export type Database = {
           created_at?: string
           id?: string
           leads_generated?: number | null
+          noindex?: boolean | null
+          og_image_url?: string | null
           page_name: string
+          page_template?: string | null
           page_type?: string | null
           page_url?: string | null
+          publish_status?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          sort_order?: number | null
           status?: string | null
           updated_at?: string
           visits?: number | null
@@ -9132,9 +9148,17 @@ export type Database = {
           created_at?: string
           id?: string
           leads_generated?: number | null
+          noindex?: boolean | null
+          og_image_url?: string | null
           page_name?: string
+          page_template?: string | null
           page_type?: string | null
           page_url?: string | null
+          publish_status?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          sort_order?: number | null
           status?: string | null
           updated_at?: string
           visits?: number | null
@@ -9142,6 +9166,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "website_pages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_publish_snapshots: {
+        Row: {
+          client_id: string
+          id: string
+          published_at: string | null
+          published_by: string | null
+          snapshot_data: Json
+          version_label: string | null
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          snapshot_data?: Json
+          version_label?: string | null
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          snapshot_data?: Json
+          version_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_publish_snapshots_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -9199,6 +9258,107 @@ export type Database = {
             columns: ["page_id"]
             isOneToOne: false
             referencedRelation: "website_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_sites: {
+        Row: {
+          address: string | null
+          business_hours: string | null
+          button_style: string | null
+          client_id: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          custom_domain: string | null
+          favicon_url: string | null
+          font_preset: string | null
+          footer_content: Json | null
+          global_cta_text: string | null
+          global_cta_url: string | null
+          id: string
+          last_published_at: string | null
+          last_published_by: string | null
+          nav_items: Json | null
+          primary_color: string | null
+          publish_status: string | null
+          secondary_color: string | null
+          site_name: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_hours?: string | null
+          button_style?: string | null
+          client_id: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          font_preset?: string | null
+          footer_content?: Json | null
+          global_cta_text?: string | null
+          global_cta_url?: string | null
+          id?: string
+          last_published_at?: string | null
+          last_published_by?: string | null
+          nav_items?: Json | null
+          primary_color?: string | null
+          publish_status?: string | null
+          secondary_color?: string | null
+          site_name?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_hours?: string | null
+          button_style?: string | null
+          client_id?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          custom_domain?: string | null
+          favicon_url?: string | null
+          font_preset?: string | null
+          footer_content?: Json | null
+          global_cta_text?: string | null
+          global_cta_url?: string | null
+          id?: string
+          last_published_at?: string | null
+          last_published_by?: string | null
+          nav_items?: Json | null
+          primary_color?: string | null
+          publish_status?: string | null
+          secondary_color?: string | null
+          site_name?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_sites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
