@@ -24,6 +24,10 @@ export interface WebsitePage {
   leads_generated: number | null;
   created_at: string;
   updated_at: string;
+  // Bridge fields
+  page_source: "hosted" | "external";
+  external_page_url: string;
+  publish_target: "hosted" | "external_manual";
 }
 
 const PAGE_TEMPLATES = [
@@ -58,7 +62,7 @@ export function useWebsitePages() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const createPage = async (name: string, slug: string, template: string) => {
+  const createPage = async (name: string, slug: string, template: string, pageSource: "hosted" | "external" = "hosted", externalUrl = "") => {
     if (!activeClientId) return null;
     const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const { data, error } = await supabase.from("website_pages").insert({
@@ -70,6 +74,9 @@ export function useWebsitePages() {
       publish_status: "draft",
       sort_order: pages.length,
       status: "active",
+      page_source: pageSource,
+      external_page_url: externalUrl,
+      publish_target: pageSource === "external" ? "external_manual" : "hosted",
     } as any).select().single();
     if (error) { toast.error(error.message); return null; }
     toast.success("Page created");
