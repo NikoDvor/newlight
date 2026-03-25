@@ -73,13 +73,20 @@ export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePag
             >
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 cursor-grab" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium truncate">{page.page_name}</span>
                   <Badge variant="outline" className="text-[9px] shrink-0">
                     {page.publish_status === "published" ? "Published" : "Draft"}
                   </Badge>
+                  {page.page_source === "external" && (
+                    <Badge variant="outline" className="text-[9px] shrink-0 border-primary/30 text-primary">External</Badge>
+                  )}
                 </div>
-                <p className="text-[10px] text-muted-foreground">/{page.slug || page.page_name?.toLowerCase().replace(/\s+/g, "-")}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {page.page_source === "external" && page.external_page_url
+                    ? page.external_page_url
+                    : `/${page.slug || page.page_name?.toLowerCase().replace(/\s+/g, "-")}`}
+                </p>
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onSelectPage(page); }}>
