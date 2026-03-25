@@ -31,8 +31,9 @@ export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePag
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    await onCreatePage(newName, newSlug, newTemplate);
-    setNewName(""); setNewSlug(""); setNewTemplate("blank");
+    await onCreatePage(newName, newSlug, newTemplate, newPageSource, newExternalUrl);
+    setNewName(""); setNewSlug(""); setNewTemplate("blank"); setNewExternalUrl("");
+    setNewPageSource(websiteMode === "external" ? "external" : "hosted");
     setCreateOpen(false);
   };
 
