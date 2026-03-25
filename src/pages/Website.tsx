@@ -166,6 +166,8 @@ export default function Website() {
             <TabsTrigger value="seo" className="rounded-md text-sm">SEO</TabsTrigger>
             <TabsTrigger value="preview" className="rounded-md text-sm">Preview</TabsTrigger>
             <TabsTrigger value="publish" className="rounded-md text-sm">Publish</TabsTrigger>
+            {isExternal && <TabsTrigger value="export" className="rounded-md text-sm">Export</TabsTrigger>}
+            <TabsTrigger value="settings" className="rounded-md text-sm">Settings</TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-md text-sm">Traffic</TabsTrigger>
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
             <TabsTrigger value="recs" className="rounded-md text-sm">Recs</TabsTrigger>
