@@ -52,7 +52,7 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           </div>
         </div>
       );
-    case "CTA":
+    case "cta":
       return (
         <div className="py-10 px-6 text-center" style={{ background: `${primary}08` }}>
           {cj.heading && <h2 className="text-lg font-bold mb-2">{cj.heading}</h2>}
