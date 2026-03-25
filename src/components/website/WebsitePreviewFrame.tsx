@@ -19,8 +19,9 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
   const primary = site?.primary_color || "#3B82F6";
   const btnRadius = site?.button_style === "pill" ? "9999px" : site?.button_style === "square" ? "4px" : "12px";
 
-  switch (section.block_type) {
-    case "Hero":
+  const bt = (section.block_type || "").toLowerCase();
+  switch (bt) {
+    case "hero":
       return (
         <div className="py-12 px-6 text-center" style={{ background: `linear-gradient(135deg, ${primary}11, ${primary}05)` }}>
           {cj.imageUrl && <img src={cj.imageUrl} alt="" className="w-full max-h-48 object-cover rounded-xl mb-4" />}
