@@ -42,7 +42,7 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           {cj.body && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{cj.body}</p>}
         </div>
       );
-    case "ImageText":
+    case "imagetext":
       return (
         <div className="py-8 px-6 flex flex-col sm:flex-row gap-6 items-center">
           {cj.imageUrl && <img src={cj.imageUrl} alt="" className="w-full sm:w-1/2 rounded-xl object-cover max-h-48" />}
