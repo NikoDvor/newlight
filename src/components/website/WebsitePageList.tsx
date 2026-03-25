@@ -14,10 +14,11 @@ import { Switch } from "@/components/ui/switch";
 interface Props {
   pages: WebsitePage[];
   onSelectPage: (page: WebsitePage) => void;
-  onCreatePage: (name: string, slug: string, template: string) => Promise<any>;
+  onCreatePage: (name: string, slug: string, template: string, pageSource?: "hosted" | "external", externalUrl?: string) => Promise<any>;
   onDeletePage: (id: string) => void;
   onUpdatePage: (id: string, updates: Partial<WebsitePage>) => void;
   selectedPageId?: string | null;
+  websiteMode?: "hosted" | "external";
 }
 
 export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePage, onUpdatePage, selectedPageId }: Props) {
