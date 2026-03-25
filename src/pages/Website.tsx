@@ -121,6 +121,7 @@ export default function Website() {
 
   const openIssues = issues.filter(i => i.status === "open").length;
   const draftPages = pages.filter(p => p.publish_status !== "published").length;
+  const isExternal = site?.website_mode === "external";
 
   if (!activeClientId) {
     return (
