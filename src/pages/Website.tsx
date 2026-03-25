@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 // Website editor components
 import { WebsitePageList } from "@/components/website/WebsitePageList";
 import { WebsiteSectionEditor } from "@/components/website/WebsiteSectionEditor";
+import { WebsiteVisualEditor } from "@/components/website/WebsiteVisualEditor";
 import { WebsiteThemeEditor } from "@/components/website/WebsiteThemeEditor";
 import { WebsiteSeoPanel } from "@/components/website/WebsiteSeoPanel";
 import { WebsitePreviewFrame } from "@/components/website/WebsitePreviewFrame";
@@ -56,7 +57,7 @@ export default function Website() {
   const { pages, loading: pagesLoading, createPage, updatePage, deletePage, refetch: refetchPages } = useWebsitePages();
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   const pageKey = selectedPage?.slug || selectedPage?.page_name?.toLowerCase().replace(/\s+/g, "-") || null;
-  const { sections, loading: sectionsLoading, addSection, updateSection, deleteSection, refetch: refetchSections } = useWebsiteSections(pageKey);
+  const { sections, loading: sectionsLoading, addSection, updateSection, deleteSection, reorderSections, refetch: refetchSections } = useWebsiteSections(pageKey);
 
   // Analytics data (existing)
   const [issues, setIssues] = useState<any[]>([]);
@@ -188,10 +189,10 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
-          {/* ─── Content Tab ─── */}
+          {/* ─── Content Tab (Visual Editor) ─── */}
           <TabsContent value="content" className="mt-4">
-            <DataCard title={selectedPage ? `Editing: ${selectedPage.page_name}` : "Select a page"}>
-              {!selectedPage ? (
+            {!selectedPage ? (
+              <DataCard title="Select a page">
                 <div className="py-8 text-center">
                   <p className="text-sm text-muted-foreground mb-4">Select a page from the Pages tab to edit its content.</p>
                   <div className="flex gap-2 justify-center flex-wrap">
@@ -200,26 +201,30 @@ export default function Website() {
                     ))}
                   </div>
                 </div>
-              ) : (
-                <>
-                  {/* Page selector */}
-                  <div className="flex items-center gap-2 mb-4 flex-wrap">
-                    {pages.map(p => (
-                      <Button key={p.id} size="sm" variant={selectedPage?.id === p.id ? "default" : "outline"} className="text-xs h-7"
-                        onClick={() => setSelectedPage(p)}>{p.page_name}</Button>
-                    ))}
-                  </div>
-                  <WebsiteSectionEditor
-                    sections={sections}
-                    pageKey={pageKey!}
-                    onAdd={addSection}
-                    onUpdate={updateSection}
-                    onDelete={deleteSection}
-                    clientId={activeClientId!}
-                  />
-                </>
-              )}
-            </DataCard>
+              </DataCard>
+            ) : (
+              <div>
+                {/* Page selector */}
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  {pages.filter(p => p.page_source !== "external").map(p => (
+                    <Button key={p.id} size="sm" variant={selectedPage?.id === p.id ? "default" : "outline"} className="text-xs h-7"
+                      onClick={() => setSelectedPage(p)}>{p.page_name}</Button>
+                  ))}
+                </div>
+                <WebsiteVisualEditor
+                  sections={sections}
+                  site={site}
+                  pageName={selectedPage.page_name}
+                  pageKey={pageKey!}
+                  onAdd={addSection}
+                  onUpdate={updateSection}
+                  onDelete={deleteSection}
+                  onReorder={reorderSections}
+                  clientId={activeClientId!}
+                  isExternal={selectedPage.page_source === "external"}
+                />
+              </div>
+            )}
           </TabsContent>
 
           {/* ─── Theme Tab ─── */}
