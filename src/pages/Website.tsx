@@ -57,7 +57,7 @@ export default function Website() {
   const { pages, loading: pagesLoading, createPage, updatePage, deletePage, refetch: refetchPages } = useWebsitePages();
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   const pageKey = selectedPage?.slug || selectedPage?.page_name?.toLowerCase().replace(/\s+/g, "-") || null;
-  const { sections, loading: sectionsLoading, addSection, updateSection, deleteSection, refetch: refetchSections } = useWebsiteSections(pageKey);
+  const { sections, loading: sectionsLoading, addSection, updateSection, deleteSection, reorderSections, refetch: refetchSections } = useWebsiteSections(pageKey);
 
   // Analytics data (existing)
   const [issues, setIssues] = useState<any[]>([]);
