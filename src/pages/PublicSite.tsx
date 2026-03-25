@@ -95,9 +95,17 @@ export default function PublicSite() {
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
+      <div className="text-center max-w-md">
         <h1 className="text-xl font-bold mb-2">Site Not Found</h1>
-        <p className="text-muted-foreground">{error}</p>
+        <p className="text-muted-foreground mb-6">{error}</p>
+        <div className="flex gap-3 justify-center">
+          <a href="/" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+            Go to Dashboard
+          </a>
+          <a href="/auth" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-secondary">
+            Sign In
+          </a>
+        </div>
       </div>
     </div>
   );

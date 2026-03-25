@@ -261,7 +261,7 @@ export default function Website() {
           <TabsContent value="preview" className="mt-4">
             <DataCard title="Website Preview">
               {selectedPage ? (
-                <WebsitePreviewFrame sections={sections} site={site} pageName={selectedPage.page_name} />
+                <WebsitePreviewFrame sections={sections} site={site} pageName={selectedPage.page_name} pageSlug={selectedPage.slug || undefined} />
               ) : (
                 <div className="py-8 text-center">
                   <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
