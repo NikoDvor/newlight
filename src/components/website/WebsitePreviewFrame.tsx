@@ -19,8 +19,9 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
   const primary = site?.primary_color || "#3B82F6";
   const btnRadius = site?.button_style === "pill" ? "9999px" : site?.button_style === "square" ? "4px" : "12px";
 
-  switch (section.block_type) {
-    case "Hero":
+  const bt = (section.block_type || "").toLowerCase();
+  switch (bt) {
+    case "hero":
       return (
         <div className="py-12 px-6 text-center" style={{ background: `linear-gradient(135deg, ${primary}11, ${primary}05)` }}>
           {cj.imageUrl && <img src={cj.imageUrl} alt="" className="w-full max-h-48 object-cover rounded-xl mb-4" />}
@@ -34,14 +35,15 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           )}
         </div>
       );
-    case "RichText":
+    case "richtext":
+    case "text":
       return (
         <div className="py-8 px-6">
           {cj.heading && <h2 className="text-lg font-semibold mb-2">{cj.heading}</h2>}
           {cj.body && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{cj.body}</p>}
         </div>
       );
-    case "ImageText":
+    case "imagetext":
       return (
         <div className="py-8 px-6 flex flex-col sm:flex-row gap-6 items-center">
           {cj.imageUrl && <img src={cj.imageUrl} alt="" className="w-full sm:w-1/2 rounded-xl object-cover max-h-48" />}
@@ -51,7 +53,7 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           </div>
         </div>
       );
-    case "CTA":
+    case "cta":
       return (
         <div className="py-10 px-6 text-center" style={{ background: `${primary}08` }}>
           {cj.heading && <h2 className="text-lg font-bold mb-2">{cj.heading}</h2>}
@@ -63,14 +65,15 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           )}
         </div>
       );
-    case "FAQ":
+    case "faq":
       return (
         <div className="py-8 px-6">
           {cj.heading && <h2 className="text-lg font-semibold mb-3">{cj.heading}</h2>}
           {cj.body && <p className="text-sm text-muted-foreground whitespace-pre-line">{cj.body}</p>}
         </div>
       );
-    case "ContactBlock":
+    case "contactblock":
+    case "contact":
       return (
         <div className="py-8 px-6" style={{ background: `${primary}05` }}>
           <h2 className="text-lg font-semibold mb-3">{cj.heading || "Contact Us"}</h2>
@@ -85,9 +88,82 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           </div>
         </div>
       );
+    case "servicelist":
+    case "services":
+      return (
+        <div className="py-8 px-6">
+          <h2 className="text-lg font-semibold mb-3">{cj.heading || "Our Services"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground mb-4">{cj.body}</p>}
+          {Array.isArray(cj.items) && cj.items.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {cj.items.map((item: any, i: number) => (
+                <div key={i} className="p-3 rounded-xl border border-border">
+                  <p className="text-sm font-medium">{item.name || item.title || `Service ${i + 1}`}</p>
+                  {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No services listed yet.</p>
+          )}
+        </div>
+      );
+    case "testimonial":
+    case "testimonials":
+      return (
+        <div className="py-8 px-6" style={{ background: `${primary}05` }}>
+          <h2 className="text-lg font-semibold mb-3">{cj.heading || "What Our Clients Say"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground italic">"{cj.body}"</p>}
+          {Array.isArray(cj.items) && cj.items.map((item: any, i: number) => (
+            <blockquote key={i} className="border-l-2 border-primary/30 pl-3 mt-3">
+              <p className="text-sm italic">"{item.quote || item.body}"</p>
+              {item.author && <p className="text-xs text-muted-foreground mt-1">— {item.author}</p>}
+            </blockquote>
+          ))}
+        </div>
+      );
+    case "productgrid":
+    case "products":
+      return (
+        <div className="py-8 px-6">
+          <h2 className="text-lg font-semibold mb-3">{cj.heading || "Products"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground mb-4">{cj.body}</p>}
+          <p className="text-sm text-muted-foreground italic">Products will display here.</p>
+        </div>
+      );
+    case "gallery":
+      return (
+        <div className="py-8 px-6">
+          <h2 className="text-lg font-semibold mb-3">{cj.heading || "Gallery"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground">{cj.body}</p>}
+        </div>
+      );
+    case "bookingblock":
+    case "booking":
+      return (
+        <div className="py-8 px-6 text-center" style={{ background: `${primary}08` }}>
+          <h2 className="text-lg font-bold mb-2">{cj.heading || "Book an Appointment"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground mb-4">{cj.body}</p>}
+          <button className="px-6 py-2.5 text-sm font-medium text-white" style={{ background: primary, borderRadius: btnRadius }}>
+            {cj.buttonText || "Book Now"}
+          </button>
+        </div>
+      );
+    case "reviewscta":
+    case "reviews":
+      return (
+        <div className="py-8 px-6 text-center" style={{ background: `${primary}05` }}>
+          <h2 className="text-lg font-bold mb-2">{cj.heading || "Leave a Review"}</h2>
+          {cj.body && <p className="text-sm text-muted-foreground mb-4">{cj.body}</p>}
+          <button className="px-6 py-2.5 text-sm font-medium text-white" style={{ background: primary, borderRadius: btnRadius }}>
+            {cj.buttonText || "Write a Review"}
+          </button>
+        </div>
+      );
     default:
       return (
         <div className="py-6 px-6">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{section.block_label || section.block_type}</p>
           {cj.heading && <h2 className="text-lg font-semibold mb-2">{cj.heading}</h2>}
           {cj.body && <p className="text-sm text-muted-foreground">{cj.body}</p>}
         </div>
