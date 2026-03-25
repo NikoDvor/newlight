@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
-  Upload, Palette, Search, FileText, Pencil, CheckCircle,
+  Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
