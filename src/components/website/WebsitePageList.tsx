@@ -9,6 +9,7 @@ import { Plus, Globe, Pencil, Trash2, GripVertical, Eye, EyeOff } from "lucide-r
 import { motion } from "framer-motion";
 import type { WebsitePage } from "@/hooks/useWebsitePages";
 import { PAGE_TEMPLATES } from "@/hooks/useWebsitePages";
+import { Switch } from "@/components/ui/switch";
 
 interface Props {
   pages: WebsitePage[];
