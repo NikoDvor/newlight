@@ -64,7 +64,7 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           )}
         </div>
       );
-    case "FAQ":
+    case "faq":
       return (
         <div className="py-8 px-6">
           {cj.heading && <h2 className="text-lg font-semibold mb-3">{cj.heading}</h2>}
