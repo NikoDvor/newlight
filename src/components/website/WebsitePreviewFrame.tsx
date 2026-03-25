@@ -71,7 +71,8 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
           {cj.body && <p className="text-sm text-muted-foreground whitespace-pre-line">{cj.body}</p>}
         </div>
       );
-    case "ContactBlock":
+    case "contactblock":
+    case "contact":
       return (
         <div className="py-8 px-6" style={{ background: `${primary}05` }}>
           <h2 className="text-lg font-semibold mb-3">{cj.heading || "Contact Us"}</h2>
