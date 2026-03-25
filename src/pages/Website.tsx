@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 // Website editor components
 import { WebsitePageList } from "@/components/website/WebsitePageList";
 import { WebsiteSectionEditor } from "@/components/website/WebsiteSectionEditor";
+import { WebsiteVisualEditor } from "@/components/website/WebsiteVisualEditor";
 import { WebsiteThemeEditor } from "@/components/website/WebsiteThemeEditor";
 import { WebsiteSeoPanel } from "@/components/website/WebsiteSeoPanel";
 import { WebsitePreviewFrame } from "@/components/website/WebsitePreviewFrame";
