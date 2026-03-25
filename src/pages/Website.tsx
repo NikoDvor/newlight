@@ -183,6 +183,7 @@ export default function Website() {
                 onCreatePage={createPage}
                 onDeletePage={deletePage}
                 onUpdatePage={updatePage}
+                websiteMode={site?.website_mode}
               />
             </DataCard>
           </TabsContent>
