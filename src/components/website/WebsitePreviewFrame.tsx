@@ -95,8 +95,20 @@ function renderSection(section: WebsiteSection, site: WebsiteSite | null) {
   }
 }
 
-export function WebsitePreviewFrame({ sections, site, pageName }: Props) {
+export function WebsitePreviewFrame({ sections, site, pageName, pageSlug }: Props) {
   const [mode, setMode] = useState<"desktop" | "mobile">("desktop");
+  const { activeClientId } = useWorkspace();
+  const [clientSlug, setClientSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeClientId) return;
+    supabase.from("clients").select("workspace_slug").eq("id", activeClientId).maybeSingle()
+      .then(({ data }) => setClientSlug(data?.workspace_slug || null));
+  }, [activeClientId]);
+
+  const publicUrl = clientSlug
+    ? `/site/${clientSlug}${pageSlug && pageSlug !== "home" ? `/${pageSlug}` : ""}`
+    : null;
 
   return (
     <div>
@@ -109,6 +121,13 @@ export function WebsitePreviewFrame({ sections, site, pageName }: Props) {
           <Button size="sm" variant={mode === "mobile" ? "default" : "outline"} onClick={() => setMode("mobile")} className="gap-1">
             <Smartphone className="h-3.5 w-3.5" /> Mobile
           </Button>
+          {publicUrl && (
+            <Button size="sm" variant="outline" className="gap-1" asChild>
+              <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" /> Open in New Tab
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 
