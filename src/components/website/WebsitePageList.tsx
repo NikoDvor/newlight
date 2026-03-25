@@ -21,11 +21,13 @@ interface Props {
   websiteMode?: "hosted" | "external";
 }
 
-export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePage, onUpdatePage, selectedPageId }: Props) {
+export function WebsitePageList({ pages, onSelectPage, onCreatePage, onDeletePage, onUpdatePage, selectedPageId, websiteMode = "hosted" }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [newTemplate, setNewTemplate] = useState("blank");
+  const [newPageSource, setNewPageSource] = useState<"hosted" | "external">(websiteMode === "external" ? "external" : "hosted");
+  const [newExternalUrl, setNewExternalUrl] = useState("");
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
