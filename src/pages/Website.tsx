@@ -273,6 +273,30 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
+          {/* ─── Export Tab (External mode only) ─── */}
+          {isExternal && (
+            <TabsContent value="export" className="mt-4">
+              <DataCard title="Export & Sync">
+                <WebsiteExportPanel
+                  sections={sections}
+                  site={site}
+                  pageName={selectedPage?.page_name || "No page selected"}
+                />
+              </DataCard>
+            </TabsContent>
+          )}
+
+          {/* ─── Settings Tab ─── */}
+          <TabsContent value="settings" className="mt-4">
+            <DataCard title="Website Mode & Settings">
+              {site ? (
+                <WebsiteModeSwitcher site={site} onSave={updateSite} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-8 text-center">Loading...</p>
+              )}
+            </DataCard>
+          </TabsContent>
+
           {/* ─── Traffic Tab ─── */}
           <TabsContent value="traffic" className="mt-4">
             <DataCard title="Traffic Overview">
