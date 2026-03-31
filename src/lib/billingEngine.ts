@@ -10,7 +10,7 @@ function invoiceNumber(): string {
   return `INV-${y}-${m}-${seq}`;
 }
 
-export async function createBillingFromProposal(proposalId: string) {
+export async function createBillingFromProposal(proposalId: string, opts?: { pendingSignature?: boolean }) {
   const { data: proposal } = await supabase
     .from("proposals")
     .select("*")
@@ -20,6 +20,36 @@ export async function createBillingFromProposal(proposalId: string) {
 
   const clientId = proposal.client_id;
   if (!clientId) return null;
+
+  // ── Dedup check: reuse existing billing records for this proposal ──
+  const { data: existingBa } = await supabase
+    .from("billing_accounts")
+    .select("id")
+    .eq("proposal_id", proposalId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingBa) {
+    // Already created — find linked records and return
+    const { data: existingSub } = await supabase.from("subscriptions").select("id").eq("billing_account_id", existingBa.id).limit(1).maybeSingle();
+    const { data: existingContract } = await supabase.from("contract_records").select("id").eq("proposal_id", proposalId).limit(1).maybeSingle();
+    const { data: existingInv } = await supabase.from("invoices").select("id").eq("proposal_id", proposalId).limit(1).maybeSingle();
+
+    await supabase.from("audit_logs").insert({
+      action: "billing_reused_existing",
+      client_id: clientId,
+      module: "billing",
+      metadata: { proposal_id: proposalId, billing_account_id: existingBa.id, reason: "duplicate_prevention" },
+    });
+
+    return {
+      billingAccountId: existingBa.id,
+      subscriptionId: existingSub?.id ?? null,
+      contractRecordId: existingContract?.id ?? null,
+      invoiceId: existingInv?.id ?? null,
+      reused: true,
+    };
+  }
 
   // 1. Billing account
   const { data: ba } = await supabase
@@ -66,22 +96,26 @@ export async function createBillingFromProposal(proposalId: string) {
     .select("id")
     .single();
 
-  // 3. Contract record
+  // 3. Contract record — pending signature unless explicitly signed
+  let contractRecordId: string | null = null;
   if (sub) {
-    await supabase.from("contract_records").insert({
+    const pendingSig = opts?.pendingSignature !== false; // default true
+    const { data: cr } = await supabase.from("contract_records").insert({
       client_id: clientId,
       proposal_id: proposalId,
       subscription_id: sub.id,
-      contract_status: "Signed",
+      contract_status: pendingSig ? "Pending Signature" : "Signed",
       contract_length_months: contractMonths,
       start_date: startDate,
       end_date: endDate,
-      signed_at: new Date().toISOString(),
+      signed_at: pendingSig ? null : new Date().toISOString(),
       enforcement_mode: "Standard",
-    } as any);
+    } as any).select("id").single();
+    contractRecordId = cr?.id ?? null;
   }
 
   // 4. Setup fee invoice
+  let invoiceId: string | null = null;
   if (setupFee > 0) {
     const { data: inv } = await supabase
       .from("invoices")
@@ -104,6 +138,7 @@ export async function createBillingFromProposal(proposalId: string) {
       .single();
 
     if (inv) {
+      invoiceId = inv.id;
       await supabase.from("invoice_line_items").insert({
         invoice_id: inv.id,
         item_name: "Setup Fee",
@@ -131,5 +166,11 @@ export async function createBillingFromProposal(proposalId: string) {
     metadata: { proposal_id: proposalId, billing_account_id: ba.id },
   });
 
-  return { billingAccountId: ba.id, subscriptionId: sub?.id };
+  return {
+    billingAccountId: ba.id,
+    subscriptionId: sub?.id ?? null,
+    contractRecordId,
+    invoiceId,
+    reused: false,
+  };
 }

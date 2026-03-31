@@ -136,6 +136,13 @@ export interface ActivationFormState {
   next_follow_up_at: string;
   lost_reason: string;
 
+  // Persisted IDs for continuity
+  proposal_id: string;
+  billing_account_id: string;
+  contract_record_id: string;
+  invoice_id: string;
+  proposal_status: string; // "generated" | "revised" | "accepted" | ""
+
   // Stage 5: Branding (reuses existing fields)
   company_name: string;
   dashboard_title: string;
@@ -455,6 +462,7 @@ export const defaultFormState = (): ActivationFormState => ({
   assigned_account_manager: "", assigned_sales_rep: "",
   activation_priority: "normal", requested_launch_date: "", immediate_activation: "no",
   close_outcome: "", pending_reason: "", revision_notes: "", next_follow_up_at: "", lost_reason: "",
+  proposal_id: "", billing_account_id: "", contract_record_id: "", invoice_id: "", proposal_status: "",
   wire_reference: "", wire_notes: "", payment_receipt_url: "", internal_payment_notes: "",
 
   company_name: "", dashboard_title: "", welcome_message: "", tagline: "",
