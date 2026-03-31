@@ -293,10 +293,9 @@ export default function ClientIntakeForm() {
                 <h3 className="text-sm font-semibold text-foreground">Your Logo</h3>
               </div>
               <LogoUploader
-                currentLogo={logoUrl}
-                onUpload={(url) => setLogoUrl(url)}
-                bucket="client-logos"
-                path={`${clientId}/logo`}
+                value={logoUrl}
+                onChange={(url) => setLogoUrl(url)}
+                dark={false}
               />
             </CardContent>
           </Card>
