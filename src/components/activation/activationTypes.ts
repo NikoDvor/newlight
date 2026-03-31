@@ -95,7 +95,8 @@ export const ROLE_PRESET_OPTIONS = [
 ];
 
 export interface ActivationFormState {
-  // Step 1: Deal Close
+  // Stage 1: Qualification
+  // (reuses existing fields)
   business_name_confirmed: string;
   legal_business_name: string;
   display_name: string;
@@ -128,7 +129,14 @@ export interface ActivationFormState {
   payment_receipt_url: string;
   internal_payment_notes: string;
 
-  // Step 2: Branding
+  // Stage 3: Close Outcome
+  close_outcome: string; // "won" | "pending" | "revised" | "lost" | ""
+  pending_reason: string;
+  revision_notes: string;
+  next_follow_up_at: string;
+  lost_reason: string;
+
+  // Stage 5: Branding (reuses existing fields)
   company_name: string;
   dashboard_title: string;
   welcome_message: string;
@@ -348,7 +356,8 @@ export interface ActivationFormState {
   worker_portal_users: string;
 }
 
-export const STEPS = [
+// ── Legacy 15-step array (kept for backward compat) ──
+export const LEGACY_STEPS = [
   { id: 1, title: "Deal Close + Activation", icon: "Zap" },
   { id: 2, title: "Business Identity + Branding", icon: "Palette" },
   { id: 3, title: "CRM Setup", icon: "Users" },
@@ -365,6 +374,22 @@ export const STEPS = [
   { id: 14, title: "Integrations + Access", icon: "Link" },
   { id: 15, title: "Review + Activate", icon: "CheckCircle" },
 ] as const;
+
+// ── New 7-stage sales spine wizard ──
+export const WIZARD_STAGES = [
+  { id: 1, title: "Qualification", icon: "Target" },
+  { id: 2, title: "Proposal + Close Prep", icon: "FileText" },
+  { id: 3, title: "Close Outcome", icon: "Gavel" },
+  { id: 4, title: "Activation Details", icon: "CreditCard" },
+  { id: 5, title: "Branding / CRM / Calendar / Services", icon: "Palette" },
+  { id: 6, title: "Messaging / Reviews / Team / Integrations", icon: "Mail" },
+  { id: 7, title: "Review + Activate", icon: "CheckCircle" },
+] as const;
+
+export const TOTAL_WIZARD_STAGES = WIZARD_STAGES.length;
+
+// Keep STEPS pointing to new wizard for the main wizard component
+export const STEPS = WIZARD_STAGES;
 
 export const INTEGRATION_KEYS = [
   "Google Analytics", "Search Console", "Google Business Profile", "Meta",
@@ -429,6 +454,7 @@ export const defaultFormState = (): ActivationFormState => ({
   closing_notes: "", sales_notes: "",
   assigned_account_manager: "", assigned_sales_rep: "",
   activation_priority: "normal", requested_launch_date: "", immediate_activation: "no",
+  close_outcome: "", pending_reason: "", revision_notes: "", next_follow_up_at: "", lost_reason: "",
   wire_reference: "", wire_notes: "", payment_receipt_url: "", internal_payment_notes: "",
 
   company_name: "", dashboard_title: "", welcome_message: "", tagline: "",
