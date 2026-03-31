@@ -6,15 +6,20 @@ import { hydrateWorkspaceFromActivation, checkSyncStatus } from "@/lib/activatio
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, ArrowLeft, ArrowRight, Loader2, Save, Zap,
   Palette, Users, Calendar, Mail, Star, UserPlus, DollarSign,
-  TrendingUp, FileText, Headphones, Link2, Bell, ClipboardCheck, ClipboardList, ShoppingBag
+  TrendingUp, FileText, Headphones, Link2, ClipboardCheck,
+  ShoppingBag, Target, CreditCard, Gavel, AlertTriangle, Lock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { STEPS, defaultFormState, defaultIntegrations, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
+import { WIZARD_STAGES, TOTAL_WIZARD_STAGES, defaultFormState, defaultIntegrations, type ActivationFormState, type CalendarConfig, type ServiceConfig } from "@/components/activation/activationTypes";
+import { StepQualification } from "@/components/activation/StepQualification";
+import { StepProposalClosePrep } from "@/components/activation/StepProposalClosePrep";
+import { StepCloseOutcome } from "@/components/activation/StepCloseOutcome";
 import { StepDealClose } from "@/components/activation/StepDealClose";
 import { StepBranding } from "@/components/activation/StepBranding";
 import { StepCRM } from "@/components/activation/StepCRM";
@@ -24,34 +29,42 @@ import { StepBookingForms } from "@/components/activation/StepBookingForms";
 import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
 import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
-import { StepWorkforce } from "@/components/activation/StepWorkforce";
-import { StepFinance } from "@/components/activation/StepFinance";
-import { StepMarketing } from "@/components/activation/StepMarketing";
-import { StepSupport } from "@/components/activation/StepSupport";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepReview } from "@/components/activation/StepReview";
-import { StepNotifications } from "@/components/activation/StepNotifications";
 
-const TOTAL_STEPS = STEPS.length;
-
-const stepIcons: Record<number, React.ReactNode> = {
-  1: <Zap className="h-3.5 w-3.5" />, 2: <Palette className="h-3.5 w-3.5" />,
-  3: <Users className="h-3.5 w-3.5" />, 4: <Calendar className="h-3.5 w-3.5" />,
-  5: <ShoppingBag className="h-3.5 w-3.5" />, 6: <ClipboardList className="h-3.5 w-3.5" />,
-  7: <Mail className="h-3.5 w-3.5" />, 8: <Star className="h-3.5 w-3.5" />,
-  9: <UserPlus className="h-3.5 w-3.5" />, 10: <DollarSign className="h-3.5 w-3.5" />,
-  11: <DollarSign className="h-3.5 w-3.5" />, 12: <TrendingUp className="h-3.5 w-3.5" />,
-  13: <Headphones className="h-3.5 w-3.5" />, 14: <Link2 className="h-3.5 w-3.5" />,
-  15: <ClipboardCheck className="h-3.5 w-3.5" />,
+const stageIcons: Record<number, React.ReactNode> = {
+  1: <Target className="h-3.5 w-3.5" />,
+  2: <FileText className="h-3.5 w-3.5" />,
+  3: <Gavel className="h-3.5 w-3.5" />,
+  4: <CreditCard className="h-3.5 w-3.5" />,
+  5: <Palette className="h-3.5 w-3.5" />,
+  6: <Mail className="h-3.5 w-3.5" />,
+  7: <ClipboardCheck className="h-3.5 w-3.5" />,
 };
 
-type DraftStatus = "not_started" | "in_progress" | "submitted" | "activated";
+type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost" | "submitted" | "activated";
+
+/** Clamp legacy 15-step drafts safely into 7-stage range */
+function clampStage(step: number): number {
+  if (step <= 0) return 1;
+  if (step > TOTAL_WIZARD_STAGES) return TOTAL_WIZARD_STAGES;
+  return step;
+}
+
+/** Map old draft_status values to new set */
+function normalizeDraftStatus(s: string): DraftStatus {
+  if (s === "activated") return "activated";
+  if (s === "submitted") return "submitted";
+  if (s === "close_pending") return "close_pending";
+  if (s === "close_lost") return "close_lost";
+  return s === "not_started" ? "not_started" : "in_progress";
+}
 
 export default function AdminMasterActivation() {
   const navigate = useNavigate();
   const { clientId } = useParams<{ clientId?: string }>();
 
-  const [step, setStep] = useState(1);
+  const [stage, setStage] = useState(1);
   const [form, setForm] = useState<ActivationFormState>(defaultFormState());
   const [submitting, setSubmitting] = useState(false);
   const [activated, setActivated] = useState(false);
@@ -62,19 +75,17 @@ export default function AdminMasterActivation() {
   const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  // ── Existing-client mode: load client data + existing draft ──
+  // ── Load existing client + draft ──
   useEffect(() => {
     if (!clientId) return;
     (async () => {
       setLoading(true);
       try {
-        // Load client record
         const { data: client } = await supabase.from("clients").select("*").eq("id", clientId).single();
         if (!client) { toast.error("Client not found"); navigate("/admin/clients"); return; }
 
         setClientName(client.business_name);
 
-        // Check for existing draft
         const { data: drafts } = await supabase
           .from("activation_drafts")
           .select("*")
@@ -86,12 +97,11 @@ export default function AdminMasterActivation() {
           const draft = drafts[0];
           const saved = draft.form_data as any;
           if (saved && typeof saved === "object") {
-            // Merge with defaults to handle any new fields
             setForm({ ...defaultFormState(), ...saved, integrations: { ...defaultIntegrations(), ...(saved.integrations || {}) } });
           }
-          setStep(draft.current_step || 1);
+          setStage(clampStage(draft.current_step || 1));
           setDraftId(draft.id);
-          setDraftStatus((draft.draft_status || "in_progress") as DraftStatus);
+          setDraftStatus(normalizeDraftStatus(draft.draft_status || "in_progress"));
           if (draft.draft_status === "activated") setActivated(true);
         } else {
           // Pre-populate from client record
@@ -108,7 +118,7 @@ export default function AdminMasterActivation() {
             company_name: client.business_name || "",
           }));
         }
-      } catch (err: any) {
+      } catch {
         toast.error("Failed to load client data");
       } finally {
         setLoading(false);
@@ -116,7 +126,6 @@ export default function AdminMasterActivation() {
     })();
   }, [clientId, navigate]);
 
-  // Check sync status for existing clients
   useEffect(() => {
     if (!clientId) return;
     checkSyncStatus(clientId).then(setSyncStatus).catch(() => {});
@@ -140,19 +149,39 @@ export default function AdminMasterActivation() {
 
   const stepProps = { form, set, setIntegration, submitting };
 
+  // ── Close outcome state checks ──
+  const isWon = form.close_outcome === "won";
+  const isLost = form.close_outcome === "lost";
+  const isPending = form.close_outcome === "pending";
+  const isRevised = form.close_outcome === "revised";
+  const postCloseUnlocked = isWon; // only Won unlocks stages 4-7
+
+  // ── Can navigate to stage? ──
+  const canAccessStage = (s: number): boolean => {
+    if (s <= 3) return true; // stages 1-3 always accessible
+    if (s <= 7) return postCloseUnlocked; // stages 4-7 only after Won
+    return false;
+  };
+
   // ── Save Draft ──
   const handleSaveDraft = async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
       const draftName = form.business_name_confirmed || form.display_name || clientName || "Untitled Draft";
 
+      // Determine draft status from close outcome
+      let newDraftStatus = draftStatus;
+      if (draftStatus === "not_started") newDraftStatus = "in_progress";
+      if (isLost) newDraftStatus = "close_lost";
+      if (isPending) newDraftStatus = "close_pending";
+
       const draftPayload: any = {
         created_by: user.user?.id || null,
         client_id: clientId || null,
         draft_name: draftName,
         form_data: form as any,
-        current_step: step,
-        draft_status: draftStatus === "not_started" ? "in_progress" : draftStatus,
+        current_step: stage,
+        draft_status: newDraftStatus,
       };
 
       if (draftId) {
@@ -162,16 +191,124 @@ export default function AdminMasterActivation() {
         if (newDraft) setDraftId(newDraft.id);
       }
 
-      if (draftStatus === "not_started") setDraftStatus("in_progress");
+      setDraftStatus(newDraftStatus);
       toast.success("Draft saved successfully");
-      await emitEvent({ eventKey: "onboarding_form_saved", payload: { step, draft_name: draftName, client_id: clientId } });
+      await emitEvent({ eventKey: "onboarding_form_saved", payload: { stage, draft_name: draftName, client_id: clientId } });
     } catch {
       toast.error("Failed to save draft");
     }
   };
 
-  // ── Activate (existing client mode) ──
-  const handleActivateExisting = async () => {
+  // ── CRM sync on stage transition ──
+  const syncDealOnOutcome = async () => {
+    if (!clientId) return;
+
+    // Find the deal linked to this client
+    const { data: deals } = await supabase.from("crm_deals")
+      .select("id, pipeline_stage")
+      .eq("client_id", clientId)
+      .neq("pipeline_stage", "closed_won")
+      .neq("pipeline_stage", "closed_lost")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const deal = deals?.[0];
+    if (!deal) return;
+
+    let pipelineStage = deal.pipeline_stage;
+    let dealStatus = "open";
+
+    switch (form.close_outcome) {
+      case "won":
+        pipelineStage = "closed_won";
+        dealStatus = "won";
+        break;
+      case "lost":
+        pipelineStage = "closed_lost";
+        dealStatus = "lost";
+        break;
+      case "pending":
+      case "revised":
+        pipelineStage = "negotiation";
+        dealStatus = "open";
+        break;
+    }
+
+    await supabase.from("crm_deals").update({
+      pipeline_stage: pipelineStage,
+      status: dealStatus,
+      ...(form.close_outcome === "won" || form.close_outcome === "lost"
+        ? { close_date: new Date().toISOString().split("T")[0] }
+        : {}),
+    }).eq("id", deal.id);
+
+    // Update lead status
+    const { data: leads } = await supabase.from("crm_leads")
+      .select("id")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (leads?.[0]) {
+      const leadStatus = form.close_outcome === "won" ? "converted"
+        : form.close_outcome === "lost" ? "lost" : "new_lead";
+      await supabase.from("crm_leads").update({ lead_status: leadStatus }).eq("id", leads[0].id);
+    }
+
+    // Log
+    await Promise.all([
+      supabase.from("crm_activities").insert({
+        client_id: clientId,
+        activity_type: `deal_${form.close_outcome}`,
+        activity_note: `Deal marked as ${form.close_outcome}${form.close_outcome === "lost" ? `: ${form.lost_reason || "No reason given"}` : ""}${form.close_outcome === "pending" ? `: ${form.pending_reason || ""}` : ""}`,
+      }),
+      supabase.from("audit_logs").insert({
+        action: `wizard_close_outcome_${form.close_outcome}`,
+        client_id: clientId,
+        module: "activation",
+        metadata: {
+          close_outcome: form.close_outcome,
+          deal_id: deal.id,
+          pending_reason: form.pending_reason || null,
+          revision_notes: form.revision_notes || null,
+          lost_reason: form.lost_reason || null,
+          next_follow_up_at: form.next_follow_up_at || null,
+        },
+      }),
+    ]);
+  };
+
+  // ── Stage navigation with outcome branching ──
+  const handleNext = async () => {
+    // Stage 3: Close Outcome — sync deal before proceeding
+    if (stage === 3 && form.close_outcome) {
+      await syncDealOnOutcome();
+      await handleSaveDraft();
+
+      if (isRevised) {
+        setStage(2); // go back to Proposal
+        toast.info("Returning to Proposal stage for revision");
+        return;
+      }
+      if (isPending) {
+        toast.info("Deal marked as Pending — saved for follow-up");
+        return; // stay on stage 3
+      }
+      if (isLost) {
+        toast.info("Deal marked as Lost");
+        return; // stay on stage 3
+      }
+    }
+
+    // Normal forward
+    const next = Math.min(TOTAL_WIZARD_STAGES, stage + 1);
+    if (canAccessStage(next)) {
+      setStage(next);
+    }
+  };
+
+  // ── Activate (Stage 7) ──
+  const handleActivate = async () => {
     if (!clientId) return;
     const paymentPending = form.payment_confirmed !== "confirmed";
     if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
@@ -180,14 +317,14 @@ export default function AdminMasterActivation() {
 
     setSubmitting(true);
     try {
-      // 1. Run full hydration sync — writes all form data to canonical records
+      // 1. Hydration sync
       const hydrationResult = await hydrateWorkspaceFromActivation(clientId, form);
       if (hydrationResult.errors.length > 0) {
         console.warn("Hydration errors:", hydrationResult.errors);
         toast.warning(`Some fields had sync issues: ${hydrationResult.errors.length} error(s)`);
       }
 
-      // 2. Calendar setup from configs (if any new ones)
+      // 2. Calendar setup from configs
       if (form.use_native_calendar === "yes") {
         const configs: CalendarConfig[] = form.calendar_configs || [];
         for (const cfg of configs) {
@@ -198,12 +335,9 @@ export default function AdminMasterActivation() {
           if (existingCal) continue;
 
           const { data: cal } = await supabase.from("calendars").insert({
-            client_id: clientId,
-            calendar_name: cfg.calendar_name,
+            client_id: clientId, calendar_name: cfg.calendar_name,
             calendar_type: cfg.calendar_type === "single" ? "booking" : cfg.calendar_type,
-            timezone: tz,
-            description: cfg.description || null,
-            default_location: cfg.location_type || null,
+            timezone: tz, description: cfg.description || null, default_location: cfg.location_type || null,
           }).select().single();
           if (!cal) continue;
 
@@ -222,28 +356,22 @@ export default function AdminMasterActivation() {
             await supabase.from("calendar_appointment_types").insert({
               client_id: clientId, calendar_id: cal.id, name: typeName,
               duration_minutes: parseInt(cfg.default_duration) || 30,
-              buffer_before: parseInt(cfg.buffer_before) || 0,
-              buffer_after: parseInt(cfg.buffer_after) || 0,
-              location_type: cfg.location_type || "virtual",
-              meeting_link_type: cfg.meeting_link_type || null,
+              buffer_before: parseInt(cfg.buffer_before) || 0, buffer_after: parseInt(cfg.buffer_after) || 0,
+              location_type: cfg.location_type || "virtual", meeting_link_type: cfg.meeting_link_type || null,
               confirmation_message: cfg.confirmation_message || null,
-              reminders_enabled: cfg.reminders_enabled !== "no",
-              is_active: cfg.active !== "no",
+              reminders_enabled: cfg.reminders_enabled !== "no", is_active: cfg.active !== "no",
             });
           }
         }
       }
 
-      // 3. Full-app provisioning (idempotent)
+      // 3. Full-app provisioning
       await provisionWorkspaceDefaults(clientId, {
-        industry: form.industry,
-        timezone: form.default_timezone,
-        skipIfExists: true,
-        ownerEmail: form.owner_email,
-        ownerName: form.owner_name,
+        industry: form.industry, timezone: form.default_timezone,
+        skipIfExists: true, ownerEmail: form.owner_email, ownerName: form.owner_name,
       });
 
-      // 4. Advance workspace — payment-aware
+      // 4. Set onboarding_stage — only here, not at Close Outcome
       await supabase.from("clients").update({
         onboarding_stage: targetStage,
         status: targetStage === "active" ? "active" : "activation_in_progress",
@@ -256,7 +384,7 @@ export default function AdminMasterActivation() {
       // 5. Audit + activity
       await Promise.all([
         supabase.from("audit_logs").insert({
-          action: "client_activated_via_master_form",
+          action: "client_activated_via_wizard",
           client_id: clientId,
           module: "activation",
           metadata: {
@@ -272,44 +400,30 @@ export default function AdminMasterActivation() {
         supabase.from("crm_activities").insert({
           client_id: clientId,
           activity_type: "client_activated",
-          activity_note: `${form.business_name_confirmed || clientName} activated via master activation form`,
+          activity_note: `${form.business_name_confirmed || clientName} activated via master wizard — Stage 7`,
         }),
       ]);
 
-      // 6. Update draft status
+      // 6. Update draft
       if (draftId) {
         await supabase.from("activation_drafts").update({
-          draft_status: "activated",
-          form_data: form as any,
-          current_step: step,
+          draft_status: "activated", form_data: form as any, current_step: stage,
         }).eq("id", draftId);
-      } else {
-        const { data: user } = await supabase.auth.getUser();
-        await supabase.from("activation_drafts").insert({
-          client_id: clientId,
-          created_by: user.user?.id || null,
-          draft_name: form.business_name_confirmed || clientName,
-          form_data: form as any,
-          current_step: step,
-          draft_status: "activated",
-        });
       }
 
-      // 7. Sync stage + emit events
+      // 7. Sync + emit
       await syncOnboardingStage(clientId, targetStage);
       await emitEvent({
-        eventKey: "activation_form_submitted",
-        clientId,
+        eventKey: "activation_form_submitted", clientId,
         payload: { package: form.service_package, payment_status: form.payment_confirmed },
       });
 
       setActivated(true);
       setDraftStatus("activated");
-      if (paymentPending) {
-        toast.success(`${form.business_name_confirmed || clientName} activated — awaiting payment confirmation`);
-      } else {
-        toast.success(`${form.business_name_confirmed || clientName} is now live!`);
-      }
+      toast.success(paymentPending
+        ? `${form.business_name_confirmed || clientName} activated — awaiting payment`
+        : `${form.business_name_confirmed || clientName} is now live!`
+      );
     } catch (err: any) {
       toast.error(err.message || "Activation failed");
     } finally {
@@ -317,7 +431,7 @@ export default function AdminMasterActivation() {
     }
   };
 
-  // ── Manual re-sync for backfill ──
+  // ── Manual re-sync ──
   const handleResync = async () => {
     if (!clientId) return;
     setSyncing(true);
@@ -337,160 +451,44 @@ export default function AdminMasterActivation() {
     }
   };
 
-  // ── Activate (new client / standalone mode – original behavior) ──
-  const handleActivateNew = async () => {
-    if (!form.business_name_confirmed || !form.owner_email) {
-      toast.error("Business name and owner email are required");
-      return;
-    }
-    const paymentPending = form.payment_confirmed !== "confirmed";
-    if (paymentPending) toast.warning("Activating with pending payment — billing will show Pending Payment");
-
-    setSubmitting(true);
-    const slug = (form.display_name || form.business_name_confirmed).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
-    try {
-      const { data: client, error: clientErr } = await supabase.from("clients").insert({
-        business_name: form.business_name_confirmed,
-        workspace_slug: slug,
-        industry: form.industry || null,
-        primary_location: form.primary_location || null,
-        timezone: form.default_timezone || "America/Los_Angeles",
-        service_package: form.service_package,
-        owner_name: form.owner_name || null,
-        owner_email: form.owner_email,
-        crm_mode: form.crm_mode === "external" ? "external" : "native",
-        onboarding_stage: "activation",
-      } as any).select().single();
-
-      if (clientErr || !client) throw new Error(clientErr?.message || "Failed to create client");
-
-      const integrationNames = [
-        "Google Analytics", "Google Search Console", "Google Business Profile",
-        "Meta / Instagram", "Google Ads", "Stripe", "Twilio", "Zoom", "Domain / Website",
-      ];
-
-      await Promise.all([
-        supabase.from("provision_queue").insert({ client_id: client.id, provision_status: "provisioning" }),
-        supabase.from("client_integrations").insert(integrationNames.map(name => ({ client_id: client.id, integration_name: name }))),
-        supabase.from("onboarding_progress").insert({ client_id: client.id }),
-        supabase.from("client_branding").insert({
-          client_id: client.id,
-          company_name: form.company_name || form.business_name_confirmed,
-          display_name: form.display_name || null,
-          logo_url: form.logo_url || null,
-          primary_color: form.primary_color,
-          secondary_color: form.secondary_color,
-          accent_color: form.accent_color || null,
-          welcome_message: form.welcome_message || "Welcome to your business dashboard",
-          tagline: form.tagline || null,
-          app_display_name: form.app_display_name || form.display_name || null,
-          workspace_header_name: form.workspace_header_name || null,
-          calendar_title: form.calendar_title || null,
-          finance_dashboard_title: form.finance_dashboard_title || null,
-          report_header_title: form.report_header_title || null,
-          login_branding_text: form.login_branding_text || null,
-          dashboard_title: form.dashboard_title || null,
-        }),
-        supabase.from("client_health_scores").insert({ client_id: client.id }),
-      ]);
-
-      await supabase.functions.invoke("invite-user", {
-        body: { email: form.owner_email, role: "client_owner", client_id: client.id },
-      });
-
-      // Calendar setup from configs
-      if (form.use_native_calendar === "yes") {
-        const configs: CalendarConfig[] = form.calendar_configs || [];
-        for (const cfg of configs) {
-          if (!cfg.calendar_name) continue;
-          const tz = form.default_timezone || "America/Los_Angeles";
-          const { data: cal } = await supabase.from("calendars").insert({
-            client_id: client.id, calendar_name: cfg.calendar_name,
-            calendar_type: cfg.calendar_type === "single" ? "booking" : cfg.calendar_type,
-            timezone: tz, description: cfg.description || null, default_location: cfg.location_type || null,
-          }).select().single();
-          if (!cal) continue;
-
-          const days = (cfg.availability_days || "1,2,3,4,5").split(",").map(d => parseInt(d.trim())).filter(d => !isNaN(d));
-          for (const day of days) {
-            await supabase.from("calendar_availability").insert({
-              client_id: client.id, calendar_id: cal.id, day_of_week: day,
-              start_time: cfg.availability_hours_start || "09:00", end_time: cfg.availability_hours_end || "17:00",
-              slot_interval_minutes: parseInt(cfg.slot_interval) || 30, is_active: true,
-            });
-          }
-          const typeNames = (cfg.appointment_types || "Consultation").split(",").map(t => t.trim()).filter(Boolean);
-          for (const typeName of typeNames) {
-            await supabase.from("calendar_appointment_types").insert({
-              client_id: client.id, calendar_id: cal.id, name: typeName,
-              duration_minutes: parseInt(cfg.default_duration) || 30,
-              buffer_before: parseInt(cfg.buffer_before) || 0, buffer_after: parseInt(cfg.buffer_after) || 0,
-              location_type: cfg.location_type || "virtual", meeting_link_type: cfg.meeting_link_type || null,
-              confirmation_message: cfg.confirmation_message || null,
-              reminders_enabled: cfg.reminders_enabled !== "no", is_active: cfg.active !== "no",
-            });
-          }
-        }
-      }
-
-      // Service catalog
-      const serviceConfigs: ServiceConfig[] = form.service_configs || [];
-      for (const svc of serviceConfigs) {
-        if (!svc.service_name) continue;
-        await supabase.from("service_catalog" as any).insert({
-          client_id: client.id, service_name: svc.service_name,
-          service_description: svc.service_description || null,
-          display_price_text: svc.display_price_text || null,
-          service_status: svc.service_status || "draft", display_order: 0,
-        });
-      }
-
-      await Promise.all([
-        supabase.from("provision_queue").update({ provision_status: "ready_for_kickoff", crm_setup: true, automation_setup: true }).eq("client_id", client.id),
-        supabase.from("audit_logs").insert({
-          action: "master_activation_completed", client_id: client.id, module: "activation",
-          metadata: { package: form.service_package, crm_mode: form.crm_mode },
-        }),
-      ]);
-
-      // Run full hydration to sync all remaining fields (billing, team, integrations, etc.)
-      await hydrateWorkspaceFromActivation(client.id, form);
-
-      await provisionWorkspaceDefaults(client.id, {
-        industry: form.industry, timezone: form.default_timezone, skipIfExists: true,
-      });
-      await syncOnboardingStage(client.id, "active");
-      await emitEvent({ eventKey: "activation_form_submitted", clientId: client.id, payload: { package: form.service_package } });
-
-      setActivated(true);
-      toast.success(`${form.business_name_confirmed} activated successfully!`);
-    } catch (err: any) {
-      toast.error(err.message || "Activation failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleActivate = clientId ? handleActivateExisting : handleActivateNew;
-
-  const renderStep = () => {
-    switch (step) {
-      case 1: return <StepDealClose {...stepProps} />;
-      case 2: return <StepBranding {...stepProps} />;
-      case 3: return <StepCRM {...stepProps} />;
-      case 4: return <StepCalendar {...stepProps} />;
-      case 5: return <StepServices {...stepProps} />;
-      case 6: return <StepBookingForms {...stepProps} />;
-      case 7: return <StepEmail {...stepProps} />;
-      case 8: return <StepReviews {...stepProps} />;
-      case 9: return <StepTeamSetup {...stepProps} />;
-      case 10: return <StepWorkforce {...stepProps} />;
-      case 11: return <StepFinance {...stepProps} />;
-      case 12: return <StepMarketing {...stepProps} />;
-      case 13: return <StepSupport {...stepProps} />;
-      case 14: return <StepIntegrations {...stepProps} />;
-      case 15: return <StepReview {...stepProps} />;
+  // ── Render current stage content ──
+  const renderStage = () => {
+    switch (stage) {
+      case 1: return <StepQualification {...stepProps} />;
+      case 2: return <StepProposalClosePrep {...stepProps} />;
+      case 3: return <StepCloseOutcome {...stepProps} />;
+      case 4: return <StepDealClose {...stepProps} />; // Payment/activation details
+      case 5:
+        return (
+          <Tabs defaultValue="branding" className="w-full">
+            <TabsList className="w-full grid grid-cols-4 bg-white/[0.04] border border-white/10 mb-4">
+              <TabsTrigger value="branding" className="text-[11px] data-[state=active]:bg-white/10">Branding</TabsTrigger>
+              <TabsTrigger value="crm" className="text-[11px] data-[state=active]:bg-white/10">CRM</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-[11px] data-[state=active]:bg-white/10">Calendar</TabsTrigger>
+              <TabsTrigger value="services" className="text-[11px] data-[state=active]:bg-white/10">Services</TabsTrigger>
+            </TabsList>
+            <TabsContent value="branding"><StepBranding {...stepProps} /></TabsContent>
+            <TabsContent value="crm"><StepCRM {...stepProps} /></TabsContent>
+            <TabsContent value="calendar"><StepCalendar {...stepProps} /></TabsContent>
+            <TabsContent value="services"><StepServices {...stepProps} /></TabsContent>
+          </Tabs>
+        );
+      case 6:
+        return (
+          <Tabs defaultValue="messaging" className="w-full">
+            <TabsList className="w-full grid grid-cols-4 bg-white/[0.04] border border-white/10 mb-4">
+              <TabsTrigger value="messaging" className="text-[11px] data-[state=active]:bg-white/10">Messaging</TabsTrigger>
+              <TabsTrigger value="reviews" className="text-[11px] data-[state=active]:bg-white/10">Reviews</TabsTrigger>
+              <TabsTrigger value="team" className="text-[11px] data-[state=active]:bg-white/10">Team</TabsTrigger>
+              <TabsTrigger value="integrations" className="text-[11px] data-[state=active]:bg-white/10">Integrations</TabsTrigger>
+            </TabsList>
+            <TabsContent value="messaging"><StepEmail {...stepProps} /></TabsContent>
+            <TabsContent value="reviews"><StepReviews {...stepProps} /></TabsContent>
+            <TabsContent value="team"><StepTeamSetup {...stepProps} /></TabsContent>
+            <TabsContent value="integrations"><StepIntegrations {...stepProps} /></TabsContent>
+          </Tabs>
+        );
+      case 7: return <StepReview {...stepProps} />;
       default: return null;
     }
   };
@@ -506,8 +504,33 @@ export default function AdminMasterActivation() {
   const draftStatusLabel: Record<DraftStatus, { text: string; cls: string }> = {
     not_started: { text: "Not Started", cls: "bg-white/10 text-white/50" },
     in_progress: { text: "In Progress", cls: "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]" },
+    close_pending: { text: "Close Pending", cls: "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]" },
+    close_lost: { text: "Lost", cls: "bg-red-500/15 text-red-400" },
     submitted: { text: "Submitted", cls: "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]" },
     activated: { text: "Activated", cls: "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" },
+  };
+
+  // Determine if Next button should show vs Activate
+  const isLastStage = stage === TOTAL_WIZARD_STAGES;
+  const showActivateButton = isLastStage && postCloseUnlocked;
+
+  // Stage 3 special next label
+  const getNextLabel = () => {
+    if (stage === 3) {
+      if (!form.close_outcome) return "Select Outcome";
+      if (isWon) return "Continue to Activation";
+      if (isPending) return "Save as Pending";
+      if (isRevised) return "Return to Proposal";
+      if (isLost) return "Save as Lost";
+    }
+    return "Next";
+  };
+
+  const nextDisabled = () => {
+    if (submitting) return true;
+    if (stage === 3 && !form.close_outcome) return true;
+    if (stage > 3 && !postCloseUnlocked) return true;
+    return false;
   };
 
   return (
@@ -518,10 +541,10 @@ export default function AdminMasterActivation() {
             <ArrowLeft className="h-3 w-3" /> {clientId ? "Back to Clients" : "Back to Activation"}
           </button>
           <h1 className="text-xl font-bold text-white">
-            {clientId ? `Activate — ${clientName}` : "Master Activation Form"}
+            {clientId ? `Sales Wizard — ${clientName}` : "Master Sales Wizard"}
           </h1>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-xs text-white/50">Step {step} of {STEPS.length}</p>
+            <p className="text-xs text-white/50">Stage {stage} of {TOTAL_WIZARD_STAGES}</p>
             <Badge className={`text-[10px] px-2 py-0 ${draftStatusLabel[draftStatus].cls} border-0`}>
               {draftStatusLabel[draftStatus].text}
             </Badge>
@@ -541,7 +564,7 @@ export default function AdminMasterActivation() {
             {syncStatus.complete ? (
               <><CheckCircle2 className="h-4 w-4 text-emerald-400" /><span className="text-xs font-medium text-emerald-300">Data Sync Complete</span></>
             ) : (
-              <><Loader2 className="h-4 w-4 text-amber-400" /><span className="text-xs font-medium text-amber-300">Missing Mapped Fields: {syncStatus.missing.join(", ")}</span></>
+              <><Loader2 className="h-4 w-4 text-amber-400" /><span className="text-xs font-medium text-amber-300">Missing: {syncStatus.missing.join(", ")}</span></>
             )}
           </div>
           {!syncStatus.complete && (
@@ -554,47 +577,65 @@ export default function AdminMasterActivation() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4">
-        {/* Step Navigation */}
+        {/* Stage Navigation */}
         <Card className="border-0 bg-white/[0.03] backdrop-blur-sm lg:sticky lg:top-4 lg:self-start" style={{ borderColor: "hsla(211,96%,60%,.06)" }}>
           <CardContent className="p-2">
             <div className="space-y-0.5">
-              {STEPS.map(s => {
-                const isCurrent = s.id === step;
-                const isPast = s.id < step;
+              {WIZARD_STAGES.map(s => {
+                const isCurrent = s.id === stage;
+                const isPast = s.id < stage;
+                const locked = !canAccessStage(s.id);
                 return (
                   <button
                     key={s.id}
-                    onClick={() => setStep(s.id)}
+                    onClick={() => { if (!locked) setStage(s.id); }}
+                    disabled={locked}
                     className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-[11px] font-medium transition-all ${
-                      isCurrent
-                        ? "bg-[hsl(var(--nl-electric))]/20 text-[hsl(var(--nl-sky))]"
-                        : isPast
-                          ? "text-white/50 hover:text-white/70 hover:bg-white/[0.04]"
-                          : "text-white/30 hover:text-white/50 hover:bg-white/[0.03]"
+                      locked
+                        ? "text-white/20 cursor-not-allowed"
+                        : isCurrent
+                          ? "bg-[hsl(var(--nl-electric))]/20 text-[hsl(var(--nl-sky))]"
+                          : isPast
+                            ? "text-white/50 hover:text-white/70 hover:bg-white/[0.04]"
+                            : "text-white/30 hover:text-white/50 hover:bg-white/[0.03]"
                     }`}
                   >
-                    <span className="shrink-0">{isPast ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60" /> : stepIcons[s.id]}</span>
+                    <span className="shrink-0">
+                      {locked ? <Lock className="h-3.5 w-3.5 text-white/15" /> : isPast ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60" /> : stageIcons[s.id]}
+                    </span>
                     <span className="truncate">{s.title}</span>
                   </button>
                 );
               })}
             </div>
+
+            {/* Close outcome indicator */}
+            {form.close_outcome && (
+              <div className={`mt-3 mx-1 rounded-lg px-2.5 py-2 text-[10px] font-medium ${
+                isWon ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                : isLost ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                : isPending ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+              }`}>
+                Outcome: {form.close_outcome === "won" ? "Won" : form.close_outcome === "lost" ? "Lost" : form.close_outcome === "pending" ? "Pending" : "Revised"}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Step Content */}
+        {/* Stage Content */}
         <div className="space-y-4">
           <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
             <CardContent className="p-4 sm:p-5">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={step}
+                  key={stage}
                   initial={{ opacity: 0, x: 12 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {renderStep()}
+                  {renderStage()}
                 </motion.div>
               </AnimatePresence>
             </CardContent>
@@ -604,8 +645,8 @@ export default function AdminMasterActivation() {
           <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="outline"
-              onClick={() => setStep(Math.max(1, step - 1))}
-              disabled={step === 1 || submitting}
+              onClick={() => setStage(Math.max(1, stage - 1))}
+              disabled={stage === 1 || submitting}
               className="border-white/10 text-white hover:bg-white/10"
             >
               <ArrowLeft className="h-4 w-4 mr-1" /> Back
@@ -622,15 +663,7 @@ export default function AdminMasterActivation() {
 
             <div className="flex-1" />
 
-            {step < TOTAL_STEPS ? (
-              <Button
-                onClick={() => setStep(Math.min(TOTAL_STEPS, step + 1))}
-                disabled={submitting}
-                className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
-              >
-                Next <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
+            {showActivateButton ? (
               <Button
                 onClick={handleActivate}
                 disabled={submitting || activated}
@@ -643,6 +676,14 @@ export default function AdminMasterActivation() {
                 ) : (
                   <><Zap className="h-4 w-4 mr-2" /> Save & Activate</>
                 )}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={nextDisabled()}
+                className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
+              >
+                {getNextLabel()} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             )}
           </div>
