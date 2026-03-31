@@ -136,6 +136,13 @@ export interface ActivationFormState {
   next_follow_up_at: string;
   lost_reason: string;
 
+  // Persisted IDs for continuity
+  proposal_id: string;
+  billing_account_id: string;
+  contract_record_id: string;
+  invoice_id: string;
+  proposal_status: string; // "generated" | "revised" | "accepted" | ""
+
   // Stage 5: Branding (reuses existing fields)
   company_name: string;
   dashboard_title: string;
