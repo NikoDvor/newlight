@@ -274,12 +274,24 @@ export default function BookingPage() {
 
       if (apptErr) throw apptErr;
 
-      // 4. Activity + audit
+      // 5. Activity + audit (includes lead/deal tracking)
       await Promise.all([
         supabase.from("crm_activities").insert({
           client_id: client.id,
           activity_type: "appointment_booked",
           activity_note: `Online booking by ${name} (${email}) — ${selectedType?.name || "Appointment"}`,
+          contact_id: contactId || null,
+        }),
+        dealAction !== "skipped" && supabase.from("crm_activities").insert({
+          client_id: client.id,
+          activity_type: dealAction === "created" ? "deal_created" : "deal_updated",
+          activity_note: `Deal ${dealAction} from booking — ${selectedType?.name || "Appointment"}`,
+          contact_id: contactId || null,
+        }),
+        leadAction !== "skipped" && supabase.from("crm_activities").insert({
+          client_id: client.id,
+          activity_type: leadAction === "created" ? "lead_created" : "lead_exists",
+          activity_note: `Lead ${leadAction} from booking — ${name} (${email})`,
           contact_id: contactId || null,
         }),
         supabase.from("audit_logs").insert({
@@ -293,9 +305,12 @@ export default function BookingPage() {
             contact_email: email,
             appointment_type: selectedType?.name,
             booking_source: "booking_page",
+            lead_action: leadAction,
+            deal_action: dealAction,
+            deal_id: dealId,
           },
         }),
-      ]);
+      ].filter(Boolean));
 
       // 5. Schedule reminders
       const { data: reminderRules } = await supabase.from("calendar_reminder_rules")
