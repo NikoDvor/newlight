@@ -125,6 +125,7 @@ import ConversationsPage from "./pages/ConversationsPage";
 import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
+import ClientIntakeForm from "./pages/ClientIntakeForm";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -145,6 +146,7 @@ const App = () => (
             <Route path="/w/:slug" element={<WorkspaceEntry />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
             <Route path="/site/:clientSlug" element={<PublicSite />} />
+            <Route path="/intake" element={<ClientIntakeForm />} />
             <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
             {/* Admin Portal */}
