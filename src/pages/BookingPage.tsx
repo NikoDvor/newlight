@@ -160,7 +160,78 @@ export default function BookingPage() {
         contactId = newContact?.id;
       }
 
-      // 2. Find assigned user (round-robin or owner)
+      // 2. CRM: find or create lead + deal (dedup guard)
+      let leadAction = "skipped";
+      let dealAction = "skipped";
+      let dealId: string | null = null;
+
+      if (contactId) {
+        try {
+          // Check for existing open deal for this contact
+          const { data: existingDeal } = await supabase.from("crm_deals")
+            .select("id, pipeline_stage")
+            .eq("client_id", client.id)
+            .eq("contact_id", contactId)
+            .neq("pipeline_stage", "closed_won")
+            .neq("pipeline_stage", "closed_lost")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (existingDeal) {
+            // Reuse existing deal — update stage to appointment_booked if earlier
+            dealId = existingDeal.id;
+            const earlyStages = ["new_lead", "contacted", "qualified"];
+            if (earlyStages.includes(existingDeal.pipeline_stage)) {
+              await supabase.from("crm_deals").update({
+                pipeline_stage: "appointment_booked",
+              }).eq("id", existingDeal.id);
+            }
+            dealAction = "reused";
+          } else {
+            // Create new deal
+            const dealName = `${name.trim()} — ${selectedType?.name || "Booking"}`;
+            const { data: newDeal } = await supabase.from("crm_deals").insert({
+              client_id: client.id,
+              contact_id: contactId,
+              deal_name: dealName,
+              pipeline_stage: "appointment_booked",
+              deal_value: 0,
+              status: "open",
+              lead_source: "booking_page",
+              qualification_status: "unqualified",
+            }).select("id").single();
+            dealId = newDeal?.id || null;
+            dealAction = "created";
+          }
+
+          // Check for existing lead for this contact
+          const { data: existingLead } = await supabase.from("crm_leads")
+            .select("id")
+            .eq("client_id", client.id)
+            .eq("contact_id", contactId)
+            .limit(1)
+            .maybeSingle();
+
+          if (existingLead) {
+            leadAction = "reused";
+          } else {
+            await supabase.from("crm_leads").insert({
+              client_id: client.id,
+              contact_id: contactId,
+              source: "booking_page",
+              lead_status: "new_lead",
+              estimated_value: 0,
+              notes: `Auto-created from booking: ${selectedType?.name || "Appointment"}`,
+            });
+            leadAction = "created";
+          }
+        } catch (crmErr) {
+          console.warn("Lead/deal creation warning (non-blocking):", crmErr);
+        }
+      }
+
+      // 3. Find assigned user (round-robin or owner)
       let assignedUserId = calendar.owner_user_id || null;
       if (calendar.calendar_type === "round_robin") {
         const { data: calUsers } = await supabase.from("calendar_users")
@@ -203,12 +274,24 @@ export default function BookingPage() {
 
       if (apptErr) throw apptErr;
 
-      // 4. Activity + audit
+      // 5. Activity + audit (includes lead/deal tracking)
       await Promise.all([
         supabase.from("crm_activities").insert({
           client_id: client.id,
           activity_type: "appointment_booked",
           activity_note: `Online booking by ${name} (${email}) — ${selectedType?.name || "Appointment"}`,
+          contact_id: contactId || null,
+        }),
+        dealAction !== "skipped" && supabase.from("crm_activities").insert({
+          client_id: client.id,
+          activity_type: dealAction === "created" ? "deal_created" : "deal_updated",
+          activity_note: `Deal ${dealAction} from booking — ${selectedType?.name || "Appointment"}`,
+          contact_id: contactId || null,
+        }),
+        leadAction !== "skipped" && supabase.from("crm_activities").insert({
+          client_id: client.id,
+          activity_type: leadAction === "created" ? "lead_created" : "lead_exists",
+          activity_note: `Lead ${leadAction} from booking — ${name} (${email})`,
           contact_id: contactId || null,
         }),
         supabase.from("audit_logs").insert({
@@ -222,9 +305,12 @@ export default function BookingPage() {
             contact_email: email,
             appointment_type: selectedType?.name,
             booking_source: "booking_page",
+            lead_action: leadAction,
+            deal_action: dealAction,
+            deal_id: dealId,
           },
         }),
-      ]);
+      ].filter(Boolean));
 
       // 5. Schedule reminders
       const { data: reminderRules } = await supabase.from("calendar_reminder_rules")

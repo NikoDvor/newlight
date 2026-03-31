@@ -146,17 +146,99 @@ Deno.serve(async (req) => {
           status: "pending",
         }))
       ),
-      adminClient.from("crm_contacts").insert({
+    ]);
+
+    // 2b. Create CRM contact + lead + deal (service-role, bypasses RLS)
+    const contactFullName = contact_name || contact_email.split("@")[0];
+    const contactEmailLower = contact_email.toLowerCase();
+
+    // Find or create contact
+    const { data: existingContact } = await adminClient.from("crm_contacts")
+      .select("id")
+      .eq("client_id", client.id)
+      .eq("email", contactEmailLower)
+      .maybeSingle();
+
+    let contactId = existingContact?.id;
+    if (!existingContact) {
+      const { data: newContact } = await adminClient.from("crm_contacts").insert({
         client_id: client.id,
-        full_name: contact_name || contact_email.split("@")[0],
-        email: contact_email.toLowerCase(),
+        full_name: contactFullName,
+        email: contactEmailLower,
         phone: contact_phone || null,
         lead_source: appointment_id ? "booking" : "onboarding_form",
-        pipeline_stage: "new_lead",
+        pipeline_stage: "appointment_booked",
         first_contact_date: new Date().toISOString(),
         last_interaction_date: new Date().toISOString(),
-      }),
-    ]);
+        number_of_appointments: 1,
+      }).select("id").single();
+      contactId = newContact?.id;
+    }
+
+    // Lead + Deal creation with dedup
+    let leadAction = "skipped";
+    let dealAction = "skipped";
+    let dealId: string | null = null;
+
+    if (contactId) {
+      // Check for existing open deal
+      const { data: existingDeal } = await adminClient.from("crm_deals")
+        .select("id, pipeline_stage")
+        .eq("client_id", client.id)
+        .eq("contact_id", contactId)
+        .neq("pipeline_stage", "closed_won")
+        .neq("pipeline_stage", "closed_lost")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingDeal) {
+        dealId = existingDeal.id;
+        const earlyStages = ["new_lead", "contacted", "qualified"];
+        if (earlyStages.includes(existingDeal.pipeline_stage)) {
+          await adminClient.from("crm_deals").update({
+            pipeline_stage: "appointment_booked",
+          }).eq("id", existingDeal.id);
+        }
+        dealAction = "reused";
+      } else {
+        const dealName = `${displayName} — ${appointment_id ? "Discovery Booking" : "New Opportunity"}`;
+        const { data: newDeal } = await adminClient.from("crm_deals").insert({
+          client_id: client.id,
+          contact_id: contactId,
+          deal_name: dealName,
+          pipeline_stage: "appointment_booked",
+          deal_value: 0,
+          status: "open",
+          lead_source: appointment_id ? "booking" : "onboarding_form",
+          qualification_status: "unqualified",
+        }).select("id").single();
+        dealId = newDeal?.id || null;
+        dealAction = "created";
+      }
+
+      // Check for existing lead
+      const { data: existingLead } = await adminClient.from("crm_leads")
+        .select("id")
+        .eq("client_id", client.id)
+        .eq("contact_id", contactId)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingLead) {
+        leadAction = "reused";
+      } else {
+        await adminClient.from("crm_leads").insert({
+          client_id: client.id,
+          contact_id: contactId,
+          source: appointment_id ? "booking" : "onboarding_form",
+          lead_status: "new_lead",
+          estimated_value: 0,
+          notes: `Auto-created from workspace provisioning: ${displayName}`,
+        });
+        leadAction = "created";
+      }
+    }
 
     // 3. Invite the user as client_owner — robust lookup, no listUsers()
     let inviteSent = false;
@@ -250,13 +332,31 @@ Deno.serve(async (req) => {
       : "invite_attempted";
 
     // 5. Activity + audit
-    await Promise.all([
-      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
-      adminClient.from("crm_activities").insert({
+    const activityInserts = [
+      {
         client_id: client.id,
         activity_type: "workspace_created",
         activity_note: `Workspace created for ${contact_name || contact_email}${main_goal ? ` — Goal: ${main_goal}` : ""}${interested_service ? ` — Interest: ${interested_service}` : ""}`,
-      }),
+      },
+    ];
+    if (dealAction !== "skipped") {
+      activityInserts.push({
+        client_id: client.id,
+        activity_type: dealAction === "created" ? "deal_created" : "deal_updated",
+        activity_note: `Deal ${dealAction} from provisioning — ${displayName}`,
+      });
+    }
+    if (leadAction !== "skipped") {
+      activityInserts.push({
+        client_id: client.id,
+        activity_type: leadAction === "created" ? "lead_created" : "lead_exists",
+        activity_note: `Lead ${leadAction} from provisioning — ${contact_name || contact_email}`,
+      });
+    }
+
+    await Promise.all([
+      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
+      adminClient.from("crm_activities").insert(activityInserts),
       adminClient.from("audit_logs").insert({
         action: "workspace_auto_provisioned",
         client_id: client.id,
@@ -276,6 +376,10 @@ Deno.serve(async (req) => {
           invite_error: inviteError,
           invite_status: finalInviteStatus,
           existing_user: existingUser,
+          lead_action: leadAction,
+          deal_action: dealAction,
+          deal_id: dealId,
+          contact_id: contactId,
         },
       }),
       adminClient
