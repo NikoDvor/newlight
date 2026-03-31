@@ -13,7 +13,8 @@ import {
   SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -117,12 +118,34 @@ const bottomItems = [
   { title: "Billing", url: "/billing", icon: CreditCard },
 ];
 
+// Field-service business types that don't need Zoom/meeting-intelligence
+const FIELD_SERVICE_TYPES = [
+  "hvac", "construction", "automotive", "window washing", "landscaping",
+  "plumbing", "roofing", "cleaning service",
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { hasAccess } = useWorkspacePermissions();
-  const { isAdmin } = useWorkspace();
+  const { isAdmin, activeClientId } = useWorkspace();
+  const [clientIndustry, setClientIndustry] = useState<string | null>(null);
+
+  // Load business type for meeting-intelligence visibility
+  useEffect(() => {
+    if (!activeClientId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("industry")
+        .eq("id", activeClientId)
+        .maybeSingle();
+      setClientIndustry(data?.industry?.toLowerCase() || null);
+    })();
+  }, [activeClientId]);
+
+  const isFieldService = clientIndustry ? FIELD_SERVICE_TYPES.includes(clientIndustry) : false;
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -131,6 +154,8 @@ export function AppSidebar() {
 
   const canSee = (moduleKey?: string) => {
     if (!moduleKey || isAdmin) return true;
+    // Hide Zoom/meeting-intelligence for field-service business types
+    if (moduleKey === "meeting_intel" && isFieldService) return false;
     return hasAccess(moduleKey, "view");
   };
 
