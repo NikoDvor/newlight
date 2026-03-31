@@ -10,7 +10,7 @@ function invoiceNumber(): string {
   return `INV-${y}-${m}-${seq}`;
 }
 
-export async function createBillingFromProposal(proposalId: string) {
+export async function createBillingFromProposal(proposalId: string, opts?: { pendingSignature?: boolean }) {
   const { data: proposal } = await supabase
     .from("proposals")
     .select("*")
