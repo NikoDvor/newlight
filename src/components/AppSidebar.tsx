@@ -13,7 +13,8 @@ import {
   SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
