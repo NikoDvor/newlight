@@ -166,5 +166,11 @@ export async function createBillingFromProposal(proposalId: string, opts?: { pen
     metadata: { proposal_id: proposalId, billing_account_id: ba.id },
   });
 
-  return { billingAccountId: ba.id, subscriptionId: sub?.id };
+  return {
+    billingAccountId: ba.id,
+    subscriptionId: sub?.id ?? null,
+    contractRecordId,
+    invoiceId,
+    reused: false,
+  };
 }
