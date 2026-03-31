@@ -129,7 +129,14 @@ export interface ActivationFormState {
   payment_receipt_url: string;
   internal_payment_notes: string;
 
-  // Step 2: Branding
+  // Stage 3: Close Outcome
+  close_outcome: string; // "won" | "pending" | "revised" | "lost" | ""
+  pending_reason: string;
+  revision_notes: string;
+  next_follow_up_at: string;
+  lost_reason: string;
+
+  // Stage 5: Branding (reuses existing fields)
   company_name: string;
   dashboard_title: string;
   welcome_message: string;
