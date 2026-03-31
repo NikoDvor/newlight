@@ -146,6 +146,7 @@ const App = () => (
             <Route path="/w/:slug" element={<WorkspaceEntry />} />
             <Route path="/proposal/:token" element={<ProposalView />} />
             <Route path="/site/:clientSlug" element={<PublicSite />} />
+            <Route path="/intake" element={<ClientIntakeForm />} />
             <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
             {/* Admin Portal */}
