@@ -6,99 +6,133 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { LogoUploader } from "@/components/LogoUploader";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
 import {
-  Building2, User, Globe, MapPin, Phone, Mail, Briefcase,
-  ChevronRight, ChevronLeft, CheckCircle2, Loader2, Rocket,
-  ExternalLink, ArrowRight, Sparkles, Clock, MessageSquare
+  Building2, User, Globe, MapPin, Phone, Mail,
+  ChevronRight, ChevronLeft, CheckCircle2, Loader2,
+  Sparkles, Calendar, AlertCircle
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 
-const TIMEZONES = [
-  "America/New_York", "America/Chicago", "America/Denver",
-  "America/Los_Angeles", "America/Phoenix", "America/Anchorage",
-  "Pacific/Honolulu", "America/Toronto", "Europe/London",
-  "Europe/Paris", "Asia/Tokyo", "Australia/Sydney",
-];
-
-const INDUSTRIES = [
+const BUSINESS_TYPES = [
   "Agency", "Dental", "Med Spa", "Salon", "Legal", "HVAC",
   "Real Estate", "Fitness", "Restaurant", "Automotive",
-  "Construction", "Consulting", "Healthcare", "E-commerce", "Other",
+  "Construction", "Consulting", "Healthcare", "E-commerce",
+  "Window Washing", "Landscaping", "Plumbing", "Roofing",
+  "Cleaning Service", "Other",
 ];
 
-type FormStep = "info" | "details";
+// Admin/NewLight master calendar config — first active admin calendar is used
+const ADMIN_CLIENT_SLUG = "newlight-marketing";
+
+type FormStep = "info" | "booking";
 type PageState = "form" | "submitting" | "success" | "error";
 
 export default function GetStarted() {
-  // Required
   const [businessName, setBusinessName] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [location, setLocation] = useState("");
-  const [timezone, setTimezone] = useState("America/Los_Angeles");
-
-  // Optional
-  const [website, setWebsite] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [mainGoal, setMainGoal] = useState("");
-  const [interestedService, setInterestedService] = useState("");
-  const [preferredContact, setPreferredContact] = useState("email");
-  const [smsConsent, setSmsConsent] = useState(false);
+  const [website, setWebsite] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [location, setLocation] = useState("");
 
-  // Slug
-  const [slug, setSlug] = useState("");
-  const [slugEdited, setSlugEdited] = useState(false);
+  // Calendar booking state
+  const [adminCalendar, setAdminCalendar] = useState<any>(null);
+  const [adminClientId, setAdminClientId] = useState<string | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
-  // UI state
   const [step, setStep] = useState<FormStep>("info");
   const [pageState, setPageState] = useState<PageState>("form");
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  // Auto-generate slug from business name
-  useEffect(() => {
-    if (!slugEdited && businessName) {
-      setSlug(businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
-    }
-  }, [businessName, slugEdited]);
-
-  const canProceed = businessName.trim() && ownerName.trim() && ownerEmail.trim();
+  const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim();
+  const canBook = selectedDate && selectedTime;
   const progress = step === "info" ? 50 : 100;
 
+  // Load admin calendar when moving to booking step
+  useEffect(() => {
+    if (step !== "booking" || adminCalendar) return;
+    setCalendarLoading(true);
+
+    const loadCalendar = async () => {
+      // Try to find the admin/NewLight master workspace calendar
+      let clientId: string | null = null;
+
+      // First try by slug
+      const { data: adminClient } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("workspace_slug", ADMIN_CLIENT_SLUG)
+        .maybeSingle();
+
+      if (adminClient) {
+        clientId = adminClient.id;
+      } else {
+        // Fallback: find the first client with an active calendar
+        const { data: anyCalendar } = await supabase
+          .from("calendars")
+          .select("id, client_id, calendar_name")
+          .eq("is_active", true)
+          .order("created_at")
+          .limit(1)
+          .maybeSingle();
+        if (anyCalendar) {
+          clientId = anyCalendar.client_id;
+          setAdminCalendar(anyCalendar);
+          setAdminClientId(clientId);
+          setCalendarLoading(false);
+          return;
+        }
+      }
+
+      if (clientId) {
+        setAdminClientId(clientId);
+        const { data: cal } = await supabase
+          .from("calendars")
+          .select("*")
+          .eq("client_id", clientId)
+          .eq("is_active", true)
+          .order("created_at")
+          .limit(1)
+          .maybeSingle();
+        setAdminCalendar(cal);
+      }
+
+      setCalendarLoading(false);
+    };
+
+    loadCalendar();
+  }, [step, adminCalendar]);
+
   const handleSubmit = async () => {
-    if (!canProceed) return;
+    if (!canProceed || !canBook) return;
     setPageState("submitting");
     setError("");
 
     try {
-      // 1. Call the provisioning edge function
+      // 1. Call provision-from-booking to create workspace + records
       const { data, error: fnError } = await supabase.functions.invoke(
         "provision-from-booking",
         {
           body: {
             business_name: businessName,
-            contact_name: ownerName,
-            contact_email: ownerEmail,
+            contact_name: contactName,
+            contact_email: email,
             contact_phone: phone || null,
             company_name: businessName,
-            logo_url: logoUrl || null,
+            logo_url: null,
             primary_color: "#3B82F6",
             secondary_color: "#06B6D4",
-            industry: industry || null,
+            industry: businessType || null,
             location: location || null,
             website: website || null,
-            timezone,
-            main_goal: mainGoal || null,
-            interested_service: interestedService || null,
+            timezone: "America/Los_Angeles",
             appointment_id: null,
-            calendar_client_id: null,
-            custom_slug: slug || null,
-            preferred_contact_method: preferredContact,
-            sms_consent: smsConsent,
+            calendar_client_id: adminClientId,
           },
         }
       );
@@ -106,135 +140,165 @@ export default function GetStarted() {
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
 
-      // Track invite status for the handoff page (don't fail the flow)
-      const inviteWarning = data?.invite_error
-        ? `Invite could not be sent: ${data.invite_error}`
-        : null;
-      if (inviteWarning) {
-        console.warn("Invite issue (non-blocking):", inviteWarning);
-      }
-
-      // Persist phone/contact prefs to canonical client record
-      if (data?.client_id) {
-        await supabase.from("clients").update({
-          owner_phone: phone || null,
-          preferred_contact_method: preferredContact,
-          sms_consent: smsConsent,
-          invite_status: data?.invite_sent ? "invite_sent" : data?.invite_error ? "invite_failed" : data?.existing_user ? "access_link_generated" : "invite_attempted",
-        }).eq("id", data.client_id);
-      }
-
       // 2. Run full-app provisioning if newly created
       if (data?.client_id && !data?.already_exists) {
         try {
           await provisionWorkspaceDefaults(data.client_id, {
-            industry: industry || null,
-            timezone,
+            industry: businessType || null,
+            timezone: "America/Los_Angeles",
             skipIfExists: true,
-            ownerEmail,
-            ownerName,
+            ownerEmail: email,
+            ownerName: contactName,
           });
         } catch (provErr) {
           console.warn("Provisioning partial:", provErr);
         }
+      }
 
-        // Update slug if custom
-        if (slug && slug !== data.workspace_slug) {
-          await supabase.from("clients").update({ workspace_slug: slug }).eq("id", data.client_id);
-          data.workspace_slug = slug;
-          data.workspace_url = `/w/${slug}`;
-        }
-
-        // 3. Create a discovery appointment on the first available calendar
+      // 3. Create the first-meeting appointment on the admin calendar
+      if (adminCalendar && data?.client_id) {
         try {
-          const { data: calendars } = await supabase.from("calendars")
-            .select("id")
-            .eq("client_id", data.client_id)
-            .eq("is_active", true)
-            .limit(1);
+          const startTime = new Date(`${selectedDate}T${selectedTime}`);
+          const endTime = new Date(startTime.getTime() + 30 * 60000);
 
-          if (calendars && calendars.length > 0) {
-            const startTime = new Date();
-            startTime.setDate(startTime.getDate() + 3); // 3 days from now
-            startTime.setHours(10, 0, 0, 0);
-            const endTime = new Date(startTime.getTime() + 30 * 60000);
+          // Find or create contact in the admin workspace
+          let contactId: string | null = null;
+          if (adminClientId) {
+            const { data: existingContact } = await supabase
+              .from("crm_contacts")
+              .select("id")
+              .eq("client_id", adminClientId)
+              .eq("email", email.trim().toLowerCase())
+              .maybeSingle();
 
-            await supabase.from("calendar_events").insert({
-              client_id: data.client_id,
-              calendar_id: calendars[0].id,
-              title: "Discovery / Kickoff Call",
-              description: `Onboarding kickoff for ${businessName}. Goal: ${mainGoal || "Discuss needs"}. Interest: ${interestedService || "TBD"}.`,
-              start_time: startTime.toISOString(),
-              end_time: endTime.toISOString(),
-              timezone,
-              contact_name: ownerName,
-              contact_email: ownerEmail,
-              contact_phone: phone || null,
-              calendar_status: "scheduled",
-              booking_source: "onboarding_form",
-            });
+            if (existingContact) {
+              contactId = existingContact.id;
+            } else {
+              const { data: newContact } = await supabase
+                .from("crm_contacts")
+                .insert({
+                  client_id: adminClientId,
+                  full_name: contactName.trim(),
+                  email: email.trim().toLowerCase(),
+                  phone: phone || null,
+                  lead_source: "get_started_form",
+                  pipeline_stage: "appointment_booked",
+                  first_contact_date: new Date().toISOString(),
+                  last_interaction_date: new Date().toISOString(),
+                  number_of_appointments: 1,
+                } as any)
+                .select("id")
+                .single();
+              contactId = newContact?.id || null;
+            }
+
+            // Create/reuse deal
+            if (contactId) {
+              const { data: existingDeal } = await supabase
+                .from("crm_deals")
+                .select("id, pipeline_stage")
+                .eq("client_id", adminClientId)
+                .eq("contact_id", contactId)
+                .neq("pipeline_stage", "closed_won")
+                .neq("pipeline_stage", "closed_lost")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (existingDeal) {
+                const earlyStages = ["new_lead", "contacted", "qualified"];
+                if (earlyStages.includes(existingDeal.pipeline_stage)) {
+                  await supabase.from("crm_deals").update({
+                    pipeline_stage: "appointment_booked",
+                  }).eq("id", existingDeal.id);
+                }
+              } else {
+                await supabase.from("crm_deals").insert({
+                  client_id: adminClientId,
+                  contact_id: contactId,
+                  deal_name: `${contactName.trim()} — Intro Call`,
+                  pipeline_stage: "appointment_booked",
+                  deal_value: 0,
+                  status: "open",
+                  lead_source: "get_started_form",
+                  qualification_status: "unqualified",
+                });
+              }
+
+              // Create/reuse lead
+              const { data: existingLead } = await supabase
+                .from("crm_leads")
+                .select("id")
+                .eq("client_id", adminClientId)
+                .eq("contact_id", contactId)
+                .limit(1)
+                .maybeSingle();
+
+              if (!existingLead) {
+                await supabase.from("crm_leads").insert({
+                  client_id: adminClientId,
+                  contact_id: contactId,
+                  source: "get_started_form",
+                  lead_status: "new_lead",
+                  estimated_value: 0,
+                  notes: `Auto-created from first meeting booking: ${businessName}`,
+                });
+              }
+            }
           }
+
+          // Create the appointment
+          await supabase.from("calendar_events").insert({
+            client_id: adminClientId!,
+            calendar_id: adminCalendar.id,
+            title: `Intro Call — ${businessName}`,
+            description: `First meeting with ${contactName} from ${businessName}. Business type: ${businessType || "Not specified"}.`,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            timezone: "America/Los_Angeles",
+            contact_name: contactName,
+            contact_email: email,
+            contact_phone: phone || null,
+            calendar_status: "scheduled",
+            booking_source: "get_started_form",
+          });
+
+          // Audit log
+          await supabase.from("audit_logs").insert({
+            client_id: data.client_id,
+            action: "first_meeting_booked_via_get_started",
+            module: "onboarding",
+            metadata: {
+              businessName,
+              businessType,
+              contactName,
+              email,
+              date: selectedDate,
+              time: selectedTime,
+              admin_calendar_id: adminCalendar.id,
+            },
+          });
+
+          await supabase.from("crm_activities").insert({
+            client_id: data.client_id,
+            activity_type: "first_meeting_booked",
+            activity_note: `First meeting booked via Get Started for ${businessName} (${email}) on ${selectedDate} at ${selectedTime}`,
+          });
         } catch (calErr) {
-          console.warn("Discovery appointment creation skipped:", calErr);
+          console.warn("Meeting creation warning (non-blocking):", calErr);
         }
-
-        // 4. Create onboarding reminder automations
-        try {
-          await supabase.from("automations").insert([
-            {
-              client_id: data.client_id,
-              name: "Continue Setup Reminder",
-              trigger_event: "onboarding_form_saved",
-              action_type: "notification",
-              action_config: { type: "continue_setup_reminder", delay_hours: 24 },
-              automation_category: "onboarding",
-              automation_key: "onboarding_continue_setup",
-              enabled: true,
-            },
-            {
-              client_id: data.client_id,
-              name: "Activation Incomplete Reminder",
-              trigger_event: "setup_progress_updated",
-              action_type: "notification",
-              action_config: { type: "activation_incomplete", delay_hours: 72 },
-              automation_category: "onboarding",
-              automation_key: "onboarding_activation_reminder",
-              enabled: true,
-            },
-            {
-              client_id: data.client_id,
-              name: "Payment Pending Reminder",
-              trigger_event: "activation_form_submitted",
-              action_type: "notification",
-              action_config: { type: "payment_pending", delay_hours: 48, condition: "payment_not_confirmed" },
-              automation_category: "onboarding",
-              automation_key: "onboarding_payment_reminder",
-              enabled: true,
-            },
-          ]);
-        } catch (autoErr) {
-          console.warn("Onboarding automations creation skipped:", autoErr);
-        }
-
-        // 5. Audit
-        await supabase.from("audit_logs").insert({
-          client_id: data.client_id,
-          action: "workspace_created_via_onboarding_form",
-          module: "onboarding",
-          metadata: { businessName, industry, ownerEmail, source: "get-started-form", main_goal: mainGoal, interested_service: interestedService },
-        });
-
-        await supabase.from("crm_activities").insert({
-          client_id: data.client_id,
-          activity_type: "workspace_created",
-          activity_note: `Workspace created via onboarding form for ${businessName} (${ownerEmail})`,
-        });
       }
 
       setResult({
         ...data,
         invite_warning: data?.invite_error || null,
-        invite_status: data?.invite_sent ? "invite_sent" : data?.invite_error ? "invite_failed" : data?.existing_user ? "access_link_generated" : "invite_attempted",
+        invite_status: data?.invite_sent
+          ? "invite_sent"
+          : data?.invite_error
+          ? "invite_failed"
+          : data?.existing_user
+          ? "access_link_generated"
+          : "invite_attempted",
       });
       setPageState("success");
     } catch (err: any) {
@@ -243,7 +307,7 @@ export default function GetStarted() {
     }
   };
 
-  // ─── Submitting ────────────────────────────────────────────────────
+  // ─── Submitting ──────────────────────────────────────────
   if (pageState === "submitting") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -255,12 +319,12 @@ export default function GetStarted() {
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <Loader2 className="h-8 w-8 text-primary animate-spin" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Creating your workspace…</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Booking your meeting…</h2>
           <p className="text-sm text-muted-foreground">
-            Setting up your personalized business dashboard with all the tools you need.
+            Setting up your personalized workspace and confirming your intro call.
           </p>
           <div className="mt-6 space-y-2">
-            {["Creating workspace", "Setting up calendar & forms", "Configuring CRM", "Applying industry defaults"].map((s, i) => (
+            {["Booking meeting", "Creating workspace", "Setting up your dashboard"].map((s, i) => (
               <motion.div
                 key={s}
                 initial={{ opacity: 0, x: -10 }}
@@ -278,43 +342,37 @@ export default function GetStarted() {
     );
   }
 
-  // ─── Success ───────────────────────────────────────────────────────
+  // ─── Success ─────────────────────────────────────────────
   if (pageState === "success" && result) {
     return (
       <WorkspaceHandoff
         businessName={businessName}
         workspaceUrl={result.workspace_url || "/"}
-        workspaceSlug={result.workspace_slug || slug}
+        workspaceSlug={result.workspace_slug}
         setupLink={result.setup_link}
         inviteSent={result.invite_sent}
         alreadyExists={result.already_exists || result.existing_user}
         inviteWarning={result.invite_warning}
-        ownerEmail={ownerEmail}
+        ownerEmail={email}
         ownerPhone={phone || null}
         clientId={result.client_id}
         inviteStatus={result.invite_status}
         emailDeliveryStatus={result.email_delivery_status}
         smsDeliveryStatus={result.sms_delivery_status}
-        preferredContactMethod={preferredContact}
-        smsConsent={smsConsent}
       />
     );
   }
 
-  // ─── Error ─────────────────────────────────────────────────────────
+  // ─── Error ───────────────────────────────────────────────
   if (pageState === "error") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="max-w-md w-full text-center"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md w-full text-center">
           <div className="h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-            <Building2 className="h-8 w-8 text-destructive" />
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Setup Failed</h2>
-          <p className="text-sm text-muted-foreground mb-2">We couldn't create your workspace. Please try again.</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">Booking Failed</h2>
+          <p className="text-sm text-muted-foreground mb-2">We couldn't complete your booking. Please try again.</p>
           <p className="text-xs text-destructive mb-6 font-mono">{error}</p>
           <Button onClick={() => { setPageState("form"); setError(""); }} variant="outline">
             Try Again
@@ -324,7 +382,7 @@ export default function GetStarted() {
     );
   }
 
-  // ─── Form ──────────────────────────────────────────────────────────
+  // ─── Form ────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-xl">
@@ -333,17 +391,21 @@ export default function GetStarted() {
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Sparkles className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Get Started with NewLight</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {step === "info" ? "Book Your Intro Call" : "Choose a Time"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Create your personalized business workspace in under a minute.
+            {step === "info"
+              ? "Tell us about your business and we'll get you set up."
+              : "Pick a time for your first meeting with our team."}
           </p>
         </div>
 
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-            <span className={step === "info" ? "font-semibold text-foreground" : ""}>Business Info</span>
-            <span className={step === "details" ? "font-semibold text-foreground" : ""}>Details & Preferences</span>
+            <span className={step === "info" ? "font-semibold text-foreground" : ""}>Your Info</span>
+            <span className={step === "booking" ? "font-semibold text-foreground" : ""}>Book Meeting</span>
           </div>
           <Progress value={progress} className="h-1.5" />
         </div>
@@ -360,10 +422,12 @@ export default function GetStarted() {
                 className="space-y-4"
               >
                 <div>
-                  <Label className="text-xs mb-1.5 block">Business Name <span className="text-destructive">*</span></Label>
+                  <Label className="text-xs mb-1.5 block">
+                    Business Name <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     value={businessName}
-                    onChange={e => setBusinessName(e.target.value)}
+                    onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="e.g. Acme Dental"
                     autoFocus
                   />
@@ -371,147 +435,165 @@ export default function GetStarted() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs mb-1.5 block">Your Name <span className="text-destructive">*</span></Label>
-                    <Input value={ownerName} onChange={e => setOwnerName(e.target.value)} placeholder="John Smith" />
+                    <Label className="text-xs mb-1.5 block">
+                      Contact Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder="John Smith"
+                    />
                   </div>
                   <div>
-                    <Label className="text-xs mb-1.5 block">Email <span className="text-destructive">*</span></Label>
-                    <Input value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)} placeholder="john@acme.com" type="email" />
+                    <Label className="text-xs mb-1.5 block">
+                      Email <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="john@acme.com"
+                      type="email"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs mb-1.5 block">Industry</Label>
+                    <Label className="text-xs mb-1.5 block">
+                      Phone <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      type="tel"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs mb-1.5 block">Website</Label>
+                    <Input
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      placeholder="https://acme.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs mb-1.5 block">Business Type</Label>
                     <select
-                      value={industry}
-                      onChange={e => setIndustry(e.target.value)}
+                      value={businessType}
+                      onChange={(e) => setBusinessType(e.target.value)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select…</option>
-                      {INDUSTRIES.map(i => <option key={i} value={i.toLowerCase()}>{i}</option>)}
+                      {BUSINESS_TYPES.map((t) => (
+                        <option key={t} value={t.toLowerCase()}>{t}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <Label className="text-xs mb-1.5 block">Primary Location</Label>
-                    <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="Los Angeles, CA" />
+                    <Input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Los Angeles, CA"
+                    />
                   </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs mb-1.5 block">Timezone</Label>
-                  <select
-                    value={timezone}
-                    onChange={e => setTimezone(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>)}
-                  </select>
                 </div>
 
                 <div className="pt-2">
                   <Button
-                    onClick={() => setStep("details")}
+                    onClick={() => setStep("booking")}
                     disabled={!canProceed}
                     className="w-full gap-2"
                   >
-                    Continue
+                    <Calendar className="h-4 w-4" />
+                    Continue to Booking
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </motion.div>
             ) : (
               <motion.div
-                key="details"
+                key="booking"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 className="space-y-4"
               >
-                <div>
-                  <Label className="text-xs mb-1.5 block">Workspace URL</Label>
-                  <div className="flex items-center gap-0">
-                    <span className="h-10 px-3 flex items-center text-xs text-muted-foreground bg-muted rounded-l-md border border-r-0 border-input whitespace-nowrap">
-                      newlight.app/
-                    </span>
-                    <Input
-                      value={slug}
-                      onChange={e => { setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")); setSlugEdited(true); }}
-                      className="rounded-l-none"
-                      placeholder="your-business"
+                {calendarLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading available times…</span>
+                  </div>
+                ) : !adminCalendar ? (
+                  <div className="text-center py-8 space-y-3">
+                    <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
+                    <p className="text-sm text-muted-foreground">
+                      No available booking calendar found. Please contact us directly.
+                    </p>
+                    <a href="mailto:hello@newlightmarketing.com" className="text-sm text-primary hover:underline">
+                      hello@newlightmarketing.com
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-3 rounded-xl bg-secondary/50 border border-border">
+                      <p className="text-xs text-muted-foreground">Booking for</p>
+                      <p className="text-sm font-semibold text-foreground">{businessName}</p>
+                      <p className="text-xs text-muted-foreground">{contactName} · {email}</p>
+                    </div>
+
+                    <CalendarSlotPicker
+                      calendarId={adminCalendar.id}
+                      clientId={adminClientId!}
+                      duration={30}
+                      bufferBefore={0}
+                      bufferAfter={0}
+                      selectedDate={selectedDate}
+                      selectedTime={selectedTime}
+                      onDateChange={setSelectedDate}
+                      onTimeChange={setSelectedTime}
                     />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Website</Label>
-                    <Input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://acme.com" />
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Phone Number</Label>
-                    <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 123-4567" type="tel" />
-                  </div>
-                </div>
-
-                {/* Contact Preference */}
-                <div>
-                  <Label className="text-xs mb-1.5 block">Preferred Contact Method</Label>
-                  <div className="flex items-center gap-4">
-                    {[
-                      { value: "email", label: "Email", icon: Mail },
-                      { value: "sms", label: "SMS", icon: MessageSquare },
-                      { value: "both", label: "Both", icon: Phone },
-                    ].map(opt => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setPreferredContact(opt.value)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs transition-colors ${
-                          preferredContact === opt.value
-                            ? "border-primary bg-primary/10 text-foreground font-medium"
-                            : "border-input bg-background text-muted-foreground hover:bg-muted"
-                        }`}
+                    {selectedDate && selectedTime && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 rounded-xl bg-primary/5 border border-primary/10"
                       >
-                        <opt.icon className="h-3.5 w-3.5" />
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* SMS Consent */}
-                {(preferredContact === "sms" || preferredContact === "both") && (
-                  <div className="flex items-start gap-2">
-                    <Checkbox
-                      id="sms-consent"
-                      checked={smsConsent}
-                      onCheckedChange={(checked) => setSmsConsent(!!checked)}
-                      className="mt-0.5"
-                    />
-                    <label htmlFor="sms-consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                      I agree to receive onboarding and setup reminder texts from NewLight Marketing. Message & data rates may apply.
-                    </label>
-                  </div>
+                        <p className="text-xs text-muted-foreground">Selected time</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {new Date(`${selectedDate}T${selectedTime}`).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                          })}{" "}
+                          at{" "}
+                          {new Date(`${selectedDate}T${selectedTime}`).toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">30 minute intro call</p>
+                      </motion.div>
+                    )}
+                  </>
                 )}
-
-                <div>
-                  <Label className="text-xs mb-1.5 block">Main Goal</Label>
-                  <Input value={mainGoal} onChange={e => setMainGoal(e.target.value)} placeholder="e.g. Get more leads, grow revenue" />
-                </div>
-
-                <div>
-                  <Label className="text-xs mb-1.5 block">Interested Service</Label>
-                  <Input value={interestedService} onChange={e => setInterestedService(e.target.value)} placeholder="e.g. SEO, Social Media, Website" />
-                </div>
 
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline" onClick={() => setStep("info")} className="gap-1">
                     <ChevronLeft className="h-4 w-4" /> Back
                   </Button>
-                  <Button onClick={handleSubmit} className="flex-1 gap-2">
-                    <Rocket className="h-4 w-4" />
-                    Create My Workspace
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!canBook || !adminCalendar}
+                    className="flex-1 gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Book My Intro Call
                   </Button>
                 </div>
               </motion.div>
@@ -520,7 +602,7 @@ export default function GetStarted() {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground mt-4">
-          By creating a workspace you agree to our terms of service.
+          By booking you agree to our terms of service.
         </p>
       </div>
     </div>
