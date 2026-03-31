@@ -125,6 +125,7 @@ import ConversationsPage from "./pages/ConversationsPage";
 import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
+import ClientIntakeForm from "./pages/ClientIntakeForm";
 const queryClient = new QueryClient();
 
 const App = () => (
