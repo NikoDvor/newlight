@@ -332,13 +332,31 @@ Deno.serve(async (req) => {
       : "invite_attempted";
 
     // 5. Activity + audit
-    await Promise.all([
-      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
-      adminClient.from("crm_activities").insert({
+    const activityInserts = [
+      {
         client_id: client.id,
         activity_type: "workspace_created",
         activity_note: `Workspace created for ${contact_name || contact_email}${main_goal ? ` — Goal: ${main_goal}` : ""}${interested_service ? ` — Interest: ${interested_service}` : ""}`,
-      }),
+      },
+    ];
+    if (dealAction !== "skipped") {
+      activityInserts.push({
+        client_id: client.id,
+        activity_type: dealAction === "created" ? "deal_created" : "deal_updated",
+        activity_note: `Deal ${dealAction} from provisioning — ${displayName}`,
+      });
+    }
+    if (leadAction !== "skipped") {
+      activityInserts.push({
+        client_id: client.id,
+        activity_type: leadAction === "created" ? "lead_created" : "lead_exists",
+        activity_note: `Lead ${leadAction} from provisioning — ${contact_name || contact_email}`,
+      });
+    }
+
+    await Promise.all([
+      adminClient.from("clients").update({ invite_status: finalInviteStatus }).eq("id", client.id),
+      adminClient.from("crm_activities").insert(activityInserts),
       adminClient.from("audit_logs").insert({
         action: "workspace_auto_provisioned",
         client_id: client.id,
@@ -358,6 +376,10 @@ Deno.serve(async (req) => {
           invite_error: inviteError,
           invite_status: finalInviteStatus,
           existing_user: existingUser,
+          lead_action: leadAction,
+          deal_action: dealAction,
+          deal_id: dealId,
+          contact_id: contactId,
         },
       }),
       adminClient
