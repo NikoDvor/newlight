@@ -95,7 +95,8 @@ export const ROLE_PRESET_OPTIONS = [
 ];
 
 export interface ActivationFormState {
-  // Step 1: Deal Close
+  // Stage 1: Qualification
+  // (reuses existing fields)
   business_name_confirmed: string;
   legal_business_name: string;
   display_name: string;
