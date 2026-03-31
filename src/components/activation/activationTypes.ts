@@ -356,7 +356,8 @@ export interface ActivationFormState {
   worker_portal_users: string;
 }
 
-export const STEPS = [
+// ── Legacy 15-step array (kept for backward compat) ──
+export const LEGACY_STEPS = [
   { id: 1, title: "Deal Close + Activation", icon: "Zap" },
   { id: 2, title: "Business Identity + Branding", icon: "Palette" },
   { id: 3, title: "CRM Setup", icon: "Users" },
@@ -373,6 +374,22 @@ export const STEPS = [
   { id: 14, title: "Integrations + Access", icon: "Link" },
   { id: 15, title: "Review + Activate", icon: "CheckCircle" },
 ] as const;
+
+// ── New 7-stage sales spine wizard ──
+export const WIZARD_STAGES = [
+  { id: 1, title: "Qualification", icon: "Target" },
+  { id: 2, title: "Proposal + Close Prep", icon: "FileText" },
+  { id: 3, title: "Close Outcome", icon: "Gavel" },
+  { id: 4, title: "Activation Details", icon: "CreditCard" },
+  { id: 5, title: "Branding / CRM / Calendar / Services", icon: "Palette" },
+  { id: 6, title: "Messaging / Reviews / Team / Integrations", icon: "Mail" },
+  { id: 7, title: "Review + Activate", icon: "CheckCircle" },
+] as const;
+
+export const TOTAL_WIZARD_STAGES = WIZARD_STAGES.length;
+
+// Keep STEPS pointing to new wizard for the main wizard component
+export const STEPS = WIZARD_STAGES;
 
 export const INTEGRATION_KEYS = [
   "Google Analytics", "Search Console", "Google Business Profile", "Meta",
