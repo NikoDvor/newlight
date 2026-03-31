@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { emitEvent } from "@/lib/automationEngine";
 import { provisionWorkspaceDefaults, syncOnboardingStage } from "@/lib/workspaceProvisioner";
 import { hydrateWorkspaceFromActivation, checkSyncStatus } from "@/lib/activationHydration";
+import { generateProposalFromWizard, markProposalAccepted } from "@/lib/proposalWizard";
+import { createBillingFromProposal } from "@/lib/billingEngine";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
