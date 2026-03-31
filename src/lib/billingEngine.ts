@@ -115,6 +115,7 @@ export async function createBillingFromProposal(proposalId: string, opts?: { pen
   }
 
   // 4. Setup fee invoice
+  let invoiceId: string | null = null;
   if (setupFee > 0) {
     const { data: inv } = await supabase
       .from("invoices")
@@ -137,6 +138,7 @@ export async function createBillingFromProposal(proposalId: string, opts?: { pen
       .single();
 
     if (inv) {
+      invoiceId = inv.id;
       await supabase.from("invoice_line_items").insert({
         invoice_id: inv.id,
         item_name: "Setup Fee",
