@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, FileText, CreditCard, ScrollText, Receipt } from "lucide-react";
 import { INTEGRATION_KEYS, type StepProps } from "./activationTypes";
 
 const sectionCls = "rounded-xl p-4 space-y-2";
@@ -23,9 +23,47 @@ function SummarySection({ title, children }: { title: string; children: React.Re
   );
 }
 
+function ReadinessItem({ label, status, icon: Icon }: { label: string; status: "ready" | "pending" | "missing"; icon: React.ElementType }) {
+  const colors = {
+    ready: { bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400", iconCls: "text-emerald-400" },
+    pending: { bg: "bg-amber-500/10", border: "border-amber-500/20", text: "text-amber-400", iconCls: "text-amber-400" },
+    missing: { bg: "bg-white/[0.03]", border: "border-white/10", text: "text-white/30", iconCls: "text-white/20" },
+  };
+  const c = colors[status];
+  const statusLabel = status === "ready" ? "Ready" : status === "pending" ? "Pending" : "Not Created";
+
+  return (
+    <div className={`flex items-center justify-between p-3 rounded-lg border ${c.bg} ${c.border}`}>
+      <div className="flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${c.iconCls}`} />
+        <span className={`text-xs font-medium ${c.text}`}>{label}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        {status === "ready" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : status === "pending" ? <Clock className="h-3.5 w-3.5 text-amber-400" /> : <AlertCircle className="h-3.5 w-3.5 text-white/20" />}
+        <span className={`text-[10px] font-medium ${c.text}`}>{statusLabel}</span>
+      </div>
+    </div>
+  );
+}
+
 export function StepReview({ form }: StepProps) {
   const enabledIntegrations = INTEGRATION_KEYS.filter(k => form.integrations[k]?.used === "yes");
   const missingAccess = enabledIntegrations.filter(k => form.integrations[k]?.access_ready !== "yes");
+
+  // ── Proposal/Billing/Contract Readiness ──
+  const proposalStatus: "ready" | "pending" | "missing" =
+    form.proposal_status === "accepted" ? "ready"
+    : form.proposal_id ? "pending"
+    : "missing";
+
+  const contractStatus: "ready" | "pending" | "missing" =
+    form.contract_record_id ? "pending" : "missing"; // pending = awaiting signature
+
+  const billingStatus: "ready" | "pending" | "missing" =
+    form.billing_account_id ? "pending" : "missing"; // pending = pending setup
+
+  const invoiceStatus: "ready" | "pending" | "missing" =
+    form.invoice_id ? "pending" : "missing";
 
   // Calculate setup progress
   let completed = 0;
@@ -58,6 +96,32 @@ export function StepReview({ form }: StepProps) {
           <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: "linear-gradient(90deg, hsl(var(--nl-electric)), hsl(var(--nl-sky)))" }} />
         </div>
       </div>
+
+      {/* Sales Readiness Indicators */}
+      <SummarySection title="Sales & Billing Readiness">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <ReadinessItem
+            label={`Proposal ${form.proposal_status === "accepted" ? "(Accepted)" : form.proposal_status === "revised" ? "(Revised)" : form.proposal_id ? "(Generated)" : ""}`}
+            status={proposalStatus}
+            icon={FileText}
+          />
+          <ReadinessItem
+            label="Service Agreement"
+            status={contractStatus}
+            icon={ScrollText}
+          />
+          <ReadinessItem
+            label="Billing Account"
+            status={billingStatus}
+            icon={CreditCard}
+          />
+          <ReadinessItem
+            label="Setup Invoice"
+            status={invoiceStatus}
+            icon={Receipt}
+          />
+        </div>
+      </SummarySection>
 
       <SummarySection title="Deal + Activation">
         <SummaryRow label="Business Name" value={form.business_name_confirmed} />

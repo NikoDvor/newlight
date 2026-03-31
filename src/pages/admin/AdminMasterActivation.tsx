@@ -280,11 +280,88 @@ export default function AdminMasterActivation() {
     ]);
   };
 
+  // ── Stage 2 → Proposal creation/update ──
+  const handleStage2Proposal = async () => {
+    if (!clientId) return;
+
+    // Find deal for this client
+    const { data: deals } = await supabase.from("crm_deals")
+      .select("id, contact_id, company_id")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const deal = deals?.[0];
+
+    const isRevision = form.close_outcome === "revised" || form.proposal_status === "revised";
+
+    const result = await generateProposalFromWizard({
+      proposalId: form.proposal_id || undefined,
+      clientId,
+      dealId: deal?.id,
+      contactId: deal?.contact_id || undefined,
+      companyId: deal?.company_id || undefined,
+      servicePackage: form.service_package,
+      setupFee: form.setup_fee,
+      monthlyFee: form.monthly_fee,
+      contractTerm: form.contract_term,
+      salesNotes: form.sales_notes,
+      businessName: form.business_name_confirmed || clientName,
+      isRevision,
+    });
+
+    if (result) {
+      // Persist proposal_id immediately into form state
+      set("proposal_id", result.proposalId);
+      set("proposal_status", isRevision ? "revised" : "generated");
+      toast.success(`Proposal ${result.action === "created" ? "created" : `updated to v${result.version}`}`);
+    } else {
+      toast.error("Failed to create/update proposal");
+    }
+  };
+
+  // ── Stage 3 Won → Billing + contract creation ──
+  const handleWonBilling = async () => {
+    if (!clientId || !form.proposal_id) return;
+
+    // Mark proposal accepted
+    await markProposalAccepted(form.proposal_id, clientId);
+    set("proposal_status", "accepted");
+
+    // Create billing (deduplicated internally)
+    const billingResult = await createBillingFromProposal(form.proposal_id, { pendingSignature: true });
+
+    if (billingResult) {
+      set("billing_account_id", billingResult.billingAccountId);
+      set("contract_record_id", billingResult.contractRecordId || "");
+      set("invoice_id", billingResult.invoiceId || "");
+
+      await supabase.from("crm_activities").insert({
+        client_id: clientId,
+        activity_type: billingResult.reused ? "billing_reused" : "billing_created",
+        activity_note: `Billing ${billingResult.reused ? "reused existing" : "created"} on Won — proposal ${form.proposal_id}`,
+      });
+
+      toast.success(billingResult.reused ? "Billing records already exist — reused" : "Billing + contract records created");
+    }
+  };
+
   // ── Stage navigation with outcome branching ──
   const handleNext = async () => {
+    // Stage 2: create/update proposal before moving forward
+    if (stage === 2) {
+      await handleStage2Proposal();
+      await handleSaveDraft();
+    }
+
     // Stage 3: Close Outcome — sync deal before proceeding
     if (stage === 3 && form.close_outcome) {
       await syncDealOnOutcome();
+
+      // Won: create billing
+      if (isWon) {
+        await handleWonBilling();
+      }
+
       await handleSaveDraft();
 
       if (isRevised) {
@@ -297,6 +374,13 @@ export default function AdminMasterActivation() {
         return; // stay on stage 3
       }
       if (isLost) {
+        // Don't mark proposal as accepted on Lost
+        if (form.proposal_id) {
+          await supabase.from("proposals").update({
+            proposal_status: "rejected",
+          } as any).eq("id", form.proposal_id);
+          set("proposal_status", "rejected");
+        }
         toast.info("Deal marked as Lost");
         return; // stay on stage 3
       }
