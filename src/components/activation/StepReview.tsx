@@ -1,5 +1,9 @@
-import { CheckCircle2, AlertCircle, Clock, FileText, CreditCard, ScrollText, Receipt } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle2, AlertCircle, Clock, FileText, CreditCard, ScrollText, Receipt, Plug, Link2, Loader2, Copy } from "lucide-react";
 import { INTEGRATION_KEYS, type StepProps } from "./activationTypes";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const sectionCls = "rounded-xl p-4 space-y-2";
 const sectionStyle = { background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" };
@@ -46,7 +50,19 @@ function ReadinessItem({ label, status, icon: Icon }: { label: string; status: "
   );
 }
 
-export function StepReview({ form }: StepProps) {
+interface LiveIntegration {
+  integration_name: string;
+  status: string | null;
+  config: any;
+}
+
+interface IntakeTokenInfo {
+  token: string;
+  expires_at: string;
+  used_at: string | null;
+}
+
+export function StepReview({ form }: StepProps & { clientId?: string }) {
   const enabledIntegrations = INTEGRATION_KEYS.filter(k => form.integrations[k]?.used === "yes");
   const missingAccess = enabledIntegrations.filter(k => form.integrations[k]?.access_ready !== "yes");
 
@@ -57,13 +73,87 @@ export function StepReview({ form }: StepProps) {
     : "missing";
 
   const contractStatus: "ready" | "pending" | "missing" =
-    form.contract_record_id ? "pending" : "missing"; // pending = awaiting signature
+    form.contract_record_id ? "pending" : "missing";
 
   const billingStatus: "ready" | "pending" | "missing" =
-    form.billing_account_id ? "pending" : "missing"; // pending = pending setup
+    form.billing_account_id ? "pending" : "missing";
 
   const invoiceStatus: "ready" | "pending" | "missing" =
     form.invoice_id ? "pending" : "missing";
+
+  // ── Live integration data ──
+  const [liveIntegrations, setLiveIntegrations] = useState<LiveIntegration[]>([]);
+  const [integrationsLoaded, setIntegrationsLoaded] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [intakeToken, setIntakeToken] = useState<IntakeTokenInfo | null>(null);
+
+  // Extract clientId from URL params
+  const clientId = typeof window !== "undefined"
+    ? window.location.pathname.match(/clients\/([^/]+)\/activate/)?.[1]
+    : null;
+
+  useEffect(() => {
+    if (!clientId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("client_integrations")
+        .select("integration_name, status, config")
+        .eq("client_id", clientId);
+      setLiveIntegrations(data || []);
+      setIntegrationsLoaded(true);
+
+      // Check for existing intake token
+      const { data: tokens } = await supabase
+        .from("client_intake_tokens")
+        .select("token, expires_at, used_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (tokens?.[0]) setIntakeToken(tokens[0] as IntakeTokenInfo);
+    })();
+  }, [clientId]);
+
+  const intakeCompleted = !!(form as any).client_intake_completed;
+
+  // Group live integrations
+  const usingOurs = liveIntegrations.filter(i => i.config?.mode === "newlight_default");
+  const usingTheirsReady = liveIntegrations.filter(i => i.config?.mode === "client_existing" && i.status === "ready_to_connect");
+  const waitingOnClient = liveIntegrations.filter(i => i.config?.mode === "client_existing" && i.status === "access_needed");
+  const skipped = liveIntegrations.filter(i => i.status === "not_needed" || i.config?.mode === "skipped");
+
+  const generateIntakeLink = async () => {
+    if (!clientId) return;
+    setGeneratingLink(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/client-intake?action=generate-token`,
+        {
+          method: "POST",
+          headers: {
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ client_id: clientId }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+      setIntakeToken({ token: result.token, expires_at: result.expires_at, used_at: null });
+      toast.success("Intake link generated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate link");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyIntakeLink = () => {
+    if (!intakeToken) return;
+    const link = `${window.location.origin}/intake?token=${intakeToken.token}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Intake link copied to clipboard");
+  };
 
   // Calculate setup progress
   let completed = 0;
@@ -81,7 +171,7 @@ export function StepReview({ form }: StepProps) {
   if (form.use_seo || form.use_ads) completed++;
   if (form.use_proposals !== "") completed++;
   if (form.use_helpdesk !== "") completed++;
-  if (enabledIntegrations.length > 0) completed++;
+  if (enabledIntegrations.length > 0 || liveIntegrations.length > 0) completed++;
   const pct = Math.round((completed / total) * 100);
 
   return (
@@ -122,6 +212,116 @@ export function StepReview({ form }: StepProps) {
           />
         </div>
       </SummarySection>
+
+      {/* Client Intake Status */}
+      <SummarySection title="Client Intake Form">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/[0.03]">
+          <div className="flex items-center gap-2">
+            <Plug className={`h-4 w-4 ${intakeCompleted ? "text-emerald-400" : "text-white/20"}`} />
+            <span className={`text-xs font-medium ${intakeCompleted ? "text-emerald-400" : "text-white/30"}`}>
+              {intakeCompleted ? "Intake Completed" : "Intake Not Completed"}
+            </span>
+          </div>
+          {intakeCompleted ? (
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+          ) : (
+            <div className="flex items-center gap-2">
+              {intakeToken && !intakeToken.used_at ? (
+                <Button size="sm" variant="ghost" onClick={copyIntakeLink} className="text-[10px] h-6 text-white/50 hover:text-white/80">
+                  <Copy className="h-3 w-3 mr-1" /> Copy Link
+                </Button>
+              ) : (
+                <Button size="sm" variant="ghost" onClick={generateIntakeLink} disabled={generatingLink} className="text-[10px] h-6 text-[hsl(var(--nl-sky))] hover:text-[hsl(var(--nl-sky))]">
+                  {generatingLink ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
+                  Generate Intake Link
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        {intakeToken && !intakeToken.used_at && (
+          <p className="text-[10px] text-white/30 mt-1">
+            Link expires {new Date(intakeToken.expires_at).toLocaleDateString()}
+          </p>
+        )}
+      </SummarySection>
+
+      {/* Live Integration States */}
+      {integrationsLoaded && liveIntegrations.length > 0 && (
+        <SummarySection title="Integration States (Live)">
+          {usingOurs.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] text-emerald-400/70 font-medium">Using Ours</p>
+              {usingOurs.map(i => (
+                <div key={i.integration_name} className="flex items-center gap-2 text-[11px]">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                  <span className="text-white/70">{i.integration_name}</span>
+                  <span className="text-[10px] text-emerald-400/50">NewLight Managed</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {usingTheirsReady.length > 0 && (
+            <div className="space-y-1 mt-2">
+              <p className="text-[10px] text-[hsl(var(--nl-sky))]/70 font-medium">Using Theirs + Ready</p>
+              {usingTheirsReady.map(i => (
+                <div key={i.integration_name} className="flex items-center gap-2 text-[11px]">
+                  <CheckCircle2 className="h-3 w-3 text-[hsl(var(--nl-sky))]" />
+                  <span className="text-white/70">{i.integration_name}</span>
+                  <span className="text-[10px] text-[hsl(var(--nl-sky))]/50">Ready to Connect</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {waitingOnClient.length > 0 && (
+            <div className="space-y-1 mt-2">
+              <p className="text-[10px] text-amber-400/70 font-medium">Waiting on Client</p>
+              {waitingOnClient.map(i => (
+                <div key={i.integration_name} className="flex items-center gap-2 text-[11px]">
+                  <Clock className="h-3 w-3 text-amber-400" />
+                  <span className="text-white/50">{i.integration_name}</span>
+                  <span className="text-[10px] text-amber-400/50">Access Needed</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {skipped.length > 0 && (
+            <div className="space-y-1 mt-2">
+              <p className="text-[10px] text-white/30 font-medium">Skipped</p>
+              {skipped.map(i => (
+                <div key={i.integration_name} className="flex items-center gap-2 text-[11px]">
+                  <AlertCircle className="h-3 w-3 text-white/20" />
+                  <span className="text-white/30">{i.integration_name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SummarySection>
+      )}
+
+      {/* Fallback: wizard-level integrations if no live data */}
+      {integrationsLoaded && liveIntegrations.length === 0 && !intakeCompleted && (
+        <SummarySection title="Integrations">
+          <p className="text-xs text-white/30 italic">Client intake not completed — integration states will appear after the client submits their intake form.</p>
+        </SummarySection>
+      )}
+
+      {/* Wizard-level integration summary (fallback) */}
+      {!integrationsLoaded && enabledIntegrations.length > 0 && (
+        <SummarySection title="Integrations (Wizard)">
+          {enabledIntegrations.map(name => {
+            const int = form.integrations[name];
+            const ready = int?.access_ready === "yes";
+            return (
+              <div key={name} className="flex items-center gap-2 text-[11px]">
+                {ready ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <Clock className="h-3 w-3 text-yellow-400" />}
+                <span className={ready ? "text-white/70" : "text-white/50"}>{name}</span>
+                {!ready && <span className="text-[10px] text-yellow-400/70">— Access Needed</span>}
+              </div>
+            );
+          })}
+        </SummarySection>
+      )}
 
       <SummarySection title="Deal + Activation">
         <SummaryRow label="Business Name" value={form.business_name_confirmed} />
@@ -203,21 +403,6 @@ export function StepReview({ form }: StepProps) {
           {form.use_social === "yes" && <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[hsl(var(--nl-electric))]/20 text-[hsl(var(--nl-sky))]">Social</span>}
           {form.use_content_planner === "yes" && <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[hsl(var(--nl-electric))]/20 text-[hsl(var(--nl-sky))]">Content</span>}
         </div>
-      </SummarySection>
-
-      <SummarySection title="Integrations">
-        {enabledIntegrations.length === 0 && <p className="text-xs text-white/30 italic">No integrations enabled</p>}
-        {enabledIntegrations.map(name => {
-          const int = form.integrations[name];
-          const ready = int?.access_ready === "yes";
-          return (
-            <div key={name} className="flex items-center gap-2 text-[11px]">
-              {ready ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <Clock className="h-3 w-3 text-yellow-400" />}
-              <span className={ready ? "text-white/70" : "text-white/50"}>{name}</span>
-              {!ready && <span className="text-[10px] text-yellow-400/70">— Access Needed</span>}
-            </div>
-          );
-        })}
       </SummarySection>
 
       {missingAccess.length > 0 && (
