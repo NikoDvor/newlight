@@ -96,19 +96,22 @@ export async function createBillingFromProposal(proposalId: string, opts?: { pen
     .select("id")
     .single();
 
-  // 3. Contract record
+  // 3. Contract record — pending signature unless explicitly signed
+  let contractRecordId: string | null = null;
   if (sub) {
-    await supabase.from("contract_records").insert({
+    const pendingSig = opts?.pendingSignature !== false; // default true
+    const { data: cr } = await supabase.from("contract_records").insert({
       client_id: clientId,
       proposal_id: proposalId,
       subscription_id: sub.id,
-      contract_status: "Signed",
+      contract_status: pendingSig ? "Pending Signature" : "Signed",
       contract_length_months: contractMonths,
       start_date: startDate,
       end_date: endDate,
-      signed_at: new Date().toISOString(),
+      signed_at: pendingSig ? null : new Date().toISOString(),
       enforcement_mode: "Standard",
-    } as any);
+    } as any).select("id").single();
+    contractRecordId = cr?.id ?? null;
   }
 
   // 4. Setup fee invoice
