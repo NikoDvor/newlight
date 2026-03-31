@@ -21,6 +21,36 @@ export async function createBillingFromProposal(proposalId: string, opts?: { pen
   const clientId = proposal.client_id;
   if (!clientId) return null;
 
+  // ── Dedup check: reuse existing billing records for this proposal ──
+  const { data: existingBa } = await supabase
+    .from("billing_accounts")
+    .select("id")
+    .eq("proposal_id", proposalId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingBa) {
+    // Already created — find linked records and return
+    const { data: existingSub } = await supabase.from("subscriptions").select("id").eq("billing_account_id", existingBa.id).limit(1).maybeSingle();
+    const { data: existingContract } = await supabase.from("contract_records").select("id").eq("proposal_id", proposalId).limit(1).maybeSingle();
+    const { data: existingInv } = await supabase.from("invoices").select("id").eq("proposal_id", proposalId).limit(1).maybeSingle();
+
+    await supabase.from("audit_logs").insert({
+      action: "billing_reused_existing",
+      client_id: clientId,
+      module: "billing",
+      metadata: { proposal_id: proposalId, billing_account_id: existingBa.id, reason: "duplicate_prevention" },
+    });
+
+    return {
+      billingAccountId: existingBa.id,
+      subscriptionId: existingSub?.id ?? null,
+      contractRecordId: existingContract?.id ?? null,
+      invoiceId: existingInv?.id ?? null,
+      reused: true,
+    };
+  }
+
   // 1. Billing account
   const { data: ba } = await supabase
     .from("billing_accounts")
