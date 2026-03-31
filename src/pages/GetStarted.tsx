@@ -24,9 +24,87 @@ const BUSINESS_TYPES = [
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
+const DEFAULT_PUBLIC_BOOKING_SLUGS = ["newlight-intro-call", "intro-call"];
+const DEFAULT_PUBLIC_CALENDAR_NAME = "Intro Call";
+const DEFAULT_TIMEZONE = "America/Los_Angeles";
 
 type FormStep = "info" | "booking";
 type PageState = "form" | "submitting" | "success" | "error";
+
+interface CalendarRow {
+  id: string;
+  client_id: string;
+  calendar_name: string;
+  timezone: string | null;
+  is_active: boolean;
+  status: string;
+}
+
+interface AvailabilityRow {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  timezone?: string | null;
+}
+
+interface BlackoutRow {
+  start_datetime: string;
+  end_datetime: string;
+}
+
+interface CalendarDebugState {
+  resolvedClientSlug: string;
+  matchedClientId: string | null;
+  matchedCalendarId: string | null;
+  activeCalendarCount: number;
+  availabilityRowCount: number;
+  timezone: string;
+  firstAvailableDate: string | null;
+  bookingLinkSlug: string | null;
+  lookupSource: string | null;
+  failureReason: string | null;
+}
+
+const createInitialCalendarDebug = (): CalendarDebugState => ({
+  resolvedClientSlug: ADMIN_CLIENT_SLUG,
+  matchedClientId: null,
+  matchedCalendarId: null,
+  activeCalendarCount: 0,
+  availabilityRowCount: 0,
+  timezone: DEFAULT_TIMEZONE,
+  firstAvailableDate: null,
+  bookingLinkSlug: null,
+  lookupSource: null,
+  failureReason: null,
+});
+
+function getFirstAvailableDate(availabilityRows: AvailabilityRow[], blackoutRows: BlackoutRow[]) {
+  if (!availabilityRows.length) return null;
+
+  const today = new Date();
+  for (let i = 1; i <= 30; i++) {
+    const candidate = new Date(today);
+    candidate.setDate(today.getDate() + i);
+    const dateValue = candidate.toISOString().split("T")[0];
+    const dayOfWeek = candidate.getDay();
+    const hasAvailability = availabilityRows.some((row) => row.day_of_week === dayOfWeek);
+
+    if (!hasAvailability) continue;
+
+    const midday = new Date(`${dateValue}T12:00:00`);
+    const isBlackedOut = blackoutRows.some((row) => {
+      const start = new Date(row.start_datetime);
+      const end = new Date(row.end_datetime);
+      return midday >= start && midday <= end;
+    });
+
+    if (!isBlackedOut) {
+      return dateValue;
+    }
+  }
+
+  return null;
+}
 
 export default function GetStarted() {
   const [businessName, setBusinessName] = useState("");
@@ -41,6 +119,7 @@ export default function GetStarted() {
   const [adminCalendar, setAdminCalendar] = useState<any>(null);
   const [adminClientId, setAdminClientId] = useState<string | null>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarDebug, setCalendarDebug] = useState<CalendarDebugState>(() => createInitialCalendarDebug());
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
 
@@ -59,50 +138,189 @@ export default function GetStarted() {
     setCalendarLoading(true);
 
     const loadCalendar = async () => {
-      // Try to find the admin/NewLight master workspace calendar
-      let clientId: string | null = null;
+      const nextDebug = createInitialCalendarDebug();
 
-      // First try by slug
-      const { data: adminClient } = await supabase
-        .from("clients")
-        .select("id")
-        .eq("workspace_slug", ADMIN_CLIENT_SLUG)
-        .maybeSingle();
+      try {
+        let resolvedCalendar: CalendarRow | null = null;
+        let resolvedClientId: string | null = null;
 
-      if (adminClient) {
-        clientId = adminClient.id;
-      } else {
-        // Fallback: find the first client with an active calendar
-        const { data: anyCalendar } = await supabase
-          .from("calendars")
-          .select("id, client_id, calendar_name")
-          .eq("is_active", true)
-          .order("created_at")
-          .limit(1)
-          .maybeSingle();
-        if (anyCalendar) {
-          clientId = anyCalendar.client_id;
-          setAdminCalendar(anyCalendar);
-          setAdminClientId(clientId);
-          setCalendarLoading(false);
+        const [adminClientRes, publicBookingLinkRes, globalActiveCalendarCountRes] = await Promise.all([
+          supabase
+            .from("clients")
+            .select("id, workspace_slug, timezone")
+            .eq("workspace_slug", ADMIN_CLIENT_SLUG)
+            .maybeSingle(),
+          supabase
+            .from("calendar_booking_links")
+            .select("calendar_id, client_id, slug")
+            .eq("is_active", true)
+            .eq("is_public", true)
+            .in("slug", DEFAULT_PUBLIC_BOOKING_SLUGS)
+            .order("created_at")
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("calendars")
+            .select("id", { count: "exact", head: true })
+            .eq("is_active", true),
+        ]);
+
+        nextDebug.activeCalendarCount = globalActiveCalendarCountRes.count ?? 0;
+
+        if (adminClientRes.error) {
+          nextDebug.failureReason = `client_lookup_error: ${adminClientRes.error.message}`;
+        }
+
+        if (adminClientRes.data) {
+          resolvedClientId = adminClientRes.data.id;
+          nextDebug.matchedClientId = adminClientRes.data.id;
+          nextDebug.timezone = adminClientRes.data.timezone || DEFAULT_TIMEZONE;
+
+          const [clientCalendarCountRes, clientCalendarRes] = await Promise.all([
+            supabase
+              .from("calendars")
+              .select("id", { count: "exact", head: true })
+              .eq("client_id", adminClientRes.data.id)
+              .eq("is_active", true),
+            supabase
+              .from("calendars")
+              .select("id, client_id, calendar_name, timezone, is_active, status")
+              .eq("client_id", adminClientRes.data.id)
+              .eq("is_active", true)
+              .order("created_at")
+              .limit(1)
+              .maybeSingle(),
+          ]);
+
+          nextDebug.activeCalendarCount = clientCalendarCountRes.count ?? nextDebug.activeCalendarCount;
+
+          if (clientCalendarRes.error) {
+            nextDebug.failureReason = `client_calendar_lookup_error: ${clientCalendarRes.error.message}`;
+          }
+
+          if (clientCalendarRes.data) {
+            resolvedCalendar = clientCalendarRes.data as CalendarRow;
+            nextDebug.lookupSource = "client_slug";
+          }
+        }
+
+        if (!resolvedCalendar && publicBookingLinkRes.data) {
+          nextDebug.bookingLinkSlug = publicBookingLinkRes.data.slug;
+          resolvedClientId = publicBookingLinkRes.data.client_id;
+          nextDebug.matchedClientId = publicBookingLinkRes.data.client_id;
+
+          const linkedCalendarRes = await supabase
+            .from("calendars")
+            .select("id, client_id, calendar_name, timezone, is_active, status")
+            .eq("id", publicBookingLinkRes.data.calendar_id)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (linkedCalendarRes.error) {
+            nextDebug.failureReason = `public_link_calendar_lookup_error: ${linkedCalendarRes.error.message}`;
+          }
+
+          if (linkedCalendarRes.data) {
+            resolvedCalendar = linkedCalendarRes.data as CalendarRow;
+            nextDebug.lookupSource = "public_booking_link";
+          }
+        }
+
+        if (!resolvedCalendar) {
+          const introCalendarRes = await supabase
+            .from("calendars")
+            .select("id, client_id, calendar_name, timezone, is_active, status")
+            .eq("is_active", true)
+            .eq("calendar_name", DEFAULT_PUBLIC_CALENDAR_NAME)
+            .order("created_at")
+            .limit(1)
+            .maybeSingle();
+
+          if (introCalendarRes.error) {
+            nextDebug.failureReason = `intro_calendar_lookup_error: ${introCalendarRes.error.message}`;
+          }
+
+          if (introCalendarRes.data) {
+            resolvedCalendar = introCalendarRes.data as CalendarRow;
+            resolvedClientId = introCalendarRes.data.client_id;
+            nextDebug.matchedClientId = introCalendarRes.data.client_id;
+            nextDebug.lookupSource = "calendar_name_fallback";
+          }
+        }
+
+        if (!resolvedCalendar) {
+          const anyCalendarRes = await supabase
+            .from("calendars")
+            .select("id, client_id, calendar_name, timezone, is_active, status")
+            .eq("is_active", true)
+            .order("created_at")
+            .limit(1)
+            .maybeSingle();
+
+          if (anyCalendarRes.error) {
+            nextDebug.failureReason = `active_calendar_fallback_error: ${anyCalendarRes.error.message}`;
+          }
+
+          if (anyCalendarRes.data) {
+            resolvedCalendar = anyCalendarRes.data as CalendarRow;
+            resolvedClientId = anyCalendarRes.data.client_id;
+            nextDebug.matchedClientId = anyCalendarRes.data.client_id;
+            nextDebug.lookupSource = "any_active_calendar_fallback";
+          }
+        }
+
+        if (!resolvedCalendar) {
+          setAdminCalendar(null);
+          setAdminClientId(null);
+          setCalendarDebug({
+            ...nextDebug,
+            failureReason: nextDebug.failureReason || "no_matching_calendar_or_public_booking_link",
+          });
           return;
         }
-      }
 
-      if (clientId) {
-        setAdminClientId(clientId);
-        const { data: cal } = await supabase
-          .from("calendars")
-          .select("*")
-          .eq("client_id", clientId)
-          .eq("is_active", true)
-          .order("created_at")
-          .limit(1)
-          .maybeSingle();
-        setAdminCalendar(cal);
-      }
+        nextDebug.matchedCalendarId = resolvedCalendar.id;
+        nextDebug.timezone = resolvedCalendar.timezone || nextDebug.timezone || DEFAULT_TIMEZONE;
 
-      setCalendarLoading(false);
+        const [availabilityRes, blackoutRes] = await Promise.all([
+          supabase
+            .from("calendar_availability")
+            .select("day_of_week, start_time, end_time, timezone")
+            .eq("calendar_id", resolvedCalendar.id)
+            .eq("is_active", true),
+          supabase
+            .from("calendar_blackout_dates")
+            .select("start_datetime, end_datetime")
+            .eq("calendar_id", resolvedCalendar.id),
+        ]);
+
+        if (availabilityRes.error) {
+          nextDebug.failureReason = `availability_lookup_error: ${availabilityRes.error.message}`;
+        }
+
+        nextDebug.availabilityRowCount = availabilityRes.data?.length ?? 0;
+        nextDebug.firstAvailableDate = getFirstAvailableDate(
+          (availabilityRes.data ?? []) as AvailabilityRow[],
+          (blackoutRes.data ?? []) as BlackoutRow[]
+        );
+
+        if (!availabilityRes.data?.length) {
+          nextDebug.failureReason = nextDebug.failureReason || "calendar_has_no_active_availability";
+        }
+
+        setAdminCalendar(resolvedCalendar);
+        setAdminClientId(resolvedClientId);
+        setCalendarDebug(nextDebug);
+      } catch (loadError: any) {
+        setAdminCalendar(null);
+        setAdminClientId(null);
+        setCalendarDebug({
+          ...nextDebug,
+          failureReason: loadError?.message || "calendar_load_failed",
+        });
+      } finally {
+        setCalendarLoading(false);
+      }
     };
 
     loadCalendar();
@@ -529,14 +747,38 @@ export default function GetStarted() {
                     <span className="ml-2 text-sm text-muted-foreground">Loading available times…</span>
                   </div>
                 ) : !adminCalendar ? (
-                  <div className="text-center py-8 space-y-3">
-                    <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                      No available booking calendar found. Please contact us directly.
-                    </p>
-                    <a href="mailto:hello@newlightmarketing.com" className="text-sm text-primary hover:underline">
-                      hello@newlightmarketing.com
-                    </a>
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-dashed bg-secondary/40 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                        Runtime booking debug
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                        <p><span className="text-muted-foreground">Resolved client slug:</span> <span className="font-mono text-foreground">{calendarDebug.resolvedClientSlug}</span></p>
+                        <p><span className="text-muted-foreground">Matched client id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedClientId || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Matched calendar id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedCalendarId || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Active calendar count:</span> <span className="font-mono text-foreground">{calendarDebug.activeCalendarCount}</span></p>
+                        <p><span className="text-muted-foreground">Availability row count:</span> <span className="font-mono text-foreground">{calendarDebug.availabilityRowCount}</span></p>
+                        <p><span className="text-muted-foreground">Timezone:</span> <span className="font-mono text-foreground">{calendarDebug.timezone}</span></p>
+                        <p><span className="text-muted-foreground">First available date:</span> <span className="font-mono text-foreground">{calendarDebug.firstAvailableDate || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Booking link slug:</span> <span className="font-mono text-foreground">{calendarDebug.bookingLinkSlug || "none"}</span></p>
+                        <p className="sm:col-span-2"><span className="text-muted-foreground">Lookup source:</span> <span className="font-mono text-foreground">{calendarDebug.lookupSource || "none"}</span></p>
+                      </div>
+                      {calendarDebug.failureReason && (
+                        <p className="text-[11px] text-destructive mt-2 font-mono break-all">
+                          Failure: {calendarDebug.failureReason}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-center py-4 space-y-3">
+                      <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <p className="text-sm text-muted-foreground">
+                        No available booking calendar found. Please contact us directly.
+                      </p>
+                      <a href="mailto:hello@newlightmarketing.com" className="text-sm text-primary hover:underline">
+                        hello@newlightmarketing.com
+                      </a>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -544,6 +786,28 @@ export default function GetStarted() {
                       <p className="text-xs text-muted-foreground">Booking for</p>
                       <p className="text-sm font-semibold text-foreground">{businessName}</p>
                       <p className="text-xs text-muted-foreground">{contactName} · {email}</p>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed bg-secondary/40 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                        Runtime booking debug
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                        <p><span className="text-muted-foreground">Resolved client slug:</span> <span className="font-mono text-foreground">{calendarDebug.resolvedClientSlug}</span></p>
+                        <p><span className="text-muted-foreground">Matched client id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedClientId || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Matched calendar id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedCalendarId || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Active calendar count:</span> <span className="font-mono text-foreground">{calendarDebug.activeCalendarCount}</span></p>
+                        <p><span className="text-muted-foreground">Availability row count:</span> <span className="font-mono text-foreground">{calendarDebug.availabilityRowCount}</span></p>
+                        <p><span className="text-muted-foreground">Timezone:</span> <span className="font-mono text-foreground">{calendarDebug.timezone}</span></p>
+                        <p><span className="text-muted-foreground">First available date:</span> <span className="font-mono text-foreground">{calendarDebug.firstAvailableDate || "none"}</span></p>
+                        <p><span className="text-muted-foreground">Booking link slug:</span> <span className="font-mono text-foreground">{calendarDebug.bookingLinkSlug || "none"}</span></p>
+                        <p className="sm:col-span-2"><span className="text-muted-foreground">Lookup source:</span> <span className="font-mono text-foreground">{calendarDebug.lookupSource || "none"}</span></p>
+                      </div>
+                      {calendarDebug.failureReason && (
+                        <p className="text-[11px] text-destructive mt-2 font-mono break-all">
+                          Failure: {calendarDebug.failureReason}
+                        </p>
+                      )}
                     </div>
 
                     <CalendarSlotPicker
