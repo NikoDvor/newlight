@@ -107,9 +107,11 @@ export default function AdminMasterActivation() {
           setDraftStatus(normalizeDraftStatus(draft.draft_status || "in_progress"));
           if (draft.draft_status === "activated") setActivated(true);
         } else {
-          // Pre-populate from client record
-          setForm(prev => ({
-            ...prev,
+          // Already-provisioned client with no draft → auto-create at Stage 4
+          const isProvisioned = client.status === "active" || client.status === "provisioned" || !!(client as any).source_appointment_id;
+          const startStage = isProvisioned ? 4 : 1;
+          const initialForm = {
+            ...defaultFormState(),
             business_name_confirmed: client.business_name || "",
             display_name: client.business_name || "",
             owner_name: (client as any).owner_name || "",
@@ -119,7 +121,29 @@ export default function AdminMasterActivation() {
             default_timezone: (client as any).timezone || "America/Los_Angeles",
             service_package: (client as any).service_package || "enterprise",
             company_name: client.business_name || "",
-          }));
+            ...(isProvisioned ? {
+              close_outcome: "won",
+              provisional_profile: (client as any).provisional_profile || "",
+              business_type: (client as any).business_type || "",
+            } : {}),
+          };
+          setForm(initialForm);
+          setStage(startStage);
+
+          if (isProvisioned) {
+            // Persist the auto-created draft so future opens resume at Stage 4
+            const { data: user } = await supabase.auth.getUser();
+            const { data: newDraft } = await supabase.from("activation_drafts").insert({
+              client_id: clientId,
+              current_step: startStage,
+              draft_status: "in_progress",
+              draft_name: client.business_name || "Untitled",
+              form_data: initialForm as any,
+              created_by: user.user?.id || null,
+            }).select().single();
+            if (newDraft) setDraftId(newDraft.id);
+            setDraftStatus("in_progress");
+          }
         }
       } catch {
         toast.error("Failed to load client data");
