@@ -53,7 +53,8 @@ export default function CalendarDetail() {
   const { calendarId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, user } = useWorkspace();
+  const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
   const initialTab = searchParams.get("tab") || "overview";
 
   const [cal, setCal] = useState<any>(null);
