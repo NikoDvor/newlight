@@ -204,7 +204,7 @@ export default function CalendarDetail() {
       user_id: user?.id || null, metadata: { calendar_id: calendarId, name: newType.name },
     });
     toast.success("Appointment type created");
-    setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true });
+    setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: zoomEnabled ? "virtual" : "in_person", meeting_link_type: zoomEnabled ? "zoom" : "", confirmation_message: "", reminders_enabled: true });
     setAddTypeOpen(false);
     fetchAll();
   };
