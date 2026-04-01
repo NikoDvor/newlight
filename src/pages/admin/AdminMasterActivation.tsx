@@ -33,6 +33,7 @@ import { StepReviews } from "@/components/activation/StepReviews";
 import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepReview } from "@/components/activation/StepReview";
+import { StepProfileSelection } from "@/components/activation/StepProfileSelection";
 
 const stageIcons: Record<number, React.ReactNode> = {
   1: <Target className="h-3.5 w-3.5" />,
