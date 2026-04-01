@@ -180,7 +180,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
-    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "", notes: "", contact_id: "" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "" });
     setNewEventOpen(false);
     fetchData();
   };
