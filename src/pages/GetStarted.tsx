@@ -327,12 +327,14 @@ export default function GetStarted() {
   }, [step, adminCalendar]);
 
   const handleSubmit = async () => {
-    if (!canProceed || !canBook) return;
+    if (!canProceed || !canBook || !adminCalendar || !adminClientId) return;
     setPageState("submitting");
     setError("");
 
     try {
-      // 1. Call provision-from-booking to create workspace + records
+      const startTime = new Date(`${selectedDate}T${selectedTime}:00`);
+      const endTime = new Date(startTime.getTime() + 30 * 60000);
+
       const { data, error: fnError } = await supabase.functions.invoke(
         "provision-from-booking",
         {
@@ -351,14 +353,21 @@ export default function GetStarted() {
             timezone: "America/Los_Angeles",
             appointment_id: null,
             calendar_client_id: adminClientId,
+            calendar_id: adminCalendar.id,
+            appointment_start: startTime.toISOString(),
+            appointment_end: endTime.toISOString(),
+            appointment_title: `Intro Call — ${businessName}`,
+            appointment_description: `First meeting with ${contactName} from ${businessName}. Business type: ${businessType || "Not specified"}.`,
+            appointment_timezone: "America/Los_Angeles",
+            booking_source: "get_started_form",
           },
         }
       );
 
       if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
+      if (!data?.appointment_id) throw new Error("Booking completed without a persisted appointment record");
 
-      // 2. Run full-app provisioning if newly created
       if (data?.client_id && !data?.already_exists) {
         try {
           await provisionWorkspaceDefaults(data.client_id, {
@@ -370,140 +379,6 @@ export default function GetStarted() {
           });
         } catch (provErr) {
           console.warn("Provisioning partial:", provErr);
-        }
-      }
-
-      // 3. Create the first-meeting appointment on the admin calendar
-      if (adminCalendar && data?.client_id) {
-        try {
-          const startTime = new Date(`${selectedDate}T${selectedTime}`);
-          const endTime = new Date(startTime.getTime() + 30 * 60000);
-
-          // Find or create contact in the admin workspace
-          let contactId: string | null = null;
-          if (adminClientId) {
-            const { data: existingContact } = await supabase
-              .from("crm_contacts")
-              .select("id")
-              .eq("client_id", adminClientId)
-              .eq("email", email.trim().toLowerCase())
-              .maybeSingle();
-
-            if (existingContact) {
-              contactId = existingContact.id;
-            } else {
-              const { data: newContact } = await supabase
-                .from("crm_contacts")
-                .insert({
-                  client_id: adminClientId,
-                  full_name: contactName.trim(),
-                  email: email.trim().toLowerCase(),
-                  phone: phone || null,
-                  lead_source: "get_started_form",
-                  pipeline_stage: "appointment_booked",
-                  first_contact_date: new Date().toISOString(),
-                  last_interaction_date: new Date().toISOString(),
-                  number_of_appointments: 1,
-                } as any)
-                .select("id")
-                .single();
-              contactId = newContact?.id || null;
-            }
-
-            // Create/reuse deal
-            if (contactId) {
-              const { data: existingDeal } = await supabase
-                .from("crm_deals")
-                .select("id, pipeline_stage")
-                .eq("client_id", adminClientId)
-                .eq("contact_id", contactId)
-                .neq("pipeline_stage", "closed_won")
-                .neq("pipeline_stage", "closed_lost")
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (existingDeal) {
-                const earlyStages = ["new_lead", "contacted", "qualified"];
-                if (earlyStages.includes(existingDeal.pipeline_stage)) {
-                  await supabase.from("crm_deals").update({
-                    pipeline_stage: "appointment_booked",
-                  }).eq("id", existingDeal.id);
-                }
-              } else {
-                await supabase.from("crm_deals").insert({
-                  client_id: adminClientId,
-                  contact_id: contactId,
-                  deal_name: `${contactName.trim()} — Intro Call`,
-                  pipeline_stage: "appointment_booked",
-                  deal_value: 0,
-                  status: "open",
-                  lead_source: "get_started_form",
-                  qualification_status: "unqualified",
-                });
-              }
-
-              // Create/reuse lead
-              const { data: existingLead } = await supabase
-                .from("crm_leads")
-                .select("id")
-                .eq("client_id", adminClientId)
-                .eq("contact_id", contactId)
-                .limit(1)
-                .maybeSingle();
-
-              if (!existingLead) {
-                await supabase.from("crm_leads").insert({
-                  client_id: adminClientId,
-                  contact_id: contactId,
-                  source: "get_started_form",
-                  lead_status: "new_lead",
-                  estimated_value: 0,
-                  notes: `Auto-created from first meeting booking: ${businessName}`,
-                });
-              }
-            }
-          }
-
-          // Create the appointment
-          await supabase.from("calendar_events").insert({
-            client_id: adminClientId!,
-            calendar_id: adminCalendar.id,
-            title: `Intro Call — ${businessName}`,
-            description: `First meeting with ${contactName} from ${businessName}. Business type: ${businessType || "Not specified"}.`,
-            start_time: startTime.toISOString(),
-            end_time: endTime.toISOString(),
-            timezone: "America/Los_Angeles",
-            contact_name: contactName,
-            contact_email: email,
-            contact_phone: phone || null,
-            calendar_status: "scheduled",
-            booking_source: "get_started_form",
-          });
-
-          // Audit log
-          await supabase.from("audit_logs").insert({
-            client_id: data.client_id,
-            action: "first_meeting_booked_via_get_started",
-            module: "onboarding",
-            metadata: {
-              businessName,
-              businessType,
-              contactName,
-              email,
-              date: selectedDate,
-              time: selectedTime,
-              admin_calendar_id: adminCalendar.id,
-            },
-          });
-
-          await supabase.from("crm_activities").insert({
-            client_id: data.client_id,
-            activity_type: "first_meeting_booked",
-            activity_note: `First meeting booked via Get Started for ${businessName} (${email}) on ${selectedDate} at ${selectedTime}`,
-          });
-        } catch (calErr) {
-          console.warn("Meeting creation warning (non-blocking):", calErr);
         }
       }
 
