@@ -26,6 +26,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 
+function useWorkspaceZoomEnabled(clientId: string | null) {
+  const [zoomEnabled, setZoomEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!clientId) { setZoomEnabled(null); return; }
+    supabase.from("workspace_automation_config").select("module_flags")
+      .eq("client_id", clientId).maybeSingle()
+      .then(({ data }) => {
+        const flags = (data?.module_flags as any) || {};
+        setZoomEnabled(flags.zoom_meetings === true || flags.meeting_intelligence === true);
+      });
+  }, [clientId]);
+  return zoomEnabled;
+}
+
 const STATUS_STYLE: Record<string, string> = {
   scheduled: "bg-accent/10 text-accent border-accent/20",
   confirmed: "bg-primary/10 text-primary border-primary/20",
@@ -91,11 +105,19 @@ export default function CalendarPage() {
   const [detailEvent, setDetailEvent] = useState<any>(null);
   const [newCalOpen, setNewCalOpen] = useState(false);
   const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+  const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
+  const defaultLocation = zoomEnabled === false ? "" : zoomEnabled === true ? "zoom" : "";
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
-    start_date: "", start_time: "", duration: "30", location: "zoom",
+    start_date: "", start_time: "", duration: "30", location: defaultLocation,
     event_type_id: "", notes: "", contact_id: "",
   });
+  // Sync default location when workspace config loads
+  useEffect(() => {
+    if (zoomEnabled !== null) {
+      setNewEvent(p => p.location === "" || p.location === "zoom" ? { ...p, location: zoomEnabled ? "zoom" : "" } : p);
+    }
+  }, [zoomEnabled]);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -158,7 +180,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
-    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: "zoom", event_type_id: "", notes: "", contact_id: "" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "" });
     setNewEventOpen(false);
     fetchData();
   };
@@ -269,10 +291,13 @@ export default function CalendarPage() {
                 </div>
                 <div><Label>Location</Label>
                   <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
-                    <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select location" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="zoom">Zoom</SelectItem><SelectItem value="office">Office</SelectItem>
-                      <SelectItem value="phone">Phone</SelectItem><SelectItem value="other">Other</SelectItem>
+                      {zoomEnabled && <SelectItem value="zoom">Zoom</SelectItem>}
+                      <SelectItem value="on_site">On-Site</SelectItem>
+                      <SelectItem value="office">Office</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

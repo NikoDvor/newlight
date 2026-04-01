@@ -18,6 +18,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState as useStateHook } from "react";
+
+function useWorkspaceZoomEnabled(clientId: string | null) {
+  const [zoom, setZoom] = useStateHook<boolean>(false);
+  useEffect(() => {
+    if (!clientId) return;
+    supabase.from("workspace_automation_config").select("module_flags")
+      .eq("client_id", clientId).maybeSingle()
+      .then(({ data }) => {
+        const flags = (data?.module_flags as any) || {};
+        setZoom(flags.zoom_meetings === true || flags.meeting_intelligence === true);
+      });
+  }, [clientId]);
+  return zoom;
+}
 import {
   Calendar, Users, Clock, Link2, Bell, Settings2, Plus, Trash2,
   MapPin, Video, Phone, Globe, Copy, Save, Ban, CalendarDays, Edit2
@@ -38,7 +53,8 @@ export default function CalendarDetail() {
   const { calendarId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, user } = useWorkspace();
+  const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
   const initialTab = searchParams.get("tab") || "overview";
 
   const [cal, setCal] = useState<any>(null);
@@ -65,8 +81,14 @@ export default function CalendarDetail() {
   const [newBlackout, setNewBlackout] = useState({ start: "", end: "", reason: "" });
   const [newType, setNewType] = useState({
     name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0",
-    location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true,
+    location_type: "in_person", meeting_link_type: "", confirmation_message: "", reminders_enabled: true,
   });
+  // Update defaults when workspace config loads
+  useEffect(() => {
+    if (zoomEnabled) {
+      setNewType(p => p.location_type === "in_person" ? { ...p, location_type: "virtual", meeting_link_type: "zoom" } : p);
+    }
+  }, [zoomEnabled]);
   const [newReminder, setNewReminder] = useState({ reminder_type: "before_appointment", offset_minutes: "60", channel: "email" });
   const [newLink, setNewLink] = useState({ slug: "", is_public: true });
 
@@ -182,7 +204,7 @@ export default function CalendarDetail() {
       user_id: user?.id || null, metadata: { calendar_id: calendarId, name: newType.name },
     });
     toast.success("Appointment type created");
-    setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true });
+    setNewType({ name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0", location_type: zoomEnabled ? "virtual" : "in_person", meeting_link_type: zoomEnabled ? "zoom" : "", confirmation_message: "", reminders_enabled: true });
     setAddTypeOpen(false);
     fetchAll();
   };
