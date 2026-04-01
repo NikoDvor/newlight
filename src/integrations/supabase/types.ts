@@ -2457,6 +2457,7 @@ export type Database = {
       clients: {
         Row: {
           business_name: string
+          business_type: string | null
           created_at: string
           crm_mode: string
           email_delivery_status: string | null
@@ -2471,6 +2472,7 @@ export type Database = {
           owner_phone: string | null
           preferred_contact_method: string | null
           primary_location: string | null
+          provisional_profile: string | null
           secondary_contact_email: string | null
           secondary_contact_name: string | null
           secondary_contact_phone: string | null
@@ -2484,9 +2486,11 @@ export type Database = {
           website_url: string | null
           workspace_access_url: string | null
           workspace_slug: string
+          zoom_enabled_default: boolean | null
         }
         Insert: {
           business_name: string
+          business_type?: string | null
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
@@ -2501,6 +2505,7 @@ export type Database = {
           owner_phone?: string | null
           preferred_contact_method?: string | null
           primary_location?: string | null
+          provisional_profile?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
@@ -2514,9 +2519,11 @@ export type Database = {
           website_url?: string | null
           workspace_access_url?: string | null
           workspace_slug: string
+          zoom_enabled_default?: boolean | null
         }
         Update: {
           business_name?: string
+          business_type?: string | null
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
@@ -2531,6 +2538,7 @@ export type Database = {
           owner_phone?: string | null
           preferred_contact_method?: string | null
           primary_location?: string | null
+          provisional_profile?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
@@ -2544,6 +2552,7 @@ export type Database = {
           website_url?: string | null
           workspace_access_url?: string | null
           workspace_slug?: string
+          zoom_enabled_default?: boolean | null
         }
         Relationships: []
       }
@@ -9567,6 +9576,44 @@ export type Database = {
           },
         ]
       }
+      workspace_automation_config: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          module_flags: Json | null
+          reminder_channels: Json | null
+          updated_at: string
+          zoom_enabled: boolean | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          module_flags?: Json | null
+          reminder_channels?: Json | null
+          updated_at?: string
+          zoom_enabled?: boolean | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          module_flags?: Json | null
+          reminder_channels?: Json | null
+          updated_at?: string
+          zoom_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_automation_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_permissions: {
         Row: {
           access_level: string
@@ -9608,6 +9655,65 @@ export type Database = {
             columns: ["workspace_user_id"]
             isOneToOne: false
             referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_profiles: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          cadence_pack_applied: boolean | null
+          calendar_pack_applied: boolean | null
+          client_id: string
+          config_overrides: Json | null
+          created_at: string
+          form_pack_applied: boolean | null
+          id: string
+          profile_type: string
+          provisional_profile: string | null
+          updated_at: string
+          workflow_pack_applied: boolean | null
+          zoom_enabled: boolean | null
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          cadence_pack_applied?: boolean | null
+          calendar_pack_applied?: boolean | null
+          client_id: string
+          config_overrides?: Json | null
+          created_at?: string
+          form_pack_applied?: boolean | null
+          id?: string
+          profile_type?: string
+          provisional_profile?: string | null
+          updated_at?: string
+          workflow_pack_applied?: boolean | null
+          zoom_enabled?: boolean | null
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          cadence_pack_applied?: boolean | null
+          calendar_pack_applied?: boolean | null
+          client_id?: string
+          config_overrides?: Json | null
+          created_at?: string
+          form_pack_applied?: boolean | null
+          id?: string
+          profile_type?: string
+          provisional_profile?: string | null
+          updated_at?: string
+          workflow_pack_applied?: boolean | null
+          zoom_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
