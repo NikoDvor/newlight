@@ -26,6 +26,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 
+function useWorkspaceZoomEnabled(clientId: string | null) {
+  const [zoomEnabled, setZoomEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!clientId) { setZoomEnabled(null); return; }
+    supabase.from("workspace_automation_config").select("module_flags")
+      .eq("client_id", clientId).maybeSingle()
+      .then(({ data }) => {
+        const flags = (data?.module_flags as any) || {};
+        setZoomEnabled(flags.zoom_meetings === true || flags.meeting_intelligence === true);
+      });
+  }, [clientId]);
+  return zoomEnabled;
+}
+
 const STATUS_STYLE: Record<string, string> = {
   scheduled: "bg-accent/10 text-accent border-accent/20",
   confirmed: "bg-primary/10 text-primary border-primary/20",
