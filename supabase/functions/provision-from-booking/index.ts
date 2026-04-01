@@ -6,6 +6,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function guessProvisionalProfile(businessType: string): string {
+  const t = (businessType || "").toLowerCase();
+  if (["hvac", "plumbing", "cleaning", "landscaping", "roofing", "window", "construction"].some(k => t.includes(k))) return "field_service";
+  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) return "appointment_local";
+  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) return "consultative_sales";
+  if (["e-commerce"].some(k => t.includes(k))) return "membership_recurring";
+  if (["legal"].some(k => t.includes(k))) return "project_service";
+  return "custom_hybrid";
+}
+
+function guessZoomDefault(businessType: string): boolean {
+  const profile = guessProvisionalProfile(businessType);
+  return ["consultative_sales", "project_service", "custom_hybrid"].includes(profile);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
