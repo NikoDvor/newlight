@@ -105,11 +105,19 @@ export default function CalendarPage() {
   const [detailEvent, setDetailEvent] = useState<any>(null);
   const [newCalOpen, setNewCalOpen] = useState(false);
   const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+  const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
+  const defaultLocation = zoomEnabled === false ? "" : zoomEnabled === true ? "zoom" : "";
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
-    start_date: "", start_time: "", duration: "30", location: "zoom",
+    start_date: "", start_time: "", duration: "30", location: defaultLocation,
     event_type_id: "", notes: "", contact_id: "",
   });
+  // Sync default location when workspace config loads
+  useEffect(() => {
+    if (zoomEnabled !== null) {
+      setNewEvent(p => p.location === "" || p.location === "zoom" ? { ...p, location: zoomEnabled ? "zoom" : "" } : p);
+    }
+  }, [zoomEnabled]);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
