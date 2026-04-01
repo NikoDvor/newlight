@@ -747,7 +747,7 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => handleReProvision(c)} disabled={provisioning === c.id} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Wand2 className="h-3.5 w-3.5" /> Re-run Starter Template
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/setup`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Settings className="h-3.5 w-3.5" /> Master Setup Form
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
