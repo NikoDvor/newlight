@@ -544,7 +544,23 @@ export default function AdminMasterActivation() {
       case 1: return <StepQualification {...stepProps} />;
       case 2: return <StepProposalClosePrep {...stepProps} />;
       case 3: return <StepCloseOutcome {...stepProps} />;
-      case 4: return <StepDealClose {...stepProps} />; // Payment/activation details
+      case 4:
+        return (
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="w-full grid grid-cols-2 bg-white/[0.04] border border-white/10 mb-4">
+              <TabsTrigger value="profile" className="text-[11px] data-[state=active]:bg-white/10">Automation Profile</TabsTrigger>
+              <TabsTrigger value="payment" className="text-[11px] data-[state=active]:bg-white/10">Payment / Details</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile">
+              {clientId ? (
+                <StepProfileSelection form={form} set={set} clientId={clientId} />
+              ) : (
+                <p className="text-xs text-white/40">Save client first to configure profile.</p>
+              )}
+            </TabsContent>
+            <TabsContent value="payment"><StepDealClose {...stepProps} /></TabsContent>
+          </Tabs>
+        );
       case 5:
         return (
           <Tabs defaultValue="branding" className="w-full">

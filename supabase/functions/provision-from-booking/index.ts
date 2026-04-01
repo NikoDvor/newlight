@@ -100,8 +100,11 @@ Deno.serve(async (req) => {
       .insert({
         business_name: displayName,
         workspace_slug: slug,
-        industry: industry || null,
-        primary_location: location || null,
+      industry: industry || null,
+      primary_location: location || null,
+      business_type: industry || null,
+      provisional_profile: guessProvisionalProfile(industry || ""),
+      zoom_enabled_default: guessZoomDefault(industry || ""),
         owner_name: contact_name || null,
         owner_email: contact_email,
         owner_phone: contact_phone || null,
