@@ -81,8 +81,14 @@ export default function CalendarDetail() {
   const [newBlackout, setNewBlackout] = useState({ start: "", end: "", reason: "" });
   const [newType, setNewType] = useState({
     name: "", description: "", duration_minutes: "30", buffer_before: "0", buffer_after: "0",
-    location_type: "virtual", meeting_link_type: "zoom", confirmation_message: "", reminders_enabled: true,
+    location_type: "in_person", meeting_link_type: "", confirmation_message: "", reminders_enabled: true,
   });
+  // Update defaults when workspace config loads
+  useEffect(() => {
+    if (zoomEnabled) {
+      setNewType(p => p.location_type === "in_person" ? { ...p, location_type: "virtual", meeting_link_type: "zoom" } : p);
+    }
+  }, [zoomEnabled]);
   const [newReminder, setNewReminder] = useState({ reminder_type: "before_appointment", offset_minutes: "60", channel: "email" });
   const [newLink, setNewLink] = useState({ slug: "", is_public: true });
 
