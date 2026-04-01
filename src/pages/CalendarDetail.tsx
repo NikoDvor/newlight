@@ -18,6 +18,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState as useStateHook } from "react";
+
+function useWorkspaceZoomEnabled(clientId: string | null) {
+  const [zoom, setZoom] = useStateHook<boolean>(false);
+  useEffect(() => {
+    if (!clientId) return;
+    supabase.from("workspace_automation_config").select("module_flags")
+      .eq("client_id", clientId).maybeSingle()
+      .then(({ data }) => {
+        const flags = (data?.module_flags as any) || {};
+        setZoom(flags.zoom_meetings === true || flags.meeting_intelligence === true);
+      });
+  }, [clientId]);
+  return zoom;
+}
 import {
   Calendar, Users, Clock, Link2, Bell, Settings2, Plus, Trash2,
   MapPin, Video, Phone, Globe, Copy, Save, Ban, CalendarDays, Edit2

@@ -291,10 +291,13 @@ export default function CalendarPage() {
                 </div>
                 <div><Label>Location</Label>
                   <Select value={newEvent.location} onValueChange={v => setNewEvent(p => ({ ...p, location: v }))}>
-                    <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Select location" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="zoom">Zoom</SelectItem><SelectItem value="office">Office</SelectItem>
-                      <SelectItem value="phone">Phone</SelectItem><SelectItem value="other">Other</SelectItem>
+                      {zoomEnabled && <SelectItem value="zoom">Zoom</SelectItem>}
+                      <SelectItem value="on_site">On-Site</SelectItem>
+                      <SelectItem value="office">Office</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
