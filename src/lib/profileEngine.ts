@@ -44,7 +44,7 @@ export interface ProfilePackDefinition {
 const PROFILE_PACKS: Record<string, ProfilePackDefinition> = {
   field_service: {
     calendars: [
-      { calendar_name: "Service Dispatch", calendar_type: "team", appointment_types: ["On-site Visit", "Estimate"], default_duration: 60, location_type: "on_site" },
+      { calendar_name: "Service Dispatch", calendar_type: "team", appointment_types: ["On-site Visit", "Estimate"], default_duration: 60, location_type: "custom" },
     ],
     forms: [
       { form_name: "Service Request", form_type: "booking" },
