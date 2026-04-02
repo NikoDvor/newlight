@@ -371,10 +371,8 @@ export default function AdminOnboardingCommandCenter() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.4 }}
       >
-        <Card className="hidden md:block border-border bg-card overflow-hidden" style={{
-          boxShadow: "0 1px 3px 0 hsla(215,50%,35%,.04), inset 0 1px 0 0 hsla(0,0%,100%,.6)"
-        }}>
-          <CardContent className="p-0">
+        <div className="hidden md:block card-admin overflow-hidden">
+          <div className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
