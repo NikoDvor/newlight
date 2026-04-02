@@ -2428,11 +2428,14 @@ export type Database = {
       client_setup_items: {
         Row: {
           admin_notes: string | null
+          admin_request_note: string | null
           assigned_to: string | null
           blocked_by: string | null
+          blocked_reason: string | null
           category: string
           client_file_url: string | null
           client_id: string
+          client_response_note: string | null
           client_submitted_at: string | null
           client_value: string | null
           completed_at: string | null
@@ -2443,18 +2446,26 @@ export type Database = {
           item_key: string
           item_label: string
           item_status: string
+          last_reminded_at: string | null
           notes: string | null
           priority: string
+          reminder_count: number
+          requested_at: string | null
+          returned_for_revision_at: string | null
           submitted_by_client: boolean
+          target_due_date: string | null
           updated_at: string
         }
         Insert: {
           admin_notes?: string | null
+          admin_request_note?: string | null
           assigned_to?: string | null
           blocked_by?: string | null
+          blocked_reason?: string | null
           category: string
           client_file_url?: string | null
           client_id: string
+          client_response_note?: string | null
           client_submitted_at?: string | null
           client_value?: string | null
           completed_at?: string | null
@@ -2465,18 +2476,26 @@ export type Database = {
           item_key: string
           item_label: string
           item_status?: string
+          last_reminded_at?: string | null
           notes?: string | null
           priority?: string
+          reminder_count?: number
+          requested_at?: string | null
+          returned_for_revision_at?: string | null
           submitted_by_client?: boolean
+          target_due_date?: string | null
           updated_at?: string
         }
         Update: {
           admin_notes?: string | null
+          admin_request_note?: string | null
           assigned_to?: string | null
           blocked_by?: string | null
+          blocked_reason?: string | null
           category?: string
           client_file_url?: string | null
           client_id?: string
+          client_response_note?: string | null
           client_submitted_at?: string | null
           client_value?: string | null
           completed_at?: string | null
@@ -2487,9 +2506,14 @@ export type Database = {
           item_key?: string
           item_label?: string
           item_status?: string
+          last_reminded_at?: string | null
           notes?: string | null
           priority?: string
+          reminder_count?: number
+          requested_at?: string | null
+          returned_for_revision_at?: string | null
           submitted_by_client?: boolean
+          target_due_date?: string | null
           updated_at?: string
         }
         Relationships: [

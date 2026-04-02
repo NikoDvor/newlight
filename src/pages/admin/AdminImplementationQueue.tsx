@@ -39,14 +39,13 @@ export default function AdminImplementationQueue() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<QueueClient[]>([]);
   const [taskCounts, setTaskCounts] = useState<Record<string, TaskCount>>({});
-  const [setupCounts, setSetupCounts] = useState<Record<string, { total: number; completed: number; received: number }>>({});
+  const [setupCounts, setSetupCounts] = useState<Record<string, { total: number; completed: number; received: number; requested: number; overdue: number; blocked: number; waiting: number }>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
-    // Get clients that are paid or have implementation started
     const { data: allClients } = await supabase
       .from("clients")
       .select("id, business_name, workspace_slug, payment_status, implementation_status, portal_access_enabled, owner_name, service_package")
@@ -59,7 +58,6 @@ export default function AdminImplementationQueue() {
     if (cls.length > 0) {
       const clientIds = cls.map(c => c.id);
 
-      // Get task counts
       const { data: tasks } = await supabase
         .from("implementation_tasks")
         .select("client_id, task_status, due_date")
@@ -84,19 +82,23 @@ export default function AdminImplementationQueue() {
       }
       setTaskCounts(counts);
 
-      // Get setup counts
+      // Get setup counts with request tracking
       const { data: setupItems } = await supabase
         .from("client_setup_items" as any)
-        .select("client_id, item_status, submitted_by_client")
+        .select("client_id, item_status, submitted_by_client, target_due_date")
         .in("client_id", clientIds);
 
-      const sc: Record<string, { total: number; completed: number; received: number }> = {};
+      const sc: Record<string, { total: number; completed: number; received: number; requested: number; overdue: number; blocked: number; waiting: number }> = {};
       for (const s of (setupItems || []) as any[]) {
-        if (!s.submitted_by_client) continue;
-        if (!sc[s.client_id]) sc[s.client_id] = { total: 0, completed: 0, received: 0 };
-        sc[s.client_id].total++;
-        if (s.item_status === "completed") sc[s.client_id].completed++;
-        if (s.item_status === "received") sc[s.client_id].received++;
+        if (!sc[s.client_id]) sc[s.client_id] = { total: 0, completed: 0, received: 0, requested: 0, overdue: 0, blocked: 0, waiting: 0 };
+        const c = sc[s.client_id];
+        c.total++;
+        if (s.item_status === "completed") c.completed++;
+        if (s.item_status === "received") c.received++;
+        if (["requested", "reminded"].includes(s.item_status)) { c.requested++; c.waiting++; }
+        if (s.item_status === "revision_needed") c.waiting++;
+        if (s.item_status === "blocked") c.blocked++;
+        if (s.target_due_date && new Date(s.target_due_date) < now && !["completed", "received"].includes(s.item_status)) c.overdue++;
       }
       setSetupCounts(sc);
     }
@@ -129,13 +131,15 @@ export default function AdminImplementationQueue() {
   const stats = useMemo(() => {
     const paid = clients.filter(c => c.payment_status === "paid" || c.payment_status === "waived");
     const inProgress = clients.filter(c => c.implementation_status === "in_progress");
-    const waiting = clients.filter(c => c.implementation_status === "waiting_on_client" || (taskCounts[c.id]?.waiting || 0) > 0);
-    const blocked = clients.filter(c => (taskCounts[c.id]?.blocked || 0) > 0);
-    const overdue = clients.filter(c => (taskCounts[c.id]?.overdue || 0) > 0);
+    const waiting = clients.filter(c => c.implementation_status === "waiting_on_client" || (taskCounts[c.id]?.waiting || 0) > 0 || (setupCounts[c.id]?.waiting || 0) > 0);
+    const blocked = clients.filter(c => (taskCounts[c.id]?.blocked || 0) > 0 || (setupCounts[c.id]?.blocked || 0) > 0);
+    const overdue = clients.filter(c => (taskCounts[c.id]?.overdue || 0) > 0 || (setupCounts[c.id]?.overdue || 0) > 0);
     const complete = clients.filter(c => c.implementation_status === "complete");
     const ready = paid.filter(c => c.implementation_status === "not_started");
-    return { paid: paid.length, inProgress: inProgress.length, waiting: waiting.length, blocked: blocked.length, overdue: overdue.length, complete: complete.length, ready: ready.length };
-  }, [clients, taskCounts]);
+    const setupOverdue = clients.reduce((n, c) => n + (setupCounts[c.id]?.overdue || 0), 0);
+    const setupWaiting = clients.reduce((n, c) => n + (setupCounts[c.id]?.waiting || 0), 0);
+    return { paid: paid.length, inProgress: inProgress.length, waiting: waiting.length, blocked: blocked.length, overdue: overdue.length, complete: complete.length, ready: ready.length, setupOverdue, setupWaiting };
+  }, [clients, taskCounts, setupCounts]);
 
   if (loading) return <div className="text-white/40 text-center py-20">Loading…</div>;
 
@@ -208,7 +212,7 @@ export default function AdminImplementationQueue() {
         {filtered.length === 0 && <p className="text-center text-white/30 py-12">No clients match this filter</p>}
         {filtered.map((c, i) => {
           const tc = taskCounts[c.id] || { total: 0, complete: 0, in_progress: 0, blocked: 0, waiting: 0, overdue: 0, due_soon: 0 };
-          const sc = setupCounts[c.id] || { total: 0, completed: 0, received: 0 };
+          const sc = setupCounts[c.id] || { total: 0, completed: 0, received: 0, requested: 0, overdue: 0, blocked: 0, waiting: 0 };
           const taskPct = tc.total > 0 ? Math.round((tc.complete / tc.total) * 100) : 0;
           const setupPct = sc.total > 0 ? Math.round(((sc.completed + sc.received) / sc.total) * 100) : 0;
           const isPaid = c.payment_status === "paid" || c.payment_status === "waived";
@@ -217,17 +221,19 @@ export default function AdminImplementationQueue() {
             <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <Card
                 className="border-0 bg-white/[0.04] hover:bg-white/[0.06] transition-colors cursor-pointer"
-                style={{ borderColor: tc.overdue > 0 ? "hsla(0,70%,50%,.2)" : tc.blocked > 0 ? "hsla(0,70%,60%,.15)" : "hsla(211,96%,60%,.08)" }}
+                style={{ borderColor: (tc.overdue > 0 || sc.overdue > 0) ? "hsla(0,70%,50%,.2)" : (tc.blocked > 0 || sc.blocked > 0) ? "hsla(0,70%,60%,.15)" : "hsla(211,96%,60%,.08)" }}
                 onClick={() => navigate(`/admin/clients/${c.id}/implementation`)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <p className="text-sm font-medium text-white truncate">{c.business_name}</p>
                         {!isPaid && <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">Unpaid</Badge>}
                         {c.implementation_status === "complete" && <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400">Complete</Badge>}
-                        {tc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{tc.overdue} overdue</Badge>}
+                        {tc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{tc.overdue} task overdue</Badge>}
+                        {sc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{sc.overdue} setup overdue</Badge>}
+                        {sc.waiting > 0 && <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">{sc.waiting} waiting</Badge>}
                         {tc.blocked > 0 && <Badge variant="outline" className="text-[9px] border-red-400/30 text-red-300">{tc.blocked} blocked</Badge>}
                         {tc.due_soon > 0 && <Badge variant="outline" className="text-[9px] border-amber-400/30 text-amber-300">{tc.due_soon} due soon</Badge>}
                       </div>

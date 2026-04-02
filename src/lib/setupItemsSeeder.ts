@@ -81,6 +81,9 @@ export const CATEGORY_ORDER = ["branding", "website", "services", "team", "calen
 export const ITEM_STATUS_OPTIONS = [
   { value: "missing", label: "Missing", color: "hsl(0 70% 60%)" },
   { value: "requested", label: "Requested", color: "hsl(38 92% 50%)" },
+  { value: "reminded", label: "Reminded", color: "hsl(24 90% 50%)" },
   { value: "received", label: "Received", color: "hsl(211 96% 56%)" },
+  { value: "revision_needed", label: "Revision Needed", color: "hsl(270 60% 60%)" },
+  { value: "blocked", label: "Blocked", color: "hsl(0 70% 50%)" },
   { value: "completed", label: "Completed", color: "hsl(152 60% 44%)" },
 ];
