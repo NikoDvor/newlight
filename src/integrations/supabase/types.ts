@@ -2343,6 +2343,59 @@ export type Database = {
           },
         ]
       }
+      client_setup_items: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          client_id: string
+          client_value: string | null
+          created_at: string
+          id: string
+          item_key: string
+          item_label: string
+          item_status: string
+          notes: string | null
+          submitted_by_client: boolean
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          client_id: string
+          client_value?: string | null
+          created_at?: string
+          id?: string
+          item_key: string
+          item_label: string
+          item_status?: string
+          notes?: string | null
+          submitted_by_client?: boolean
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          client_id?: string
+          client_value?: string | null
+          created_at?: string
+          id?: string
+          item_key?: string
+          item_label?: string
+          item_status?: string
+          notes?: string | null
+          submitted_by_client?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_setup_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_success_milestones: {
         Row: {
           assigned_user_id: string | null
@@ -2456,12 +2509,14 @@ export type Database = {
       }
       clients: {
         Row: {
+          agreement_status: string
           business_name: string
           business_type: string | null
           created_at: string
           crm_mode: string
           email_delivery_status: string | null
           id: string
+          implementation_status: string
           industry: string | null
           invite_status: string | null
           last_handoff_sent_at: string | null
@@ -2470,8 +2525,10 @@ export type Database = {
           owner_email: string | null
           owner_name: string | null
           owner_phone: string | null
+          payment_status: string
           preferred_contact_method: string | null
           primary_location: string | null
+          proposal_status: string
           provisional_profile: string | null
           secondary_contact_email: string | null
           secondary_contact_name: string | null
@@ -2489,12 +2546,14 @@ export type Database = {
           zoom_enabled_default: boolean | null
         }
         Insert: {
+          agreement_status?: string
           business_name: string
           business_type?: string | null
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
           id?: string
+          implementation_status?: string
           industry?: string | null
           invite_status?: string | null
           last_handoff_sent_at?: string | null
@@ -2503,8 +2562,10 @@ export type Database = {
           owner_email?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          payment_status?: string
           preferred_contact_method?: string | null
           primary_location?: string | null
+          proposal_status?: string
           provisional_profile?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
@@ -2522,12 +2583,14 @@ export type Database = {
           zoom_enabled_default?: boolean | null
         }
         Update: {
+          agreement_status?: string
           business_name?: string
           business_type?: string | null
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
           id?: string
+          implementation_status?: string
           industry?: string | null
           invite_status?: string | null
           last_handoff_sent_at?: string | null
@@ -2536,8 +2599,10 @@ export type Database = {
           owner_email?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          payment_status?: string
           preferred_contact_method?: string | null
           primary_location?: string | null
+          proposal_status?: string
           provisional_profile?: string | null
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null

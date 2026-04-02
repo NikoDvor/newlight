@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,10 @@ interface Client {
   sms_delivery_status: string | null;
   created_at: string;
   onboarding_stage: string;
+  proposal_status: string;
+  agreement_status: string;
+  payment_status: string;
+  implementation_status: string;
 }
 
 interface ActivationInfo {
@@ -598,7 +602,7 @@ export default function AdminClients() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {["Client Name", "Industry", "Readiness", "Onboarding", "Form 2", "Payment", "Status", "Owner", ""].map(h => (
+                {["Client Name", "Industry", "Readiness", "Onboarding", "Form 2", "Payment", "Impl.", "Status", "Owner", ""].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
                 ))}
               </tr>
@@ -644,11 +648,20 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3">
                     {(() => {
-                      const b = billingMap[c.id];
-                      if (!b) return <span className="text-[10px] text-white/20">—</span>;
-                      if (b === "active" || b === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] capitalize">{b}</span>;
-                      if (b === "awaiting_payment" || b === "awaiting_wire") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{b.replace(/_/g, " ")}</span>;
-                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{b.replace(/_/g, " ")}</span>;
+                      const p = c.payment_status;
+                      if (p === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Paid</span>;
+                      if (p === "pending") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]">Pending</span>;
+                      if (p === "failed") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(0,70%,50%,.15)] text-[hsl(0,70%,68%)]">Failed</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">Unpaid</span>;
+                    })()}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const im = c.implementation_status;
+                      if (im === "complete") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Complete</span>;
+                      if (im === "in_progress") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]">In Progress</span>;
+                      if (["waiting_on_client", "access_requested"].includes(im)) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{im.replace(/_/g, " ")}</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{im.replace(/_/g, " ")}</span>;
                     })()}
                   </td>
                   <td className="px-4 py-3">
@@ -750,6 +763,9 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Settings className="h-3.5 w-3.5" /> Master Setup Form
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/lifecycle`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <ClipboardList className="h-3.5 w-3.5" /> Lifecycle & Setup
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
@@ -768,7 +784,7 @@ export default function AdminClients() {
                 </motion.tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-12 text-white/30">No clients found</td></tr>
+                <tr><td colSpan={10} className="text-center py-12 text-white/30">No clients found</td></tr>
               )}
             </tbody>
           </table>

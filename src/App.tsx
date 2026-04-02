@@ -90,6 +90,7 @@ import AdminArchitecture from "./pages/admin/AdminArchitecture";
 import AdminRevenueExpansion from "./pages/admin/AdminRevenueExpansion";
 import AdminImplementationRequests from "./pages/admin/AdminImplementationRequests";
 import AdminHandoffChecklist from "./pages/admin/AdminHandoffChecklist";
+import AdminClientLifecycle from "./pages/admin/AdminClientLifecycle";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -193,6 +194,7 @@ const App = () => (
               <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
               <Route path="implementation-requests" element={<AdminImplementationRequests />} />
               <Route path="clients/:clientId/handoff" element={<AdminHandoffChecklist />} />
+              <Route path="clients/:clientId/lifecycle" element={<AdminClientLifecycle />} />
             </Route>
 
             {/* Client Workspace */}
