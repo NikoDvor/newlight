@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
-import { Bell, Zap, ChevronDown } from "lucide-react";
+import { Bell, Zap } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
@@ -71,6 +71,11 @@ export function AdminLayout() {
                 <Outlet />
               </motion.div>
             </AnimatePresence>
+            {/* Powered by NewLight footer */}
+            <div className="flex items-center justify-center gap-1.5 py-4 opacity-30 hover:opacity-50 transition-opacity">
+              <Zap className="h-3 w-3 text-[hsl(var(--nl-sky))]" />
+              <span className="text-[10px] font-semibold tracking-wide uppercase text-white/60">Powered by NewLight</span>
+            </div>
           </main>
         </div>
       </div>

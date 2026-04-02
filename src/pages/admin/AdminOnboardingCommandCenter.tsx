@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ClientDetailDrawer from "@/components/admin/ClientDetailDrawer";
+import { NewLightHero } from "@/components/admin/NewLightHero";
 
 interface ClientRow {
   id: string;
@@ -292,17 +293,11 @@ export default function AdminOnboardingCommandCenter() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-      >
-        <h1 className="page-title">Onboarding Command Center</h1>
-        <p className="text-sm text-muted-foreground mt-1.5 max-w-xl leading-relaxed">
-          Manage all post-sale clients from one operational dashboard
-        </p>
-      </motion.div>
+      {/* Hero Header */}
+      <NewLightHero
+        title="Onboarding Command Center"
+        subtitle="AI-powered client operations system — manage all post-sale clients from one operational dashboard"
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">

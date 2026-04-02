@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase } from "lucide-react";
+import { NewLightHero } from "@/components/admin/NewLightHero";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,23 +68,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-sm text-white/50 mt-1">Platform overview and system monitoring</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => navigate("/admin/welcome")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-            <Play className="h-4 w-4 mr-1" /> Replay Intro
-          </Button>
-          <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-            <Hammer className="h-4 w-4 mr-1" /> New Demo Build
-          </Button>
-          <Button onClick={() => navigate("/admin/clients")} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
-            <Plus className="h-4 w-4 mr-1" /> New Client
-          </Button>
-        </div>
-      </div>
+      <NewLightHero
+        title="Admin Dashboard"
+        subtitle="Platform overview and system monitoring"
+      >
+        <Button onClick={() => navigate("/admin/welcome")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+          <Play className="h-4 w-4 mr-1" /> Replay Intro
+        </Button>
+        <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+          <Hammer className="h-4 w-4 mr-1" /> New Demo Build
+        </Button>
+        <Button onClick={() => navigate("/admin/clients")} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+          <Plus className="h-4 w-4 mr-1" /> New Client
+        </Button>
+      </NewLightHero>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((s, i) => (
