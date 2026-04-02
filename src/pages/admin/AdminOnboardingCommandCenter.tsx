@@ -361,38 +361,46 @@ export default function AdminOnboardingCommandCenter() {
       )}
 
       {/* Desktop Table */}
-      <Card className="hidden md:block border-border bg-card">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-muted-foreground text-[11px]">Client</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Next Action</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Payment</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Portal</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Setup</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Items</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Team</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Impl.</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px] w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow className="border-border">
-                    <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
-                      No clients match current filters
-                    </TableCell>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15, duration: 0.4 }}
+      >
+        <Card className="hidden md:block border-border bg-card overflow-hidden" style={{
+          boxShadow: "0 1px 3px 0 hsla(215,50%,35%,.04), inset 0 1px 0 0 hsla(0,0%,100%,.6)"
+        }}>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Client</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Next Action</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Payment</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Portal</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Setup</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Items</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Team</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Impl.</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] w-10"></TableHead>
                   </TableRow>
-                ) : (
-                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow className="border-border">
+                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                        No clients match current filters
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((c, i) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} index={i} />)
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
