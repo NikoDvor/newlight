@@ -480,6 +480,14 @@ export default function SetupPortal() {
         </Card>
       )}
 
+      {/* ── Activity Feed ── */}
+      {activeClientId && (
+        <SetupActivityFeed
+          clientId={activeClientId}
+          lastVisit={client?.portal_last_login_at}
+        />
+      )}
+
       {/* ── Progress Card ── */}
       <Card className="border border-border/50 shadow-sm">
         <CardContent className="p-5">
