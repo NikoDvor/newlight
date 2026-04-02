@@ -45,6 +45,7 @@ interface ClientInfo {
   business_name: string;
   payment_status: string;
   implementation_status: string;
+  portal_last_login_at: string | null;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
