@@ -599,6 +599,9 @@ function QuickMenu({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: st
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => window.open(`${window.location.origin}/auth?redirect=/setup-portal`, "_blank")}>
+          <Eye className="h-3.5 w-3.5 mr-2" /> Preview Setup Portal
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => copyPortalLink(c.workspace_slug)}>
           <Copy className="h-3.5 w-3.5 mr-2" /> Copy Portal Link
         </DropdownMenuItem>
