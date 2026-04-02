@@ -15,15 +15,17 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
     >
-      {/* Layered background */}
+      {/* Layered background — deeper, richer */}
       <div className="absolute inset-0 nl-hero-bg" />
       <div className="absolute inset-0 nl-hero-grid" />
       <div className="absolute inset-0 nl-hero-orb nl-hero-orb--a" />
       <div className="absolute inset-0 nl-hero-orb nl-hero-orb--b" />
+      {/* Extra cinematic glow layer */}
+      <div className="absolute inset-0 nl-hero-shimmer" />
 
       {/* Content */}
-      <div className="relative z-10 px-6 py-8 sm:px-8 sm:py-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="space-y-2">
+      <div className="relative z-10 px-6 py-10 sm:px-10 sm:py-14 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div className="space-y-3">
           <motion.div
             className="flex items-center gap-2"
             initial={{ opacity: 0, x: -10 }}
@@ -31,14 +33,14 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
             transition={{ delay: 0.15, duration: 0.4 }}
           >
             <div className="nl-hero-badge">
-              <Zap className="h-3 w-3" />
+              <Zap className="h-3.5 w-3.5" />
               <span>Powered by NewLight</span>
             </div>
           </motion.div>
 
           <motion.h1
-            className="text-2xl sm:text-3xl font-bold tracking-tight text-white"
-            style={{ letterSpacing: "-0.025em" }}
+            className="text-3xl sm:text-4xl font-bold tracking-tight text-white"
+            style={{ letterSpacing: "-0.03em" }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.45 }}
@@ -48,7 +50,7 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
 
           {subtitle && (
             <motion.p
-              className="text-sm text-white/50 max-w-lg leading-relaxed"
+              className="text-sm sm:text-base text-white/50 max-w-xl leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.4 }}
@@ -70,8 +72,12 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
         )}
       </div>
 
-      {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px nl-hero-accent-line" />
+      {/* Bottom accent line — brighter */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] nl-hero-accent-line" />
+      {/* Top edge highlight */}
+      <div className="absolute top-0 left-0 right-0 h-px" style={{
+        background: "linear-gradient(90deg, transparent 10%, hsla(211,96%,70%,.2) 50%, transparent 90%)"
+      }} />
     </motion.div>
   );
 }
