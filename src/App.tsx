@@ -245,6 +245,7 @@ const App = () => (
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/enterprise" element={<Enterprise />} />
               <Route path="/client-setup" element={<ClientSetup />} />
+              <Route path="/setup-portal" element={<SetupPortal />} />
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
               <Route path="/calendar" element={<PermissionGuard moduleKey="calendar"><CalendarPage /></PermissionGuard>} />
