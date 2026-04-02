@@ -754,6 +754,9 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/activate`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Settings className="h-3.5 w-3.5" /> Master Setup Form
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/lifecycle`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <ClipboardList className="h-3.5 w-3.5" /> Lifecycle & Setup
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
