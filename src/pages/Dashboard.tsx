@@ -13,7 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare, Brain,
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
-  ArrowUpRight, Plug, Calendar, Upload, Rocket, Play
+  ArrowUpRight, Plug, Calendar, Upload, Rocket
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
