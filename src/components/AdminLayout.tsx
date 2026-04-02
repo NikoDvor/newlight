@@ -62,9 +62,14 @@ export function AdminLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto" style={{
-            background: "linear-gradient(180deg, hsl(218 35% 10%) 0%, hsl(220 30% 14%) 100%)"
+          <main className="flex-1 overflow-auto relative" style={{
+            background: "linear-gradient(180deg, hsl(218 38% 8%) 0%, hsl(220 32% 12%) 100%)"
           }}>
+            {/* Subtle fixed grid overlay for cinematic depth */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.025]" style={{
+              backgroundImage: "linear-gradient(hsla(211,96%,60%,.4) 1px, transparent 1px), linear-gradient(90deg, hsla(211,96%,60%,.4) 1px, transparent 1px)",
+              backgroundSize: "80px 80px"
+            }} />
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
