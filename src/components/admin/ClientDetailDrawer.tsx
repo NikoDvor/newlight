@@ -142,7 +142,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
       supabase.from("client_setup_items" as any).select("id, item_name, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("implementation_tasks").select("id, task_title, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("workspace_users").select("id, display_name, email, provisioning_status, workspace_role").eq("client_id", clientId),
-      supabase.from("audit_logs").select("id, action, module, created_at, status").eq("client_id", clientId).order("created_at", { descending: true }).limit(15),
+      supabase.from("audit_logs").select("id, action, module, created_at, status").eq("client_id", clientId).order("created_at", { ascending: false }).limit(15),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
     setImplTasks((implRes.data || []) as any[]);
