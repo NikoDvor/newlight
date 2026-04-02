@@ -648,11 +648,20 @@ export default function AdminClients() {
                   </td>
                   <td className="px-4 py-3">
                     {(() => {
-                      const b = billingMap[c.id];
-                      if (!b) return <span className="text-[10px] text-white/20">—</span>;
-                      if (b === "active" || b === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] capitalize">{b}</span>;
-                      if (b === "awaiting_payment" || b === "awaiting_wire") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{b.replace(/_/g, " ")}</span>;
-                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{b.replace(/_/g, " ")}</span>;
+                      const p = c.payment_status;
+                      if (p === "paid") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Paid</span>;
+                      if (p === "pending") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]">Pending</span>;
+                      if (p === "failed") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(0,70%,50%,.15)] text-[hsl(0,70%,68%)]">Failed</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">Unpaid</span>;
+                    })()}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const im = c.implementation_status;
+                      if (im === "complete") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Complete</span>;
+                      if (im === "in_progress") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-sky))]">In Progress</span>;
+                      if (["waiting_on_client", "access_requested"].includes(im)) return <span className="text-[10px] px-2 py-0.5 rounded-full bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] capitalize">{im.replace(/_/g, " ")}</span>;
+                      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 capitalize">{im.replace(/_/g, " ")}</span>;
                     })()}
                   </td>
                   <td className="px-4 py-3">
