@@ -241,33 +241,61 @@ export default function AdminClientLifecycle() {
             <CardContent className="space-y-2">
               {group.items.map(item => {
                 const statusOpt = ITEM_STATUS_OPTIONS.find(o => o.value === item.item_status);
+                const hasClientData = !!(item.client_value || item.client_file_url);
                 return (
-                  <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                  <div key={item.id} className={`p-3 rounded-xl border transition-colors ${
                     !isPaid && item.category !== "internal" ? "opacity-50 pointer-events-none" : ""
-                  }`} style={{ borderColor: "hsla(211,96%,60%,.06)", background: "hsla(211,96%,60%,.02)" }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white">{item.item_label}</p>
-                      {item.client_value && (
-                        <p className="text-[10px] text-[hsl(var(--nl-sky))] mt-0.5">Client: {item.client_value}</p>
-                      )}
-                      {item.admin_notes && (
-                        <p className="text-[10px] text-white/30 mt-0.5">{item.admin_notes}</p>
-                      )}
+                  }`} style={{ borderColor: hasClientData ? "hsla(211,96%,60%,.15)" : "hsla(211,96%,60%,.06)", background: hasClientData ? "hsla(211,96%,60%,.04)" : "hsla(211,96%,60%,.02)" }}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white">{item.item_label}</p>
+                        {item.client_submitted_at && (
+                          <p className="text-[9px] text-white/25 mt-0.5">
+                            Client submitted {new Date(item.client_submitted_at).toLocaleDateString()} {new Date(item.client_submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {item.submitted_by_client && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasClientData ? "bg-[hsla(211,96%,60%,.12)] text-[hsl(var(--nl-sky))]" : "bg-white/5 text-white/25"}`}>
+                            {hasClientData ? "submitted" : "client"}
+                          </span>
+                        )}
+                        <select
+                          value={item.item_status}
+                          onChange={e => updateSetupItemStatus(item.id, e.target.value)}
+                          className="text-[10px] rounded-md px-2 py-1 bg-white/[0.06] border border-white/10 text-white"
+                          style={{ color: statusOpt?.color }}
+                        >
+                          {ITEM_STATUS_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {item.submitted_by_client && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/25">client</span>
-                      )}
-                      <select
-                        value={item.item_status}
-                        onChange={e => updateSetupItemStatus(item.id, e.target.value)}
-                        className="text-[10px] rounded-md px-2 py-1 bg-white/[0.06] border border-white/10 text-white"
-                        style={{ color: statusOpt?.color }}
-                      >
-                        {ITEM_STATUS_OPTIONS.map(o => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
+                    {/* Client submitted data */}
+                    {item.client_value && (
+                      <div className="mt-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                        <p className="text-[10px] text-white/30 mb-0.5 uppercase tracking-wider font-semibold">Client Response</p>
+                        <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>
+                      </div>
+                    )}
+                    {item.client_file_url && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <a href={item.client_file_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[hsl(var(--nl-sky))] hover:underline truncate flex items-center gap-1">
+                          📎 {item.client_file_url.split("/").pop()}
+                        </a>
+                      </div>
+                    )}
+                    {/* Admin notes inline edit */}
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Add internal note…"
+                        defaultValue={item.admin_notes || ""}
+                        onBlur={e => { if (e.target.value !== (item.admin_notes || "")) updateSetupItemNotes(item.id, e.target.value); }}
+                        className="w-full text-[10px] px-2 py-1 rounded bg-white/[0.03] border border-white/[0.05] text-white/40 placeholder:text-white/15 focus:border-white/20 focus:text-white/60 outline-none"
+                      />
                     </div>
                   </div>
                 );
