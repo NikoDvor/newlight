@@ -92,8 +92,7 @@ export default function SetupPortal() {
         portal_invite_status: "accepted",
       } as any).eq("id", activeClientId).then(() => {});
     }
-
-  useEffect(() => { load(); }, [load]);
+  }, [activeClientId]);
 
   const handleSubmitItem = async (item: SetupItem) => {
     const edit = editValues[item.id];
