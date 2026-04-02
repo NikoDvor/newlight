@@ -183,7 +183,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Recent Activity</CardTitle>
           </CardHeader>
@@ -194,8 +194,11 @@ export default function AdminDashboard() {
               const Icon = actionIconMap[a.action] || Activity;
               return (
                 <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06, duration: 0.25 }}
-                  className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
-                  <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: "hsla(211,96%,60%,.1)" }}>
+                  className="flex items-center gap-3 py-2 border-b border-white/[0.06] last:border-0">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{
+                    background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(197,92%,68%,.08))",
+                    boxShadow: "0 0 16px -4px hsla(211,96%,60%,.15)"
+                  }}>
                     <Icon className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                   </div>
                   <span className="text-sm text-white/70 flex-1">{a.action.replace(/_/g, " ")}{a.module ? ` · ${a.module}` : ""}</span>
@@ -204,7 +207,7 @@ export default function AdminDashboard() {
               );
             })}
           </CardContent>
-        </Card>
+        </div>
 
         <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
           <CardHeader className="pb-3">
