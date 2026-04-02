@@ -405,7 +405,6 @@ export default function SetupPortal() {
           ) : (
             <Button size="sm" onClick={() => handleSubmitItem(item)} disabled={submitting === item.id || item.item_status === "blocked"}
               className="gap-1.5"
-              variant={isRevision ? "default" : "default"}
             >
               {submitting === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
                 isRevision ? <RotateCcw className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
