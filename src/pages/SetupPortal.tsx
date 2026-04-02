@@ -85,9 +85,14 @@ export default function SetupPortal() {
     });
     setEditValues(edits);
     setLoading(false);
+    // Track portal login
+    if (activeClientId) {
+      supabase.from("clients").update({
+        portal_last_login_at: new Date().toISOString(),
+        portal_invite_status: "accepted",
+      } as any).eq("id", activeClientId).then(() => {});
+    }
   }, [activeClientId]);
-
-  useEffect(() => { load(); }, [load]);
 
   const handleSubmitItem = async (item: SetupItem) => {
     const edit = editValues[item.id];

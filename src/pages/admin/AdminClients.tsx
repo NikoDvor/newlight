@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,6 +288,34 @@ export default function AdminClients() {
       await supabase.from("clients").update({ sms_delivery_status: "sent" }).eq("id", client.id);
     } else {
       toast.error(data?.sms_error || "SMS could not be sent");
+    }
+    fetchClients();
+  };
+
+  const handleSendPortalInvite = async (client: Client) => {
+    if (!client.owner_email) { toast.error("No owner email on file"); return; }
+    const { data, error } = await supabase.functions.invoke("invite-user", {
+      body: { email: client.owner_email, role: "client_owner", client_id: client.id },
+    });
+    const now = new Date().toISOString();
+    await supabase.from("clients").update({
+      portal_invite_status: "sent",
+      portal_last_invited_at: now,
+      portal_access_enabled: true,
+    } as any).eq("id", client.id);
+    await supabase.from("audit_logs").insert({
+      client_id: client.id, action: "portal_invite_sent", module: "lifecycle",
+      metadata: { email: client.owner_email } as any,
+    });
+    if (error) {
+      toast.error("Invite failed, but portal access enabled. Share the link manually.");
+    } else if (data?.invite_email_sent) {
+      toast.success("Setup portal invite sent!");
+    } else if (data?.setup_link) {
+      navigator.clipboard.writeText(data.setup_link);
+      toast.success("Setup link copied!");
+    } else {
+      toast.success("User already has access — portal enabled.");
     }
     fetchClients();
   };
@@ -743,9 +771,14 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Copy className="h-3.5 w-3.5" /> Copy Workspace Link
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-center`); toast.success("Setup link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
-                            <Link2 className="h-3.5 w-3.5" /> Copy Setup Link
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-portal`); toast.success("Setup portal link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Link2 className="h-3.5 w-3.5" /> Copy Setup Portal Link
                           </DropdownMenuItem>
+                          {c.payment_status === "paid" && c.owner_email && (
+                            <DropdownMenuItem onClick={() => handleSendPortalInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                              <Send className="h-3.5 w-3.5" /> Send Setup Invite
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator className="bg-white/10" />
                           {c.owner_email && (
                             <DropdownMenuItem onClick={() => handleResendInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
