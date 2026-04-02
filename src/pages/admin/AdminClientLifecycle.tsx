@@ -348,6 +348,13 @@ export default function AdminClientLifecycle() {
         </CardContent>
       </Card>
 
+      {/* Team Access Provisioning */}
+      <TeamAccessReview
+        clientId={clientId!}
+        teamMembersJson={setupItems.find(i => i.item_key === "team_members")?.client_value || null}
+        onRefresh={load}
+      />
+
       {/* Lifecycle Status Pipeline */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {(["proposal", "agreement", "payment", "implementation"] as const).map(key => {
