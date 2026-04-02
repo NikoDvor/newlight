@@ -425,21 +425,23 @@ export default function AdminOnboardingCommandCenter() {
 }
 
 /* ───── Desktop Table Row ───── */
-function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
+function DesktopRow({ c, copyPortalLink, onSelect, index }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void; index: number }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
   const NbaIcon = nba.icon;
 
   return (
-    <TableRow className="border-border hover:bg-accent/30 cursor-pointer" onClick={onSelect}>
+    <TableRow
+      className="border-border hover:bg-primary/[0.03] cursor-pointer transition-colors duration-150"
+      onClick={onSelect}
+    >
       <TableCell>
-        <div className="text-foreground text-xs font-medium">{c.business_name}</div>
-        {c.profile_name && <div className="text-[10px] text-muted-foreground">{c.profile_name}</div>}
-        {c.owner_email && <div className="text-[10px] text-muted-foreground">{c.owner_email}</div>}
+        <div className="text-foreground text-xs font-semibold">{c.business_name}</div>
+        {c.profile_name && <div className="text-[10px] text-muted-foreground mt-0.5">{c.profile_name}</div>}
       </TableCell>
       <TableCell>
-        <div className={`flex items-center gap-1.5 text-[11px] font-medium ${nba.color}`}>
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${nba.color}`}>
           <NbaIcon className="h-3.5 w-3.5 shrink-0" />
           <span>{nba.label}</span>
         </div>
@@ -449,20 +451,23 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
         <div className="space-y-0.5">
           {statusBadge(c.portal_invite_status)}
           {c.portal_last_login_at ? (
-            <div className="text-[9px] text-emerald-400">Logged in</div>
+            <div className="text-[9px] text-[hsl(152,60%,44%)] font-medium">Logged in</div>
           ) : c.portal_invite_status === "sent" ? (
-            <div className="text-[9px] text-amber-400">No login</div>
+            <div className="text-[9px] text-[hsl(38,92%,50%)] font-medium">No login</div>
           ) : null}
         </div>
       </TableCell>
       <TableCell>
         {c.setup_total > 0 ? (
           <div className="space-y-1">
-            <div className="text-xs text-foreground font-medium">{setupPct}%</div>
-            <div className="h-1 w-14 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${setupPct}%` }} />
+            <div className="text-xs text-foreground font-semibold tabular-nums">{setupPct}%</div>
+            <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${setupPct}%` }}
+              />
             </div>
-            <div className="text-[9px] text-muted-foreground">{c.setup_completed}/{c.setup_total}</div>
+            <div className="text-[9px] text-muted-foreground tabular-nums">{c.setup_completed}/{c.setup_total}</div>
           </div>
         ) : <span className="text-[10px] text-muted-foreground">—</span>}
       </TableCell>
@@ -471,7 +476,7 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
       </TableCell>
       <TableCell>
         {c.team_pending > 0 ? (
-          <Badge variant="outline" className="text-[9px] bg-purple-500/10 text-purple-300 border-purple-500/20">
+          <Badge variant="outline" className="text-[9px] bg-[hsla(280,60%,50%,.08)] text-[hsl(280,60%,50%)] border-[hsla(280,60%,50%,.15)]">
             {c.team_pending} pending
           </Badge>
         ) : <span className="text-[10px] text-muted-foreground">—</span>}
@@ -479,9 +484,8 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
       <TableCell>
         <div className="space-y-0.5">
           {statusBadge(c.implementation_status)}
-          {c.impl_total > 0 && <div className="text-[9px] text-muted-foreground">{implPct}% ({c.impl_done}/{c.impl_total})</div>}
-          {c.impl_blocked > 0 && <div className="text-[9px] text-red-400">{c.impl_blocked} blocked</div>}
-          {c.next_due && <div className="text-[9px] text-muted-foreground">Due: {new Date(c.next_due).toLocaleDateString()}</div>}
+          {c.impl_total > 0 && <div className="text-[9px] text-muted-foreground tabular-nums">{implPct}% ({c.impl_done}/{c.impl_total})</div>}
+          {c.impl_blocked > 0 && <div className="text-[9px] text-[hsl(0,72%,51%)]">{c.impl_blocked} blocked</div>}
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
