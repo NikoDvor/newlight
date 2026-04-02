@@ -335,6 +335,19 @@ export default function SetupPortal() {
         );
       })}
 
+      {/* Team & User Access Section */}
+      {(() => {
+        const teamItem = items.find(i => i.item_key === "team_members");
+        return (
+          <TeamAccessSection
+            clientId={activeClientId!}
+            setupItemId={teamItem?.id || null}
+            initialValue={teamItem?.client_value || null}
+            onSaved={load}
+          />
+        );
+      })()}
+
       {/* Internal items notice */}
       {items.filter(i => !i.submitted_by_client).length > 0 && (
         <Card className="border border-border/50 shadow-sm">
