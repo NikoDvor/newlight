@@ -285,8 +285,9 @@ export default function AdminOnboardingCommandCenter() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        <p className="text-sm text-muted-foreground">Loading command center…</p>
       </div>
     );
   }
