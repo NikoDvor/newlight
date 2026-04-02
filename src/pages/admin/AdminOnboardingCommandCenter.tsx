@@ -407,14 +407,14 @@ export default function AdminOnboardingCommandCenter() {
 }
 
 /* ───── Desktop Table Row ───── */
-function DesktopRow({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: string | null) => void }) {
+function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
   const NbaIcon = nba.icon;
 
   return (
-    <TableRow className="border-border hover:bg-accent/30">
+    <TableRow className="border-border hover:bg-accent/30 cursor-pointer" onClick={onSelect}>
       <TableCell>
         <div className="text-foreground text-xs font-medium">{c.business_name}</div>
         {c.profile_name && <div className="text-[10px] text-muted-foreground">{c.profile_name}</div>}
