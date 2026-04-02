@@ -435,6 +435,7 @@ export default function AdminClientLifecycle() {
                         item={item}
                         clientId={clientId!}
                         clientName={client.business_name}
+                        clientEmail={client.owner_email}
                         portalLink={portalLink}
                         onUpdate={handleItemUpdate}
                       />
