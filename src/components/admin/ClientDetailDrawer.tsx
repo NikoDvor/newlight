@@ -409,7 +409,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">{title}</h3>
+      <h3 className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-2.5">{title}</h3>
       {children}
     </motion.div>
   );
