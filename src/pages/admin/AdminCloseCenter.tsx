@@ -325,11 +325,30 @@ export default function AdminCloseCenter() {
     const monthlyFee = latestProposal?.monthly_fee || 0;
     const total = setupFee + monthlyFee;
     const num = `INV-${Date.now().toString(36).toUpperCase()}`;
+
+    // Get or create billing account for this client
+    let billingAccountId: string;
+    const { data: existingBa } = await supabase.from("billing_accounts").select("id").eq("client_id", clientId!).limit(1).single();
+    if (existingBa) {
+      billingAccountId = existingBa.id;
+    } else {
+      const { data: newBa, error: baErr } = await supabase.from("billing_accounts").insert({
+        client_id: clientId!,
+        billing_status: "active",
+        billing_email: client?.owner_email || null,
+        setup_fee: setupFee,
+        monthly_fee: monthlyFee,
+      }).select("id").single();
+      if (baErr || !newBa) { toast.error("Failed to create billing account"); setActing(false); return; }
+      billingAccountId = newBa.id;
+    }
+
     const { data, error } = await supabase.from("invoices").insert({
       client_id: clientId!,
+      billing_account_id: billingAccountId,
       invoice_number: num,
-      invoice_type: "setup",
-      invoice_status: "pending",
+      invoice_type: "Setup",
+      invoice_status: "Draft",
       subtotal_amount: total,
       tax_amount: 0,
       total_amount: total,
