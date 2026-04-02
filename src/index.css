@@ -355,4 +355,80 @@
     box-shadow: 0 1px 6px -2px hsla(211,96%,56%,.25);
     transition-duration: .08s;
   }
+
+  /* ── NewLight Hero System ── */
+  .nl-hero-bg {
+    background: linear-gradient(135deg,
+      hsla(218,40%,8%,1) 0%,
+      hsla(215,55%,14%,1) 40%,
+      hsla(211,60%,12%,1) 100%
+    );
+  }
+
+  .nl-hero-grid {
+    opacity: .06;
+    background-image:
+      linear-gradient(hsla(211,96%,60%,.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsla(211,96%,60%,.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 70% 80% at 30% 50%, black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 80% at 30% 50%, black 0%, transparent 100%);
+  }
+
+  .nl-hero-orb {
+    pointer-events: none;
+    border-radius: 50%;
+    filter: blur(80px);
+  }
+  .nl-hero-orb--a {
+    width: 320px; height: 320px;
+    top: -80px; right: -40px;
+    position: absolute;
+    background: radial-gradient(circle, hsla(211,96%,60%,.18), transparent 70%);
+    animation: nl-orb-a 20s ease-in-out infinite;
+  }
+  .nl-hero-orb--b {
+    width: 240px; height: 240px;
+    bottom: -60px; left: 10%;
+    position: absolute;
+    background: radial-gradient(circle, hsla(197,92%,68%,.12), transparent 70%);
+    animation: nl-orb-b 24s ease-in-out infinite;
+  }
+
+  .nl-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: hsl(var(--nl-sky));
+    background: hsla(211,96%,60%,.08);
+    border: 1px solid hsla(211,96%,60%,.15);
+    border-radius: 9999px;
+    padding: 4px 12px 4px 8px;
+    backdrop-filter: blur(8px);
+  }
+
+  .nl-hero-accent-line {
+    background: linear-gradient(90deg,
+      transparent 0%,
+      hsla(211,96%,60%,.4) 30%,
+      hsla(197,92%,68%,.3) 70%,
+      transparent 100%
+    );
+  }
+
+  /* ── Faux-3D perspective card ── */
+  .card-perspective {
+    perspective: 800px;
+  }
+  .card-perspective-inner {
+    transition: transform .4s cubic-bezier(.25,.1,.25,1);
+    transform-style: preserve-3d;
+  }
+  .card-perspective:hover .card-perspective-inner {
+    transform: rotateX(1deg) rotateY(-1deg) translateY(-2px);
+  }
 }
