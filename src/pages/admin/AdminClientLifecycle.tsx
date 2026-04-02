@@ -203,7 +203,8 @@ export default function AdminClientLifecycle() {
     toast.success("Setup portal link copied!");
   };
 
-  if (loading || !client) return <div className="text-white/40 text-center py-20">Loading…</div>;
+  if (loading) return <div className="text-muted-foreground text-center py-20">Loading lifecycle…</div>;
+  if (!client) return <div className="text-muted-foreground text-center py-20">Client not found</div>;
 
   const isPaid = client.payment_status === "paid";
   const portalLink = `${window.location.origin}/auth?redirect=/setup-portal`;
