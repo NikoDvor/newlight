@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -184,22 +185,32 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col" side="right">
+      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-l border-border" side="right" style={{
+        boxShadow: "-8px 0 48px -12px hsla(211,96%,56%,.08)"
+      }}>
         <SheetHeader className="px-5 pt-5 pb-3">
-          <SheetTitle className="text-lg font-bold text-foreground">{client.business_name}</SheetTitle>
+          <SheetTitle className="text-lg font-bold text-foreground tracking-tight">{client.business_name}</SheetTitle>
           {client.profile_name && <div className="text-xs text-muted-foreground">{client.profile_name} · {client.owner_email || "No email"}</div>}
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-5 pb-5">
           <div className="space-y-5">
             {/* ── Operator Recommendation ── */}
-            <div className={`rounded-lg border p-3 space-y-1 ${nba.color === "text-muted-foreground" ? "border-border bg-muted/30" : "border-amber-500/20 bg-amber-500/5"}`}>
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`rounded-xl border p-3.5 space-y-1.5 ${nba.color === "text-muted-foreground" ? "border-border bg-muted/20" : "border-primary/15 bg-primary/[0.04]"}`}
+              style={{
+                boxShadow: nba.color !== "text-muted-foreground" ? "0 0 20px -6px hsla(211,96%,60%,.08)" : "none"
+              }}
+            >
               <div className={`flex items-center gap-2 text-sm font-semibold ${nba.color}`}>
                 <NbaIcon className="h-4 w-4 shrink-0" />
                 {nba.label}
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{nba.reason}</p>
-            </div>
+            </motion.div>
 
             {/* ── A. Client Summary ── */}
             <Section title="Client Summary">
@@ -209,19 +220,9 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
                 <SummaryItem label="Last Login" value={client.portal_last_login_at ? new Date(client.portal_last_login_at).toLocaleDateString() : "Never"} raw />
                 <SummaryItem label="Implementation" value={client.implementation_status} />
               </div>
-              <div className="mt-3 flex items-center gap-3">
-                <div>
-                  <div className="text-xs font-medium text-foreground">{setupPct}% setup</div>
-                  <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden mt-1">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${setupPct}%` }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-foreground">{implPct}% impl</div>
-                  <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden mt-1">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${implPct}%` }} />
-                  </div>
-                </div>
+              <div className="mt-3 flex items-center gap-4">
+                <ProgressMini label="Setup" pct={setupPct} color="bg-primary" />
+                <ProgressMini label="Impl" pct={implPct} color="bg-[hsl(152,60%,44%)]" />
               </div>
             </Section>
 
@@ -350,22 +351,22 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
             <Section title="Quick Actions">
               <div className="grid grid-cols-2 gap-2">
                 <Link to={`/admin/clients/${client.id}/lifecycle`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <ExternalLink className="h-3.5 w-3.5" /> Lifecycle & Setup
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <ExternalLink className="h-3.5 w-3.5 text-primary" /> Lifecycle & Setup
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/close`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <DollarSign className="h-3.5 w-3.5" /> Close Center
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <DollarSign className="h-3.5 w-3.5 text-primary" /> Close Center
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/implementation`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <Wrench className="h-3.5 w-3.5" /> Implementation
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <Wrench className="h-3.5 w-3.5 text-primary" /> Implementation
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8" onClick={copyPortalLink}>
-                  <Copy className="h-3.5 w-3.5" /> Copy Portal Link
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200" onClick={copyPortalLink}>
+                  <Copy className="h-3.5 w-3.5 text-primary" /> Copy Portal Link
                 </Button>
               </div>
             </Section>
@@ -377,12 +378,28 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 }
 
 /* ── Shared helpers ── */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function ProgressMini({ label, pct, color }: { label: string; pct: number; color: string }) {
   return (
     <div>
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{title}</h3>
-      {children}
+      <div className="text-xs font-semibold text-foreground tabular-nums">{pct}% {label.toLowerCase()}</div>
+      <div className="h-1.5 w-28 bg-muted rounded-full overflow-hidden mt-1">
+        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
+  );
+}
+
+/* ── Shared helpers ── */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">{title}</h3>
+      {children}
+    </motion.div>
   );
 }
 

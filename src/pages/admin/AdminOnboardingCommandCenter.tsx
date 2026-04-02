@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -287,27 +288,36 @@ export default function AdminOnboardingCommandCenter() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Onboarding Command Center</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage all post-sale clients from one operational dashboard</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <h1 className="page-title">Onboarding Command Center</h1>
+        <p className="text-sm text-muted-foreground mt-1.5 max-w-xl leading-relaxed">
+          Manage all post-sale clients from one operational dashboard
+        </p>
+      </motion.div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-        {BUCKET_CONFIG.map((b) => (
-          <button
+        {BUCKET_CONFIG.map((b, i) => (
+          <motion.button
             key={b.key}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.35 }}
             onClick={() => setActiveBucket(activeBucket === b.key ? "all" : b.key)}
-            className={`rounded-xl p-3 text-left transition-all border ${
+            className={`rounded-xl p-3 text-left transition-all duration-200 border group ${
               activeBucket === b.key
-                ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20"
-                : "border-border bg-card hover:bg-accent/50"
+                ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20 shadow-[0_0_16px_-4px_hsla(211,96%,60%,.15)]"
+                : "border-border bg-card hover:bg-accent/40 hover:border-primary/15 hover:shadow-[0_4px_16px_-4px_hsla(211,96%,56%,.08)]"
             }`}
           >
-            <b.icon className={`h-4 w-4 ${b.color} mb-1`} />
-            <div className="text-lg font-bold text-foreground">{bucketCounts[b.key]}</div>
+            <b.icon className={`h-4 w-4 ${b.color} mb-1 transition-transform duration-200 group-hover:scale-110`} />
+            <div className="text-lg font-bold text-foreground tabular-nums">{bucketCounts[b.key]}</div>
             <div className="text-[10px] text-muted-foreground leading-tight">{b.label}</div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -351,38 +361,46 @@ export default function AdminOnboardingCommandCenter() {
       )}
 
       {/* Desktop Table */}
-      <Card className="hidden md:block border-border bg-card">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-muted-foreground text-[11px]">Client</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Next Action</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Payment</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Portal</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Setup</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Items</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Team</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px]">Impl.</TableHead>
-                  <TableHead className="text-muted-foreground text-[11px] w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow className="border-border">
-                    <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
-                      No clients match current filters
-                    </TableCell>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15, duration: 0.4 }}
+      >
+        <Card className="hidden md:block border-border bg-card overflow-hidden" style={{
+          boxShadow: "0 1px 3px 0 hsla(215,50%,35%,.04), inset 0 1px 0 0 hsla(0,0%,100%,.6)"
+        }}>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Client</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Next Action</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Payment</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Portal</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Setup</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Items</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Team</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">Impl.</TableHead>
+                    <TableHead className="text-muted-foreground text-[11px] w-10"></TableHead>
                   </TableRow>
-                ) : (
-                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow className="border-border">
+                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                        No clients match current filters
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((c, i) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} index={i} />)
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
@@ -407,21 +425,23 @@ export default function AdminOnboardingCommandCenter() {
 }
 
 /* ───── Desktop Table Row ───── */
-function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
+function DesktopRow({ c, copyPortalLink, onSelect, index }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void; index: number }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
   const NbaIcon = nba.icon;
 
   return (
-    <TableRow className="border-border hover:bg-accent/30 cursor-pointer" onClick={onSelect}>
+    <TableRow
+      className="border-border hover:bg-primary/[0.03] cursor-pointer transition-colors duration-150"
+      onClick={onSelect}
+    >
       <TableCell>
-        <div className="text-foreground text-xs font-medium">{c.business_name}</div>
-        {c.profile_name && <div className="text-[10px] text-muted-foreground">{c.profile_name}</div>}
-        {c.owner_email && <div className="text-[10px] text-muted-foreground">{c.owner_email}</div>}
+        <div className="text-foreground text-xs font-semibold">{c.business_name}</div>
+        {c.profile_name && <div className="text-[10px] text-muted-foreground mt-0.5">{c.profile_name}</div>}
       </TableCell>
       <TableCell>
-        <div className={`flex items-center gap-1.5 text-[11px] font-medium ${nba.color}`}>
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold ${nba.color}`}>
           <NbaIcon className="h-3.5 w-3.5 shrink-0" />
           <span>{nba.label}</span>
         </div>
@@ -431,20 +451,23 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
         <div className="space-y-0.5">
           {statusBadge(c.portal_invite_status)}
           {c.portal_last_login_at ? (
-            <div className="text-[9px] text-emerald-400">Logged in</div>
+            <div className="text-[9px] text-[hsl(152,60%,44%)] font-medium">Logged in</div>
           ) : c.portal_invite_status === "sent" ? (
-            <div className="text-[9px] text-amber-400">No login</div>
+            <div className="text-[9px] text-[hsl(38,92%,50%)] font-medium">No login</div>
           ) : null}
         </div>
       </TableCell>
       <TableCell>
         {c.setup_total > 0 ? (
           <div className="space-y-1">
-            <div className="text-xs text-foreground font-medium">{setupPct}%</div>
-            <div className="h-1 w-14 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${setupPct}%` }} />
+            <div className="text-xs text-foreground font-semibold tabular-nums">{setupPct}%</div>
+            <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${setupPct}%` }}
+              />
             </div>
-            <div className="text-[9px] text-muted-foreground">{c.setup_completed}/{c.setup_total}</div>
+            <div className="text-[9px] text-muted-foreground tabular-nums">{c.setup_completed}/{c.setup_total}</div>
           </div>
         ) : <span className="text-[10px] text-muted-foreground">—</span>}
       </TableCell>
@@ -453,7 +476,7 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
       </TableCell>
       <TableCell>
         {c.team_pending > 0 ? (
-          <Badge variant="outline" className="text-[9px] bg-purple-500/10 text-purple-300 border-purple-500/20">
+          <Badge variant="outline" className="text-[9px] bg-[hsla(280,60%,50%,.08)] text-[hsl(280,60%,50%)] border-[hsla(280,60%,50%,.15)]">
             {c.team_pending} pending
           </Badge>
         ) : <span className="text-[10px] text-muted-foreground">—</span>}
@@ -461,9 +484,8 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
       <TableCell>
         <div className="space-y-0.5">
           {statusBadge(c.implementation_status)}
-          {c.impl_total > 0 && <div className="text-[9px] text-muted-foreground">{implPct}% ({c.impl_done}/{c.impl_total})</div>}
-          {c.impl_blocked > 0 && <div className="text-[9px] text-red-400">{c.impl_blocked} blocked</div>}
-          {c.next_due && <div className="text-[9px] text-muted-foreground">Due: {new Date(c.next_due).toLocaleDateString()}</div>}
+          {c.impl_total > 0 && <div className="text-[9px] text-muted-foreground tabular-nums">{implPct}% ({c.impl_done}/{c.impl_total})</div>}
+          {c.impl_blocked > 0 && <div className="text-[9px] text-[hsl(0,72%,51%)]">{c.impl_blocked} blocked</div>}
         </div>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
