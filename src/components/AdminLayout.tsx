@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
-import { Bell, Zap, ChevronDown } from "lucide-react";
+import { Bell, Zap } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
