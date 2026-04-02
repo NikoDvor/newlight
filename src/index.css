@@ -335,17 +335,20 @@
     background: linear-gradient(135deg, hsl(var(--nl-electric)), hsl(var(--nl-sky)));
     color: white;
     border: none;
-    box-shadow: 0 2px 14px -3px hsla(211,96%,56%,.32);
-    transition: filter .2s ease, box-shadow .2s ease, transform .2s ease;
+    box-shadow: 0 2px 14px -3px hsla(211,96%,56%,.32),
+                inset 0 1px 0 0 hsla(0,0%,100%,.18);
+    transition: filter .25s ease, box-shadow .25s ease, transform .25s ease;
   }
   .btn-gradient:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 8px 28px -4px hsla(211,96%,56%,.42);
-    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow: 0 8px 28px -4px hsla(211,96%,56%,.38),
+                inset 0 1px 0 0 hsla(0,0%,100%,.22);
+    transform: translateY(-1.5px);
   }
   .btn-gradient:active {
-    transform: translateY(0);
-    filter: brightness(.95);
-    box-shadow: 0 2px 8px -2px hsla(211,96%,56%,.25);
+    transform: translateY(0.5px);
+    filter: brightness(.96);
+    box-shadow: 0 1px 6px -2px hsla(211,96%,56%,.25);
+    transition-duration: .08s;
   }
 }
