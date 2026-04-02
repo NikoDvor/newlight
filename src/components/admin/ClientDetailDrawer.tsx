@@ -185,12 +185,14 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-l border-border" side="right" style={{
-        boxShadow: "-8px 0 48px -12px hsla(211,96%,56%,.08)"
-      }}>
-        <SheetHeader className="px-5 pt-5 pb-3">
-          <SheetTitle className="text-lg font-bold text-foreground tracking-tight">{client.business_name}</SheetTitle>
-          {client.profile_name && <div className="text-xs text-muted-foreground">{client.profile_name} · {client.owner_email || "No email"}</div>}
+        <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-l" side="right" style={{
+          boxShadow: "-12px 0 60px -16px hsla(211,96%,56%,.14), -2px 0 20px -4px hsla(0,0%,0%,.2)",
+          borderColor: "hsla(211,96%,60%,.10)",
+          background: "linear-gradient(180deg, hsl(218 35% 10%) 0%, hsl(220 30% 13%) 100%)"
+        }}>
+          <SheetHeader className="px-5 pt-6 pb-4">
+            <SheetTitle className="text-lg font-bold text-white tracking-tight">{client.business_name}</SheetTitle>
+            {client.profile_name && <div className="text-xs text-white/40">{client.profile_name} · {client.owner_email || "No email"}</div>}
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-5 pb-5">
