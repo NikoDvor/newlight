@@ -127,6 +127,7 @@ import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
+import SetupPortal from "./pages/SetupPortal";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -244,6 +245,7 @@ const App = () => (
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/enterprise" element={<Enterprise />} />
               <Route path="/client-setup" element={<ClientSetup />} />
+              <Route path="/setup-portal" element={<SetupPortal />} />
               <Route path="/brand-assets" element={<BrandAssets />} />
               <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
               <Route path="/calendar" element={<PermissionGuard moduleKey="calendar"><CalendarPage /></PermissionGuard>} />
