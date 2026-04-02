@@ -351,22 +351,22 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
             <Section title="Quick Actions">
               <div className="grid grid-cols-2 gap-2">
                 <Link to={`/admin/clients/${client.id}/lifecycle`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <ExternalLink className="h-3.5 w-3.5" /> Lifecycle & Setup
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <ExternalLink className="h-3.5 w-3.5 text-primary" /> Lifecycle & Setup
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/close`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <DollarSign className="h-3.5 w-3.5" /> Close Center
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <DollarSign className="h-3.5 w-3.5 text-primary" /> Close Center
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/implementation`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8">
-                    <Wrench className="h-3.5 w-3.5" /> Implementation
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
+                    <Wrench className="h-3.5 w-3.5 text-primary" /> Implementation
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-8" onClick={copyPortalLink}>
-                  <Copy className="h-3.5 w-3.5" /> Copy Portal Link
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200" onClick={copyPortalLink}>
+                  <Copy className="h-3.5 w-3.5 text-primary" /> Copy Portal Link
                 </Button>
               </div>
             </Section>
@@ -374,6 +374,18 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
         </ScrollArea>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/* ── Shared helpers ── */
+function ProgressMini({ label, pct, color }: { label: string; pct: number; color: string }) {
+  return (
+    <div>
+      <div className="text-xs font-semibold text-foreground tabular-nums">{pct}% {label.toLowerCase()}</div>
+      <div className="h-1.5 w-28 bg-muted rounded-full overflow-hidden mt-1">
+        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }
 
