@@ -73,7 +73,7 @@ export default function AdminDashboard() {
         title="Admin Dashboard"
         subtitle="Platform overview and system monitoring"
       >
-        <Button onClick={() => navigate("/admin/welcome")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+        <Button onClick={() => { resetIntroState(); window.location.reload(); }} variant="outline" className="border-white/10 text-white hover:bg-white/10">
           <Play className="h-4 w-4 mr-1" /> Replay Intro
         </Button>
         <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
