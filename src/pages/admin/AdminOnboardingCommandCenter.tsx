@@ -481,7 +481,7 @@ function MobileCard({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
   const NbaIcon = nba.icon;
 
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-border bg-card cursor-pointer hover:bg-accent/30 transition-colors" onClick={onSelect}>
       <CardContent className="p-4 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between">
