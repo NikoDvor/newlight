@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
@@ -30,14 +30,12 @@ export default function Auth() {
       } else if (isAdmin) {
         navigate("/admin", { replace: true });
       } else {
-        // Client user — check if they should go to setup portal
         (async () => {
           const { data: roles } = await supabase.from("user_roles").select("client_id").eq("user_id", user.id).not("client_id", "is", null).limit(1);
           const clientId = roles?.[0]?.client_id;
           if (clientId) {
             const { data: client } = await supabase.from("clients").select("payment_status, portal_access_enabled").eq("id", clientId).single();
             if (client?.payment_status === "paid" && client?.portal_access_enabled) {
-              // Check if setup is substantially incomplete
               const { data: items } = await supabase.from("client_setup_items" as any).select("item_status, submitted_by_client").eq("client_id", clientId);
               const clientItems = ((items || []) as any[]).filter((i: any) => i.submitted_by_client);
               const doneCount = clientItems.filter((i: any) => ["received", "completed"].includes(i.item_status)).length;
@@ -55,7 +53,6 @@ export default function Auth() {
     }
   }, [user, isAdmin, userRole, navigate]);
 
-  // After sign-in, if redirect is a /w/:slug path, navigate there to set workspace context
   const getRedirectAwareNav = () => {
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get("redirect");
@@ -98,7 +95,6 @@ export default function Auth() {
       return;
     }
 
-    // Sign in
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast.error("Invalid email or password");
@@ -107,7 +103,6 @@ export default function Auth() {
       toast.error("Please verify your email before signing in.");
     } else {
       toast.success("Welcome back!");
-      // Check for redirect param first (workspace entry links)
       const redirectPath = getRedirectAwareNav();
       if (redirectPath) {
         navigate(redirectPath, { replace: true });
@@ -131,167 +126,211 @@ export default function Auth() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
-      }}
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, hsl(218 35% 6%) 0%, hsl(220 42% 12%) 40%, hsl(215 50% 10%) 70%, hsl(218 35% 6%) 100%)" }}
     >
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute w-[600px] h-[600px] rounded-full"
+      {/* Animated grid */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "linear-gradient(hsla(211,96%,60%,.18) 1px, transparent 1px), linear-gradient(90deg, hsla(211,96%,60%,.18) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+        maskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent)",
+        WebkitMaskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent)",
+        opacity: 0.12,
+        animation: "nl-grid-drift 50s linear infinite",
+      }} />
+
+      {/* Scan line */}
+      <motion.div
+        className="absolute left-0 right-0 h-px pointer-events-none"
+        style={{
+          background: "linear-gradient(90deg, transparent, hsla(211,96%,60%,.4), transparent)",
+          boxShadow: "0 0 20px 2px hsla(211,96%,60%,.15)",
+        }}
+        initial={{ top: "0%" }}
+        animate={{ top: "100%" }}
+        transition={{ duration: 8, ease: "linear", repeat: Infinity }}
+      />
+
+      {/* Orbs */}
+      <motion.div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 600, height: 600, top: "-200px", right: "-150px",
+          background: "radial-gradient(circle, hsla(211,96%,62%,.20), transparent 70%)",
+          filter: "blur(80px)",
+        }}
+        animate={{ scale: [1, 1.15, 1], x: [0, 30, 0], y: [0, 20, 0] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 500, height: 500, bottom: "-150px", left: "-100px",
+          background: "radial-gradient(circle, hsla(197,92%,68%,.14), transparent 70%)",
+          filter: "blur(80px)",
+        }}
+        animate={{ scale: [1, 1.1, 1], x: [0, -20, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Particles */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full pointer-events-none"
           style={{
-            top: "-150px",
-            right: "-100px",
-            background: "radial-gradient(circle, hsla(211,96%,62%,.12), transparent 70%)",
-            filter: "blur(80px)",
+            width: 2 + Math.random() * 3, height: 2 + Math.random() * 3,
+            background: "hsla(211,96%,70%,.5)",
+            left: `${15 + Math.random() * 70}%`, top: `${15 + Math.random() * 70}%`,
+            filter: "blur(1px)",
           }}
+          animate={{ opacity: [0, 0.7, 0], y: [0, -40, -80] }}
+          transition={{ duration: 4 + Math.random() * 3, repeat: Infinity, delay: Math.random() * 4 }}
         />
-        <div
-          className="absolute w-[500px] h-[500px] rounded-full"
-          style={{
-            bottom: "-100px",
-            left: "-80px",
-            background: "radial-gradient(circle, hsla(197,92%,68%,.09), transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-      </div>
+      ))}
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
         className="w-full max-w-md relative z-10"
       >
+        {/* Logo area */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img src={newlightLogo} alt="NewLight" className="h-16 w-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px hsla(211,96%,56%,.3))" }} />
-          </div>
-          <p className="text-sm text-white/40">
-            {mode === "forgot"
-              ? "Reset your password"
-              : mode === "signup"
-              ? "Create your account"
-              : "Sign in to your account"}
-          </p>
+          <motion.div
+            className="inline-flex items-center justify-center mb-3 relative"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <img src={newlightLogo} alt="NewLight" className="h-16 sm:h-20 w-auto object-contain relative z-10"
+              style={{ filter: "drop-shadow(0 0 30px hsla(211,96%,56%,.4))" }} />
+            {/* Logo glow ring */}
+            <div className="absolute -inset-4 rounded-full" style={{
+              background: "radial-gradient(circle, hsla(211,96%,60%,.12), transparent 70%)",
+            }} />
+          </motion.div>
+          <motion.p
+            className="text-xs font-semibold tracking-[0.15em] uppercase"
+            style={{ color: "hsla(211,96%,70%,.5)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : "Sign in to your account"}
+          </motion.p>
         </div>
 
-        <div
-          className="rounded-2xl p-6 sm:p-8"
+        {/* Glass card */}
+        <motion.div
+          className="rounded-2xl p-6 sm:p-8 relative overflow-hidden"
           style={{
-            background: "hsla(218,35%,14%,.8)",
-            backdropFilter: "blur(24px)",
-            border: "1px solid hsla(211,96%,60%,.12)",
-            boxShadow: "0 20px 60px -15px hsla(211,96%,56%,.2)",
+            background: "hsla(215,35%,12%,.65)",
+            backdropFilter: "blur(32px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(32px) saturate(1.6)",
+            border: "1px solid hsla(211,96%,60%,.15)",
+            boxShadow: "0 24px 80px -16px hsla(211,96%,56%,.25), 0 0 0 1px hsla(211,96%,60%,.08), inset 0 1px 0 0 hsla(211,96%,70%,.08)",
           }}
+          initial={{ y: 12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Card shimmer accent */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "linear-gradient(115deg, transparent 30%, hsla(211,96%,60%,.04) 48%, hsla(197,92%,68%,.03) 52%, transparent 70%)",
+            backgroundSize: "250% 100%",
+            animation: "nl-shimmer 8s ease-in-out infinite",
+          }} />
+
+          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             <div>
-              <label className="text-xs text-white/50 mb-1.5 block font-medium">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  className="pl-9 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
+                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com" required
+                  className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
                 />
               </div>
             </div>
 
             {mode !== "forgot" && (
               <div>
-                <label className="text-xs text-white/50 mb-1.5 block font-medium">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Password</label>
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
                   <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                    className="pl-9 pr-10 bg-white/[0.06] border-white/10 text-white placeholder:text-white/25 h-11"
+                    type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••" required minLength={6}
+                    className="pl-9 pr-10 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                  >
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
             )}
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 text-sm font-semibold text-white border-0"
+            <Button type="submit" disabled={loading}
+              className="w-full h-11 text-sm font-bold text-white border-0 relative overflow-hidden group"
               style={{
-                background: "linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%))",
-                boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
+                background: "linear-gradient(135deg, hsl(217 90% 54%), hsl(211 96% 52%), hsl(197 90% 50%))",
+                backgroundSize: "200% 200%",
+                boxShadow: "0 6px 28px -6px hsla(211,96%,56%,.5), inset 0 1px 0 0 hsla(0,0%,100%,.15)",
               }}
             >
-              {loading
-                ? "Please wait..."
-                : mode === "forgot"
-                ? "Send Reset Link"
-                : mode === "signup"
-                ? "Create Account"
-                : "Sign In"}
+              <span className="relative z-10">
+                {loading ? "Please wait..." : mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
+              </span>
+              {/* Button hover shimmer */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background: "linear-gradient(115deg, transparent 30%, hsla(0,0%,100%,.12) 48%, transparent 70%)",
+                  backgroundSize: "250% 100%",
+                  animation: "nl-shimmer 3s ease-in-out infinite",
+                }}
+              />
             </Button>
           </form>
 
-          <div className="mt-5 flex flex-col items-center gap-2">
+          <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
             {mode === "signin" && (
               <>
-                <button
-                  onClick={() => setMode("forgot")}
-                  className="text-xs text-white/40 hover:text-white/70 transition-colors"
-                >
+                <button onClick={() => setMode("forgot")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
                   Forgot your password?
                 </button>
-                <button
-                  onClick={() => setMode("signup")}
-                  className="text-xs text-white/40 hover:text-white/70 transition-colors"
-                >
-                  Don't have an account? <span className="text-white/60 font-medium">Sign Up</span>
+                <button onClick={() => setMode("signup")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
+                  Don't have an account? <span className="text-[hsl(211,96%,60%)] font-medium">Sign Up</span>
                 </button>
               </>
             )}
             {mode === "signup" && (
-              <button
-                onClick={() => setMode("signin")}
-                className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
-              >
+              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
                 <ArrowLeft className="h-3 w-3" /> Back to Sign In
               </button>
             )}
             {mode === "forgot" && (
-              <button
-                onClick={() => setMode("signin")}
-                className="text-xs text-white/40 hover:text-white/70 transition-colors inline-flex items-center gap-1"
-              >
+              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
                 <ArrowLeft className="h-3 w-3" /> Back to Sign In
               </button>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="text-center mt-6 space-y-2">
-          <Link
-            to="/get-started"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(211,96%,56%)] hover:text-white transition-colors"
-          >
+        {/* Bottom links */}
+        <div className="text-center mt-6 space-y-3">
+          <Link to="/get-started"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(211,96%,56%)] hover:text-white transition-colors">
             <Rocket className="h-3.5 w-3.5" /> New business? Get Started
           </Link>
-          <p className="text-[10px] text-white/20 tracking-wide">
-            Powered by <span className="font-semibold">NewLight</span>
-          </p>
+          <div className="flex items-center justify-center gap-1.5">
+            <Zap className="h-3 w-3" style={{ color: "hsla(211,96%,70%,.4)" }} />
+            <p className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: "hsla(0,0%,100%,.25)" }}>
+              Powered by NewLight
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

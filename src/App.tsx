@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,6 +8,9 @@ import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
+import { NewLightIntro, shouldPlayIntro } from "@/components/NewLightIntro";
+
+// Pages
 import Dashboard from "./pages/Dashboard";
 import CRM from "./pages/CRM";
 import ContactDetail from "./pages/ContactDetail";
@@ -132,160 +136,168 @@ import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <WorkspaceProvider>
-          <Routes>
-            {/* Auth */}
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
-            <Route path="/book/:slug" element={<BookingPage />} />
-            <Route path="/get-started" element={<GetStarted />} />
-            <Route path="/w/:slug" element={<WorkspaceEntry />} />
-            <Route path="/proposal/:token" element={<ProposalView />} />
-            <Route path="/site/:clientSlug" element={<PublicSite />} />
-            <Route path="/intake" element={<ClientIntakeForm />} />
-            <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
+const App = () => {
+  const [showIntro, setShowIntro] = useState(shouldPlayIntro);
+  const handleIntroComplete = useCallback(() => setShowIntro(false), []);
 
-            {/* Admin Portal */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="clients" element={<AdminClients />} />
-              <Route path="monitoring" element={<AdminMonitoring />} />
-              <Route path="team" element={<AdminTeam />} />
-              <Route path="prospects" element={<AdminProspects />} />
-              <Route path="provision" element={<AdminProvision />} />
-              <Route path="fix-now" element={<AdminFixNow />} />
-              <Route path="audit-logs" element={<AdminAuditLogs />} />
-              <Route path="templates" element={<AdminTemplates />} />
-              <Route path="packages" element={<AdminPackages />} />
-              <Route path="packages/:id" element={<AdminPackageDetail />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
-              <Route path="activation" element={<AdminActivation />} />
-              <Route path="master-activation" element={<AdminMasterActivation />} />
-              <Route path="clients/:clientId/activate" element={<AdminMasterActivation />} />
-              <Route path="demo-builds" element={<AdminDemoBuilds />} />
-              <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
-              <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
-              <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
-              <Route path="welcome" element={<AdminWelcome />} />
-              <Route path="app-settings" element={<AdminAppSettings />} />
-              <Route path="sales-pipeline" element={<AdminSalesPipeline />} />
-              <Route path="deals/:dealId" element={<AdminDealDetail />} />
-              <Route path="meetings/:meetingId" element={<AdminMeetingDetail />} />
-              <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
-              <Route path="proposal-templates" element={<AdminProposalTemplates />} />
-              <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
-              <Route path="billing" element={<AdminBilling />} />
-              <Route path="automations" element={<AdminAutomations />} />
-              <Route path="executive" element={<AdminExecutiveDashboard />} />
-              <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
-              <Route path="client-success" element={<AdminClientSuccess />} />
-              <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
-              <Route path="follow-ups" element={<FollowUpQueue />} />
-              <Route path="message-templates" element={<MessageTemplates />} />
-              <Route path="how-it-works" element={<HowItWorks />} />
-              <Route path="architecture" element={<AdminArchitecture />} />
-              <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
-              <Route path="implementation-requests" element={<AdminImplementationRequests />} />
-              <Route path="clients/:clientId/handoff" element={<AdminHandoffChecklist />} />
-              <Route path="clients/:clientId/lifecycle" element={<AdminClientLifecycle />} />
-              <Route path="clients/:clientId/close" element={<AdminCloseCenter />} />
-              <Route path="implementation-queue" element={<AdminImplementationQueue />} />
-              <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
-              <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
-            </Route>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showIntro && <NewLightIntro onComplete={handleIntroComplete} />}
+        <BrowserRouter>
+          <WorkspaceProvider>
+            <Routes>
+              {/* Auth */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
+              <Route path="/book/:slug" element={<BookingPage />} />
+              <Route path="/get-started" element={<GetStarted />} />
+              <Route path="/w/:slug" element={<WorkspaceEntry />} />
+              <Route path="/proposal/:token" element={<ProposalView />} />
+              <Route path="/site/:clientSlug" element={<PublicSite />} />
+              <Route path="/intake" element={<ClientIntakeForm />} />
+              <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
-            {/* Client Workspace */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/crm" element={<PermissionGuard moduleKey="crm"><CRM /></PermissionGuard>} />
-              <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
-              <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
-              <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
-              <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
-              <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
-              <Route path="/paid-ads" element={<PermissionGuard moduleKey="ads"><PaidAds /></PermissionGuard>} />
-              <Route path="/reviews" element={<PermissionGuard moduleKey="reviews"><Reviews /></PermissionGuard>} />
-              <Route path="/meetings" element={<Meetings />} />
-              <Route path="/reports" element={<PermissionGuard moduleKey="reports"><Reports /></PermissionGuard>} />
-              <Route path="/intelligence" element={<Intelligence />} />
-              <Route path="/ai-insights" element={<PermissionGuard moduleKey="ai"><AIInsights /></PermissionGuard>} />
-              <Route path="/training" element={<PermissionGuard moduleKey="training"><Training /></PermissionGuard>} />
-              <Route path="/settings" element={<PermissionGuard moduleKey="settings"><SettingsPage /></PermissionGuard>} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
-              <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
-              <Route path="/proposal-booking" element={<ProposalBooking />} />
-              <Route path="/prospect-detail" element={<ProspectDetail />} />
-              <Route path="/audit-pack" element={<AuditPack />} />
-              <Route path="/meeting-outcome" element={<MeetingOutcome />} />
-              <Route path="/proposal-draft" element={<ProposalDraft />} />
-              <Route path="/website-builder" element={<PermissionGuard moduleKey="website"><WebsiteBuilder /></PermissionGuard>} />
-              <Route path="/funnel-builder" element={<PermissionGuard moduleKey="website"><FunnelBuilder /></PermissionGuard>} />
-              <Route path="/landing-pages" element={<PermissionGuard moduleKey="website"><LandingPageEditor /></PermissionGuard>} />
-              <Route path="/forms" element={<PermissionGuard moduleKey="forms"><FormBuilder /></PermissionGuard>} />
-              <Route path="/automations" element={<Automations />} />
-              <Route path="/client-performance" element={<PermissionGuard moduleKey="reports"><ClientPerformance /></PermissionGuard>} />
-              <Route path="/client-report" element={<PermissionGuard moduleKey="reports"><ClientReport /></PermissionGuard>} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/agency" element={<AgencyDashboard />} />
-              <Route path="/integrations" element={<PermissionGuard moduleKey="settings"><Integrations /></PermissionGuard>} />
-              <Route path="/growth-advisor" element={<PermissionGuard moduleKey="ai"><GrowthAdvisor /></PermissionGuard>} />
-              <Route path="/business-health" element={<PermissionGuard moduleKey="reports"><BusinessHealth /></PermissionGuard>} />
-              <Route path="/revenue-opportunities" element={<PermissionGuard moduleKey="reports"><RevenueOpportunities /></PermissionGuard>} />
-              <Route path="/priority-actions" element={<PriorityActions />} />
-              <Route path="/live-activity" element={<LiveActivity />} />
-              <Route path="/market-research" element={<PermissionGuard moduleKey="reports"><MarketResearch /></PermissionGuard>} />
-              <Route path="/competitor-tracking" element={<PermissionGuard moduleKey="reports"><CompetitorTracking /></PermissionGuard>} />
-              <Route path="/meeting-intelligence" element={<PermissionGuard moduleKey="meeting_intel"><MeetingIntelligence /></PermissionGuard>} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/enterprise" element={<Enterprise />} />
-              <Route path="/client-setup" element={<ClientSetup />} />
-              <Route path="/setup-portal" element={<SetupPortal />} />
-              <Route path="/brand-assets" element={<BrandAssets />} />
-              <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
-              <Route path="/calendar" element={<PermissionGuard moduleKey="calendar"><CalendarPage /></PermissionGuard>} />
-              <Route path="/calendar-management" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarManagement /></PermissionGuard>} />
-              <Route path="/calendar-management/:calendarId" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarDetail /></PermissionGuard>} />
-              <Route path="/appointments/:appointmentId" element={<PermissionGuard moduleKey="calendar"><AppointmentDetail /></PermissionGuard>} />
-              <Route path="/email" element={<PermissionGuard moduleKey="email"><EmailPage /></PermissionGuard>} />
-              <Route path="/branding-settings" element={<PermissionGuard moduleKey="settings"><BrandingSettings /></PermissionGuard>} />
-              <Route path="/welcome" element={<Welcome />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/workforce" element={<PermissionGuard moduleKey="workforce"><Workforce /></PermissionGuard>} />
-              <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
-              <Route path="/content-planner" element={<PermissionGuard moduleKey="content"><ContentPlanner /></PermissionGuard>} />
-              <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
-              <Route path="/help-desk" element={<PermissionGuard moduleKey="helpdesk"><HelpDesk /></PermissionGuard>} />
-              <Route path="/knowledge-base" element={<KnowledgeBase />} />
-              <Route path="/team" element={<PermissionGuard moduleKey="settings"><TeamManagement /></PermissionGuard>} />
-              <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarIntegrations /></PermissionGuard>} />
-              <Route path="/setup-center" element={<SetupCenter />} />
-              <Route path="/services" element={<PermissionGuard moduleKey="website"><ServiceManager /></PermissionGuard>} />
-              <Route path="/success-center" element={<ClientSuccessCenter />} />
-              <Route path="/support-tickets" element={<SupportTickets />} />
-              <Route path="/conversations" element={<ConversationsPage title="Conversations" />} />
-              <Route path="/follow-ups" element={<FollowUpQueue />} />
-              <Route path="/message-templates" element={<MessageTemplates />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </WorkspaceProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              {/* Admin Portal */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="clients" element={<AdminClients />} />
+                <Route path="monitoring" element={<AdminMonitoring />} />
+                <Route path="team" element={<AdminTeam />} />
+                <Route path="prospects" element={<AdminProspects />} />
+                <Route path="provision" element={<AdminProvision />} />
+                <Route path="fix-now" element={<AdminFixNow />} />
+                <Route path="audit-logs" element={<AdminAuditLogs />} />
+                <Route path="templates" element={<AdminTemplates />} />
+                <Route path="packages" element={<AdminPackages />} />
+                <Route path="packages/:id" element={<AdminPackageDetail />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
+                <Route path="activation" element={<AdminActivation />} />
+                <Route path="master-activation" element={<AdminMasterActivation />} />
+                <Route path="clients/:clientId/activate" element={<AdminMasterActivation />} />
+                <Route path="demo-builds" element={<AdminDemoBuilds />} />
+                <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
+                <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
+                <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
+                <Route path="welcome" element={<AdminWelcome />} />
+                <Route path="app-settings" element={<AdminAppSettings />} />
+                <Route path="sales-pipeline" element={<AdminSalesPipeline />} />
+                <Route path="deals/:dealId" element={<AdminDealDetail />} />
+                <Route path="meetings/:meetingId" element={<AdminMeetingDetail />} />
+                <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
+                <Route path="proposal-templates" element={<AdminProposalTemplates />} />
+                <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
+                <Route path="billing" element={<AdminBilling />} />
+                <Route path="automations" element={<AdminAutomations />} />
+                <Route path="executive" element={<AdminExecutiveDashboard />} />
+                <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
+                <Route path="client-success" element={<AdminClientSuccess />} />
+                <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
+                <Route path="follow-ups" element={<FollowUpQueue />} />
+                <Route path="message-templates" element={<MessageTemplates />} />
+                <Route path="how-it-works" element={<HowItWorks />} />
+                <Route path="architecture" element={<AdminArchitecture />} />
+                <Route path="revenue-expansion" element={<AdminRevenueExpansion />} />
+                <Route path="implementation-requests" element={<AdminImplementationRequests />} />
+                <Route path="clients/:clientId/handoff" element={<AdminHandoffChecklist />} />
+                <Route path="clients/:clientId/lifecycle" element={<AdminClientLifecycle />} />
+                <Route path="clients/:clientId/close" element={<AdminCloseCenter />} />
+                <Route path="implementation-queue" element={<AdminImplementationQueue />} />
+                <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
+                <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
+              </Route>
+
+              {/* Client Workspace */}
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/crm" element={<PermissionGuard moduleKey="crm"><CRM /></PermissionGuard>} />
+                <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
+                <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
+                <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
+                <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
+                <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
+                <Route path="/paid-ads" element={<PermissionGuard moduleKey="ads"><PaidAds /></PermissionGuard>} />
+                <Route path="/reviews" element={<PermissionGuard moduleKey="reviews"><Reviews /></PermissionGuard>} />
+                <Route path="/meetings" element={<Meetings />} />
+                <Route path="/reports" element={<PermissionGuard moduleKey="reports"><Reports /></PermissionGuard>} />
+                <Route path="/intelligence" element={<Intelligence />} />
+                <Route path="/ai-insights" element={<PermissionGuard moduleKey="ai"><AIInsights /></PermissionGuard>} />
+                <Route path="/training" element={<PermissionGuard moduleKey="training"><Training /></PermissionGuard>} />
+                <Route path="/settings" element={<PermissionGuard moduleKey="settings"><SettingsPage /></PermissionGuard>} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
+                <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
+                <Route path="/proposal-booking" element={<ProposalBooking />} />
+                <Route path="/prospect-detail" element={<ProspectDetail />} />
+                <Route path="/audit-pack" element={<AuditPack />} />
+                <Route path="/meeting-outcome" element={<MeetingOutcome />} />
+                <Route path="/proposal-draft" element={<ProposalDraft />} />
+                <Route path="/website-builder" element={<PermissionGuard moduleKey="website"><WebsiteBuilder /></PermissionGuard>} />
+                <Route path="/funnel-builder" element={<PermissionGuard moduleKey="website"><FunnelBuilder /></PermissionGuard>} />
+                <Route path="/landing-pages" element={<PermissionGuard moduleKey="website"><LandingPageEditor /></PermissionGuard>} />
+                <Route path="/forms" element={<PermissionGuard moduleKey="forms"><FormBuilder /></PermissionGuard>} />
+                <Route path="/automations" element={<Automations />} />
+                <Route path="/client-performance" element={<PermissionGuard moduleKey="reports"><ClientPerformance /></PermissionGuard>} />
+                <Route path="/client-report" element={<PermissionGuard moduleKey="reports"><ClientReport /></PermissionGuard>} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/agency" element={<AgencyDashboard />} />
+                <Route path="/integrations" element={<PermissionGuard moduleKey="settings"><Integrations /></PermissionGuard>} />
+                <Route path="/growth-advisor" element={<PermissionGuard moduleKey="ai"><GrowthAdvisor /></PermissionGuard>} />
+                <Route path="/business-health" element={<PermissionGuard moduleKey="reports"><BusinessHealth /></PermissionGuard>} />
+                <Route path="/revenue-opportunities" element={<PermissionGuard moduleKey="reports"><RevenueOpportunities /></PermissionGuard>} />
+                <Route path="/priority-actions" element={<PriorityActions />} />
+                <Route path="/live-activity" element={<LiveActivity />} />
+                <Route path="/market-research" element={<PermissionGuard moduleKey="reports"><MarketResearch /></PermissionGuard>} />
+                <Route path="/competitor-tracking" element={<PermissionGuard moduleKey="reports"><CompetitorTracking /></PermissionGuard>} />
+                <Route path="/meeting-intelligence" element={<PermissionGuard moduleKey="meeting_intel"><MeetingIntelligence /></PermissionGuard>} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/enterprise" element={<Enterprise />} />
+                <Route path="/client-setup" element={<ClientSetup />} />
+                <Route path="/setup-portal" element={<SetupPortal />} />
+                <Route path="/brand-assets" element={<BrandAssets />} />
+                <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
+                <Route path="/calendar" element={<PermissionGuard moduleKey="calendar"><CalendarPage /></PermissionGuard>} />
+                <Route path="/calendar-management" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarManagement /></PermissionGuard>} />
+                <Route path="/calendar-management/:calendarId" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarDetail /></PermissionGuard>} />
+                <Route path="/appointments/:appointmentId" element={<PermissionGuard moduleKey="calendar"><AppointmentDetail /></PermissionGuard>} />
+                <Route path="/email" element={<PermissionGuard moduleKey="email"><EmailPage /></PermissionGuard>} />
+                <Route path="/branding-settings" element={<PermissionGuard moduleKey="settings"><BrandingSettings /></PermissionGuard>} />
+                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/workforce" element={<PermissionGuard moduleKey="workforce"><Workforce /></PermissionGuard>} />
+                <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
+                <Route path="/content-planner" element={<PermissionGuard moduleKey="content"><ContentPlanner /></PermissionGuard>} />
+                <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
+                <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
+                <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
+                <Route path="/team" element={<TeamManagement />} />
+                <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
+                <Route path="/setup-center" element={<SetupCenter />} />
+                <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />
+                <Route path="/client-success" element={<ClientSuccessCenter />} />
+                <Route path="/support-tickets" element={<PermissionGuard moduleKey="support"><SupportTickets /></PermissionGuard>} />
+                <Route path="/conversations" element={<PermissionGuard moduleKey="messaging"><ConversationsPage /></PermissionGuard>} />
+                <Route path="/follow-ups" element={<PermissionGuard moduleKey="crm"><FollowUpQueue /></PermissionGuard>} />
+                <Route path="/message-templates" element={<PermissionGuard moduleKey="messaging"><MessageTemplates /></PermissionGuard>} />
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </WorkspaceProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

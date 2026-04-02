@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="NewLight" />
-    <meta name="theme-color" content="#3B82F6" />
+    <meta name="theme-color" content="#1a2540" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -25,24 +25,26 @@
     <meta property="og:description" content="New Eyes To ROI">
     <meta name="twitter:description" content="New Eyes To ROI">
     <style>
-      /* Splash screen shown before React mounts */
       #splash-screen {
         position: fixed; inset: 0; z-index: 9999;
         display: flex; align-items: center; justify-content: center; flex-direction: column;
-        background: linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%);
+        background: linear-gradient(135deg, hsl(218 38% 6%) 0%, hsl(220 42% 12%) 50%, hsl(218 38% 6%) 100%);
         transition: opacity 0.4s ease;
       }
       #splash-screen.hide { opacity: 0; pointer-events: none; }
       #splash-logo {
-        width: 180px; height: auto;
-        animation: splash-pulse 2s infinite ease-in-out;
-        filter: drop-shadow(0 4px 30px hsla(211,96%,56%,.3));
+        width: 160px; height: auto;
+        filter: drop-shadow(0 0 40px hsla(211,96%,56%,.4));
       }
       #splash-logo img { width: 100%; height: auto; }
-      #splash-text { margin-top: 16px; color: rgba(255,255,255,0.5); font-size: 13px; font-family: system-ui; font-weight: 600; letter-spacing: 0.05em; }
-      @keyframes splash-pulse {
-        0%, 100% { box-shadow: 0 4px 30px -4px hsla(211,96%,56%,.4); }
-        50% { box-shadow: 0 4px 50px -4px hsla(211,96%,56%,.7); }
+      #splash-text {
+        margin-top: 16px;
+        color: rgba(255,255,255,0.4);
+        font-size: 11px;
+        font-family: system-ui;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
       }
       #splash-fallback { display: none; margin-top: 24px; }
       #splash-fallback a {
@@ -53,7 +55,6 @@
       }
     </style>
     <script>
-      // Safety timeout: if splash is still visible after 6s, show a fallback link
       setTimeout(function() {
         var s = document.getElementById("splash-screen");
         var f = document.getElementById("splash-fallback");
