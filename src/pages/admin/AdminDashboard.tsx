@@ -85,22 +85,25 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, duration: 0.3 }}>
-            <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <s.icon className="h-4 w-4" style={{ color: s.color }} />
-                  <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.label}</span>
-                </div>
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-              </CardContent>
-            </Card>
+          <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }}
+            className="card-admin group cursor-default p-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{
+                background: `linear-gradient(135deg, ${s.color}22, ${s.color}08)`,
+                boxShadow: `0 0 20px -6px ${s.color}30`
+              }}>
+                <s.icon className="h-4 w-4" style={{ color: s.color }} />
+              </div>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.label}</span>
+            </div>
+            <p className="text-3xl font-bold text-white tracking-tight">{s.value}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Automation Health */}
-      <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+      <div className="card-admin p-0 overflow-hidden">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-semibold text-white/80">Automation Health</CardTitle>
           <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/automations")}>
@@ -129,11 +132,11 @@ export default function AdminDashboard() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </div>
 
       {/* Pipeline Health + Templates */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
             <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/sales-pipeline")}>
@@ -155,9 +158,9 @@ export default function AdminDashboard() {
               ))
             )}
           </CardContent>
-        </Card>
+        </div>
 
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Templates & Deployment</CardTitle>
             <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/templates")}>
@@ -176,11 +179,11 @@ export default function AdminDashboard() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Recent Activity</CardTitle>
           </CardHeader>
@@ -191,8 +194,11 @@ export default function AdminDashboard() {
               const Icon = actionIconMap[a.action] || Activity;
               return (
                 <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06, duration: 0.25 }}
-                  className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
-                  <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ background: "hsla(211,96%,60%,.1)" }}>
+                  className="flex items-center gap-3 py-2 border-b border-white/[0.06] last:border-0">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{
+                    background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(197,92%,68%,.08))",
+                    boxShadow: "0 0 16px -4px hsla(211,96%,60%,.15)"
+                  }}>
                     <Icon className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                   </div>
                   <span className="text-sm text-white/70 flex-1">{a.action.replace(/_/g, " ")}{a.module ? ` · ${a.module}` : ""}</span>
@@ -201,13 +207,13 @@ export default function AdminDashboard() {
               );
             })}
           </CardContent>
-        </Card>
+        </div>
 
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-1">
             {[
               { label: "New Demo Build", path: "/admin/demo-builds" },
               { label: "Client Activation", path: "/admin/activation" },
@@ -219,13 +225,13 @@ export default function AdminDashboard() {
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-all duration-200 group">
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)]">
                 <span>{action.label}</span>
-                <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
               </motion.button>
             ))}
           </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );

@@ -28,15 +28,21 @@ export function AdminLayout() {
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
-            background: "hsla(218,40%,12%,.95)",
-            backdropFilter: "blur(24px) saturate(1.6)",
-            borderColor: "hsla(211,96%,60%,.12)"
+            background: "hsla(218,42%,8%,.97)",
+            backdropFilter: "blur(28px) saturate(1.6)",
+            borderColor: "hsla(211,96%,60%,.12)",
+            boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-white/60 hover:text-white transition-colors" />
-              <div className="hidden sm:flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
-                <span className="text-xs font-bold tracking-tight text-white/70">NewLight Admin</span>
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="h-6 w-6 rounded-md flex items-center justify-center" style={{
+                  background: "linear-gradient(135deg, hsl(211 96% 56%), hsl(197 92% 68%))",
+                  boxShadow: "0 0 14px -2px hsla(211,96%,60%,.4)"
+                }}>
+                  <Zap className="h-3 w-3 text-white" />
+                </div>
+                <span className="text-xs font-bold tracking-tight text-white/80">NewLight Admin</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -45,20 +51,25 @@ export function AdminLayout() {
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
                   background: "linear-gradient(135deg, hsl(197 92% 68%), hsl(211 96% 56%))",
-                  boxShadow: "0 0 8px hsla(211,96%,60%,.5)"
+                  boxShadow: "0 0 10px hsla(211,96%,60%,.6)"
                 }} />
               </button>
               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{
                 background: "linear-gradient(135deg, hsl(197 92% 68%), hsl(217 90% 58%))",
-                boxShadow: "0 2px 14px -3px hsla(211,96%,56%,.35)"
+                boxShadow: "0 2px 16px -3px hsla(211,96%,56%,.4)"
               }}>
                 <span className="text-xs font-bold text-white">NL</span>
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto" style={{
-            background: "linear-gradient(180deg, hsl(218 35% 10%) 0%, hsl(220 30% 14%) 100%)"
+          <main className="flex-1 overflow-auto relative" style={{
+            background: "linear-gradient(180deg, hsl(218 38% 8%) 0%, hsl(220 32% 12%) 100%)"
           }}>
+            {/* Subtle fixed grid overlay for cinematic depth */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.025]" style={{
+              backgroundImage: "linear-gradient(hsla(211,96%,60%,.4) 1px, transparent 1px), linear-gradient(90deg, hsla(211,96%,60%,.4) 1px, transparent 1px)",
+              backgroundSize: "80px 80px"
+            }} />
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

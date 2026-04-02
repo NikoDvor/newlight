@@ -113,6 +113,13 @@
   100% { background-position: 0% 50%; }
 }
 
+/* ── Shimmer sweep ── */
+@keyframes nl-shimmer {
+  0%   { background-position: -100% 0; }
+  50%  { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* ── Particle float ── */
 @keyframes nl-particle-float {
   0%   { transform: translateY(100vh) scale(0); opacity: 0; }
@@ -245,24 +252,48 @@
   .card-widget {
     @apply text-card-foreground rounded-2xl p-6;
     position: relative;
-    background: hsla(210,50%,99%,.82);
-    backdrop-filter: blur(24px) saturate(1.8);
-    -webkit-backdrop-filter: blur(24px) saturate(1.8);
-    border: 1px solid hsla(211,96%,60%,.06);
-    box-shadow: 0 1px 3px 0 hsla(215,50%,35%,.04),
-                0 0 0 1px hsla(215,50%,50%,.04),
-                inset 0 1px 0 0 hsla(0,0%,100%,.75);
-    transition: box-shadow .4s cubic-bezier(.25,.1,.25,1),
-                transform .4s cubic-bezier(.25,.1,.25,1),
-                border-color .4s ease;
+    background: hsla(210,50%,99%,.85);
+    backdrop-filter: blur(28px) saturate(1.8);
+    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+    border: 1px solid hsla(211,96%,60%,.08);
+    box-shadow: 0 1px 4px 0 hsla(215,50%,35%,.06),
+                0 0 0 1px hsla(215,50%,50%,.05),
+                inset 0 1px 0 0 hsla(0,0%,100%,.8);
+    transition: box-shadow .35s cubic-bezier(.25,.1,.25,1),
+                transform .35s cubic-bezier(.25,.1,.25,1),
+                border-color .35s ease;
   }
   .card-widget:hover {
-    box-shadow: 0 16px 48px -12px hsla(211,96%,56%,.14),
-                0 0 0 1px hsla(211,96%,56%,.10),
-                0 0 32px -8px hsla(211,96%,60%,.10),
-                inset 0 1px 0 0 hsla(0,0%,100%,.85);
+    box-shadow: 0 20px 56px -14px hsla(211,96%,56%,.18),
+                0 0 0 1px hsla(211,96%,56%,.14),
+                0 0 40px -10px hsla(211,96%,60%,.14),
+                inset 0 1px 0 0 hsla(0,0%,100%,.9);
+    transform: translateY(-4px);
+    border-color: hsla(211,96%,60%,.22);
+  }
+
+  /* ── Admin dark card (for dark admin bg) ── */
+  .card-admin {
+    position: relative;
+    border-radius: 1rem;
+    background: hsla(215,30%,14%,.7);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid hsla(211,96%,60%,.10);
+    box-shadow: 0 2px 8px -2px hsla(0,0%,0%,.3),
+                0 0 0 1px hsla(211,96%,60%,.06),
+                inset 0 1px 0 0 hsla(211,96%,70%,.06);
+    transition: box-shadow .35s cubic-bezier(.25,.1,.25,1),
+                transform .35s cubic-bezier(.25,.1,.25,1),
+                border-color .35s ease;
+  }
+  .card-admin:hover {
+    box-shadow: 0 16px 48px -12px hsla(211,96%,56%,.16),
+                0 0 0 1px hsla(211,96%,56%,.14),
+                0 0 32px -8px hsla(211,96%,60%,.12),
+                inset 0 1px 0 0 hsla(211,96%,70%,.10);
     transform: translateY(-3px);
-    border-color: hsla(211,96%,60%,.18);
+    border-color: hsla(211,96%,60%,.20);
   }
 
   /* Animated glowing border card */
@@ -359,65 +390,82 @@
   /* ── NewLight Hero System ── */
   .nl-hero-bg {
     background: linear-gradient(135deg,
-      hsla(218,40%,8%,1) 0%,
-      hsla(215,55%,14%,1) 40%,
-      hsla(211,60%,12%,1) 100%
+      hsla(218,42%,6%,1) 0%,
+      hsla(215,58%,12%,1) 35%,
+      hsla(211,65%,10%,1) 70%,
+      hsla(220,50%,8%,1) 100%
     );
   }
 
   .nl-hero-grid {
-    opacity: .06;
+    opacity: .10;
     background-image:
       linear-gradient(hsla(211,96%,60%,.5) 1px, transparent 1px),
       linear-gradient(90deg, hsla(211,96%,60%,.5) 1px, transparent 1px);
     background-size: 40px 40px;
-    mask-image: radial-gradient(ellipse 70% 80% at 30% 50%, black 0%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 70% 80% at 30% 50%, black 0%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 90% at 30% 50%, black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 90% at 30% 50%, black 0%, transparent 100%);
   }
 
   .nl-hero-orb {
     pointer-events: none;
     border-radius: 50%;
-    filter: blur(80px);
+    filter: blur(70px);
   }
   .nl-hero-orb--a {
-    width: 320px; height: 320px;
-    top: -80px; right: -40px;
+    width: 400px; height: 400px;
+    top: -100px; right: -20px;
     position: absolute;
-    background: radial-gradient(circle, hsla(211,96%,60%,.18), transparent 70%);
-    animation: nl-orb-a 20s ease-in-out infinite;
+    background: radial-gradient(circle, hsla(211,96%,60%,.30), transparent 70%);
+    animation: nl-orb-a 18s ease-in-out infinite;
   }
   .nl-hero-orb--b {
-    width: 240px; height: 240px;
-    bottom: -60px; left: 10%;
+    width: 300px; height: 300px;
+    bottom: -80px; left: 8%;
     position: absolute;
-    background: radial-gradient(circle, hsla(197,92%,68%,.12), transparent 70%);
-    animation: nl-orb-b 24s ease-in-out infinite;
+    background: radial-gradient(circle, hsla(197,92%,68%,.22), transparent 70%);
+    animation: nl-orb-b 22s ease-in-out infinite;
+  }
+
+  .nl-hero-shimmer {
+    background: linear-gradient(
+      115deg,
+      transparent 25%,
+      hsla(211,96%,60%,.06) 45%,
+      hsla(197,92%,68%,.04) 55%,
+      transparent 75%
+    );
+    background-size: 250% 100%;
+    animation: nl-shimmer 6s ease-in-out infinite;
   }
 
   .nl-hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: hsl(var(--nl-sky));
-    background: hsla(211,96%,60%,.08);
-    border: 1px solid hsla(211,96%,60%,.15);
+    background: hsla(211,96%,60%,.12);
+    border: 1px solid hsla(211,96%,60%,.25);
     border-radius: 9999px;
-    padding: 4px 12px 4px 8px;
-    backdrop-filter: blur(8px);
+    padding: 5px 14px 5px 10px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 16px -4px hsla(211,96%,60%,.20),
+                inset 0 1px 0 0 hsla(211,96%,70%,.10);
   }
 
   .nl-hero-accent-line {
     background: linear-gradient(90deg,
       transparent 0%,
-      hsla(211,96%,60%,.4) 30%,
-      hsla(197,92%,68%,.3) 70%,
+      hsla(211,96%,60%,.6) 25%,
+      hsla(197,92%,68%,.5) 50%,
+      hsla(211,96%,60%,.6) 75%,
       transparent 100%
     );
+    box-shadow: 0 0 12px 1px hsla(211,96%,60%,.3);
   }
 
   /* ── Faux-3D perspective card ── */

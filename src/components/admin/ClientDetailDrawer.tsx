@@ -185,12 +185,14 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-l border-border" side="right" style={{
-        boxShadow: "-8px 0 48px -12px hsla(211,96%,56%,.08)"
-      }}>
-        <SheetHeader className="px-5 pt-5 pb-3">
-          <SheetTitle className="text-lg font-bold text-foreground tracking-tight">{client.business_name}</SheetTitle>
-          {client.profile_name && <div className="text-xs text-muted-foreground">{client.profile_name} · {client.owner_email || "No email"}</div>}
+        <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-l" side="right" style={{
+          boxShadow: "-12px 0 60px -16px hsla(211,96%,56%,.14), -2px 0 20px -4px hsla(0,0%,0%,.2)",
+          borderColor: "hsla(211,96%,60%,.10)",
+          background: "linear-gradient(180deg, hsl(218 35% 10%) 0%, hsl(220 30% 13%) 100%)"
+        }}>
+          <SheetHeader className="px-5 pt-6 pb-4">
+            <SheetTitle className="text-lg font-bold text-white tracking-tight">{client.business_name}</SheetTitle>
+            {client.profile_name && <div className="text-xs text-white/40">{client.profile_name} · {client.owner_email || "No email"}</div>}
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-5 pb-5">
@@ -200,16 +202,22 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className={`rounded-xl border p-3.5 space-y-1.5 ${nba.color === "text-muted-foreground" ? "border-border bg-muted/20" : "border-primary/15 bg-primary/[0.04]"}`}
+              className="rounded-xl border p-4 space-y-2"
               style={{
-                boxShadow: nba.color !== "text-muted-foreground" ? "0 0 20px -6px hsla(211,96%,60%,.08)" : "none"
+                background: nba.color !== "text-muted-foreground"
+                  ? "linear-gradient(135deg, hsla(211,96%,60%,.08), hsla(197,92%,68%,.04))"
+                  : "hsla(215,20%,16%,.5)",
+                borderColor: nba.color !== "text-muted-foreground" ? "hsla(211,96%,60%,.20)" : "hsla(0,0%,100%,.06)",
+                boxShadow: nba.color !== "text-muted-foreground"
+                  ? "0 0 28px -8px hsla(211,96%,60%,.15), inset 0 1px 0 0 hsla(211,96%,70%,.06)"
+                  : "none"
               }}
             >
               <div className={`flex items-center gap-2 text-sm font-semibold ${nba.color}`}>
                 <NbaIcon className="h-4 w-4 shrink-0" />
                 {nba.label}
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{nba.reason}</p>
+              <p className="text-xs text-white/40 leading-relaxed">{nba.reason}</p>
             </motion.div>
 
             {/* ── A. Client Summary ── */}
@@ -401,7 +409,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">{title}</h3>
+      <h3 className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-2.5">{title}</h3>
       {children}
     </motion.div>
   );
