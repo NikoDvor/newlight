@@ -376,7 +376,7 @@ export default function AdminOnboardingCommandCenter() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} />)
+                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
                 )}
               </TableBody>
             </Table>
