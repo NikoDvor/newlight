@@ -9,7 +9,7 @@ interface NewLightIntroProps {
   launchLabel?: string;
 }
 
-export function NewLightIntro({ onComplete }: NewLightIntroProps) {
+export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
   const [visible, setVisible] = useState(true);
   const completedRef = useRef(false);
 
