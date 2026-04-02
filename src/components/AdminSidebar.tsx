@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
       { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: Sparkles },
+      { title: "Implementation Queue", url: "/admin/implementation-queue", icon: ListChecks },
       { title: "Implementation Requests", url: "/admin/implementation-requests", icon: ClipboardCheck },
       { title: "Automations", url: "/admin/automations", icon: Zap },
       { title: "Reports", url: "/admin/reports", icon: BarChart3 },
