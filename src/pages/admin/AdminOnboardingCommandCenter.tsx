@@ -249,6 +249,10 @@ export default function AdminOnboardingCommandCenter() {
 
     setClients(enriched);
     setLoading(false);
+    } catch (err) {
+      console.error("Failed to load command center data:", err);
+      setLoading(false);
+    }
   }
 
   const bucketCounts = useMemo(() => {
