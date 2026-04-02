@@ -389,7 +389,7 @@ export default function AdminOnboardingCommandCenter() {
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground text-sm">No clients match current filters</div>
         ) : (
-          filtered.map((c) => <MobileCard key={c.id} c={c} copyPortalLink={copyPortalLink} />)
+          filtered.map((c) => <MobileCard key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
         )}
       </div>
 
