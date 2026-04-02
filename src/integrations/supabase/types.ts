@@ -2428,49 +2428,67 @@ export type Database = {
       client_setup_items: {
         Row: {
           admin_notes: string | null
+          assigned_to: string | null
+          blocked_by: string | null
           category: string
           client_file_url: string | null
           client_id: string
           client_submitted_at: string | null
           client_value: string | null
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
+          due_date: string | null
           id: string
           item_key: string
           item_label: string
           item_status: string
           notes: string | null
+          priority: string
           submitted_by_client: boolean
           updated_at: string
         }
         Insert: {
           admin_notes?: string | null
+          assigned_to?: string | null
+          blocked_by?: string | null
           category: string
           client_file_url?: string | null
           client_id: string
           client_submitted_at?: string | null
           client_value?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           item_key: string
           item_label: string
           item_status?: string
           notes?: string | null
+          priority?: string
           submitted_by_client?: boolean
           updated_at?: string
         }
         Update: {
           admin_notes?: string | null
+          assigned_to?: string | null
+          blocked_by?: string | null
           category?: string
           client_file_url?: string | null
           client_id?: string
           client_submitted_at?: string | null
           client_value?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           item_key?: string
           item_label?: string
           item_status?: string
           notes?: string | null
+          priority?: string
           submitted_by_client?: boolean
           updated_at?: string
         }
@@ -4883,6 +4901,81 @@ export type Database = {
             columns: ["related_deal_id"]
             isOneToOne: false
             referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implementation_tasks: {
+        Row: {
+          assigned_to: string | null
+          blocked_by: string | null
+          category: string
+          client_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          internal_notes: string | null
+          priority: string
+          source_profile: string | null
+          source_setup_item_id: string | null
+          task_key: string
+          task_label: string
+          task_status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          blocked_by?: string | null
+          category?: string
+          client_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          priority?: string
+          source_profile?: string | null
+          source_setup_item_id?: string | null
+          task_key: string
+          task_label: string
+          task_status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          blocked_by?: string | null
+          category?: string
+          client_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          priority?: string
+          source_profile?: string | null
+          source_setup_item_id?: string | null
+          task_key?: string
+          task_label?: string
+          task_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implementation_tasks_source_setup_item_id_fkey"
+            columns: ["source_setup_item_id"]
+            isOneToOne: false
+            referencedRelation: "client_setup_items"
             referencedColumns: ["id"]
           },
         ]
