@@ -8,7 +8,7 @@ import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
-import { NewLightIntro, shouldPlayIntro } from "@/components/NewLightIntro";
+import { NewLightIntro, shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
