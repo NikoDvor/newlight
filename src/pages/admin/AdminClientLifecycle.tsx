@@ -459,7 +459,39 @@ export default function AdminClientLifecycle() {
                     {item.client_value && (
                       <div className="mt-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                         <p className="text-[10px] text-white/30 mb-0.5 uppercase tracking-wider font-semibold">Client Response</p>
-                        <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>
+                        {item.item_key === "team_members" ? (() => {
+                          try {
+                            const employees = JSON.parse(item.client_value!);
+                            if (Array.isArray(employees)) return (
+                              <div className="space-y-2 mt-1">
+                                {employees.map((emp: any, ei: number) => (
+                                  <div key={ei} className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs font-medium text-white">{emp.full_name || "Unnamed"}</span>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">{emp.permission_level}</span>
+                                      {emp.invite_now && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">invite now</span>}
+                                    </div>
+                                    <p className="text-[10px] text-white/50">{emp.work_email}{emp.title ? ` · ${emp.title}` : ""}</p>
+                                    {emp.modules_needed?.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-0.5">
+                                        {emp.modules_needed.map((m: string) => (
+                                          <span key={m} className="text-[8px] px-1.5 py-0.5 rounded-full bg-[hsla(211,96%,60%,.08)] text-[hsl(var(--nl-sky))]">{m}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {emp.calendar_assignment !== "none" && (
+                                      <p className="text-[9px] text-white/30">Calendar: {emp.calendar_assignment.replace(/_/g, " ")}{emp.calendar_notes ? ` — ${emp.calendar_notes}` : ""}</p>
+                                    )}
+                                    {emp.notes && <p className="text-[9px] text-white/30 italic">{emp.notes}</p>}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          } catch { /* fallback */ }
+                          return <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>;
+                        })() : (
+                          <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>
+                        )}
                       </div>
                     )}
                     {item.client_file_url && (

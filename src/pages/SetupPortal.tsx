@@ -14,6 +14,7 @@ import {
   CheckCircle2, AlertCircle, Upload, Link2, Lock, Loader2, Send
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
+import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
 
 interface SetupItem {
   id: string;
@@ -333,6 +334,19 @@ export default function SetupPortal() {
           </motion.div>
         );
       })}
+
+      {/* Team & User Access Section */}
+      {(() => {
+        const teamItem = items.find(i => i.item_key === "team_members");
+        return (
+          <TeamAccessSection
+            clientId={activeClientId!}
+            setupItemId={teamItem?.id || null}
+            initialValue={teamItem?.client_value || null}
+            onSaved={load}
+          />
+        );
+      })()}
 
       {/* Internal items notice */}
       {items.filter(i => !i.submitted_by_client).length > 0 && (
