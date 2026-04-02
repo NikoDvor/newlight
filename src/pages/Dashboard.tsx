@@ -13,7 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare, Brain,
   Heart, Target, Zap, Globe, Search, Megaphone, Share2, Users, Star,
-  ArrowUpRight, Plug, Calendar, Upload, Rocket, Play
+  ArrowUpRight, Plug, Calendar, Upload, Rocket
 } from "lucide-react";
 import { HealthScoreWidget } from "@/components/HealthScoreWidget";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
@@ -135,9 +135,6 @@ export default function Dashboard() {
           title={branding.welcome_message || (branding.company_name ? `Welcome, ${branding.company_name}` : "Dashboard")}
           description="Your AI-powered business command center"
         />
-        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate("/welcome")}>
-          <Play className="h-3.5 w-3.5" /> Replay Intro
-        </Button>
       </div>
 
       {/* Live workspace banner */}
