@@ -474,7 +474,7 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
 }
 
 /* ───── Mobile Card ───── */
-function MobileCard({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: string | null) => void }) {
+function MobileCard({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
