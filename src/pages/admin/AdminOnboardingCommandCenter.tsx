@@ -285,8 +285,9 @@ export default function AdminOnboardingCommandCenter() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        <p className="text-sm text-muted-foreground">Loading command center…</p>
       </div>
     );
   }
@@ -300,7 +301,7 @@ export default function AdminOnboardingCommandCenter() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
         {BUCKET_CONFIG.map((b, i) => (
           <motion.button
             key={b.key}
