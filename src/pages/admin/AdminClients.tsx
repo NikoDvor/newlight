@@ -799,6 +799,9 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/lifecycle`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <ClipboardList className="h-3.5 w-3.5" /> Lifecycle & Setup
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/close`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <CreditCard className="h-3.5 w-3.5" /> Close Center
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
