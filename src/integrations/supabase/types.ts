@@ -2532,6 +2532,10 @@ export type Database = {
           owner_name: string | null
           owner_phone: string | null
           payment_status: string
+          portal_access_enabled: boolean
+          portal_invite_status: string
+          portal_last_invited_at: string | null
+          portal_last_login_at: string | null
           preferred_contact_method: string | null
           primary_location: string | null
           proposal_status: string
@@ -2569,6 +2573,10 @@ export type Database = {
           owner_name?: string | null
           owner_phone?: string | null
           payment_status?: string
+          portal_access_enabled?: boolean
+          portal_invite_status?: string
+          portal_last_invited_at?: string | null
+          portal_last_login_at?: string | null
           preferred_contact_method?: string | null
           primary_location?: string | null
           proposal_status?: string
@@ -2606,6 +2614,10 @@ export type Database = {
           owner_name?: string | null
           owner_phone?: string | null
           payment_status?: string
+          portal_access_enabled?: boolean
+          portal_invite_status?: string
+          portal_last_invited_at?: string | null
+          portal_last_login_at?: string | null
           preferred_contact_method?: string | null
           primary_location?: string | null
           proposal_status?: string
