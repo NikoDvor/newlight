@@ -392,10 +392,14 @@ function ProgressMini({ label, pct, color }: { label: string; pct: number; color
 /* ── Shared helpers ── */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{title}</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">{title}</h3>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
