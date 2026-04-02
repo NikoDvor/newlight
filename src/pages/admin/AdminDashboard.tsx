@@ -132,7 +132,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </div>
 
       {/* Pipeline Health + Templates */}
       <div className="grid lg:grid-cols-2 gap-6">
