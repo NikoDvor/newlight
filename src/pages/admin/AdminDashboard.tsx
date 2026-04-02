@@ -85,16 +85,19 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, duration: 0.3 }}>
-            <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <s.icon className="h-4 w-4" style={{ color: s.color }} />
-                  <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.label}</span>
-                </div>
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-              </CardContent>
-            </Card>
+          <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }}
+            className="card-admin group cursor-default p-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{
+                background: `linear-gradient(135deg, ${s.color}22, ${s.color}08)`,
+                boxShadow: `0 0 20px -6px ${s.color}30`
+              }}>
+                <s.icon className="h-4 w-4" style={{ color: s.color }} />
+              </div>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.label}</span>
+            </div>
+            <p className="text-3xl font-bold text-white tracking-tight">{s.value}</p>
           </motion.div>
         ))}
       </div>
