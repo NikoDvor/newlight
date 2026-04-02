@@ -202,16 +202,22 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className={`rounded-xl border p-3.5 space-y-1.5 ${nba.color === "text-muted-foreground" ? "border-border bg-muted/20" : "border-primary/15 bg-primary/[0.04]"}`}
+              className="rounded-xl border p-4 space-y-2"
               style={{
-                boxShadow: nba.color !== "text-muted-foreground" ? "0 0 20px -6px hsla(211,96%,60%,.08)" : "none"
+                background: nba.color !== "text-muted-foreground"
+                  ? "linear-gradient(135deg, hsla(211,96%,60%,.08), hsla(197,92%,68%,.04))"
+                  : "hsla(215,20%,16%,.5)",
+                borderColor: nba.color !== "text-muted-foreground" ? "hsla(211,96%,60%,.20)" : "hsla(0,0%,100%,.06)",
+                boxShadow: nba.color !== "text-muted-foreground"
+                  ? "0 0 28px -8px hsla(211,96%,60%,.15), inset 0 1px 0 0 hsla(211,96%,70%,.06)"
+                  : "none"
               }}
             >
               <div className={`flex items-center gap-2 text-sm font-semibold ${nba.color}`}>
                 <NbaIcon className="h-4 w-4 shrink-0" />
                 {nba.label}
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{nba.reason}</p>
+              <p className="text-xs text-white/40 leading-relaxed">{nba.reason}</p>
             </motion.div>
 
             {/* ── A. Client Summary ── */}
