@@ -288,27 +288,36 @@ export default function AdminOnboardingCommandCenter() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Onboarding Command Center</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage all post-sale clients from one operational dashboard</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <h1 className="page-title">Onboarding Command Center</h1>
+        <p className="text-sm text-muted-foreground mt-1.5 max-w-xl leading-relaxed">
+          Manage all post-sale clients from one operational dashboard
+        </p>
+      </motion.div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-        {BUCKET_CONFIG.map((b) => (
-          <button
+        {BUCKET_CONFIG.map((b, i) => (
+          <motion.button
             key={b.key}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.35 }}
             onClick={() => setActiveBucket(activeBucket === b.key ? "all" : b.key)}
-            className={`rounded-xl p-3 text-left transition-all border ${
+            className={`rounded-xl p-3 text-left transition-all duration-200 border group ${
               activeBucket === b.key
-                ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20"
-                : "border-border bg-card hover:bg-accent/50"
+                ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20 shadow-[0_0_16px_-4px_hsla(211,96%,60%,.15)]"
+                : "border-border bg-card hover:bg-accent/40 hover:border-primary/15 hover:shadow-[0_4px_16px_-4px_hsla(211,96%,56%,.08)]"
             }`}
           >
-            <b.icon className={`h-4 w-4 ${b.color} mb-1`} />
-            <div className="text-lg font-bold text-foreground">{bucketCounts[b.key]}</div>
+            <b.icon className={`h-4 w-4 ${b.color} mb-1 transition-transform duration-200 group-hover:scale-110`} />
+            <div className="text-lg font-bold text-foreground tabular-nums">{bucketCounts[b.key]}</div>
             <div className="text-[10px] text-muted-foreground leading-tight">{b.label}</div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
