@@ -92,6 +92,8 @@ import AdminImplementationRequests from "./pages/admin/AdminImplementationReques
 import AdminHandoffChecklist from "./pages/admin/AdminHandoffChecklist";
 import AdminClientLifecycle from "./pages/admin/AdminClientLifecycle";
 import AdminCloseCenter from "./pages/admin/AdminCloseCenter";
+import AdminImplementationQueue from "./pages/admin/AdminImplementationQueue";
+import AdminImplementationDetail from "./pages/admin/AdminImplementationDetail";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
