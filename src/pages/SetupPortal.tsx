@@ -92,7 +92,7 @@ export default function SetupPortal() {
   const load = useCallback(async () => {
     if (!activeClientId) return;
     const [clientRes, itemsRes] = await Promise.all([
-      supabase.from("clients").select("id, business_name, payment_status, implementation_status").eq("id", activeClientId).single(),
+      supabase.from("clients").select("id, business_name, payment_status, implementation_status, portal_last_login_at").eq("id", activeClientId).single(),
       supabase.from("client_setup_items" as any).select("*").eq("client_id", activeClientId).order("created_at"),
     ]);
     if (clientRes.data) setClient(clientRes.data as any);
