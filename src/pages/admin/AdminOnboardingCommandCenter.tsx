@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ClientDetailDrawer from "@/components/admin/ClientDetailDrawer";
+import { NewLightHero } from "@/components/admin/NewLightHero";
 
 interface ClientRow {
   id: string;
