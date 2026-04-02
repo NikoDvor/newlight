@@ -11,10 +11,10 @@ export function DataCard({ title, children, className = "", action }: DataCardPr
   return (
     <motion.div
       className={`card-widget ${className}`}
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="section-title">{title}</h3>
