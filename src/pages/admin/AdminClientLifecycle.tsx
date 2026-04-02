@@ -29,6 +29,8 @@ interface SetupItem {
   notes: string | null;
   submitted_by_client: boolean;
   client_value: string | null;
+  client_file_url: string | null;
+  client_submitted_at: string | null;
   admin_notes: string | null;
 }
 

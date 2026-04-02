@@ -127,6 +127,7 @@ import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
+import SetupPortal from "./pages/SetupPortal";
 const queryClient = new QueryClient();
 
 const App = () => (
