@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { resetIntroState } from "@/components/NewLightIntro";
+import { triggerIntroReplay } from "@/App";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
