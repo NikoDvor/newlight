@@ -4,7 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
