@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
 import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
+import { SetupActivityFeed } from "@/components/SetupActivityFeed";
 
 interface SetupItem {
   id: string;
@@ -44,6 +45,7 @@ interface ClientInfo {
   business_name: string;
   payment_status: string;
   implementation_status: string;
+  portal_last_login_at: string | null;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -90,7 +92,7 @@ export default function SetupPortal() {
   const load = useCallback(async () => {
     if (!activeClientId) return;
     const [clientRes, itemsRes] = await Promise.all([
-      supabase.from("clients").select("id, business_name, payment_status, implementation_status").eq("id", activeClientId).single(),
+      supabase.from("clients").select("id, business_name, payment_status, implementation_status, portal_last_login_at").eq("id", activeClientId).single(),
       supabase.from("client_setup_items" as any).select("*").eq("client_id", activeClientId).order("created_at"),
     ]);
     if (clientRes.data) setClient(clientRes.data as any);
@@ -476,6 +478,14 @@ export default function SetupPortal() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* ── Activity Feed ── */}
+      {activeClientId && (
+        <SetupActivityFeed
+          clientId={activeClientId}
+          lastVisit={client?.portal_last_login_at}
+        />
       )}
 
       {/* ── Progress Card ── */}

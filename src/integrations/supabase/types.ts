@@ -2640,6 +2640,7 @@ export type Database = {
       clients: {
         Row: {
           agreement_status: string
+          allow_sms: boolean
           business_name: string
           business_type: string | null
           created_at: string
@@ -2651,6 +2652,8 @@ export type Database = {
           invite_status: string | null
           last_handoff_sent_at: string | null
           legal_business_name: string | null
+          notification_channel: string
+          notification_fallback_channel: string
           onboarding_stage: string
           owner_email: string | null
           owner_name: string | null
@@ -2681,6 +2684,7 @@ export type Database = {
         }
         Insert: {
           agreement_status?: string
+          allow_sms?: boolean
           business_name: string
           business_type?: string | null
           created_at?: string
@@ -2692,6 +2696,8 @@ export type Database = {
           invite_status?: string | null
           last_handoff_sent_at?: string | null
           legal_business_name?: string | null
+          notification_channel?: string
+          notification_fallback_channel?: string
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
@@ -2722,6 +2728,7 @@ export type Database = {
         }
         Update: {
           agreement_status?: string
+          allow_sms?: boolean
           business_name?: string
           business_type?: string | null
           created_at?: string
@@ -2733,6 +2740,8 @@ export type Database = {
           invite_status?: string | null
           last_handoff_sent_at?: string | null
           legal_business_name?: string | null
+          notification_channel?: string
+          notification_fallback_channel?: string
           onboarding_stage?: string
           owner_email?: string | null
           owner_name?: string | null
@@ -5726,6 +5735,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "message_templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_send_log: {
+        Row: {
+          action_type: string
+          body_preview: string | null
+          channel: string
+          client_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          provider_message_id: string | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          send_status: string
+          setup_item_id: string | null
+          subject: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action_type?: string
+          body_preview?: string | null
+          channel?: string
+          client_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          send_status?: string
+          setup_item_id?: string | null
+          subject?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          action_type?: string
+          body_preview?: string | null
+          channel?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          send_status?: string
+          setup_item_id?: string | null
+          subject?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_send_log_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

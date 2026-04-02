@@ -384,6 +384,7 @@ export default function AdminClientLifecycle() {
         items={setupItems}
         clientId={clientId!}
         clientName={client.business_name}
+        clientEmail={client.owner_email}
         portalLink={portalLink}
         onUpdate={handleBulkUpdate}
       />
@@ -400,6 +401,7 @@ export default function AdminClientLifecycle() {
                   items={group.items}
                   clientId={clientId!}
                   clientName={client.business_name}
+                  clientEmail={client.owner_email}
                   portalLink={portalLink}
                   category={group.category}
                   onUpdate={handleBulkUpdate}
@@ -435,6 +437,7 @@ export default function AdminClientLifecycle() {
                         item={item}
                         clientId={clientId!}
                         clientName={client.business_name}
+                        clientEmail={client.owner_email}
                         portalLink={portalLink}
                         onUpdate={handleItemUpdate}
                       />
