@@ -85,7 +85,13 @@ export default function SetupPortal() {
     });
     setEditValues(edits);
     setLoading(false);
-  }, [activeClientId]);
+    // Track portal login
+    if (activeClientId) {
+      supabase.from("clients").update({
+        portal_last_login_at: new Date().toISOString(),
+        portal_invite_status: "accepted",
+      } as any).eq("id", activeClientId).then(() => {});
+    }
 
   useEffect(() => { load(); }, [load]);
 
