@@ -178,7 +178,7 @@ export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25, delay: 0.7 }}
           >
-            Launching workspace…
+            {launchLabel || "Launching workspace…"}
           </motion.p>
 
           {/* Bottom accent line */}
