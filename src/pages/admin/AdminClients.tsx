@@ -743,9 +743,14 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Copy className="h-3.5 w-3.5" /> Copy Workspace Link
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-center`); toast.success("Setup link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
-                            <Link2 className="h-3.5 w-3.5" /> Copy Setup Link
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-portal`); toast.success("Setup portal link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Link2 className="h-3.5 w-3.5" /> Copy Setup Portal Link
                           </DropdownMenuItem>
+                          {c.payment_status === "paid" && c.owner_email && (
+                            <DropdownMenuItem onClick={() => handleSendPortalInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                              <Send className="h-3.5 w-3.5" /> Send Setup Invite
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator className="bg-white/10" />
                           {c.owner_email && (
                             <DropdownMenuItem onClick={() => handleResendInvite(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
