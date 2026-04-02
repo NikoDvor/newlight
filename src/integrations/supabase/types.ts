@@ -2347,7 +2347,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           category: string
+          client_file_url: string | null
           client_id: string
+          client_submitted_at: string | null
           client_value: string | null
           created_at: string
           id: string
@@ -2361,7 +2363,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           category: string
+          client_file_url?: string | null
           client_id: string
+          client_submitted_at?: string | null
           client_value?: string | null
           created_at?: string
           id?: string
@@ -2375,7 +2379,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           category?: string
+          client_file_url?: string | null
           client_id?: string
+          client_submitted_at?: string | null
           client_value?: string | null
           created_at?: string
           id?: string
