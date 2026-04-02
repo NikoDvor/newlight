@@ -203,6 +203,7 @@ const App = () => (
               <Route path="clients/:clientId/close" element={<AdminCloseCenter />} />
               <Route path="implementation-queue" element={<AdminImplementationQueue />} />
               <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
+              <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
             </Route>
 
             {/* Client Workspace */}
