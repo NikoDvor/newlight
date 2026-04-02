@@ -396,6 +396,12 @@ export default function AdminOnboardingCommandCenter() {
       <div className="text-[11px] text-muted-foreground text-right">
         Showing {filtered.length} of {clients.length} clients
       </div>
+
+      <ClientDetailDrawer
+        client={selectedClient}
+        open={!!selectedClient}
+        onClose={() => setSelectedClient(null)}
+      />
     </div>
   );
 }
