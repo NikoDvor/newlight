@@ -200,6 +200,8 @@ const App = () => (
               <Route path="clients/:clientId/handoff" element={<AdminHandoffChecklist />} />
               <Route path="clients/:clientId/lifecycle" element={<AdminClientLifecycle />} />
               <Route path="clients/:clientId/close" element={<AdminCloseCenter />} />
+              <Route path="implementation-queue" element={<AdminImplementationQueue />} />
+              <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
             </Route>
 
             {/* Client Workspace */}
