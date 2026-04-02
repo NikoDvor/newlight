@@ -8,7 +8,7 @@ import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
-import { NewLightIntro, shouldPlayIntro } from "@/components/NewLightIntro";
+import { NewLightIntro, shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -139,9 +139,19 @@ import SetupPortal from "./pages/SetupPortal";
 
 const queryClient = new QueryClient();
 
+// Global replay trigger – components call this to show the intro overlay
+let globalReplayTrigger: (() => void) | null = null;
+export function triggerIntroReplay() {
+  resetIntroState();
+  globalReplayTrigger?.();
+}
+
 const App = () => {
   const [showIntro, setShowIntro] = useState(shouldPlayIntro);
   const handleIntroComplete = useCallback(() => setShowIntro(false), []);
+
+  // Register global replay
+  globalReplayTrigger = useCallback(() => setShowIntro(true), []);
 
   return (
     <QueryClientProvider client={queryClient}>
