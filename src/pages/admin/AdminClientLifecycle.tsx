@@ -400,6 +400,7 @@ export default function AdminClientLifecycle() {
                   items={group.items}
                   clientId={clientId!}
                   clientName={client.business_name}
+                  clientEmail={client.owner_email}
                   portalLink={portalLink}
                   category={group.category}
                   onUpdate={handleBulkUpdate}
