@@ -39,14 +39,13 @@ export default function AdminImplementationQueue() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<QueueClient[]>([]);
   const [taskCounts, setTaskCounts] = useState<Record<string, TaskCount>>({});
-  const [setupCounts, setSetupCounts] = useState<Record<string, { total: number; completed: number; received: number }>>({});
+  const [setupCounts, setSetupCounts] = useState<Record<string, { total: number; completed: number; received: number; requested: number; overdue: number; blocked: number; waiting: number }>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
-    // Get clients that are paid or have implementation started
     const { data: allClients } = await supabase
       .from("clients")
       .select("id, business_name, workspace_slug, payment_status, implementation_status, portal_access_enabled, owner_name, service_package")
@@ -59,7 +58,6 @@ export default function AdminImplementationQueue() {
     if (cls.length > 0) {
       const clientIds = cls.map(c => c.id);
 
-      // Get task counts
       const { data: tasks } = await supabase
         .from("implementation_tasks")
         .select("client_id, task_status, due_date")
@@ -84,19 +82,23 @@ export default function AdminImplementationQueue() {
       }
       setTaskCounts(counts);
 
-      // Get setup counts
+      // Get setup counts with request tracking
       const { data: setupItems } = await supabase
         .from("client_setup_items" as any)
-        .select("client_id, item_status, submitted_by_client")
+        .select("client_id, item_status, submitted_by_client, target_due_date")
         .in("client_id", clientIds);
 
-      const sc: Record<string, { total: number; completed: number; received: number }> = {};
+      const sc: Record<string, { total: number; completed: number; received: number; requested: number; overdue: number; blocked: number; waiting: number }> = {};
       for (const s of (setupItems || []) as any[]) {
-        if (!s.submitted_by_client) continue;
-        if (!sc[s.client_id]) sc[s.client_id] = { total: 0, completed: 0, received: 0 };
-        sc[s.client_id].total++;
-        if (s.item_status === "completed") sc[s.client_id].completed++;
-        if (s.item_status === "received") sc[s.client_id].received++;
+        if (!sc[s.client_id]) sc[s.client_id] = { total: 0, completed: 0, received: 0, requested: 0, overdue: 0, blocked: 0, waiting: 0 };
+        const c = sc[s.client_id];
+        c.total++;
+        if (s.item_status === "completed") c.completed++;
+        if (s.item_status === "received") c.received++;
+        if (["requested", "reminded"].includes(s.item_status)) { c.requested++; c.waiting++; }
+        if (s.item_status === "revision_needed") c.waiting++;
+        if (s.item_status === "blocked") c.blocked++;
+        if (s.target_due_date && new Date(s.target_due_date) < now && !["completed", "received"].includes(s.item_status)) c.overdue++;
       }
       setSetupCounts(sc);
     }

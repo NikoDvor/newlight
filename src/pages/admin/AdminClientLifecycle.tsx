@@ -14,6 +14,7 @@ import {
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER, ITEM_STATUS_OPTIONS } from "@/lib/setupItemsSeeder";
 import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
+import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
 
 interface ClientData {
   id: string;
@@ -31,20 +32,6 @@ interface ClientData {
   portal_last_invited_at: string | null;
   portal_last_login_at: string | null;
   portal_access_enabled: boolean;
-}
-
-interface SetupItem {
-  id: string;
-  category: string;
-  item_key: string;
-  item_label: string;
-  item_status: string;
-  notes: string | null;
-  submitted_by_client: boolean;
-  client_value: string | null;
-  client_file_url: string | null;
-  client_submitted_at: string | null;
-  admin_notes: string | null;
 }
 
 const STATUS_CONFIGS: Record<string, { icon: any; steps: { value: string; label: string }[] }> = {
@@ -111,7 +98,7 @@ export default function AdminClientLifecycle() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const [client, setClient] = useState<ClientData | null>(null);
-  const [setupItems, setSetupItems] = useState<SetupItem[]>([]);
+  const [setupItems, setSetupItems] = useState<SetupItemWithRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
@@ -124,11 +111,11 @@ export default function AdminClientLifecycle() {
       supabase.from("client_setup_items" as any).select("*").eq("client_id", clientId).order("created_at"),
     ]);
     if (clientRes.data) setClient(clientRes.data as any);
-    const items = (itemsRes.data || []) as any as SetupItem[];
+    const items = (itemsRes.data || []) as any as SetupItemWithRequest[];
     if (items.length === 0) {
       await seedSetupItems(clientId);
       const { data: seeded } = await supabase.from("client_setup_items" as any).select("*").eq("client_id", clientId).order("created_at");
-      setSetupItems((seeded || []) as any as SetupItem[]);
+      setSetupItems((seeded || []) as any as SetupItemWithRequest[]);
     } else {
       setSetupItems(items);
     }
@@ -152,9 +139,15 @@ export default function AdminClientLifecycle() {
     setSaving(false);
   };
 
-  const updateSetupItemStatus = async (itemId: string, newStatus: string) => {
-    await supabase.from("client_setup_items" as any).update({ item_status: newStatus }).eq("id", itemId);
-    setSetupItems(prev => prev.map(i => i.id === itemId ? { ...i, item_status: newStatus } : i));
+  const handleItemUpdate = (itemId: string, updates: Partial<SetupItemWithRequest>) => {
+    setSetupItems(prev => prev.map(i => i.id === itemId ? { ...i, ...updates } : i));
+  };
+
+  const handleBulkUpdate = (updates: Array<{ id: string; updates: Partial<SetupItemWithRequest> }>) => {
+    setSetupItems(prev => prev.map(i => {
+      const u = updates.find(u => u.id === i.id);
+      return u ? { ...i, ...u.updates } : i;
+    }));
   };
 
   const updateSetupItemNotes = async (itemId: string, notes: string) => {
@@ -166,44 +159,33 @@ export default function AdminClientLifecycle() {
     if (!client?.owner_email || !clientId) return;
     setSendingInvite(true);
     try {
-      // Use existing invite-user function to ensure auth account exists
       const { data, error } = await supabase.functions.invoke("invite-user", {
         body: { email: client.owner_email, role: "client_owner", client_id: clientId },
       });
-
       const now = new Date().toISOString();
+      await supabase.from("clients").update({
+        portal_invite_status: "sent",
+        portal_last_invited_at: now,
+        portal_access_enabled: true,
+      } as any).eq("id", clientId);
+
       if (error) {
         toast.error("Invite failed: " + error.message);
-        await supabase.from("clients").update({
-          portal_invite_status: "sent",
-          portal_last_invited_at: now,
-          portal_access_enabled: true,
-        } as any).eq("id", clientId);
-      } else {
-        await supabase.from("clients").update({
-          portal_invite_status: "sent",
-          portal_last_invited_at: now,
-          portal_access_enabled: true,
-        } as any).eq("id", clientId);
-
-        if (data?.invite_email_sent) {
-          toast.success("Setup portal invite sent!");
-        } else if (data?.already_existed) {
-          toast.success("User already has access — invite status updated.");
-        } else if (data?.setup_link) {
-          navigator.clipboard.writeText(data.setup_link);
-          toast.success("Setup link copied to clipboard!");
-        }
+      } else if (data?.invite_email_sent) {
+        toast.success("Setup portal invite sent!");
+      } else if (data?.already_existed) {
+        toast.success("User already has access — invite status updated.");
+      } else if (data?.setup_link) {
+        navigator.clipboard.writeText(data.setup_link);
+        toast.success("Setup link copied to clipboard!");
       }
 
-      // Audit log
       await supabase.from("audit_logs").insert({
         client_id: clientId,
         action: "portal_invite_sent",
         module: "lifecycle",
         metadata: { email: client.owner_email, method: "admin_lifecycle" } as any,
       });
-
       setClient(prev => prev ? { ...prev, portal_invite_status: "sent", portal_last_invited_at: now, portal_access_enabled: true } : prev);
     } catch {
       toast.error("Failed to send invite");
@@ -221,6 +203,7 @@ export default function AdminClientLifecycle() {
   if (loading || !client) return <div className="text-white/40 text-center py-20">Loading…</div>;
 
   const isPaid = client.payment_status === "paid";
+  const portalLink = `${window.location.origin}/auth?redirect=/setup-portal`;
   const grouped = CATEGORY_ORDER.map(cat => ({
     category: cat,
     label: CATEGORY_LABELS[cat],
@@ -230,6 +213,10 @@ export default function AdminClientLifecycle() {
   const totalItems = setupItems.length;
   const completedItems = setupItems.filter(i => i.item_status === "completed").length;
   const missingItems = setupItems.filter(i => i.item_status === "missing").length;
+  const requestedItems = setupItems.filter(i => ["requested", "reminded"].includes(i.item_status)).length;
+  const overdueItems = setupItems.filter(i => i.target_due_date && new Date(i.target_due_date) < new Date() && !["completed", "received"].includes(i.item_status)).length;
+  const waitingItems = setupItems.filter(i => ["requested", "reminded", "revision_needed"].includes(i.item_status)).length;
+  const blockedItems = setupItems.filter(i => i.item_status === "blocked").length;
   const portalStatus = PORTAL_STATUS_DISPLAY[client.portal_invite_status] || PORTAL_STATUS_DISPLAY.not_sent;
 
   return (
@@ -253,7 +240,6 @@ export default function AdminClientLifecycle() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Status row */}
           <div className="flex items-center gap-4 flex-wrap">
             <div>
               <p className="text-[10px] text-white/30 uppercase tracking-wider">Invite Status</p>
@@ -278,8 +264,6 @@ export default function AdminClientLifecycle() {
               </p>
             </div>
           </div>
-
-          {/* Setup completion */}
           {progress.total > 0 && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -300,37 +284,17 @@ export default function AdminClientLifecycle() {
               </div>
             </div>
           )}
-
-          {/* Actions */}
           <div className="flex gap-2 flex-wrap">
             {isPaid ? (
               <>
-                <Button
-                  size="sm"
-                  onClick={handleSendPortalInvite}
-                  disabled={sendingInvite || !client.owner_email}
-                  className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white gap-1.5 text-xs h-8"
-                >
+                <Button size="sm" onClick={handleSendPortalInvite} disabled={sendingInvite || !client.owner_email} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white gap-1.5 text-xs h-8">
                   {sendingInvite ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                   {client.portal_invite_status === "not_sent" ? "Send Setup Invite" : "Resend Invite"}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={copyPortalLink}
-                  className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs h-8"
-                >
+                <Button size="sm" variant="outline" onClick={copyPortalLink} className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs h-8">
                   <Copy className="h-3 w-3" /> Copy Portal Link
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    // Admin preview - open setup portal for this client
-                    window.open(`${window.location.origin}/auth?redirect=/setup-portal`, "_blank");
-                  }}
-                  className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs h-8"
-                >
+                <Button size="sm" variant="outline" onClick={() => window.open(`${window.location.origin}/auth?redirect=/setup-portal`, "_blank")} className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs h-8">
                   <Eye className="h-3 w-3" /> Preview Portal
                 </Button>
               </>
@@ -341,10 +305,7 @@ export default function AdminClientLifecycle() {
               </div>
             )}
           </div>
-
-          {!client.owner_email && (
-            <p className="text-[10px] text-red-400">No owner email on file — cannot send invite</p>
-          )}
+          {!client.owner_email && <p className="text-[10px] text-red-400">No owner email on file — cannot send invite</p>}
         </CardContent>
       </Card>
 
@@ -374,12 +335,8 @@ export default function AdminClientLifecycle() {
                 <CardContent className="space-y-2">
                   <div className="flex flex-wrap gap-1.5">
                     {config.steps.map(step => (
-                      <button
-                        key={step.value}
-                        onClick={() => updateLifecycleStatus(fieldName, step.value)}
-                        disabled={saving}
-                        className={`text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${statusStepColor(step.value, currentValue, config.steps)}`}
-                      >
+                      <button key={step.value} onClick={() => updateLifecycleStatus(fieldName, step.value)} disabled={saving}
+                        className={`text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${statusStepColor(step.value, currentValue, config.steps)}`}>
                         {step.label}
                       </button>
                     ))}
@@ -393,33 +350,43 @@ export default function AdminClientLifecycle() {
 
       {/* Payment Gate Banner */}
       {!isPaid && (
-        <div className="rounded-xl p-4 flex items-center gap-3" style={{
-          background: "hsla(38,92%,50%,.08)",
-          border: "1px solid hsla(38,92%,50%,.2)",
-        }}>
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "hsla(38,92%,50%,.08)", border: "1px solid hsla(38,92%,50%,.2)" }}>
           <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-300">Payment Required</p>
-            <p className="text-xs text-white/50">Setup and implementation actions are blocked until payment is confirmed. Mark payment as "Paid" to unlock.</p>
+            <p className="text-xs text-white/50">Setup and implementation actions are blocked until payment is confirmed.</p>
           </div>
         </div>
       )}
 
-      {/* Setup Progress Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Setup Request Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         {[
-          { label: "Total Items", value: totalItems, color: "hsl(var(--nl-sky))" },
-          { label: "Completed", value: completedItems, color: "hsl(152 60% 44%)" },
+          { label: "Total", value: totalItems, color: "hsl(var(--nl-sky))" },
           { label: "Missing", value: missingItems, color: "hsl(0 70% 60%)" },
+          { label: "Requested", value: requestedItems, color: "hsl(38 92% 50%)" },
+          { label: "Waiting", value: waitingItems, color: "hsl(38 92% 50%)" },
+          { label: "Overdue", value: overdueItems, color: "hsl(0 70% 50%)" },
+          { label: "Blocked", value: blockedItems, color: "hsl(0 70% 60%)" },
+          { label: "Complete", value: completedItems, color: "hsl(152 60% 44%)" },
         ].map(s => (
           <Card key={s.label} className="border-0 bg-white/[0.04]">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1">{s.label}</p>
+            <CardContent className="p-3 text-center">
+              <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-[9px] text-white/40 uppercase tracking-wider">{s.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Global bulk actions */}
+      <BulkRequestActions
+        items={setupItems}
+        clientId={clientId!}
+        clientName={client.business_name}
+        portalLink={portalLink}
+        onUpdate={handleBulkUpdate}
+      />
 
       {/* Setup Items by Category */}
       <div className="space-y-4">
@@ -427,43 +394,52 @@ export default function AdminClientLifecycle() {
         {grouped.map(group => (
           <Card key={group.category} className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-white/70">{group.label}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-white/70">{group.label}</CardTitle>
+                <BulkRequestActions
+                  items={group.items}
+                  clientId={clientId!}
+                  clientName={client.business_name}
+                  portalLink={portalLink}
+                  category={group.category}
+                  onUpdate={handleBulkUpdate}
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-2">
               {group.items.map(item => {
-                const statusOpt = ITEM_STATUS_OPTIONS.find(o => o.value === item.item_status);
                 const hasClientData = !!(item.client_value || item.client_file_url);
                 return (
                   <div key={item.id} className={`p-3 rounded-xl border transition-colors ${
                     !isPaid && item.category !== "internal" ? "opacity-50 pointer-events-none" : ""
-                  }`} style={{ borderColor: hasClientData ? "hsla(211,96%,60%,.15)" : "hsla(211,96%,60%,.06)", background: hasClientData ? "hsla(211,96%,60%,.04)" : "hsla(211,96%,60%,.02)" }}>
+                  }`} style={{
+                    borderColor: item.item_status === "blocked" ? "hsla(0,70%,50%,.2)" :
+                      hasClientData ? "hsla(211,96%,60%,.15)" : "hsla(211,96%,60%,.06)",
+                    background: item.item_status === "blocked" ? "hsla(0,70%,50%,.04)" :
+                      hasClientData ? "hsla(211,96%,60%,.04)" : "hsla(211,96%,60%,.02)",
+                  }}>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-white">{item.item_label}</p>
                         {item.client_submitted_at && (
                           <p className="text-[9px] text-white/25 mt-0.5">
-                            Client submitted {new Date(item.client_submitted_at).toLocaleDateString()} {new Date(item.client_submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            Client submitted {new Date(item.client_submitted_at).toLocaleDateString()}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.submitted_by_client && (
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${hasClientData ? "bg-[hsla(211,96%,60%,.12)] text-[hsl(var(--nl-sky))]" : "bg-white/5 text-white/25"}`}>
-                            {hasClientData ? "submitted" : "client"}
-                          </span>
-                        )}
-                        <select
-                          value={item.item_status}
-                          onChange={e => updateSetupItemStatus(item.id, e.target.value)}
-                          className="text-[10px] rounded-md px-2 py-1 bg-white/[0.06] border border-white/10 text-white"
-                          style={{ color: statusOpt?.color }}
-                        >
-                          {ITEM_STATUS_OPTIONS.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                          ))}
-                        </select>
-                      </div>
                     </div>
+
+                    {/* Request actions */}
+                    <div className="mt-2">
+                      <SetupItemActions
+                        item={item}
+                        clientId={clientId!}
+                        clientName={client.business_name}
+                        portalLink={portalLink}
+                        onUpdate={handleItemUpdate}
+                      />
+                    </div>
+
                     {item.client_value && (
                       <div className="mt-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                         <p className="text-[10px] text-white/30 mb-0.5 uppercase tracking-wider font-semibold">Client Response</p>
@@ -487,15 +463,11 @@ export default function AdminClientLifecycle() {
                                         ))}
                                       </div>
                                     )}
-                                    {emp.calendar_assignment !== "none" && (
-                                      <p className="text-[9px] text-white/30">Calendar: {emp.calendar_assignment.replace(/_/g, " ")}{emp.calendar_notes ? ` — ${emp.calendar_notes}` : ""}</p>
-                                    )}
-                                    {emp.notes && <p className="text-[9px] text-white/30 italic">{emp.notes}</p>}
                                   </div>
                                 ))}
                               </div>
                             );
-                          } catch { /* fallback */ }
+                          } catch {}
                           return <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>;
                         })() : (
                           <p className="text-xs text-white/70 whitespace-pre-wrap">{item.client_value}</p>
