@@ -6,6 +6,7 @@ const SESSION_KEY = "nl_intro_played";
 
 interface NewLightIntroProps {
   onComplete: () => void;
+  launchLabel?: string;
 }
 
 export function NewLightIntro({ onComplete }: NewLightIntroProps) {
