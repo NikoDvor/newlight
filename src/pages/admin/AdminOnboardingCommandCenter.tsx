@@ -169,6 +169,7 @@ export default function AdminOnboardingCommandCenter() {
   const [search, setSearch] = useState("");
   const [activeBucket, setActiveBucket] = useState<Bucket>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
