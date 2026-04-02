@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
 import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
+import { SetupActivityFeed } from "@/components/SetupActivityFeed";
 
 interface SetupItem {
   id: string;
