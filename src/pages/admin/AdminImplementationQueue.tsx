@@ -131,13 +131,15 @@ export default function AdminImplementationQueue() {
   const stats = useMemo(() => {
     const paid = clients.filter(c => c.payment_status === "paid" || c.payment_status === "waived");
     const inProgress = clients.filter(c => c.implementation_status === "in_progress");
-    const waiting = clients.filter(c => c.implementation_status === "waiting_on_client" || (taskCounts[c.id]?.waiting || 0) > 0);
-    const blocked = clients.filter(c => (taskCounts[c.id]?.blocked || 0) > 0);
-    const overdue = clients.filter(c => (taskCounts[c.id]?.overdue || 0) > 0);
+    const waiting = clients.filter(c => c.implementation_status === "waiting_on_client" || (taskCounts[c.id]?.waiting || 0) > 0 || (setupCounts[c.id]?.waiting || 0) > 0);
+    const blocked = clients.filter(c => (taskCounts[c.id]?.blocked || 0) > 0 || (setupCounts[c.id]?.blocked || 0) > 0);
+    const overdue = clients.filter(c => (taskCounts[c.id]?.overdue || 0) > 0 || (setupCounts[c.id]?.overdue || 0) > 0);
     const complete = clients.filter(c => c.implementation_status === "complete");
     const ready = paid.filter(c => c.implementation_status === "not_started");
-    return { paid: paid.length, inProgress: inProgress.length, waiting: waiting.length, blocked: blocked.length, overdue: overdue.length, complete: complete.length, ready: ready.length };
-  }, [clients, taskCounts]);
+    const setupOverdue = clients.reduce((n, c) => n + (setupCounts[c.id]?.overdue || 0), 0);
+    const setupWaiting = clients.reduce((n, c) => n + (setupCounts[c.id]?.waiting || 0), 0);
+    return { paid: paid.length, inProgress: inProgress.length, waiting: waiting.length, blocked: blocked.length, overdue: overdue.length, complete: complete.length, ready: ready.length, setupOverdue, setupWaiting };
+  }, [clients, taskCounts, setupCounts]);
 
   if (loading) return <div className="text-white/40 text-center py-20">Loading…</div>;
 
