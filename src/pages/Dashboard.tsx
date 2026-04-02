@@ -135,9 +135,6 @@ export default function Dashboard() {
           title={branding.welcome_message || (branding.company_name ? `Welcome, ${branding.company_name}` : "Dashboard")}
           description="Your AI-powered business command center"
         />
-        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate("/welcome")}>
-          <Play className="h-3.5 w-3.5" /> Replay Intro
-        </Button>
       </div>
 
       {/* Live workspace banner */}
