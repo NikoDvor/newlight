@@ -10076,6 +10076,7 @@ export type Database = {
       }
       workspace_users: {
         Row: {
+          calendar_assignment: string | null
           client_id: string
           commission_rate: number | null
           created_at: string
@@ -10084,18 +10085,24 @@ export type Database = {
           full_name: string
           id: string
           internal_notes: string | null
+          invite_now_requested: boolean | null
           is_bookable_staff: boolean
           job_title: string | null
           last_active_at: string | null
           manager_user_id: string | null
+          modules_requested: string[] | null
           phone: string | null
+          provisioned_at: string | null
+          provisioning_status: string
           role_preset: string
           status: string
+          submitted_at: string | null
           tags: string[] | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          calendar_assignment?: string | null
           client_id: string
           commission_rate?: number | null
           created_at?: string
@@ -10104,18 +10111,24 @@ export type Database = {
           full_name: string
           id?: string
           internal_notes?: string | null
+          invite_now_requested?: boolean | null
           is_bookable_staff?: boolean
           job_title?: string | null
           last_active_at?: string | null
           manager_user_id?: string | null
+          modules_requested?: string[] | null
           phone?: string | null
+          provisioned_at?: string | null
+          provisioning_status?: string
           role_preset?: string
           status?: string
+          submitted_at?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          calendar_assignment?: string | null
           client_id?: string
           commission_rate?: number | null
           created_at?: string
@@ -10124,13 +10137,18 @@ export type Database = {
           full_name?: string
           id?: string
           internal_notes?: string | null
+          invite_now_requested?: boolean | null
           is_bookable_staff?: boolean
           job_title?: string | null
           last_active_at?: string | null
           manager_user_id?: string | null
+          modules_requested?: string[] | null
           phone?: string | null
+          provisioned_at?: string | null
+          provisioning_status?: string
           role_preset?: string
           status?: string
+          submitted_at?: string | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string | null

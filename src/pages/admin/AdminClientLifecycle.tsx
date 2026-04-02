@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER, ITEM_STATUS_OPTIONS } from "@/lib/setupItemsSeeder";
 import { useSetupProgress } from "@/hooks/useSetupProgress";
+import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 
 interface ClientData {
   id: string;
@@ -346,6 +347,13 @@ export default function AdminClientLifecycle() {
           )}
         </CardContent>
       </Card>
+
+      {/* Team Access Provisioning */}
+      <TeamAccessReview
+        clientId={clientId!}
+        teamMembersJson={setupItems.find(i => i.item_key === "team_members")?.client_value || null}
+        onRefresh={load}
+      />
 
       {/* Lifecycle Status Pipeline */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
