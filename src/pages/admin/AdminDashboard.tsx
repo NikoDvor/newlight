@@ -209,11 +209,11 @@ export default function AdminDashboard() {
           </CardContent>
         </div>
 
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-1">
             {[
               { label: "New Demo Build", path: "/admin/demo-builds" },
               { label: "Client Activation", path: "/admin/activation" },
@@ -225,13 +225,13 @@ export default function AdminDashboard() {
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-all duration-200 group">
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)]">
                 <span>{action.label}</span>
-                <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
               </motion.button>
             ))}
           </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );
