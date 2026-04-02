@@ -401,8 +401,8 @@ export default function AdminOnboardingCommandCenter() {
                 </TableBody>
               </Table>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </motion.div>
 
       {/* Mobile Cards */}
