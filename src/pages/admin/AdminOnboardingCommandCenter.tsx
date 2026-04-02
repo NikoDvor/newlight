@@ -300,23 +300,28 @@ export default function AdminOnboardingCommandCenter() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {BUCKET_CONFIG.map((b, i) => (
           <motion.button
             key={b.key}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04, duration: 0.35 }}
+            transition={{ delay: i * 0.05, duration: 0.35 }}
             onClick={() => setActiveBucket(activeBucket === b.key ? "all" : b.key)}
-            className={`rounded-xl p-3 text-left transition-all duration-200 border group ${
+            className={`card-admin rounded-xl p-3.5 text-left group cursor-pointer ${
               activeBucket === b.key
-                ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20 shadow-[0_0_16px_-4px_hsla(211,96%,60%,.15)]"
-                : "border-border bg-card hover:bg-accent/40 hover:border-primary/15 hover:shadow-[0_4px_16px_-4px_hsla(211,96%,56%,.08)]"
+                ? "!border-[hsla(211,96%,60%,.35)] ring-1 ring-[hsla(211,96%,60%,.20)] !shadow-[0_0_24px_-4px_hsla(211,96%,60%,.25)]"
+                : ""
             }`}
           >
-            <b.icon className={`h-4 w-4 ${b.color} mb-1 transition-transform duration-200 group-hover:scale-110`} />
-            <div className="text-lg font-bold text-foreground tabular-nums">{bucketCounts[b.key]}</div>
-            <div className="text-[10px] text-muted-foreground leading-tight">{b.label}</div>
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-110" style={{
+              background: "linear-gradient(135deg, hsla(211,96%,60%,.12), hsla(197,92%,68%,.06))",
+              boxShadow: "0 0 14px -4px hsla(211,96%,60%,.15)"
+            }}>
+              <b.icon className={`h-3.5 w-3.5 ${b.color}`} />
+            </div>
+            <div className="text-xl font-bold text-white tabular-nums">{bucketCounts[b.key]}</div>
+            <div className="text-[10px] text-white/40 leading-tight mt-0.5">{b.label}</div>
           </motion.button>
         ))}
       </div>
