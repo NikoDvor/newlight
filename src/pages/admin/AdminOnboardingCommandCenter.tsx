@@ -466,7 +466,7 @@ function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalL
           {c.next_due && <div className="text-[9px] text-muted-foreground">Due: {new Date(c.next_due).toLocaleDateString()}</div>}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()}>
         <QuickMenu c={c} copyPortalLink={copyPortalLink} />
       </TableCell>
     </TableRow>
