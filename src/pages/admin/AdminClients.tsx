@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -801,6 +801,9 @@ export default function AdminClients() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/close`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CreditCard className="h-3.5 w-3.5" /> Close Center
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/implementation`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Wrench className="h-3.5 w-3.5" /> Implementation
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
