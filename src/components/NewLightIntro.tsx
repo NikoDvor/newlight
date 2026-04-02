@@ -6,9 +6,10 @@ const SESSION_KEY = "nl_intro_played";
 
 interface NewLightIntroProps {
   onComplete: () => void;
+  launchLabel?: string;
 }
 
-export function NewLightIntro({ onComplete }: NewLightIntroProps) {
+export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
   const [visible, setVisible] = useState(true);
   const completedRef = useRef(false);
 
@@ -177,7 +178,7 @@ export function NewLightIntro({ onComplete }: NewLightIntroProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25, delay: 0.7 }}
           >
-            Launching workspace…
+            {launchLabel || "Launching workspace…"}
           </motion.p>
 
           {/* Bottom accent line */}

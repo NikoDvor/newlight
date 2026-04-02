@@ -4,7 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
@@ -146,21 +146,36 @@ export function triggerIntroReplay() {
   globalReplayTrigger?.();
 }
 
-const App = () => {
+/** Context-aware intro overlay that reads workspace state */
+function IntroOverlay() {
   const [showIntro, setShowIntro] = useState(shouldPlayIntro);
   const handleIntroComplete = useCallback(() => setShowIntro(false), []);
+  const { isAdmin, activeClientName, branding } = useWorkspace();
 
   // Register global replay
   globalReplayTrigger = useCallback(() => setShowIntro(true), []);
 
+  if (!showIntro) return null;
+
+  const displayName = branding.company_name || activeClientName;
+  const launchLabel = isAdmin
+    ? "Launching Admin Portal…"
+    : displayName
+      ? `Launching ${displayName}…`
+      : "Launching workspace…";
+
+  return <NewLightIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
+}
+
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {showIntro && <NewLightIntro onComplete={handleIntroComplete} />}
         <BrowserRouter>
           <WorkspaceProvider>
+            <IntroOverlay />
             <Routes>
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
