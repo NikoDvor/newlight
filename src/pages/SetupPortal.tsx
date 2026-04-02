@@ -211,7 +211,12 @@ export default function SetupPortal() {
     [items]
   );
 
-  if (loading) return <div className="text-muted-foreground text-center py-20">Loading setup portal…</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3">
+      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      <p className="text-sm text-muted-foreground">Loading your setup portal…</p>
+    </div>
+  );
 
   const isPaid = client?.payment_status === "paid";
   if (!isPaid) {
