@@ -14,6 +14,7 @@ import {
   CheckCircle2, AlertCircle, Upload, Link2, Lock, Loader2, Send
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
+import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
 
 interface SetupItem {
   id: string;
