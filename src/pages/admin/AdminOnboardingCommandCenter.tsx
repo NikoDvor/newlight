@@ -16,6 +16,7 @@ import {
   MoreVertical, ArrowRight, Eye, ClipboardList, UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
+import ClientDetailDrawer from "@/components/admin/ClientDetailDrawer";
 
 interface ClientRow {
   id: string;
@@ -168,6 +169,7 @@ export default function AdminOnboardingCommandCenter() {
   const [search, setSearch] = useState("");
   const [activeBucket, setActiveBucket] = useState<Bucket>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -374,7 +376,7 @@ export default function AdminOnboardingCommandCenter() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} />)
+                  filtered.map((c) => <DesktopRow key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
                 )}
               </TableBody>
             </Table>
@@ -387,26 +389,32 @@ export default function AdminOnboardingCommandCenter() {
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground text-sm">No clients match current filters</div>
         ) : (
-          filtered.map((c) => <MobileCard key={c.id} c={c} copyPortalLink={copyPortalLink} />)
+          filtered.map((c) => <MobileCard key={c.id} c={c} copyPortalLink={copyPortalLink} onSelect={() => setSelectedClient(c)} />)
         )}
       </div>
 
       <div className="text-[11px] text-muted-foreground text-right">
         Showing {filtered.length} of {clients.length} clients
       </div>
+
+      <ClientDetailDrawer
+        client={selectedClient}
+        open={!!selectedClient}
+        onClose={() => setSelectedClient(null)}
+      />
     </div>
   );
 }
 
 /* ───── Desktop Table Row ───── */
-function DesktopRow({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: string | null) => void }) {
+function DesktopRow({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
   const NbaIcon = nba.icon;
 
   return (
-    <TableRow className="border-border hover:bg-accent/30">
+    <TableRow className="border-border hover:bg-accent/30 cursor-pointer" onClick={onSelect}>
       <TableCell>
         <div className="text-foreground text-xs font-medium">{c.business_name}</div>
         {c.profile_name && <div className="text-[10px] text-muted-foreground">{c.profile_name}</div>}
@@ -458,7 +466,7 @@ function DesktopRow({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: s
           {c.next_due && <div className="text-[9px] text-muted-foreground">Due: {new Date(c.next_due).toLocaleDateString()}</div>}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()}>
         <QuickMenu c={c} copyPortalLink={copyPortalLink} />
       </TableCell>
     </TableRow>
@@ -466,14 +474,14 @@ function DesktopRow({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: s
 }
 
 /* ───── Mobile Card ───── */
-function MobileCard({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: string | null) => void }) {
+function MobileCard({ c, copyPortalLink, onSelect }: { c: ClientRow; copyPortalLink: (s: string | null) => void; onSelect: () => void }) {
   const setupPct = c.setup_total > 0 ? Math.round((c.setup_completed / c.setup_total) * 100) : 0;
   const implPct = c.impl_total > 0 ? Math.round((c.impl_done / c.impl_total) * 100) : 0;
   const nba = getNextBestAction(c);
   const NbaIcon = nba.icon;
 
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-border bg-card cursor-pointer hover:bg-accent/30 transition-colors" onClick={onSelect}>
       <CardContent className="p-4 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between">
