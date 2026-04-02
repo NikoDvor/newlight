@@ -212,7 +212,7 @@ export default function AdminImplementationQueue() {
         {filtered.length === 0 && <p className="text-center text-white/30 py-12">No clients match this filter</p>}
         {filtered.map((c, i) => {
           const tc = taskCounts[c.id] || { total: 0, complete: 0, in_progress: 0, blocked: 0, waiting: 0, overdue: 0, due_soon: 0 };
-          const sc = setupCounts[c.id] || { total: 0, completed: 0, received: 0 };
+          const sc = setupCounts[c.id] || { total: 0, completed: 0, received: 0, requested: 0, overdue: 0, blocked: 0, waiting: 0 };
           const taskPct = tc.total > 0 ? Math.round((tc.complete / tc.total) * 100) : 0;
           const setupPct = sc.total > 0 ? Math.round(((sc.completed + sc.received) / sc.total) * 100) : 0;
           const isPaid = c.payment_status === "paid" || c.payment_status === "waived";
@@ -221,17 +221,19 @@ export default function AdminImplementationQueue() {
             <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <Card
                 className="border-0 bg-white/[0.04] hover:bg-white/[0.06] transition-colors cursor-pointer"
-                style={{ borderColor: tc.overdue > 0 ? "hsla(0,70%,50%,.2)" : tc.blocked > 0 ? "hsla(0,70%,60%,.15)" : "hsla(211,96%,60%,.08)" }}
+                style={{ borderColor: (tc.overdue > 0 || sc.overdue > 0) ? "hsla(0,70%,50%,.2)" : (tc.blocked > 0 || sc.blocked > 0) ? "hsla(0,70%,60%,.15)" : "hsla(211,96%,60%,.08)" }}
                 onClick={() => navigate(`/admin/clients/${c.id}/implementation`)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <p className="text-sm font-medium text-white truncate">{c.business_name}</p>
                         {!isPaid && <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">Unpaid</Badge>}
                         {c.implementation_status === "complete" && <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400">Complete</Badge>}
-                        {tc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{tc.overdue} overdue</Badge>}
+                        {tc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{tc.overdue} task overdue</Badge>}
+                        {sc.overdue > 0 && <Badge variant="outline" className="text-[9px] border-red-500/30 text-red-400">{sc.overdue} setup overdue</Badge>}
+                        {sc.waiting > 0 && <Badge variant="outline" className="text-[9px] border-amber-500/30 text-amber-400">{sc.waiting} waiting</Badge>}
                         {tc.blocked > 0 && <Badge variant="outline" className="text-[9px] border-red-400/30 text-red-300">{tc.blocked} blocked</Badge>}
                         {tc.due_soon > 0 && <Badge variant="outline" className="text-[9px] border-amber-400/30 text-amber-300">{tc.due_soon} due soon</Badge>}
                       </div>
