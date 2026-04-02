@@ -292,6 +292,34 @@ export default function AdminClients() {
     fetchClients();
   };
 
+  const handleSendPortalInvite = async (client: Client) => {
+    if (!client.owner_email) { toast.error("No owner email on file"); return; }
+    const { data, error } = await supabase.functions.invoke("invite-user", {
+      body: { email: client.owner_email, role: "client_owner", client_id: client.id },
+    });
+    const now = new Date().toISOString();
+    await supabase.from("clients").update({
+      portal_invite_status: "sent",
+      portal_last_invited_at: now,
+      portal_access_enabled: true,
+    } as any).eq("id", client.id);
+    await supabase.from("audit_logs").insert({
+      client_id: client.id, action: "portal_invite_sent", module: "lifecycle",
+      metadata: { email: client.owner_email } as any,
+    });
+    if (error) {
+      toast.error("Invite failed, but portal access enabled. Share the link manually.");
+    } else if (data?.invite_email_sent) {
+      toast.success("Setup portal invite sent!");
+    } else if (data?.setup_link) {
+      navigator.clipboard.writeText(data.setup_link);
+      toast.success("Setup link copied!");
+    } else {
+      toast.success("User already has access — portal enabled.");
+    }
+    fetchClients();
+  };
+
   const resetForm = () => {
     setShowCreate(false);
     setInviteResult(null);
