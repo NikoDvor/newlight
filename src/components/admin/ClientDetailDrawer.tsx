@@ -365,6 +365,10 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
                     <Wrench className="h-3.5 w-3.5 text-primary" /> Implementation
                   </Button>
                 </Link>
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200"
+                  onClick={() => window.open(`${window.location.origin}/auth?redirect=/setup-portal`, "_blank")}>
+                  <Eye className="h-3.5 w-3.5 text-primary" /> Preview Portal
+                </Button>
                 <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200" onClick={copyPortalLink}>
                   <Copy className="h-3.5 w-3.5 text-primary" /> Copy Portal Link
                 </Button>

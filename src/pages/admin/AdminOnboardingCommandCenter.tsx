@@ -176,12 +176,13 @@ export default function AdminOnboardingCommandCenter() {
 
   async function loadData() {
     setLoading(true);
-    const { data: rawClients } = await supabase
-      .from("clients")
-      .select("id, business_name, business_type, proposal_status, agreement_status, payment_status, implementation_status, portal_access_enabled, portal_invite_status, portal_last_login_at, status, workspace_slug, owner_email")
-      .neq("status", "archived");
+    try {
+      const { data: rawClients, error: clientErr } = await supabase
+        .from("clients")
+        .select("id, business_name, business_type, proposal_status, agreement_status, payment_status, implementation_status, portal_access_enabled, portal_invite_status, portal_last_login_at, status, workspace_slug, owner_email")
+        .neq("status", "archived");
 
-    if (!rawClients) { setLoading(false); return; }
+      if (clientErr || !rawClients) { setLoading(false); return; }
 
     const { data: setupItems } = await supabase.from("client_setup_items" as any).select("client_id, item_status");
     const { data: implTasks } = await supabase.from("implementation_tasks").select("client_id, task_status, blocked_by, due_date");
@@ -248,6 +249,10 @@ export default function AdminOnboardingCommandCenter() {
 
     setClients(enriched);
     setLoading(false);
+    } catch (err) {
+      console.error("Failed to load command center data:", err);
+      setLoading(false);
+    }
   }
 
   const bucketCounts = useMemo(() => {
@@ -599,6 +604,9 @@ function QuickMenu({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: st
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => window.open(`${window.location.origin}/auth?redirect=/setup-portal`, "_blank")}>
+          <Eye className="h-3.5 w-3.5 mr-2" /> Preview Setup Portal
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => copyPortalLink(c.workspace_slug)}>
           <Copy className="h-3.5 w-3.5 mr-2" /> Copy Portal Link
         </DropdownMenuItem>

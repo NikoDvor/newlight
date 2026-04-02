@@ -157,6 +157,7 @@ export default function AdminClientLifecycle() {
 
   const handleSendPortalInvite = async () => {
     if (!client?.owner_email || !clientId) return;
+    if (sendingInvite) return; // double-click guard
     setSendingInvite(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-user", {
@@ -178,6 +179,8 @@ export default function AdminClientLifecycle() {
       } else if (data?.setup_link) {
         navigator.clipboard.writeText(data.setup_link);
         toast.success("Setup link copied to clipboard!");
+      } else {
+        toast.success("Invite processed");
       }
 
       await supabase.from("audit_logs").insert({
@@ -187,7 +190,7 @@ export default function AdminClientLifecycle() {
         metadata: { email: client.owner_email, method: "admin_lifecycle" } as any,
       });
       setClient(prev => prev ? { ...prev, portal_invite_status: "sent", portal_last_invited_at: now, portal_access_enabled: true } : prev);
-    } catch {
+    } catch (err) {
       toast.error("Failed to send invite");
     }
     setSendingInvite(false);
@@ -200,7 +203,8 @@ export default function AdminClientLifecycle() {
     toast.success("Setup portal link copied!");
   };
 
-  if (loading || !client) return <div className="text-white/40 text-center py-20">Loading…</div>;
+  if (loading) return <div className="text-muted-foreground text-center py-20">Loading lifecycle…</div>;
+  if (!client) return <div className="text-muted-foreground text-center py-20">Client not found</div>;
 
   const isPaid = client.payment_status === "paid";
   const portalLink = `${window.location.origin}/auth?redirect=/setup-portal`;

@@ -77,10 +77,14 @@ export default function AdminImplementationDetail() {
   useEffect(() => { load(); }, [load]);
 
   const handleGenerate = async () => {
-    if (!clientId) return;
+    if (!clientId || generating) return; // double-click guard
     setGenerating(true);
-    const result = await generateImplementationTasks(clientId);
-    toast.success(`Generated ${result.created} tasks (${result.skipped} already existed)`);
+    try {
+      const result = await generateImplementationTasks(clientId);
+      toast.success(`Generated ${result.created} tasks (${result.skipped} already existed)`);
+    } catch (err) {
+      toast.error("Failed to generate tasks");
+    }
     setGenerating(false);
     load();
   };
@@ -132,7 +136,8 @@ export default function AdminImplementationDetail() {
     }
   };
 
-  if (loading || !client) return <div className="text-white/40 text-center py-20">Loading…</div>;
+  if (loading) return <div className="text-muted-foreground text-center py-20">Loading implementation…</div>;
+  if (!client) return <div className="text-muted-foreground text-center py-20">Client not found</div>;
 
   const isPaid = client.payment_status === "paid" || client.payment_status === "waived";
   const totalTasks = tasks.length;
