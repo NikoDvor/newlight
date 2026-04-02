@@ -157,6 +157,7 @@ export default function AdminClientLifecycle() {
 
   const handleSendPortalInvite = async () => {
     if (!client?.owner_email || !clientId) return;
+    if (sendingInvite) return; // double-click guard
     setSendingInvite(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-user", {
@@ -178,6 +179,8 @@ export default function AdminClientLifecycle() {
       } else if (data?.setup_link) {
         navigator.clipboard.writeText(data.setup_link);
         toast.success("Setup link copied to clipboard!");
+      } else {
+        toast.success("Invite processed");
       }
 
       await supabase.from("audit_logs").insert({
@@ -187,7 +190,7 @@ export default function AdminClientLifecycle() {
         metadata: { email: client.owner_email, method: "admin_lifecycle" } as any,
       });
       setClient(prev => prev ? { ...prev, portal_invite_status: "sent", portal_last_invited_at: now, portal_access_enabled: true } : prev);
-    } catch {
+    } catch (err) {
       toast.error("Failed to send invite");
     }
     setSendingInvite(false);

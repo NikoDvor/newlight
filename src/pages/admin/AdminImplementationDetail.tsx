@@ -136,7 +136,8 @@ export default function AdminImplementationDetail() {
     }
   };
 
-  if (loading || !client) return <div className="text-white/40 text-center py-20">Loading…</div>;
+  if (loading) return <div className="text-muted-foreground text-center py-20">Loading implementation…</div>;
+  if (!client) return <div className="text-muted-foreground text-center py-20">Client not found</div>;
 
   const isPaid = client.payment_status === "paid" || client.payment_status === "waived";
   const totalTasks = tasks.length;
