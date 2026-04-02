@@ -136,7 +136,7 @@ export default function AdminDashboard() {
 
       {/* Pipeline Health + Templates */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
             <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/sales-pipeline")}>
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
               ))
             )}
           </CardContent>
-        </Card>
+        </div>
 
         <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
