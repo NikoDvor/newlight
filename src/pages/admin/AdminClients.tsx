@@ -32,6 +32,10 @@ interface Client {
   sms_delivery_status: string | null;
   created_at: string;
   onboarding_stage: string;
+  proposal_status: string;
+  agreement_status: string;
+  payment_status: string;
+  implementation_status: string;
 }
 
 interface ActivationInfo {
