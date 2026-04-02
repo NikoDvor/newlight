@@ -16,6 +16,7 @@ import {
   MoreVertical, ArrowRight, Eye, ClipboardList, UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
+import ClientDetailDrawer from "@/components/admin/ClientDetailDrawer";
 
 interface ClientRow {
   id: string;
