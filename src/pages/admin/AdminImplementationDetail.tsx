@@ -77,10 +77,14 @@ export default function AdminImplementationDetail() {
   useEffect(() => { load(); }, [load]);
 
   const handleGenerate = async () => {
-    if (!clientId) return;
+    if (!clientId || generating) return; // double-click guard
     setGenerating(true);
-    const result = await generateImplementationTasks(clientId);
-    toast.success(`Generated ${result.created} tasks (${result.skipped} already existed)`);
+    try {
+      const result = await generateImplementationTasks(clientId);
+      toast.success(`Generated ${result.created} tasks (${result.skipped} already existed)`);
+    } catch (err) {
+      toast.error("Failed to generate tasks");
+    }
     setGenerating(false);
     load();
   };
