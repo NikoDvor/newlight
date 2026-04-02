@@ -160,7 +160,7 @@ export default function AdminDashboard() {
           </CardContent>
         </div>
 
-        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Templates & Deployment</CardTitle>
             <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/templates")}>
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
