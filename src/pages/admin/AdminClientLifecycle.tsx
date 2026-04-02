@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER, ITEM_STATUS_OPTIONS } from "@/lib/setupItemsSeeder";
 import { useSetupProgress } from "@/hooks/useSetupProgress";
+import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 
 interface ClientData {
   id: string;
