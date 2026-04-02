@@ -1835,6 +1835,88 @@ export type Database = {
           },
         ]
       }
+      client_agreements: {
+        Row: {
+          agreement_status: string
+          agreement_title: string
+          agreement_type: string
+          agreement_url: string | null
+          client_id: string
+          created_at: string
+          deal_id: string | null
+          declined_at: string | null
+          id: string
+          internal_notes: string | null
+          proposal_id: string | null
+          sent_at: string | null
+          signed_at: string | null
+          signer_email: string | null
+          signer_name: string | null
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          agreement_status?: string
+          agreement_title?: string
+          agreement_type?: string
+          agreement_url?: string | null
+          client_id: string
+          created_at?: string
+          deal_id?: string | null
+          declined_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          proposal_id?: string | null
+          sent_at?: string | null
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          agreement_status?: string
+          agreement_title?: string
+          agreement_type?: string
+          agreement_url?: string | null
+          client_id?: string
+          created_at?: string
+          deal_id?: string | null
+          declined_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          proposal_id?: string | null
+          sent_at?: string | null
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_agreements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_agreements_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_agreements_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_branding: {
         Row: {
           accent_color: string | null
@@ -4866,7 +4948,11 @@ export type Database = {
           invoice_type: string
           issued_at: string | null
           paid_at: string | null
+          payment_link_url: string | null
+          payment_method: string | null
+          payment_notes: string | null
           proposal_id: string | null
+          sent_at: string | null
           subscription_id: string | null
           subtotal_amount: number | null
           tax_amount: number | null
@@ -4886,7 +4972,11 @@ export type Database = {
           invoice_type?: string
           issued_at?: string | null
           paid_at?: string | null
+          payment_link_url?: string | null
+          payment_method?: string | null
+          payment_notes?: string | null
           proposal_id?: string | null
+          sent_at?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -4906,7 +4996,11 @@ export type Database = {
           invoice_type?: string
           issued_at?: string | null
           paid_at?: string | null
+          payment_link_url?: string | null
+          payment_method?: string | null
+          payment_notes?: string | null
           proposal_id?: string | null
+          sent_at?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -5051,6 +5145,53 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifecycle_send_logs: {
+        Row: {
+          action: string
+          artifact_id: string | null
+          artifact_type: string
+          client_id: string
+          created_at: string
+          id: string
+          method: string | null
+          notes: string | null
+          recipient_email: string | null
+          sent_by: string | null
+        }
+        Insert: {
+          action: string
+          artifact_id?: string | null
+          artifact_type: string
+          client_id: string
+          created_at?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          recipient_email?: string | null
+          sent_by?: string | null
+        }
+        Update: {
+          action?: string
+          artifact_id?: string | null
+          artifact_type?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          recipient_email?: string | null
+          sent_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_send_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

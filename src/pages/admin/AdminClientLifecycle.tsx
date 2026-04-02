@@ -488,14 +488,17 @@ export default function AdminClientLifecycle() {
 
       {/* Quick Actions */}
       <div className="flex gap-3 flex-wrap">
-        <Button onClick={() => navigate(`/admin/clients/${clientId}/activate`)} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
-          <Wrench className="h-3.5 w-3.5 mr-1.5" /> Master Activation
+        <Button onClick={() => navigate(`/admin/clients/${clientId}/close`)} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white gap-1.5 text-xs">
+          <CreditCard className="h-3.5 w-3.5" /> Close Center
         </Button>
-        <Button onClick={() => navigate(`/admin/clients/${clientId}/handoff`)} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Handoff Checklist
+        <Button onClick={() => navigate(`/admin/clients/${clientId}/activate`)} variant="outline" className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs">
+          <Wrench className="h-3.5 w-3.5" /> Master Activation
         </Button>
-        <Button onClick={load} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
+        <Button onClick={() => navigate(`/admin/clients/${clientId}/handoff`)} variant="outline" className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
+        </Button>
+        <Button onClick={load} variant="outline" className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs">
+          <RefreshCw className="h-3.5 w-3.5" /> Refresh
         </Button>
       </div>
     </div>
