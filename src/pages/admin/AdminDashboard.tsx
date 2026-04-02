@@ -103,7 +103,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Automation Health */}
-      <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+      <div className="card-admin p-0 overflow-hidden">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-semibold text-white/80">Automation Health</CardTitle>
           <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/automations")}>
