@@ -127,6 +127,14 @@ export default function GetStarted() {
   const [workspaceProfile, setWorkspaceProfile] = useState<string>("");
   const [location, setLocation] = useState("");
 
+  // Auto-suggest workspace profile when business type changes
+  const handleBusinessTypeChange = (val: string) => {
+    setBusinessType(val);
+    if (val && !workspaceProfile) {
+      setWorkspaceProfile(suggestProfileFromIndustry(val));
+    }
+  };
+
   // Calendar booking state
   const [adminCalendar, setAdminCalendar] = useState<any>(null);
   const [adminClientId, setAdminClientId] = useState<string | null>(null);
