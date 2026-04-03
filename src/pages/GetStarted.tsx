@@ -124,6 +124,7 @@ export default function GetStarted() {
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
   const [businessType, setBusinessType] = useState("");
+  const [workspaceProfile, setWorkspaceProfile] = useState<string>("");
   const [location, setLocation] = useState("");
 
   // Calendar booking state
