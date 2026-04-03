@@ -594,10 +594,10 @@ export default function GetStarted() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs mb-1.5 block">Business Type</Label>
+                    <Label className="text-xs mb-1.5 block">Industry / Niche</Label>
                     <select
                       value={businessType}
-                      onChange={(e) => setBusinessType(e.target.value)}
+                      onChange={(e) => handleBusinessTypeChange(e.target.value)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select…</option>
@@ -605,6 +605,7 @@ export default function GetStarted() {
                         <option key={t} value={t.toLowerCase()}>{t}</option>
                       ))}
                     </select>
+                    <p className="text-[10px] text-muted-foreground mt-1">Your specific niche or category</p>
                   </div>
                   <div>
                     <Label className="text-xs mb-1.5 block">Primary Location</Label>
@@ -614,6 +615,24 @@ export default function GetStarted() {
                       placeholder="Los Angeles, CA"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    <Briefcase className="h-3 w-3 inline mr-1" />
+                    Workspace Profile <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    value={workspaceProfile}
+                    onChange={(e) => setWorkspaceProfile(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select how your business operates…</option>
+                    {PROFILE_TYPES.map((p) => (
+                      <option key={p.value} value={p.value}>{p.label} — {p.description}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-muted-foreground mt-1">Determines modules, calendars & automations provisioned for your workspace</p>
                 </div>
 
                 <div className="pt-2">
