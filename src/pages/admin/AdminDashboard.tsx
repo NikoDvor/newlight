@@ -183,7 +183,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
         <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Recent Activity</CardTitle>
