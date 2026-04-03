@@ -67,8 +67,8 @@ const BUCKET_CONFIG: { key: Bucket; label: string; icon: any; color: string }[] 
   { key: "invite_no_login", label: "Invited / No Login", icon: Clock, color: "text-blue-400" },
   { key: "client_action", label: "Client Action Needed", icon: AlertTriangle, color: "text-red-400" },
   { key: "team_pending", label: "Team Access Pending", icon: Users, color: "text-purple-400" },
-  { key: "ready_impl", label: "Ready for Implementation", icon: Wrench, color: "text-emerald-400" },
-  { key: "impl_blocked", label: "Implementation Blocked", icon: ShieldAlert, color: "text-red-500" },
+  { key: "ready_impl", label: "Ready for Step 3", icon: Wrench, color: "text-emerald-400" },
+  { key: "impl_blocked", label: "Step 3 Blocked", icon: ShieldAlert, color: "text-red-500" },
   { key: "ready_complete", label: "Ready to Complete", icon: CheckCircle2, color: "text-green-400" },
 ];
 
@@ -297,7 +297,7 @@ export default function AdminOnboardingCommandCenter() {
       {/* Hero Header */}
       <NewLightHero
         title="Onboarding Command Center"
-        subtitle="AI-powered client operations system — manage all post-sale clients from one operational dashboard"
+        subtitle="Track every client from Meeting 2 → Close & Payment through Step 4 → Launch & Handoff"
       />
 
       {/* KPI Cards */}
@@ -589,17 +589,17 @@ function QuickMenu({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: st
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/lifecycle`} className="flex items-center gap-2">
-            <ExternalLink className="h-3.5 w-3.5" /> Lifecycle & Setup
+            <ExternalLink className="h-3.5 w-3.5" /> Step 1 · Client Intake & Setup
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/close`} className="flex items-center gap-2">
-            <DollarSign className="h-3.5 w-3.5" /> Close Center
+            <DollarSign className="h-3.5 w-3.5" /> Meeting 2 · Close & Payment
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/implementation`} className="flex items-center gap-2">
-            <Wrench className="h-3.5 w-3.5" /> Implementation
+            <Wrench className="h-3.5 w-3.5" /> Step 3 · Internal Implementation
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

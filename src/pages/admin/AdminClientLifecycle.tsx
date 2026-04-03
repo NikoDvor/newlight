@@ -243,8 +243,11 @@ export default function AdminClientLifecycle() {
           <ArrowLeft className="h-4 w-4 text-white/40" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
-          <p className="text-sm text-white/40">Client Lifecycle & Setup Center</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
+            <Badge variant="outline" className="text-[10px] bg-[hsl(var(--nl-electric))]/10 text-[hsl(var(--nl-sky))] border-[hsl(var(--nl-electric))]/20">Step 1</Badge>
+          </div>
+          <p className="text-sm text-white/40">Step 1 — Client Intake & Setup · Collect assets, credentials, and calendar/booking info</p>
         </div>
       </div>
 

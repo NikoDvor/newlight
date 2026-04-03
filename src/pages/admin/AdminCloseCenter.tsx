@@ -419,8 +419,12 @@ export default function AdminCloseCenter() {
           <ArrowLeft className="h-4 w-4 text-white/40" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
-          <p className="text-sm text-white/40">Close Center — Proposal · Agreement · Payment</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
+            <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-300 border-amber-500/20">Meeting 2</Badge>
+          </div>
+          <p className="text-sm text-white/40">Meeting 2 — Close & Payment · Proposal · Agreement · Invoice</p>
+          <p className="text-[11px] text-white/25 mt-0.5">Next → Step 1: Client Intake & Setup</p>
         </div>
         <Button variant="outline" onClick={load} className="border-white/10 text-white hover:bg-white/10 gap-1.5 text-xs h-8">
           <RefreshCw className="h-3 w-3" /> Refresh
@@ -433,7 +437,7 @@ export default function AdminCloseCenter() {
           { key: "proposal_status", label: "Proposal", icon: FileSignature, steps: PROPOSAL_STEPS },
           { key: "agreement_status", label: "Agreement", icon: Package, steps: AGREEMENT_STEPS },
           { key: "payment_status", label: "Payment", icon: CreditCard, steps: PAYMENT_STEPS },
-          { key: "implementation_status", label: "Implementation", icon: Wrench, steps: IMPL_STEPS },
+          { key: "implementation_status", label: "Step 3 · Implementation", icon: Wrench, steps: IMPL_STEPS },
         ]).map(({ key, label, icon: Icon, steps }) => {
           const current = (client as any)[key] as string;
           return (

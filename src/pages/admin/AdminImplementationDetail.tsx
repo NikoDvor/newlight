@@ -179,8 +179,12 @@ export default function AdminImplementationDetail() {
           <ArrowLeft className="h-4 w-4 text-white/40" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
-          <p className="text-sm text-white/40">Implementation Workspace</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">{client.business_name}</h1>
+            <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-300 border-emerald-500/20">Step 3</Badge>
+          </div>
+          <p className="text-sm text-white/40">Step 3 — Internal Implementation · Assign, build, and deliver client work</p>
+          <p className="text-[11px] text-white/25 mt-0.5">Next → Step 4: Launch & Handoff — calendar goes live in client workspace</p>
         </div>
         <div className="flex gap-2">
           <Button size="sm" onClick={handleGenerate} disabled={generating} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white gap-1.5 text-xs h-8">

@@ -299,8 +299,8 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
             <Separator />
 
-            {/* ── D. Implementation Snapshot ── */}
-            <Section title="Implementation">
+            {/* ── D. Step 3 · Implementation Snapshot ── */}
+            <Section title="Step 3 · Implementation">
               {loadingDetail ? <LoadingSkeleton /> : (
                 <>
                   <div className="flex flex-wrap gap-1.5 mb-2">
@@ -360,17 +360,17 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <Link to={`/admin/clients/${client.id}/lifecycle`}>
                   <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
-                    <ExternalLink className="h-3.5 w-3.5 text-primary" /> Lifecycle & Setup
+                    <ExternalLink className="h-3.5 w-3.5 text-primary" /> Step 1 · Intake & Setup
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/close`}>
                   <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
-                    <DollarSign className="h-3.5 w-3.5 text-primary" /> Close Center
+                    <DollarSign className="h-3.5 w-3.5 text-primary" /> Meeting 2 · Close & Payment
                   </Button>
                 </Link>
                 <Link to={`/admin/clients/${client.id}/implementation`}>
                   <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200">
-                    <Wrench className="h-3.5 w-3.5 text-primary" /> Implementation
+                    <Wrench className="h-3.5 w-3.5 text-primary" /> Step 3 · Implementation
                   </Button>
                 </Link>
                 <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200"
