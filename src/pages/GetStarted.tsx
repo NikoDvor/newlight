@@ -645,38 +645,20 @@ export default function GetStarted() {
                     <span className="ml-2 text-sm text-muted-foreground">Loading available times…</span>
                   </div>
                 ) : !adminCalendar ? (
-                  <div className="space-y-4">
-                    <div className="rounded-xl border border-dashed bg-secondary/40 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                        Runtime booking debug
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                        <p><span className="text-muted-foreground">Resolved client slug:</span> <span className="font-mono text-foreground">{calendarDebug.resolvedClientSlug}</span></p>
-                        <p><span className="text-muted-foreground">Matched client id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedClientId || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Matched calendar id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedCalendarId || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Active calendar count:</span> <span className="font-mono text-foreground">{calendarDebug.activeCalendarCount}</span></p>
-                        <p><span className="text-muted-foreground">Availability row count:</span> <span className="font-mono text-foreground">{calendarDebug.availabilityRowCount}</span></p>
-                        <p><span className="text-muted-foreground">Timezone:</span> <span className="font-mono text-foreground">{calendarDebug.timezone}</span></p>
-                        <p><span className="text-muted-foreground">First available date:</span> <span className="font-mono text-foreground">{calendarDebug.firstAvailableDate || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Booking link slug:</span> <span className="font-mono text-foreground">{calendarDebug.bookingLinkSlug || "none"}</span></p>
-                        <p className="sm:col-span-2"><span className="text-muted-foreground">Lookup source:</span> <span className="font-mono text-foreground">{calendarDebug.lookupSource || "none"}</span></p>
-                      </div>
-                      {calendarDebug.failureReason && (
-                        <p className="text-[11px] text-destructive mt-2 font-mono break-all">
-                          Failure: {calendarDebug.failureReason}
-                        </p>
-                      )}
+                  <div className="text-center py-8 space-y-4">
+                    <div className="h-14 w-14 rounded-full mx-auto flex items-center justify-center bg-secondary">
+                      <Calendar className="h-7 w-7 text-muted-foreground" />
                     </div>
-
-                    <div className="text-center py-4 space-y-3">
-                      <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">
-                        No available booking calendar found. Please contact us directly.
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-1">No Available Times Right Now</h3>
+                      <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                        Our booking calendar is being set up. Please contact us directly to schedule your intro call.
                       </p>
-                      <a href="mailto:hello@newlightmarketing.com" className="text-sm text-primary hover:underline">
-                        hello@newlightmarketing.com
-                      </a>
                     </div>
+                    <a href="mailto:hello@newlightmarketing.com" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                      <Mail className="h-3.5 w-3.5" />
+                      hello@newlightmarketing.com
+                    </a>
                   </div>
                 ) : (
                   <>
