@@ -24,8 +24,8 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
       <div className="absolute inset-0 nl-hero-shimmer" />
 
       {/* Content */}
-      <div className="relative z-10 px-6 py-10 sm:px-10 sm:py-14 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-        <div className="space-y-3">
+      <div className="relative z-10 px-4 py-6 sm:px-10 sm:py-14 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
+        <div className="space-y-2 sm:space-y-3">
           <motion.div
             className="flex items-center gap-2"
             initial={{ opacity: 0, x: -10 }}
@@ -39,7 +39,7 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
           </motion.div>
 
           <motion.h1
-            className="text-3xl sm:text-4xl font-bold tracking-tight text-white"
+            className="text-2xl sm:text-4xl font-bold tracking-tight text-white"
             style={{ letterSpacing: "-0.03em" }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -50,7 +50,7 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
 
           {subtitle && (
             <motion.p
-              className="text-sm sm:text-base text-white/50 max-w-xl leading-relaxed"
+              className="text-xs sm:text-base text-white/50 max-w-xl leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.4 }}
@@ -62,7 +62,7 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
 
         {children && (
           <motion.div
-            className="flex items-center gap-3 shrink-0"
+            className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.4 }}
