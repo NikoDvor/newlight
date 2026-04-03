@@ -16,7 +16,8 @@ import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
-import { INDUSTRY_OPTIONS, suggestProfileFromIndustry } from "@/lib/industryConstants";
+import { suggestProfileFromIndustry } from "@/lib/industryConstants";
+import { IndustrySearchSelect } from "@/components/IndustrySearchSelect";
 interface Client {
   id: string;
   business_name: string;
@@ -520,10 +521,9 @@ export default function AdminClients() {
                   <div key={f.key}>
                     <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
                     {(f as any).isIndustryDropdown ? (
-                      <select
+                      <IndustrySearchSelect
                         value={(form as any)[f.key]}
-                        onChange={e => {
-                          const val = e.target.value;
+                        onChange={(val) => {
                           setForm(prev => {
                             const next = { ...prev, [f.key]: val };
                             if (val && !prev.provisional_profile) {
@@ -532,13 +532,8 @@ export default function AdminClients() {
                             return next;
                           });
                         }}
-                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                      >
-                        <option value="">Select industry…</option>
-                        {INDUSTRY_OPTIONS.map(t => (
-                          <option key={t} value={t.toLowerCase()}>{t}</option>
-                        ))}
-                      </select>
+                        variant="dark"
+                      />
                     ) : (
                       <Input
                         type={(f as any).type || "text"}
