@@ -68,37 +68,37 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <NewLightHero
         title="Admin Dashboard"
         subtitle="Platform overview and system monitoring"
       >
-        <Button onClick={() => triggerIntroReplay()} variant="outline" className="border-white/10 text-white hover:bg-white/10">
+        <Button onClick={() => triggerIntroReplay()} variant="outline" className="border-white/10 text-white hover:bg-white/10 hidden sm:inline-flex">
           <Play className="h-4 w-4 mr-1" /> Replay Intro
         </Button>
-        <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10">
-          <Hammer className="h-4 w-4 mr-1" /> New Demo Build
+        <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10 flex-1 sm:flex-none text-xs sm:text-sm">
+          <Hammer className="h-4 w-4 mr-1" /> Demo Build
         </Button>
-        <Button onClick={() => navigate("/admin/clients")} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+        <Button onClick={() => navigate("/admin/clients")} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white flex-1 sm:flex-none text-xs sm:text-sm">
           <Plus className="h-4 w-4 mr-1" /> New Client
         </Button>
       </NewLightHero>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {stats.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }}
-            className="card-admin group cursor-default p-4"
+            className="card-admin group cursor-default p-3 sm:p-4"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{
                 background: `linear-gradient(135deg, ${s.color}22, ${s.color}08)`,
                 boxShadow: `0 0 20px -6px ${s.color}30`
               }}>
-                <s.icon className="h-4 w-4" style={{ color: s.color }} />
+                <s.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" style={{ color: s.color }} />
               </div>
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{s.label}</span>
+              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider font-semibold leading-tight">{s.label}</span>
             </div>
-            <p className="text-3xl font-bold text-white tracking-tight">{s.value}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{s.value}</p>
           </motion.div>
         ))}
       </div>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pipeline Health + Templates */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
         <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
         <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white/80">Recent Activity</CardTitle>
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)]">
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-3.5 sm:py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)] min-h-[44px]">
                 <span>{action.label}</span>
                 <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
               </motion.button>
