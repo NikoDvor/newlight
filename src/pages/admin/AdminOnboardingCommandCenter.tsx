@@ -297,7 +297,7 @@ export default function AdminOnboardingCommandCenter() {
       {/* Hero Header */}
       <NewLightHero
         title="Onboarding Command Center"
-        subtitle="AI-powered client operations system — manage all post-sale clients from one operational dashboard"
+        subtitle="Track every client from Meeting 2 → Close & Payment through Step 4 → Launch & Handoff"
       />
 
       {/* KPI Cards */}
