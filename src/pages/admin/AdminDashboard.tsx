@@ -226,7 +226,7 @@ export default function AdminDashboard() {
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)]">
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-3.5 sm:py-3 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all duration-200 group border border-transparent hover:border-[hsla(211,96%,60%,.10)] min-h-[44px]">
                 <span>{action.label}</span>
                 <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200" />
               </motion.button>
