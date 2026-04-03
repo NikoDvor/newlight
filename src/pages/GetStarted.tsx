@@ -668,27 +668,7 @@ export default function GetStarted() {
                       <p className="text-xs text-muted-foreground">{contactName} · {email}</p>
                     </div>
 
-                    <div className="rounded-xl border border-dashed bg-secondary/40 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                        Runtime booking debug
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                        <p><span className="text-muted-foreground">Resolved client slug:</span> <span className="font-mono text-foreground">{calendarDebug.resolvedClientSlug}</span></p>
-                        <p><span className="text-muted-foreground">Matched client id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedClientId || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Matched calendar id:</span> <span className="font-mono text-foreground">{calendarDebug.matchedCalendarId || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Active calendar count:</span> <span className="font-mono text-foreground">{calendarDebug.activeCalendarCount}</span></p>
-                        <p><span className="text-muted-foreground">Availability row count:</span> <span className="font-mono text-foreground">{calendarDebug.availabilityRowCount}</span></p>
-                        <p><span className="text-muted-foreground">Timezone:</span> <span className="font-mono text-foreground">{calendarDebug.timezone}</span></p>
-                        <p><span className="text-muted-foreground">First available date:</span> <span className="font-mono text-foreground">{calendarDebug.firstAvailableDate || "none"}</span></p>
-                        <p><span className="text-muted-foreground">Booking link slug:</span> <span className="font-mono text-foreground">{calendarDebug.bookingLinkSlug || "none"}</span></p>
-                        <p className="sm:col-span-2"><span className="text-muted-foreground">Lookup source:</span> <span className="font-mono text-foreground">{calendarDebug.lookupSource || "none"}</span></p>
-                      </div>
-                      {calendarDebug.failureReason && (
-                        <p className="text-[11px] text-destructive mt-2 font-mono break-all">
-                          Failure: {calendarDebug.failureReason}
-                        </p>
-                      )}
-                    </div>
+
 
                     <CalendarSlotPicker
                       calendarId={adminCalendar.id}
