@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
+import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
 interface Client {
   id: string;
   business_name: string;
