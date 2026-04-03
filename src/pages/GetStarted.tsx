@@ -381,8 +381,8 @@ export default function GetStarted() {
             ownerEmail: email,
             ownerName: contactName,
           });
-        } catch (provErr) {
-          console.warn("Provisioning partial:", provErr);
+        } catch (_provErr) {
+          // Provisioning partial failure — non-blocking
         }
       }
 
