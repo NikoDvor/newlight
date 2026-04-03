@@ -6,58 +6,53 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const json = (body: any, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { share_token, action, signer_name, signer_email, signature_data, rejection_reason } = await req.json();
 
-    if (!share_token || !action) {
-      return new Response(JSON.stringify({ error: "Missing share_token or action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (!share_token || !action) return json({ error: "Missing share_token or action" }, 400);
+    if (!["accept", "reject", "view"].includes(action)) return json({ error: "Invalid action" }, 400);
 
-    if (!["accept", "reject", "view"].includes(action)) {
-      return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
-
-    // Fetch proposal by share_token (server-side validation)
     const { data: proposal, error: fetchErr } = await supabase
       .from("proposals")
       .select("*")
       .eq("share_token", share_token)
       .single();
 
-    if (fetchErr || !proposal) {
-      return new Response(JSON.stringify({ error: "Proposal not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (fetchErr || !proposal) return json({ error: "Proposal not found" }, 404);
 
     const terminalStates = ["accepted", "declined", "expired"];
 
     if (action === "view") {
-      // Mark as viewed if not yet
       if (!proposal.viewed_at) {
         await supabase.from("proposals").update({
           viewed_at: new Date().toISOString(),
           proposal_status: proposal.proposal_status === "sent" ? "viewed" : proposal.proposal_status,
         }).eq("id", proposal.id);
+        proposal.viewed_at = new Date().toISOString();
+        if (proposal.proposal_status === "sent") proposal.proposal_status = "viewed";
       }
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const [sRes, lRes] = await Promise.all([
+        supabase.from("proposal_sections").select("*").eq("proposal_id", proposal.id).order("section_order"),
+        supabase.from("proposal_line_items").select("*").eq("proposal_id", proposal.id).order("sort_order"),
+      ]);
+
+      return json({ proposal, sections: sRes.data || [], lineItems: lRes.data || [] });
     }
 
-    if (terminalStates.includes(proposal.proposal_status)) {
-      return new Response(JSON.stringify({ error: "Proposal is in a terminal state" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    if (terminalStates.includes(proposal.proposal_status)) return json({ error: "Proposal is in a terminal state" }, 409);
 
     if (action === "accept") {
-      if (!signer_name || !signer_email) {
-        return new Response(JSON.stringify({ error: "Signer name and email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+      if (!signer_name || !signer_email) return json({ error: "Signer name and email required" }, 400);
 
-      // Insert signature
       await supabase.from("proposal_signatures").insert({
         proposal_id: proposal.id,
         signer_name,
@@ -66,20 +61,18 @@ serve(async (req) => {
         ip_address: req.headers.get("x-forwarded-for") || null,
       });
 
-      // Update proposal status
       await supabase.from("proposals").update({
         proposal_status: "accepted",
         accepted_at: new Date().toISOString(),
       }).eq("id", proposal.id);
 
-      // Audit log
       await supabase.from("audit_logs").insert({
         action: "proposal_accepted",
         module: "sales",
         metadata: { proposal_id: proposal.id, signer: signer_name },
       });
 
-      return new Response(JSON.stringify({ success: true, status: "accepted" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ success: true, status: "accepted" });
     }
 
     if (action === "reject") {
@@ -95,11 +88,11 @@ serve(async (req) => {
         metadata: { proposal_id: proposal.id, reason: rejection_reason },
       });
 
-      return new Response(JSON.stringify({ success: true, status: "declined" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ success: true, status: "declined" });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Internal error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ error: "Unknown action" }, 400);
+  } catch {
+    return json({ error: "Internal error" }, 500);
   }
 });

@@ -41,13 +41,9 @@ export default function ProposalView() {
       if (fetchErr || !result?.proposal) { setNotFound(true); setLoading(false); return; }
       const p = result.proposal;
 
-      const [sRes, lRes] = await Promise.all([
-        supabase.from("proposal_sections").select("*").eq("proposal_id", p.id).order("section_order"),
-        supabase.from("proposal_line_items").select("*").eq("proposal_id", p.id).order("sort_order"),
-      ]);
       setProposal(p);
-      setSections(sRes.data || []);
-      setLineItems(lRes.data || []);
+      setSections(result.sections || []);
+      setLineItems(result.lineItems || []);
       setLoading(false);
     })();
   }, [token]);
