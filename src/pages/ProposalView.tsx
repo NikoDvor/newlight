@@ -33,27 +33,13 @@ export default function ProposalView() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      // Pass share_token via custom header for RLS validation
-      const { data: p } = await supabase
-        .from("proposals")
-        .select("*")
-        .eq("share_token", token)
-        .single({
-          headers: { "x-proposal-token": token } as any,
-        } as any);
+      // Fetch proposal data via edge function (server-side token validation)
+      const { data: result, error: fetchErr } = await supabase.functions.invoke("proposal-action", {
+        body: { share_token: token, action: "view" },
+      });
 
-      if (!p) { setNotFound(true); setLoading(false); return; }
-
-      // Mark as viewed via edge function (server-side)
-      if (!p.viewed_at) {
-        try {
-          await supabase.functions.invoke("proposal-action", {
-            body: { share_token: token, action: "view" },
-          });
-          p.viewed_at = new Date().toISOString();
-          if (p.proposal_status === "sent") p.proposal_status = "viewed";
-        } catch {}
-      }
+      if (fetchErr || !result?.proposal) { setNotFound(true); setLoading(false); return; }
+      const p = result.proposal;
 
       const [sRes, lRes] = await Promise.all([
         supabase.from("proposal_sections").select("*").eq("proposal_id", p.id).order("section_order"),
