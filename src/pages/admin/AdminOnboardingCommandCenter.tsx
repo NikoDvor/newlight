@@ -67,8 +67,8 @@ const BUCKET_CONFIG: { key: Bucket; label: string; icon: any; color: string }[] 
   { key: "invite_no_login", label: "Invited / No Login", icon: Clock, color: "text-blue-400" },
   { key: "client_action", label: "Client Action Needed", icon: AlertTriangle, color: "text-red-400" },
   { key: "team_pending", label: "Team Access Pending", icon: Users, color: "text-purple-400" },
-  { key: "ready_impl", label: "Ready for Implementation", icon: Wrench, color: "text-emerald-400" },
-  { key: "impl_blocked", label: "Implementation Blocked", icon: ShieldAlert, color: "text-red-500" },
+  { key: "ready_impl", label: "Ready for Step 3", icon: Wrench, color: "text-emerald-400" },
+  { key: "impl_blocked", label: "Step 3 Blocked", icon: ShieldAlert, color: "text-red-500" },
   { key: "ready_complete", label: "Ready to Complete", icon: CheckCircle2, color: "text-green-400" },
 ];
 

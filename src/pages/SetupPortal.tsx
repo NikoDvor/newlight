@@ -419,9 +419,15 @@ export default function SetupPortal() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Setup Portal</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">Client Intake & Setup</h1>
+          <Badge variant="outline" className="text-[10px]">Step 1</Badge>
+        </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Submit your business details and assets so our team can configure your workspace.
+          Submit your business details, calendar/booking preferences, and assets so our team can configure your workspace.
+        </p>
+        <p className="text-xs text-muted-foreground/60 mt-0.5">
+          Your live working calendar will appear in your workspace after setup is complete.
         </p>
       </div>
 
