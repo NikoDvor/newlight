@@ -78,8 +78,8 @@ export function BookingWorkspaceProvisioner({
             ownerEmail: contactEmail,
             ownerName: contactName,
           });
-        } catch (provErr) {
-          console.warn("Full provisioning partial failure:", provErr);
+        } catch (_provErr) {
+          // Full provisioning partial failure — non-blocking
         }
       }
 
