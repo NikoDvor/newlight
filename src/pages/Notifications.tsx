@@ -54,11 +54,14 @@ export default function Notifications() {
   useEffect(() => {
     if (!activeClientId) return;
     const channel = supabase
-      .channel("notifications-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
-        if ((payload.new as any).client_id === activeClientId) {
-          setNotifications(prev => [payload.new as any, ...prev]);
-        }
+      .channel(`notifications-realtime-${activeClientId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `client_id=eq.${activeClientId}`,
+      }, (payload) => {
+        setNotifications(prev => [payload.new as any, ...prev]);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
