@@ -55,7 +55,7 @@ export default function LiveActivity() {
     fetch();
 
     const channel = supabase
-      .channel("live-activity-page")
+      .channel(`live-activity-page-${activeClientId}`)
       .on("postgres_changes", {
         event: "INSERT",
         schema: "public",
