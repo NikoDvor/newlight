@@ -136,6 +136,7 @@ export default function AdminClients() {
       business_name: form.business_name,
       workspace_slug: slug,
       industry: form.industry || null,
+      provisional_profile: form.provisional_profile || null,
       primary_location: form.primary_location || null,
       timezone: form.timezone,
       service_package: form.service_package,
