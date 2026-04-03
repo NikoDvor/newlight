@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
+import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
 interface Client {
   id: string;
   business_name: string;
@@ -61,7 +62,8 @@ export default function AdminClients() {
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   
   const [form, setForm] = useState({
-    business_name: "", workspace_slug: "", industry: "", primary_location: "",
+    business_name: "", workspace_slug: "", industry: "", provisional_profile: "" as string,
+    primary_location: "",
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
     owner_phone: "", preferred_contact_method: "email", sms_consent: false,
     logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
@@ -135,6 +137,7 @@ export default function AdminClients() {
       business_name: form.business_name,
       workspace_slug: slug,
       industry: form.industry || null,
+      provisional_profile: form.provisional_profile || null,
       primary_location: form.primary_location || null,
       timezone: form.timezone,
       service_package: form.service_package,
@@ -325,7 +328,8 @@ export default function AdminClients() {
     setInviteResult(null);
     setCreatedClient(null);
     setForm({
-      business_name: "", workspace_slug: "", industry: "", primary_location: "",
+      business_name: "", workspace_slug: "", industry: "", provisional_profile: "",
+      primary_location: "",
       timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
       owner_phone: "", preferred_contact_method: "email", sms_consent: false,
       logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
@@ -407,7 +411,7 @@ export default function AdminClients() {
   const formFields = [
     { label: "Business Name *", key: "business_name", placeholder: "Acme Corp" },
     { label: "Workspace Slug *", key: "workspace_slug", placeholder: "acme-corp" },
-    { label: "Industry", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant" },
+    { label: "Industry / Niche", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant — category only" },
     { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
     { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
     { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
@@ -523,6 +527,25 @@ export default function AdminClients() {
                     />
                   </div>
                 ))}
+
+                {/* Workspace Profile */}
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block flex items-center gap-1">
+                    <Briefcase className="h-3 w-3" /> Workspace Profile *
+                  </label>
+                  <select
+                    value={form.provisional_profile}
+                    onChange={e => setForm(prev => ({ ...prev, provisional_profile: e.target.value }))}
+                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                  >
+                    <option value="">Select how this business operates…</option>
+                    {PROFILE_TYPES.map(p => (
+                      <option key={p.value} value={p.value}>{p.label} — {p.description}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-white/30 mt-1">Determines modules, calendars & automations provisioned</p>
+                </div>
+
                 {/* Preferred Contact Method */}
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Preferred Contact Method</label>

@@ -10,9 +10,10 @@ import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
 import {
   Building2, User, Globe, MapPin, Phone, Mail,
   ChevronRight, ChevronLeft, CheckCircle2, Loader2,
-  Sparkles, Calendar, AlertCircle
+  Sparkles, Calendar, AlertCircle, Briefcase
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
+import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
 
 const BUSINESS_TYPES = [
   "Agency", "Dental", "Med Spa", "Salon", "Legal", "HVAC",
@@ -21,6 +22,16 @@ const BUSINESS_TYPES = [
   "Window Washing", "Landscaping", "Plumbing", "Roofing",
   "Cleaning Service", "Other",
 ];
+
+function suggestProfileFromIndustry(industry: string): ProfileType {
+  const t = (industry || "").toLowerCase();
+  if (["hvac", "plumbing", "cleaning", "landscaping", "roofing", "window", "construction"].some(k => t.includes(k))) return "field_service";
+  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) return "appointment_local";
+  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) return "consultative_sales";
+  if (["e-commerce"].some(k => t.includes(k))) return "membership_recurring";
+  if (["legal"].some(k => t.includes(k))) return "project_service";
+  return "custom_hybrid";
+}
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
@@ -113,7 +124,16 @@ export default function GetStarted() {
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
   const [businessType, setBusinessType] = useState("");
+  const [workspaceProfile, setWorkspaceProfile] = useState<string>("");
   const [location, setLocation] = useState("");
+
+  // Auto-suggest workspace profile when business type changes
+  const handleBusinessTypeChange = (val: string) => {
+    setBusinessType(val);
+    if (val && !workspaceProfile) {
+      setWorkspaceProfile(suggestProfileFromIndustry(val));
+    }
+  };
 
   // Calendar booking state
   const [adminCalendar, setAdminCalendar] = useState<any>(null);
@@ -128,7 +148,7 @@ export default function GetStarted() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim();
+  const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim() && workspaceProfile;
   const canBook = selectedDate && selectedTime;
   const progress = step === "info" ? 50 : 100;
 
@@ -351,13 +371,14 @@ export default function GetStarted() {
             location: location || null,
             website: website || null,
             timezone: "America/Los_Angeles",
+            provisional_profile: workspaceProfile || null,
             appointment_id: null,
             calendar_client_id: adminClientId,
             calendar_id: adminCalendar.id,
             appointment_start: startTime.toISOString(),
             appointment_end: endTime.toISOString(),
             appointment_title: `Intro Call — ${businessName}`,
-            appointment_description: `First meeting with ${contactName} from ${businessName}. Business type: ${businessType || "Not specified"}.`,
+            appointment_description: `First meeting with ${contactName} from ${businessName}. Profile: ${workspaceProfile || "Not selected"}. Industry: ${businessType || "Not specified"}.`,
             appointment_timezone: "America/Los_Angeles",
             booking_source: "get_started_form",
           },
@@ -574,10 +595,10 @@ export default function GetStarted() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs mb-1.5 block">Business Type</Label>
+                    <Label className="text-xs mb-1.5 block">Industry / Niche</Label>
                     <select
                       value={businessType}
-                      onChange={(e) => setBusinessType(e.target.value)}
+                      onChange={(e) => handleBusinessTypeChange(e.target.value)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select…</option>
@@ -585,6 +606,7 @@ export default function GetStarted() {
                         <option key={t} value={t.toLowerCase()}>{t}</option>
                       ))}
                     </select>
+                    <p className="text-[10px] text-muted-foreground mt-1">Your specific niche or category</p>
                   </div>
                   <div>
                     <Label className="text-xs mb-1.5 block">Primary Location</Label>
@@ -594,6 +616,24 @@ export default function GetStarted() {
                       placeholder="Los Angeles, CA"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    <Briefcase className="h-3 w-3 inline mr-1" />
+                    Workspace Profile <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    value={workspaceProfile}
+                    onChange={(e) => setWorkspaceProfile(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select how your business operates…</option>
+                    {PROFILE_TYPES.map((p) => (
+                      <option key={p.value} value={p.value}>{p.label} — {p.description}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-muted-foreground mt-1">Determines modules, calendars & automations provisioned for your workspace</p>
                 </div>
 
                 <div className="pt-2">

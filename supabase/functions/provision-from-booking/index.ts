@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       appointment_timezone,
       booking_source,
       customer_notes,
+      provisional_profile: explicit_profile,
     } = await req.json();
 
     if (!contact_email || !business_name) {
@@ -118,8 +119,8 @@ Deno.serve(async (req) => {
       industry: industry || null,
       primary_location: location || null,
       business_type: industry || null,
-      provisional_profile: guessProvisionalProfile(industry || ""),
-      zoom_enabled_default: guessZoomDefault(industry || ""),
+      provisional_profile: explicit_profile || guessProvisionalProfile(industry || ""),
+      zoom_enabled_default: explicit_profile ? ["consultative_sales", "project_service", "custom_hybrid"].includes(explicit_profile) : guessZoomDefault(industry || ""),
         owner_name: contact_name || null,
         owner_email: contact_email,
         owner_phone: contact_phone || null,
