@@ -148,7 +148,7 @@ export default function GetStarted() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim();
+  const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim() && workspaceProfile;
   const canBook = selectedDate && selectedTime;
   const progress = step === "info" ? 50 : 100;
 
