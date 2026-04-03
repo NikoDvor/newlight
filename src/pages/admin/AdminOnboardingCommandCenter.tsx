@@ -589,17 +589,17 @@ function QuickMenu({ c, copyPortalLink }: { c: ClientRow; copyPortalLink: (s: st
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/lifecycle`} className="flex items-center gap-2">
-            <ExternalLink className="h-3.5 w-3.5" /> Lifecycle & Setup
+            <ExternalLink className="h-3.5 w-3.5" /> Step 1 · Client Intake & Setup
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/close`} className="flex items-center gap-2">
-            <DollarSign className="h-3.5 w-3.5" /> Close Center
+            <DollarSign className="h-3.5 w-3.5" /> Meeting 2 · Close & Payment
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={`/admin/clients/${c.id}/implementation`} className="flex items-center gap-2">
-            <Wrench className="h-3.5 w-3.5" /> Implementation
+            <Wrench className="h-3.5 w-3.5" /> Step 3 · Internal Implementation
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
