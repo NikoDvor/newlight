@@ -58,7 +58,7 @@ export default function Chat() {
     fetchMessages(selectedThread.id);
     // Realtime
     const channel = supabase
-      .channel(`chat-${selectedThread.id}`)
+      .channel(`chat-${activeClientId}-${selectedThread.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `thread_id=eq.${selectedThread.id}` }, (payload) => {
         setMessages(prev => [...prev, payload.new as any]);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);

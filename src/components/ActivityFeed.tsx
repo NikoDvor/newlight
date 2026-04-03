@@ -49,7 +49,7 @@ export function ActivityFeed() {
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel("activity-feed")
+      .channel(`activity-feed-${activeClientId}`)
       .on("postgres_changes", {
         event: "INSERT",
         schema: "public",
