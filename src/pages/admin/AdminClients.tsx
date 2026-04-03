@@ -527,6 +527,25 @@ export default function AdminClients() {
                     />
                   </div>
                 ))}
+
+                {/* Workspace Profile */}
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block flex items-center gap-1">
+                    <Briefcase className="h-3 w-3" /> Workspace Profile *
+                  </label>
+                  <select
+                    value={form.provisional_profile}
+                    onChange={e => setForm(prev => ({ ...prev, provisional_profile: e.target.value }))}
+                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                  >
+                    <option value="">Select how this business operates…</option>
+                    {PROFILE_TYPES.map(p => (
+                      <option key={p.value} value={p.value}>{p.label} — {p.description}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-white/30 mt-1">Determines modules, calendars & automations provisioned</p>
+                </div>
+
                 {/* Preferred Contact Method */}
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Preferred Contact Method</label>
