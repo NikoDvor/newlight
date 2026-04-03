@@ -16,6 +16,7 @@ import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
+import { INDUSTRY_OPTIONS, suggestProfileFromIndustry } from "@/lib/industryConstants";
 interface Client {
   id: string;
   business_name: string;
