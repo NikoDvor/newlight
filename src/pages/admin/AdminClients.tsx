@@ -411,7 +411,7 @@ export default function AdminClients() {
   const formFields = [
     { label: "Business Name *", key: "business_name", placeholder: "Acme Corp" },
     { label: "Workspace Slug *", key: "workspace_slug", placeholder: "acme-corp" },
-    { label: "Industry", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant" },
+    { label: "Industry / Niche", key: "industry", placeholder: "e.g. Dental, Auto, Restaurant — category only" },
     { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
     { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
     { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
