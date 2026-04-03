@@ -437,7 +437,7 @@ export default function AdminCloseCenter() {
           { key: "proposal_status", label: "Proposal", icon: FileSignature, steps: PROPOSAL_STEPS },
           { key: "agreement_status", label: "Agreement", icon: Package, steps: AGREEMENT_STEPS },
           { key: "payment_status", label: "Payment", icon: CreditCard, steps: PAYMENT_STEPS },
-          { key: "implementation_status", label: "Implementation", icon: Wrench, steps: IMPL_STEPS },
+          { key: "implementation_status", label: "Step 3 · Implementation", icon: Wrench, steps: IMPL_STEPS },
         ]).map(({ key, label, icon: Icon, steps }) => {
           const current = (client as any)[key] as string;
           return (

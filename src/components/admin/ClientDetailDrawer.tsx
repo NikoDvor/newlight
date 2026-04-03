@@ -299,8 +299,8 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
             <Separator />
 
-            {/* ── D. Implementation Snapshot ── */}
-            <Section title="Implementation">
+            {/* ── D. Step 3 · Implementation Snapshot ── */}
+            <Section title="Step 3 · Implementation">
               {loadingDetail ? <LoadingSkeleton /> : (
                 <>
                   <div className="flex flex-wrap gap-1.5 mb-2">
