@@ -226,8 +226,8 @@ export default function BookingPage() {
             });
             leadAction = "created";
           }
-        } catch (crmErr) {
-          console.warn("Lead/deal creation warning (non-blocking):", crmErr);
+        } catch (_crmErr) {
+          // Lead/deal creation warning — non-blocking
         }
       }
 

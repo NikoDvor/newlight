@@ -133,8 +133,8 @@ export default function AdminCloseConfirm() {
           ownerEmail: form.owner_email,
           ownerName: form.owner_name,
         });
-      } catch (provErr) {
-        console.warn("Full provisioning partial failure:", provErr);
+      } catch (_provErr) {
+        // Full provisioning partial failure — non-blocking
       }
 
       provisionChecklist.slice(4).forEach(s => markStep(s));

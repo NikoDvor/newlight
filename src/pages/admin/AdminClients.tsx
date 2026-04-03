@@ -189,7 +189,7 @@ export default function AdminClients() {
         ownerName: form.owner_name,
       });
       if (result.provisionedItems.length > 0) {
-        console.log(`Full app provisioned: ${result.provisionedItems.length} items`);
+        // provisioning succeeded silently
       }
     } catch (provErr: any) {
       toast.error(`Workspace created but full provisioning failed: ${provErr.message}`);

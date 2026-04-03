@@ -254,7 +254,6 @@ export default function AdminProspects() {
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "workspace";
 
   const handleOpenForm = () => {
-    console.log("[AdminProspects] Opening Add Prospect form");
     setShowForm(true);
   };
 

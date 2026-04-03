@@ -431,7 +431,7 @@ export default function AdminMasterActivation() {
       // 1. Hydration sync
       const hydrationResult = await hydrateWorkspaceFromActivation(clientId, form);
       if (hydrationResult.errors.length > 0) {
-        console.warn("Hydration errors:", hydrationResult.errors);
+        // Hydration had sync issues
         toast.warning(`Some fields had sync issues: ${hydrationResult.errors.length} error(s)`);
       }
 
