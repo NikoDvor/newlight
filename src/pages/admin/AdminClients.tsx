@@ -519,13 +519,35 @@ export default function AdminClients() {
                 {formFields.map(f => (
                   <div key={f.key}>
                     <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                    <Input
-                      type={(f as any).type || "text"}
-                      value={(form as any)[f.key]}
-                      onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      placeholder={f.placeholder}
-                      className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                    />
+                    {(f as any).isIndustryDropdown ? (
+                      <select
+                        value={(form as any)[f.key]}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setForm(prev => {
+                            const next = { ...prev, [f.key]: val };
+                            if (val && !prev.provisional_profile) {
+                              next.provisional_profile = suggestProfileFromIndustry(val);
+                            }
+                            return next;
+                          });
+                        }}
+                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                      >
+                        <option value="">Select industry…</option>
+                        {INDUSTRY_OPTIONS.map(t => (
+                          <option key={t} value={t.toLowerCase()}>{t}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        type={(f as any).type || "text"}
+                        value={(form as any)[f.key]}
+                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder}
+                        className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                      />
+                    )}
                   </div>
                 ))}
 
