@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pipeline Health + Templates */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
         <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
