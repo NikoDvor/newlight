@@ -10,9 +10,10 @@ import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
 import {
   Building2, User, Globe, MapPin, Phone, Mail,
   ChevronRight, ChevronLeft, CheckCircle2, Loader2,
-  Sparkles, Calendar, AlertCircle
+  Sparkles, Calendar, AlertCircle, Briefcase
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
+import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
 
 const BUSINESS_TYPES = [
   "Agency", "Dental", "Med Spa", "Salon", "Legal", "HVAC",
@@ -21,6 +22,16 @@ const BUSINESS_TYPES = [
   "Window Washing", "Landscaping", "Plumbing", "Roofing",
   "Cleaning Service", "Other",
 ];
+
+function suggestProfileFromIndustry(industry: string): ProfileType {
+  const t = (industry || "").toLowerCase();
+  if (["hvac", "plumbing", "cleaning", "landscaping", "roofing", "window", "construction"].some(k => t.includes(k))) return "field_service";
+  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) return "appointment_local";
+  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) return "consultative_sales";
+  if (["e-commerce"].some(k => t.includes(k))) return "membership_recurring";
+  if (["legal"].some(k => t.includes(k))) return "project_service";
+  return "custom_hybrid";
+}
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
