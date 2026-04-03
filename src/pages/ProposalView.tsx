@@ -33,27 +33,17 @@ export default function ProposalView() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      const { data: p } = await supabase
-        .from("proposals")
-        .select("*")
-        .eq("share_token", token)
-        .single();
-      if (!p) { setNotFound(true); setLoading(false); return; }
+      // Fetch proposal data via edge function (server-side token validation)
+      const { data: result, error: fetchErr } = await supabase.functions.invoke("proposal-action", {
+        body: { share_token: token, action: "view" },
+      });
 
-      // Mark as viewed
-      if (!p.viewed_at) {
-        await supabase.from("proposals").update({ viewed_at: new Date().toISOString(), proposal_status: p.proposal_status === "sent" ? "viewed" : p.proposal_status } as any).eq("id", p.id);
-        p.viewed_at = new Date().toISOString();
-        if (p.proposal_status === "sent") p.proposal_status = "viewed";
-      }
+      if (fetchErr || !result?.proposal) { setNotFound(true); setLoading(false); return; }
+      const p = result.proposal;
 
-      const [sRes, lRes] = await Promise.all([
-        supabase.from("proposal_sections").select("*").eq("proposal_id", p.id).order("section_order"),
-        supabase.from("proposal_line_items").select("*").eq("proposal_id", p.id).order("sort_order"),
-      ]);
       setProposal(p);
-      setSections(sRes.data || []);
-      setLineItems(lRes.data || []);
+      setSections(result.sections || []);
+      setLineItems(result.lineItems || []);
       setLoading(false);
     })();
   }, [token]);
@@ -102,25 +92,16 @@ export default function ProposalView() {
     setSigning(true);
     try {
       const sigData = canvasRef.current?.toDataURL("image/png") || "";
-      await supabase.from("proposal_signatures").insert({
-        proposal_id: proposal.id,
-        signer_name: sigForm.name,
-        signer_email: sigForm.email,
-        signature_data: sigData,
-        ip_address: null,
+      const { data, error } = await supabase.functions.invoke("proposal-action", {
+        body: {
+          share_token: token,
+          action: "accept",
+          signer_name: sigForm.name,
+          signer_email: sigForm.email,
+          signature_data: sigData,
+        },
       });
-      await supabase.from("proposals").update({
-        proposal_status: "accepted",
-        accepted_at: new Date().toISOString(),
-      } as any).eq("id", proposal.id);
-
-      // Log audit
-      await supabase.from("audit_logs").insert({
-        action: "proposal_accepted",
-        module: "sales",
-        metadata: { proposal_id: proposal.id, signer: sigForm.name },
-      });
-
+      if (error) throw error;
       setProposal({ ...proposal, proposal_status: "accepted", accepted_at: new Date().toISOString() });
       setShowAccept(false);
       toast.success("Proposal accepted!");
@@ -134,16 +115,14 @@ export default function ProposalView() {
   const handleReject = async () => {
     setSigning(true);
     try {
-      await supabase.from("proposals").update({
-        proposal_status: "declined",
-        declined_at: new Date().toISOString(),
-        rejection_reason: sigForm.reason || null,
-      } as any).eq("id", proposal.id);
-      await supabase.from("audit_logs").insert({
-        action: "proposal_rejected",
-        module: "sales",
-        metadata: { proposal_id: proposal.id, reason: sigForm.reason },
+      const { data, error } = await supabase.functions.invoke("proposal-action", {
+        body: {
+          share_token: token,
+          action: "reject",
+          rejection_reason: sigForm.reason || null,
+        },
       });
+      if (error) throw error;
       setProposal({ ...proposal, proposal_status: "declined" });
       setShowReject(false);
       toast.success("Response recorded");
@@ -172,7 +151,6 @@ export default function ProposalView() {
 
   const isTerminal = ["accepted", "declined", "expired"].includes(proposal.proposal_status);
   const totalLineItems = lineItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
-  const templateConfig = typeof proposal.template_config === "string" ? JSON.parse(proposal.template_config || "{}") : {};
 
   return (
     <div className="min-h-screen py-8 px-4" style={{ background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)" }}>
