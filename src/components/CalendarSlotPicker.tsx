@@ -167,7 +167,7 @@ export function CalendarSlotPicker({
           {!dayAvail ? (
             <p className="text-xs text-muted-foreground py-2">Not available on this day</p>
           ) : availableSlots.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-2">No available times — all slots booked or blocked</p>
+            <p className="text-xs text-muted-foreground py-2">No available times — please contact us to schedule</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-[220px] overflow-y-auto">
               {availableSlots.map(slot => (

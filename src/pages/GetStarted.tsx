@@ -580,16 +580,10 @@ export default function GetStarted() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs mb-1.5 block">Industry / Niche</Label>
-                    <select
+                    <IndustrySearchSelect
                       value={businessType}
-                      onChange={(e) => handleBusinessTypeChange(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select…</option>
-                      {INDUSTRY_OPTIONS.map((t) => (
-                        <option key={t} value={t.toLowerCase()}>{t}</option>
-                      ))}
-                    </select>
+                      onChange={handleBusinessTypeChange}
+                    />
                     <p className="text-[10px] text-muted-foreground mt-1">Your specific niche or category</p>
                   </div>
                   <div>
