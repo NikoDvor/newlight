@@ -585,7 +585,7 @@ export default function GetStarted() {
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select…</option>
-                      {BUSINESS_TYPES.map((t) => (
+                      {INDUSTRY_OPTIONS.map((t) => (
                         <option key={t} value={t.toLowerCase()}>{t}</option>
                       ))}
                     </select>
