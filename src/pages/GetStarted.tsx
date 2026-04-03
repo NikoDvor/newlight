@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
-import { INDUSTRY_OPTIONS, suggestProfileFromIndustry } from "@/lib/industryConstants";
+import { suggestProfileFromIndustry } from "@/lib/industryConstants";
+import { IndustrySearchSelect } from "@/components/IndustrySearchSelect";
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
