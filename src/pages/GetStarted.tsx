@@ -14,24 +14,7 @@ import {
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
-
-const BUSINESS_TYPES = [
-  "Agency", "Dental", "Med Spa", "Salon", "Legal", "HVAC",
-  "Real Estate", "Fitness", "Restaurant", "Automotive",
-  "Construction", "Consulting", "Healthcare", "E-commerce",
-  "Window Washing", "Landscaping", "Plumbing", "Roofing",
-  "Cleaning Service", "Other",
-];
-
-function suggestProfileFromIndustry(industry: string): ProfileType {
-  const t = (industry || "").toLowerCase();
-  if (["hvac", "plumbing", "cleaning", "landscaping", "roofing", "window", "construction"].some(k => t.includes(k))) return "field_service";
-  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) return "appointment_local";
-  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) return "consultative_sales";
-  if (["e-commerce"].some(k => t.includes(k))) return "membership_recurring";
-  if (["legal"].some(k => t.includes(k))) return "project_service";
-  return "custom_hybrid";
-}
+import { INDUSTRY_OPTIONS, suggestProfileFromIndustry } from "@/lib/industryConstants";
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
@@ -602,7 +585,7 @@ export default function GetStarted() {
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select…</option>
-                      {BUSINESS_TYPES.map((t) => (
+                      {INDUSTRY_OPTIONS.map((t) => (
                         <option key={t} value={t.toLowerCase()}>{t}</option>
                       ))}
                     </select>
