@@ -128,6 +128,29 @@
   100% { transform: translateY(-10vh) scale(1); opacity: 0; }
 }
 
+/* ── Global dark cinematic background ── */
+.nl-dark-bg {
+  position: relative;
+  background:
+    radial-gradient(ellipse 120% 60% at 20% 10%, hsla(211,96%,60%,.04), transparent 50%),
+    radial-gradient(ellipse 100% 80% at 80% 90%, hsla(197,88%,55%,.03), transparent 50%),
+    linear-gradient(170deg,
+      hsl(222 38% 5%) 0%,
+      hsl(220 42% 7%) 30%,
+      hsl(222 40% 5%) 60%,
+      hsl(218 36% 4%) 100%
+    );
+  overflow: hidden;
+  color: hsl(210 40% 90%);
+}
+.nl-dark-bg > * { position: relative; z-index: 1; }
+/* Heading overrides for dark bg */
+.nl-dark-bg h1, .nl-dark-bg h2, .nl-dark-bg h3,
+.nl-dark-bg h4, .nl-dark-bg h5, .nl-dark-bg h6 {
+  color: hsl(210 40% 90%);
+}
+
+/* Legacy light animated bg — keep for non-layout use */
 .nl-animated-bg {
   position: relative;
   background: linear-gradient(135deg,
@@ -140,60 +163,6 @@
   animation: nl-wave 22s ease infinite;
   overflow: hidden;
 }
-
-/* Orbs */
-.nl-animated-bg::before,
-.nl-animated-bg::after {
-  content:'';
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(90px);
-  z-index: 0;
-}
-.nl-animated-bg::before {
-  width: 600px; height: 600px;
-  top: -100px; right: -140px;
-  background: radial-gradient(circle, hsla(211,96%,62%,.14), transparent 70%);
-  animation: nl-orb-a 26s ease-in-out infinite;
-}
-.nl-animated-bg::after {
-  width: 500px; height: 500px;
-  bottom: -80px; left: -100px;
-  background: radial-gradient(circle, hsla(197,92%,68%,.11), transparent 70%);
-  animation: nl-orb-b 30s ease-in-out infinite;
-}
-
-/* Tech grid overlay */
-.nl-grid-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: .035;
-  background-image:
-    linear-gradient(hsla(211,96%,56%,.4) 1px, transparent 1px),
-    linear-gradient(90deg, hsla(211,96%,56%,.4) 1px, transparent 1px);
-  background-size: 60px 60px;
-  animation: nl-grid-drift 40s linear infinite;
-}
-
-/* Floating particles */
-.nl-particles {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-.nl-particle {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, hsla(211,96%,70%,.5), hsla(197,92%,68%,.2));
-  filter: blur(1px);
-  animation: nl-particle-float linear infinite;
-}
-
 .nl-animated-bg > * { position: relative; z-index: 1; }
 
 /* ── Cursor glow ── */
