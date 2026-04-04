@@ -658,14 +658,19 @@ function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
   );
 }
 
-/* ── NEW: Opportunities / Revenue Expansion ── */
+/* ── Revenue Expansion with Psychology ── */
 function OpportunitiesSection({ metrics }: { metrics: any }) {
-  const opportunities = [
-    { title: "Upsell Existing Clients", potential: "$12,400", confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns" },
-    { title: "Reactivation Campaign", potential: "$8,200", confidence: 67, icon: Users, desc: "14 dormant contacts identified" },
-    { title: "Referral Pipeline", potential: "$5,600", confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready" },
-    { title: "Cross-Sell Opportunity", potential: "$3,900", confidence: 58, icon: Layers, desc: "Complementary services match" },
-  ];
+  const totalPotential = useMemo(() => {
+    const base = Math.max(metrics.pipelineValue, 8000);
+    return Math.round(base * 0.45 / 100) * 100;
+  }, [metrics.pipelineValue]);
+
+  const opportunities = useMemo(() => [
+    { title: "Upsell Existing Clients", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns", growth: "+$3.2K/mo" },
+    { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "14 dormant contacts identified", growth: "+18% conv." },
+    { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready", growth: "+9 leads" },
+    { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
+  ], [totalPotential]);
 
   return (
     <motion.div
@@ -675,13 +680,46 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
       transition={{ duration: 0.6 }}
     >
       <SectionHeader icon={DollarSign} label="Revenue Expansion Opportunities" extra={
-        <motion.span className="text-[9px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-full"
+        <motion.span className="text-[9px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
           style={{ color: "hsl(197 88% 60%)", background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.12)" }}
-          animate={{ boxShadow: ["0 0 8px -2px hsla(197,88%,55%,.1)", "0 0 16px -2px hsla(197,88%,55%,.2)", "0 0 8px -2px hsla(197,88%,55%,.1)"] }}
+          animate={{ boxShadow: ["0 0 8px -2px hsla(197,88%,55%,.1)", "0 0 20px -2px hsla(197,88%,55%,.25)", "0 0 8px -2px hsla(197,88%,55%,.1)"] }}
           transition={{ duration: 3, repeat: Infinity }}>
-          $30K+ Identified
+          ${totalPotential.toLocaleString()}+ Identified
         </motion.span>
       } />
+
+      {/* Urgency banner */}
+      <motion.div className="dash-card p-4 mb-5"
+        initial={{ opacity: 0, scale: 0.97 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        style={{ borderColor: "hsla(197,88%,55%,.15)" }}>
+        <div className="flex items-center gap-3 relative z-10">
+          <motion.div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.15)" }}
+            animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+            <DollarSign className="h-5 w-5" style={{ color: "hsl(197 88% 60%)" }} />
+          </motion.div>
+          <div className="flex-1">
+            <p className="text-sm font-bold" style={{ color: "hsl(210 40% 90%)" }}>
+              You're leaving an estimated <span style={{ color: "hsl(197 88% 60%)" }}>${totalPotential.toLocaleString()}/mo</span> on the table
+            </p>
+            <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.5)" }}>
+              AI detected {opportunities.length} missed revenue channels based on your business profile
+            </p>
+          </div>
+          <motion.div className="text-2xl font-bold shrink-0"
+            style={{
+              background: "linear-gradient(135deg, hsl(197 88% 60%), hsl(211 96% 68%))",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              filter: "drop-shadow(0 0 8px hsla(197,88%,55%,.2))",
+            }}
+            animate={{ opacity: [0.8, 1, 0.8] }} transition={{ duration: 2.5, repeat: Infinity }}>
+            +{Math.round(((totalPotential / Math.max(metrics.pipelineValue || totalPotential, 1)) * 100))}%
+          </motion.div>
+        </div>
+      </motion.div>
+
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
         className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {opportunities.map((opp, i) => (
@@ -718,6 +756,16 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
                         <span className="text-[9px] font-bold tabular-nums" style={{ color: "hsla(211,96%,65%,.5)" }}>{opp.confidence}%</span>
                       </div>
                     </div>
+                    <motion.span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                      style={{
+                        color: "hsl(197 88% 62%)",
+                        background: "hsla(197,88%,55%,.06)",
+                        border: "1px solid hsla(197,88%,55%,.1)",
+                      }}
+                      initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+                      transition={{ delay: 0.5 + i * 0.1 }}>
+                      {opp.growth}
+                    </motion.span>
                   </div>
                 </div>
               </div>
