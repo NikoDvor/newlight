@@ -1187,8 +1187,58 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ══════ AI INSIGHTS LAYER (NEW) ══════ */}
+          {/* ══════ AI INSIGHTS LAYER ══════ */}
           <AIInsightsLayer />
+
+          {/* ══════ ENERGY SWEEP DIVIDER ══════ */}
+          <motion.div className="relative py-2"
+            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+            <motion.div className="h-px" style={{
+              background: "linear-gradient(90deg, transparent 0%, hsla(211,96%,60%,.3) 20%, hsla(197,88%,55%,.4) 50%, hsla(211,96%,60%,.3) 80%, transparent 100%)",
+              boxShadow: "0 0 12px 0 hsla(211,96%,60%,.12)",
+            }}
+            animate={{ opacity: [0.3, 0.8, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+          </motion.div>
+
+          {/* ══════ PERFORMANCE TRENDS ══════ */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <SectionHeader icon={Activity} label="Performance Trends" extra={<AIIndicator label="Tracking" />} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Lead Velocity", value: "+23%", sub: "vs. last month", color: "hsl(211 96% 62%)" },
+                { label: "Conversion Rate", value: "3.8%", sub: "above industry avg", color: "hsl(197 88% 58%)" },
+                { label: "Avg Deal Size", value: `$${Math.max(2400, Math.round(metrics.pipelineValue / Math.max(metrics.openDeals, 1))).toLocaleString()}`, sub: "trending up", color: "hsl(211 96% 68%)" },
+                { label: "Response Time", value: "< 2hr", sub: "optimal range", color: "hsl(197 88% 62%)" },
+              ].map((trend, i) => (
+                <motion.div key={trend.label}
+                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}>
+                  <TiltCard>
+                    <div className="dash-card p-4 text-center">
+                      <div className="relative z-10">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: "hsla(210,50%,70%,.45)" }}>{trend.label}</p>
+                        <motion.p className="text-2xl font-bold"
+                          style={{ color: trend.color, filter: `drop-shadow(0 0 8px ${trend.color}40)` }}
+                          animate={{ opacity: [0.85, 1, 0.85] }}
+                          transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}>
+                          {trend.value}
+                        </motion.p>
+                        <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>{trend.sub}</p>
+                      </div>
+                    </div>
+                  </TiltCard>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
           {/* ══════ MAIN CONTENT GRID ══════ */}
           <motion.div
