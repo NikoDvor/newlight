@@ -206,12 +206,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "linear-gradient(170deg, hsl(211 90% 62%) 0%, hsl(215 80% 52%) 50%, hsl(218 75% 46%) 100%)"
-      }} />
-      <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none opacity-40" style={{
-        background: "radial-gradient(ellipse at 50% 0%, hsla(197,92%,78%,.5), transparent 70%)"
-      }} />
+      <div className="absolute inset-0 pointer-events-none sidebar-futuristic" />
+      <div className="sidebar-glow-top absolute top-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(211,96%,60%,.12), transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 100%, hsla(187,80%,55%,.06), transparent 70%)" }} />
 
       <SidebarHeader className="p-3 relative z-10">
         <div className="flex items-center justify-between px-2 py-1">
