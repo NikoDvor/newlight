@@ -178,6 +178,9 @@ const App = () => {
           <WorkspaceProvider>
             <IntroOverlay />
             <Routes>
+              {/* Public landing */}
+              <Route path="/" element={<Landing />} />
+
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
