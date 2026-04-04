@@ -79,35 +79,76 @@ function TiltCard({ children, className = "", style = {} }: { children: React.Re
   );
 }
 
-/* ── Parallax Background Layers ── */
+/* ── Parallax Background Layers (4 layers) ── */
 function ParallaxBackground() {
   const { scrollY } = useScroll();
   const farY = useTransform(scrollY, [0, 3000], [0, -80]);
   const midY = useTransform(scrollY, [0, 3000], [0, -180]);
   const nearY = useTransform(scrollY, [0, 3000], [0, -300]);
+  const fgY = useTransform(scrollY, [0, 3000], [0, -400]);
 
   return (
     <>
-      {/* Far layer — neural grid */}
+      {/* Layer 1: Far — neural grid */}
       <motion.div className="dash-neural-grid" style={{ y: farY }} />
 
-      {/* Mid layer — lightning streaks */}
+      {/* Layer 2: Mid — lightning streaks */}
       <motion.div style={{ y: midY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <LightningStreaks />
       </motion.div>
 
-      {/* Near layer — orbs */}
+      {/* Layer 3: Near — orbs */}
       <motion.div style={{ y: nearY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div className="dash-orb dash-orb--primary" />
         <div className="dash-orb dash-orb--cyan" />
         <div className="dash-orb dash-orb--secondary" />
       </motion.div>
 
+      {/* Layer 4: Foreground — geometric fragments */}
+      <motion.div style={{ y: fgY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        <ForegroundFragments />
+      </motion.div>
+
       <div className="dash-scanline" />
+      <div className="dash-lightning" />
 
       {/* Energy pulse waves */}
       <EnergyPulses />
     </>
+  );
+}
+
+/* ── Layer 4: Floating geometric fragments ── */
+function ForegroundFragments() {
+  const fragments = useMemo(() => [
+    { type: "rect", top: "12%", left: "8%", w: 24, h: 24, delay: 0, dur: 22 },
+    { type: "rect", top: "28%", left: "82%", w: 16, h: 32, delay: 4, dur: 18 },
+    { type: "rect", top: "55%", left: "15%", w: 20, h: 20, delay: 8, dur: 25 },
+    { type: "ring", top: "18%", left: "72%", size: 48, delay: 2, dur: 10 },
+    { type: "ring", top: "65%", left: "88%", size: 32, delay: 5, dur: 12 },
+    { type: "ring", top: "40%", left: "5%", size: 40, delay: 0, dur: 9 },
+    { type: "rect", top: "78%", left: "45%", w: 18, h: 28, delay: 6, dur: 20 },
+    { type: "ring", top: "85%", left: "25%", size: 28, delay: 3, dur: 11 },
+  ], []);
+
+  return (
+    <div className="dash-foreground-layer">
+      {fragments.map((f, i) =>
+        f.type === "rect" ? (
+          <div key={i} className="dash-geo-fragment" style={{
+            top: f.top, left: f.left,
+            width: f.w, height: f.h,
+            animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`,
+          }} />
+        ) : (
+          <div key={i} className="dash-geo-ring" style={{
+            top: f.top, left: f.left,
+            width: f.size, height: f.size,
+            animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`,
+          }} />
+        )
+      )}
+    </div>
   );
 }
 
