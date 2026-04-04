@@ -14,7 +14,6 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 
-}
 
 function CursorGlow() {
   const ref = useRef<HTMLDivElement>(null);
