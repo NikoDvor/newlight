@@ -454,22 +454,23 @@
   /* ── Premium glass card ── */
   .card-glass {
     @apply rounded-2xl;
-    background: hsla(210,50%,99%,.72);
-    backdrop-filter: blur(32px) saturate(1.8);
-    -webkit-backdrop-filter: blur(32px) saturate(1.8);
+    background: hsla(222,30%,10%,.72);
+    backdrop-filter: blur(32px) saturate(1.4);
+    -webkit-backdrop-filter: blur(32px) saturate(1.4);
     border: 1px solid hsla(211,96%,60%,.06);
-    box-shadow: 0 1px 3px 0 hsla(215,50%,35%,.04),
-                0 0 0 1px hsla(215,50%,50%,.04),
-                inset 0 1px 0 0 hsla(0,0%,100%,.85);
+    box-shadow: 0 2px 6px -2px hsla(0,0%,0%,.3),
+                0 0 0 1px hsla(211,96%,60%,.04),
+                inset 0 1px 0 0 hsla(211,96%,70%,.05);
     transition: all .4s cubic-bezier(.25,.1,.25,1);
+    color: hsl(210 40% 90%);
   }
   .card-glass:hover {
-    box-shadow: 0 24px 64px -16px hsla(211,96%,56%,.16),
-                0 0 0 1px hsla(211,96%,56%,.12),
-                0 0 48px -12px hsla(211,96%,60%,.10),
-                inset 0 1px 0 0 hsla(0,0%,100%,.9);
+    box-shadow: 0 24px 64px -16px hsla(211,96%,56%,.14),
+                0 0 0 1px hsla(211,96%,56%,.10),
+                0 0 48px -12px hsla(211,96%,60%,.08),
+                inset 0 1px 0 0 hsla(211,96%,70%,.10);
     transform: translateY(-4px) scale(1.005);
-    border-color: hsla(211,96%,60%,.18);
+    border-color: hsla(211,96%,60%,.16);
   }
 
   /* ── Animated glow pulse for key metrics ── */
