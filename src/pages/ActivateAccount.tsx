@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
@@ -29,6 +30,7 @@ export default function ActivateAccount() {
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const navigate = useNavigate();
+  const { setActiveClientId, setViewMode } = useWorkspace();
 
   // Wait for Supabase to exchange the invite hash token for a session
   useEffect(() => {
@@ -96,12 +98,19 @@ export default function ActivateAccount() {
       .eq("user_id", user.id);
 
     const adminRoles = ["admin", "operator"];
-    const isAdmin = roles?.some(r => adminRoles.includes(r.role));
+    const isAdminUser = roles?.some(r => adminRoles.includes(r.role));
 
-    if (isAdmin) {
+    if (isAdminUser) {
       toast.success("Account activated! Welcome.");
       navigate("/admin", { replace: true });
     } else {
+      // Find client workspaces
+      const clientWorkspaces = roles?.filter(r => r.client_id) || [];
+      if (clientWorkspaces.length === 1) {
+        // Single workspace — auto-select it
+        setActiveClientId(clientWorkspaces[0].client_id);
+        setViewMode("workspace");
+      }
       toast.success("Account activated! Welcome to your workspace.");
       navigate("/dashboard", { replace: true });
     }
