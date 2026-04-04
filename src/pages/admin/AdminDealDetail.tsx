@@ -111,6 +111,12 @@ export default function AdminDealDetail() {
           <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={handleCreateProposal}>
             <FileText className="h-3.5 w-3.5 mr-1" /> Create Proposal
           </Button>
+          {deal.client_id && (
+            <Button size="sm" variant="outline" className="border-[hsla(211,96%,60%,.3)] text-[hsl(var(--nl-neon))] hover:bg-[hsla(211,96%,60%,.1)]"
+              onClick={() => navigate(`/admin/clients/${deal.client_id}/proposal-wizard?dealId=${deal.id}`)}>
+              <Target className="h-3.5 w-3.5 mr-1" /> Proposal Wizard
+            </Button>
+          )}
           <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleClosedWon}>
             <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark Won
           </Button>
