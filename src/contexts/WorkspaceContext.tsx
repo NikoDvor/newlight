@@ -173,7 +173,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, signOut,
+      isAdmin, user, branding, userRole, isSessionLoading, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
