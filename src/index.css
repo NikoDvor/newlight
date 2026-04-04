@@ -640,10 +640,10 @@
     background: radial-gradient(circle, hsla(187,80%,55%,.07), transparent 70%);
     animation: nl-orb-b 26s ease-in-out infinite;
   }
-  .dash-orb--violet {
+  .dash-orb--secondary {
     width: 380px; height: 380px;
     top: 35%; right: 8%;
-    background: radial-gradient(circle, hsla(260,60%,62%,.05), transparent 70%);
+    background: radial-gradient(circle, hsla(211,96%,55%,.04), transparent 70%);
     animation: nl-orb-a 30s ease-in-out infinite reverse;
   }
 
