@@ -138,9 +138,9 @@ export function AppLayout() {
                 </div>
               )}
               {activeClientName && !branding.company_name && (
-                <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg bg-primary/5">
-                  <Building2 className="h-3 w-3 text-primary/60" />
-                  <span className="text-[11px] font-medium text-primary/70">{activeClientName}</span>
+                <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg bg-white/5">
+                  <Building2 className="h-3 w-3 text-[hsl(var(--nl-sky))]/60" />
+                  <span className="text-[11px] font-medium text-white/50">{activeClientName}</span>
                 </div>
               )}
             </div>
