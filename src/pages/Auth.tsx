@@ -30,25 +30,7 @@ export default function Auth() {
       } else if (isAdmin) {
         navigate("/admin", { replace: true });
       } else {
-        (async () => {
-          const { data: roles } = await supabase.from("user_roles").select("client_id").eq("user_id", user.id).not("client_id", "is", null).limit(1);
-          const clientId = roles?.[0]?.client_id;
-          if (clientId) {
-            const { data: client } = await supabase.from("clients").select("payment_status, portal_access_enabled").eq("id", clientId).single();
-            if (client?.payment_status === "paid" && client?.portal_access_enabled) {
-              const { data: items } = await supabase.from("client_setup_items" as any).select("item_status, submitted_by_client").eq("client_id", clientId);
-              const clientItems = ((items || []) as any[]).filter((i: any) => i.submitted_by_client);
-              const doneCount = clientItems.filter((i: any) => ["received", "completed"].includes(i.item_status)).length;
-              const pct = clientItems.length > 0 ? (doneCount / clientItems.length) * 100 : 100;
-              if (pct < 80) {
-                navigate("/setup-portal", { replace: true });
-                return;
-              }
-            }
-          }
-          navigate("/dashboard", { replace: true });
-        })();
-        return;
+        navigate("/dashboard", { replace: true });
       }
     }
   }, [user, isAdmin, userRole, navigate]);
