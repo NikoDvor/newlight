@@ -137,6 +137,7 @@ import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
+import ActivateAccount from "./pages/ActivateAccount";
 
 const queryClient = new QueryClient();
 

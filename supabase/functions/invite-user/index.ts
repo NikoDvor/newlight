@@ -87,9 +87,14 @@ Deno.serve(async (req) => {
     let alreadyExisted = false;
 
     // Try invite first — if user exists, this will fail with a known error
+    // Derive site URL for activation redirect
+    const siteUrl = (Deno.env.get("SITE_URL") || supabaseUrl.replace(".supabase.co", ".lovable.app")).replace(/\/$/, "");
+    const activateRedirect = `${siteUrl}/activate`;
+
     const { data: inviteData, error: inviteError } =
       await adminClient.auth.admin.inviteUserByEmail(email, {
         data: { full_name: email.split("@")[0] },
+        redirectTo: activateRedirect,
       });
 
     if (inviteError) {
