@@ -860,9 +860,9 @@
     margin-top: 3px;
     background: linear-gradient(90deg,
       transparent 0%,
-      hsla(187,80%,55%,.15) 30%,
-      hsla(260,60%,62%,.1) 50%,
-      hsla(187,80%,55%,.15) 70%,
+      hsla(197,88%,55%,.15) 30%,
+      hsla(211,96%,58%,.1) 50%,
+      hsla(197,88%,55%,.15) 70%,
       transparent 100%
     );
     background-size: 200% 100%;
