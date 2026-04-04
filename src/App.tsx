@@ -137,6 +137,7 @@ import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
+import ActivateAccount from "./pages/ActivateAccount";
 
 const queryClient = new QueryClient();
 
@@ -183,6 +184,7 @@ const App = () => {
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
