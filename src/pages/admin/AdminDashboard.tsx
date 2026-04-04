@@ -113,6 +113,46 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {/* Client Workspaces — Quick Access */}
+      <div className="card-admin overflow-hidden">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold text-white/80">Client Workspaces</CardTitle>
+          <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/clients")}>
+            View All <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {recentClients.length === 0 ? (
+            <p className="text-xs text-white/30 py-4 text-center">No clients yet</p>
+          ) : recentClients.map((c, i) => (
+            <motion.div
+              key={c.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.06] transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0" />
+                <span className="text-sm text-white/80 truncate">{c.business_name}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                  c.status === "active" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-white/5 text-white/30"
+                }`}>{c.status}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => enterClientView(c.id)}
+                className="text-[hsl(var(--nl-sky))] hover:text-white hover:bg-[hsla(211,96%,60%,.15)] text-xs gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Enter</span>
+              </Button>
+            </motion.div>
+          ))}
+        </CardContent>
+      </div>
+
       {/* Automation Health */}
       <div className="card-admin p-0 overflow-hidden">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
