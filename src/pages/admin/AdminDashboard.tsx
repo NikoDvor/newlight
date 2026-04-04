@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientCount, setClientCount] = useState(0);
   const [fixCount, setFixCount] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
@@ -25,10 +26,18 @@ export default function AdminDashboard() {
   const [pipelineStages, setPipelineStages] = useState<Record<string, number>>({});
   const [templateCount, setTemplateCount] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
+  const [recentClients, setRecentClients] = useState<{ id: string; business_name: string; status: string }[]>([]);
+
+  const enterClientView = (clientId: string) => {
+    setViewMode("workspace");
+    setActiveClientId(clientId);
+    navigate("/dashboard");
+  };
 
   useEffect(() => {
     Promise.all([
       supabase.from("clients").select("id", { count: "exact", head: true }).then(({ count }) => setClientCount(count ?? 0)),
+      supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
       supabase.from("prospects").select("id", { count: "exact", head: true }).then(({ count }) => setProspectCount(count ?? 0)),
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "build_in_progress").then(({ count }) => setDemoInProgress(count ?? 0)),
