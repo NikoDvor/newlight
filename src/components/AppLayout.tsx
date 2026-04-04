@@ -143,18 +143,19 @@ export function AppLayout() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Back to Admin button when admin is viewing client workspace */}
               {isAdmin && activeClientId && (
                 <button
                   onClick={() => {
-                    const { setViewMode, setActiveClientId } = require("@/contexts/WorkspaceContext") as any;
-                    // We use the workspace context directly
+                    setViewMode("admin");
+                    setActiveClientId(null);
+                    navigate("/admin");
                   }}
-                  className="hidden"
-                />
-              )}
-              {isAdmin && activeClientId && (
-                <BackToAdminButton />
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-primary/10 border border-primary/15"
+                  title="Back to Admin Portal"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 text-primary/70" />
+                  <span className="hidden sm:inline text-primary/70">Admin</span>
+                </button>
               )}
               <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
