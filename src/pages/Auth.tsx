@@ -71,6 +71,7 @@ export default function Auth() {
   };
 
   return (
+    <SessionGate>
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{ background: "linear-gradient(135deg, hsl(218 35% 6%) 0%, hsl(220 42% 12%) 40%, hsl(215 50% 10%) 70%, hsl(218 35% 6%) 100%)" }}
     >
