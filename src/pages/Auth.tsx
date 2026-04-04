@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { SessionGate } from "@/components/SessionGate";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
