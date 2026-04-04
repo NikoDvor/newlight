@@ -110,12 +110,13 @@ export function AppLayout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
-            background: "hsla(210,50%,99%,.6)",
-            backdropFilter: "blur(24px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+            background: "hsla(218,42%,8%,.97)",
+            backdropFilter: "blur(28px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(28px) saturate(1.6)",
             borderColor: hasCustomBranding
               ? `${branding.primary_color}18`
-              : "hsla(211,96%,60%,.06)"
+              : "hsla(211,96%,60%,.12)",
+            boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground hover:text-primary transition-colors" />
