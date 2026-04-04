@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 function Particles() {
   const particles = Array.from({ length: 18 }, (_, i) => ({
