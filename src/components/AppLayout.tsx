@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { GlobalSearch } from "@/components/GlobalSearch";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Bell, Building2, LogOut, Shield, ArrowLeft } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useEffect, useRef, useMemo } from "react";
