@@ -181,23 +181,22 @@ export function AppSidebar() {
           asChild
           isActive={active}
           tooltip={collapsed ? item.title : undefined}
-          className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
+          className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-300 group ${
             active
-              ? "text-white font-semibold"
-              : "text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
+              ? "text-white font-semibold sidebar-active-glow"
+              : "text-white/40 hover:text-white/75 hover:bg-white/[0.04]"
           }`}
           style={active ? {
-            background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(187,80%,55%,.08))",
-            boxShadow: "0 0 20px -4px hsla(211,96%,60%,.2), inset 0 0 0 1px hsla(211,96%,60%,.15)",
-            borderLeft: "2px solid hsl(211 96% 60%)",
+            background: "linear-gradient(135deg, hsla(211,96%,60%,.12), hsla(187,80%,55%,.06))",
+            boxShadow: "0 0 24px -4px hsla(211,96%,60%,.18), inset 0 0 0 1px hsla(211,96%,60%,.12)",
           } : undefined}
         >
           <Link to={item.url}>
-            <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
+            <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-300 ${
               active
-                ? "drop-shadow-[0_0_6px_hsla(0,0%,100%,.7)]"
-                : "group-hover:drop-shadow-[0_0_5px_hsla(0,0%,100%,.4)] group-hover:scale-110"
-            }`} />
+                ? "drop-shadow-[0_0_8px_hsla(211,96%,68%,.6)]"
+                : "group-hover:drop-shadow-[0_0_6px_hsla(211,96%,68%,.3)] group-hover:scale-110"
+            }`} style={active ? { color: "hsl(211 96% 72%)" } : undefined} />
             {!collapsed && <span>{item.title}</span>}
           </Link>
         </SidebarMenuButton>
