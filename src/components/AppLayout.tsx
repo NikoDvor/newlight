@@ -13,34 +13,7 @@ import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
-function Particles() {
-  const particles = Array.from({ length: 18 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    size: 2 + Math.random() * 3,
-    duration: 18 + Math.random() * 22,
-    delay: Math.random() * 20,
-    opacity: 0.15 + Math.random() * 0.25,
-  }));
 
-  return (
-    <div className="nl-particles">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="nl-particle"
-          style={{
-            left: p.left,
-            width: p.size,
-            height: p.size,
-            opacity: p.opacity,
-            animationDuration: `${p.duration}s`,
-            animationDelay: `${p.delay}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
 }
 
 function CursorGlow() {
