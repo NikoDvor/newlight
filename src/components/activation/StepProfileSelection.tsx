@@ -56,10 +56,29 @@ export function StepProfileSelection({ form, set, clientId }: StepProfileSelecti
 
   return (
     <div className="space-y-5">
+      {/* ── New Workspace Profile Builder (foundation) ── */}
+      <WorkspaceProfileBuilder
+        onChange={(profile: WorkspaceProfile) => {
+          set("workspace_profile", JSON.stringify(profile));
+          // Auto-select the best legacy profile type based on new archetype
+          const legacyMatch = PROFILE_TYPES.find((p) => p.value === profile.legacyProfileType);
+          if (legacyMatch && !applied) {
+            handleSelectProfile(legacyMatch.value);
+          }
+        }}
+        disabled={applied}
+      />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 pt-2">
+        <div className="flex-1 h-px bg-white/8" />
+        <span className="text-[10px] text-white/25 uppercase tracking-widest">Automation Profile</span>
+        <div className="flex-1 h-px bg-white/8" />
+      </div>
+
       <div>
-        <h3 className="text-base font-semibold text-white mb-1">Automation Profile</h3>
         <p className="text-xs text-white/50">
-          Select the workspace profile that best matches this client's business model. This will provision calendars, forms, reminders, and module settings.
+          The automation profile below is auto-selected based on your business model. Override if needed.
         </p>
       </div>
 
