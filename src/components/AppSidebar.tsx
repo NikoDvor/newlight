@@ -184,11 +184,12 @@ export function AppSidebar() {
           className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
             active
               ? "text-white font-semibold"
-              : "text-white/70 hover:text-white hover:bg-white/[0.12]"
+              : "text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
           }`}
           style={active ? {
-            background: "hsla(0,0%,100%,.18)",
-            boxShadow: "0 0 18px -4px hsla(0,0%,100%,.25), inset 0 0 0 1px hsla(0,0%,100%,.15)",
+            background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(187,80%,55%,.08))",
+            boxShadow: "0 0 20px -4px hsla(211,96%,60%,.2), inset 0 0 0 1px hsla(211,96%,60%,.15)",
+            borderLeft: "2px solid hsl(211 96% 60%)",
           } : undefined}
         >
           <Link to={item.url}>
