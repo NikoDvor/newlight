@@ -312,5 +312,6 @@ export default function Landing() {
         </p>
       </section>
     </div>
+    </SessionGate>
   );
 }
