@@ -119,7 +119,7 @@ export function AppLayout() {
             boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-primary transition-colors" />
+              <SidebarTrigger className="text-white/60 hover:text-white transition-colors" />
               {/* Show client branding logo or NewLight default */}
               {branding.logo_url && activeClientId ? (
                 <div className="hidden sm:flex items-center gap-2">
