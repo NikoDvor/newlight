@@ -513,11 +513,10 @@
     --dash-surface: 222 30% 9%;
     --dash-surface-light: 222 26% 13%;
     --dash-border: 211 40% 18%;
-    --dash-text: 210 50% 92%;
-    --dash-text-muted: 215 18% 50%;
+    --dash-text: 210 40% 90%;
+    --dash-text-muted: 210 30% 55%;
     --dash-glow: 211 96% 60%;
-    --dash-cyan: 187 80% 55%;
-    --dash-violet: 260 60% 62%;
+    --dash-cyan: 197 88% 55%;
     color: hsl(var(--dash-text));
   }
 
