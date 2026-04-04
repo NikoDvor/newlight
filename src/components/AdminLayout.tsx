@@ -5,6 +5,7 @@ import { Bell, Zap } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 export function AdminLayout() {
   const location = useLocation();
