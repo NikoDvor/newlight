@@ -8,6 +8,8 @@ import { Loader2, CheckCircle2, Zap, Settings2 } from "lucide-react";
 import { PROFILE_TYPES, getProfilePack, applyProfileToWorkspace, type ProfileType } from "@/lib/profileEngine";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { WorkspaceProfileBuilder } from "@/components/workspace-profile/WorkspaceProfileBuilder";
+import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 
 interface StepProfileSelectionProps {
   form: any;
