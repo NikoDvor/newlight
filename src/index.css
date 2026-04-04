@@ -996,7 +996,6 @@
     border-radius: 0 2px 2px 0;
     box-shadow: 0 0 8px 1px hsla(211,96%,60%,.3);
   }
-}
 
   /* ═══ REVENUE GLOW CARD ═══ */
   .dash-revenue-card {
@@ -1051,6 +1050,7 @@
     border: 1px solid hsla(211,96%,60%,.08);
     backdrop-filter: blur(8px);
   }
+}
 
 @keyframes glow-pulse-anim {
   0%, 100% { box-shadow: 0 0 20px -8px hsla(211,96%,60%,.15); }
