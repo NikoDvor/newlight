@@ -676,8 +676,8 @@
     background: linear-gradient(145deg,
       hsla(211,96%,60%,.035) 0%,
       transparent 40%,
-      hsla(187,80%,55%,.02) 80%,
-      hsla(260,60%,62%,.015) 100%
+      hsla(197,88%,55%,.02) 80%,
+      hsla(211,96%,55%,.015) 100%
     );
     pointer-events: none;
   }
