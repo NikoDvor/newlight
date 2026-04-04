@@ -280,5 +280,6 @@ export default function Auth() {
         </div>
       </motion.div>
     </div>
+    </SessionGate>
   );
 }
