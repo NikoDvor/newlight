@@ -35,11 +35,6 @@ export default function Auth() {
     }
   }, [user, isAdmin, userRole, navigate]);
 
-  const getRedirectAwareNav = () => {
-    const params = new URLSearchParams(window.location.search);
-    const redirect = params.get("redirect");
-    return redirect && redirect.startsWith("/") ? redirect : null;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
