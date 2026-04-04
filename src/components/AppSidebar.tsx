@@ -31,7 +31,7 @@ interface NavEntry {
 }
 
 const navStructure: NavEntry[] = [
-  { type: "item", title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
   { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
