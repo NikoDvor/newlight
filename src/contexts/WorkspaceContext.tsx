@@ -35,6 +35,7 @@ interface WorkspaceContextType {
   user: any;
   branding: ClientBranding;
   userRole: string | null;
+  isSessionLoading: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -48,6 +49,7 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   user: null,
   branding: defaultBranding,
   userRole: null,
+  isSessionLoading: true,
   signOut: async () => {},
 });
 
@@ -59,6 +61,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [branding, setBranding] = useState<ClientBranding>(defaultBranding);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -106,18 +109,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        // Defer role fetch to avoid Supabase auth deadlock
-        setTimeout(() => fetchUserRole(u.id), 0);
+        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
       } else {
         setIsAdmin(false);
         setUserRole(null);
+        setIsSessionLoading(false);
       }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        setTimeout(() => fetchUserRole(u.id), 0);
+        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
+      } else {
+        setIsSessionLoading(false);
       }
     });
     return () => subscription.unsubscribe();
@@ -168,7 +173,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, signOut,
+      isAdmin, user, branding, userRole, isSessionLoading, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>

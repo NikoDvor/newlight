@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { SessionGate } from "@/components/SessionGate";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
@@ -19,21 +19,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<AuthMode>("signin");
   const navigate = useNavigate();
-  const { user, isAdmin, userRole } = useWorkspace();
-
-  useEffect(() => {
-    if (user && userRole) {
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect");
-      if (redirect && redirect.startsWith("/")) {
-        navigate(redirect, { replace: true });
-      } else if (isAdmin) {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
-    }
-  }, [user, isAdmin, userRole, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +71,7 @@ export default function Auth() {
   };
 
   return (
+    <SessionGate>
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{ background: "linear-gradient(135deg, hsl(218 35% 6%) 0%, hsl(220 42% 12%) 40%, hsl(215 50% 10%) 70%, hsl(218 35% 6%) 100%)" }}
     >
@@ -294,5 +280,6 @@ export default function Auth() {
         </div>
       </motion.div>
     </div>
+    </SessionGate>
   );
 }
