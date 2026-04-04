@@ -251,7 +251,7 @@ export default function Onboarding() {
       });
 
       toast.success("Onboarding complete! Your workspace is being configured.");
-      navigate("/welcome");
+      navigate("/dashboard");
     } catch (err) {
       console.error(err);
       toast.error("Error saving onboarding data");

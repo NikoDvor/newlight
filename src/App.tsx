@@ -302,7 +302,7 @@ const App = () => {
                 <Route path="/appointments/:appointmentId" element={<PermissionGuard moduleKey="calendar"><AppointmentDetail /></PermissionGuard>} />
                 <Route path="/email" element={<PermissionGuard moduleKey="email"><EmailPage /></PermissionGuard>} />
                 <Route path="/branding-settings" element={<PermissionGuard moduleKey="settings"><BrandingSettings /></PermissionGuard>} />
-                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/welcome" element={<Dashboard />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/workforce" element={<PermissionGuard moduleKey="workforce"><Workforce /></PermissionGuard>} />
                 <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />

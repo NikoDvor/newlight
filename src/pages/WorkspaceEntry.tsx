@@ -52,7 +52,7 @@ export default function WorkspaceEntry() {
       navigate(`/auth?redirect=/w/${slug}`, { replace: true });
     } else if (userRole) {
       // Logged in and role loaded → go to workspace dashboard
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
     // If user exists but userRole is still loading, wait (with timeout fallback)
   }, [state, user, userRole, slug, navigate]);
