@@ -35,6 +35,7 @@ interface WorkspaceContextType {
   user: any;
   branding: ClientBranding;
   userRole: string | null;
+  isSessionLoading: boolean;
   signOut: () => Promise<void>;
 }
 
