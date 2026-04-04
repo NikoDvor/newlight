@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink } from "lucide-react";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { triggerIntroReplay } from "@/App";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
