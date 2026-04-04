@@ -1,4 +1,5 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
+import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
