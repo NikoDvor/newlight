@@ -179,6 +179,7 @@ export default function AdminClientSetup() {
       )}
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <CardContent className="p-5 space-y-5">
 
           {/* Business + Brand */}
           <div className={sectionCls} style={sectionStyle}>
