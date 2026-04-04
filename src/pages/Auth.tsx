@@ -19,21 +19,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<AuthMode>("signin");
   const navigate = useNavigate();
-  const { user, isAdmin, userRole } = useWorkspace();
-
-  useEffect(() => {
-    if (user && userRole) {
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect");
-      if (redirect && redirect.startsWith("/")) {
-        navigate(redirect, { replace: true });
-      } else if (isAdmin) {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
-    }
-  }, [user, isAdmin, userRole, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
