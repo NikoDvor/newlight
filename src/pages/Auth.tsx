@@ -46,7 +46,7 @@ export default function Auth() {
               }
             }
           }
-          navigate("/", { replace: true });
+          navigate("/dashboard", { replace: true });
         })();
         return;
       }
