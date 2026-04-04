@@ -61,6 +61,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [branding, setBranding] = useState<ClientBranding>(defaultBranding);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const signOut = async () => {
     await supabase.auth.signOut();
