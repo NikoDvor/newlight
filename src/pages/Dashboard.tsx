@@ -79,35 +79,76 @@ function TiltCard({ children, className = "", style = {} }: { children: React.Re
   );
 }
 
-/* ── Parallax Background Layers ── */
+/* ── Parallax Background Layers (4 layers) ── */
 function ParallaxBackground() {
   const { scrollY } = useScroll();
   const farY = useTransform(scrollY, [0, 3000], [0, -80]);
   const midY = useTransform(scrollY, [0, 3000], [0, -180]);
   const nearY = useTransform(scrollY, [0, 3000], [0, -300]);
+  const fgY = useTransform(scrollY, [0, 3000], [0, -400]);
 
   return (
     <>
-      {/* Far layer — neural grid */}
+      {/* Layer 1: Far — neural grid */}
       <motion.div className="dash-neural-grid" style={{ y: farY }} />
 
-      {/* Mid layer — lightning streaks */}
+      {/* Layer 2: Mid — lightning streaks */}
       <motion.div style={{ y: midY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <LightningStreaks />
       </motion.div>
 
-      {/* Near layer — orbs */}
+      {/* Layer 3: Near — orbs */}
       <motion.div style={{ y: nearY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div className="dash-orb dash-orb--primary" />
         <div className="dash-orb dash-orb--cyan" />
         <div className="dash-orb dash-orb--secondary" />
       </motion.div>
 
+      {/* Layer 4: Foreground — geometric fragments */}
+      <motion.div style={{ y: fgY, position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        <ForegroundFragments />
+      </motion.div>
+
       <div className="dash-scanline" />
+      <div className="dash-lightning" />
 
       {/* Energy pulse waves */}
       <EnergyPulses />
     </>
+  );
+}
+
+/* ── Layer 4: Floating geometric fragments ── */
+function ForegroundFragments() {
+  const fragments = useMemo(() => [
+    { type: "rect", top: "12%", left: "8%", w: 24, h: 24, delay: 0, dur: 22 },
+    { type: "rect", top: "28%", left: "82%", w: 16, h: 32, delay: 4, dur: 18 },
+    { type: "rect", top: "55%", left: "15%", w: 20, h: 20, delay: 8, dur: 25 },
+    { type: "ring", top: "18%", left: "72%", size: 48, delay: 2, dur: 10 },
+    { type: "ring", top: "65%", left: "88%", size: 32, delay: 5, dur: 12 },
+    { type: "ring", top: "40%", left: "5%", size: 40, delay: 0, dur: 9 },
+    { type: "rect", top: "78%", left: "45%", w: 18, h: 28, delay: 6, dur: 20 },
+    { type: "ring", top: "85%", left: "25%", size: 28, delay: 3, dur: 11 },
+  ], []);
+
+  return (
+    <div className="dash-foreground-layer">
+      {fragments.map((f, i) =>
+        f.type === "rect" ? (
+          <div key={i} className="dash-geo-fragment" style={{
+            top: f.top, left: f.left,
+            width: f.w, height: f.h,
+            animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`,
+          }} />
+        ) : (
+          <div key={i} className="dash-geo-ring" style={{
+            top: f.top, left: f.left,
+            width: f.size, height: f.size,
+            animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`,
+          }} />
+        )
+      )}
+    </div>
   );
 }
 
@@ -617,14 +658,19 @@ function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
   );
 }
 
-/* ── NEW: Opportunities / Revenue Expansion ── */
+/* ── Revenue Expansion with Psychology ── */
 function OpportunitiesSection({ metrics }: { metrics: any }) {
-  const opportunities = [
-    { title: "Upsell Existing Clients", potential: "$12,400", confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns" },
-    { title: "Reactivation Campaign", potential: "$8,200", confidence: 67, icon: Users, desc: "14 dormant contacts identified" },
-    { title: "Referral Pipeline", potential: "$5,600", confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready" },
-    { title: "Cross-Sell Opportunity", potential: "$3,900", confidence: 58, icon: Layers, desc: "Complementary services match" },
-  ];
+  const totalPotential = useMemo(() => {
+    const base = Math.max(metrics.pipelineValue, 8000);
+    return Math.round(base * 0.45 / 100) * 100;
+  }, [metrics.pipelineValue]);
+
+  const opportunities = useMemo(() => [
+    { title: "Upsell Existing Clients", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns", growth: "+$3.2K/mo" },
+    { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "14 dormant contacts identified", growth: "+18% conv." },
+    { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready", growth: "+9 leads" },
+    { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
+  ], [totalPotential]);
 
   return (
     <motion.div
@@ -634,13 +680,46 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
       transition={{ duration: 0.6 }}
     >
       <SectionHeader icon={DollarSign} label="Revenue Expansion Opportunities" extra={
-        <motion.span className="text-[9px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-full"
+        <motion.span className="text-[9px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
           style={{ color: "hsl(197 88% 60%)", background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.12)" }}
-          animate={{ boxShadow: ["0 0 8px -2px hsla(197,88%,55%,.1)", "0 0 16px -2px hsla(197,88%,55%,.2)", "0 0 8px -2px hsla(197,88%,55%,.1)"] }}
+          animate={{ boxShadow: ["0 0 8px -2px hsla(197,88%,55%,.1)", "0 0 20px -2px hsla(197,88%,55%,.25)", "0 0 8px -2px hsla(197,88%,55%,.1)"] }}
           transition={{ duration: 3, repeat: Infinity }}>
-          $30K+ Identified
+          ${totalPotential.toLocaleString()}+ Identified
         </motion.span>
       } />
+
+      {/* Urgency banner */}
+      <motion.div className="dash-card p-4 mb-5"
+        initial={{ opacity: 0, scale: 0.97 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        style={{ borderColor: "hsla(197,88%,55%,.15)" }}>
+        <div className="flex items-center gap-3 relative z-10">
+          <motion.div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.15)" }}
+            animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+            <DollarSign className="h-5 w-5" style={{ color: "hsl(197 88% 60%)" }} />
+          </motion.div>
+          <div className="flex-1">
+            <p className="text-sm font-bold" style={{ color: "hsl(210 40% 90%)" }}>
+              You're leaving an estimated <span style={{ color: "hsl(197 88% 60%)" }}>${totalPotential.toLocaleString()}/mo</span> on the table
+            </p>
+            <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.5)" }}>
+              AI detected {opportunities.length} missed revenue channels based on your business profile
+            </p>
+          </div>
+          <motion.div className="text-2xl font-bold shrink-0"
+            style={{
+              background: "linear-gradient(135deg, hsl(197 88% 60%), hsl(211 96% 68%))",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              filter: "drop-shadow(0 0 8px hsla(197,88%,55%,.2))",
+            }}
+            animate={{ opacity: [0.8, 1, 0.8] }} transition={{ duration: 2.5, repeat: Infinity }}>
+            +{Math.round(((totalPotential / Math.max(metrics.pipelineValue || totalPotential, 1)) * 100))}%
+          </motion.div>
+        </div>
+      </motion.div>
+
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
         className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {opportunities.map((opp, i) => (
@@ -677,6 +756,16 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
                         <span className="text-[9px] font-bold tabular-nums" style={{ color: "hsla(211,96%,65%,.5)" }}>{opp.confidence}%</span>
                       </div>
                     </div>
+                    <motion.span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                      style={{
+                        color: "hsl(197 88% 62%)",
+                        background: "hsla(197,88%,55%,.06)",
+                        border: "1px solid hsla(197,88%,55%,.1)",
+                      }}
+                      initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+                      transition={{ delay: 0.5 + i * 0.1 }}>
+                      {opp.growth}
+                    </motion.span>
                   </div>
                 </div>
               </div>
@@ -856,7 +945,7 @@ export default function Dashboard() {
 
   return (
     <div className="dash-dark -m-4 sm:-m-6 lg:-m-10">
-      <div className="dash-bg-main p-5 sm:p-8 lg:p-12 min-h-screen">
+      <div className="dash-bg-main dash-breathe p-5 sm:p-8 lg:p-12 min-h-screen">
         {/* ═══ Parallax Atmospheric layers ═══ */}
         <ParallaxBackground />
 
@@ -1098,8 +1187,58 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ══════ AI INSIGHTS LAYER (NEW) ══════ */}
+          {/* ══════ AI INSIGHTS LAYER ══════ */}
           <AIInsightsLayer />
+
+          {/* ══════ ENERGY SWEEP DIVIDER ══════ */}
+          <motion.div className="relative py-2"
+            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+            <motion.div className="h-px" style={{
+              background: "linear-gradient(90deg, transparent 0%, hsla(211,96%,60%,.3) 20%, hsla(197,88%,55%,.4) 50%, hsla(211,96%,60%,.3) 80%, transparent 100%)",
+              boxShadow: "0 0 12px 0 hsla(211,96%,60%,.12)",
+            }}
+            animate={{ opacity: [0.3, 0.8, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+          </motion.div>
+
+          {/* ══════ PERFORMANCE TRENDS ══════ */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <SectionHeader icon={Activity} label="Performance Trends" extra={<AIIndicator label="Tracking" />} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Lead Velocity", value: "+23%", sub: "vs. last month", color: "hsl(211 96% 62%)" },
+                { label: "Conversion Rate", value: "3.8%", sub: "above industry avg", color: "hsl(197 88% 58%)" },
+                { label: "Avg Deal Size", value: `$${Math.max(2400, Math.round(metrics.pipelineValue / Math.max(metrics.openDeals, 1))).toLocaleString()}`, sub: "trending up", color: "hsl(211 96% 68%)" },
+                { label: "Response Time", value: "< 2hr", sub: "optimal range", color: "hsl(197 88% 62%)" },
+              ].map((trend, i) => (
+                <motion.div key={trend.label}
+                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}>
+                  <TiltCard>
+                    <div className="dash-card p-4 text-center">
+                      <div className="relative z-10">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: "hsla(210,50%,70%,.45)" }}>{trend.label}</p>
+                        <motion.p className="text-2xl font-bold"
+                          style={{ color: trend.color, filter: `drop-shadow(0 0 8px ${trend.color}40)` }}
+                          animate={{ opacity: [0.85, 1, 0.85] }}
+                          transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}>
+                          {trend.value}
+                        </motion.p>
+                        <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>{trend.sub}</p>
+                      </div>
+                    </div>
+                  </TiltCard>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
           {/* ══════ MAIN CONTENT GRID ══════ */}
           <motion.div
