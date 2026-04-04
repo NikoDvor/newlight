@@ -15,12 +15,16 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useCountUp } from "@/hooks/useCountUp";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid
+} from "recharts";
 
 /* ── animation presets ── */
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
 const fadeUp = {
-  hidden: { opacity: 0, y: 24, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as any } },
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as any } },
 };
 
 function getGreeting(): string {
@@ -38,13 +42,13 @@ function getSystemStatus(isLive: boolean, hasData: boolean): string {
 
 /* ── Lightning streaks (mid layer) ── */
 function LightningStreaks() {
-  const streaks = useMemo(() => Array.from({ length: 6 }, (_, i) => ({
+  const streaks = useMemo(() => Array.from({ length: 8 }, (_, i) => ({
     id: i,
-    top: `${10 + i * 16}%`,
-    width: `${100 + Math.random() * 240}px`,
-    duration: 16 + Math.random() * 14,
-    delay: i * 3.5 + Math.random() * 3,
-    opacity: 0.08 + Math.random() * 0.08,
+    top: `${8 + i * 12}%`,
+    width: `${120 + Math.random() * 260}px`,
+    duration: 18 + Math.random() * 16,
+    delay: i * 2.8 + Math.random() * 3,
+    opacity: 0.06 + Math.random() * 0.07,
   })), []);
 
   return (
@@ -59,7 +63,7 @@ function LightningStreaks() {
   );
 }
 
-/* ── Sparkline chart (inline SVG) ── */
+/* ── Sparkline chart (inline SVG for KPI cards) ── */
 function Sparkline({ data, color = "hsl(211 96% 62%)", height = 28, width = 80 }: {
   data: number[]; color?: string; height?: number; width?: number;
 }) {
@@ -205,22 +209,19 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, sparkData 
   return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
 }
 
-/* ── Mini bar chart ── */
-function MiniBarChart({ data, height = 48 }: { data: number[]; height?: number }) {
-  const max = Math.max(...data, 1);
+/* ── Recharts custom tooltip ── */
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="flex items-end gap-[3px]" style={{ height }}>
-      {data.map((v, i) => (
-        <motion.div key={i} className="flex-1 rounded-t-sm" style={{
-          background: `linear-gradient(180deg, hsla(211,96%,60%,.5) 0%, hsla(211,96%,60%,.15) 100%)`,
-          boxShadow: "0 0 6px -2px hsla(211,96%,60%,.2)",
-          minWidth: 4,
-        }}
-          initial={{ height: 0 }}
-          whileInView={{ height: `${(v / max) * 100}%` }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: i * 0.04, ease: "easeOut" }}
-        />
+    <div className="rounded-lg px-3 py-2" style={{
+      background: "hsla(222,30%,8%,.95)", border: "1px solid hsla(211,96%,60%,.15)",
+      boxShadow: "0 8px 32px -8px hsla(0,0%,0%,.6)",
+    }}>
+      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "hsla(211,96%,65%,.6)" }}>{label}</p>
+      {payload.map((p: any, i: number) => (
+        <p key={i} className="text-xs font-semibold" style={{ color: "hsl(211 96% 72%)" }}>
+          {p.name}: {typeof p.value === "number" && p.name?.includes("$") ? `$${p.value.toLocaleString()}` : p.value}
+        </p>
       ))}
     </div>
   );
@@ -284,7 +285,6 @@ function PriorityInsights({ metrics, isNewClient }: { metrics: any; isNewClient:
 
   if (insights.length === 0) return null;
 
-  // All blue-family styling
   const typeStyles = {
     alert:       { border: "hsla(211,96%,55%,.25)", glow: "hsla(211,96%,55%,.08)", iconColor: "hsl(211 96% 65%)" },
     opportunity: { border: "hsla(197,88%,55%,.2)",  glow: "hsla(197,88%,55%,.07)", iconColor: "hsl(197 88% 60%)" },
@@ -363,10 +363,52 @@ function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; des
   );
 }
 
-/* ── Fake sparkline data generators ── */
+/* ── Generate chart data ── */
+function generateChartData(base: number, len = 7): { name: string; value: number }[] {
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return Array.from({ length: len }, (_, i) => ({
+    name: labels[i] || `P${i + 1}`,
+    value: Math.max(0, Math.round(base * (0.5 + Math.random() * 1.0))),
+  }));
+}
+
+function generateBarData(base: number, len = 12): { name: string; value: number }[] {
+  return Array.from({ length: len }, (_, i) => ({
+    name: `W${i + 1}`,
+    value: Math.max(0, Math.round(base * (0.3 + Math.random() * 1.2))),
+  }));
+}
+
 function fakeSparkline(base: number, len = 7): number[] {
   if (base === 0) return Array.from({ length: len }, () => 0);
   return Array.from({ length: len }, () => Math.max(0, base * (0.6 + Math.random() * 0.8)));
+}
+
+/* ── Circular Progress ── */
+function CircularProgress({ value, size = 56, stroke = 4 }: { value: number; size?: number; stroke?: number }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (value / 100) * circ;
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none"
+        stroke="hsla(211,96%,60%,.08)" strokeWidth={stroke} />
+      <motion.circle cx={size / 2} cy={size / 2} r={r} fill="none"
+        stroke="url(#circGrad)" strokeWidth={stroke} strokeLinecap="round"
+        strokeDasharray={circ}
+        initial={{ strokeDashoffset: circ }}
+        whileInView={{ strokeDashoffset: offset }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
+      />
+      <defs>
+        <linearGradient id="circGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="hsl(211 96% 62%)" />
+          <stop offset="100%" stopColor="hsl(197 88% 58%)" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
 }
 
 export default function Dashboard() {
@@ -440,12 +482,13 @@ export default function Dashboard() {
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
   const displayName = branding.company_name || activeClientName || "your business";
 
-  // Sparkline data (derived from real metrics for visual context)
   const sparkPipeline = useMemo(() => fakeSparkline(metrics.pipelineValue), [metrics.pipelineValue]);
   const sparkWon = useMemo(() => fakeSparkline(metrics.wonValue), [metrics.wonValue]);
   const sparkContacts = useMemo(() => fakeSparkline(metrics.contacts), [metrics.contacts]);
   const sparkEvents = useMemo(() => fakeSparkline(metrics.upcomingEvents), [metrics.upcomingEvents]);
-  const barData = useMemo(() => fakeSparkline(Math.max(metrics.contacts, metrics.openDeals, 3), 12), [metrics.contacts, metrics.openDeals]);
+
+  const areaChartData = useMemo(() => generateChartData(Math.max(metrics.pipelineValue / 1000, metrics.contacts, 5)), [metrics.pipelineValue, metrics.contacts]);
+  const barChartData = useMemo(() => generateBarData(Math.max(metrics.contacts, metrics.openDeals, 3)), [metrics.contacts, metrics.openDeals]);
 
   const quickActions = [
     { label: "New Contact", icon: UserPlus, to: "/crm" },
@@ -481,15 +524,16 @@ export default function Dashboard() {
 
   return (
     <div className="dash-dark -m-4 sm:-m-6 lg:-m-10">
-      <div className="dash-bg-main p-4 sm:p-6 lg:p-10 min-h-screen">
+      <div className="dash-bg-main p-5 sm:p-8 lg:p-12 min-h-screen">
         {/* ═══ Atmospheric layers ═══ */}
         <div className="dash-neural-grid" />
         <LightningStreaks />
         <div className="dash-scanline" />
         <div className="dash-orb dash-orb--primary" />
         <div className="dash-orb dash-orb--cyan" />
+        <div className="dash-orb dash-orb--secondary" />
 
-        <div className="relative z-10 space-y-10">
+        <div className="relative z-10 space-y-12">
 
           {/* ══════ HERO ══════ */}
           <motion.div initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }}
@@ -521,13 +565,13 @@ export default function Dashboard() {
               <p className="text-sm font-semibold mb-1" style={{ color: "hsla(211,96%,68%,.45)" }}>{getGreeting()}</p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold"
                 style={{
-                  background: "linear-gradient(140deg, hsl(210 40% 94%) 0%, hsl(211 96% 72%) 40%, hsl(197 88% 62%) 80%)",
+                  background: "linear-gradient(140deg, hsl(210 40% 92%) 0%, hsl(211 96% 72%) 40%, hsl(197 88% 62%) 80%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                   letterSpacing: "-0.035em", lineHeight: "1.1",
                 }}>
                 {displayName}
               </h1>
-              <p className="text-xs sm:text-sm mt-2 max-w-lg leading-relaxed" style={{ color: "hsla(210,40%,65%,.45)" }}>
+              <p className="text-xs sm:text-sm mt-2.5 max-w-lg leading-relaxed" style={{ color: "hsla(210,40%,65%,.45)" }}>
                 {getSystemStatus(isLive, hasData)}
               </p>
             </div>
@@ -540,14 +584,15 @@ export default function Dashboard() {
 
           {/* ══════ SETUP BANNER ══════ */}
           {isNewClient && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-5">
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <div className="flex items-center gap-3">
-                  <motion.div className="h-11 w-11 rounded-xl flex items-center justify-center"
-                    style={{ background: "hsla(211,96%,60%,.08)", border: "1px solid hsla(211,96%,60%,.1)" }}
-                    animate={{ rotate: [0, 3, -3, 0], scale: [1, 1.03, 1] }} transition={{ duration: 5, repeat: Infinity }}>
-                    <Rocket className="h-5 w-5" style={{ color: "hsl(211 96% 68%)" }} />
-                  </motion.div>
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-6">
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <CircularProgress value={setupPct} size={52} stroke={3} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Rocket className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} />
+                    </div>
+                  </div>
                   <div>
                     <p className="text-sm font-bold" style={{ color: "hsl(210 40% 88%)" }}>Complete your setup</p>
                     <p className="text-xs" style={{ color: "hsla(210,40%,65%,.5)" }}>Finish onboarding to unlock your full growth toolkit</p>
@@ -576,7 +621,7 @@ export default function Dashboard() {
               </span>
             } />
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <RevenueGlowCard label="Pipeline Value" value={metrics.pipelineValue} sub={`${metrics.openDeals} open deal${metrics.openDeals !== 1 ? "s" : ""}`} icon={TrendingUp} intensity="high" to="/pipeline" sparkData={sparkPipeline} />
               <RevenueGlowCard label="Revenue Won" value={metrics.wonValue} sub="Closed deals" icon={DollarSign} intensity="med" to="/pipeline" sparkData={sparkWon} />
               <RevenueGlowCard label="Revenue Influenced" value={metrics.pipelineValue + metrics.wonValue} sub="Total tracked value" icon={LineChart} intensity="low" />
@@ -587,7 +632,7 @@ export default function Dashboard() {
           <div>
             <SectionHeader icon={Cpu} label="System Metrics" extra={<AIIndicator />} />
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" sparkData={sparkContacts} />
               <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} accent to="/calendar" sparkData={sparkEvents} />
               <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
@@ -595,45 +640,75 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          {/* ══════ GRAPHS SECTION ══════ */}
+          {/* ══════ GRAPHS SECTION (Recharts) ══════ */}
           <div>
             <SectionHeader icon={BarChart3} label="Performance Overview" extra={<Waveform />} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Line chart card */}
-              <div className="dash-card p-6">
-                <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Area chart — Growth Trend */}
+              <motion.div className="dash-card p-6" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                <div className="flex items-center justify-between mb-5 relative z-10">
                   <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Growth Trend</h3>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>7 periods</span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>7 days</span>
                 </div>
-                <div className="relative z-10">
+                <div className="relative z-10" style={{ height: 160 }}>
                   {metrics.contacts === 0 && metrics.openDeals === 0 ? (
                     <EmptyBlock icon={LineChart} title="Trends loading" desc="Data will populate as your system tracks activity." />
                   ) : (
-                    <div className="pt-2">
-                      <Sparkline data={sparkPipeline} color="hsl(211 96% 62%)" width={320} height={80} />
-                      <div className="flex items-center gap-3 mt-3">
-                        <div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(211 96% 62%)" }} />
-                        <span className="text-[10px]" style={{ color: "hsla(210,40%,65%,.5)" }}>Pipeline value over time</span>
-                      </div>
-                    </div>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={areaChartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                        <defs>
+                          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
+                        <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Area type="monotone" dataKey="value" name="Growth"
+                          stroke="hsl(211 96% 62%)" strokeWidth={2}
+                          fill="url(#areaGrad)"
+                          dot={false}
+                          activeDot={{ r: 4, fill: "hsl(211 96% 65%)", stroke: "hsla(211,96%,60%,.3)", strokeWidth: 6 }}
+                          style={{ filter: "drop-shadow(0 0 6px hsla(211,96%,60%,.3))" }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Bar chart card */}
-              <div className="dash-card p-6">
-                <div className="flex items-center justify-between mb-4 relative z-10">
+              {/* Bar chart — Activity Volume */}
+              <motion.div className="dash-card p-6" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                <div className="flex items-center justify-between mb-5 relative z-10">
                   <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Activity Volume</h3>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>12 periods</span>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>12 weeks</span>
                 </div>
-                <div className="relative z-10">
+                <div className="relative z-10" style={{ height: 160 }}>
                   {metrics.contacts === 0 && activities.length === 0 ? (
                     <EmptyBlock icon={BarChart3} title="Activity ready" desc="Volume data will appear as your system captures events." />
                   ) : (
-                    <MiniBarChart data={barData} height={80} />
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barChartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                        <defs>
+                          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.6} />
+                            <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0.15} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
+                        <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar dataKey="value" name="Activity" fill="url(#barGrad)" radius={[4, 4, 0, 0]}
+                          style={{ filter: "drop-shadow(0 0 4px hsla(211,96%,60%,.15))" }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
 
@@ -789,7 +864,7 @@ export default function Dashboard() {
 
           {/* ══════ ONBOARDING PROGRESS ══════ */}
           {isLive && setupPct < 100 && (
-            <div className="dash-card p-4">
+            <div className="dash-card p-5">
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <p className="dash-section-label">Onboarding Progress</p>
                 <span className="text-sm font-bold tabular-nums" style={{ color: "hsl(211 96% 68%)" }}>{setupPct}%</span>
@@ -811,7 +886,7 @@ export default function Dashboard() {
           </div>
 
           {/* Powered by */}
-          <div className="text-center py-4 text-[10px] tracking-widest" style={{ color: "hsla(211,96%,55%,.2)" }}>
+          <div className="text-center py-6 text-[10px] tracking-widest" style={{ color: "hsla(211,96%,55%,.2)" }}>
             Powered by <span className="font-semibold" style={{ color: "hsla(211,96%,60%,.28)" }}>NewLight</span>
           </div>
         </div>
