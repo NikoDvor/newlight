@@ -208,8 +208,8 @@ export function AppLayout() {
               </motion.div>
             </AnimatePresence>
             {/* Powered by footer */}
-            <div className="text-center py-4 text-[10px] text-muted-foreground/40 tracking-wide">
-              Powered by <span className="font-semibold">NewLight</span>
+            <div className="flex items-center justify-center gap-1.5 py-4 opacity-30 hover:opacity-50 transition-opacity">
+              <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: "hsla(210,40%,70%,.5)" }}>Powered by NewLight</span>
             </div>
           </main>
         </div>
