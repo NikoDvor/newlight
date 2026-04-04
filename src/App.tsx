@@ -85,6 +85,7 @@ import AdminMeetingDetail from "./pages/admin/AdminMeetingDetail";
 import AdminProposalDetail from "./pages/admin/AdminProposalDetail";
 import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
+import AdminProposalWizard from "./pages/admin/AdminProposalWizard";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
@@ -226,6 +227,7 @@ const App = () => {
                 <Route path="proposals/:proposalId" element={<AdminProposalDetail />} />
                 <Route path="proposal-templates" element={<AdminProposalTemplates />} />
                 <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
+                <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="executive" element={<AdminExecutiveDashboard />} />
