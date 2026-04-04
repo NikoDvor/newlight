@@ -6,24 +6,24 @@
 
 @layer base {
   :root {
-    --background: 210 45% 97%;
-    --foreground: 218 28% 14%;
-    --card: 210 50% 99%;
-    --card-foreground: 218 28% 14%;
-    --popover: 210 50% 99%;
-    --popover-foreground: 218 28% 14%;
-    --primary: 211 96% 56%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 94%;
-    --secondary-foreground: 218 28% 16%;
-    --muted: 210 35% 93%;
-    --muted-foreground: 215 16% 50%;
+    --background: 222 38% 5%;
+    --foreground: 210 40% 90%;
+    --card: 222 30% 9%;
+    --card-foreground: 210 40% 90%;
+    --popover: 222 30% 9%;
+    --popover-foreground: 210 40% 90%;
+    --primary: 211 96% 60%;
+    --primary-foreground: 222 30% 6%;
+    --secondary: 222 25% 14%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 222 25% 14%;
+    --muted-foreground: 215 18% 55%;
     --accent: 197 88% 52%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 215 75% 48%;
+    --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 28% 89%;
-    --input: 210 28% 89%;
+    --border: 222 20% 16%;
+    --input: 222 20% 16%;
     --ring: 211 96% 62%;
     --radius: 0.75rem;
 
@@ -36,20 +36,20 @@
     --nl-neon: 211 100% 66%;
     --nl-soft: 210 55% 86%;
 
-    --sidebar-background: 215 65% 48%;
+    --sidebar-background: 220 40% 6%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 215 65% 48%;
     --sidebar-accent: 215 60% 55%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 55% 55%;
+    --sidebar-border: 222 20% 14%;
     --sidebar-ring: 211 96% 70%;
-    --sidebar-muted: 210 40% 80%;
+    --sidebar-muted: 210 30% 55%;
 
-    --shadow-card: 0 1px 4px 0 hsla(215,50%,35%,.05), 0 0 0 1px hsla(215,50%,50%,.05);
-    --shadow-card-hover: 0 14px 40px -8px hsla(211,96%,56%,.16), 0 0 0 1px hsla(211,96%,56%,.10);
-    --shadow-glow: 0 0 28px -6px hsla(211,96%,60%,.22);
-    --shadow-glow-strong: 0 0 48px -6px hsla(211,96%,60%,.34);
+    --shadow-card: 0 2px 8px -2px hsla(0,0%,0%,.3), 0 0 0 1px hsla(211,96%,60%,.04);
+    --shadow-card-hover: 0 16px 48px -12px hsla(211,96%,56%,.16), 0 0 0 1px hsla(211,96%,56%,.12);
+    --shadow-glow: 0 0 28px -6px hsla(211,96%,60%,.18);
+    --shadow-glow-strong: 0 0 48px -6px hsla(211,96%,60%,.28);
 
     --chart-1: 211 96% 56%;
     --chart-2: 197 92% 68%;
