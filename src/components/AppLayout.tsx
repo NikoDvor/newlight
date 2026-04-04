@@ -192,9 +192,8 @@ export function AppLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto nl-animated-bg">
-            <div className="nl-grid-overlay" />
-            <Particles />
+          <main className="flex-1 overflow-auto nl-dark-bg">
+            <GlobalAtmosphere />
             <CursorGlow />
             <AnimatePresence mode="wait">
               <motion.div
