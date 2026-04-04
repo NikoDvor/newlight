@@ -173,10 +173,10 @@ export function AppLayout() {
               {user && (
                 <button
                   onClick={signOut}
-                  className="p-2 rounded-xl transition-all duration-200 hover:bg-destructive/10 group"
+                  className="p-2 rounded-xl transition-all duration-200 hover:bg-red-500/10 group"
                   title="Sign out"
                 >
-                  <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-destructive transition-colors" />
+                  <LogOut className="h-4 w-4 text-white/50 group-hover:text-red-400 transition-colors" />
                 </button>
               )}
               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{
