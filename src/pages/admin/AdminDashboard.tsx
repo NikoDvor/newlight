@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink } from "lucide-react";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { triggerIntroReplay } from "@/App";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientCount, setClientCount] = useState(0);
   const [fixCount, setFixCount] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
@@ -24,10 +26,18 @@ export default function AdminDashboard() {
   const [pipelineStages, setPipelineStages] = useState<Record<string, number>>({});
   const [templateCount, setTemplateCount] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
+  const [recentClients, setRecentClients] = useState<{ id: string; business_name: string; status: string }[]>([]);
+
+  const enterClientView = (clientId: string) => {
+    setViewMode("workspace");
+    setActiveClientId(clientId);
+    navigate("/dashboard");
+  };
 
   useEffect(() => {
     Promise.all([
       supabase.from("clients").select("id", { count: "exact", head: true }).then(({ count }) => setClientCount(count ?? 0)),
+      supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
       supabase.from("prospects").select("id", { count: "exact", head: true }).then(({ count }) => setProspectCount(count ?? 0)),
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "build_in_progress").then(({ count }) => setDemoInProgress(count ?? 0)),
@@ -101,6 +111,46 @@ export default function AdminDashboard() {
             <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{s.value}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Client Workspaces — Quick Access */}
+      <div className="card-admin overflow-hidden">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold text-white/80">Client Workspaces</CardTitle>
+          <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/clients")}>
+            View All <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {recentClients.length === 0 ? (
+            <p className="text-xs text-white/30 py-4 text-center">No clients yet</p>
+          ) : recentClients.map((c, i) => (
+            <motion.div
+              key={c.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.06] transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0" />
+                <span className="text-sm text-white/80 truncate">{c.business_name}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                  c.status === "active" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-white/5 text-white/30"
+                }`}>{c.status}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => enterClientView(c.id)}
+                className="text-[hsl(var(--nl-sky))] hover:text-white hover:bg-[hsla(211,96%,60%,.15)] text-xs gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Enter</span>
+              </Button>
+            </motion.div>
+          ))}
+        </CardContent>
       </div>
 
       {/* Automation Health */}

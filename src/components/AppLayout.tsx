@@ -3,8 +3,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { GlobalSearch } from "@/components/GlobalSearch";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
-import { Bell, Building2, LogOut } from "lucide-react";
+import { Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
+import { Bell, Building2, LogOut, Shield, ArrowLeft } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -59,7 +59,8 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, setViewMode, setActiveClientId } = useWorkspace();
+  const navigate = useNavigate();
   useClientManifest();
 
   // Apply dynamic branding CSS variables when a client workspace is active
@@ -142,6 +143,20 @@ export function AppLayout() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {isAdmin && activeClientId && (
+                <button
+                  onClick={() => {
+                    setViewMode("admin");
+                    setActiveClientId(null);
+                    navigate("/admin");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-primary/10 border border-primary/15"
+                  title="Back to Admin Portal"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 text-primary/70" />
+                  <span className="hidden sm:inline text-primary/70">Admin</span>
+                </button>
+              )}
               <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-primary/5 hover:shadow-[0_0_14px_-3px_hsla(211,96%,60%,.22)] relative group">
