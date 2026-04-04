@@ -6,24 +6,23 @@ import {
   Activity, TrendingUp, DollarSign, CheckSquare,
   Target, Users, Star, ArrowUpRight, Calendar, Upload,
   Plug, Rocket, FileText, Clock, Briefcase,
-  Plus, UserPlus, Send, BarChart3, Zap
+  Plus, UserPlus, Send, BarChart3, Zap, Cpu, Radio
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card } from "@/components/ui/card";
 import { useCountUp } from "@/hooks/useCountUp";
 
 /* ── animation presets ── */
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
 const fadeUp = {
-  hidden: { opacity: 0, y: 18, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as any } },
+  hidden: { opacity: 0, y: 22, scale: 0.96 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
 };
 
-/* ── Count-up KPI Card ── */
+/* ── Futuristic KPI Card ── */
 function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency = false }: {
   label: string; value: number; sub: string; icon: any; accent?: boolean; to?: string; isCurrency?: boolean;
 }) {
@@ -31,47 +30,64 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency
   const display = isCurrency ? `$${count.toLocaleString()}` : String(count);
 
   const inner = (
-    <motion.div variants={fadeUp}>
-      <Card className={`card-glass relative overflow-hidden p-5 group ${accent ? "border-primary/20 glow-pulse" : ""}`}>
-        {/* Hover glow overlay */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-          style={{ background: "radial-gradient(circle at 70% 20%, hsla(211,96%,60%,.06), transparent 60%)" }} />
+    <motion.div variants={fadeUp} className="h-full">
+      <div className={`dash-kpi h-full group relative ${accent ? "glow-pulse" : ""}`}>
+        {/* Corner accent */}
+        <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ background: "radial-gradient(circle at 100% 0%, hsla(211,96%,60%,.12), transparent 70%)" }} />
         <div className="flex items-start justify-between relative z-10">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">{display}</p>
-            <p className="text-xs text-muted-foreground">{sub}</p>
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.6)" }}>{label}</p>
+            <p className="text-2xl font-bold tracking-tight tabular-nums"
+              style={{
+                background: accent
+                  ? "linear-gradient(135deg, hsl(187 80% 55%), hsl(211 96% 68%))"
+                  : "linear-gradient(135deg, hsl(210 50% 92%), hsl(210 50% 78%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>{display}</p>
+            <p className="text-[11px]" style={{ color: "hsla(215,18%,55%,.8)" }}>{sub}</p>
           </div>
           <motion.div
             className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg, hsla(211,96%,56%,.12), hsla(197,92%,68%,.06))", boxShadow: "0 0 20px -6px hsla(211,96%,60%,.14)" }}
+            style={{
+              background: "linear-gradient(135deg, hsla(211,96%,60%,.1), hsla(187,80%,55%,.05))",
+              border: "1px solid hsla(211,96%,60%,.1)",
+              boxShadow: "0 0 20px -8px hsla(211,96%,60%,.15)",
+            }}
             whileHover={{ scale: 1.15, rotate: 4 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Icon className="h-[18px] w-[18px] text-primary" />
+            <Icon className="h-[18px] w-[18px]" style={{ color: "hsl(211 96% 68%)" }} />
           </motion.div>
         </div>
-        {to && <ArrowUpRight className="absolute top-3 right-3 h-3 w-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />}
-      </Card>
+        {to && <ArrowUpRight className="absolute top-3 right-3 h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" style={{ color: "hsl(211 96% 68%)" }} />}
+      </div>
     </motion.div>
   );
-  return to ? <Link to={to}>{inner}</Link> : inner;
+  return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
 }
 
-/* ── Empty state helper ── */
+/* ── Futuristic Empty state ── */
 function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
     <div className="py-10 text-center">
-      <motion.div
-        className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-        style={{ background: "hsla(211,96%,56%,.08)" }}
-        animate={{ y: [0, -4, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <Icon className="h-5 w-5 text-primary" />
-      </motion.div>
-      <p className="text-sm font-semibold text-foreground mb-1">{title}</p>
-      <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">{desc}</p>
+      <div className="dash-empty-icon mx-auto mb-4">
+        <motion.div
+          className="h-14 w-14 rounded-2xl flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, hsla(211,96%,60%,.1), hsla(187,80%,55%,.05))",
+            border: "1px solid hsla(211,96%,60%,.1)",
+          }}
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Icon className="h-6 w-6" style={{ color: "hsl(211 96% 68%)" }} />
+        </motion.div>
+      </div>
+      <p className="text-sm font-semibold mb-1" style={{ color: "hsl(210 50% 85%)" }}>{title}</p>
+      <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: "hsla(215,18%,55%,.7)" }}>{desc}</p>
     </div>
   );
 }
@@ -155,24 +171,28 @@ export default function Dashboard() {
     { label: "Automations", icon: Zap, to: "/automations" },
   ];
 
-  /* Skeleton loader */
+  /* Skeleton loader — dark themed */
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <div className="skeleton-loading h-8 w-64" />
-          <div className="skeleton-loading h-4 w-48" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton-loading h-28 rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3 skeleton-loading h-64 rounded-2xl" />
-          <div className="lg:col-span-2 space-y-6">
-            <div className="skeleton-loading h-48 rounded-2xl" />
-            <div className="skeleton-loading h-36 rounded-2xl" />
+      <div className="dash-dark">
+        <div className="dash-bg-main p-4 sm:p-6 lg:p-10 min-h-screen space-y-8">
+          <div className="dash-neural-grid" />
+          <div className="dash-orb dash-orb--primary" />
+          <div className="space-y-2 relative z-10">
+            <div className="skeleton-loading h-8 w-64" />
+            <div className="skeleton-loading h-4 w-48" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 relative z-10">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="skeleton-loading h-28 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 relative z-10">
+            <div className="lg:col-span-3 skeleton-loading h-64 rounded-2xl" />
+            <div className="lg:col-span-2 space-y-6">
+              <div className="skeleton-loading h-48 rounded-2xl" />
+              <div className="skeleton-loading h-36 rounded-2xl" />
+            </div>
           </div>
         </div>
       </div>
@@ -180,242 +200,330 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* ── Header ── */}
-      <PageHeader
-        title={branding.welcome_message || (branding.company_name ? `Welcome back, ${branding.company_name}` : "Command Center")}
-        description="Your client acquisition and onboarding hub"
-      />
+    <div className="dash-dark -m-4 sm:-m-6 lg:-m-10">
+      <div className="dash-bg-main p-4 sm:p-6 lg:p-10 min-h-screen">
+        {/* Atmospheric layers */}
+        <div className="dash-neural-grid" />
+        <div className="dash-scanline" />
+        <div className="dash-orb dash-orb--primary" />
+        <div className="dash-orb dash-orb--cyan" />
+        <div className="dash-orb dash-orb--violet" />
 
-      {/* ── Live banner ── */}
-      {isLive && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-4 rounded-2xl border"
-          style={{ borderColor: "hsla(152,60%,44%,.18)", background: "hsla(152,60%,44%,.04)" }}>
-          <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsla(152,60%,44%,.12)" }}>
-            <CheckSquare className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-foreground">Workspace is live</p>
-            <p className="text-xs text-muted-foreground">All systems operational — manage everything from here</p>
-          </div>
-        </motion.div>
-      )}
+        <div className="relative z-10 space-y-8">
 
-      {/* ── Setup banner (new clients) ── */}
-      {isNewClient && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="p-5 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.05] to-transparent">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.1)" }}>
-                <Rocket className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">Complete your setup</p>
-                <p className="text-xs text-muted-foreground">Finish onboarding to unlock your full growth toolkit</p>
-              </div>
-            </div>
-            <span className="text-2xl font-bold text-primary tabular-nums">{setupPct}%</span>
-          </div>
-          <Progress value={setupPct} className="h-2 mb-4" />
-          <div className="flex flex-wrap gap-2">
-            <Link to="/setup-center"><Button size="sm" className="btn-gradient h-8 text-[11px]"><Upload className="h-3 w-3 mr-1" /> Complete Setup</Button></Link>
-            <Link to="/integrations"><Button size="sm" variant="outline" className="h-8 text-[11px]"><Plug className="h-3 w-3 mr-1" /> Integrations ({integrationStats.connected}/{integrationStats.total})</Button></Link>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ═══════════ KPI CARDS ═══════════ */}
-      <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" />
-        <KpiCard label="Open Deals" value={metrics.openDeals} sub={hasData ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : "No deals yet"} icon={Briefcase} accent to="/pipeline" />
-        <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} to="/calendar" />
-        <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
-        <KpiCard label="Revenue Won" value={metrics.wonValue} isCurrency sub="Closed deals" icon={DollarSign} accent={metrics.wonValue > 0} to="/pipeline" />
-        <KpiCard label="Follow-Ups" value={metrics.overdueFollowUps} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
-      </motion.div>
-
-      {/* ═══════════ ONBOARDING PROGRESS ═══════════ */}
-      {isLive && setupPct < 100 && (
-        <Card className="card-glass p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Onboarding Progress</p>
-            <span className="text-sm font-bold text-primary tabular-nums">{setupPct}%</span>
-          </div>
-          <Progress value={setupPct} className="h-1.5" />
-        </Card>
-      )}
-
-      {/* ═══════════ QUICK ACTIONS ═══════════ */}
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-          {quickActions.map((a, i) => (
-            <Link key={a.label} to={a.to}>
+          {/* ══════ HERO HEADER ══════ */}
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Status badge */}
+            <div className="flex items-center gap-2 mb-3">
               <motion.div
-                className="card-glass flex flex-col items-center gap-2 p-4 group cursor-pointer"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04, duration: 0.4 }}
-                whileHover={{ y: -4, boxShadow: "0 16px 48px -12px hsla(211,96%,56%,.18)" }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em]"
+                style={{
+                  color: isLive ? "hsl(152 60% 60%)" : "hsl(211 96% 68%)",
+                  background: isLive ? "hsla(152,60%,44%,.1)" : "hsla(211,96%,60%,.08)",
+                  border: `1px solid ${isLive ? "hsla(152,60%,44%,.2)" : "hsla(211,96%,60%,.15)"}`,
+                }}
+                animate={{ boxShadow: [
+                  `0 0 12px -4px ${isLive ? "hsla(152,60%,44%,.2)" : "hsla(211,96%,60%,.15)"}`,
+                  `0 0 20px -4px ${isLive ? "hsla(152,60%,44%,.35)" : "hsla(211,96%,60%,.3)"}`,
+                  `0 0 12px -4px ${isLive ? "hsla(152,60%,44%,.2)" : "hsla(211,96%,60%,.15)"}`,
+                ]}}
+                transition={{ duration: 3, repeat: Infinity }}
               >
-                <motion.div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center"
-                  style={{ background: "hsla(211,96%,56%,.08)" }}
-                  whileHover={{ scale: 1.15, rotate: 6 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <a.icon className="h-4 w-4 text-primary" />
-                </motion.div>
-                <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
+                <Radio className="h-3 w-3" />
+                {isLive ? "System Online" : "Setting Up"}
               </motion.div>
-            </Link>
-          ))}
-        </div>
-      </div>
+            </div>
 
-      {/* ═══════════ MAIN CONTENT GRID ═══════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Activity Feed */}
-        <Card className="card-glass lg:col-span-3 p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" /> Recent Activity
-            </h3>
-            {activities.length > 0 && (
-              <Link to="/live-activity" className="text-[11px] font-medium text-primary flex items-center gap-1 hover:underline">
-                View all <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            )}
-          </div>
-          {activities.length === 0 ? (
-            <EmptyBlock icon={Activity} title="No activity yet" desc="Activity will appear as you add contacts, book appointments, and complete tasks." />
-          ) : (
-            <div className="space-y-1">
-              {activities.map((a, i) => (
-                <motion.div key={a.id || i}
-                  className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0"
-                  initial={{ opacity: 0, x: -8 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05, duration: 0.4 }}>
-                  <div className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Activity className="h-3.5 w-3.5 text-primary" />
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight"
+              style={{
+                background: "linear-gradient(135deg, hsl(210 50% 95%), hsl(211 96% 72%), hsl(187 80% 60%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.03em",
+              }}>
+              {branding.welcome_message || (branding.company_name ? `Welcome back, ${branding.company_name}` : "Command Center")}
+            </h1>
+            <p className="text-sm mt-1.5" style={{ color: "hsla(215,18%,55%,.7)" }}>
+              Your client acquisition and onboarding hub
+            </p>
+
+            {/* Accent line */}
+            <div className="dash-hero-bar mt-4 w-full max-w-md" />
+          </motion.div>
+
+          {/* ══════ SETUP BANNER (new clients) ══════ */}
+          {isNewClient && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="dash-card p-5">
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "hsla(211,96%,60%,.1)", border: "1px solid hsla(211,96%,60%,.12)" }}
+                    animate={{ rotate: [0, 4, -4, 0] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  >
+                    <Rocket className="h-5 w-5" style={{ color: "hsl(211 96% 68%)" }} />
+                  </motion.div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: "hsl(210 50% 90%)" }}>Complete your setup</p>
+                    <p className="text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>Finish onboarding to unlock your full growth toolkit</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground leading-snug">{a.activity_note || a.activity_type}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{new Date(a.created_at).toLocaleString()}</p>
-                  </div>
-                </motion.div>
-              ))}
+                </div>
+                <span className="text-2xl font-bold tabular-nums"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(211 96% 68%), hsl(187 80% 55%))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}>{setupPct}%</span>
+              </div>
+              <Progress value={setupPct} className="h-2 mb-4" />
+              <div className="flex flex-wrap gap-2 relative z-10">
+                <Link to="/setup-center"><Button size="sm" className="btn-gradient h-8 text-[11px]"><Upload className="h-3 w-3 mr-1" /> Complete Setup</Button></Link>
+                <Link to="/integrations"><Button size="sm" variant="outline" className="h-8 text-[11px] border-[hsla(211,96%,60%,.15)] text-[hsl(211,96%,68%)] hover:bg-[hsla(211,96%,60%,.08)]"><Plug className="h-3 w-3 mr-1" /> Integrations ({integrationStats.connected}/{integrationStats.total})</Button></Link>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ══════ LIVE BANNER ══════ */}
+          {isLive && !isNewClient && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="dash-card p-4">
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "hsla(152,60%,44%,.1)", border: "1px solid hsla(152,60%,44%,.15)" }}>
+                  <CheckSquare className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "hsl(210 50% 90%)" }}>Workspace is live</p>
+                  <p className="text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>All systems operational — manage everything from here</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ══════ KPI CARDS ══════ */}
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" />
+            <KpiCard label="Open Deals" value={metrics.openDeals} sub={hasData ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : "No deals yet"} icon={Briefcase} accent to="/pipeline" />
+            <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} to="/calendar" />
+            <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
+            <KpiCard label="Revenue Won" value={metrics.wonValue} isCurrency sub="Closed deals" icon={DollarSign} accent={metrics.wonValue > 0} to="/pipeline" />
+            <KpiCard label="Follow-Ups" value={metrics.overdueFollowUps} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
+          </motion.div>
+
+          {/* ══════ ONBOARDING PROGRESS BAR ══════ */}
+          {isLive && setupPct < 100 && (
+            <div className="dash-card p-4">
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.6)" }}>Onboarding Progress</p>
+                <span className="text-sm font-bold tabular-nums" style={{ color: "hsl(211 96% 68%)" }}>{setupPct}%</span>
+              </div>
+              <Progress value={setupPct} className="h-1.5 relative z-10" />
             </div>
           )}
-        </Card>
 
-        {/* Right column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Pipeline snapshot */}
-          <Card className="card-glass p-6">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-              <Target className="h-4 w-4 text-primary" /> Pipeline Snapshot
-            </h3>
-            {metrics.openDeals === 0 && metrics.wonValue === 0 ? (
-              <EmptyBlock icon={Briefcase} title="No deals yet" desc="Create your first deal to start tracking revenue opportunities." />
-            ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Open Pipeline</p>
-                    <p className="text-xl font-bold text-foreground">${metrics.pipelineValue.toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Closed Won</p>
-                    <p className="text-xl font-bold" style={{ color: "hsl(152 60% 44%)" }}>${metrics.wonValue.toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="h-2 rounded-full bg-secondary overflow-hidden flex">
-                  {metrics.pipelineValue + metrics.wonValue > 0 && (
-                    <>
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: "hsl(152 60% 44%)" }}
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${(metrics.wonValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                      />
-                      <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${(metrics.pipelineValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-                      />
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  <span>{metrics.openDeals} open deals</span>
-                  <span>·</span>
-                  <span>{metrics.pendingProposals} proposals pending</span>
-                </div>
+          {/* ══════ QUICK ACTIONS ══════ */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.6)" }}>Quick Actions</h2>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {quickActions.map((a, i) => (
+                <Link key={a.label} to={a.to}>
+                  <motion.div
+                    className="dash-action group"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.04, duration: 0.4 }}
+                  >
+                    <motion.div
+                      className="h-9 w-9 rounded-lg flex items-center justify-center"
+                      style={{
+                        background: "linear-gradient(135deg, hsla(211,96%,60%,.08), hsla(187,80%,55%,.04))",
+                        border: "1px solid hsla(211,96%,60%,.08)",
+                      }}
+                      whileHover={{ scale: 1.12, rotate: 6 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <a.icon className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} />
+                    </motion.div>
+                    <span className="text-[11px] font-semibold text-center leading-tight" style={{ color: "hsl(210 50% 80%)" }}>{a.label}</span>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* ══════ MAIN CONTENT GRID ══════ */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {/* Activity Feed */}
+            <div className="dash-card lg:col-span-3 p-6">
+              <div className="flex items-center justify-between mb-5 relative z-10">
+                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "hsl(210 50% 88%)" }}>
+                  <Activity className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} /> Recent Activity
+                </h3>
+                {activities.length > 0 && (
+                  <Link to="/live-activity" className="text-[11px] font-medium flex items-center gap-1 hover:underline" style={{ color: "hsl(211 96% 68%)" }}>
+                    View all <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                )}
               </div>
-            )}
-          </Card>
-
-          {/* Reputation */}
-          <Card className="card-glass p-6">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-              <Star className="h-4 w-4 text-primary" /> Reputation
-            </h3>
-            {metrics.ratingCount === 0 ? (
-              <EmptyBlock icon={Star} title="No reviews yet" desc="Send review requests to start building social proof." />
-            ) : (
-              <div className="flex items-end gap-4">
-                <div>
-                  <p className="text-4xl font-bold text-foreground">{metrics.avgRating.toFixed(1)}</p>
-                  <div className="flex gap-0.5 mt-1">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(metrics.avgRating) ? "text-amber-400 fill-amber-400" : "text-border"}`} />
+              <div className="relative z-10">
+                {activities.length === 0 ? (
+                  <EmptyBlock icon={Activity} title="No activity yet" desc="Activity will appear as you add contacts, book appointments, and complete tasks." />
+                ) : (
+                  <div className="space-y-1">
+                    {activities.map((a, i) => (
+                      <motion.div key={a.id || i}
+                        className="flex items-start gap-3 py-3 last:border-0"
+                        style={{ borderBottom: "1px solid hsla(211,40%,18%,.5)" }}
+                        initial={{ opacity: 0, x: -8 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.05, duration: 0.4 }}>
+                        <div className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: "hsla(211,96%,60%,.08)", border: "1px solid hsla(211,96%,60%,.06)" }}>
+                          <Activity className="h-3.5 w-3.5" style={{ color: "hsl(211 96% 68%)" }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-snug" style={{ color: "hsl(210 50% 85%)" }}>{a.activity_note || a.activity_type}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "hsla(215,18%,55%,.6)" }}>{new Date(a.created_at).toLocaleString()}</p>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
-                <div className="text-xs text-muted-foreground pb-1">
-                  <p>{metrics.ratingCount} ratings</p>
-                  <p>{metrics.reviewRequests} requests sent</p>
-                </div>
+                )}
               </div>
-            )}
-          </Card>
+            </div>
 
-          {/* Tasks */}
-          <Card className="card-glass p-6">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-              <CheckSquare className="h-4 w-4 text-primary" /> Open Tasks
-            </h3>
-            {metrics.openTasks === 0 ? (
-              <EmptyBlock icon={CheckSquare} title="All clear" desc="No open tasks — great work staying on top of things." />
-            ) : (
-              <div className="flex items-center gap-4">
-                <p className="text-3xl font-bold text-foreground">{metrics.openTasks}</p>
-                <div className="text-xs text-muted-foreground">
-                  <p>tasks remaining</p>
-                  <Link to="/tasks" className="text-primary font-medium hover:underline">View all →</Link>
+            {/* Right column */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Pipeline snapshot */}
+              <div className="dash-card p-6">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-4 relative z-10" style={{ color: "hsl(210 50% 88%)" }}>
+                  <Target className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} /> Pipeline Snapshot
+                </h3>
+                <div className="relative z-10">
+                  {metrics.openDeals === 0 && metrics.wonValue === 0 ? (
+                    <EmptyBlock icon={Briefcase} title="No deals yet" desc="Create your first deal to start tracking revenue opportunities." />
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>Open Pipeline</p>
+                          <p className="text-xl font-bold" style={{ color: "hsl(210 50% 90%)" }}>${metrics.pipelineValue.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>Closed Won</p>
+                          <p className="text-xl font-bold" style={{ color: "hsl(152 60% 55%)" }}>${metrics.wonValue.toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsla(222,26%,16%,.8)" }}>
+                        {metrics.pipelineValue + metrics.wonValue > 0 && (
+                          <>
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{ background: "hsl(152 60% 44%)" }}
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${(metrics.wonValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                            />
+                            <motion.div
+                              className="h-full"
+                              style={{ background: "hsl(211 96% 60%)" }}
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${(metrics.pipelineValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+                            />
+                          </>
+                        )}
+                      </div>
+                      <div className="flex gap-4 text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>
+                        <span>{metrics.openDeals} open deals</span>
+                        <span>·</span>
+                        <span>{metrics.pendingProposals} proposals pending</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </Card>
+
+              {/* Reputation */}
+              <div className="dash-card p-6">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-4 relative z-10" style={{ color: "hsl(210 50% 88%)" }}>
+                  <Star className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} /> Reputation
+                </h3>
+                <div className="relative z-10">
+                  {metrics.ratingCount === 0 ? (
+                    <EmptyBlock icon={Star} title="No reviews yet" desc="Send review requests to start building social proof." />
+                  ) : (
+                    <div className="flex items-end gap-4">
+                      <div>
+                        <p className="text-4xl font-bold" style={{ color: "hsl(210 50% 92%)" }}>{metrics.avgRating.toFixed(1)}</p>
+                        <div className="flex gap-0.5 mt-1">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} className={`h-3.5 w-3.5 ${s <= Math.round(metrics.avgRating) ? "text-amber-400 fill-amber-400" : ""}`}
+                              style={s > Math.round(metrics.avgRating) ? { color: "hsla(215,18%,30%,.5)" } : undefined} />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-xs pb-1" style={{ color: "hsla(215,18%,55%,.7)" }}>
+                        <p>{metrics.ratingCount} ratings</p>
+                        <p>{metrics.reviewRequests} requests sent</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tasks */}
+              <div className="dash-card p-6">
+                <h3 className="text-sm font-bold flex items-center gap-2 mb-4 relative z-10" style={{ color: "hsl(210 50% 88%)" }}>
+                  <CheckSquare className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} /> Open Tasks
+                </h3>
+                <div className="relative z-10">
+                  {metrics.openTasks === 0 ? (
+                    <EmptyBlock icon={CheckSquare} title="All clear" desc="No open tasks — great work staying on top of things." />
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <p className="text-3xl font-bold" style={{ color: "hsl(210 50% 92%)" }}>{metrics.openTasks}</p>
+                      <div className="text-xs" style={{ color: "hsla(215,18%,55%,.7)" }}>
+                        <p>tasks remaining</p>
+                        <Link to="/tasks" className="font-medium hover:underline" style={{ color: "hsl(211 96% 68%)" }}>View all →</Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════ SYSTEM STATUS ══════ */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,70%,.6)" }}>System Status</h2>
+            </div>
+            <SystemStatusBar />
+          </div>
+
+          {/* Powered by */}
+          <div className="text-center py-2 text-[10px] tracking-wide" style={{ color: "hsla(215,18%,50%,.3)" }}>
+            Powered by <span className="font-semibold">NewLight</span>
+          </div>
         </div>
-      </div>
-
-      {/* ═══════════ SYSTEM STATUS ═══════════ */}
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">System Status</h2>
-        <SystemStatusBar />
       </div>
     </div>
   );
