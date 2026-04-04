@@ -30,6 +30,7 @@ export default function ActivateAccount() {
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const navigate = useNavigate();
+  const { setActiveClientId, setViewMode } = useWorkspace();
 
   // Wait for Supabase to exchange the invite hash token for a session
   useEffect(() => {
