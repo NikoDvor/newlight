@@ -11,36 +11,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
-function Particles() {
-  const particles = Array.from({ length: 18 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    size: 2 + Math.random() * 3,
-    duration: 18 + Math.random() * 22,
-    delay: Math.random() * 20,
-    opacity: 0.15 + Math.random() * 0.25,
-  }));
 
-  return (
-    <div className="nl-particles">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="nl-particle"
-          style={{
-            left: p.left,
-            width: p.size,
-            height: p.size,
-            opacity: p.opacity,
-            animationDuration: `${p.duration}s`,
-            animationDelay: `${p.delay}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 function CursorGlow() {
   const ref = useRef<HTMLDivElement>(null);
@@ -109,15 +82,16 @@ export function AppLayout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
-            background: "hsla(210,50%,99%,.6)",
-            backdropFilter: "blur(24px) saturate(1.6)",
-            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+            background: "hsla(218,42%,8%,.97)",
+            backdropFilter: "blur(28px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(28px) saturate(1.6)",
             borderColor: hasCustomBranding
               ? `${branding.primary_color}18`
-              : "hsla(211,96%,60%,.06)"
+              : "hsla(211,96%,60%,.12)",
+            boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-primary transition-colors" />
+              <SidebarTrigger className="text-white/60 hover:text-white transition-colors" />
               {/* Show client branding logo or NewLight default */}
               {branding.logo_url && activeClientId ? (
                 <div className="hidden sm:flex items-center gap-2">
@@ -127,7 +101,7 @@ export function AppLayout() {
                     className="h-7 w-7 rounded-lg object-contain"
                   />
                   {displayName && (
-                    <span className="text-xs font-bold tracking-tight text-foreground/70">{displayName}</span>
+                    <span className="text-xs font-bold tracking-tight text-white/70">{displayName}</span>
                   )}
                 </div>
               ) : (
@@ -136,9 +110,9 @@ export function AppLayout() {
                 </div>
               )}
               {activeClientName && !branding.company_name && (
-                <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg bg-primary/5">
-                  <Building2 className="h-3 w-3 text-primary/60" />
-                  <span className="text-[11px] font-medium text-primary/70">{activeClientName}</span>
+                <div className="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg bg-white/5">
+                  <Building2 className="h-3 w-3 text-[hsl(var(--nl-sky))]/60" />
+                  <span className="text-[11px] font-medium text-white/50">{activeClientName}</span>
                 </div>
               )}
             </div>
@@ -150,17 +124,17 @@ export function AppLayout() {
                     setActiveClientId(null);
                     navigate("/admin");
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-primary/10 border border-primary/15"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-white/10 border border-white/10"
                   title="Back to Admin Portal"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="hidden sm:inline text-primary/70">Admin</span>
+                  <ArrowLeft className="h-3.5 w-3.5 text-white/60" />
+                  <span className="hidden sm:inline text-white/60">Admin</span>
                 </button>
               )}
               <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
-              <button className="p-2 rounded-xl transition-all duration-200 hover:bg-primary/5 hover:shadow-[0_0_14px_-3px_hsla(211,96%,60%,.22)] relative group">
-                <Bell className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
+                <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
                   background: hasCustomBranding
                     ? `linear-gradient(135deg, ${branding.secondary_color}, ${branding.primary_color})`
@@ -171,10 +145,10 @@ export function AppLayout() {
               {user && (
                 <button
                   onClick={signOut}
-                  className="p-2 rounded-xl transition-all duration-200 hover:bg-destructive/10 group"
+                  className="p-2 rounded-xl transition-all duration-200 hover:bg-red-500/10 group"
                   title="Sign out"
                 >
-                  <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-destructive transition-colors" />
+                  <LogOut className="h-4 w-4 text-white/50 group-hover:text-red-400 transition-colors" />
                 </button>
               )}
               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{
@@ -191,9 +165,8 @@ export function AppLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto nl-animated-bg">
-            <div className="nl-grid-overlay" />
-            <Particles />
+          <main className="flex-1 overflow-auto nl-dark-bg">
+            <GlobalAtmosphere />
             <CursorGlow />
             <AnimatePresence mode="wait">
               <motion.div
@@ -208,8 +181,8 @@ export function AppLayout() {
               </motion.div>
             </AnimatePresence>
             {/* Powered by footer */}
-            <div className="text-center py-4 text-[10px] text-muted-foreground/40 tracking-wide">
-              Powered by <span className="font-semibold">NewLight</span>
+            <div className="flex items-center justify-center gap-1.5 py-4 opacity-30 hover:opacity-50 transition-opacity">
+              <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: "hsla(210,40%,70%,.5)" }}>Powered by NewLight</span>
             </div>
           </main>
         </div>

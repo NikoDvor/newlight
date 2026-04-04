@@ -922,34 +922,28 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="dash-dark">
-        <div className="dash-bg-main p-4 sm:p-6 lg:p-10 min-h-screen space-y-8">
-          <div className="dash-neural-grid" />
-          <div className="dash-orb dash-orb--primary" />
-          <div className="dash-orb dash-orb--cyan" />
-          <div className="space-y-3 relative z-10">
-            <div className="skeleton-loading h-3 w-24" />
-            <div className="skeleton-loading h-10 w-72" />
-            <div className="skeleton-loading h-4 w-48" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
-            {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton-loading h-32 rounded-2xl" />)}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-            {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-loading h-28 rounded-2xl" />)}
-          </div>
+      <div className="dash-dark min-h-[60vh] space-y-8">
+        <div className="space-y-3 relative z-10">
+          <div className="skeleton-loading h-3 w-24" />
+          <div className="skeleton-loading h-10 w-72" />
+          <div className="skeleton-loading h-4 w-48" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
+          {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton-loading h-32 rounded-2xl" />)}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-loading h-28 rounded-2xl" />)}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="dash-dark -m-4 sm:-m-6 lg:-m-10">
-      <div className="dash-bg-main dash-breathe p-5 sm:p-8 lg:p-12 min-h-screen">
-        {/* ═══ Parallax Atmospheric layers ═══ */}
-        <ParallaxBackground />
+    <div className="dash-dark dash-breathe">
+      {/* ═══ Parallax Atmospheric layers (scroll-enhanced, on top of global bg) ═══ */}
+      <ParallaxBackground />
 
-        <div className="relative z-10 space-y-14">
+      <div className="relative z-10 space-y-14">
 
           {/* ══════ HERO ══════ */}
           <motion.div initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }}
@@ -1403,6 +1397,5 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
