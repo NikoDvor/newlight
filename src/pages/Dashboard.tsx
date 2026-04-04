@@ -1146,6 +1146,11 @@ export default function Dashboard() {
           {/* ══════ GROWTH INTELLIGENCE (NEW) ══════ */}
           <GrowthIntelligenceSection metrics={metrics} />
 
+          {/* ══════ BUSINESS INTELLIGENCE (from engine) ══════ */}
+          {activeClientId && (
+            <BusinessIntelligencePreview clientId={activeClientId} />
+          )}
+
           {/* ══════ PRIORITY INSIGHTS ══════ */}
           <PriorityInsights metrics={metrics} isNewClient={isNewClient} />
 

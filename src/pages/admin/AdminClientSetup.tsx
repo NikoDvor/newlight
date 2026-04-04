@@ -11,6 +11,7 @@ import {
   Loader2, Save, CheckCircle2, ArrowLeft, Building2, Globe, Palette,
   MapPin, Search, Share2, CreditCard, Phone, Video, Users, Plug, Zap
 } from "lucide-react";
+import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
