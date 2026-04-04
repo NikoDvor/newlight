@@ -945,7 +945,7 @@ export default function Dashboard() {
 
   return (
     <div className="dash-dark -m-4 sm:-m-6 lg:-m-10">
-      <div className="dash-bg-main p-5 sm:p-8 lg:p-12 min-h-screen">
+      <div className="dash-bg-main dash-breathe p-5 sm:p-8 lg:p-12 min-h-screen">
         {/* ═══ Parallax Atmospheric layers ═══ */}
         <ParallaxBackground />
 
