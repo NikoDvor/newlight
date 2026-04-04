@@ -37,7 +37,7 @@ export function WorkspaceSwitcher() {
   const handleClientSwitch = (client: ClientItem) => {
     setViewMode("workspace");
     setActiveClientId(client.id);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   return (

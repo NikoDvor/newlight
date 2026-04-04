@@ -146,7 +146,7 @@ export default function AdminHandoffChecklist() {
     if (!clientId) return;
     setViewMode("workspace");
     setActiveClientId(clientId);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleLaunch = async () => {

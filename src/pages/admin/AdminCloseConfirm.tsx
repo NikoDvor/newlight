@@ -326,7 +326,7 @@ export default function AdminCloseConfirm() {
                         if (c) {
                           setViewMode("workspace");
                           setActiveClientId(c.id);
-                          navigate("/");
+                          navigate("/dashboard");
                         }
                       });
                     }} className="bg-[hsl(var(--nl-sky))] hover:bg-[hsl(var(--nl-electric))] text-white">

@@ -136,6 +136,7 @@ import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -177,6 +178,9 @@ const App = () => {
           <WorkspaceProvider>
             <IntroOverlay />
             <Routes>
+              {/* Public landing */}
+              <Route path="/" element={<Landing />} />
+
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
@@ -243,7 +247,7 @@ const App = () => {
 
               {/* Client Workspace */}
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/crm" element={<PermissionGuard moduleKey="crm"><CRM /></PermissionGuard>} />
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />

@@ -14,7 +14,7 @@ export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) 
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

@@ -46,7 +46,7 @@ export default function Auth() {
               }
             }
           }
-          navigate("/", { replace: true });
+          navigate("/dashboard", { replace: true });
         })();
         return;
       }
@@ -118,7 +118,7 @@ export default function Auth() {
         } else if (roleData?.role === "operator") {
           navigate("/admin/clients");
         } else {
-          navigate("/");
+          navigate("/dashboard");
         }
       }
     }

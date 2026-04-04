@@ -343,13 +343,13 @@ export default function AdminClients() {
     setViewMode("workspace");
     setActiveClientId(createdClient.id);
     resetForm();
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const openWorkspace = (client: Client) => {
     setViewMode("workspace");
     setActiveClientId(client.id);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleSuspend = async (client: Client) => {

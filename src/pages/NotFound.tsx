@@ -31,7 +31,7 @@ const NotFound = () => {
           The page <code className="text-white/30 text-xs bg-white/5 px-1.5 py-0.5 rounded">{location.pathname}</code> doesn't exist or you may not have access.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
-          <Link to="/">
+          <Link to="/dashboard">
             <Button
               className="gap-1.5 text-white border-0"
               style={{
