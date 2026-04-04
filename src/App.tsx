@@ -247,7 +247,7 @@ const App = () => {
 
               {/* Client Workspace */}
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/crm" element={<PermissionGuard moduleKey="crm"><CRM /></PermissionGuard>} />
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
