@@ -184,6 +184,7 @@ const App = () => {
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
