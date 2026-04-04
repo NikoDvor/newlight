@@ -217,28 +217,29 @@
 }
 
 @layer components {
-  /* Glass card with animated gradient border */
+  /* Glass card — dark-optimized */
   .card-widget {
     @apply text-card-foreground rounded-2xl p-6;
     position: relative;
-    background: hsla(210,50%,99%,.85);
-    backdrop-filter: blur(28px) saturate(1.8);
-    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+    background: hsla(222,30%,10%,.75);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid hsla(211,96%,60%,.08);
-    box-shadow: 0 1px 4px 0 hsla(215,50%,35%,.06),
-                0 0 0 1px hsla(215,50%,50%,.05),
-                inset 0 1px 0 0 hsla(0,0%,100%,.8);
+    box-shadow: 0 2px 8px -2px hsla(0,0%,0%,.3),
+                0 0 0 1px hsla(211,96%,60%,.04),
+                inset 0 1px 0 0 hsla(211,96%,70%,.05);
     transition: box-shadow .35s cubic-bezier(.25,.1,.25,1),
                 transform .35s cubic-bezier(.25,.1,.25,1),
                 border-color .35s ease;
+    color: hsl(210 40% 90%);
   }
   .card-widget:hover {
-    box-shadow: 0 20px 56px -14px hsla(211,96%,56%,.18),
-                0 0 0 1px hsla(211,96%,56%,.14),
-                0 0 40px -10px hsla(211,96%,60%,.14),
-                inset 0 1px 0 0 hsla(0,0%,100%,.9);
+    box-shadow: 0 20px 56px -14px hsla(211,96%,56%,.16),
+                0 0 0 1px hsla(211,96%,56%,.12),
+                0 0 40px -10px hsla(211,96%,60%,.10),
+                inset 0 1px 0 0 hsla(211,96%,70%,.10);
     transform: translateY(-4px);
-    border-color: hsla(211,96%,60%,.22);
+    border-color: hsla(211,96%,60%,.18);
   }
 
   /* ── Admin dark card (for dark admin bg) ── */
