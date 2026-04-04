@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { IndustryCategorySelect } from "./IndustryCategorySelect";
 import { ArchetypeSelector } from "./ArchetypeSelector";
 import { ZoomTierSelector } from "./ZoomTierSelector";
+import { NicheSelect } from "./NicheSelect";
 import {
   buildWorkspaceProfile,
   DEFAULT_WORKSPACE_PROFILE,
@@ -9,15 +10,14 @@ import {
   type BusinessArchetype,
   type ZoomTier,
   type WorkspaceProfile,
+  type NicheMetadata,
 } from "@/lib/workspaceProfileTypes";
+import type { NicheDefinition } from "@/lib/workspaceNiches";
 import { Cpu } from "lucide-react";
 
 interface WorkspaceProfileBuilderProps {
-  /** Initial values (e.g. from a draft) */
   initialProfile?: Partial<WorkspaceProfile>;
-  /** Called whenever the profile changes */
   onChange?: (profile: WorkspaceProfile) => void;
-  /** Disable all inputs */
   disabled?: boolean;
 }
 
@@ -29,6 +29,10 @@ export function WorkspaceProfileBuilder({
   const [industry, setIndustry] = useState<IndustryCategory>(
     initialProfile?.industry ?? DEFAULT_WORKSPACE_PROFILE.industry
   );
+  const [nicheId, setNicheId] = useState<string | null>(initialProfile?.niche ?? null);
+  const [nicheMetadata, setNicheMetadata] = useState<NicheMetadata | null>(
+    initialProfile?.metadata ?? null
+  );
   const [archetype, setArchetype] = useState<BusinessArchetype>(
     initialProfile?.archetype ?? DEFAULT_WORKSPACE_PROFILE.archetype
   );
@@ -36,24 +40,45 @@ export function WorkspaceProfileBuilder({
     initialProfile?.zoomTier ?? DEFAULT_WORKSPACE_PROFILE.zoomTier
   );
 
-  const emitChange = useCallback(
-    (i: IndustryCategory, a: BusinessArchetype, z: ZoomTier) => {
-      onChange?.(buildWorkspaceProfile(i, a, z));
+  const emit = useCallback(
+    (i: IndustryCategory, a: BusinessArchetype, z: ZoomTier, nId: string | null, nMeta: NicheMetadata | null) => {
+      onChange?.(buildWorkspaceProfile(i, a, z, nId, nMeta));
     },
     [onChange]
   );
 
   const handleIndustry = (v: IndustryCategory) => {
     setIndustry(v);
-    emitChange(v, archetype, zoomTier);
+    // Clear niche when industry changes
+    setNicheId(null);
+    setNicheMetadata(null);
+    emit(v, archetype, zoomTier, null, null);
   };
+
+  const handleNiche = (n: NicheDefinition) => {
+    setNicheId(n.id);
+    const meta: NicheMetadata = {
+      revenueModel: n.revenueModel,
+      salesCycle: n.salesCycle,
+      ticketSize: n.ticketSize,
+      complexityLevel: n.complexityLevel,
+      complianceLevel: n.complianceLevel,
+    };
+    setNicheMetadata(meta);
+    // Auto-sync archetype + zoom tier from niche (user can still override)
+    setArchetype(n.archetype);
+    setZoomTier(n.defaultZoomTier);
+    emit(industry, n.archetype, n.defaultZoomTier, n.id, meta);
+  };
+
   const handleArchetype = (v: BusinessArchetype) => {
     setArchetype(v);
-    emitChange(industry, v, zoomTier);
+    emit(industry, v, zoomTier, nicheId, nicheMetadata);
   };
+
   const handleZoom = (v: ZoomTier) => {
     setZoomTier(v);
-    emitChange(industry, archetype, v);
+    emit(industry, archetype, v, nicheId, nicheMetadata);
   };
 
   return (
@@ -72,6 +97,7 @@ export function WorkspaceProfileBuilder({
       </div>
 
       <IndustryCategorySelect value={industry} onChange={handleIndustry} />
+      <NicheSelect industry={industry} value={nicheId} onChange={handleNiche} />
       <ArchetypeSelector value={archetype} onChange={handleArchetype} />
       <ZoomTierSelector value={zoomTier} onChange={handleZoom} />
     </div>
