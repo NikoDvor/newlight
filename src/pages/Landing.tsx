@@ -2,8 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Zap, BarChart3, CalendarCheck, DollarSign, CheckCircle2, Activity } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
