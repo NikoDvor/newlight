@@ -558,10 +558,10 @@
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(60deg, hsla(187,80%,55%,.12) 1px, transparent 1px),
-      linear-gradient(-60deg, hsla(187,80%,55%,.12) 1px, transparent 1px);
+      linear-gradient(60deg, hsla(211,96%,60%,.1) 1px, transparent 1px),
+      linear-gradient(-60deg, hsla(211,96%,60%,.1) 1px, transparent 1px);
     background-size: 80px 46px;
-    opacity: .015;
+    opacity: .012;
     animation: dash-grid-breathe 12s ease-in-out infinite reverse;
   }
 
