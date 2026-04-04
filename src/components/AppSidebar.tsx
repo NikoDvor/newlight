@@ -251,7 +251,7 @@ export function AppSidebar() {
               {!collapsed && (
                 <button
                   onClick={() => toggleGroup(group.label!)}
-                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/50 hover:text-white/70 transition-colors"
+                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/30 hover:text-white/50 transition-colors"
                 >
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
