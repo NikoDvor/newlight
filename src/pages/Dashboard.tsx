@@ -1,4 +1,5 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
+import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -1144,6 +1145,11 @@ export default function Dashboard() {
 
           {/* ══════ GROWTH INTELLIGENCE (NEW) ══════ */}
           <GrowthIntelligenceSection metrics={metrics} />
+
+          {/* ══════ BUSINESS INTELLIGENCE (from engine) ══════ */}
+          {activeClientId && (
+            <BusinessIntelligencePreview clientId={activeClientId} />
+          )}
 
           {/* ══════ PRIORITY INSIGHTS ══════ */}
           <PriorityInsights metrics={metrics} isNewClient={isNewClient} />

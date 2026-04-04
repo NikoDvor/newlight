@@ -11,6 +11,7 @@ import {
   Loader2, Save, CheckCircle2, ArrowLeft, Building2, Globe, Palette,
   MapPin, Search, Share2, CreditCard, Phone, Video, Users, Plug, Zap
 } from "lucide-react";
+import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -167,6 +168,15 @@ export default function AdminClientSetup() {
         <h1 className="text-2xl font-bold text-white">Post-Payment Integration + Setup</h1>
         <p className="text-sm text-white/50 mt-1">Complete the remaining setup details for <span className="text-white/70">{client?.business_name}</span></p>
       </div>
+
+      {/* Workspace Intelligence Preview */}
+      {clientId && (
+        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-5">
+            <BusinessIntelligencePreview clientId={clientId} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
         <CardContent className="p-5 space-y-5">
