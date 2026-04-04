@@ -343,7 +343,7 @@ export default function AdminClients() {
     setViewMode("workspace");
     setActiveClientId(createdClient.id);
     resetForm();
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const openWorkspace = (client: Client) => {
