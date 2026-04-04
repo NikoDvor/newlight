@@ -49,6 +49,7 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   user: null,
   branding: defaultBranding,
   userRole: null,
+  isSessionLoading: true,
   signOut: async () => {},
 });
 
