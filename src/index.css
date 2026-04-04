@@ -513,11 +513,10 @@
     --dash-surface: 222 30% 9%;
     --dash-surface-light: 222 26% 13%;
     --dash-border: 211 40% 18%;
-    --dash-text: 210 50% 92%;
-    --dash-text-muted: 215 18% 50%;
+    --dash-text: 210 40% 90%;
+    --dash-text-muted: 210 30% 55%;
     --dash-glow: 211 96% 60%;
-    --dash-cyan: 187 80% 55%;
-    --dash-violet: 260 60% 62%;
+    --dash-cyan: 197 88% 55%;
     color: hsl(var(--dash-text));
   }
 
@@ -525,11 +524,11 @@
     position: relative;
     background:
       radial-gradient(ellipse 120% 60% at 20% 10%, hsla(211,96%,60%,.04), transparent 50%),
-      radial-gradient(ellipse 100% 80% at 80% 90%, hsla(260,60%,62%,.03), transparent 50%),
+      radial-gradient(ellipse 100% 80% at 80% 90%, hsla(197,88%,55%,.03), transparent 50%),
       linear-gradient(170deg,
         hsl(222 38% 5%) 0%,
         hsl(220 42% 7%) 30%,
-        hsl(225 40% 5%) 60%,
+        hsl(222 40% 5%) 60%,
         hsl(218 36% 4%) 100%
       );
     min-height: 100%;
@@ -559,10 +558,10 @@
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(60deg, hsla(187,80%,55%,.12) 1px, transparent 1px),
-      linear-gradient(-60deg, hsla(187,80%,55%,.12) 1px, transparent 1px);
+      linear-gradient(60deg, hsla(211,96%,60%,.1) 1px, transparent 1px),
+      linear-gradient(-60deg, hsla(211,96%,60%,.1) 1px, transparent 1px);
     background-size: 80px 46px;
-    opacity: .015;
+    opacity: .012;
     animation: dash-grid-breathe 12s ease-in-out infinite reverse;
   }
 
@@ -641,10 +640,10 @@
     background: radial-gradient(circle, hsla(187,80%,55%,.07), transparent 70%);
     animation: nl-orb-b 26s ease-in-out infinite;
   }
-  .dash-orb--violet {
+  .dash-orb--secondary {
     width: 380px; height: 380px;
     top: 35%; right: 8%;
-    background: radial-gradient(circle, hsla(260,60%,62%,.05), transparent 70%);
+    background: radial-gradient(circle, hsla(211,96%,55%,.04), transparent 70%);
     animation: nl-orb-a 30s ease-in-out infinite reverse;
   }
 
@@ -677,8 +676,8 @@
     background: linear-gradient(145deg,
       hsla(211,96%,60%,.035) 0%,
       transparent 40%,
-      hsla(187,80%,55%,.02) 80%,
-      hsla(260,60%,62%,.015) 100%
+      hsla(197,88%,55%,.02) 80%,
+      hsla(211,96%,55%,.015) 100%
     );
     pointer-events: none;
   }
@@ -847,8 +846,7 @@
     background: linear-gradient(90deg,
       transparent 0%,
       hsla(211,96%,60%,.4) 20%,
-      hsla(187,80%,55%,.5) 40%,
-      hsla(260,60%,62%,.3) 60%,
+      hsla(197,88%,58%,.5) 50%,
       hsla(211,96%,60%,.4) 80%,
       transparent 100%
     );
@@ -862,9 +860,9 @@
     margin-top: 3px;
     background: linear-gradient(90deg,
       transparent 0%,
-      hsla(187,80%,55%,.15) 30%,
-      hsla(260,60%,62%,.1) 50%,
-      hsla(187,80%,55%,.15) 70%,
+      hsla(197,88%,55%,.15) 30%,
+      hsla(211,96%,58%,.1) 50%,
+      hsla(197,88%,55%,.15) 70%,
       transparent 100%
     );
     background-size: 200% 100%;
