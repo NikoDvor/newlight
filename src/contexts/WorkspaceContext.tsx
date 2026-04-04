@@ -109,18 +109,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        // Defer role fetch to avoid Supabase auth deadlock
-        setTimeout(() => fetchUserRole(u.id), 0);
+        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
       } else {
         setIsAdmin(false);
         setUserRole(null);
+        setIsSessionLoading(false);
       }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        setTimeout(() => fetchUserRole(u.id), 0);
+        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
+      } else {
+        setIsSessionLoading(false);
       }
     });
     return () => subscription.unsubscribe();
