@@ -148,7 +148,7 @@ export function AppSidebar() {
   const isFieldService = clientIndustry ? FIELD_SERVICE_TYPES.includes(clientIndustry) : false;
 
   const isActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
+    if (path === "/dashboard") return location.pathname === "/dashboard" || location.pathname === "/";
     return location.pathname.startsWith(path);
   };
 
