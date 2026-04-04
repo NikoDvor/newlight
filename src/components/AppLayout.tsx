@@ -152,11 +152,11 @@ export function AppLayout() {
                     setActiveClientId(null);
                     navigate("/admin");
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-primary/10 border border-primary/15"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-white/10 border border-white/10"
                   title="Back to Admin Portal"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="hidden sm:inline text-primary/70">Admin</span>
+                  <ArrowLeft className="h-3.5 w-3.5 text-white/60" />
+                  <span className="hidden sm:inline text-white/60">Admin</span>
                 </button>
               )}
               <GlobalSearch />
