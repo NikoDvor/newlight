@@ -479,4 +479,51 @@
   .card-perspective:hover .card-perspective-inner {
     transform: rotateX(1deg) rotateY(-1deg) translateY(-2px);
   }
+
+  /* ── Premium glass card ── */
+  .card-glass {
+    @apply rounded-2xl;
+    background: hsla(210,50%,99%,.72);
+    backdrop-filter: blur(32px) saturate(1.8);
+    -webkit-backdrop-filter: blur(32px) saturate(1.8);
+    border: 1px solid hsla(211,96%,60%,.06);
+    box-shadow: 0 1px 3px 0 hsla(215,50%,35%,.04),
+                0 0 0 1px hsla(215,50%,50%,.04),
+                inset 0 1px 0 0 hsla(0,0%,100%,.85);
+    transition: all .4s cubic-bezier(.25,.1,.25,1);
+  }
+  .card-glass:hover {
+    box-shadow: 0 24px 64px -16px hsla(211,96%,56%,.16),
+                0 0 0 1px hsla(211,96%,56%,.12),
+                0 0 48px -12px hsla(211,96%,60%,.10),
+                inset 0 1px 0 0 hsla(0,0%,100%,.9);
+    transform: translateY(-4px) scale(1.005);
+    border-color: hsla(211,96%,60%,.18);
+  }
+
+  /* ── Animated glow pulse for key metrics ── */
+  .glow-pulse {
+    animation: glow-pulse-anim 3s ease-in-out infinite;
+  }
+}
+
+@keyframes glow-pulse-anim {
+  0%, 100% { box-shadow: 0 0 20px -8px hsla(211,96%,60%,.15); }
+  50%      { box-shadow: 0 0 36px -6px hsla(211,96%,60%,.28); }
+}
+
+/* ── Skeleton loading shimmer ── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-loading {
+  background: linear-gradient(90deg,
+    hsla(210,35%,93%,1) 25%,
+    hsla(210,45%,96%,1) 50%,
+    hsla(210,35%,93%,1) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
 }
