@@ -90,7 +90,7 @@ export default function AdminMonitoring() {
   const openWorkspace = (id: string) => {
     setViewMode("workspace");
     setActiveClientId(id);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const healthColor = (s: number) => {

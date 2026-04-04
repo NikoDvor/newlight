@@ -349,7 +349,7 @@ export default function AdminClients() {
   const openWorkspace = (client: Client) => {
     setViewMode("workspace");
     setActiveClientId(client.id);
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleSuspend = async (client: Client) => {

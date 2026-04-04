@@ -225,7 +225,7 @@ export default function Welcome() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button className="gap-2 h-12 px-8 text-white font-semibold text-base"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`, boxShadow: `0 4px 24px -4px ${primaryColor}50` }}
-                  onClick={() => navigate("/")}>
+                  onClick={() => navigate("/dashboard")}>
                   <Rocket className="h-5 w-5" /> Enter Workspace <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" className="gap-2 h-11 border-white/10 text-white/70 hover:text-white hover:bg-white/10"

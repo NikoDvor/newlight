@@ -118,7 +118,7 @@ export default function Auth() {
         } else if (roleData?.role === "operator") {
           navigate("/admin/clients");
         } else {
-          navigate("/");
+          navigate("/dashboard");
         }
       }
     }

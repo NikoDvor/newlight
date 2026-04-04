@@ -37,7 +37,7 @@ function PermissionDenied() {
         <p className="text-sm text-muted-foreground mb-6">
           You don't have permission to access this module. Contact your workspace administrator to request access.
         </p>
-        <Button variant="outline" onClick={() => navigate("/")}>Back to Dashboard</Button>
+        <Button variant="outline" onClick={() => navigate("/dashboard")}>Back to Dashboard</Button>
       </Card>
     </div>
   );
