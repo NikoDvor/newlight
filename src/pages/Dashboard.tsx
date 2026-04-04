@@ -1,5 +1,4 @@
 import { PageHeader } from "@/components/PageHeader";
-import { DataCard } from "@/components/DataCard";
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,28 +14,42 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
+import { useCountUp } from "@/hooks/useCountUp";
 
 /* ── animation presets ── */
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
-const fadeUp = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] as any } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = {
+  hidden: { opacity: 0, y: 18, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as any } },
+};
 
-/* ── KPI Card ── */
-function KpiCard({ label, value, sub, icon: Icon, accent = false, to }: {
-  label: string; value: string; sub: string; icon: any; accent?: boolean; to?: string;
+/* ── Count-up KPI Card ── */
+function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency = false }: {
+  label: string; value: number; sub: string; icon: any; accent?: boolean; to?: string; isCurrency?: boolean;
 }) {
+  const count = useCountUp(value, 1400);
+  const display = isCurrency ? `$${count.toLocaleString()}` : String(count);
+
   const inner = (
     <motion.div variants={fadeUp}>
-      <Card className={`relative overflow-hidden p-5 group transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] ${accent ? "border-primary/20 bg-gradient-to-br from-primary/[0.06] to-transparent" : ""}`}>
-        <div className="flex items-start justify-between">
+      <Card className={`card-glass relative overflow-hidden p-5 group ${accent ? "border-primary/20 glow-pulse" : ""}`}>
+        {/* Hover glow overlay */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{ background: "radial-gradient(circle at 70% 20%, hsla(211,96%,60%,.06), transparent 60%)" }} />
+        <div className="flex items-start justify-between relative z-10">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">{display}</p>
             <p className="text-xs text-muted-foreground">{sub}</p>
           </div>
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
-            style={{ background: "linear-gradient(135deg, hsla(211,96%,56%,.12), hsla(197,92%,68%,.06))", boxShadow: "0 0 20px -6px hsla(211,96%,60%,.14)" }}>
+          <motion.div
+            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "linear-gradient(135deg, hsla(211,96%,56%,.12), hsla(197,92%,68%,.06))", boxShadow: "0 0 20px -6px hsla(211,96%,60%,.14)" }}
+            whileHover={{ scale: 1.15, rotate: 4 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
             <Icon className="h-[18px] w-[18px] text-primary" />
-          </div>
+          </motion.div>
         </div>
         {to && <ArrowUpRight className="absolute top-3 right-3 h-3 w-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />}
       </Card>
@@ -49,10 +62,14 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to }: {
 function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
     <div className="py-10 text-center">
-      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-        style={{ background: "hsla(211,96%,56%,.08)" }}>
+      <motion.div
+        className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+        style={{ background: "hsla(211,96%,56%,.08)" }}
+        animate={{ y: [0, -4, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      >
         <Icon className="h-5 w-5 text-primary" />
-      </div>
+      </motion.div>
       <p className="text-sm font-semibold text-foreground mb-1">{title}</p>
       <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">{desc}</p>
     </div>
@@ -72,9 +89,11 @@ export default function Dashboard() {
     pendingProposals: 0,
   });
   const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!activeClientId) return;
+    setLoading(true);
     Promise.all([
       supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
@@ -119,6 +138,7 @@ export default function Dashboard() {
         pendingProposals: proposals.count || 0,
       });
       setActivities(acts.data || []);
+      setLoading(false);
     });
   }, [activeClientId]);
 
@@ -134,6 +154,30 @@ export default function Dashboard() {
     { label: "View Reports", icon: BarChart3, to: "/reports" },
     { label: "Automations", icon: Zap, to: "/automations" },
   ];
+
+  /* Skeleton loader */
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <div className="skeleton-loading h-8 w-64" />
+          <div className="skeleton-loading h-4 w-48" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton-loading h-28 rounded-2xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 skeleton-loading h-64 rounded-2xl" />
+          <div className="lg:col-span-2 space-y-6">
+            <div className="skeleton-loading h-48 rounded-2xl" />
+            <div className="skeleton-loading h-36 rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -185,17 +229,17 @@ export default function Dashboard() {
       {/* ═══════════ KPI CARDS ═══════════ */}
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
         className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard label="Contacts" value={hasData ? String(metrics.contacts) : "0"} sub="Total in CRM" icon={Users} to="/crm" />
-        <KpiCard label="Open Deals" value={String(metrics.openDeals)} sub={hasData ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : "No deals yet"} icon={Briefcase} accent to="/pipeline" />
-        <KpiCard label="Appointments" value={String(metrics.upcomingEvents)} sub={`${metrics.completedEvents} completed`} icon={Calendar} to="/calendar" />
-        <KpiCard label="Proposals" value={String(metrics.pendingProposals)} sub="Awaiting signature" icon={FileText} to="/proposals" />
-        <KpiCard label="Revenue Won" value={`$${metrics.wonValue.toLocaleString()}`} sub="Closed deals" icon={DollarSign} accent={metrics.wonValue > 0} to="/pipeline" />
-        <KpiCard label="Follow-Ups" value={String(metrics.overdueFollowUps)} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
+        <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" />
+        <KpiCard label="Open Deals" value={metrics.openDeals} sub={hasData ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : "No deals yet"} icon={Briefcase} accent to="/pipeline" />
+        <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} to="/calendar" />
+        <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
+        <KpiCard label="Revenue Won" value={metrics.wonValue} isCurrency sub="Closed deals" icon={DollarSign} accent={metrics.wonValue > 0} to="/pipeline" />
+        <KpiCard label="Follow-Ups" value={metrics.overdueFollowUps} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
       </motion.div>
 
-      {/* ═══════════ ONBOARDING PROGRESS BAR (live clients) ═══════════ */}
+      {/* ═══════════ ONBOARDING PROGRESS ═══════════ */}
       {isLive && setupPct < 100 && (
-        <Card className="p-4">
+        <Card className="card-glass p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Onboarding Progress</p>
             <span className="text-sm font-bold text-primary tabular-nums">{setupPct}%</span>
@@ -211,12 +255,21 @@ export default function Dashboard() {
           {quickActions.map((a, i) => (
             <Link key={a.label} to={a.to}>
               <motion.div
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:border-primary/20 hover:shadow-[var(--shadow-card-hover)] transition-all duration-300 cursor-pointer group"
-                initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}>
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: "hsla(211,96%,56%,.08)" }}>
+                className="card-glass flex flex-col items-center gap-2 p-4 group cursor-pointer"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04, duration: 0.4 }}
+                whileHover={{ y: -4, boxShadow: "0 16px 48px -12px hsla(211,96%,56%,.18)" }}
+              >
+                <motion.div
+                  className="h-9 w-9 rounded-lg flex items-center justify-center"
+                  style={{ background: "hsla(211,96%,56%,.08)" }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
                   <a.icon className="h-4 w-4 text-primary" />
-                </div>
+                </motion.div>
                 <span className="text-[11px] font-semibold text-foreground text-center leading-tight">{a.label}</span>
               </motion.div>
             </Link>
@@ -226,8 +279,8 @@ export default function Dashboard() {
 
       {/* ═══════════ MAIN CONTENT GRID ═══════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Activity Feed — takes 3 cols */}
-        <Card className="lg:col-span-3 p-6">
+        {/* Activity Feed */}
+        <Card className="card-glass lg:col-span-3 p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" /> Recent Activity
@@ -245,7 +298,10 @@ export default function Dashboard() {
               {activities.map((a, i) => (
                 <motion.div key={a.id || i}
                   className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0"
-                  initial={{ opacity: 0, x: -6 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}>
+                  initial={{ opacity: 0, x: -8 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05, duration: 0.4 }}>
                   <div className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <Activity className="h-3.5 w-3.5 text-primary" />
@@ -260,10 +316,10 @@ export default function Dashboard() {
           )}
         </Card>
 
-        {/* Right column — takes 2 cols */}
+        {/* Right column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Pipeline snapshot */}
-          <Card className="p-6">
+          <Card className="card-glass p-6">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
               <Target className="h-4 w-4 text-primary" /> Pipeline Snapshot
             </h3>
@@ -284,13 +340,21 @@ export default function Dashboard() {
                 <div className="h-2 rounded-full bg-secondary overflow-hidden flex">
                   {metrics.pipelineValue + metrics.wonValue > 0 && (
                     <>
-                      <div className="h-full rounded-full" style={{
-                        width: `${(metrics.wonValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%`,
-                        background: "hsl(152 60% 44%)"
-                      }} />
-                      <div className="h-full bg-primary" style={{
-                        width: `${(metrics.pipelineValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%`
-                      }} />
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: "hsl(152 60% 44%)" }}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${(metrics.wonValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                      />
+                      <motion.div
+                        className="h-full bg-primary"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${(metrics.pipelineValue / (metrics.pipelineValue + metrics.wonValue)) * 100}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+                      />
                     </>
                   )}
                 </div>
@@ -303,8 +367,8 @@ export default function Dashboard() {
             )}
           </Card>
 
-          {/* Reviews / Rating */}
-          <Card className="p-6">
+          {/* Reputation */}
+          <Card className="card-glass p-6">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
               <Star className="h-4 w-4 text-primary" /> Reputation
             </h3>
@@ -328,8 +392,8 @@ export default function Dashboard() {
             )}
           </Card>
 
-          {/* Tasks summary */}
-          <Card className="p-6">
+          {/* Tasks */}
+          <Card className="card-glass p-6">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
               <CheckSquare className="h-4 w-4 text-primary" /> Open Tasks
             </h3>
