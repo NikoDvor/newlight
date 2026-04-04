@@ -67,25 +67,14 @@ function StatCard({ stat, index }: { stat: typeof stats[0]; index: number }) {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, isAdmin, userRole } = useWorkspace();
   const go = () => navigate("/auth");
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
-  // Auto-redirect authenticated users
-  useEffect(() => {
-    if (user && userRole) {
-      if (isAdmin) {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
-    }
-  }, [user, userRole, isAdmin, navigate]);
-
   return (
+    <SessionGate>
     <div className="min-h-screen bg-[hsl(218,38%,6%)] text-white overflow-x-hidden">
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
