@@ -198,7 +198,7 @@
   }
   h1,h2,h3,h4,h5,h6 {
     @apply font-semibold tracking-tight;
-    color: hsl(218 28% 14%);
+    color: hsl(210 40% 90%);
     text-wrap: balance;
   }
   p { text-wrap: pretty; }
