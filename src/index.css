@@ -274,7 +274,7 @@
     background: linear-gradient(135deg,
       hsla(211,96%,60%,.15),
       hsla(197,92%,68%,.08),
-      hsla(0,0%,100%,.2),
+      hsla(211,96%,60%,.05),
       hsla(211,96%,60%,.15)
     );
     background-size: 300% 300%;
@@ -282,15 +282,16 @@
   }
   .card-glow-border > .card-glow-inner {
     @apply rounded-2xl p-6;
-    background: hsla(210,50%,99%,.85);
-    backdrop-filter: blur(20px) saturate(1.6);
-    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    background: hsla(222,30%,9%,.9);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    color: hsl(210 40% 90%);
   }
   .card-glow-border:hover {
     background: linear-gradient(135deg,
       hsla(211,96%,60%,.3),
       hsla(197,92%,68%,.18),
-      hsla(0,0%,100%,.3),
+      hsla(211,96%,60%,.1),
       hsla(211,96%,60%,.3)
     );
     background-size: 300% 300%;
