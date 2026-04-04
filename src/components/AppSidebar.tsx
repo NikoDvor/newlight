@@ -184,11 +184,12 @@ export function AppSidebar() {
           className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
             active
               ? "text-white font-semibold"
-              : "text-white/70 hover:text-white hover:bg-white/[0.12]"
+              : "text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
           }`}
           style={active ? {
-            background: "hsla(0,0%,100%,.18)",
-            boxShadow: "0 0 18px -4px hsla(0,0%,100%,.25), inset 0 0 0 1px hsla(0,0%,100%,.15)",
+            background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(187,80%,55%,.08))",
+            boxShadow: "0 0 20px -4px hsla(211,96%,60%,.2), inset 0 0 0 1px hsla(211,96%,60%,.15)",
+            borderLeft: "2px solid hsl(211 96% 60%)",
           } : undefined}
         >
           <Link to={item.url}>
@@ -206,12 +207,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "linear-gradient(170deg, hsl(211 90% 62%) 0%, hsl(215 80% 52%) 50%, hsl(218 75% 46%) 100%)"
-      }} />
-      <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none opacity-40" style={{
-        background: "radial-gradient(ellipse at 50% 0%, hsla(197,92%,78%,.5), transparent 70%)"
-      }} />
+      <div className="absolute inset-0 pointer-events-none sidebar-futuristic" />
+      <div className="sidebar-glow-top absolute top-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(211,96%,60%,.12), transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 100%, hsla(187,80%,55%,.06), transparent 70%)" }} />
 
       <SidebarHeader className="p-3 relative z-10">
         <div className="flex items-center justify-between px-2 py-1">
@@ -251,7 +251,7 @@ export function AppSidebar() {
               {!collapsed && (
                 <button
                   onClick={() => toggleGroup(group.label!)}
-                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/50 hover:text-white/70 transition-colors"
+                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/30 hover:text-white/50 transition-colors"
                 >
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
