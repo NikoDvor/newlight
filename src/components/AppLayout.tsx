@@ -129,7 +129,7 @@ export function AppLayout() {
                     className="h-7 w-7 rounded-lg object-contain"
                   />
                   {displayName && (
-                    <span className="text-xs font-bold tracking-tight text-foreground/70">{displayName}</span>
+                    <span className="text-xs font-bold tracking-tight text-white/70">{displayName}</span>
                   )}
                 </div>
               ) : (
