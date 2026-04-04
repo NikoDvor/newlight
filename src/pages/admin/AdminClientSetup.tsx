@@ -169,8 +169,16 @@ export default function AdminClientSetup() {
         <p className="text-sm text-white/50 mt-1">Complete the remaining setup details for <span className="text-white/70">{client?.business_name}</span></p>
       </div>
 
+      {/* Workspace Intelligence Preview */}
+      {clientId && (
+        <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-5">
+            <BusinessIntelligencePreview clientId={clientId} />
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-        <CardContent className="p-5 space-y-5">
 
           {/* Business + Brand */}
           <div className={sectionCls} style={sectionStyle}>
