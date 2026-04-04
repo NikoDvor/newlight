@@ -524,11 +524,11 @@
     position: relative;
     background:
       radial-gradient(ellipse 120% 60% at 20% 10%, hsla(211,96%,60%,.04), transparent 50%),
-      radial-gradient(ellipse 100% 80% at 80% 90%, hsla(260,60%,62%,.03), transparent 50%),
+      radial-gradient(ellipse 100% 80% at 80% 90%, hsla(197,88%,55%,.03), transparent 50%),
       linear-gradient(170deg,
         hsl(222 38% 5%) 0%,
         hsl(220 42% 7%) 30%,
-        hsl(225 40% 5%) 60%,
+        hsl(222 40% 5%) 60%,
         hsl(218 36% 4%) 100%
       );
     min-height: 100%;
