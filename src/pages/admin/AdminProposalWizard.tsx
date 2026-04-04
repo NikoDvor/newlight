@@ -15,7 +15,7 @@ import type { QuoteOutput } from "@/lib/workspaceQuoteEngine";
 import { ArrowLeft, Brain, Package, Eye, Loader2 } from "lucide-react";
 
 const DEFAULT_PROFILE: WorkspaceProfile = {
-  industry: "agencies_services",
+  industry: "agencies_professional",
   niche: null,
   archetype: "retainers",
   zoomTier: "z2",
@@ -50,15 +50,21 @@ export default function AdminProposalWizard() {
       ]);
       setClient(c);
       if (wp) {
-        setProfile({
-          industry: wp.industry || DEFAULT_PROFILE.industry,
-          niche: wp.niche || null,
-          archetype: wp.archetype || DEFAULT_PROFILE.archetype,
-          zoomTier: (wp.zoom_tier as any) || DEFAULT_PROFILE.zoomTier,
-          legacyProfileType: wp.legacy_profile_type || "",
-          legacyIndustryValue: wp.legacy_industry_value || "",
-          metadata: (wp.metadata as any) || DEFAULT_PROFILE.metadata,
-        });
+        // Profile data is stored in config_overrides JSON field
+        const overrides = (wp.config_overrides && typeof wp.config_overrides === "object" && !Array.isArray(wp.config_overrides))
+          ? wp.config_overrides as Record<string, any>
+          : {};
+        if (overrides.industry || overrides.archetype) {
+          setProfile({
+            industry: overrides.industry || DEFAULT_PROFILE.industry,
+            niche: overrides.niche || null,
+            archetype: overrides.archetype || DEFAULT_PROFILE.archetype,
+            zoomTier: overrides.zoomTier || DEFAULT_PROFILE.zoomTier,
+            legacyProfileType: (wp as any).profile_type || overrides.legacyProfileType || "",
+            legacyIndustryValue: overrides.legacyIndustryValue || "",
+            metadata: overrides.metadata || DEFAULT_PROFILE.metadata,
+          });
+        }
       }
 
       if (dealId) {
