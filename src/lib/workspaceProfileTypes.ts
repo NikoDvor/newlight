@@ -133,15 +133,28 @@ export const ZOOM_TIERS = [
 
 export type ZoomTier = (typeof ZOOM_TIERS)[number]["value"];
 
+// ── Niche Metadata (embedded in profile) ──
+export interface NicheMetadata {
+  revenueModel: string;
+  salesCycle: string;
+  ticketSize: string;
+  complexityLevel: string;
+  complianceLevel: string;
+}
+
 // ── Workspace Profile Object ──
 export interface WorkspaceProfile {
   industry: IndustryCategory;
+  /** Selected niche id from the registry (null = no niche chosen) */
+  niche: string | null;
   archetype: BusinessArchetype;
   zoomTier: ZoomTier;
   /** Preserved mapping to old profile system */
   legacyProfileType: string;
   /** Preserved mapping to old industry dropdown value */
   legacyIndustryValue: string;
+  /** Behavior metadata derived from niche (or defaults) */
+  metadata: NicheMetadata;
 }
 
 // ── Legacy Mapping Helpers ──
@@ -185,25 +198,43 @@ export function mapArchetypeToLegacyProfile(archetype: BusinessArchetype): Profi
 export function buildWorkspaceProfile(
   industry: IndustryCategory,
   archetype: BusinessArchetype,
-  zoomTier: ZoomTier
+  zoomTier: ZoomTier,
+  nicheId?: string | null,
+  nicheMetadata?: NicheMetadata | null
 ): WorkspaceProfile {
   const legacyFromArchetype = mapArchetypeToLegacyProfile(archetype);
   const industryLabel = INDUSTRY_CATEGORIES.find((c) => c.value === industry)?.label ?? "";
 
   return {
     industry,
+    niche: nicheId ?? null,
     archetype,
     zoomTier,
     legacyProfileType: legacyFromArchetype,
     legacyIndustryValue: industryLabel.toLowerCase(),
+    metadata: nicheMetadata ?? {
+      revenueModel: "lead_gen",
+      salesCycle: "medium",
+      ticketSize: "medium",
+      complexityLevel: "medium",
+      complianceLevel: "none",
+    },
   };
 }
 
 /** Default empty profile */
 export const DEFAULT_WORKSPACE_PROFILE: WorkspaceProfile = {
   industry: "other",
+  niche: null,
   archetype: "appointments",
   zoomTier: "z2",
   legacyProfileType: "custom_hybrid",
   legacyIndustryValue: "",
+  metadata: {
+    revenueModel: "lead_gen",
+    salesCycle: "medium",
+    ticketSize: "medium",
+    complexityLevel: "medium",
+    complianceLevel: "none",
+  },
 };
