@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card";
 
 /* ── animation presets ── */
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
-const fadeUp = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } } };
+const fadeUp = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] as any } } };
 
 /* ── KPI Card ── */
 function KpiCard({ label, value, sub, icon: Icon, accent = false, to }: {
