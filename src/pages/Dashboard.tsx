@@ -1,12 +1,13 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Activity, TrendingUp, DollarSign, CheckSquare,
   Target, Users, Star, ArrowUpRight, Calendar, Upload,
   Plug, Rocket, FileText, Clock, Briefcase,
   Plus, UserPlus, Send, BarChart3, Zap, Cpu, Radio,
-  Wifi, Shield
+  Wifi, Shield, Brain, Sparkles, AlertTriangle, Eye,
+  ArrowRight, ChevronRight, Bell, LineChart
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,20 @@ const fadeUp = {
   hidden: { opacity: 0, y: 24, scale: 0.95 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as any } },
 };
+
+/* ── Dynamic greeting ── */
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getSystemStatus(isLive: boolean, hasData: boolean): string {
+  if (!isLive) return "System initializing — complete setup to go live";
+  if (hasData) return "Growth engine active · Tracking leads, revenue & performance";
+  return "System online · Ready to capture your first leads";
+}
 
 /* ── Drifting light streaks (mid layer) ── */
 function LightStreaks() {
@@ -48,7 +63,7 @@ function LightStreaks() {
 }
 
 /* ── AI System indicator ── */
-function AIIndicator() {
+function AIIndicator({ label = "AI Active" }: { label?: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className="dash-ai-dots">
@@ -57,7 +72,7 @@ function AIIndicator() {
         <div className="dash-ai-dot" />
       </div>
       <span className="text-[9px] font-bold uppercase tracking-[0.15em]"
-        style={{ color: "hsla(211,96%,68%,.4)" }}>AI Active</span>
+        style={{ color: "hsla(211,96%,68%,.4)" }}>{label}</span>
     </div>
   );
 }
@@ -85,12 +100,54 @@ function SectionHeader({ icon: Icon, label, extra }: { icon: any; label: string;
   );
 }
 
+/* ── Revenue Glow Card — bigger emphasis ── */
+function RevenueGlowCard({ label, value, sub, icon: Icon, color = "blue", to }: {
+  label: string; value: number; sub: string; icon: any; color?: "blue" | "green" | "cyan" | "violet"; to?: string;
+}) {
+  const count = useCountUp(value, 1600);
+  const display = `$${count.toLocaleString()}`;
+  const colors = {
+    blue: { grad: "linear-gradient(135deg, hsl(211 96% 68%), hsl(211 96% 55%))", glow: "hsla(211,96%,60%,.2)", bg: "hsla(211,96%,60%,.06)" },
+    green: { grad: "linear-gradient(135deg, hsl(152 60% 60%), hsl(152 60% 45%))", glow: "hsla(152,60%,50%,.2)", bg: "hsla(152,60%,50%,.06)" },
+    cyan: { grad: "linear-gradient(135deg, hsl(187 80% 60%), hsl(187 80% 48%))", glow: "hsla(187,80%,55%,.2)", bg: "hsla(187,80%,55%,.06)" },
+    violet: { grad: "linear-gradient(135deg, hsl(260 60% 68%), hsl(260 60% 55%))", glow: "hsla(260,60%,62%,.2)", bg: "hsla(260,60%,62%,.06)" },
+  };
+  const c = colors[color];
+
+  const inner = (
+    <motion.div variants={fadeUp} className="h-full">
+      <div className="dash-revenue-card group relative h-full" style={{ "--glow-color": c.glow, "--glow-bg": c.bg } as any}>
+        <div className="relative z-10 flex flex-col justify-between h-full">
+          <div className="flex items-center gap-2 mb-3">
+            <motion.div
+              className="h-8 w-8 rounded-lg flex items-center justify-center"
+              style={{ background: c.bg, border: `1px solid ${c.glow}` }}
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              <Icon className="h-4 w-4" style={{ color: c.grad.includes("152") ? "hsl(152 60% 55%)" : c.grad.includes("187") ? "hsl(187 80% 55%)" : "hsl(211 96% 68%)" }} />
+            </motion.div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em]"
+              style={{ color: "hsla(210,50%,70%,.55)" }}>{label}</p>
+          </div>
+          <div>
+            <motion.p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight"
+              style={{ background: c.grad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", filter: `drop-shadow(0 0 12px ${c.glow})` }}
+            >{display}</motion.p>
+            <p className="text-[11px] mt-1" style={{ color: "hsla(215,18%,55%,.6)" }}>{sub}</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+  return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
+}
+
 /* ── Futuristic KPI Card ── */
-function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency = false }: {
-  label: string; value: number; sub: string; icon: any; accent?: boolean; to?: string; isCurrency?: boolean;
+function KpiCard({ label, value, sub, icon: Icon, accent = false, to }: {
+  label: string; value: number; sub: string; icon: any; accent?: boolean; to?: string;
 }) {
   const count = useCountUp(value, 1400);
-  const display = isCurrency ? `$${count.toLocaleString()}` : String(count);
 
   const inner = (
     <motion.div variants={fadeUp} className="h-full">
@@ -105,12 +162,10 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency
                 background: accent
                   ? "linear-gradient(135deg, hsl(187 80% 55%), hsl(211 96% 68%))"
                   : "linear-gradient(135deg, hsl(210 50% 94%), hsl(210 50% 76%))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                 filter: accent ? "drop-shadow(0 0 8px hsla(211,96%,60%,.15))" : undefined,
               }}
-            >{display}</motion.p>
+            >{count}</motion.p>
             <p className="text-[11px]" style={{ color: "hsla(215,18%,55%,.7)" }}>{sub}</p>
           </div>
           <motion.div
@@ -134,13 +189,159 @@ function KpiCard({ label, value, sub, icon: Icon, accent = false, to, isCurrency
   return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
 }
 
+/* ── System Activity Pulse ── */
+function SystemActivityPulse({ activities }: { activities: any[] }) {
+  const recent = activities.slice(0, 4);
+  return (
+    <div className="dash-card p-5">
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "hsl(210 50% 88%)" }}>
+          <Radio className="h-4 w-4" style={{ color: "hsl(187 80% 55%)" }} /> System Activity
+        </h3>
+        <div className="flex items-center gap-2">
+          <motion.div className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "hsl(152 60% 50%)" }}
+            animate={{ scale: [1, 1.5, 1], opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(152,60%,55%,.5)" }}>Live</span>
+        </div>
+      </div>
+      <div className="relative z-10 space-y-0.5">
+        {recent.length === 0 ? (
+          <div className="py-6 text-center">
+            <motion.div className="flex justify-center gap-1.5 mb-3"
+              animate={{ opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity }}>
+              {[0, 1, 2, 3, 4].map(i => (
+                <motion.div key={i} className="w-1 rounded-full" style={{ background: "hsla(211,96%,60%,.3)" }}
+                  animate={{ height: [4, 8 + i * 3, 4] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15 }} />
+              ))}
+            </motion.div>
+            <p className="text-[11px] font-medium" style={{ color: "hsla(210,50%,70%,.45)" }}>Monitoring — activity will appear here</p>
+          </div>
+        ) : recent.map((a, i) => (
+          <motion.div key={a.id || i}
+            className="flex items-center gap-3 py-2.5 group/pulse"
+            style={{ borderBottom: i < recent.length - 1 ? "1px solid hsla(211,40%,16%,.3)" : undefined }}
+            initial={{ opacity: 0, x: -8 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.08 }}>
+            <motion.div className="w-2 h-2 rounded-full shrink-0"
+              style={{ background: "hsl(211 96% 60%)" }}
+              animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate" style={{ color: "hsl(210 50% 80%)" }}>{a.activity_note || a.activity_type}</p>
+            </div>
+            <span className="text-[10px] tabular-nums shrink-0" style={{ color: "hsla(215,18%,50%,.4)" }}>
+              {new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Priority Insights / Next Best Actions ── */
+function PriorityInsights({ metrics, isNewClient }: { metrics: any; isNewClient: boolean }) {
+  const insights: { label: string; desc: string; icon: any; type: "alert" | "opportunity" | "info"; to: string }[] = [];
+
+  if (metrics.overdueFollowUps > 0) insights.push({ label: `${metrics.overdueFollowUps} overdue follow-up${metrics.overdueFollowUps > 1 ? "s" : ""}`, desc: "Revenue at risk — take action now", icon: AlertTriangle, type: "alert", to: "/follow-up-queue" });
+  if (metrics.pendingProposals > 0) insights.push({ label: `${metrics.pendingProposals} proposal${metrics.pendingProposals > 1 ? "s" : ""} awaiting signature`, desc: "Follow up to close revenue", icon: FileText, type: "opportunity", to: "/proposals" });
+  if (metrics.openDeals > 0 && metrics.pipelineValue > 0) insights.push({ label: `$${metrics.pipelineValue.toLocaleString()} in open pipeline`, desc: "Move deals forward to close", icon: TrendingUp, type: "opportunity", to: "/pipeline" });
+  if (isNewClient) insights.push({ label: "Complete your setup", desc: "Unlock full system capabilities", icon: Rocket, type: "info", to: "/setup-center" });
+  if (metrics.contacts === 0) insights.push({ label: "Add your first contact", desc: "Start building your CRM", icon: UserPlus, type: "info", to: "/crm" });
+
+  if (insights.length === 0) return null;
+
+  const typeStyles = {
+    alert: { border: "hsla(35,90%,55%,.2)", glow: "hsla(35,90%,55%,.08)", iconColor: "hsl(35 90% 60%)" },
+    opportunity: { border: "hsla(152,60%,50%,.2)", glow: "hsla(152,60%,50%,.08)", iconColor: "hsl(152 60% 55%)" },
+    info: { border: "hsla(211,96%,60%,.15)", glow: "hsla(211,96%,60%,.06)", iconColor: "hsl(211 96% 68%)" },
+  };
+
+  return (
+    <div>
+      <SectionHeader icon={Sparkles} label="Priority Insights" extra={<AIIndicator label="Analyzing" />} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {insights.slice(0, 4).map((ins, i) => {
+          const s = typeStyles[ins.type];
+          return (
+            <Link key={ins.label} to={ins.to}>
+              <motion.div
+                className="dash-insight-card group"
+                style={{ borderColor: s.border, background: s.glow }}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: s.glow, border: `1px solid ${s.border}` }}>
+                    <ins.icon className="h-4 w-4" style={{ color: s.iconColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold" style={{ color: "hsl(210 50% 90%)" }}>{ins.label}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "hsla(215,18%,55%,.6)" }}>{ins.desc}</p>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 mt-1 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" style={{ color: "hsl(211 96% 68%)" }} />
+                </div>
+              </motion.div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Floating AI Assistant Presence ── */
+function AIAssistantPresence() {
+  return (
+    <motion.div
+      className="dash-ai-presence"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.2, duration: 0.6 }}
+    >
+      <div className="flex items-center gap-3">
+        <motion.div className="h-8 w-8 rounded-full flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsla(211,96%,60%,.15), hsla(260,60%,62%,.1))", border: "1px solid hsla(211,96%,60%,.15)" }}
+          animate={{ boxShadow: ["0 0 12px -4px hsla(211,96%,60%,.2)", "0 0 24px -4px hsla(211,96%,60%,.35)", "0 0 12px -4px hsla(211,96%,60%,.2)"] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        >
+          <Brain className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} />
+        </motion.div>
+        <div>
+          <p className="text-[11px] font-bold" style={{ color: "hsl(210 50% 85%)" }}>AI Growth Engine</p>
+          <div className="flex items-center gap-2">
+            <motion.div className="w-1.5 h-1.5 rounded-full"
+              style={{ background: "hsl(152 60% 50%)" }}
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <span className="text-[9px]" style={{ color: "hsla(152,60%,55%,.6)" }}>Optimizing performance</span>
+          </div>
+        </div>
+        <Waveform />
+      </div>
+    </motion.div>
+  );
+}
+
 /* ── Futuristic Empty state ── */
 function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
-    <div className="py-12 text-center">
+    <div className="py-10 text-center">
       <div className="dash-empty-icon mx-auto mb-5">
         <motion.div
-          className="h-16 w-16 rounded-2xl flex items-center justify-center"
+          className="h-14 w-14 rounded-2xl flex items-center justify-center"
           style={{
             background: "linear-gradient(145deg, hsla(211,96%,60%,.08), hsla(187,80%,55%,.04))",
             border: "1px solid hsla(211,96%,60%,.08)",
@@ -148,17 +349,17 @@ function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; des
           animate={{ y: [0, -6, 0], rotate: [0, 1, -1, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
-          <Icon className="h-7 w-7" style={{ color: "hsl(211 96% 68%)" }} />
+          <Icon className="h-6 w-6" style={{ color: "hsl(211 96% 68%)" }} />
         </motion.div>
       </div>
-      <p className="text-sm font-semibold mb-1.5" style={{ color: "hsl(210 50% 85%)" }}>{title}</p>
-      <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: "hsla(215,18%,55%,.6)" }}>{desc}</p>
+      <p className="text-sm font-semibold mb-1" style={{ color: "hsl(210 50% 85%)" }}>{title}</p>
+      <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: "hsla(215,18%,55%,.5)" }}>{desc}</p>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const { activeClientId, branding } = useWorkspace();
+  const { activeClientId, branding, activeClientName } = useWorkspace();
   const navigate = useNavigate();
   const [onboardingStage, setOnboardingStage] = useState("lead");
   const [setupPct, setSetupPct] = useState(0);
@@ -184,7 +385,7 @@ export default function Dashboard() {
       supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
       supabase.from("review_requests" as any).select("rating").eq("client_id", activeClientId),
       supabase.from("crm_tasks").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("status", "open"),
-      supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(6),
+      supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
     ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
@@ -226,6 +427,7 @@ export default function Dashboard() {
   const isNewClient = setupPct < 50 && onboardingStage !== "active";
   const isLive = onboardingStage === "active";
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
+  const displayName = branding.company_name || activeClientName || "your business";
 
   const quickActions = [
     { label: "New Contact", icon: UserPlus, to: "/crm" },
@@ -249,17 +451,15 @@ export default function Dashboard() {
             <div className="skeleton-loading h-10 w-72" />
             <div className="skeleton-loading h-4 w-48" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 relative z-10">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skeleton-loading h-28 rounded-2xl" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton-loading h-32 rounded-2xl" />
             ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 relative z-10">
-            <div className="lg:col-span-3 skeleton-loading h-72 rounded-2xl" />
-            <div className="lg:col-span-2 space-y-6">
-              <div className="skeleton-loading h-52 rounded-2xl" />
-              <div className="skeleton-loading h-40 rounded-2xl" />
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skeleton-loading h-28 rounded-2xl" />
+            ))}
           </div>
         </div>
       </div>
@@ -277,17 +477,17 @@ export default function Dashboard() {
         <div className="dash-orb dash-orb--cyan" />
         <div className="dash-orb dash-orb--violet" />
 
-        <div className="relative z-10 space-y-10">
+        <div className="relative z-10 space-y-8">
 
-          {/* ══════ HERO — Command Center Header ══════ */}
+          {/* ══════ PERSONALIZED HERO ══════ */}
           <motion.div
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-4"
+            className="space-y-5"
           >
-            {/* Top bar: Status + AI indicator */}
-            <div className="flex items-center justify-between">
+            {/* Top bar */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-4">
                 <motion.div
                   className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.12em]"
@@ -313,28 +513,28 @@ export default function Dashboard() {
                 </motion.div>
                 <Waveform />
               </div>
-              <AIIndicator />
+              <AIAssistantPresence />
             </div>
 
-            {/* Main title */}
+            {/* Personalized greeting */}
             <div>
-              <h1 className="text-4xl sm:text-5xl font-bold"
+              <p className="text-sm font-semibold mb-1" style={{ color: "hsla(211,96%,68%,.5)" }}>
+                {getGreeting()}
+              </p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold"
                 style={{
                   background: "linear-gradient(140deg, hsl(210 50% 96%) 0%, hsl(211 96% 74%) 40%, hsl(187 80% 62%) 70%, hsl(260 60% 72%) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  letterSpacing: "-0.035em",
-                  lineHeight: "1.1",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                  letterSpacing: "-0.035em", lineHeight: "1.1",
                 }}>
-                {branding.welcome_message || (branding.company_name ? `Welcome back, ${branding.company_name}` : "Command Center")}
+                {displayName}
               </h1>
-              <p className="text-sm mt-3 max-w-lg leading-relaxed" style={{ color: "hsla(215,18%,60%,.6)" }}>
-                Your intelligent growth engine — tracking, optimizing, and automating your business in real time.
+              <p className="text-xs sm:text-sm mt-2 max-w-lg leading-relaxed" style={{ color: "hsla(215,18%,60%,.5)" }}>
+                {getSystemStatus(isLive, hasData)}
               </p>
             </div>
 
-            {/* Double accent lines */}
+            {/* Accent lines */}
             <div className="max-w-lg">
               <div className="dash-hero-bar" />
               <div className="dash-hero-bar-secondary" />
@@ -363,9 +563,7 @@ export default function Dashboard() {
                 <span className="text-3xl font-bold tabular-nums"
                   style={{
                     background: "linear-gradient(135deg, hsl(211 96% 68%), hsl(187 80% 55%))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                     filter: "drop-shadow(0 0 6px hsla(211,96%,60%,.15))",
                   }}>{setupPct}%</span>
               </div>
@@ -377,48 +575,35 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* ══════ LIVE BANNER ══════ */}
-          {isLive && !isNewClient && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              className="dash-card p-4">
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "hsla(152,60%,44%,.08)", border: "1px solid hsla(152,60%,44%,.12)" }}>
-                  <Shield className="h-4 w-4" style={{ color: "hsl(152 60% 55%)" }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold" style={{ color: "hsl(210 50% 90%)" }}>All systems operational</p>
-                  <p className="text-xs" style={{ color: "hsla(215,18%,55%,.6)" }}>Your workspace is live and tracking data in real time</p>
-                </div>
-                <Waveform />
-              </div>
+          {/* ══════ LIVE REVENUE FEEDBACK — Primary value section ══════ */}
+          <div>
+            <SectionHeader icon={DollarSign} label="Revenue & Growth" extra={
+              <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(152,60%,55%,.4)" }}>
+                {hasData ? "Tracking" : "Ready"}
+              </span>
+            } />
+            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <RevenueGlowCard label="Pipeline Value" value={metrics.pipelineValue} sub={`${metrics.openDeals} open deal${metrics.openDeals !== 1 ? "s" : ""}`} icon={TrendingUp} color="blue" to="/pipeline" />
+              <RevenueGlowCard label="Revenue Won" value={metrics.wonValue} sub="Closed deals" icon={DollarSign} color="green" to="/pipeline" />
+              <RevenueGlowCard label="Revenue Influenced" value={metrics.pipelineValue + metrics.wonValue} sub="Total tracked value" icon={LineChart} color="cyan" />
             </motion.div>
-          )}
+          </div>
 
           {/* ══════ KPI MODULES ══════ */}
           <div>
             <SectionHeader icon={Cpu} label="System Metrics" extra={<AIIndicator />} />
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+              className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" />
-              <KpiCard label="Open Deals" value={metrics.openDeals} sub={hasData ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : "No deals yet"} icon={Briefcase} accent to="/pipeline" />
-              <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} to="/calendar" />
+              <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} accent to="/calendar" />
               <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
-              <KpiCard label="Revenue Won" value={metrics.wonValue} isCurrency sub="Closed deals" icon={DollarSign} accent={metrics.wonValue > 0} to="/pipeline" />
               <KpiCard label="Follow-Ups" value={metrics.overdueFollowUps} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
             </motion.div>
           </div>
 
-          {/* ══════ ONBOARDING PROGRESS ══════ */}
-          {isLive && setupPct < 100 && (
-            <div className="dash-card p-4">
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <p className="dash-section-label">Onboarding Progress</p>
-                <span className="text-sm font-bold tabular-nums" style={{ color: "hsl(211 96% 68%)" }}>{setupPct}%</span>
-              </div>
-              <Progress value={setupPct} className="h-1.5 relative z-10" />
-            </div>
-          )}
+          {/* ══════ PRIORITY INSIGHTS ══════ */}
+          <PriorityInsights metrics={metrics} isNewClient={isNewClient} />
 
           {/* ══════ QUICK ACTIONS ══════ */}
           <div>
@@ -471,7 +656,7 @@ export default function Dashboard() {
               </div>
               <div className="relative z-10">
                 {activities.length === 0 ? (
-                  <EmptyBlock icon={Activity} title="No activity yet" desc="Activity will appear as you add contacts, book appointments, and complete tasks." />
+                  <EmptyBlock icon={Activity} title="Your system is ready" desc="Activity will appear here as your growth engine captures leads, books appointments, and closes deals." />
                 ) : (
                   <div className="space-y-1">
                     {activities.map((a, i) => (
@@ -505,6 +690,9 @@ export default function Dashboard() {
 
             {/* Right column */}
             <div className="lg:col-span-2 space-y-6">
+              {/* System Activity Pulse */}
+              <SystemActivityPulse activities={activities} />
+
               {/* Pipeline snapshot */}
               <div className="dash-card p-6">
                 <h3 className="text-sm font-bold flex items-center gap-2 mb-5 relative z-10" style={{ color: "hsl(210 50% 88%)" }}>
@@ -512,7 +700,7 @@ export default function Dashboard() {
                 </h3>
                 <div className="relative z-10">
                   {metrics.openDeals === 0 && metrics.wonValue === 0 ? (
-                    <EmptyBlock icon={Briefcase} title="No deals yet" desc="Create your first deal to start tracking revenue opportunities." />
+                    <EmptyBlock icon={Briefcase} title="Pipeline ready" desc="Create your first deal — your system will track and optimize from here." />
                   ) : (
                     <div className="space-y-4">
                       <div className="flex justify-between items-end">
@@ -547,11 +735,6 @@ export default function Dashboard() {
                           </>
                         )}
                       </div>
-                      <div className="flex gap-4 text-[11px]" style={{ color: "hsla(215,18%,55%,.6)" }}>
-                        <span>{metrics.openDeals} open deals</span>
-                        <span style={{ color: "hsla(211,96%,60%,.2)" }}>·</span>
-                        <span>{metrics.pendingProposals} proposals pending</span>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -564,15 +747,13 @@ export default function Dashboard() {
                 </h3>
                 <div className="relative z-10">
                   {metrics.ratingCount === 0 ? (
-                    <EmptyBlock icon={Star} title="No reviews yet" desc="Send review requests to start building social proof." />
+                    <EmptyBlock icon={Star} title="Reputation tracking ready" desc="Your system will collect and display reviews automatically." />
                   ) : (
                     <div className="flex items-end gap-4">
                       <div>
                         <p className="text-4xl font-bold" style={{
                           background: "linear-gradient(135deg, hsl(45 90% 60%), hsl(35 90% 55%))",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
+                          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                         }}>{metrics.avgRating.toFixed(1)}</p>
                         <div className="flex gap-0.5 mt-1">
                           {[1, 2, 3, 4, 5].map(s => (
@@ -589,33 +770,19 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
-
-              {/* Tasks */}
-              <div className="dash-card p-6">
-                <h3 className="text-sm font-bold flex items-center gap-2 mb-5 relative z-10" style={{ color: "hsl(210 50% 88%)" }}>
-                  <CheckSquare className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} /> Open Tasks
-                </h3>
-                <div className="relative z-10">
-                  {metrics.openTasks === 0 ? (
-                    <EmptyBlock icon={CheckSquare} title="All clear" desc="No open tasks — great work staying on top of things." />
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <p className="text-3xl font-bold" style={{
-                        background: "linear-gradient(135deg, hsl(210 50% 94%), hsl(211 96% 72%))",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}>{metrics.openTasks}</p>
-                      <div className="text-xs" style={{ color: "hsla(215,18%,55%,.6)" }}>
-                        <p>tasks remaining</p>
-                        <Link to="/tasks" className="font-medium hover:underline transition-colors duration-300" style={{ color: "hsl(211 96% 68%)" }}>View all →</Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
+
+          {/* ══════ ONBOARDING PROGRESS ══════ */}
+          {isLive && setupPct < 100 && (
+            <div className="dash-card p-4">
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <p className="dash-section-label">Onboarding Progress</p>
+                <span className="text-sm font-bold tabular-nums" style={{ color: "hsl(211 96% 68%)" }}>{setupPct}%</span>
+              </div>
+              <Progress value={setupPct} className="h-1.5 relative z-10" />
+            </div>
+          )}
 
           {/* ══════ SYSTEM STATUS ══════ */}
           <div>
