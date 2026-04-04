@@ -136,6 +136,7 @@ import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
