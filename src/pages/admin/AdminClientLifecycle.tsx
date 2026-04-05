@@ -16,6 +16,7 @@ import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
 import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
+import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 
 interface ClientData {
   id: string;
@@ -264,6 +265,14 @@ export default function AdminClientLifecycle() {
         onUpdate={load}
       />
 
+      {/* Workspace Intelligence Preview */}
+      {clientId && (
+        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-5">
+            <BusinessIntelligencePreview clientId={clientId} />
+          </CardContent>
+        </Card>
+      )}
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">

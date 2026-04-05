@@ -1,6 +1,8 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
+import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
+import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -661,18 +663,22 @@ function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
 }
 
 /* ── Revenue Expansion with Psychology ── */
-function OpportunitiesSection({ metrics }: { metrics: any }) {
+function OpportunitiesSection({ metrics, intel }: { metrics: any; intel: ClientIntelligenceOutput | null }) {
   const totalPotential = useMemo(() => {
     const base = Math.max(metrics.pipelineValue, 8000);
     return Math.round(base * 0.45 / 100) * 100;
   }, [metrics.pipelineValue]);
 
-  const opportunities = useMemo(() => [
-    { title: "Upsell Existing Clients", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns", growth: "+$3.2K/mo" },
-    { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "14 dormant contacts identified", growth: "+18% conv." },
-    { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready", growth: "+9 leads" },
-    { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
-  ], [totalPotential]);
+  const opportunities = useMemo(() => {
+    const lever = intel?.primaryGrowthLever ?? "Optimize growth channels";
+    const urgency = intel?.urgencySignal ?? "Take action to capture missed revenue";
+    return [
+      { title: lever.split("+")[0]?.trim() || "Growth Lever", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: intel ? Math.min(92, intel.growthPotentialPct + 10) : 82, icon: TrendingUp, desc: intel?.nicheOpportunitySummary?.substring(0, 60) + "…" || "Based on service usage patterns", growth: "+$3.2K/mo" },
+      { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "Dormant contacts identified for reactivation", growth: "+18% conv." },
+      { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "High-satisfaction clients ready for referrals", growth: "+9 leads" },
+      { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
+    ];
+  }, [totalPotential, intel]);
 
   return (
     <motion.div
@@ -779,9 +785,13 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
   );
 }
 
-/* ── NEW: AI Insights Layer ── */
-function AIInsightsLayer() {
-  const insights = [
+/* ── AI Insights Layer (connected to intelligence engine) ── */
+function AIInsightsLayer({ intel }: { intel: ClientIntelligenceOutput | null }) {
+  const insights = intel ? [
+    { title: "Growth Opportunity", body: intel.nicheOpportunitySummary, icon: TrendingUp, priority: "high" },
+    { title: "Primary Growth Lever", body: intel.primaryGrowthLever, icon: Zap, priority: "med" },
+    { title: "Urgency Signal", body: intel.urgencySignal, icon: AlertTriangle, priority: "high" },
+  ] : [
     { title: "Lead Response Time", body: "Average response is 4.2 hours — reducing to under 1 hour could increase conversion by 21%", icon: Clock, priority: "high" },
     { title: "Best Performing Channel", body: "Organic search drives 42% of qualified leads. Consider increasing SEO investment.", icon: Eye, priority: "med" },
     { title: "Proposal Win Rate", body: "Your close rate is 34% — 8% above industry average. Maintain current follow-up cadence.", icon: Shield, priority: "low" },
@@ -848,6 +858,7 @@ export default function Dashboard() {
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
+  const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -865,7 +876,8 @@ export default function Dashboard() {
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
-    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
+      supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
+    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals, wpRes]) => {
       const cs = clientStage.data as any;
       setOnboardingStage(cs?.onboarding_stage || "lead");
       setClientStages({
@@ -904,6 +916,23 @@ export default function Dashboard() {
         pendingProposals: proposals.count || 0,
       });
       setActivities(acts.data || []);
+
+      // Hydrate workspace profile for intelligence engine
+      const wpData = wpRes.data;
+      if (wpData) {
+        const ov = (wpData.config_overrides && typeof wpData.config_overrides === "object" && !Array.isArray(wpData.config_overrides))
+          ? wpData.config_overrides as Record<string, any> : {};
+        setWorkspaceProfile({
+          industry: ov.industry || "agencies_professional",
+          niche: ov.niche || null,
+          archetype: ov.archetype || "retainers",
+          zoomTier: ov.zoomTier || "z2",
+          legacyProfileType: (wpData as any).profile_type || "",
+          legacyIndustryValue: ov.legacyIndustryValue || "",
+          metadata: ov.metadata || { revenueModel: "retainer", salesCycle: "medium", ticketSize: "medium", complexityLevel: "medium", complianceLevel: "none" },
+        });
+      }
+
       setLoading(false);
     });
   }, [activeClientId]);
@@ -912,6 +941,7 @@ export default function Dashboard() {
   const isLive = onboardingStage === "active";
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
   const displayName = branding.company_name || activeClientName || "your business";
+  const intel = useMemo(() => workspaceProfile ? generateClientIntelligence(workspaceProfile) : null, [workspaceProfile]);
 
   const sparkPipeline = useMemo(() => fakeSparkline(metrics.pipelineValue), [metrics.pipelineValue]);
   const sparkWon = useMemo(() => fakeSparkline(metrics.wonValue), [metrics.wonValue]);
@@ -1174,7 +1204,7 @@ export default function Dashboard() {
           <PriorityInsights metrics={metrics} isNewClient={isNewClient} />
 
           {/* ══════ OPPORTUNITIES / REVENUE EXPANSION (NEW) ══════ */}
-          <OpportunitiesSection metrics={metrics} />
+          <OpportunitiesSection metrics={metrics} intel={intel} />
 
           {/* ══════ QUICK ACTIONS ══════ */}
           <motion.div
@@ -1207,7 +1237,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ══════ AI INSIGHTS LAYER ══════ */}
-          <AIInsightsLayer />
+          <AIInsightsLayer intel={intel} />
 
           {/* ══════ ENERGY SWEEP DIVIDER ══════ */}
           <motion.div className="relative py-2"
