@@ -85,7 +85,7 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
     niche: client.business_type || "",
   };
   const niche = NICHE_REGISTRY[profile.niche] || null;
-  const opType = resolveOperationType(profile.archetype, profile.industry);
+  const opType = resolveOperationType(profile.archetype as any, profile.industry);
   const nicheLabel = niche?.label || profile.niche || "General";
 
   // Derive sales stage from client statuses
