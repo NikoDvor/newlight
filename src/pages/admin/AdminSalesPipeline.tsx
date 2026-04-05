@@ -72,6 +72,7 @@ interface ClientSalesRecord {
   paymentStatus: string | null;
   riskIndicator: string;
   riskColor: string;
+  riskFlags: string[];
   modulesCount: number;
   quoteMonthly: number;
   quoteSetup: number;
