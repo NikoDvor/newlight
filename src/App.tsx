@@ -100,6 +100,7 @@ import AdminCloseCenter from "./pages/admin/AdminCloseCenter";
 import AdminImplementationQueue from "./pages/admin/AdminImplementationQueue";
 import AdminImplementationDetail from "./pages/admin/AdminImplementationDetail";
 import AdminOnboardingCommandCenter from "./pages/admin/AdminOnboardingCommandCenter";
+import AdminSalesControlCenter from "./pages/admin/AdminSalesControlCenter";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -246,6 +247,7 @@ const App = () => {
                 <Route path="implementation-queue" element={<AdminImplementationQueue />} />
                 <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
+                <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
               </Route>
 
               {/* Client Workspace */}
