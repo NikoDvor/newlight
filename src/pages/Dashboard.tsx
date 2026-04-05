@@ -847,6 +847,7 @@ export default function Dashboard() {
     pendingProposals: 0,
   });
   const [activities, setActivities] = useState<any[]>([]);
+  const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
