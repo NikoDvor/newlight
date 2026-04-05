@@ -856,7 +856,7 @@ export default function Dashboard() {
     Promise.all([
       supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
-      supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
+      supabase.from("clients").select("onboarding_stage, proposal_status, agreement_status, payment_status, implementation_status").eq("id", activeClientId).single(),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       supabase.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", activeClientId),
       supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
