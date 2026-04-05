@@ -12,18 +12,35 @@ import { resolveOperationType, BUSINESS_OPERATION_TYPES } from "@/lib/businessOp
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import {
   Zap, DollarSign, Globe, Smartphone, Shield, TrendingUp,
-  Megaphone, Search, BarChart3, Users, RefreshCw, Star, Radio, FileText
+  Megaphone, Search, BarChart3, Users, RefreshCw, Star, Radio, FileText,
+  CheckCircle2, AlertTriangle, Lightbulb
 } from "lucide-react";
 
 const MODULES = [
-  { key: "paid_ads", label: "Paid Ads System", icon: Megaphone, desc: "Google/Meta ad management" },
-  { key: "seo", label: "SEO System", icon: Search, desc: "Organic search optimization" },
-  { key: "website_management", label: "Website System", icon: Globe, desc: "Website management & updates" },
-  { key: "crm_automation", label: "CRM Automation", icon: Users, desc: "Pipeline & contact automation" },
-  { key: "lifecycle_nurture", label: "Lifecycle Nurture", icon: RefreshCw, desc: "Nurture + reactivation" },
-  { key: "reputation_reviews", label: "Reputation + Reviews", icon: Star, desc: "Review gen & monitoring" },
-  { key: "tracking_attribution", label: "Tracking + Attribution", icon: Radio, desc: "Call tracking & analytics" },
-  { key: "financial_compliance", label: "Financial Compliance", icon: Shield, desc: "Compliance workflow add-on" },
+  { key: "paid_ads", label: "Paid Ads System", icon: Megaphone,
+    desc: "Google & Meta ad management with attribution",
+    rationale: "Drives immediate qualified lead volume with measurable ROI tracking" },
+  { key: "seo", label: "SEO System", icon: Search,
+    desc: "Organic search optimization & local rankings",
+    rationale: "Builds compounding organic visibility — reduces long-term acquisition costs" },
+  { key: "website_management", label: "Website System", icon: Globe,
+    desc: "Conversion-optimized website management",
+    rationale: "Ensures every visitor encounters a high-converting, branded experience" },
+  { key: "crm_automation", label: "CRM Automation", icon: Users,
+    desc: "Pipeline, contact management & lead scoring",
+    rationale: "Captures, scores, and nurtures every lead without manual follow-up" },
+  { key: "lifecycle_nurture", label: "Lifecycle Nurture", icon: RefreshCw,
+    desc: "Automated nurture + dormant client reactivation",
+    rationale: "Reactivates dormant clients — highest ROI of any growth module" },
+  { key: "reputation_reviews", label: "Reputation + Reviews", icon: Star,
+    desc: "Review generation, monitoring & response",
+    rationale: "Builds the social proof that closes deals before your team even speaks" },
+  { key: "tracking_attribution", label: "Tracking + Attribution", icon: Radio,
+    desc: "Call tracking, analytics & channel attribution",
+    rationale: "Proves ROI on every channel — eliminates wasted marketing spend" },
+  { key: "financial_compliance", label: "Financial Compliance", icon: Shield,
+    desc: "Compliance workflow & regulatory tracking",
+    rationale: "Ensures every client interaction meets financial regulatory requirements" },
 ];
 
 interface Props {
@@ -44,28 +61,24 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
 
   const quote = useMemo(() => {
-    const q = computeQuote({
+    return computeQuote({
       workspaceProfile: profile,
       selectedModules,
       hasPurchasedPlatformSetup: platformPurchased,
       includeWebsiteBuild: websiteBuild,
       includeAppStoreLaunchUpgrade: appStoreUpgrade,
     });
-    return q;
   }, [profile, selectedModules, platformPurchased, websiteBuild, appStoreUpgrade]);
 
   const toggleModule = useCallback((key: string) => {
-    setSelectedModules(prev => {
-      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
-      return next;
-    });
+    setSelectedModules(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   }, []);
 
   const emitQuote = useCallback(() => {
     onQuoteChange?.(quote, selectedModules, internalNotes);
   }, [quote, selectedModules, internalNotes, onQuoteChange]);
 
-  // Recommended modules from niche
+  // Recommended modules from niche priority
   const recommended = useMemo(() => {
     if (!niche) return [];
     const priority = niche.modulePriority;
@@ -77,23 +90,50 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
       lifecycle_nurture: priority.automation,
       reputation_reviews: 3,
       tracking_attribution: 3,
+      financial_compliance: niche.complianceLevel === "high" ? 5 : niche.complianceLevel === "moderate" ? 3 : 1,
     };
     return Object.entries(map).filter(([, v]) => v >= 4).map(([k]) => k);
   }, [niche]);
+
+  const selectRecommended = useCallback(() => {
+    setSelectedModules(recommended);
+  }, [recommended]);
+
+  // Sort modules: recommended first
+  const sortedModules = useMemo(() => {
+    return [...MODULES].sort((a, b) => {
+      const aRec = recommended.includes(a.key) ? 1 : 0;
+      const bRec = recommended.includes(b.key) ? 1 : 0;
+      return bRec - aRec;
+    });
+  }, [recommended]);
 
   return (
     <div className="space-y-4">
       {/* Business Profile Summary */}
       <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <Zap className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
-          <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Proposal Intake — Business Profile</h3>
+          <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Business Profile</h3>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] mb-3">
           <div><span className="text-white/40 block">Niche</span><span className="text-white/80">{niche?.label ?? "General"}</span></div>
           <div><span className="text-white/40 block">Operation</span><span className="text-white/80">{opLabel}</span></div>
           <div><span className="text-white/40 block">Revenue Opp.</span><span className="text-[hsl(var(--nl-neon))]">{intel.revenueOpportunity}</span></div>
           <div><span className="text-white/40 block">Growth</span><span className="text-[hsl(var(--nl-neon))]">{intel.growthPotentialPct}%</span></div>
+        </div>
+        {/* Niche opportunity insight */}
+        <div className="rounded-lg p-3 mt-2" style={{ background: "hsla(211,96%,60%,.03)", border: "1px solid hsla(211,96%,60%,.06)" }}>
+          <div className="flex items-start gap-2">
+            <Lightbulb className="h-3 w-3 text-[hsl(var(--nl-sky))] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] text-white/60 leading-relaxed">{intel.nicheOpportunitySummary}</p>
+              <p className="text-[10px] text-[hsl(var(--nl-neon))] mt-1.5 font-medium">Primary lever: {intel.primaryGrowthLever}</p>
+              <p className="text-[10px] text-amber-400/60 mt-0.5 flex items-center gap-1">
+                <AlertTriangle className="h-2.5 w-2.5" /> {intel.urgencySignal}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -107,43 +147,75 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
             </div>
             <Switch checked={platformPurchased} onCheckedChange={setPlatformPurchased} />
           </div>
+          {platformPurchased && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+              <p className="text-[10px] text-emerald-400/80">All module activation fees waived</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Module Selection Grid */}
+      {/* Module Selection */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-            <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Growth Modules</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Growth Modules</h3>
+            </div>
+            {recommended.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[9px] h-6 px-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+                onClick={selectRecommended}
+              >
+                <CheckCircle2 className="h-3 w-3 mr-1" /> Select Recommended
+              </Button>
+            )}
           </div>
+
           <div className="space-y-1.5">
-            {MODULES.map(mod => {
+            {sortedModules.map(mod => {
               const active = selectedModules.includes(mod.key);
               const isRecommended = recommended.includes(mod.key);
               return (
                 <div
                   key={mod.key}
                   onClick={() => toggleModule(mod.key)}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                  className={`p-3 rounded-lg cursor-pointer transition-all ${
                     active
                       ? "bg-[hsla(211,96%,60%,.1)] border border-[hsla(211,96%,60%,.3)]"
                       : "bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04]"
                   }`}
                 >
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    active ? "bg-[hsla(211,96%,60%,.2)]" : "bg-white/[0.04]"
-                  }`}>
-                    <mod.icon className={`h-4 w-4 ${active ? "text-[hsl(var(--nl-neon))]" : "text-white/30"}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className={`text-xs font-medium ${active ? "text-white" : "text-white/60"}`}>{mod.label}</p>
-                      {isRecommended && <Badge className="text-[7px] bg-emerald-500/20 text-emerald-400 px-1 py-0">REC</Badge>}
+                  <div className="flex items-center gap-3">
+                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      active ? "bg-[hsla(211,96%,60%,.2)]" : "bg-white/[0.04]"
+                    }`}>
+                      <mod.icon className={`h-4 w-4 ${active ? "text-[hsl(var(--nl-neon))]" : "text-white/30"}`} />
                     </div>
-                    <p className="text-[10px] text-white/30">{mod.desc}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-xs font-medium ${active ? "text-white" : "text-white/60"}`}>{mod.label}</p>
+                        {isRecommended && (
+                          <Badge className="text-[7px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0">
+                            RECOMMENDED
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-white/30">{mod.desc}</p>
+                    </div>
+                    <Switch checked={active} onCheckedChange={() => toggleModule(mod.key)} onClick={e => e.stopPropagation()} />
                   </div>
-                  <Switch checked={active} onCheckedChange={() => toggleModule(mod.key)} onClick={e => e.stopPropagation()} />
+                  {/* Show rationale when active */}
+                  {active && (
+                    <div className="mt-2 ml-11 flex items-start gap-1.5">
+                      <TrendingUp className="h-3 w-3 text-[hsl(var(--nl-sky))] shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-[hsl(var(--nl-sky))]/60 leading-relaxed">{mod.rationale}</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
