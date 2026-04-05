@@ -15,6 +15,7 @@ import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER, ITEM_STATUS_OPTIONS } 
 import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
+import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 
 interface ClientData {
   id: string;
