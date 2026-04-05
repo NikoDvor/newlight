@@ -663,18 +663,22 @@ function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
 }
 
 /* ── Revenue Expansion with Psychology ── */
-function OpportunitiesSection({ metrics }: { metrics: any }) {
+function OpportunitiesSection({ metrics, intel }: { metrics: any; intel: ClientIntelligenceOutput | null }) {
   const totalPotential = useMemo(() => {
     const base = Math.max(metrics.pipelineValue, 8000);
     return Math.round(base * 0.45 / 100) * 100;
   }, [metrics.pipelineValue]);
 
-  const opportunities = useMemo(() => [
-    { title: "Upsell Existing Clients", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: 82, icon: TrendingUp, desc: "Based on service usage patterns", growth: "+$3.2K/mo" },
-    { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "14 dormant contacts identified", growth: "+18% conv." },
-    { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "3 high-satisfaction clients ready", growth: "+9 leads" },
-    { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
-  ], [totalPotential]);
+  const opportunities = useMemo(() => {
+    const lever = intel?.primaryGrowthLever ?? "Optimize growth channels";
+    const urgency = intel?.urgencySignal ?? "Take action to capture missed revenue";
+    return [
+      { title: lever.split("+")[0]?.trim() || "Growth Lever", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: intel ? Math.min(92, intel.growthPotentialPct + 10) : 82, icon: TrendingUp, desc: intel?.nicheOpportunitySummary?.substring(0, 60) + "…" || "Based on service usage patterns", growth: "+$3.2K/mo" },
+      { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "Dormant contacts identified for reactivation", growth: "+18% conv." },
+      { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "High-satisfaction clients ready for referrals", growth: "+9 leads" },
+      { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
+    ];
+  }, [totalPotential, intel]);
 
   return (
     <motion.div
