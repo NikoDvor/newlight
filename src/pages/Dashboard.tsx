@@ -912,6 +912,23 @@ export default function Dashboard() {
         pendingProposals: proposals.count || 0,
       });
       setActivities(acts.data || []);
+
+      // Hydrate workspace profile for intelligence engine
+      const wpData = wpRes.data;
+      if (wpData) {
+        const ov = (wpData.config_overrides && typeof wpData.config_overrides === "object" && !Array.isArray(wpData.config_overrides))
+          ? wpData.config_overrides as Record<string, any> : {};
+        setWorkspaceProfile({
+          industry: ov.industry || "agencies_professional",
+          niche: ov.niche || null,
+          archetype: ov.archetype || "retainers",
+          zoomTier: ov.zoomTier || "z2",
+          legacyProfileType: (wpData as any).profile_type || "",
+          legacyIndustryValue: ov.legacyIndustryValue || "",
+          metadata: ov.metadata || { revenueModel: "retainer", salesCycle: "medium", ticketSize: "medium", complexityLevel: "medium", complianceLevel: "none" },
+        });
+      }
+
       setLoading(false);
     });
   }, [activeClientId]);
