@@ -1002,6 +1002,16 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
+          {/* ══════ PROPOSAL STAGE BANNER ══════ */}
+          {clientStages.proposalStatus !== "not_sent" && clientStages.paymentStatus !== "paid" && (
+            <ProposalStageBanner
+              proposalStatus={clientStages.proposalStatus}
+              agreementStatus={clientStages.agreementStatus}
+              paymentStatus={clientStages.paymentStatus}
+              implementationStatus={clientStages.implementationStatus}
+            />
+          )}
+
           {/* ══════ SETUP BANNER ══════ */}
           {isNewClient && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-6">
