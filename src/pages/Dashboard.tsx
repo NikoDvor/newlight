@@ -872,7 +872,8 @@ export default function Dashboard() {
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
-    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
+      supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
+    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals, wpRes]) => {
       const cs = clientStage.data as any;
       setOnboardingStage(cs?.onboarding_stage || "lead");
       setClientStages({
