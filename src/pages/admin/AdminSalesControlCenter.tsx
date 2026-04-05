@@ -12,7 +12,7 @@ import {
   DollarSign, Package, Zap, TrendingUp, Shield, Globe,
   ChevronRight, CheckCircle2, Clock, AlertTriangle, FileText, Brain,
   Target, Layers, BarChart3, Star, Info, Copy, Pencil, Eye,
-  ArrowRightLeft, Lock, Unlock, Clipboard, Camera
+  ArrowRightLeft, Lock, Unlock, Clipboard, Camera, Users
 } from "lucide-react";
 import { WEBSITE_BUILD_FEES } from "@/lib/workspaceQuoteEngine";
 import { BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
@@ -136,24 +136,51 @@ function SalesControlCenterInner() {
     if (snap) toast.success("Handoff snapshot generated");
   };
 
+  // Risk flag count
+  const activeRiskCount = Object.values(s.riskFlags).filter(Boolean).length;
+  const riskLabel = activeRiskCount === 0 ? "Low" : activeRiskCount <= 2 ? "Moderate" : "High";
+  const riskLabelColor = activeRiskCount === 0 ? "text-emerald-400" : activeRiskCount <= 2 ? "text-amber-400" : "text-red-400";
+
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <BackArrow to="/admin/clients" />
+          <BackArrow to="/admin/sales-pipeline" />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Sales Control Center</h1>
             <p className="text-xs text-muted-foreground">Single source of truth — pricing, packaging & proposal</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {s.ownership.primaryRep && <Badge variant="outline" className="border-primary/20 text-primary/70 text-[10px]">Rep: {s.ownership.primaryRep}</Badge>}
           {s.readyToPresent && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]"><CheckCircle2 className="h-3 w-3 mr-1" /> Ready to Present</Badge>}
           {s.readyToClose && <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]"><Unlock className="h-3 w-3 mr-1" /> Ready to Close</Badge>}
           {s.presentedVersion && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]"><Eye className="h-3 w-3 mr-1" /> Presented: {s.presentedVersion.name}</Badge>}
           <Badge variant="outline" className="border-destructive/30 text-destructive bg-destructive/10 px-2 py-1 text-[10px]">ADMIN ONLY</Badge>
         </div>
       </div>
+
+      {/* Ops Header Strip */}
+      <Card className="p-3 bg-card/60 border-border/30 backdrop-blur-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {[
+            { label: "Owner", value: s.ownership.primaryRep || "Unassigned", color: s.ownership.primaryRep ? "text-foreground" : "text-muted-foreground/50" },
+            { label: "Stage", value: WORKFLOW_STEPS.find(w => w.key === s.currentStage)?.label || s.currentStage },
+            { label: "Close %", value: `${s.forecast.probability}%`, color: s.forecast.category === "strong" ? "text-emerald-400" : s.forecast.category === "at_risk" ? "text-amber-400" : "text-foreground" },
+            { label: "Confidence", value: s.forecast.confidenceLabel, color: s.forecast.category === "strong" ? "text-emerald-400" : s.forecast.category === "stalled" ? "text-red-400" : "text-foreground" },
+            { label: "Next Action", value: s.nextAction.action || "None set", color: s.nextAction.action ? "text-foreground" : "text-amber-400" },
+            { label: "Due", value: s.nextAction.dueDate ? new Date(s.nextAction.dueDate).toLocaleDateString() : "—", color: s.nextAction.dueDate && new Date(s.nextAction.dueDate) < new Date() ? "text-red-400" : "text-foreground" },
+            { label: "Risk", value: `${riskLabel} (${activeRiskCount})`, color: riskLabelColor },
+            { label: "Handoff", value: s.handoffSnapshot ? "✓ Ready" : "Pending", color: s.handoffSnapshot ? "text-emerald-400" : "text-muted-foreground/50" },
+          ].map((item, i) => (
+            <div key={i} className="text-center">
+              <p className="text-[8px] text-muted-foreground/50 uppercase tracking-widest">{item.label}</p>
+              <p className={`text-[11px] font-semibold truncate ${item.color || "text-foreground"}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Workflow Strip */}
       <Card className="p-2.5 bg-card/60 border-border/40 backdrop-blur-sm">
@@ -431,6 +458,84 @@ function SalesControlCenterInner() {
                 <div key={key}>
                   <label className="text-[9px] text-muted-foreground block capitalize">{key.replace(/([A-Z])/g, " $1")}</label>
                   <Textarea placeholder={`${key}...`} value={s.notes[key]} onChange={e => s.updateNotes({ [key]: e.target.value })} className="text-[9px] bg-muted/10 border-border/15 min-h-[30px]" />
+                </div>
+              ))}
+            </div>
+          </Sec>
+
+          {/* Ownership */}
+          <Sec icon={Users} title="Rep Ownership">
+            <div className="space-y-1.5">
+              <div><label className="text-[9px] text-muted-foreground block">Primary Rep</label><Input value={s.ownership.primaryRep} onChange={e => s.setOwnership({ primaryRep: e.target.value })} placeholder="Assign rep..." className="h-6 text-[9px] bg-muted/10 border-border/15" /></div>
+              <div><label className="text-[9px] text-muted-foreground block">Secondary / Closer</label><Input value={s.ownership.secondaryRep} onChange={e => s.setOwnership({ secondaryRep: e.target.value })} placeholder="Optional..." className="h-6 text-[9px] bg-muted/10 border-border/15" /></div>
+            </div>
+          </Sec>
+
+          {/* Next Action */}
+          <Sec icon={Clock} title="Next Action" iconColor={s.nextAction.dueDate && new Date(s.nextAction.dueDate) < new Date() && !s.nextAction.completed ? "text-red-400" : "text-primary"}>
+            <div className="space-y-1.5">
+              <Input value={s.nextAction.action} onChange={e => s.setNextAction({ action: e.target.value })} placeholder="Next step..." className="h-6 text-[9px] bg-muted/10 border-border/15" />
+              <div className="grid grid-cols-2 gap-1.5">
+                <div><label className="text-[9px] text-muted-foreground block">Due</label><Input type="date" value={s.nextAction.dueDate} onChange={e => s.setNextAction({ dueDate: e.target.value })} className="h-6 text-[9px] bg-muted/10 border-border/15" /></div>
+                <div><label className="text-[9px] text-muted-foreground block">Type</label>
+                  <Select value={s.nextAction.type} onValueChange={v => s.setNextAction({ type: v as any })}>
+                    <SelectTrigger className="h-6 text-[9px] bg-muted/10 border-border/15"><SelectValue /></SelectTrigger>
+                    <SelectContent>{["call", "text", "email", "meeting", "internal_review"].map(t => <SelectItem key={t} value={t} className="text-[10px]">{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={s.nextAction.priority} onValueChange={v => s.setNextAction({ priority: v as any })}>
+                  <SelectTrigger className="h-6 text-[9px] bg-muted/10 border-border/15 w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent>{["low", "medium", "high", "urgent"].map(p => <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>)}</SelectContent>
+                </Select>
+                <Button size="sm" variant={s.nextAction.completed ? "default" : "outline"} className={`text-[9px] h-6 ${s.nextAction.completed ? "bg-emerald-500/20 text-emerald-400" : ""}`} onClick={() => { s.setNextAction({ completed: !s.nextAction.completed }); if (!s.nextAction.completed) s.logActivity("Follow-Up", `Completed: ${s.nextAction.action}`); }}>
+                  {s.nextAction.completed ? "✓ Done" : "Mark Done"}
+                </Button>
+              </div>
+              {s.nextAction.dueDate && new Date(s.nextAction.dueDate) < new Date() && !s.nextAction.completed && (
+                <p className="text-[8px] text-red-400 font-semibold">⚠ Overdue follow-up</p>
+              )}
+            </div>
+          </Sec>
+
+          {/* Forecast */}
+          <Sec icon={BarChart3} title="Close Forecast">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <label className="text-[9px] text-muted-foreground shrink-0">Probability</label>
+                <Input type="number" min={0} max={100} value={s.forecast.probability} onChange={e => s.setForecast({ probability: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className="h-6 text-[9px] bg-muted/10 border-border/15 w-16" />
+                <span className={`text-[10px] font-semibold ${s.forecast.category === "strong" ? "text-emerald-400" : s.forecast.category === "at_risk" ? "text-amber-400" : s.forecast.category === "stalled" ? "text-red-400" : "text-foreground"}`}>{s.forecast.confidenceLabel}</span>
+              </div>
+              <div><label className="text-[9px] text-muted-foreground block">Close Window</label><Input value={s.forecast.closeWindow} onChange={e => s.setForecast({ closeWindow: e.target.value })} placeholder="e.g. This week, Next 30 days..." className="h-6 text-[9px] bg-muted/10 border-border/15" /></div>
+            </div>
+          </Sec>
+
+          {/* Risk Flags */}
+          <Sec icon={AlertTriangle} title={`Risk Flags (${Object.values(s.riskFlags).filter(Boolean).length})`} iconColor={Object.values(s.riskFlags).filter(Boolean).length > 0 ? "text-amber-400" : "text-emerald-400"}>
+            <div className="space-y-1">
+              {Object.entries(s.riskFlags).filter(([, v]) => v).map(([key]) => (
+                <div key={key} className="flex items-center gap-1.5 text-[10px] text-amber-400/80">
+                  <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                  <span>{key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase())}</span>
+                </div>
+              ))}
+              {Object.values(s.riskFlags).filter(Boolean).length === 0 && <p className="text-[10px] text-emerald-400/60">No active risk flags</p>}
+            </div>
+          </Sec>
+
+          {/* Activity Log */}
+          <Sec icon={FileText} title="Activity Log">
+            <div className="space-y-1 max-h-[200px] overflow-y-auto">
+              {s.activityLog.length === 0 && <p className="text-[10px] text-muted-foreground/40">No activity yet</p>}
+              {s.activityLog.map(entry => (
+                <div key={entry.id} className="flex items-start gap-1.5 text-[10px] border-b border-border/10 pb-1">
+                  <Clock className="h-2.5 w-2.5 text-primary/40 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="text-foreground/70 font-medium">{entry.action}</span>
+                    <span className="text-muted-foreground/50 ml-1">{entry.detail}</span>
+                    <p className="text-[8px] text-muted-foreground/30">{new Date(entry.timestamp).toLocaleString()}</p>
+                  </div>
                 </div>
               ))}
             </div>
