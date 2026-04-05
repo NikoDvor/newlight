@@ -3,7 +3,7 @@
 
 import { useMemo, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Brain, TrendingUp, Zap, Shield, Gauge, BarChart3 } from "lucide-react";
+import { Brain, TrendingUp, Zap, Shield, Gauge, BarChart3, Lightbulb, AlertTriangle } from "lucide-react";
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,7 +86,6 @@ function ModuleEmphasisBar({ name, priority }: { name: string; priority: number 
 
 interface Props {
   clientId: string;
-  /** Pass profile directly (admin preview) or let component fetch it */
   profile?: WorkspaceProfile;
 }
 
@@ -143,6 +142,23 @@ export function BusinessIntelligencePreview({ clientId, profile: externalProfile
           <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.35)" }}>
             Analyzing
           </span>
+        </div>
+      </div>
+
+      {/* Opportunity Insight */}
+      <div className="rounded-xl p-4 mb-4" style={{
+        background: "hsla(211,96%,60%,.03)",
+        border: "1px solid hsla(211,96%,60%,.06)",
+      }}>
+        <div className="flex items-start gap-2.5">
+          <Lightbulb className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[11px] text-white/60 leading-relaxed">{intel.nicheOpportunitySummary}</p>
+            <p className="text-[10px] text-[hsl(var(--nl-neon))] mt-2 font-medium">{intel.primaryGrowthLever}</p>
+            <p className="text-[10px] text-amber-400/50 mt-1 flex items-center gap-1">
+              <AlertTriangle className="h-2.5 w-2.5" /> {intel.urgencySignal}
+            </p>
+          </div>
         </div>
       </div>
 
