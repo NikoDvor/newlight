@@ -937,6 +937,7 @@ export default function Dashboard() {
   const isLive = onboardingStage === "active";
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
   const displayName = branding.company_name || activeClientName || "your business";
+  const intel = useMemo(() => workspaceProfile ? generateClientIntelligence(workspaceProfile) : null, [workspaceProfile]);
 
   const sparkPipeline = useMemo(() => fakeSparkline(metrics.pipelineValue), [metrics.pipelineValue]);
   const sparkWon = useMemo(() => fakeSparkline(metrics.wonValue), [metrics.wonValue]);
@@ -1232,7 +1233,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ══════ AI INSIGHTS LAYER ══════ */}
-          <AIInsightsLayer />
+          <AIInsightsLayer intel={intel} />
 
           {/* ══════ ENERGY SWEEP DIVIDER ══════ */}
           <motion.div className="relative py-2"
