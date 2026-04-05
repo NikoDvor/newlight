@@ -31,6 +31,7 @@ const navGroups: NavGroup[] = [
     label: "Sales",
     items: [
       { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
+      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: DollarSign },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
       { title: "Onboarding Form", url: "/get-started", icon: Rocket },
       { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
