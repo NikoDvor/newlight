@@ -403,10 +403,41 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
   const [notes, setNotes] = useState<SalesNotes>(EMPTY_NOTES);
   const updateNotes = useCallback((patch: Partial<SalesNotes>) => setNotes(prev => ({ ...prev, ...patch })), []);
 
+  // Ownership
+  const [ownership, setOwnershipState] = useState<RepOwnership>(EMPTY_OWNERSHIP);
+  const setOwnership = useCallback((patch: Partial<RepOwnership>) => setOwnershipState(prev => ({ ...prev, ...patch })), []);
+
+  // Next Action
+  const [nextAction, setNextActionState] = useState<NextAction>(EMPTY_NEXT_ACTION);
+  const setNextAction = useCallback((patch: Partial<NextAction>) => setNextActionState(prev => ({ ...prev, ...patch })), []);
+
+  // Activity Log
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const logActivity = useCallback((action: string, detail: string) => {
+    setActivityLog(prev => [{ id: crypto.randomUUID(), timestamp: new Date().toISOString(), action, detail }, ...prev].slice(0, 100));
+  }, []);
+
+  // Forecast
+  const [forecast, setForecastState] = useState<CloseForecast>(EMPTY_FORECAST);
+  const setForecast = useCallback((patch: Partial<CloseForecast>) => {
+    setForecastState(prev => {
+      const next = { ...prev, ...patch };
+      if (patch.probability !== undefined) {
+        const derived = deriveForecastLabel(patch.probability);
+        next.confidenceLabel = derived.label;
+        next.category = derived.category;
+      }
+      return next;
+    });
+  }, []);
+
   // Readiness
   const stageIdx = WORKFLOW_STEPS.findIndex(s => s.key === currentStage);
   const readyToPresent = !!(profile.industry && profile.archetype && profile.niche && (quote.totalUpfront > 0 || quote.totalMonthly > 0) && narrative.opportunity);
   const readyToClose = !!((proposalStatus === "revealed" || proposalStatus === "accepted") && stageIdx >= 7 && stageIdx >= 8 && stageIdx >= 9);
+
+  // Risk flags
+  const riskFlags = useMemo(() => computeRiskFlags(notes, nextAction, dPct, proposalStatus, presentedVersion, niche, stageIdx), [notes, nextAction, dPct, proposalStatus, presentedVersion, niche, stageIdx]);
 
   // Handoff snapshot
   const [handoffSnapshot, setHandoffSnapshot] = useState<HandoffSnapshot | null>(null);
@@ -437,8 +468,9 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
       fulfillmentCautions: notes.fulfillmentCautions,
     };
     setHandoffSnapshot(snap);
+    logActivity("Handoff Snapshot", `Generated from ${src.name}`);
     return snap;
-  }, [presentedVersion, activeVersion, presentedQuote, quote, presentedNarrative, narrative, profile, niche, notes]);
+  }, [presentedVersion, activeVersion, presentedQuote, quote, presentedNarrative, narrative, profile, niche, notes, logActivity]);
 
   const value: ActiveSalesState = {
     profile, setProfile,
@@ -448,6 +480,11 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
     quote, intel, narrative, effectiveSetup, effectiveMonthly, discountPct: dPct,
     proposalStatus, setProposalStatus, currentStage, setCurrentStage,
     notes, updateNotes,
+    ownership, setOwnership,
+    nextAction, setNextAction,
+    activityLog, logActivity,
+    forecast, setForecast,
+    riskFlags,
     readyToPresent, readyToClose,
     handoffSnapshot, generateHandoffSnapshot,
     niche, opType, financial,
