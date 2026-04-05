@@ -116,7 +116,15 @@ export default function AdminSalesControlCenter() {
     niche: "med_spa",
     archetype: "appointments",
     zoomTier: "z3",
-    legacyProfileType: "service_provider",
+    legacyProfileType: "appointment_local",
+    legacyIndustryValue: "healthcare & wellness",
+    metadata: {
+      revenueModel: "consultation",
+      salesCycle: "short",
+      ticketSize: "high",
+      complexityLevel: "medium",
+      complianceLevel: "moderate",
+    },
   });
 
   // Module selection state
