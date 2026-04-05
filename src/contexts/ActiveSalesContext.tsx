@@ -91,6 +91,100 @@ const EMPTY_NOTES: SalesNotes = {
 };
 
 // ═══════════════════════════════════════════════
+// Rep Ownership
+// ═══════════════════════════════════════════════
+export interface RepOwnership {
+  primaryRep: string;
+  secondaryRep: string;
+}
+
+const EMPTY_OWNERSHIP: RepOwnership = { primaryRep: "", secondaryRep: "" };
+
+// ═══════════════════════════════════════════════
+// Follow-Up / Next Action
+// ═══════════════════════════════════════════════
+export type FollowUpType = "call" | "text" | "email" | "meeting" | "internal_review";
+export type FollowUpPriority = "low" | "medium" | "high" | "urgent";
+
+export interface NextAction {
+  action: string;
+  dueDate: string;
+  priority: FollowUpPriority;
+  type: FollowUpType;
+  completed: boolean;
+}
+
+const EMPTY_NEXT_ACTION: NextAction = { action: "", dueDate: "", priority: "medium", type: "call", completed: false };
+
+// ═══════════════════════════════════════════════
+// Activity Log
+// ═══════════════════════════════════════════════
+export interface ActivityEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  detail: string;
+}
+
+// ═══════════════════════════════════════════════
+// Close Forecast
+// ═══════════════════════════════════════════════
+export type ForecastCategory = "strong" | "moderate" | "at_risk" | "stalled";
+
+export interface CloseForecast {
+  probability: number;
+  confidenceLabel: string;
+  closeWindow: string;
+  category: ForecastCategory;
+}
+
+const EMPTY_FORECAST: CloseForecast = { probability: 50, confidenceLabel: "Moderate", closeWindow: "", category: "moderate" };
+
+function deriveForecastLabel(prob: number): { label: string; category: ForecastCategory } {
+  if (prob >= 80) return { label: "Strong", category: "strong" };
+  if (prob >= 50) return { label: "Moderate", category: "moderate" };
+  if (prob >= 25) return { label: "At Risk", category: "at_risk" };
+  return { label: "Stalled", category: "stalled" };
+}
+
+// ═══════════════════════════════════════════════
+// Risk Flags
+// ═══════════════════════════════════════════════
+export interface RiskFlags {
+  noDecisionMaker: boolean;
+  missingProposalVersion: boolean;
+  aggressiveDiscount: boolean;
+  revealedNotProgressing: boolean;
+  overdueFollowUp: boolean;
+  onboardingRisk: boolean;
+  highComplianceRisk: boolean;
+  fulfillmentCaution: boolean;
+}
+
+export function computeRiskFlags(
+  notes: SalesNotes,
+  nextAction: NextAction,
+  discountPct: number,
+  proposalStatus: ProposalStatusKey,
+  presentedVersion: any,
+  niche: any,
+  stageIdx: number,
+): RiskFlags {
+  const now = new Date();
+  const due = nextAction.dueDate ? new Date(nextAction.dueDate) : null;
+  return {
+    noDecisionMaker: !notes.decisionMaker,
+    missingProposalVersion: !presentedVersion && stageIdx >= 5,
+    aggressiveDiscount: discountPct > 15,
+    revealedNotProgressing: (proposalStatus === "revealed") && stageIdx < 9,
+    overdueFollowUp: !!(due && due < now && !nextAction.completed),
+    onboardingRisk: !!notes.fulfillmentCautions,
+    highComplianceRisk: niche?.complianceLevel === "high",
+    fulfillmentCaution: !!notes.fulfillmentCautions,
+  };
+}
+
+// ═══════════════════════════════════════════════
 // Proposal Status
 // ═══════════════════════════════════════════════
 export const PROPOSAL_STATUSES = [
