@@ -1,6 +1,8 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
+import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
+import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -779,9 +781,13 @@ function OpportunitiesSection({ metrics }: { metrics: any }) {
   );
 }
 
-/* ── NEW: AI Insights Layer ── */
-function AIInsightsLayer() {
-  const insights = [
+/* ── AI Insights Layer (connected to intelligence engine) ── */
+function AIInsightsLayer({ intel }: { intel: ClientIntelligenceOutput | null }) {
+  const insights = intel ? [
+    { title: "Growth Opportunity", body: intel.nicheOpportunitySummary, icon: TrendingUp, priority: "high" },
+    { title: "Primary Growth Lever", body: intel.primaryGrowthLever, icon: Zap, priority: "med" },
+    { title: "Urgency Signal", body: intel.urgencySignal, icon: AlertTriangle, priority: "high" },
+  ] : [
     { title: "Lead Response Time", body: "Average response is 4.2 hours — reducing to under 1 hour could increase conversion by 21%", icon: Clock, priority: "high" },
     { title: "Best Performing Channel", body: "Organic search drives 42% of qualified leads. Consider increasing SEO investment.", icon: Eye, priority: "med" },
     { title: "Proposal Win Rate", body: "Your close rate is 34% — 8% above industry average. Maintain current follow-up cadence.", icon: Shield, priority: "low" },
