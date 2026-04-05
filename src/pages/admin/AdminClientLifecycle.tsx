@@ -273,6 +273,7 @@ export default function AdminClientLifecycle() {
           </CardContent>
         </Card>
       )}
+      {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-semibold text-white/50 uppercase tracking-wider flex items-center gap-2">
