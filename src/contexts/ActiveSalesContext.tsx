@@ -261,6 +261,25 @@ export interface ActiveSalesState {
   notes: SalesNotes;
   updateNotes: (patch: Partial<SalesNotes>) => void;
 
+  // Ownership
+  ownership: RepOwnership;
+  setOwnership: (patch: Partial<RepOwnership>) => void;
+
+  // Next Action
+  nextAction: NextAction;
+  setNextAction: (patch: Partial<NextAction>) => void;
+
+  // Activity Log
+  activityLog: ActivityEntry[];
+  logActivity: (action: string, detail: string) => void;
+
+  // Forecast
+  forecast: CloseForecast;
+  setForecast: (patch: Partial<CloseForecast>) => void;
+
+  // Risk
+  riskFlags: RiskFlags;
+
   // Readiness
   readyToPresent: boolean;
   readyToClose: boolean;
