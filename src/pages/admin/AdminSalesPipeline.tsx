@@ -140,7 +140,7 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
   if (!readyToPresent) riskFlagsList.push("Missing profile data");
   if (proposalRevealed && !paymentReady) riskFlagsList.push("Revealed but not progressing");
   if (salesStage === "first_meeting") riskFlagsList.push("Awaiting first meeting");
-  if (proposalStatus === "draft" && salesStage !== "first_meeting" && salesStage !== "booked") riskFlagsList.push("Proposal not finalized");
+  if (proposalStatus === "draft" && salesStage !== "first_meeting" && salesStage !== ("booked" as WorkflowStepKey)) riskFlagsList.push("Proposal not finalized");
 
   return {
     id: client.id,
