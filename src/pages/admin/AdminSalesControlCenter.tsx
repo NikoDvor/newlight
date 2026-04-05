@@ -136,24 +136,51 @@ function SalesControlCenterInner() {
     if (snap) toast.success("Handoff snapshot generated");
   };
 
+  // Risk flag count
+  const activeRiskCount = Object.values(s.riskFlags).filter(Boolean).length;
+  const riskLabel = activeRiskCount === 0 ? "Low" : activeRiskCount <= 2 ? "Moderate" : "High";
+  const riskLabelColor = activeRiskCount === 0 ? "text-emerald-400" : activeRiskCount <= 2 ? "text-amber-400" : "text-red-400";
+
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <BackArrow to="/admin/clients" />
+          <BackArrow to="/admin/sales-pipeline" />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Sales Control Center</h1>
             <p className="text-xs text-muted-foreground">Single source of truth — pricing, packaging & proposal</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {s.ownership.primaryRep && <Badge variant="outline" className="border-primary/20 text-primary/70 text-[10px]">Rep: {s.ownership.primaryRep}</Badge>}
           {s.readyToPresent && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]"><CheckCircle2 className="h-3 w-3 mr-1" /> Ready to Present</Badge>}
           {s.readyToClose && <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]"><Unlock className="h-3 w-3 mr-1" /> Ready to Close</Badge>}
           {s.presentedVersion && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]"><Eye className="h-3 w-3 mr-1" /> Presented: {s.presentedVersion.name}</Badge>}
           <Badge variant="outline" className="border-destructive/30 text-destructive bg-destructive/10 px-2 py-1 text-[10px]">ADMIN ONLY</Badge>
         </div>
       </div>
+
+      {/* Ops Header Strip */}
+      <Card className="p-3 bg-card/60 border-border/30 backdrop-blur-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {[
+            { label: "Owner", value: s.ownership.primaryRep || "Unassigned", color: s.ownership.primaryRep ? "text-foreground" : "text-muted-foreground/50" },
+            { label: "Stage", value: WORKFLOW_STEPS.find(w => w.key === s.currentStage)?.label || s.currentStage },
+            { label: "Close %", value: `${s.forecast.probability}%`, color: s.forecast.category === "strong" ? "text-emerald-400" : s.forecast.category === "at_risk" ? "text-amber-400" : "text-foreground" },
+            { label: "Confidence", value: s.forecast.confidenceLabel, color: s.forecast.category === "strong" ? "text-emerald-400" : s.forecast.category === "stalled" ? "text-red-400" : "text-foreground" },
+            { label: "Next Action", value: s.nextAction.action || "None set", color: s.nextAction.action ? "text-foreground" : "text-amber-400" },
+            { label: "Due", value: s.nextAction.dueDate ? new Date(s.nextAction.dueDate).toLocaleDateString() : "—", color: s.nextAction.dueDate && new Date(s.nextAction.dueDate) < new Date() ? "text-red-400" : "text-foreground" },
+            { label: "Risk", value: `${riskLabel} (${activeRiskCount})`, color: riskLabelColor },
+            { label: "Handoff", value: s.handoffSnapshot ? "✓ Ready" : "Pending", color: s.handoffSnapshot ? "text-emerald-400" : "text-muted-foreground/50" },
+          ].map((item, i) => (
+            <div key={i} className="text-center">
+              <p className="text-[8px] text-muted-foreground/50 uppercase tracking-widest">{item.label}</p>
+              <p className={`text-[11px] font-semibold truncate ${item.color || "text-foreground"}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Workflow Strip */}
       <Card className="p-2.5 bg-card/60 border-border/40 backdrop-blur-sm">
