@@ -265,7 +265,14 @@ export default function AdminClientLifecycle() {
         onUpdate={load}
       />
 
-      {/* Portal Invite & Access Card */}
+      {/* Workspace Intelligence Preview */}
+      {clientId && (
+        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-5">
+            <BusinessIntelligencePreview clientId={clientId} />
+          </CardContent>
+        </Card>
+      )}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-semibold text-white/50 uppercase tracking-wider flex items-center gap-2">
