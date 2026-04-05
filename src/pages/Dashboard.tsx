@@ -854,6 +854,7 @@ export default function Dashboard() {
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
+  const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
