@@ -136,6 +136,12 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
   else if (!readyToPresent) { riskIndicator = "Missing Profile Data"; riskColor = "text-red-400"; }
   else if (proposalStatus === "draft") { riskIndicator = "Proposal Not Ready"; riskColor = "text-amber-400"; }
 
+  const riskFlagsList: string[] = [];
+  if (!readyToPresent) riskFlagsList.push("Missing profile data");
+  if (proposalRevealed && !paymentReady) riskFlagsList.push("Revealed but not progressing");
+  if (salesStage === "first_meeting") riskFlagsList.push("Awaiting first meeting");
+  if (proposalStatus === "draft" && salesStage !== "first_meeting" && salesStage !== "booked") riskFlagsList.push("Proposal not finalized");
+
   return {
     id: client.id,
     business_name: client.business_name || "Unnamed",
@@ -156,6 +162,7 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
     paymentStatus: payStatus,
     riskIndicator,
     riskColor,
+    riskFlags: riskFlagsList,
     modulesCount: 0,
     quoteMonthly: 0,
     quoteSetup: 0,
