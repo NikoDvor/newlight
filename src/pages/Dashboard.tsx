@@ -866,7 +866,14 @@ export default function Dashboard() {
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
     ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
-      setOnboardingStage((clientStage.data as any)?.onboarding_stage || "lead");
+      const cs = clientStage.data as any;
+      setOnboardingStage(cs?.onboarding_stage || "lead");
+      setClientStages({
+        proposalStatus: cs?.proposal_status || "not_sent",
+        agreementStatus: cs?.agreement_status || "not_sent",
+        paymentStatus: cs?.payment_status || "unpaid",
+        implementationStatus: cs?.implementation_status || "not_started",
+      });
       if (intg.data) setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
 
       const onbData = onb.data || {};
