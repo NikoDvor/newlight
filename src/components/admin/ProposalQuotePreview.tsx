@@ -5,19 +5,22 @@ import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { BUSINESS_OPERATION_TYPES, resolveOperationType } from "@/lib/businessOperationTypes";
 import { INDUSTRY_CATEGORIES } from "@/lib/workspaceProfileTypes";
-import { DollarSign, FileText, CheckCircle2, AlertTriangle } from "lucide-react";
+import { generatePackageFitNarrative } from "@/lib/packageFitNarrative";
+import { DollarSign, FileText, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
 
 interface Props {
   quote: QuoteOutput;
   profile: WorkspaceProfile;
   internalNotes?: string;
+  selectedModules?: string[];
 }
 
-export function ProposalQuotePreview({ quote, profile, internalNotes }: Props) {
+export function ProposalQuotePreview({ quote, profile, internalNotes, selectedModules = [] }: Props) {
   const niche = NICHE_REGISTRY.find(n => n.id === profile.niche);
   const industry = INDUSTRY_CATEGORIES.find(c => c.value === profile.industry);
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
+  const narrative = generatePackageFitNarrative(profile, selectedModules);
 
   return (
     <div className="space-y-4">
@@ -39,6 +42,21 @@ export function ProposalQuotePreview({ quote, profile, internalNotes }: Props) {
               <div><span className="text-white/40 block">Niche</span><span className="text-white">{niche?.label ?? "General"}</span></div>
               <div><span className="text-white/40 block">Operation</span><span className="text-white">{opLabel}</span></div>
               <div><span className="text-white/40 block">Tier</span><span className="text-white">{profile.zoomTier.toUpperCase()}</span></div>
+            </div>
+          </div>
+
+          {/* Package Fit Narrative */}
+          <div className="rounded-lg p-4 mb-4" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+              <p className="text-[10px] text-[hsl(var(--nl-sky))] uppercase font-semibold">Why This Package Fits</p>
+            </div>
+            <p className="text-xs font-semibold text-white mb-2">{narrative.headline}</p>
+            <div className="space-y-1.5 text-[11px] text-white/50 leading-relaxed">
+              <p>{narrative.opportunity}</p>
+              <p>{narrative.prioritySystems}</p>
+              <p>{narrative.bottlenecks}</p>
+              <p>{narrative.moduleRationale}</p>
             </div>
           </div>
 

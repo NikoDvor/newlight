@@ -15,6 +15,7 @@ import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER, ITEM_STATUS_OPTIONS } 
 import { useSetupProgress } from "@/hooks/useSetupProgress";
 import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
+import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 
 interface ClientData {
   id: string;
@@ -250,6 +251,18 @@ export default function AdminClientLifecycle() {
           <p className="text-sm text-white/40">Step 1 — Client Intake & Setup · Collect assets, credentials, and calendar/booking info</p>
         </div>
       </div>
+
+      {/* Proposal Reveal & Payment Unlock Controls */}
+      <ProposalRevealControls
+        stages={{
+          clientId: client.id,
+          proposalStatus: client.proposal_status,
+          agreementStatus: client.agreement_status,
+          paymentStatus: client.payment_status,
+          implementationStatus: client.implementation_status,
+        }}
+        onUpdate={load}
+      />
 
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>

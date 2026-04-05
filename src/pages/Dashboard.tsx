@@ -1,5 +1,6 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
+import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -846,6 +847,7 @@ export default function Dashboard() {
     pendingProposals: 0,
   });
   const [activities, setActivities] = useState<any[]>([]);
+  const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -854,7 +856,7 @@ export default function Dashboard() {
     Promise.all([
       supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
       supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
-      supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
+      supabase.from("clients").select("onboarding_stage, proposal_status, agreement_status, payment_status, implementation_status").eq("id", activeClientId).single(),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
       supabase.from("crm_deals").select("deal_value, pipeline_stage, status").eq("client_id", activeClientId),
       supabase.from("appointments").select("id, status, start_time").eq("client_id", activeClientId),
@@ -864,7 +866,14 @@ export default function Dashboard() {
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
     ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
-      setOnboardingStage((clientStage.data as any)?.onboarding_stage || "lead");
+      const cs = clientStage.data as any;
+      setOnboardingStage(cs?.onboarding_stage || "lead");
+      setClientStages({
+        proposalStatus: cs?.proposal_status || "not_sent",
+        agreementStatus: cs?.agreement_status || "not_sent",
+        paymentStatus: cs?.payment_status || "unpaid",
+        implementationStatus: cs?.implementation_status || "not_started",
+      });
       if (intg.data) setIntegrationStats({ connected: intg.data.filter((d: any) => d.status === "connected").length, total: intg.data.length });
 
       const onbData = onb.data || {};
@@ -992,6 +1001,16 @@ export default function Dashboard() {
               <div className="dash-hero-bar-secondary" />
             </div>
           </motion.div>
+
+          {/* ══════ PROPOSAL STAGE BANNER ══════ */}
+          {clientStages.proposalStatus !== "not_sent" && clientStages.paymentStatus !== "paid" && (
+            <ProposalStageBanner
+              proposalStatus={clientStages.proposalStatus}
+              agreementStatus={clientStages.agreementStatus}
+              paymentStatus={clientStages.paymentStatus}
+              implementationStatus={clientStages.implementationStatus}
+            />
+          )}
 
           {/* ══════ SETUP BANNER ══════ */}
           {isNewClient && (
