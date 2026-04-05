@@ -1204,7 +1204,7 @@ export default function Dashboard() {
           <PriorityInsights metrics={metrics} isNewClient={isNewClient} />
 
           {/* ══════ OPPORTUNITIES / REVENUE EXPANSION (NEW) ══════ */}
-          <OpportunitiesSection metrics={metrics} />
+          <OpportunitiesSection metrics={metrics} intel={intel} />
 
           {/* ══════ QUICK ACTIONS ══════ */}
           <motion.div
