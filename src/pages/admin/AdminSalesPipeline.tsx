@@ -325,11 +325,22 @@ export default function AdminSalesPipeline() {
   const totalPipeline = deals.filter(d => !["closed_won", "closed_lost"].includes(d.pipeline_stage)).reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   const wonValue = deals.filter(d => d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
 
+  // Enhanced summary metrics
+  const readyToPresentCount = salesRecords.filter(c => c.readyToPresent && !c.proposalRevealed).length;
+  const readyToCloseCount = salesRecords.filter(c => c.readyToClose).length;
+  const revealedNotClosed = salesRecords.filter(c => c.proposalRevealed && !c.readyToClose && c.paymentStatus !== "paid").length;
+  const paymentReadyCount = salesRecords.filter(c => c.paymentReady).length;
+  const atRiskCount = salesRecords.filter(c => c.riskColor !== "text-emerald-400").length;
+
   const stats = [
     { label: "Open Pipeline", value: `$${totalPipeline.toLocaleString()}`, icon: DollarSign },
-    { label: "Won Revenue", value: `$${wonValue.toLocaleString()}`, icon: CheckCircle2 },
-    { label: "Total Deals", value: String(deals.length), icon: Briefcase },
-    { label: "Active Clients", value: String(salesRecords.length), icon: Users },
+    { label: "Active Opps", value: String(salesRecords.filter(c => c.paymentStatus !== "paid").length), icon: Briefcase },
+    { label: "Ready to Present", value: String(readyToPresentCount), icon: Eye },
+    { label: "Ready to Close", value: String(readyToCloseCount), icon: CheckCircle2 },
+    { label: "Revealed / Open", value: String(revealedNotClosed), icon: AlertTriangle },
+    { label: "Payment Ready", value: String(paymentReadyCount), icon: DollarSign },
+    { label: "At Risk", value: String(atRiskCount), icon: Shield },
+    { label: "Won Revenue", value: `$${wonValue.toLocaleString()}`, icon: Target },
   ];
 
   return (
@@ -344,18 +355,18 @@ export default function AdminSalesPipeline() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Summary Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {stats.map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,60%,.12)" }}>
-                  <s.icon className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
+          <motion.div key={s.label} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+            <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.06)" }}>
+              <CardContent className="p-3 flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,60%,.1)" }}>
+                  <s.icon className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
                 </div>
-                <div>
-                  <p className="text-lg font-bold text-white">{s.value}</p>
-                  <p className="text-[10px] text-white/40">{s.label}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{s.value}</p>
+                  <p className="text-[9px] text-white/35 truncate">{s.label}</p>
                 </div>
               </CardContent>
             </Card>
