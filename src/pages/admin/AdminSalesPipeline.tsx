@@ -454,7 +454,7 @@ export default function AdminSalesPipeline() {
                     <div className="p-2 space-y-1.5 min-h-[120px]">
                       {stageDeals.map(deal => (
                         <motion.div key={deal.id} draggable whileHover={{ scale: 1.02, y: -1 }} transition={{ duration: 0.15 }}
-                          onDragStart={e => e.dataTransfer.setData("dealId", deal.id)}
+                          onDragStart={e => (e as any).dataTransfer?.setData("dealId", deal.id)}
                           onClick={() => navigate(`/admin/deals/${deal.id}`)}
                           className="p-3 rounded-lg bg-muted/15 hover:bg-muted/25 border border-border/10 hover:border-primary/15 cursor-grab active:cursor-grabbing transition-colors">
                           <p className="text-xs font-medium text-foreground truncate">{deal.deal_name}</p>
