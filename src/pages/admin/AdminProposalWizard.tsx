@@ -153,7 +153,7 @@ export default function AdminProposalWizard() {
         <TabsContent value="preview" className="mt-4">
           {currentQuote ? (
             <div className="space-y-4">
-              <ProposalQuotePreview quote={currentQuote} profile={profile} internalNotes={currentNotes} />
+              <ProposalQuotePreview quote={currentQuote} profile={profile} internalNotes={currentNotes} selectedModules={currentModules} />
               <Button
                 className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white h-11"
                 onClick={handleGenerateProposal}
