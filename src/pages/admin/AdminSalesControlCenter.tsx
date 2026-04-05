@@ -12,7 +12,7 @@ import {
   DollarSign, Package, Zap, TrendingUp, Shield, Globe,
   ChevronRight, CheckCircle2, Clock, AlertTriangle, FileText, Brain,
   Target, Layers, BarChart3, Star, Info, Copy, Pencil, Eye,
-  ArrowRightLeft, Lock, Unlock, Clipboard, Camera
+  ArrowRightLeft, Lock, Unlock, Clipboard, Camera, Users, Clock
 } from "lucide-react";
 import { WEBSITE_BUILD_FEES } from "@/lib/workspaceQuoteEngine";
 import { BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
