@@ -112,9 +112,9 @@ export default function AdminSalesControlCenter() {
 
   // Demo workspace profile (in production, fetched from DB for the selected client)
   const [profile, setProfile] = useState<WorkspaceProfile>({
-    industry: "health_wellness",
+    industry: "healthcare_wellness",
     niche: "med_spa",
-    archetype: "appointment_based",
+    archetype: "appointments",
     zoomTier: "z3",
     legacyProfileType: "service_provider",
   });
