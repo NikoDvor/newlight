@@ -219,10 +219,19 @@ function ClientSalesSummaryPanel({ client, open, onClose }: { client: ClientSale
               ))}
             </div>
 
-            {/* Risk */}
+            {/* Risk Flags */}
             <div className="bg-white/[0.03] rounded-lg p-3 border border-white/[0.04]">
-              <p className="text-[9px] text-white/35 uppercase tracking-wider mb-1">Risk / Status</p>
-              <p className={`text-sm font-semibold ${client.riskColor}`}>{client.riskIndicator}</p>
+              <p className="text-[9px] text-white/35 uppercase tracking-wider mb-1.5">Risk / Status</p>
+              <p className={`text-sm font-semibold ${client.riskColor} mb-2`}>{client.riskIndicator}</p>
+              <div className="space-y-1">
+                {client.riskFlags.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-[10px] text-amber-400/80">
+                    <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+                {client.riskFlags.length === 0 && <p className="text-[10px] text-emerald-400/60">No active risk flags</p>}
+              </div>
             </div>
 
             <Separator className="bg-white/[0.06]" />
@@ -236,6 +245,8 @@ function ClientSalesSummaryPanel({ client, open, onClose }: { client: ClientSale
                 { label: "Client Lifecycle", icon: Layers, action: () => navigate(`/admin/clients/${client.id}/lifecycle`) },
                 { label: "Handoff Checklist", icon: Clipboard, action: () => navigate(`/admin/clients/${client.id}/handoff`) },
                 { label: "Close Center", icon: Target, action: () => navigate(`/admin/clients/${client.id}/close`) },
+                { label: "Mark Final Meeting Scheduled", icon: Calendar, action: () => toast.success("Final meeting marked as scheduled") },
+                { label: "Flag as At Risk", icon: AlertTriangle, action: () => toast.success("Flagged as at risk") },
               ].map(a => (
                 <Button key={a.label} variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/[0.06] h-9 text-xs" onClick={a.action}>
                   <a.icon className="h-3.5 w-3.5 mr-2 text-[hsl(var(--nl-sky))]" />
