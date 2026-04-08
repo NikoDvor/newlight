@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
-import { BusinessNichePicker } from "@/components/BusinessNichePicker";
+import { CategoryNichePicker } from "@/components/CategoryNichePicker";
+import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 interface Client {
   id: string;
   business_name: string;
@@ -528,25 +529,21 @@ export default function AdminClients() {
                   </div>
                 ))}
 
-                {/* Business Niche — single unified field */}
-                <div>
-                  <label className="text-xs text-white/50 mb-1 block">Business Niche</label>
-                  <BusinessNichePicker
-                    value={(form as any).nicheId || null}
-                    onChange={(nicheId, legacyIndustry, legacyProfile) => {
-                      setForm(prev => ({
-                        ...prev,
-                        nicheId,
-                        industry: legacyIndustry,
-                        provisional_profile: legacyProfile,
-                      }));
-                    }}
-                    customLabel={(form as any).nicheCustomLabel || ""}
-                    onCustomLabelChange={(label) => setForm(prev => ({ ...prev, nicheCustomLabel: label } as any))}
-                    variant="dark"
-                  />
-                  <p className="text-[10px] text-white/30 mt-1">Determines modules, calendars & automations provisioned</p>
-                </div>
+                {/* Business Category + Niche */}
+                <CategoryNichePicker
+                  categoryId={(form as any).categoryId || null}
+                  nicheId={(form as any).nicheId || null}
+                  onCategoryChange={(catId) => setForm(prev => ({ ...prev, categoryId: catId } as any))}
+                  onNicheChange={(nId) => setForm(prev => ({ ...prev, nicheId: nId } as any))}
+                  onProfileChange={(profile: StructuredWorkspaceProfile) => {
+                    setForm(prev => ({
+                      ...prev,
+                      industry: profile.legacy.industry,
+                      provisional_profile: profile.legacy.provisional_profile,
+                    }));
+                  }}
+                  variant="dark"
+                />
 
                 {/* Preferred Contact Method */}
                 <div>
