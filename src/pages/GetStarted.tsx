@@ -13,7 +13,8 @@ import {
   Sparkles, Calendar, AlertCircle
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
-import { BusinessNichePicker } from "@/components/BusinessNichePicker";
+import { CategoryNichePicker } from "@/components/CategoryNichePicker";
+import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
@@ -107,8 +108,8 @@ export default function GetStarted() {
   const [website, setWebsite] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [workspaceProfile, setWorkspaceProfile] = useState<string>("custom_hybrid");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [nicheId, setNicheId] = useState<string | null>(null);
-  const [nicheCustomLabel, setNicheCustomLabel] = useState("");
   const [location, setLocation] = useState("");
 
 
@@ -570,31 +571,26 @@ export default function GetStarted() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Business Niche</Label>
-                    <BusinessNichePicker
-                      value={nicheId}
-                      onChange={(nId, legacyIndustry, legacyProfile) => {
-                        setNicheId(nId);
-                        setBusinessType(legacyIndustry);
-                        setWorkspaceProfile(legacyProfile);
-                      }}
-                      customLabel={nicheCustomLabel}
-                      onCustomLabelChange={setNicheCustomLabel}
-                      variant="light"
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-1">Search or select your business type</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Primary Location</Label>
-                    <Input
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Los Angeles, CA"
-                    />
-                  </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Primary Location</Label>
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Los Angeles, CA"
+                  />
                 </div>
+
+                <CategoryNichePicker
+                  categoryId={categoryId}
+                  nicheId={nicheId}
+                  onCategoryChange={setCategoryId}
+                  onNicheChange={setNicheId}
+                  onProfileChange={(profile: StructuredWorkspaceProfile) => {
+                    setBusinessType(profile.legacy.industry);
+                    setWorkspaceProfile(profile.legacy.provisional_profile);
+                  }}
+                  variant="light"
+                />
 
                 <div className="pt-2">
                   <Button
