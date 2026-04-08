@@ -271,7 +271,7 @@ export default function CalendarDetail() {
   };
 
   const toggleLink = async (id: string, field: "is_active" | "is_public", current: boolean) => {
-    await supabase.from("calendar_booking_links").update({ [field]: !current }).eq("id", id);
+    await supabase.from("calendar_booking_links").update({ [field]: !current } as any).eq("id", id);
     toast.success("Updated");
     fetchAll();
   };

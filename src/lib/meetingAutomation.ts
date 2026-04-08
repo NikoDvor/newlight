@@ -35,7 +35,7 @@ export async function markAssetReady(prospectId: string, assetType: "demo_app" |
 
   await supabase
     .from("meeting_status")
-    .update(updateData)
+    .update(updateData as any)
     .eq("prospect_id", prospectId)
     .order("created_at", { ascending: false })
     .limit(1);
