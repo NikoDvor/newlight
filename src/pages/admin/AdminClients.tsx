@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Briefcase } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
