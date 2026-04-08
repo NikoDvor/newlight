@@ -13,9 +13,7 @@ import {
   Sparkles, Calendar, AlertCircle, Briefcase
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
-import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
-import { suggestProfileFromIndustry } from "@/lib/industryConstants";
-import { IndustrySearchSelect } from "@/components/IndustrySearchSelect";
+import { BusinessNichePicker } from "@/components/BusinessNichePicker";
 
 // Admin/NewLight master calendar config — first active admin calendar is used
 const ADMIN_CLIENT_SLUG = "newlight-marketing";
