@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Briefcase } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,7 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
-import { PROFILE_TYPES, type ProfileType } from "@/lib/profileEngine";
-import { suggestProfileFromIndustry } from "@/lib/industryConstants";
-import { IndustrySearchSelect } from "@/components/IndustrySearchSelect";
+import { BusinessNichePicker } from "@/components/BusinessNichePicker";
 interface Client {
   id: string;
   business_name: string;
@@ -413,7 +411,7 @@ export default function AdminClients() {
   const formFields = [
     { label: "Business Name *", key: "business_name", placeholder: "Acme Corp" },
     { label: "Workspace Slug *", key: "workspace_slug", placeholder: "acme-corp" },
-    { label: "Industry / Niche", key: "industry", placeholder: "", isIndustryDropdown: true },
+    
     { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
     { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
     { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
@@ -520,47 +518,33 @@ export default function AdminClients() {
                 {formFields.map(f => (
                   <div key={f.key}>
                     <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                    {(f as any).isIndustryDropdown ? (
-                      <IndustrySearchSelect
-                        value={(form as any)[f.key]}
-                        onChange={(val) => {
-                          setForm(prev => {
-                            const next = { ...prev, [f.key]: val };
-                            if (val && !prev.provisional_profile) {
-                              next.provisional_profile = suggestProfileFromIndustry(val);
-                            }
-                            return next;
-                          });
-                        }}
-                        variant="dark"
-                      />
-                    ) : (
-                      <Input
-                        type={(f as any).type || "text"}
-                        value={(form as any)[f.key]}
-                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                      />
-                    )}
+                    <Input
+                      type={(f as any).type || "text"}
+                      value={(form as any)[f.key]}
+                      onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      placeholder={f.placeholder}
+                      className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                    />
                   </div>
                 ))}
 
-                {/* Workspace Profile */}
+                {/* Business Niche — single unified field */}
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block flex items-center gap-1">
-                    <Briefcase className="h-3 w-3" /> Workspace Profile *
-                  </label>
-                  <select
-                    value={form.provisional_profile}
-                    onChange={e => setForm(prev => ({ ...prev, provisional_profile: e.target.value }))}
-                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                  >
-                    <option value="">Select how this business operates…</option>
-                    {PROFILE_TYPES.map(p => (
-                      <option key={p.value} value={p.value}>{p.label} — {p.description}</option>
-                    ))}
-                  </select>
+                  <label className="text-xs text-white/50 mb-1 block">Business Niche</label>
+                  <BusinessNichePicker
+                    value={(form as any).nicheId || null}
+                    onChange={(nicheId, legacyIndustry, legacyProfile) => {
+                      setForm(prev => ({
+                        ...prev,
+                        nicheId,
+                        industry: legacyIndustry,
+                        provisional_profile: legacyProfile,
+                      }));
+                    }}
+                    customLabel={(form as any).nicheCustomLabel || ""}
+                    onCustomLabelChange={(label) => setForm(prev => ({ ...prev, nicheCustomLabel: label } as any))}
+                    variant="dark"
+                  />
                   <p className="text-[10px] text-white/30 mt-1">Determines modules, calendars & automations provisioned</p>
                 </div>
 
