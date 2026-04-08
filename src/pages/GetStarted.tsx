@@ -10,7 +10,7 @@ import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
 import {
   Building2, User, Globe, MapPin, Phone, Mail,
   ChevronRight, ChevronLeft, CheckCircle2, Loader2,
-  Sparkles, Calendar, AlertCircle, Briefcase
+  Sparkles, Calendar, AlertCircle
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 import { BusinessNichePicker } from "@/components/BusinessNichePicker";
