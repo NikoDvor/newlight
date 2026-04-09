@@ -201,16 +201,16 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
     lineItems.push({ category: "website", label: `Website Build — ${wb.label}`, upfront: wb.fee, monthly: 0 });
   }
 
-  // ── App Store Launch Upgrade ──
+  // ── App Store Launch Upgrade (Custom Quote) ──
   let appStoreLaunchFee = 0;
   if (includeAppStoreLaunchUpgrade) {
-    appStoreLaunchFee = financial ? FINANCIAL_APP_STORE_PRICE : APP_STORE_PRICING[opType];
+    // App Store is now always custom-quoted — no fixed price injected into totals
     lineItems.push({
       category: "app_store",
-      label: "App Store Launch Upgrade (Elite Add-On)",
-      upfront: appStoreLaunchFee,
+      label: "App Store Launch — Custom Quote",
+      upfront: 0,
       monthly: 0,
-      notes: "One-time fee. Developer account costs paid directly by client.",
+      notes: "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.",
     });
   }
 
