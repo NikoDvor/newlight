@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
@@ -22,6 +22,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+
+const ContentPlannerEmbed = lazy(() => import("@/pages/ContentPlanner"));
 
 const PLATFORM_ICONS: Record<string, any> = {
   Instagram: Heart, Facebook: ThumbsUp, LinkedIn: Users, "X (Twitter)": MessageSquare, TikTok: Eye, YouTube: Eye,
@@ -157,6 +159,7 @@ export default function SocialDashboard() {
           <TabsList className="bg-secondary h-10 rounded-lg">
             <TabsTrigger value="accounts" className="rounded-md text-sm">Accounts</TabsTrigger>
             <TabsTrigger value="posts" className="rounded-md text-sm">Posts</TabsTrigger>
+            <TabsTrigger value="planner" className="rounded-md text-sm">Content Planner</TabsTrigger>
           </TabsList>
 
           <TabsContent value="accounts" className="mt-4">
@@ -263,6 +266,12 @@ export default function SocialDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="planner" className="mt-4">
+            <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm">Loading Content Planner…</div>}>
+              <ContentPlannerEmbed />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
