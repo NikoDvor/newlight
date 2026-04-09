@@ -69,7 +69,51 @@ export default function SetupCenter() {
         supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
       ]);
       const clientStage = (clientRes.data as any)?.onboarding_stage;
+      const clientIndustry = (clientRes.data as any)?.industry;
       setIsLive(clientStage === "active");
+
+      // Resolve onboarding emphasis from workspace profile
+      let resolvedPreset: OnboardingPresetConfig | null = null;
+      const wpData = wpRes.data;
+      if (wpData) {
+        const ov = (wpData.config_overrides && typeof wpData.config_overrides === "object" && !Array.isArray(wpData.config_overrides))
+          ? wpData.config_overrides as Record<string, any> : {};
+        const catId = ov.categoryId || clientIndustry;
+        if (catId) {
+          const cat = getCategoryById(catId);
+          if (cat) {
+            const sp = buildStructuredProfile(cat.id, null);
+            resolvedPreset = resolveOnboardingPreset(sp);
+          }
+        }
+      }
+      if (!resolvedPreset && clientIndustry) {
+        const cat = getCategoryById(clientIndustry);
+        if (cat) {
+          resolvedPreset = resolveOnboardingPreset(buildStructuredProfile(cat.id, null));
+        }
+      }
+      setOnboardingPreset(resolvedPreset);
+
+      // Map emphasized step keys to setup section keys
+      const STEP_TO_SECTION: Record<string, string> = {
+        crm: "crm", pipeline: "crm", calendars: "calendars", reminders: "calendars",
+        reviews: "reviews", nurture: "integrations", branding: "branding",
+        routing: "integrations", speed_to_lead: "integrations", dispatch: "integrations",
+        missed_call_textback: "integrations", compliance_review: "services",
+        approvals: "services", attribution: "integrations", website: "website",
+        proposals: "forms", local_ads: "integrations", reactivation: "integrations",
+        ads: "integrations", lifecycle: "integrations", retention: "services",
+        automations: "integrations", billing_visibility: "billing",
+        kickoff: "forms", milestones: "services", delivery_comms: "integrations",
+      };
+      const emphasizedKeys = new Set<string>();
+      if (resolvedPreset) {
+        for (const step of resolvedPreset.emphasizedSteps) {
+          const sectionKey = STEP_TO_SECTION[step];
+          if (sectionKey) emphasizedKeys.add(sectionKey);
+        }
+      }
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const calCount = calRes.data?.length || 0;
@@ -109,13 +153,12 @@ export default function SetupCenter() {
           ? `${calCount} calendar(s), ${apptTypeCount} type(s), ${bookingLinkCount} link(s)`
           : `${calCount} calendar(s) — ${apptTypeCount === 0 ? "add appointment types" : availCount === 0 ? "set availability" : "create booking link"}`;
 
-      // CRM readiness
       const crmParts = [contactCount > 0, dealCount > 0];
       const crmCompleted = crmParts.filter(Boolean).length;
       const crmStatus: SectionStatus = crmCompleted >= 2 ? "completed" : crmCompleted > 0 ? "in_progress" : "not_started";
       const crmDetails = contactCount === 0 ? "Add your first contact" : dealCount === 0 ? `${contactCount} contact(s) — create your first deal` : `${contactCount} contact(s), ${dealCount} deal(s)`;
 
-      setSections([
+      const allSections: SetupSection[] = [
         { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
         { key: "crm", title: "CRM & Contacts", description: "Contacts, deals, and follow-up queue", icon: Users, status: crmStatus, link: "/crm", details: crmDetails },
         { key: "calendars", title: "Scheduling & Booking", description: "Calendars, appointment types, availability, and booking links", icon: Calendar, status: calStatus, link: "/calendar-management", details: calDetails },
@@ -127,7 +170,20 @@ export default function SetupCenter() {
         { key: "reviews", title: "Reviews", description: "Review requests and reputation", icon: Star, status: onb?.review_platform_connected ? "completed" : "not_started", link: "/reviews", details: onb?.review_platform_connected ? "Review platform linked" : "Connect review platform" },
         { key: "billing", title: "Billing & Plan", description: "Subscription and payment status", icon: CreditCard, status: "ready" as SectionStatus, link: "/billing", details: "View your plan" },
         { key: "training", title: "Training & Help", description: "Courses and knowledge base", icon: GraduationCap, status: "ready" as SectionStatus, link: "/training", details: "Browse available courses" },
-      ]);
+      ];
+
+      // Mark emphasized and sort: emphasized first, then rest
+      const marked = allSections.map(sec => ({
+        ...sec,
+        emphasized: emphasizedKeys.has(sec.key),
+      }));
+      marked.sort((a, b) => {
+        if (a.emphasized && !b.emphasized) return -1;
+        if (!a.emphasized && b.emphasized) return 1;
+        return 0;
+      });
+
+      setSections(marked);
       setLoading(false);
     };
 
