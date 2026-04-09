@@ -92,7 +92,7 @@ export const systemModules: SystemModule[] = [
   {
     key: "proposals",
     name: "Proposal & E-Sign Engine",
-    category: "Revenue Systems",
+    category: "Enterprise Services",
     status: "Operational",
     dependency: "Native",
     description: "Proposal creation, templates, native e-sign with canvas signature, IP logging, and deal linkage.",
