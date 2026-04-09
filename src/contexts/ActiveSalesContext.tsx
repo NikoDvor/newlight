@@ -441,7 +441,8 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
 
   // Readiness
   const stageIdx = WORKFLOW_STEPS.findIndex(s => s.key === currentStage);
-  const readyToPresent = !!(profile.industry && profile.archetype && profile.niche && (quote.totalUpfront > 0 || quote.totalMonthly > 0) && narrative.opportunity);
+  const appStoreAmountOk = !activeVersion.appStoreLaunch || (!!activeVersion.appStoreCustomAmount && parseFloat(activeVersion.appStoreCustomAmount) > 0);
+  const readyToPresent = !!(profile.industry && profile.archetype && profile.niche && (quote.totalUpfront > 0 || quote.totalMonthly > 0) && narrative.opportunity && appStoreAmountOk);
   const readyToClose = !!((proposalStatus === "revealed" || proposalStatus === "accepted") && stageIdx >= 7 && stageIdx >= 8 && stageIdx >= 9);
 
   // Risk flags
