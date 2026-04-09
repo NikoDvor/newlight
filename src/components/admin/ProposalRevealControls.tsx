@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Eye, EyeOff, CreditCard, CheckCircle2, FileSignature,
-  Loader2, Shield, Unlock, Lock, Zap
+  Loader2, Shield, Unlock, Lock, Zap, Copy
 } from "lucide-react";
 
 interface ClientStages {
@@ -88,7 +88,7 @@ export function ProposalRevealControls({ stages, onUpdate }: Props) {
           ))}
         </div>
 
-        {/* Reveal Proposal to Client */}
+        {/* Proposal Visibility */}
         <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -96,10 +96,15 @@ export function ProposalRevealControls({ stages, onUpdate }: Props) {
               <span className="text-xs text-white font-medium">Proposal Visibility</span>
             </div>
             <Badge className={`text-[9px] ${isProposalRevealed ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-white/40"}`}>
-              {isProposalRevealed ? "Revealed to Client" : "Hidden"}
+              {isProposalRevealed ? "Revealed to Client" : "Internal Only — Hidden from Client"}
             </Badge>
           </div>
-          <div className="flex gap-2">
+          {!isProposalRevealed && (
+            <p className="text-[10px] text-white/30">
+              This proposal is only visible to your team. Reveal it during the final meeting to share with the client.
+            </p>
+          )}
+          <div className="flex gap-2 flex-wrap">
             {!isProposalRevealed ? (
               <Button
                 size="sm"
@@ -111,16 +116,30 @@ export function ProposalRevealControls({ stages, onUpdate }: Props) {
                 Reveal Proposal
               </Button>
             ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-white/10 text-white/50 text-xs h-8 hover:bg-white/5"
-                onClick={() => update("proposal_status", "not_sent")}
-                disabled={saving === "proposal_status"}
-              >
-                {saving === "proposal_status" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
-                Hide Proposal
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/10 text-white/50 text-xs h-8 hover:bg-white/5"
+                  onClick={() => update("proposal_status", "not_sent")}
+                  disabled={saving === "proposal_status"}
+                >
+                  {saving === "proposal_status" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                  Hide Proposal
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/10 text-white/50 text-xs h-8 hover:bg-white/5"
+                  onClick={() => {
+                    const url = `${window.location.origin}/proposal/view/${stages.clientId}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success("Proposal link copied to clipboard");
+                  }}
+                >
+                  <Copy className="h-3 w-3 mr-1" /> Copy Link
+                </Button>
+              </>
             )}
             {isProposalRevealed && stages.proposalStatus !== "approved" && (
               <Button

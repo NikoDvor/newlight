@@ -25,17 +25,27 @@ import { motion } from "framer-motion";
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-amber-50 text-amber-700",
   generated: "bg-amber-50 text-amber-700",
+  not_sent: "bg-secondary text-muted-foreground",
   sent: "bg-blue-50 text-blue-700",
   viewed: "bg-cyan-50 text-cyan-700",
   accepted: "bg-emerald-50 text-emerald-700",
+  approved: "bg-emerald-50 text-emerald-700",
   signed: "bg-emerald-50 text-emerald-700",
   expired: "bg-secondary text-muted-foreground",
   declined: "bg-red-50 text-red-600",
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  draft: "Draft", generated: "Generated", sent: "Sent", viewed: "Viewed",
-  accepted: "Accepted", signed: "Signed", expired: "Expired", declined: "Declined",
+  draft: "Draft — Internal",
+  generated: "Generated — Internal",
+  not_sent: "Not Sent — Internal",
+  sent: "Revealed to Client",
+  viewed: "Client Viewed",
+  accepted: "Client Accepted",
+  approved: "Approved",
+  signed: "Signed",
+  expired: "Expired",
+  declined: "Declined",
 };
 
 export default function Proposals() {

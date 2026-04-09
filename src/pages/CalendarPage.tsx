@@ -25,6 +25,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
+import { LockBadge } from "@/components/LockedFeature";
+import { useLockContext } from "@/hooks/useLockContext";
 
 function useWorkspaceZoomEnabled(clientId: string | null) {
   const [zoomEnabled, setZoomEnabled] = useState<boolean | null>(null);
