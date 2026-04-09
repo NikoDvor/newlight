@@ -47,7 +47,7 @@ export default function SetupCenter() {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes, wpRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -56,7 +56,7 @@ export default function SetupCenter() {
         supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
         supabase.from("service_catalog" as any).select("id").eq("client_id", activeClientId),
         supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
-        supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
+        supabase.from("clients").select("onboarding_stage, industry").eq("id", activeClientId).single(),
         supabase.from("faq_records" as any).select("id").eq("client_id", activeClientId),
         supabase.from("website_content_blocks" as any).select("id").eq("client_id", activeClientId),
         supabase.from("calendar_availability").select("id").eq("client_id", activeClientId).eq("is_active", true),
@@ -66,6 +66,7 @@ export default function SetupCenter() {
         supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
         supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
         supabase.from("follow_up_queues" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
       ]);
       const clientStage = (clientRes.data as any)?.onboarding_stage;
       setIsLive(clientStage === "active");
