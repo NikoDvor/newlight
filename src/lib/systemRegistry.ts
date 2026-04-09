@@ -17,6 +17,7 @@ export type SystemCategory =
   | "Core Engine"
   | "Revenue Systems"
   | "Growth Systems"
+  | "Enterprise Services"
   | "Communications"
   | "Support Systems"
   | "Client Workspace"
@@ -91,7 +92,7 @@ export const systemModules: SystemModule[] = [
   {
     key: "proposals",
     name: "Proposal & E-Sign Engine",
-    category: "Revenue Systems",
+    category: "Enterprise Services",
     status: "Operational",
     dependency: "Native",
     description: "Proposal creation, templates, native e-sign with canvas signature, IP logging, and deal linkage.",
@@ -213,7 +214,7 @@ export const systemModules: SystemModule[] = [
   {
     key: "reviews",
     name: "Reviews & Reputation Engine",
-    category: "Growth Systems",
+    category: "Enterprise Services",
     status: "Operational",
     dependency: "Native",
     description: "Review requests, post-appointment triggers, recovery pipeline, reputation analytics.",
@@ -224,12 +225,12 @@ export const systemModules: SystemModule[] = [
   },
   {
     key: "content",
-    name: "Content Planner",
+    name: "Content Planner (Social Media)",
     category: "Growth Systems",
     status: "Partially Operational",
     dependency: "Native",
-    description: "Content calendar and planning tools.",
-    routes: ["/content-planner"],
+    description: "Content calendar and planning tools. Embedded within Social Media module.",
+    routes: ["/social-media"],
     dataModels: [],
     feedsInto: ["social", "website"],
     receivesFrom: [],
@@ -555,6 +556,7 @@ export const allCategories: SystemCategory[] = [
   "Core Engine",
   "Revenue Systems",
   "Growth Systems",
+  "Enterprise Services",
   "Communications",
   "Support Systems",
   "Client Workspace",
