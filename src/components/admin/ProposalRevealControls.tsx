@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Eye, EyeOff, CreditCard, CheckCircle2, FileSignature,
-  Loader2, Shield, Unlock, Lock, Zap
+  Loader2, Shield, Unlock, Lock, Zap, Copy
 } from "lucide-react";
 
 interface ClientStages {
