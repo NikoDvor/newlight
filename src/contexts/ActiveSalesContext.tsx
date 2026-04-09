@@ -465,6 +465,7 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
       modules: src.modules,
       websiteBuild: src.websiteBuild,
       appStoreLaunch: src.appStoreLaunch,
+      appStoreCustomAmount: src.appStoreCustomAmount || "",
       complianceLevel: niche?.complianceLevel || "none",
       setupTotal: srcQuote.totalUpfront,
       monthlyTotal: srcQuote.totalMonthly,
