@@ -10,10 +10,12 @@ import { computeQuote, WEBSITE_BUILD_FEES, type QuoteOutput } from "@/lib/worksp
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
 import { resolveOperationType, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
+import { getCategoryById, buildStructuredProfile, type StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
+import { resolveModulePreset, resolveProposalPreset, resolveDemoModel, resolvePricing } from "@/lib/profilePresetEngine";
 import {
   Zap, DollarSign, Globe, Smartphone, Shield, TrendingUp,
   Megaphone, Search, BarChart3, Users, RefreshCw, Star, Radio, FileText,
-  CheckCircle2, AlertTriangle, Lightbulb
+  CheckCircle2, AlertTriangle, Lightbulb, Info
 } from "lucide-react";
 
 const MODULES = [
@@ -60,6 +62,39 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
 
+  // Try to derive a StructuredWorkspaceProfile for preset-driven recommendations
+  const structuredProfile = useMemo((): StructuredWorkspaceProfile | null => {
+    if (!niche) {
+      // Try to find category from industry
+      const cat = getCategoryById(profile.industry);
+      if (cat) return buildStructuredProfile(cat.id, null);
+      return null;
+    }
+    const cat = getCategoryById(niche.industry);
+    if (cat) return buildStructuredProfile(cat.id, niche);
+    return null;
+  }, [niche, profile.industry]);
+
+  const modulePreset = useMemo(() => {
+    if (structuredProfile) return resolveModulePreset(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const proposalPreset = useMemo(() => {
+    if (structuredProfile) return resolveProposalPreset(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const demoModelConfig = useMemo(() => {
+    if (structuredProfile) return resolveDemoModel(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const pricingInfo = useMemo(() => {
+    if (structuredProfile) return resolvePricing(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
   const quote = useMemo(() => {
     return computeQuote({
       workspaceProfile: profile,
@@ -78,8 +113,11 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
     onQuoteChange?.(quote, selectedModules, internalNotes);
   }, [quote, selectedModules, internalNotes, onQuoteChange]);
 
-  // Recommended modules from niche priority
+  // Recommended modules: prefer preset engine, fallback to niche priority
   const recommended = useMemo(() => {
+    if (modulePreset) {
+      return [...modulePreset.priority];
+    }
     if (!niche) return [];
     const priority = niche.modulePriority;
     const map: Record<string, number> = {
@@ -93,7 +131,7 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
       financial_compliance: niche.complianceLevel === "high" ? 5 : niche.complianceLevel === "moderate" ? 3 : 1,
     };
     return Object.entries(map).filter(([, v]) => v >= 4).map(([k]) => k);
-  }, [niche]);
+  }, [modulePreset, niche]);
 
   const selectRecommended = useCallback(() => {
     setSelectedModules(recommended);
@@ -115,6 +153,9 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <Zap className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
           <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Business Profile</h3>
+          {pricingInfo?.isFinancialPremium && (
+            <Badge className="text-[7px] bg-amber-500/20 text-amber-400 px-1.5 py-0 ml-auto">FINANCIAL PREMIUM</Badge>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] mb-3">
           <div><span className="text-white/40 block">Niche</span><span className="text-white/80">{niche?.label ?? "General"}</span></div>
@@ -122,6 +163,21 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
           <div><span className="text-white/40 block">Revenue Opp.</span><span className="text-[hsl(var(--nl-neon))]">{intel.revenueOpportunity}</span></div>
           <div><span className="text-white/40 block">Growth</span><span className="text-[hsl(var(--nl-neon))]">{intel.growthPotentialPct}%</span></div>
         </div>
+        {pricingInfo && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px] mb-3 pt-2 border-t border-white/[0.06]">
+            <div><span className="text-white/40 block">Pricing Family</span><span className="text-white/80">{pricingInfo.family.replace(/_/g, " ")}</span></div>
+            <div><span className="text-white/40 block">Bracket</span><span className="text-white/80">{pricingInfo.bracket.replace(/_/g, " ")}</span></div>
+            {proposalPreset && <div><span className="text-white/40 block">Proposal Preset</span><span className="text-white/80">{proposalPreset.presetKey.replace(/_/g, " ")}</span></div>}
+          </div>
+        )}
+        {/* Demo model emphasis labels */}
+        {demoModelConfig && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {demoModelConfig.emphasisLabels.map(label => (
+              <Badge key={label} className="text-[8px] bg-white/[0.06] text-white/50 border-white/[0.08]">{label}</Badge>
+            ))}
+          </div>
+        )}
         {/* Niche opportunity insight */}
         <div className="rounded-lg p-3 mt-2" style={{ background: "hsla(211,96%,60%,.03)", border: "1px solid hsla(211,96%,60%,.06)" }}>
           <div className="flex items-start gap-2">
@@ -135,6 +191,23 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
             </div>
           </div>
         </div>
+        {/* Proposal preset focus outcomes */}
+        {proposalPreset && (
+          <div className="rounded-lg p-3 mt-2" style={{ background: "hsla(142,70%,45%,.03)", border: "1px solid hsla(142,70%,45%,.08)" }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Info className="h-3 w-3 text-emerald-400/60" />
+              <span className="text-[9px] font-semibold text-emerald-400/80 uppercase tracking-wider">Proposal Focus Outcomes</span>
+            </div>
+            <ul className="space-y-1">
+              {proposalPreset.focusOutcomes.map((outcome, i) => (
+                <li key={i} className="text-[10px] text-white/50 flex items-start gap-1.5">
+                  <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400/40 shrink-0 mt-0.5" />
+                  {outcome}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Platform Setup Toggle */}

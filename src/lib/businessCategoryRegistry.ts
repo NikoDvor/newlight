@@ -211,15 +211,20 @@ export function buildStructuredProfile(
     enterprise_accounts: "pipeline_close",
   };
 
-  // Derive pricing bracket from niche or category
-  const bracketMap: Record<string, string> = {
-    appointment_local: "standard",
-    field_service: "standard",
-    consultative_sales: "premium",
-    membership_recurring: "standard",
-    project_service: "standard",
-    custom_hybrid: "standard",
+  // Derive pricing bracket from category
+  const bracketFromCategory: Record<string, string> = {
+    financial_compliance: "premium_financial",
+    aesthetics_wellness: "high_local",
+    field_local_service: "standard_field",
+    food_hospitality: "standard_local",
+    professional_consultative: "standard_consultative",
+    real_estate: "real_estate_consultative",
+    membership_recurring: "standard_membership",
+    retail_ecommerce: "safe_default_retail",
+    technology_saas: "saas_recurring",
+    project_delivery: "standard_project",
   };
+  const bracketMap = bracketFromCategory;
 
   return {
     version: 2,
@@ -234,7 +239,7 @@ export function buildStructuredProfile(
     },
     pricing: {
       family: pricingFamily,
-      bracket: bracketMap[legacyProfile] || "standard",
+      bracket: bracketMap[categoryId] || "standard",
     },
     twilioPlaybook: `${archetype}_default`,
     appStoreTier: niche?.pricingProfile?.setupTier === "premium" ? "premium" : "standard",

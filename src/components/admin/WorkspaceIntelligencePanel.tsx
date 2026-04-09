@@ -7,9 +7,11 @@ import { INDUSTRY_CATEGORIES } from "@/lib/workspaceProfileTypes";
 import { resolveOperationType, isFinancialFirm, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
 import { computeQuote, type QuoteInput, type QuoteOutput } from "@/lib/workspaceQuoteEngine";
+import { getCategoryById, buildStructuredProfile } from "@/lib/businessCategoryRegistry";
+import { resolveAllPresets, type ResolvedPresets } from "@/lib/profilePresetEngine";
 import {
   Brain, Building2, Target, Gauge, Shield, TrendingUp,
-  Zap, BarChart3, DollarSign, Layers
+  Zap, BarChart3, DollarSign, Layers, FileText, Smartphone
 } from "lucide-react";
 
 interface Props {
@@ -44,6 +46,17 @@ export function WorkspaceIntelligencePanel({
   const opLabel = useMemo(() => BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType, [opType]);
   const financial = isFinancialFirm(profile.industry);
   const intel = useMemo(() => generateClientIntelligence(profile), [profile]);
+
+  // Derive structured profile for preset resolution
+  const presets: ResolvedPresets | null = useMemo(() => {
+    if (niche) {
+      const cat = getCategoryById(niche.industry);
+      if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, niche));
+    }
+    const cat = getCategoryById(profile.industry);
+    if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, null));
+    return null;
+  }, [niche, profile.industry]);
 
   const quote: QuoteOutput | null = useMemo(() => {
     if (selectedModules.length === 0 && !hasPurchasedPlatformSetup) return null;
@@ -180,6 +193,50 @@ export function WorkspaceIntelligencePanel({
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Resolved Presets Summary */}
+      {presets && (
+        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Profile Presets</h3>
+              <Badge className="text-[8px] bg-amber-500/20 text-amber-400 ml-auto">Auto-Resolved</Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+              <InfoRow label="Pricing Family" value={presets.pricing.family.replace(/_/g, " ")} />
+              <InfoRow label="Bracket" value={presets.pricing.bracket.replace(/_/g, " ")} accent={presets.pricing.isFinancialPremium} />
+              <InfoRow label="Proposal Preset" value={presets.proposal.presetKey.replace(/_/g, " ")} />
+              <InfoRow label="Contract Preset" value={presets.contract.presetKey.replace(/_/g, " ")} />
+              <InfoRow label="App Store Tier" value={presets.appStore.tierLabel} />
+              <InfoRow label="Onboarding" value={presets.onboarding.presetKey.replace(/_/g, " ")} />
+            </div>
+            <div className="mt-3 pt-2 border-t border-white/[0.06]">
+              <p className="text-[9px] text-white/40 uppercase font-semibold mb-1.5">Dashboard Emphasis</p>
+              <div className="flex flex-wrap gap-1.5">
+                {presets.dashboardEmphasis.map(e => (
+                  <Badge key={e} className="text-[8px] bg-white/[0.06] text-white/50 border-white/[0.08]">{e}</Badge>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 pt-2 border-t border-white/[0.06]">
+              <p className="text-[9px] text-white/40 uppercase font-semibold mb-1.5">Demo Model</p>
+              <div className="flex flex-wrap gap-1.5">
+                {presets.demoModel.emphasisLabels.map(l => (
+                  <Badge key={l} className="text-[8px] bg-[hsla(211,96%,60%,.08)] text-[hsl(var(--nl-sky))] border-[hsla(211,96%,60%,.12)]">{l}</Badge>
+                ))}
+              </div>
+              <p className="text-[10px] text-white/40 mt-1.5">{presets.demoModel.estimatePrefix}</p>
+            </div>
+            {presets.pricing.isFinancialPremium && (
+              <div className="mt-3 p-2 rounded-lg bg-amber-500/[0.06] border border-amber-500/10">
+                <p className="text-[9px] text-amber-400/80 uppercase font-semibold mb-1">Financial Premium</p>
+                <p className="text-[10px] text-amber-400/60">Premium pricing bracket active. Financial Compliance Workflow add-on supported. Compliance-sensitive contract wording enabled.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
