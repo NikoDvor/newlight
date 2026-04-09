@@ -302,6 +302,7 @@ function SalesControlCenterInner() {
                 { label: "Niche selected", ok: !!s.profile.niche },
                 { label: "Quote computed", ok: s.quote.totalUpfront > 0 || s.quote.totalMonthly > 0 },
                 { label: "Narrative ready", ok: !!s.narrative.opportunity },
+                ...(s.activeVersion.appStoreLaunch ? [{ label: "App Store custom amount set", ok: !!s.activeVersion.appStoreCustomAmount && parseFloat(s.activeVersion.appStoreCustomAmount) > 0 }] : []),
                 { label: "Version marked presented", ok: !!s.presentedVersion },
               ]}
               closeChecks={[
