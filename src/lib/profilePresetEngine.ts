@@ -599,9 +599,24 @@ export interface ResolvedPresets {
   appStore: AppStoreTierConfig;
   onboarding: OnboardingPresetConfig;
   demoModel: DemoModelConfig;
+  twilioPlaybook: string;
 }
 
 export function resolveAllPresets(profile: StructuredWorkspaceProfile): ResolvedPresets {
+  // Import inline to avoid circular deps at module scope
+  const playbookMap: Record<string, string> = {
+    financial_compliance: "financial_compliance_nurture",
+    aesthetics_wellness: "appointment_reactivation",
+    field_local_service: "speed_to_lead_field_service",
+    food_hospitality: "foot_traffic_loyalty",
+    professional_consultative: "consultative_followup",
+    real_estate: "consultative_followup",
+    membership_recurring: "recurring_retention",
+    retail_ecommerce: "retail_safe_default",
+    technology_saas: "recurring_retention",
+    project_delivery: "project_milestone_updates",
+  };
+
   return {
     pricing: resolvePricing(profile),
     modules: resolveModulePreset(profile),
@@ -611,5 +626,6 @@ export function resolveAllPresets(profile: StructuredWorkspaceProfile): Resolved
     appStore: resolveAppStoreTier(profile),
     onboarding: resolveOnboardingPreset(profile),
     demoModel: resolveDemoModel(profile),
+    twilioPlaybook: playbookMap[profile.category] ?? "consultative_followup",
   };
 }

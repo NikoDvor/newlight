@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { Progress } from "@/components/ui/progress";
@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { getCategoryById, buildStructuredProfile } from "@/lib/businessCategoryRegistry";
+import { resolveOnboardingPreset, type OnboardingPresetConfig } from "@/lib/profilePresetEngine";
 import {
   Palette, Calendar, FileText, Users, Plug, Globe, Star, CreditCard,
   GraduationCap, CheckCircle2, Circle, ArrowRight, Rocket, ShoppingBag,
-  ChevronRight, AlertCircle
+  ChevronRight, AlertCircle, Sparkles
 } from "lucide-react";
 
 type SectionStatus = "not_started" | "in_progress" | "needs_access" | "ready" | "completed";
@@ -23,6 +25,7 @@ interface SetupSection {
   status: SectionStatus;
   link: string;
   details: string;
+  emphasized?: boolean;
 }
 
 const statusMeta: Record<SectionStatus, { label: string; color: string; bg: string; icon: any }> = {
@@ -38,12 +41,13 @@ export default function SetupCenter() {
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
+  const [onboardingPreset, setOnboardingPreset] = useState<OnboardingPresetConfig | null>(null);
 
   useEffect(() => {
     if (!activeClientId) return;
 
     const evaluate = async () => {
-      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes] = await Promise.all([
+      const [brandRes, calRes, formRes, formRes2, teamRes, intgRes, svcRes, onbRes, clientRes, faqRes, wcbRes, availRes, apptTypeRes, bookingLinkRes, calUsersRes, contactsRes, dealsRes, fuRes, wpRes] = await Promise.all([
         supabase.from("client_branding").select("id, logo_url, primary_color").eq("client_id", activeClientId).maybeSingle(),
         supabase.from("calendars").select("id").eq("client_id", activeClientId),
         supabase.from("client_forms").select("id").eq("client_id", activeClientId),
@@ -52,7 +56,7 @@ export default function SetupCenter() {
         supabase.from("client_integrations").select("status").eq("client_id", activeClientId),
         supabase.from("service_catalog" as any).select("id").eq("client_id", activeClientId),
         supabase.from("onboarding_progress").select("*").eq("client_id", activeClientId).maybeSingle(),
-        supabase.from("clients").select("onboarding_stage").eq("id", activeClientId).single(),
+        supabase.from("clients").select("onboarding_stage, industry").eq("id", activeClientId).single(),
         supabase.from("faq_records" as any).select("id").eq("client_id", activeClientId),
         supabase.from("website_content_blocks" as any).select("id").eq("client_id", activeClientId),
         supabase.from("calendar_availability").select("id").eq("client_id", activeClientId).eq("is_active", true),
@@ -62,9 +66,54 @@ export default function SetupCenter() {
         supabase.from("crm_contacts").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
         supabase.from("crm_deals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
         supabase.from("follow_up_queues" as any).select("id", { count: "exact", head: true }).eq("client_id", activeClientId),
+        supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
       ]);
       const clientStage = (clientRes.data as any)?.onboarding_stage;
+      const clientIndustry = (clientRes.data as any)?.industry;
       setIsLive(clientStage === "active");
+
+      // Resolve onboarding emphasis from workspace profile
+      let resolvedPreset: OnboardingPresetConfig | null = null;
+      const wpData = wpRes.data;
+      if (wpData) {
+        const ov = (wpData.config_overrides && typeof wpData.config_overrides === "object" && !Array.isArray(wpData.config_overrides))
+          ? wpData.config_overrides as Record<string, any> : {};
+        const catId = ov.categoryId || clientIndustry;
+        if (catId) {
+          const cat = getCategoryById(catId);
+          if (cat) {
+            const sp = buildStructuredProfile(cat.id, null);
+            resolvedPreset = resolveOnboardingPreset(sp);
+          }
+        }
+      }
+      if (!resolvedPreset && clientIndustry) {
+        const cat = getCategoryById(clientIndustry);
+        if (cat) {
+          resolvedPreset = resolveOnboardingPreset(buildStructuredProfile(cat.id, null));
+        }
+      }
+      setOnboardingPreset(resolvedPreset);
+
+      // Map emphasized step keys to setup section keys
+      const STEP_TO_SECTION: Record<string, string> = {
+        crm: "crm", pipeline: "crm", calendars: "calendars", reminders: "calendars",
+        reviews: "reviews", nurture: "integrations", branding: "branding",
+        routing: "integrations", speed_to_lead: "integrations", dispatch: "integrations",
+        missed_call_textback: "integrations", compliance_review: "services",
+        approvals: "services", attribution: "integrations", website: "website",
+        proposals: "forms", local_ads: "integrations", reactivation: "integrations",
+        ads: "integrations", lifecycle: "integrations", retention: "services",
+        automations: "integrations", billing_visibility: "billing",
+        kickoff: "forms", milestones: "services", delivery_comms: "integrations",
+      };
+      const emphasizedKeys = new Set<string>();
+      if (resolvedPreset) {
+        for (const step of resolvedPreset.emphasizedSteps) {
+          const sectionKey = STEP_TO_SECTION[step];
+          if (sectionKey) emphasizedKeys.add(sectionKey);
+        }
+      }
 
       const hasBrand = !!(brandRes.data?.logo_url && brandRes.data?.primary_color && brandRes.data.primary_color !== "#3B82F6");
       const calCount = calRes.data?.length || 0;
@@ -104,13 +153,12 @@ export default function SetupCenter() {
           ? `${calCount} calendar(s), ${apptTypeCount} type(s), ${bookingLinkCount} link(s)`
           : `${calCount} calendar(s) — ${apptTypeCount === 0 ? "add appointment types" : availCount === 0 ? "set availability" : "create booking link"}`;
 
-      // CRM readiness
       const crmParts = [contactCount > 0, dealCount > 0];
       const crmCompleted = crmParts.filter(Boolean).length;
       const crmStatus: SectionStatus = crmCompleted >= 2 ? "completed" : crmCompleted > 0 ? "in_progress" : "not_started";
       const crmDetails = contactCount === 0 ? "Add your first contact" : dealCount === 0 ? `${contactCount} contact(s) — create your first deal` : `${contactCount} contact(s), ${dealCount} deal(s)`;
 
-      setSections([
+      const allSections: SetupSection[] = [
         { key: "branding", title: "Branding", description: "Logo, colors, and business identity", icon: Palette, status: brandingStatus, link: "/branding-settings", details: hasBrand ? "Brand configured" : brandingHasLogo ? "Add brand colors" : "Upload logo and set colors" },
         { key: "crm", title: "CRM & Contacts", description: "Contacts, deals, and follow-up queue", icon: Users, status: crmStatus, link: "/crm", details: crmDetails },
         { key: "calendars", title: "Scheduling & Booking", description: "Calendars, appointment types, availability, and booking links", icon: Calendar, status: calStatus, link: "/calendar-management", details: calDetails },
@@ -122,7 +170,20 @@ export default function SetupCenter() {
         { key: "reviews", title: "Reviews", description: "Review requests and reputation", icon: Star, status: onb?.review_platform_connected ? "completed" : "not_started", link: "/reviews", details: onb?.review_platform_connected ? "Review platform linked" : "Connect review platform" },
         { key: "billing", title: "Billing & Plan", description: "Subscription and payment status", icon: CreditCard, status: "ready" as SectionStatus, link: "/billing", details: "View your plan" },
         { key: "training", title: "Training & Help", description: "Courses and knowledge base", icon: GraduationCap, status: "ready" as SectionStatus, link: "/training", details: "Browse available courses" },
-      ]);
+      ];
+
+      // Mark emphasized and sort: emphasized first, then rest
+      const marked = allSections.map(sec => ({
+        ...sec,
+        emphasized: emphasizedKeys.has(sec.key),
+      }));
+      marked.sort((a, b) => {
+        if (a.emphasized && !b.emphasized) return -1;
+        if (!a.emphasized && b.emphasized) return 1;
+        return 0;
+      });
+
+      setSections(marked);
       setLoading(false);
     };
 
@@ -252,14 +313,22 @@ export default function SetupCenter() {
             <motion.div key={section.key}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="card-widget group hover:shadow-md transition-all">
+              className={`card-widget group hover:shadow-md transition-all ${section.emphasized ? "ring-1 ring-primary/20" : ""}`}>
               <div className="flex items-start gap-4">
                 <div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                   <section.icon className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-bold text-foreground">{section.title}</p>
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-bold text-foreground">{section.title}</p>
+                      {section.emphasized && (
+                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 shrink-0" style={{ color: "hsl(211 96% 56%)", background: "hsla(211,96%,56%,.08)", borderColor: "transparent" }}>
+                          <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                          Priority
+                        </Badge>
+                      )}
+                    </div>
                     <Badge variant="outline" className="text-[10px] px-2 py-0.5 shrink-0" style={{ color: sm.color, background: sm.bg, borderColor: "transparent" }}>
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {sm.label}
