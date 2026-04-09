@@ -50,25 +50,15 @@ const navStructure: NavEntry[] = [
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
+      { title: "Content Planner", url: "/content-planner", icon: Palette, moduleKey: "social" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
-      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
-      { title: "Content Planner", url: "/content-planner", icon: Palette, moduleKey: "content" },
-      { title: "Proposals", url: "/proposals", icon: PenTool, moduleKey: "proposals" },
-    ],
-  },
-  {
-    type: "group", label: "Communications",
-    items: [
-      { title: "Conversations", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Inbox", url: "/inbox", icon: Mail, moduleKey: "messaging" },
-      { title: "Follow-Up Queue", url: "/follow-ups", icon: ListChecks },
-      { title: "Message Templates", url: "/message-templates", icon: FileText },
-      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
     ],
   },
   {
     type: "group", label: "Enterprise Services",
     items: [
+      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
+      { title: "Proposals", url: "/proposals", icon: PenTool, moduleKey: "proposals" },
       { title: "Finance", url: "/finance", icon: Wallet, moduleKey: "finance" },
       { title: "Workforce", url: "/workforce", icon: HardHat, moduleKey: "workforce" },
       { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
