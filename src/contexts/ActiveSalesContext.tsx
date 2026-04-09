@@ -22,6 +22,8 @@ export interface QuoteVersion {
   hasPurchasedSetup: boolean;
   websiteBuild: string | null;
   appStoreLaunch: boolean;
+  appStoreCustomAmount: string;
+  appStoreNotes: string;
   setupOverride: string;
   monthlyOverride: string;
   discountPct: string;
@@ -38,6 +40,8 @@ export function createQuoteVersion(name: string, modules: string[], extras?: Par
     hasPurchasedSetup: false,
     websiteBuild: null,
     appStoreLaunch: false,
+    appStoreCustomAmount: "",
+    appStoreNotes: "",
     setupOverride: "",
     monthlyOverride: "",
     discountPct: "",
@@ -59,6 +63,7 @@ export interface HandoffSnapshot {
   modules: string[];
   websiteBuild: string | null;
   appStoreLaunch: boolean;
+  appStoreCustomAmount: string;
   complianceLevel: string;
   setupTotal: number;
   monthlyTotal: number;
@@ -338,6 +343,8 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
       hasPurchasedSetup: src.hasPurchasedSetup,
       websiteBuild: src.websiteBuild,
       appStoreLaunch: src.appStoreLaunch,
+      appStoreCustomAmount: src.appStoreCustomAmount,
+      appStoreNotes: src.appStoreNotes,
       setupOverride: src.setupOverride,
       monthlyOverride: src.monthlyOverride,
       discountPct: src.discountPct,
@@ -383,6 +390,7 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
     hasPurchasedPlatformSetup: v.hasPurchasedSetup,
     includeWebsiteBuild: v.websiteBuild,
     includeAppStoreLaunchUpgrade: v.appStoreLaunch,
+    appStoreCustomAmount: v.appStoreCustomAmount ? parseFloat(v.appStoreCustomAmount) : null,
   }), [profile]);
 
   const quote = useMemo(() => computeForVersion(activeVersion), [computeForVersion, activeVersion]);
@@ -457,6 +465,7 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
       modules: src.modules,
       websiteBuild: src.websiteBuild,
       appStoreLaunch: src.appStoreLaunch,
+      appStoreCustomAmount: src.appStoreCustomAmount || "",
       complianceLevel: niche?.complianceLevel || "none",
       setupTotal: srcQuote.totalUpfront,
       monthlyTotal: srcQuote.totalMonthly,

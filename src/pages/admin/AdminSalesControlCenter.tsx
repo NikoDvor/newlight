@@ -363,9 +363,34 @@ function SalesControlCenterInner() {
                   <SelectContent>{[<SelectItem key="none" value="none">None</SelectItem>, ...Object.entries(WEBSITE_BUILD_FEES).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)]}</SelectContent>
                 </Select>
               </UpsellRow>
-              <UpsellRow label="App Store Launch" sub={s.financial ? "⚡ Strong fit" : "Add-on"}>
+              <UpsellRow label="App Store Launch" sub={s.financial ? "⚡ Strong fit" : "Custom Quote"}>
                 <Switch checked={s.activeVersion.appStoreLaunch} onCheckedChange={v => s.updateActiveVersion({ appStoreLaunch: v })} className="scale-[0.6]" />
               </UpsellRow>
+              {s.activeVersion.appStoreLaunch && (
+                <div className="ml-4 space-y-1.5 pb-1">
+                  <div className="flex items-center gap-2">
+                    <label className="text-[9px] text-muted-foreground/60 w-24 shrink-0">Custom Amount</label>
+                    <Input
+                      value={s.activeVersion.appStoreCustomAmount}
+                      onChange={e => s.updateActiveVersion({ appStoreCustomAmount: e.target.value.replace(/[^0-9]/g, "") })}
+                      placeholder="Enter amount…"
+                      className="h-6 text-[10px] bg-muted/10 border-border/15 w-28"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[9px] text-muted-foreground/60 w-24 shrink-0">Scope Notes</label>
+                    <Input
+                      value={s.activeVersion.appStoreNotes}
+                      onChange={e => s.updateActiveVersion({ appStoreNotes: e.target.value })}
+                      placeholder="Scope details…"
+                      className="h-6 text-[10px] bg-muted/10 border-border/15 flex-1"
+                    />
+                  </div>
+                  {!s.activeVersion.appStoreCustomAmount && (
+                    <p className="text-[9px] text-amber-400/70 flex items-center gap-1"><AlertTriangle className="h-2.5 w-2.5" /> Custom pricing required before reveal</p>
+                  )}
+                </div>
+              )}
               <UpsellRow label="Setup Purchased" sub="Waives activation fees">
                 <Switch checked={s.activeVersion.hasPurchasedSetup} onCheckedChange={v => s.updateActiveVersion({ hasPurchasedSetup: v })} className="scale-[0.6]" />
               </UpsellRow>
@@ -382,7 +407,7 @@ function SalesControlCenterInner() {
                 <Row label="Version" value={s.handoffSnapshot.versionName} />
                 <Row label="Modules" value={s.handoffSnapshot.modules.length > 0 ? s.handoffSnapshot.modules.map(m => m.replace(/_/g, " ")).join(", ") : "Core"} />
                 <Row label="Website" value={s.handoffSnapshot.websiteBuild ? WEBSITE_BUILD_FEES[s.handoffSnapshot.websiteBuild]?.label : "None"} />
-                <Row label="App Launch" value={s.handoffSnapshot.appStoreLaunch ? "Yes" : "No"} />
+                <Row label="App Launch" value={s.handoffSnapshot.appStoreLaunch ? (s.handoffSnapshot.appStoreCustomAmount ? `Custom — $${Number(s.handoffSnapshot.appStoreCustomAmount).toLocaleString()}` : "Custom Quote") : "No"} />
                 <Row label="Compliance" value={s.handoffSnapshot.complianceLevel} />
                 <Separator className="bg-border/10 my-1.5" />
                 <Row label="Setup" value={`$${s.handoffSnapshot.effectiveSetup.toLocaleString()}`} />

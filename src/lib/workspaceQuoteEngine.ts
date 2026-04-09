@@ -116,6 +116,7 @@ export interface QuoteInput {
   hasPurchasedPlatformSetup: boolean;
   includeWebsiteBuild?: string | null;
   includeAppStoreLaunchUpgrade?: boolean;
+  appStoreCustomAmount?: number | null;
 }
 
 export interface QuoteLineItem {
@@ -204,13 +205,17 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   // ── App Store Launch Upgrade (Custom Quote) ──
   let appStoreLaunchFee = 0;
   if (includeAppStoreLaunchUpgrade) {
-    // App Store is now always custom-quoted — no fixed price injected into totals
+    const customAmt = input.appStoreCustomAmount ?? null;
+    const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
+    appStoreLaunchFee = hasCustomPrice ? customAmt : 0;
     lineItems.push({
       category: "app_store",
-      label: "App Store Launch — Custom Quote",
-      upfront: 0,
+      label: hasCustomPrice ? "App Store Launch — Custom" : "App Store Launch — Custom Quote",
+      upfront: appStoreLaunchFee,
       monthly: 0,
-      notes: "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.",
+      notes: hasCustomPrice
+        ? "Custom-scoped add-on. Developer account costs paid directly by client."
+        : "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.",
     });
   }
 
