@@ -153,6 +153,9 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <Zap className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
           <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Business Profile</h3>
+          {pricingInfo?.isFinancialPremium && (
+            <Badge className="text-[7px] bg-amber-500/20 text-amber-400 px-1.5 py-0 ml-auto">FINANCIAL PREMIUM</Badge>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] mb-3">
           <div><span className="text-white/40 block">Niche</span><span className="text-white/80">{niche?.label ?? "General"}</span></div>
@@ -160,6 +163,21 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
           <div><span className="text-white/40 block">Revenue Opp.</span><span className="text-[hsl(var(--nl-neon))]">{intel.revenueOpportunity}</span></div>
           <div><span className="text-white/40 block">Growth</span><span className="text-[hsl(var(--nl-neon))]">{intel.growthPotentialPct}%</span></div>
         </div>
+        {pricingInfo && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px] mb-3 pt-2 border-t border-white/[0.06]">
+            <div><span className="text-white/40 block">Pricing Family</span><span className="text-white/80">{pricingInfo.family.replace(/_/g, " ")}</span></div>
+            <div><span className="text-white/40 block">Bracket</span><span className="text-white/80">{pricingInfo.bracket.replace(/_/g, " ")}</span></div>
+            {proposalPreset && <div><span className="text-white/40 block">Proposal Preset</span><span className="text-white/80">{proposalPreset.presetKey.replace(/_/g, " ")}</span></div>}
+          </div>
+        )}
+        {/* Demo model emphasis labels */}
+        {demoModelConfig && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {demoModelConfig.emphasisLabels.map(label => (
+              <Badge key={label} className="text-[8px] bg-white/[0.06] text-white/50 border-white/[0.08]">{label}</Badge>
+            ))}
+          </div>
+        )}
         {/* Niche opportunity insight */}
         <div className="rounded-lg p-3 mt-2" style={{ background: "hsla(211,96%,60%,.03)", border: "1px solid hsla(211,96%,60%,.06)" }}>
           <div className="flex items-start gap-2">
@@ -173,6 +191,23 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
             </div>
           </div>
         </div>
+        {/* Proposal preset focus outcomes */}
+        {proposalPreset && (
+          <div className="rounded-lg p-3 mt-2" style={{ background: "hsla(142,70%,45%,.03)", border: "1px solid hsla(142,70%,45%,.08)" }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Info className="h-3 w-3 text-emerald-400/60" />
+              <span className="text-[9px] font-semibold text-emerald-400/80 uppercase tracking-wider">Proposal Focus Outcomes</span>
+            </div>
+            <ul className="space-y-1">
+              {proposalPreset.focusOutcomes.map((outcome, i) => (
+                <li key={i} className="text-[10px] text-white/50 flex items-start gap-1.5">
+                  <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400/40 shrink-0 mt-0.5" />
+                  {outcome}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Platform Setup Toggle */}
