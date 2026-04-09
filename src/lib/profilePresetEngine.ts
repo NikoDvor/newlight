@@ -434,6 +434,7 @@ export function resolveContractPreset(profile: StructuredWorkspaceProfile): Cont
 export interface AppStoreTierConfig {
   tierKey: string;
   tierLabel: string;
+  isCustomQuote: true; // App Store pricing is always custom-quoted
 }
 
 const APP_STORE_TIERS: Record<string, AppStoreTierConfig> = {
