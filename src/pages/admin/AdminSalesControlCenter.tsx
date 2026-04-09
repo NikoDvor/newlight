@@ -407,7 +407,7 @@ function SalesControlCenterInner() {
                 <Row label="Version" value={s.handoffSnapshot.versionName} />
                 <Row label="Modules" value={s.handoffSnapshot.modules.length > 0 ? s.handoffSnapshot.modules.map(m => m.replace(/_/g, " ")).join(", ") : "Core"} />
                 <Row label="Website" value={s.handoffSnapshot.websiteBuild ? WEBSITE_BUILD_FEES[s.handoffSnapshot.websiteBuild]?.label : "None"} />
-                <Row label="App Launch" value={s.handoffSnapshot.appStoreLaunch ? "Yes" : "No"} />
+                <Row label="App Launch" value={s.handoffSnapshot.appStoreLaunch ? (s.handoffSnapshot.appStoreCustomAmount ? `Custom — $${Number(s.handoffSnapshot.appStoreCustomAmount).toLocaleString()}` : "Custom Quote") : "No"} />
                 <Row label="Compliance" value={s.handoffSnapshot.complianceLevel} />
                 <Separator className="bg-border/10 my-1.5" />
                 <Row label="Setup" value={`$${s.handoffSnapshot.effectiveSetup.toLocaleString()}`} />
