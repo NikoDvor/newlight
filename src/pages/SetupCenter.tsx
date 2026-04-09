@@ -41,6 +41,7 @@ export default function SetupCenter() {
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
+  const [onboardingPreset, setOnboardingPreset] = useState<OnboardingPresetConfig | null>(null);
 
   useEffect(() => {
     if (!activeClientId) return;
