@@ -213,6 +213,7 @@ export function WorkspaceIntelligencePanel({
               <InfoRow label="Contract Preset" value={presets.contract.presetKey.replace(/_/g, " ")} />
               <InfoRow label="App Store Tier" value={presets.appStore.tierLabel} />
               <InfoRow label="Onboarding" value={presets.onboarding.presetKey.replace(/_/g, " ")} />
+              <InfoRow label="Twilio Playbook" value={presets.twilioPlaybook.replace(/_/g, " ")} accent />
             </div>
             <div className="mt-3 pt-2 border-t border-white/[0.06]">
               <p className="text-[9px] text-white/40 uppercase font-semibold mb-1.5">Dashboard Emphasis</p>
