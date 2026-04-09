@@ -10,10 +10,12 @@ import { computeQuote, WEBSITE_BUILD_FEES, type QuoteOutput } from "@/lib/worksp
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
 import { resolveOperationType, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
+import { getCategoryById, buildStructuredProfile, type StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
+import { resolveModulePreset, resolveProposalPreset, resolveDemoModel, resolvePricing } from "@/lib/profilePresetEngine";
 import {
   Zap, DollarSign, Globe, Smartphone, Shield, TrendingUp,
   Megaphone, Search, BarChart3, Users, RefreshCw, Star, Radio, FileText,
-  CheckCircle2, AlertTriangle, Lightbulb
+  CheckCircle2, AlertTriangle, Lightbulb, Info
 } from "lucide-react";
 
 const MODULES = [
