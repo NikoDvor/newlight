@@ -157,6 +157,7 @@ export default function SocialDashboard() {
           <TabsList className="bg-secondary h-10 rounded-lg">
             <TabsTrigger value="accounts" className="rounded-md text-sm">Accounts</TabsTrigger>
             <TabsTrigger value="posts" className="rounded-md text-sm">Posts</TabsTrigger>
+            <TabsTrigger value="planner" className="rounded-md text-sm">Content Planner</TabsTrigger>
           </TabsList>
 
           <TabsContent value="accounts" className="mt-4">

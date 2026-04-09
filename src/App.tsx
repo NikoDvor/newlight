@@ -310,7 +310,7 @@ const App = () => {
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/workforce" element={<PermissionGuard moduleKey="workforce"><Workforce /></PermissionGuard>} />
                 <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
-                <Route path="/content-planner" element={<PermissionGuard moduleKey="content"><ContentPlanner /></PermissionGuard>} />
+                <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />

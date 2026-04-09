@@ -50,7 +50,6 @@ const navStructure: NavEntry[] = [
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
-      { title: "Content Planner", url: "/content-planner", icon: Palette, moduleKey: "social" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
     ],
   },
