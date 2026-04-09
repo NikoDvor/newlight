@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { Progress } from "@/components/ui/progress";
@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { getCategoryById, buildStructuredProfile } from "@/lib/businessCategoryRegistry";
+import { resolveOnboardingPreset, type OnboardingPresetConfig } from "@/lib/profilePresetEngine";
 import {
   Palette, Calendar, FileText, Users, Plug, Globe, Star, CreditCard,
   GraduationCap, CheckCircle2, Circle, ArrowRight, Rocket, ShoppingBag,
-  ChevronRight, AlertCircle
+  ChevronRight, AlertCircle, Sparkles
 } from "lucide-react";
 
 type SectionStatus = "not_started" | "in_progress" | "needs_access" | "ready" | "completed";
@@ -23,6 +25,7 @@ interface SetupSection {
   status: SectionStatus;
   link: string;
   details: string;
+  emphasized?: boolean;
 }
 
 const statusMeta: Record<SectionStatus, { label: string; color: string; bg: string; icon: any }> = {
