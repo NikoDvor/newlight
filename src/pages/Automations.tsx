@@ -25,6 +25,8 @@ import { motion } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { LockBadge } from "@/components/LockedFeature";
+import { useLockContext } from "@/hooks/useLockContext";
 
 const TRIGGER_OPTIONS = [
   "form_submitted", "new_lead", "pipeline_stage_changed", "appointment_completed",
