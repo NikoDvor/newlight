@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
@@ -264,6 +264,12 @@ export default function SocialDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="planner" className="mt-4">
+            <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm">Loading Content Planner…</div>}>
+              <ContentPlannerEmbed />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
