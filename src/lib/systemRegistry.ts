@@ -17,6 +17,7 @@ export type SystemCategory =
   | "Core Engine"
   | "Revenue Systems"
   | "Growth Systems"
+  | "Enterprise Services"
   | "Communications"
   | "Support Systems"
   | "Client Workspace"
@@ -555,6 +556,7 @@ export const allCategories: SystemCategory[] = [
   "Core Engine",
   "Revenue Systems",
   "Growth Systems",
+  "Enterprise Services",
   "Communications",
   "Support Systems",
   "Client Workspace",
