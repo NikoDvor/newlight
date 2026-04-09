@@ -7,9 +7,11 @@ import { INDUSTRY_CATEGORIES } from "@/lib/workspaceProfileTypes";
 import { resolveOperationType, isFinancialFirm, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
 import { computeQuote, type QuoteInput, type QuoteOutput } from "@/lib/workspaceQuoteEngine";
+import { getCategoryById, buildStructuredProfile } from "@/lib/businessCategoryRegistry";
+import { resolveAllPresets, type ResolvedPresets } from "@/lib/profilePresetEngine";
 import {
   Brain, Building2, Target, Gauge, Shield, TrendingUp,
-  Zap, BarChart3, DollarSign, Layers
+  Zap, BarChart3, DollarSign, Layers, FileText, Smartphone
 } from "lucide-react";
 
 interface Props {
