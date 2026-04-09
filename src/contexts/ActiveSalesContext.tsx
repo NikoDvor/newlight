@@ -63,6 +63,7 @@ export interface HandoffSnapshot {
   modules: string[];
   websiteBuild: string | null;
   appStoreLaunch: boolean;
+  appStoreCustomAmount: string;
   complianceLevel: string;
   setupTotal: number;
   monthlyTotal: number;
