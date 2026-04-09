@@ -62,6 +62,39 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
 
+  // Try to derive a StructuredWorkspaceProfile for preset-driven recommendations
+  const structuredProfile = useMemo((): StructuredWorkspaceProfile | null => {
+    if (!niche) {
+      // Try to find category from industry
+      const cat = getCategoryById(profile.industry);
+      if (cat) return buildStructuredProfile(cat.id, null);
+      return null;
+    }
+    const cat = getCategoryById(niche.industry);
+    if (cat) return buildStructuredProfile(cat.id, niche);
+    return null;
+  }, [niche, profile.industry]);
+
+  const modulePreset = useMemo(() => {
+    if (structuredProfile) return resolveModulePreset(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const proposalPreset = useMemo(() => {
+    if (structuredProfile) return resolveProposalPreset(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const demoModelConfig = useMemo(() => {
+    if (structuredProfile) return resolveDemoModel(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
+  const pricingInfo = useMemo(() => {
+    if (structuredProfile) return resolvePricing(structuredProfile);
+    return null;
+  }, [structuredProfile]);
+
   const quote = useMemo(() => {
     return computeQuote({
       workspaceProfile: profile,
@@ -80,8 +113,11 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
     onQuoteChange?.(quote, selectedModules, internalNotes);
   }, [quote, selectedModules, internalNotes, onQuoteChange]);
 
-  // Recommended modules from niche priority
+  // Recommended modules: prefer preset engine, fallback to niche priority
   const recommended = useMemo(() => {
+    if (modulePreset) {
+      return [...modulePreset.priority];
+    }
     if (!niche) return [];
     const priority = niche.modulePriority;
     const map: Record<string, number> = {
@@ -95,7 +131,7 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
       financial_compliance: niche.complianceLevel === "high" ? 5 : niche.complianceLevel === "moderate" ? 3 : 1,
     };
     return Object.entries(map).filter(([, v]) => v >= 4).map(([k]) => k);
-  }, [niche]);
+  }, [modulePreset, niche]);
 
   const selectRecommended = useCallback(() => {
     setSelectedModules(recommended);
