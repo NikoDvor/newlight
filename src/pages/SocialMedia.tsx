@@ -23,6 +23,8 @@ import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+const ContentPlannerEmbed = lazy(() => import("@/pages/ContentPlanner"));
+
 const PLATFORM_ICONS: Record<string, any> = {
   Instagram: Heart, Facebook: ThumbsUp, LinkedIn: Users, "X (Twitter)": MessageSquare, TikTok: Eye, YouTube: Eye,
 };
