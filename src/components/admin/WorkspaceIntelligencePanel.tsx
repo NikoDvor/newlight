@@ -47,6 +47,17 @@ export function WorkspaceIntelligencePanel({
   const financial = isFinancialFirm(profile.industry);
   const intel = useMemo(() => generateClientIntelligence(profile), [profile]);
 
+  // Derive structured profile for preset resolution
+  const presets: ResolvedPresets | null = useMemo(() => {
+    if (niche) {
+      const cat = getCategoryById(niche.industry);
+      if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, niche));
+    }
+    const cat = getCategoryById(profile.industry);
+    if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, null));
+    return null;
+  }, [niche, profile.industry]);
+
   const quote: QuoteOutput | null = useMemo(() => {
     if (selectedModules.length === 0 && !hasPurchasedPlatformSetup) return null;
     return computeQuote({
