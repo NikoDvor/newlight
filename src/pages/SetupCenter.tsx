@@ -313,14 +313,22 @@ export default function SetupCenter() {
             <motion.div key={section.key}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="card-widget group hover:shadow-md transition-all">
+              className={`card-widget group hover:shadow-md transition-all ${section.emphasized ? "ring-1 ring-primary/20" : ""}`}>
               <div className="flex items-start gap-4">
                 <div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                   <section.icon className="h-5 w-5" style={{ color: "hsl(211 96% 56%)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-bold text-foreground">{section.title}</p>
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-bold text-foreground">{section.title}</p>
+                      {section.emphasized && (
+                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 shrink-0" style={{ color: "hsl(211 96% 56%)", background: "hsla(211,96%,56%,.08)", borderColor: "transparent" }}>
+                          <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                          Priority
+                        </Badge>
+                      )}
+                    </div>
                     <Badge variant="outline" className="text-[10px] px-2 py-0.5 shrink-0" style={{ color: sm.color, background: sm.bg, borderColor: "transparent" }}>
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {sm.label}
