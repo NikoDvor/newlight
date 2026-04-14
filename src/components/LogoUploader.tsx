@@ -15,7 +15,7 @@ interface LogoUploaderProps {
   clientId?: string;
 }
 
-export function LogoUploader({ value, onChange, label = "Logo", className = "", dark = true }: LogoUploaderProps) {
+export function LogoUploader({ value, onChange, label = "Logo", className = "", dark = true, clientId }: LogoUploaderProps) {
   const [mode, setMode] = useState<"upload" | "url">(value && !value.startsWith("blob:") ? "url" : "upload");
   const [uploading, setUploading] = useState(false);
   const [scale, setScale] = useState(1);
