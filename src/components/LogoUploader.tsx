@@ -77,7 +77,7 @@ export function LogoUploader({ value, onChange, label = "Logo", className = "", 
     setScale(1);
     toast.success("Logo uploaded!");
     setUploading(false);
-  }, [onChange]);
+  }, [onChange, clientId]);
 
   const clearLogo = () => {
     onChange("");
