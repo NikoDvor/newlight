@@ -11,6 +11,8 @@ interface LogoUploaderProps {
   label?: string;
   className?: string;
   dark?: boolean;
+  /** Storage folder prefix — must be a valid client UUID for RLS. Falls back to current user ID. */
+  clientId?: string;
 }
 
 export function LogoUploader({ value, onChange, label = "Logo", className = "", dark = true }: LogoUploaderProps) {
