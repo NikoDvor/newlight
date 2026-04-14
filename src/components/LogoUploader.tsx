@@ -11,9 +11,11 @@ interface LogoUploaderProps {
   label?: string;
   className?: string;
   dark?: boolean;
+  /** Storage folder prefix — must be a valid client UUID for RLS. Falls back to current user ID. */
+  clientId?: string;
 }
 
-export function LogoUploader({ value, onChange, label = "Logo", className = "", dark = true }: LogoUploaderProps) {
+export function LogoUploader({ value, onChange, label = "Logo", className = "", dark = true, clientId }: LogoUploaderProps) {
   const [mode, setMode] = useState<"upload" | "url">(value && !value.startsWith("blob:") ? "url" : "upload");
   const [uploading, setUploading] = useState(false);
   const [scale, setScale] = useState(1);
@@ -43,8 +45,21 @@ export function LogoUploader({ value, onChange, label = "Logo", className = "", 
     }
 
     setUploading(true);
+
+    // Determine folder: use clientId prop, or fall back to current user's UUID
+    let folder = clientId;
+    if (!folder) {
+      const { data: { user } } = await supabase.auth.getUser();
+      folder = user?.id;
+    }
+    if (!folder) {
+      toast.error("Unable to determine upload folder");
+      setUploading(false);
+      return;
+    }
+
     const ext = file.name.split(".").pop();
-    const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     const { error } = await supabase.storage.from("client-logos").upload(path, file, {
       cacheControl: "3600",
@@ -62,7 +77,7 @@ export function LogoUploader({ value, onChange, label = "Logo", className = "", 
     setScale(1);
     toast.success("Logo uploaded!");
     setUploading(false);
-  }, [onChange]);
+  }, [onChange, clientId]);
 
   const clearLogo = () => {
     onChange("");
