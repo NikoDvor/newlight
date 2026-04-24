@@ -267,6 +267,7 @@ Deno.serve(async (req) => {
 
     return json({ error: "Invalid action" }, 400);
   } catch (err) {
-    return json({ error: err.message || "Internal error" }, 500);
+    const msg = err instanceof Error ? err.message : "Internal error";
+    return json({ error: msg }, 500);
   }
 });
