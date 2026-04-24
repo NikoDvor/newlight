@@ -69,6 +69,8 @@ import AdminPackages from "./pages/admin/AdminPackages";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminMonitoring from "./pages/admin/AdminMonitoring";
 import AdminTeam from "./pages/admin/AdminTeam";
+import AdminTrainingCenter from "./pages/admin/AdminTrainingCenter";
+import AdminTrainingTrack from "./pages/admin/AdminTrainingTrack";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import AdminActivation from "./pages/admin/AdminActivation";
@@ -203,6 +205,8 @@ const App = () => {
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
+                <Route path="training-center" element={<AdminTrainingCenter />} />
+                <Route path="training-center/:trackKey" element={<AdminTrainingTrack />} />
                 <Route path="prospects" element={<AdminProspects />} />
                 <Route path="provision" element={<AdminProvision />} />
                 <Route path="fix-now" element={<AdminFixNow />} />
