@@ -5744,31 +5744,40 @@ export type Database = {
       }
       nl_training_certifications: {
         Row: {
+          certificate_number: string | null
           created_at: string
           id: string
           issued_at: string
           passed: boolean
+          rep_name: string | null
           score: number
+          total_questions: number | null
           track_id: string
           track_key: string
           user_id: string
         }
         Insert: {
+          certificate_number?: string | null
           created_at?: string
           id?: string
           issued_at?: string
           passed?: boolean
+          rep_name?: string | null
           score: number
+          total_questions?: number | null
           track_id: string
           track_key: string
           user_id: string
         }
         Update: {
+          certificate_number?: string | null
           created_at?: string
           id?: string
           issued_at?: string
           passed?: boolean
+          rep_name?: string | null
           score?: number
+          total_questions?: number | null
           track_id?: string
           track_key?: string
           user_id?: string
@@ -5806,6 +5815,47 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_training_exam_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          module_scores: Json | null
+          passed: boolean
+          score: number
+          total_questions: number
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          module_scores?: Json | null
+          passed?: boolean
+          score: number
+          total_questions: number
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          module_scores?: Json | null
+          passed?: boolean
+          score?: number
+          total_questions?: number
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_exam_attempts_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
             referencedColumns: ["id"]
           },
         ]
