@@ -63,6 +63,7 @@ export default function AdminTrainingTrack() {
         return;
       }
       setTrackName(track.track_name);
+      setTrackId(track.id);
 
       const { data: mods } = await supabase
         .from("nl_training_modules")
@@ -80,7 +81,7 @@ export default function AdminTrainingTrack() {
         const ids = moduleList.map((m) => m.id);
         const { data: chs } = await supabase
           .from("nl_training_chapters")
-          .select("id, chapter_number, chapter_title, module_id")
+          .select("id, chapter_number, chapter_title, content, module_id")
           .in("module_id", ids)
           .order("chapter_number");
         setChapters((chs || []) as Chapter[]);
@@ -99,7 +100,7 @@ export default function AdminTrainingTrack() {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackKey]);
+  }, [trackKey, reloadTick]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
