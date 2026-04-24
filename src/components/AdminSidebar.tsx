@@ -2,7 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
   ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
-  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket, Map, Sparkles
+  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket, Map, Sparkles, GraduationCap
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -44,6 +44,7 @@ const navGroups: NavGroup[] = [
       { title: "Clients", url: "/admin/clients", icon: Users },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
       { title: "Team & Users", url: "/admin/team", icon: Shield },
+      { title: "Training Center", url: "/admin/training-center", icon: GraduationCap },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
       { title: "Master Activation", url: "/admin/master-activation", icon: Zap },

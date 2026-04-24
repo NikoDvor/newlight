@@ -5742,6 +5742,232 @@ export type Database = {
           },
         ]
       }
+      nl_training_certifications: {
+        Row: {
+          created_at: string
+          id: string
+          issued_at: string
+          passed: boolean
+          score: number
+          track_id: string
+          track_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issued_at?: string
+          passed?: boolean
+          score: number
+          track_id: string
+          track_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issued_at?: string
+          passed?: boolean
+          score?: number
+          track_id?: string
+          track_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nl_training_chapters: {
+        Row: {
+          chapter_number: number
+          chapter_title: string
+          content: string | null
+          created_at: string
+          id: string
+          module_id: string
+        }
+        Insert: {
+          chapter_number: number
+          chapter_title: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+        }
+        Update: {
+          chapter_number?: number
+          chapter_title?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_chapters_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_training_modules: {
+        Row: {
+          created_at: string
+          id: string
+          is_locked: boolean
+          module_description: string | null
+          module_number: number
+          module_title: string
+          track_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          module_description?: string | null
+          module_number: number
+          module_title: string
+          track_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_locked?: boolean
+          module_description?: string | null
+          module_number?: number
+          module_title?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_modules_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_training_progress: {
+        Row: {
+          attempts: number
+          chapter_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          module_id: string
+          score: number | null
+          status: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          chapter_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          module_id: string
+          score?: number | null
+          status?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          chapter_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          module_id?: string
+          score?: number | null
+          status?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nl_training_questions: {
+        Row: {
+          chapter_id: string | null
+          correct_index: number
+          created_at: string
+          explanation: string | null
+          id: string
+          module_id: string
+          options: Json
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          correct_index: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          module_id: string
+          options?: Json
+          question_text: string
+          question_type: string
+        }
+        Update: {
+          chapter_id?: string | null
+          correct_index?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          module_id?: string
+          options?: Json
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_training_tracks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          track_key: string
+          track_name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          track_key: string
+          track_name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          track_key?: string
+          track_name?: string
+        }
+        Relationships: []
+      }
       notification_send_log: {
         Row: {
           action_type: string
