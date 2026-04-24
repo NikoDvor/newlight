@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
 
 interface Module {
   id: string;
