@@ -22,6 +22,7 @@ interface Chapter {
   id: string;
   chapter_number: number;
   chapter_title: string;
+  content: string | null;
   module_id: string;
 }
 
