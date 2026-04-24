@@ -36,11 +36,18 @@ export default function AdminTrainingTrack() {
   const { trackKey } = useParams<{ trackKey: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [trackId, setTrackId] = useState<string | null>(null);
   const [trackName, setTrackName] = useState("");
   const [modules, setModules] = useState<Module[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [runner, setRunner] = useState<
+    | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
+    | { mode: "module_test"; moduleId: string }
+    | null
+  >(null);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     const load = async () => {
