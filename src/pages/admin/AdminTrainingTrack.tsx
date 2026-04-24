@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
 
 interface Module {
   id: string;
@@ -21,6 +22,7 @@ interface Chapter {
   id: string;
   chapter_number: number;
   chapter_title: string;
+  content: string | null;
   module_id: string;
 }
 
@@ -34,11 +36,18 @@ export default function AdminTrainingTrack() {
   const { trackKey } = useParams<{ trackKey: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [trackId, setTrackId] = useState<string | null>(null);
   const [trackName, setTrackName] = useState("");
   const [modules, setModules] = useState<Module[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [runner, setRunner] = useState<
+    | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
+    | { mode: "module_test"; moduleId: string }
+    | null
+  >(null);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -54,6 +63,7 @@ export default function AdminTrainingTrack() {
         return;
       }
       setTrackName(track.track_name);
+      setTrackId(track.id);
 
       const { data: mods } = await supabase
         .from("nl_training_modules")
@@ -71,7 +81,7 @@ export default function AdminTrainingTrack() {
         const ids = moduleList.map((m) => m.id);
         const { data: chs } = await supabase
           .from("nl_training_chapters")
-          .select("id, chapter_number, chapter_title, module_id")
+          .select("id, chapter_number, chapter_title, content, module_id")
           .in("module_id", ids)
           .order("chapter_number");
         setChapters((chs || []) as Chapter[]);
@@ -90,7 +100,7 @@ export default function AdminTrainingTrack() {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackKey]);
+  }, [trackKey, reloadTick]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
@@ -279,14 +289,30 @@ export default function AdminTrainingTrack() {
                     </p>
                   </div>
                 ) : (
-                  selectedChapters.map((c) => {
+                  selectedChapters.map((c, idx) => {
                     const done = progress.some(
                       (p) => p.chapter_id === c.id && p.status === "completed"
                     );
+                    // A chapter is unlocked if it's the first one OR the previous chapter is complete
+                    const prev = selectedChapters[idx - 1];
+                    const prevDone = !prev || progress.some(
+                      (p) => p.chapter_id === prev.id && p.status === "completed"
+                    );
+                    const unlocked = !selectedModule.is_locked && prevDone;
                     return (
-                      <div
+                      <button
                         key={c.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/40 hover:bg-white/[0.03] transition-colors"
+                        onClick={() =>
+                          unlocked && trackId && setRunner({
+                            mode: "chapter",
+                            chapter: c as ChapterRow,
+                            moduleId: selectedModule.id,
+                          })
+                        }
+                        disabled={!unlocked}
+                        className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/40 transition-colors ${
+                          unlocked ? "hover:bg-white/[0.03] cursor-pointer" : "opacity-50 cursor-not-allowed"
+                        }`}
                       >
                         {done ? (
                           <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0" />
@@ -296,16 +322,58 @@ export default function AdminTrainingTrack() {
                         <span className="text-[13px] text-foreground/85 flex-1">
                           {c.chapter_number}. {c.chapter_title}
                         </span>
-                      </div>
+                        {unlocked && !done && (
+                          <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Open</span>
+                        )}
+                      </button>
                     );
                   })
                 )}
               </div>
 
-              <Button disabled={selectedModule.is_locked} className="gap-2">
-                <PlayCircle className="h-4 w-4" />
-                {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
-              </Button>
+              {(() => {
+                const allChaptersDone =
+                  selectedChapters.length > 0 &&
+                  selectedChapters.every((c) =>
+                    progress.some((p) => p.chapter_id === c.id && p.status === "completed")
+                  );
+                const moduleDone = moduleStatus(selectedModule.id) === "completed";
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      disabled={selectedModule.is_locked || selectedChapters.length === 0}
+                      onClick={() => {
+                        const firstUndone = selectedChapters.find(
+                          (c) => !progress.some((p) => p.chapter_id === c.id && p.status === "completed")
+                        ) || selectedChapters[0];
+                        if (firstUndone) {
+                          setRunner({
+                            mode: "chapter",
+                            chapter: firstUndone as ChapterRow,
+                            moduleId: selectedModule.id,
+                          });
+                        }
+                      }}
+                      className="gap-2"
+                    >
+                      <PlayCircle className="h-4 w-4" />
+                      {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
+                    </Button>
+
+                    <Button
+                      variant={allChaptersDone && !moduleDone ? "default" : "outline"}
+                      disabled={!allChaptersDone || selectedModule.is_locked}
+                      onClick={() =>
+                        setRunner({ mode: "module_test", moduleId: selectedModule.id })
+                      }
+                      className="gap-2"
+                    >
+                      <Award className="h-4 w-4" />
+                      {moduleDone ? "Module Test Passed" : "Take Module Test"}
+                    </Button>
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <div className="py-12 text-center text-muted-foreground text-sm">
@@ -314,6 +382,17 @@ export default function AdminTrainingTrack() {
           )}
         </motion.div>
       </div>
+
+      {runner && trackId && (
+        <ChapterRunner
+          mode={runner.mode}
+          chapter={runner.mode === "chapter" ? runner.chapter : undefined}
+          moduleId={runner.moduleId}
+          trackId={trackId}
+          onClose={() => setRunner(null)}
+          onCompleted={() => setReloadTick((t) => t + 1)}
+        />
+      )}
 
       {/* Stats bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
