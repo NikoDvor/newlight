@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ export default function AdminTrainingTrack() {
     | null
   >(null);
   const [reloadTick, setReloadTick] = useState(0);
+  const [hasCertification, setHasCertification] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -94,6 +95,18 @@ export default function AdminTrainingTrack() {
           .select("module_id, chapter_id, status")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
+
+        if (track.track_name && (trackKey || "bdr") === "bdr") {
+          const { data: cert } = await supabase
+            .from("nl_training_certifications")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("track_key", "bdr")
+            .eq("passed", true)
+            .limit(1)
+            .maybeSingle();
+          setHasCertification(!!cert);
+        }
       }
 
       setLoading(false);
@@ -170,66 +183,97 @@ export default function AdminTrainingTrack() {
                 ))}
               </div>
             ) : (
-              modules.map((m) => {
-                const status = moduleStatus(m.id);
-                const isSelected = selectedModuleId === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setSelectedModuleId(m.id)}
-                    className={`w-full text-left px-4 py-3 border-b border-border/30 transition-all duration-200 flex items-start gap-3 ${
-                      isSelected ? "bg-primary/[0.08]" : "hover:bg-white/[0.03]"
-                    }`}
-                    style={
-                      isSelected
-                        ? {
-                            boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))",
-                          }
-                        : undefined
-                    }
-                  >
-                    <div
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5"
-                      style={{
-                        background: isSelected
-                          ? "hsla(211,96%,60%,.22)"
-                          : "hsla(220,15%,20%,.5)",
-                        color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
-                      }}
+              <>
+                {modules.map((m) => {
+                  const status = moduleStatus(m.id);
+                  const isSelected = selectedModuleId === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setSelectedModuleId(m.id)}
+                      className={`w-full text-left px-4 py-3 border-b border-border/30 transition-all duration-200 flex items-start gap-3 ${
+                        isSelected ? "bg-primary/[0.08]" : "hover:bg-white/[0.03]"
+                      }`}
+                      style={
+                        isSelected
+                          ? {
+                              boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))",
+                            }
+                          : undefined
+                      }
                     >
-                      {m.module_number}
+                      <div
+                        className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5"
+                        style={{
+                          background: isSelected
+                            ? "hsla(211,96%,60%,.22)"
+                            : "hsla(220,15%,20%,.5)",
+                          color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
+                        }}
+                      >
+                        {m.module_number}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
+                            {m.module_title}
+                          </p>
+                          {m.is_locked && (
+                            <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {status === "completed" ? (
+                            <>
+                              <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
+                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete</span>
+                            </>
+                          ) : status === "in_progress" ? (
+                            <>
+                              <PlayCircle className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
+                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">In progress</span>
+                            </>
+                          ) : (
+                            <>
+                              <Circle className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground font-medium">Not started</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+                {trackKey === "bdr" && (
+                  <button
+                    onClick={() => overallPct === 100 && navigate("/admin/training-center/bdr/certification")}
+                    disabled={overallPct < 100}
+                    className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
+                      overallPct === 100 ? "hover:bg-white/[0.03]" : "opacity-60 cursor-not-allowed"
+                    }`}
+                  >
+                    <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-secondary">
+                      {hasCertification ? (
+                        <Star className="h-3.5 w-3.5 text-[hsl(var(--nl-gold))]" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
-                          {m.module_title}
-                        </p>
-                        {m.is_locked && (
-                          <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                        )}
-                      </div>
+                      <p className="text-[13px] font-medium text-foreground/85 truncate">Certification Exam</p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        {status === "completed" ? (
-                          <>
-                            <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
-                            <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete</span>
-                          </>
-                        ) : status === "in_progress" ? (
-                          <>
-                            <PlayCircle className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
-                            <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">In progress</span>
-                          </>
+                        {hasCertification ? (
+                          <span className="text-[10px] text-[hsl(var(--nl-gold))] font-semibold">BDR Certified ✓</span>
+                        ) : overallPct === 100 ? (
+                          <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Unlocked</span>
                         ) : (
-                          <>
-                            <Circle className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground font-medium">Not started</span>
-                          </>
+                          <span className="text-[10px] text-muted-foreground font-medium">Certification Locked</span>
                         )}
                       </div>
                     </div>
                   </button>
-                );
-              })
+                )}
+              </>
             )}
           </div>
         </motion.div>
@@ -407,7 +451,7 @@ export default function AdminTrainingTrack() {
           icon={BookOpen}
         />
         <MetricCard label="Current Streak" value="0 days" icon={Flame} />
-        <MetricCard label="Certification" value="Not Issued" icon={Award} />
+        <MetricCard label="Certification" value={hasCertification ? "BDR Certified" : overallPct === 100 ? "Unlocked" : "Not Issued"} icon={Award} />
       </div>
     </div>
   );
