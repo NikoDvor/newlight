@@ -196,7 +196,8 @@ export default function AdminBDRCertification() {
         .sort((a, b) => {
           const modA = moduleRows.find((m) => m.id === a.module_id)?.module_number || 0;
           const modB = moduleRows.find((m) => m.id === b.module_id)?.module_number || 0;
-          return modA - modB;
+          if (modA !== modB) return modA - modB;
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         }) as QuestionRow[];
       setQuestions(orderedQuestions.slice(0, TOTAL_QUESTIONS));
       setLoading(false);
@@ -256,7 +257,7 @@ export default function AdminBDRCertification() {
     setScore(correct);
     setReviewModules(modules.filter((m) => wrongModuleIds.has(m.id)));
 
-    const { data: attempt } = await supabase
+    const { data: attempt, error: attemptError } = await supabase
       .from("nl_training_exam_attempts")
       .insert({
         user_id: user.id,
@@ -266,10 +267,19 @@ export default function AdminBDRCertification() {
         passed,
         module_scores: moduleScores as any,
       })
-      .select("attempted_at, passed, score, total_questions, module_scores")
-      .single();
+      .select("id, attempted_at, passed, score, total_questions, module_scores")
+      .maybeSingle();
 
-    if (attempt) setLatestAttempt(attempt as AttemptRow);
+    if (attemptError || !attempt) {
+      toast({
+        title: "Exam attempt was not saved",
+        description: attemptError?.message || "Please try submitting the exam again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLatestAttempt(attempt as StoredAttemptRow);
 
     if (passed) {
       const { data: existing } = await supabase
@@ -298,11 +308,16 @@ export default function AdminBDRCertification() {
             rep_name: repName,
           })
           .select("id, certificate_number, issued_at, rep_name, score, total_questions")
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          toast({ title: "Certification saved failed", description: error.message, variant: "destructive" });
-        } else if (cert) {
+        if (error || !cert) {
+          toast({
+            title: "Certification save failed",
+            description: error?.message || "The exam attempt was saved, but the certificate was not issued.",
+            variant: "destructive",
+          });
+          return;
+        } else {
           const generatedNumber = cert.certificate_number || `BDR-${cert.id.slice(0, 8).toUpperCase()}`;
           if (!cert.certificate_number) {
             await supabase
