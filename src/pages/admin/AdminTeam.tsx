@@ -112,11 +112,6 @@ export default function AdminTeam() {
       toast.error("Temporary password must be at least 8 characters");
       return;
     }
-    if (!manualClientId) {
-      toast.error("Assign the user to a client workspace");
-      return;
-    }
-
     setManualLoading(true);
     try {
       const res = await supabase.functions.invoke("create-user-manual", {
@@ -127,12 +122,21 @@ export default function AdminTeam() {
           role_preset: manualRolePreset,
           department: manualDepartment.trim() || null,
           job_title: manualJobTitle.trim() || null,
-          client_id: manualClientId,
+          client_id: manualClientId || null,
         },
       });
 
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to create account");
+        let backendError = res.data?.error;
+        const errorContext = (res.error as any)?.context;
+        if (!backendError && errorContext?.json) {
+          try {
+            backendError = (await errorContext.json())?.error;
+          } catch {
+            backendError = null;
+          }
+        }
+        toast.error(backendError || res.error?.message || "Failed to create account");
       } else {
         toast.success("Account created successfully");
         setShowManualAdd(false);
@@ -216,7 +220,7 @@ export default function AdminTeam() {
                 <div><label className="text-xs text-white/50 mb-1 block">Email</label><Input type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30" /></div>
                 <div><label className="text-xs text-white/50 mb-1 block">Temporary Password</label><div className="relative"><Input type={showManualPassword ? "text" : "password"} value={manualPassword} onChange={e => setManualPassword(e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30 pr-10" /><button type="button" onClick={() => setShowManualPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">{showManualPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
                 <div><label className="text-xs text-white/50 mb-1 block">Role preset</label><select value={manualRolePreset} onChange={e => setManualRolePreset(e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">{manualRoleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}</select></div>
-                <div><label className="text-xs text-white/50 mb-1 block">Assign to Client</label><select value={manualClientId} onChange={e => setManualClientId(e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"><option value="">Select client...</option>{clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}</select></div>
+                <div><label className="text-xs text-white/50 mb-1 block">Assign to Client</label><select value={manualClientId} onChange={e => setManualClientId(e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"><option value="">Platform-wide (Internal Team)</option>{clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}</select></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label className="text-xs text-white/50 mb-1 block">Department</label><Input value={manualDepartment} onChange={e => setManualDepartment(e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30" /></div><div><label className="text-xs text-white/50 mb-1 block">Job Title</label><Input value={manualJobTitle} onChange={e => setManualJobTitle(e.target.value)} className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30" /></div></div>
                 <Button onClick={handleManualCreate} disabled={manualLoading} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">{manualLoading ? "Creating..." : "Create Account"}</Button>
                 <p className="text-[10px] text-white/30 text-center">No email will be sent. Share the temporary password securely.</p>

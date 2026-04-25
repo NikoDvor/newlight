@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const ROLE_PRESETS = new Set(["workspace_admin", "manager", "marketing_staff", "support_staff", "custom"]);
+const PLATFORM_WIDE_VALUES = new Set(["", "platform", "platform-wide", "__platform__"]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -21,9 +22,18 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Not authenticated" }, 401);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error("Missing required function secrets", {
+        hasSupabaseUrl: Boolean(supabaseUrl),
+        hasServiceRoleKey: Boolean(serviceRoleKey),
+        hasAnonKey: Boolean(anonKey),
+      });
+      return json({ error: "Manual account creation is not configured" }, 500);
+    }
 
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -31,12 +41,15 @@ Deno.serve(async (req) => {
     const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser();
     if (callerError || !caller) return json({ error: "Not authenticated" }, 401);
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", caller.id)
       .in("role", ["admin", "operator"])
+      .limit(1)
       .maybeSingle();
 
     if (!callerRole) return json({ error: "Only admins and operators can create users" }, 403);
@@ -46,19 +59,26 @@ Deno.serve(async (req) => {
     const email = String(body.email || "").trim().toLowerCase();
     const temporaryPassword = String(body.temporary_password || "");
     const rolePreset = String(body.role_preset || "custom");
-    const clientId = String(body.client_id || "").trim();
+    const rawClientId = body.client_id == null ? "" : String(body.client_id).trim();
+    const clientId = PLATFORM_WIDE_VALUES.has(rawClientId) ? null : rawClientId;
     const department = body.department ? String(body.department).trim() : null;
     const jobTitle = body.job_title ? String(body.job_title).trim() : null;
 
-    if (!fullName || !email || !temporaryPassword || !clientId) {
-      return json({ error: "Full name, email, temporary password, and client are required" }, 400);
+    if (!fullName || !email || !temporaryPassword) {
+      return json({ error: "Full name, email, and temporary password are required" }, 400);
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email address" }, 400);
     if (temporaryPassword.length < 8) return json({ error: "Temporary password must be at least 8 characters" }, 400);
     if (!ROLE_PRESETS.has(rolePreset)) return json({ error: "Invalid role preset" }, 400);
 
-    const { data: client } = await adminClient.from("clients").select("id").eq("id", clientId).maybeSingle();
-    if (!client) return json({ error: "Client workspace not found" }, 404);
+    if (clientId) {
+      const { data: client, error: clientError } = await adminClient.from("clients").select("id").eq("id", clientId).maybeSingle();
+      if (clientError) {
+        console.error("Client lookup failed", { clientId, message: clientError.message });
+        return json({ error: "Could not verify client workspace" }, 400);
+      }
+      if (!client) return json({ error: "Client workspace not found" }, 404);
+    }
 
     const { data: created, error: createError } = await adminClient.auth.admin.createUser({
       email,
@@ -72,7 +92,9 @@ Deno.serve(async (req) => {
     }
 
     const userId = created.user.id;
-    const platformRole = rolePreset === "workspace_admin" ? "client_owner" : "client_team";
+    const platformRole = clientId
+      ? rolePreset === "workspace_admin" ? "client_owner" : "client_team"
+      : rolePreset === "workspace_admin" ? "admin" : "operator";
 
     const { error: roleError } = await adminClient.from("user_roles").insert({
       user_id: userId,
@@ -80,8 +102,22 @@ Deno.serve(async (req) => {
       client_id: clientId,
     });
     if (roleError) {
+      console.error("User role insert failed", { userId, role: platformRole, clientId, message: roleError.message });
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: roleError.message }, 400);
+    }
+
+    if (!clientId) {
+      await adminClient.from("audit_logs").insert({
+        client_id: null,
+        user_id: caller.id,
+        action: "manual_platform_user_created",
+        module: "team",
+        status: "success",
+        metadata: { created_user_id: userId, full_name: fullName, email, role_preset: rolePreset, platform_role: platformRole },
+      });
+
+      return json({ success: true, user_id: userId, platform_role: platformRole });
     }
 
     const { error: workspaceError } = await adminClient.from("workspace_users").insert({
@@ -98,6 +134,7 @@ Deno.serve(async (req) => {
       is_bookable_staff: false,
     });
     if (workspaceError) {
+      console.error("Workspace user insert failed", { userId, clientId, message: workspaceError.message });
       await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", clientId);
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: workspaceError.message }, 400);
