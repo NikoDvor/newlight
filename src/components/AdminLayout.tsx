@@ -10,7 +10,6 @@ import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 export function AdminLayout() {
   const location = useLocation();
   const { viewMode, user, isAdmin } = useWorkspace();
-  const isFocusedCertificationExam = location.pathname === "/admin/training-center/bdr/certification";
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -27,9 +26,9 @@ export function AdminLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        {!isFocusedCertificationExam && <AdminSidebar />}
+        <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          {!isFocusedCertificationExam && <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
+          <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b relative z-10" style={{
             background: "hsla(218,42%,8%,.97)",
             backdropFilter: "blur(28px) saturate(1.6)",
             borderColor: "hsla(211,96%,60%,.12)",
@@ -63,7 +62,7 @@ export function AdminLayout() {
                 <span className="text-xs font-bold text-white">NL</span>
               </div>
             </div>
-          </header>}
+          </header>
           <main className="flex-1 overflow-auto nl-dark-bg relative">
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
