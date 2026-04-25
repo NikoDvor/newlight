@@ -1,0 +1,112 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const ROLE_PRESETS = new Set(["workspace_admin", "manager", "marketing_staff", "support_staff", "custom"]);
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return json({ error: "Not authenticated" }, 401);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser();
+    if (callerError || !caller) return json({ error: "Not authenticated" }, 401);
+
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const { data: callerRole } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", caller.id)
+      .in("role", ["admin", "operator"])
+      .maybeSingle();
+
+    if (!callerRole) return json({ error: "Only admins and operators can create users" }, 403);
+
+    const body = await req.json();
+    const fullName = String(body.full_name || "").trim();
+    const email = String(body.email || "").trim().toLowerCase();
+    const temporaryPassword = String(body.temporary_password || "");
+    const rolePreset = String(body.role_preset || "custom");
+    const clientId = String(body.client_id || "").trim();
+    const department = body.department ? String(body.department).trim() : null;
+    const jobTitle = body.job_title ? String(body.job_title).trim() : null;
+
+    if (!fullName || !email || !temporaryPassword || !clientId) {
+      return json({ error: "Full name, email, temporary password, and client are required" }, 400);
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email address" }, 400);
+    if (temporaryPassword.length < 8) return json({ error: "Temporary password must be at least 8 characters" }, 400);
+    if (!ROLE_PRESETS.has(rolePreset)) return json({ error: "Invalid role preset" }, 400);
+
+    const { data: client } = await adminClient.from("clients").select("id").eq("id", clientId).maybeSingle();
+    if (!client) return json({ error: "Client workspace not found" }, 404);
+
+    const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, role_preset: rolePreset, created_manually: true },
+    });
+
+    if (createError || !created.user?.id) {
+      return json({ error: createError?.message || "Could not create user account" }, 400);
+    }
+
+    const userId = created.user.id;
+    const platformRole = rolePreset === "workspace_admin" ? "client_owner" : "client_team";
+
+    const { error: roleError } = await adminClient.from("user_roles").insert({
+      user_id: userId,
+      role: platformRole,
+      client_id: clientId,
+    });
+    if (roleError) return json({ error: roleError.message }, 400);
+
+    const { error: workspaceError } = await adminClient.from("workspace_users").insert({
+      client_id: clientId,
+      user_id: userId,
+      full_name: fullName,
+      email,
+      department,
+      job_title: jobTitle,
+      role_preset: rolePreset,
+      status: "active",
+      provisioning_status: "provisioned",
+      provisioned_at: new Date().toISOString(),
+      is_bookable_staff: false,
+    });
+    if (workspaceError) return json({ error: workspaceError.message }, 400);
+
+    await adminClient.from("audit_logs").insert({
+      client_id: clientId,
+      user_id: caller.id,
+      action: "manual_user_created",
+      module: "team",
+      status: "success",
+      metadata: { created_user_id: userId, full_name: fullName, email, role_preset: rolePreset },
+    });
+
+    return json({ success: true, user_id: userId });
+  } catch (err) {
+    return json({ error: (err as Error).message || "Failed to create account" }, 500);
+  }
+});
