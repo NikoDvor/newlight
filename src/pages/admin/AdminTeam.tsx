@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserPlus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2 } from "lucide-react";
 
 interface RoleRow {
   id: string;
@@ -21,8 +21,26 @@ export default function AdminTeam() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("client_owner");
   const [inviteClientId, setInviteClientId] = useState("");
+  const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualFullName, setManualFullName] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualPassword, setManualPassword] = useState("");
+  const [manualRolePreset, setManualRolePreset] = useState("workspace_admin");
+  const [manualDepartment, setManualDepartment] = useState("");
+  const [manualJobTitle, setManualJobTitle] = useState("");
+  const [manualClientId, setManualClientId] = useState("");
+  const [showManualPassword, setShowManualPassword] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
   const [clients, setClients] = useState<{ id: string; business_name: string }[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const manualRoleOptions = [
+    { value: "workspace_admin", label: "Admin" },
+    { value: "manager", label: "Manager" },
+    { value: "marketing_staff", label: "Marketing Staff" },
+    { value: "support_staff", label: "Support Staff" },
+    { value: "custom", label: "Custom" },
+  ];
 
   const fetchData = async () => {
     const [rolesRes, clientsRes] = await Promise.all([
