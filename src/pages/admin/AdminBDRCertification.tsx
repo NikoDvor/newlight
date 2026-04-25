@@ -88,6 +88,16 @@ function formatDuration(ms: number) {
   return `${hours}h ${minutes}m`;
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  }[char] || char));
+}
+
 export default function AdminBDRCertification() {
   const navigate = useNavigate();
   const { user } = useWorkspace();
@@ -123,11 +133,17 @@ export default function AdminBDRCertification() {
       if (!user?.id) return;
       setLoading(true);
 
-      const { data: track } = await supabase
+      const { data: track, error: trackError } = await supabase
         .from("nl_training_tracks")
         .select("id")
         .eq("track_key", "bdr")
         .maybeSingle();
+
+      if (trackError) {
+        toast({ title: "Certification track failed to load", description: trackError.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
 
       if (!track?.id) {
         setLoading(false);
@@ -136,11 +152,17 @@ export default function AdminBDRCertification() {
 
       setTrackId(track.id);
 
-      const { data: moduleData } = await supabase
+      const { data: moduleData, error: moduleError } = await supabase
         .from("nl_training_modules")
         .select("id, module_number, module_title")
         .eq("track_id", track.id)
         .order("module_number");
+
+      if (moduleError) {
+        toast({ title: "Training modules failed to load", description: moduleError.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
 
       const moduleRows = (moduleData || []) as ModuleRow[];
       setModules(moduleRows);
@@ -184,12 +206,18 @@ export default function AdminBDRCertification() {
 
       setLatestAttempt((attemptData as AttemptRow | null) || null);
 
-      const { data: questionData } = await supabase
+      const { data: questionData, error: questionError } = await supabase
         .from("nl_training_questions")
         .select("id, module_id, question_text, options, correct_index, explanation, created_at")
         .in("module_id", moduleRows.map((m) => m.id))
         .eq("question_type", "certification")
         .order("created_at");
+
+      if (questionError) {
+        toast({ title: "Certification questions failed to load", description: questionError.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
 
       const orderedQuestions = ((questionData || []) as any[])
         .map((q) => ({ ...q, options: parseOptions(q.options) }))
@@ -200,6 +228,13 @@ export default function AdminBDRCertification() {
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         }) as QuestionRow[];
       setQuestions(orderedQuestions.slice(0, TOTAL_QUESTIONS));
+      if (orderedQuestions.length !== TOTAL_QUESTIONS) {
+        toast({
+          title: "Certification exam is incomplete",
+          description: `Expected 30 questions, found ${orderedQuestions.length}.`,
+          variant: "destructive",
+        });
+      }
       setLoading(false);
     };
 
