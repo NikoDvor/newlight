@@ -22,9 +22,18 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Not authenticated" }, 401);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error("Missing required function secrets", {
+        hasSupabaseUrl: Boolean(supabaseUrl),
+        hasServiceRoleKey: Boolean(serviceRoleKey),
+        hasAnonKey: Boolean(anonKey),
+      });
+      return json({ error: "Manual account creation is not configured" }, 500);
+    }
 
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -32,7 +41,9 @@ Deno.serve(async (req) => {
     const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser();
     if (callerError || !caller) return json({ error: "Not authenticated" }, 401);
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
