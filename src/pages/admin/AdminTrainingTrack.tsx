@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ export default function AdminTrainingTrack() {
     | null
   >(null);
   const [reloadTick, setReloadTick] = useState(0);
+  const [hasCertification, setHasCertification] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -94,6 +95,18 @@ export default function AdminTrainingTrack() {
           .select("module_id, chapter_id, status")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
+
+        if (track.track_name && (trackKey || "bdr") === "bdr") {
+          const { data: cert } = await supabase
+            .from("nl_training_certifications")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("track_key", "bdr")
+            .eq("passed", true)
+            .limit(1)
+            .maybeSingle();
+          setHasCertification(!!cert);
+        }
       }
 
       setLoading(false);
