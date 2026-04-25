@@ -4,6 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+process.env.BROWSERSLIST_IGNORE_OLD_DATA = "true";
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
