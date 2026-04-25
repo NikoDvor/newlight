@@ -68,6 +68,7 @@ export default {
           deep: "hsl(var(--nl-deep))",
           ice: "hsl(var(--nl-ice))",
           glow: "hsl(var(--nl-glow))",
+          gold: "hsl(var(--nl-gold))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",
