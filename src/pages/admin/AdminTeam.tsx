@@ -127,7 +127,16 @@ export default function AdminTeam() {
       });
 
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to create account");
+        let backendError = res.data?.error;
+        const errorContext = (res.error as any)?.context;
+        if (!backendError && errorContext?.json) {
+          try {
+            backendError = (await errorContext.json())?.error;
+          } catch {
+            backendError = null;
+          }
+        }
+        toast.error(backendError || res.error?.message || "Failed to create account");
       } else {
         toast.success("Account created successfully");
         setShowManualAdd(false);
