@@ -378,21 +378,33 @@ export default function AdminBDRCertification() {
   const downloadCertificate = () => {
     const issued = certification?.issued_at ? formatDate(certification.issued_at) : formatDate(new Date());
     const printWindow = window.open("", "_blank", "width=900,height=700");
-    if (!printWindow) return;
+    if (!printWindow) {
+      toast({
+        title: "Certificate window was blocked",
+        description: "Allow pop-ups for this site, then try downloading again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const safeCertificateNumber = escapeHtml(certificateNumber);
+    const safeRepName = escapeHtml(repName);
+    const safeIssued = escapeHtml(issued);
+    const safeScore = escapeHtml(`${score}/${TOTAL_QUESTIONS} — ${scorePct}%`);
     printWindow.document.write(`
       <html>
         <head>
-          <title>${certificateNumber}</title>
+          <title>${safeCertificateNumber}</title>
           <style>
-            body { margin:0; min-height:100vh; display:grid; place-items:center; background:#07101f; font-family: Inter, Arial, sans-serif; color:#eef6ff; }
-            .card { width:760px; min-height:460px; border:1px solid rgba(255,199,87,.55); border-radius:28px; padding:54px; background:linear-gradient(145deg,#0b1629,#07101f); box-shadow:0 30px 80px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.04); text-align:center; }
-            .seal { color:#ffc857; font-size:58px; margin-bottom:18px; }
-            .eyebrow { color:#74d9ff; font-size:13px; letter-spacing:.22em; text-transform:uppercase; font-weight:700; }
+            :root { --cert-bg: hsl(218 63% 7%); --cert-panel: hsl(218 58% 10%); --cert-fg: hsl(205 100% 96%); --cert-muted: hsl(215 18% 72%); --cert-gold: hsl(42 96% 63%); --cert-cyan: hsl(197 92% 68%); }
+            body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--cert-bg); font-family: Inter, Arial, sans-serif; color:var(--cert-fg); }
+            .card { width:760px; min-height:460px; border:1px solid hsl(42 96% 63% / .55); border-radius:28px; padding:54px; background:linear-gradient(145deg,var(--cert-panel),var(--cert-bg)); box-shadow:0 30px 80px hsl(0 0% 0% / .35), inset 0 0 0 1px hsl(0 0% 100% / .04); text-align:center; }
+            .seal { color:var(--cert-gold); font-size:58px; margin-bottom:18px; }
+            .eyebrow { color:var(--cert-cyan); font-size:13px; letter-spacing:.22em; text-transform:uppercase; font-weight:700; }
             h1 { margin:18px 0 8px; font-size:46px; letter-spacing:-.02em; }
-            h2 { margin:0 0 28px; color:#ffc857; font-size:24px; }
+            h2 { margin:0 0 28px; color:var(--cert-gold); font-size:24px; }
             .name { font-size:32px; font-weight:800; margin:30px 0 10px; }
-            .meta { margin-top:34px; display:flex; justify-content:space-between; gap:24px; color:#b8c6dc; font-size:14px; text-align:left; }
-            .meta strong { display:block; color:#eef6ff; font-size:16px; margin-top:5px; }
+            .meta { margin-top:34px; display:flex; justify-content:space-between; gap:24px; color:var(--cert-muted); font-size:14px; text-align:left; }
+            .meta strong { display:block; color:var(--cert-fg); font-size:16px; margin-top:5px; }
             @media print { body { background:white; } .card { box-shadow:none; } }
           </style>
         </head>
@@ -403,12 +415,12 @@ export default function AdminBDRCertification() {
             <h1>BDR Certified</h1>
             <h2>Business Development Representative</h2>
             <p>This certifies that</p>
-            <div class="name">${repName}</div>
+            <div class="name">${safeRepName}</div>
             <p>has completed the BDR Training Track and passed the certification exam.</p>
             <div class="meta">
-              <div>Date Issued<strong>${issued}</strong></div>
-              <div>Score<strong>${score}/${TOTAL_QUESTIONS} — ${scorePct}%</strong></div>
-              <div>Certificate<strong>${certificateNumber}</strong></div>
+              <div>Date Issued<strong>${safeIssued}</strong></div>
+              <div>Score<strong>${safeScore}</strong></div>
+              <div>Certificate<strong>${safeCertificateNumber}</strong></div>
             </div>
           </main>
           <script>window.onload = () => window.print();</script>
