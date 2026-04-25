@@ -79,7 +79,10 @@ Deno.serve(async (req) => {
       role: platformRole,
       client_id: clientId,
     });
-    if (roleError) return json({ error: roleError.message }, 400);
+    if (roleError) {
+      await adminClient.auth.admin.deleteUser(userId);
+      return json({ error: roleError.message }, 400);
+    }
 
     const { error: workspaceError } = await adminClient.from("workspace_users").insert({
       client_id: clientId,
@@ -94,7 +97,11 @@ Deno.serve(async (req) => {
       provisioned_at: new Date().toISOString(),
       is_bookable_staff: false,
     });
-    if (workspaceError) return json({ error: workspaceError.message }, 400);
+    if (workspaceError) {
+      await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", clientId);
+      await adminClient.auth.admin.deleteUser(userId);
+      return json({ error: workspaceError.message }, 400);
+    }
 
     await adminClient.from("audit_logs").insert({
       client_id: clientId,
