@@ -92,6 +92,13 @@ Deno.serve(async (req) => {
     }
 
     const userId = created.user.id;
+    await adminClient
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .is("client_id", null)
+      .eq("role", "client_team");
+
     const platformRole = clientId
       ? rolePreset === "workspace_admin" ? "client_owner" : "client_team"
       : rolePreset === "workspace_admin" ? "admin" : "operator";
