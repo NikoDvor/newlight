@@ -292,6 +292,7 @@ export default function AdminBDRCertification() {
     setScore(correct);
     setReviewModules(modules.filter((m) => wrongModuleIds.has(m.id)));
 
+    const submittedAt = new Date().toISOString();
     const { data: attempt, error: attemptError } = await supabase
       .from("nl_training_exam_attempts")
       .insert({
@@ -301,6 +302,7 @@ export default function AdminBDRCertification() {
         total_questions: TOTAL_QUESTIONS,
         passed,
         module_scores: moduleScores as any,
+        attempted_at: submittedAt,
       })
       .select("id, attempted_at, passed, score, total_questions, module_scores")
       .maybeSingle();
@@ -317,31 +319,23 @@ export default function AdminBDRCertification() {
     setLatestAttempt(attempt as StoredAttemptRow);
 
     if (passed) {
-      const { data: existing } = await supabase
-        .from("nl_training_certifications")
-        .select("id, certificate_number, issued_at, rep_name, score, total_questions")
-        .eq("user_id", user.id)
-        .eq("track_key", "bdr")
-        .eq("passed", true)
-        .order("issued_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existing) {
-        setCertification(existing as CertificationRow);
-      } else {
+      try {
+        const certificateId = crypto.randomUUID();
+        const generatedNumber = `BDR-${certificateId.slice(0, 8).toUpperCase()}`;
         const { data: cert, error } = await supabase
           .from("nl_training_certifications")
-          .insert({
+          .upsert({
+            id: certification?.id || certificateId,
             user_id: user.id,
             track_id: trackId,
             track_key: "bdr",
             score: correct,
             total_questions: TOTAL_QUESTIONS,
             passed: true,
-            issued_at: new Date().toISOString(),
+            issued_at: certification?.issued_at || submittedAt,
             rep_name: repName,
-          })
+            certificate_number: certification?.certificate_number || generatedNumber,
+          }, { onConflict: "id" })
           .select("id, certificate_number, issued_at, rep_name, score, total_questions")
           .maybeSingle();
 
@@ -352,16 +346,15 @@ export default function AdminBDRCertification() {
             variant: "destructive",
           });
           return;
-        } else {
-          const generatedNumber = cert.certificate_number || `BDR-${cert.id.slice(0, 8).toUpperCase()}`;
-          if (!cert.certificate_number) {
-            await supabase
-              .from("nl_training_certifications")
-              .update({ certificate_number: generatedNumber })
-              .eq("id", cert.id);
-          }
-          setCertification({ ...(cert as CertificationRow), certificate_number: generatedNumber });
         }
+        setCertification(cert as CertificationRow);
+      } catch (error) {
+        toast({
+          title: "Certification save failed",
+          description: error instanceof Error ? error.message : "The exam attempt was saved, but the certificate was not issued.",
+          variant: "destructive",
+        });
+        return;
       }
       setPhase("pass");
     } else {
