@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", caller.id)
       .in("role", ["admin", "operator"])
+      .limit(1)
       .maybeSingle();
 
     if (!callerRole) return json({ error: "Only admins and operators can create users" }, 403);
