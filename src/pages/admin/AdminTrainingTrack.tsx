@@ -263,7 +263,9 @@ export default function AdminTrainingTrack() {
                       <p className="text-[13px] font-medium text-foreground/85 truncate">Certification Exam</p>
                       <div className="flex items-center gap-1.5 mt-1">
                         {hasCertification ? (
-                          <span className="text-[10px] text-[hsl(var(--nl-gold))] font-semibold">BDR Certified ✓</span>
+                          <Badge className="h-5 bg-[hsl(var(--nl-gold)/.16)] text-[hsl(var(--nl-gold))] border border-[hsl(var(--nl-gold)/.28)] hover:bg-[hsl(var(--nl-gold)/.16)] px-2 text-[10px]">
+                            BDR Certified ✓
+                          </Badge>
                         ) : overallPct === 100 ? (
                           <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Unlocked</span>
                         ) : (
