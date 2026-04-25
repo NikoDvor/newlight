@@ -21,6 +21,7 @@ interface ModuleRow {
 interface QuestionRow {
   id: string;
   module_id: string;
+  created_at: string;
   question_text: string;
   options: string[];
   correct_index: number;
@@ -42,6 +43,10 @@ interface AttemptRow {
   score: number;
   total_questions: number;
   module_scores: unknown;
+}
+
+interface StoredAttemptRow extends AttemptRow {
+  id: string;
 }
 
 const PASSING_SCORE = 24;
