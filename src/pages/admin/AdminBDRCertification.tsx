@@ -132,6 +132,7 @@ export default function AdminBDRCertification() {
     const load = async () => {
       if (!user?.id) return;
       setLoading(true);
+      try {
 
       const { data: track, error: trackError } = await supabase
         .from("nl_training_tracks")
@@ -236,6 +237,14 @@ export default function AdminBDRCertification() {
         });
       }
       setLoading(false);
+      } catch (error) {
+        toast({
+          title: "Certification exam failed to load",
+          description: error instanceof Error ? error.message : "Please refresh and try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+      }
     };
 
     load();
