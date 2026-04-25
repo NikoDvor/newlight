@@ -200,7 +200,11 @@ export default function Landing() {
           <h2 className="text-2xl sm:text-3xl font-bold">Your Numbers, Right Now</h2>
         </motion.div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((s, i) => <StatCard key={s.label} stat={s} index={i} />)}
+          {stats.map((s, i) => (
+            <div key={s.label}>
+              <StatCard stat={s} index={i} />
+            </div>
+          ))}
         </div>
       </section>
 
