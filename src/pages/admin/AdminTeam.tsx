@@ -92,6 +92,59 @@ export default function AdminTeam() {
     }
   };
 
+  const resetManualForm = () => {
+    setManualFullName("");
+    setManualEmail("");
+    setManualPassword("");
+    setManualRolePreset("workspace_admin");
+    setManualDepartment("");
+    setManualJobTitle("");
+    setManualClientId("");
+    setShowManualPassword(false);
+  };
+
+  const handleManualCreate = async () => {
+    if (!manualFullName.trim() || !manualEmail.trim() || !manualPassword) {
+      toast.error("Full name, email, and temporary password are required");
+      return;
+    }
+    if (manualPassword.length < 8) {
+      toast.error("Temporary password must be at least 8 characters");
+      return;
+    }
+    if (!manualClientId) {
+      toast.error("Assign the user to a client workspace");
+      return;
+    }
+
+    setManualLoading(true);
+    try {
+      const res = await supabase.functions.invoke("create-user-manual", {
+        body: {
+          full_name: manualFullName.trim(),
+          email: manualEmail.trim(),
+          temporary_password: manualPassword,
+          role_preset: manualRolePreset,
+          department: manualDepartment.trim() || null,
+          job_title: manualJobTitle.trim() || null,
+          client_id: manualClientId,
+        },
+      });
+
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "Failed to create account");
+      } else {
+        toast.success("Account created successfully");
+        setShowManualAdd(false);
+        resetManualForm();
+        fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create account");
+    }
+    setManualLoading(false);
+  };
+
   const roleColor = (r: string) => {
     if (r === "admin") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-electric))]";
     if (r === "operator") return "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]";
