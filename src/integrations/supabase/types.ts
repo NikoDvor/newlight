@@ -10543,6 +10543,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_workspace_users: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_proposal_token: { Args: never; Returns: string }
       has_role: {
         Args: {
