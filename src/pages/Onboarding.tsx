@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { LogoUploader } from "@/components/LogoUploader";
-import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
