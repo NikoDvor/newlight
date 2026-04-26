@@ -101,7 +101,13 @@ Deno.serve(async (req) => {
 
     const platformRole = clientId
       ? rolePreset === "workspace_admin" ? "client_owner" : "client_team"
-      : rolePreset === "workspace_admin" ? "admin" : "operator";
+      : rolePreset === "workspace_admin"
+        ? "admin"
+        : rolePreset === "support_staff"
+          ? "support_staff"
+          : rolePreset === "marketing_staff"
+            ? "marketing_staff"
+            : "operator";
 
     const { error: roleError } = await adminClient.from("user_roles").insert({
       user_id: userId,
@@ -115,6 +121,25 @@ Deno.serve(async (req) => {
     }
 
     if (!clientId) {
+      if (["marketing_staff", "support_staff"].includes(platformRole)) {
+        const { error: employeeError } = await adminClient.from("employee_profiles").insert({
+          user_id: userId,
+          full_name: fullName,
+          email,
+          department,
+          job_title: jobTitle,
+          employee_role: platformRole,
+          status: "active",
+        });
+
+        if (employeeError) {
+          console.error("Employee profile insert failed", { userId, message: employeeError.message });
+          await adminClient.from("user_roles").delete().eq("user_id", userId).is("client_id", null);
+          await adminClient.auth.admin.deleteUser(userId);
+          return json({ error: employeeError.message }, 400);
+        }
+      }
+
       await adminClient.from("audit_logs").insert({
         client_id: null,
         user_id: caller.id,
