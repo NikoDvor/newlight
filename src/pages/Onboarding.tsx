@@ -108,6 +108,11 @@ export default function Onboarding() {
     setTeamMembers(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
   };
 
+  const handleInstallApp = async () => {
+    await install();
+    setAppDownloadAcknowledged(true);
+  };
+
   const handleSubmit = async () => {
     if (!activeClientId) {
       toast.error("No active workspace selected");
@@ -247,7 +252,13 @@ export default function Onboarding() {
         user_id: user?.id,
         action: "onboarding_form_submitted",
         module: "onboarding",
-        metadata: { businessName, businessType, integrations_selected: Object.keys(integrations).filter(k => integrations[k]) },
+        metadata: {
+          businessName,
+          businessType,
+          app_download_step_completed: appDownloadAcknowledged || isInstalled,
+          app_download_link: `${window.location.origin}/dashboard`,
+          integrations_selected: Object.keys(integrations).filter(k => integrations[k]),
+        },
       });
 
       // 10. Create activity
@@ -257,6 +268,22 @@ export default function Onboarding() {
         activity_note: `Onboarding form submitted for ${businessName}. ${Object.values(integrations).filter(Boolean).length} integrations selected. Default pipelines, calendar availability, and event types created.`,
         created_by: user?.id,
       });
+
+      const { data: client } = await supabase.from("clients").select("business_name, owner_email, owner_phone, preferred_contact_method, sms_consent, workspace_slug").eq("id", activeClientId).maybeSingle();
+      if (client?.owner_email && client?.workspace_slug) {
+        await supabase.functions.invoke("send-handoff-message", {
+          body: {
+            client_id: activeClientId,
+            business_name: companyName || businessName || client.business_name || "your business",
+            owner_email: client.owner_email,
+            owner_phone: client.owner_phone,
+            preferred_contact_method: client.preferred_contact_method || "email",
+            sms_consent: Boolean(client.sms_consent),
+            workspace_slug: client.workspace_slug,
+            base_url: window.location.origin,
+          },
+        });
+      }
 
       toast.success("Onboarding complete! Your workspace is being configured.");
       navigate("/dashboard");
