@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { getEmployeeRoute } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 
 /**
@@ -9,19 +10,22 @@ import newlightLogo from "@/assets/newlight-logo.jpg";
  * redirects them to their dashboard — otherwise it renders children.
  */
 export function SessionGate({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, userRole, isSessionLoading } = useWorkspace();
+  const { user, isAdmin, userRole, employeeProfile, isSessionLoading } = useWorkspace();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isSessionLoading) return;
     if (user && userRole) {
+      const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
       if (isAdmin) {
         navigate("/admin", { replace: true });
+      } else if (employeeRoute) {
+        navigate(employeeRoute, { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }
     }
-  }, [isSessionLoading, user, userRole, isAdmin, navigate]);
+  }, [isSessionLoading, user, userRole, employeeProfile?.job_title, isAdmin, navigate]);
 
   if (isSessionLoading) {
     return (
