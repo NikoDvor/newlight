@@ -1,1 +1,4 @@
 project_id = "irvrmkshjcyabjubihmp"
+
+[functions.client-manifest]
+verify_jwt = false
