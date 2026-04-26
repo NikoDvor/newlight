@@ -18,6 +18,7 @@ interface ClientBranding {
   company_name: string;
   welcome_message: string;
   app_icon_url: string;
+  pwa_icon_url: string;
   splash_logo_url: string;
   app_display_name: string;
 }
@@ -29,6 +30,7 @@ const defaultBranding: ClientBranding = {
   company_name: "",
   welcome_message: "Welcome to your business dashboard",
   app_icon_url: "",
+  pwa_icon_url: "",
   splash_logo_url: "",
   app_display_name: "",
 };
@@ -185,6 +187,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             company_name: data.company_name || "",
             welcome_message: data.welcome_message || "Welcome to your business dashboard",
             app_icon_url: (data as any).app_icon_url || "",
+            pwa_icon_url: (data as any).pwa_icon_url || "",
             splash_logo_url: (data as any).splash_logo_url || "",
             app_display_name: (data as any).app_display_name || "",
           });
