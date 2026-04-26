@@ -31,12 +31,23 @@ const cleanIcon = (value: unknown) => {
   return DEFAULT_ICON;
 };
 
+const cleanOrigin = (value: string | null) => {
+  if (!value) return "";
+  try {
+    const origin = new URL(value).origin;
+    return origin.startsWith("http://") || origin.startsWith("https://") ? origin : "";
+  } catch {
+    return "";
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
 
   const url = new URL(req.url);
   const clientId = url.searchParams.get("client_id")?.trim() ?? "";
+  const appOrigin = cleanOrigin(url.searchParams.get("app_origin"));
 
   if (!UUID_RE.test(clientId)) {
     return json({ error: "Valid client_id is required" }, 400);
@@ -84,14 +95,16 @@ Deno.serve(async (req) => {
   const appName = cleanName(branding?.app_display_name, cleanName(branding?.company_name, cleanName(client.business_name, "NewLight")));
   const iconUrl = cleanIcon(branding?.app_icon_url || branding?.logo_url);
   const themeColor = cleanName(branding?.primary_color, "#3B82F6");
-  const startUrl = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
+  const startPath = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
+  const startUrl = appOrigin ? `${appOrigin}${startPath}` : startPath;
+  const scope = appOrigin ? `${appOrigin}/` : "/";
 
   return json({
     name: appName,
     short_name: appName.slice(0, 12),
     description: `${appName} workspace`,
     start_url: startUrl,
-    scope: "/",
+    scope,
     display: "standalone",
     orientation: "portrait-primary",
     background_color: "#030712",
