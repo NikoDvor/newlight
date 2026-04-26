@@ -1,7 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type ViewMode = "admin" | "workspace";
+type ViewMode = "admin" | "workspace" | "employee";
+
+interface EmployeeProfile {
+  full_name: string;
+  email: string;
+  department: string | null;
+  job_title: string | null;
+  employee_role: string;
+}
 
 interface ClientBranding {
   logo_url: string;
@@ -35,6 +43,7 @@ interface WorkspaceContextType {
   user: any;
   branding: ClientBranding;
   userRole: string | null;
+  employeeProfile: EmployeeProfile | null;
   isSessionLoading: boolean;
   signOut: () => Promise<void>;
 }
@@ -49,6 +58,7 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   user: null,
   branding: defaultBranding,
   userRole: null,
+  employeeProfile: null,
   isSessionLoading: true,
   signOut: async () => {},
 });
@@ -61,6 +71,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [branding, setBranding] = useState<ClientBranding>(defaultBranding);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const signOut = async () => {
@@ -68,6 +79,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIsAdmin(false);
     setUserRole(null);
+    setEmployeeProfile(null);
     setActiveClientId(null);
   };
 
@@ -81,12 +93,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     if (roles && roles.length > 0) {
       const adminRoles = ["admin", "operator"];
+      const employeeRoles = ["marketing_staff", "support_staff"];
       const hasAdmin = roles.some(r => adminRoles.includes(r.role));
+      const employeeRole = roles.find(r => employeeRoles.includes(r.role));
 
       if (hasAdmin) {
         const adminRole = roles.find(r => adminRoles.includes(r.role));
         setUserRole(adminRole?.role || "admin");
         setIsAdmin(true);
+      } else if (employeeRole) {
+        setUserRole(employeeRole.role);
+        setIsAdmin(false);
+        setViewMode("employee");
+        setActiveClientId(null);
+        const { data: profile } = await supabase
+          .from("employee_profiles")
+          .select("full_name, email, department, job_title, employee_role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        setEmployeeProfile(profile ?? null);
       } else {
         // Client user — pick the first role
         setUserRole(roles[0].role);
@@ -113,6 +138,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAdmin(false);
         setUserRole(null);
+        setEmployeeProfile(null);
         setIsSessionLoading(false);
       }
     });
@@ -173,7 +199,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, isSessionLoading, signOut,
+      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
