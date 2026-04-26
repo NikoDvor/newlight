@@ -8,14 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { LogoUploader } from "@/components/LogoUploader";
-import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
 import {
-  Building2, Globe, Palette, Users, Plug, KeyRound, Settings2,
-  ChevronRight, ChevronLeft, Check, Rocket, Upload, Plus, Trash2
+  Building2, Palette, Users, Plug, KeyRound, Settings2,
+  ChevronRight, ChevronLeft, Check, Rocket, Plus, Trash2, Smartphone
 } from "lucide-react";
 
 const STEPS = [
@@ -25,6 +26,7 @@ const STEPS = [
   { id: "integrations", label: "Integrations", icon: Plug },
   { id: "access", label: "Access Details", icon: KeyRound },
   { id: "preferences", label: "Preferences", icon: Settings2 },
+  { id: "download", label: "Download Your App", icon: Smartphone },
 ];
 
 const INTEGRATION_OPTIONS = [
@@ -45,11 +47,15 @@ interface TeamMember {
   role: string;
 }
 
+type PipelineStageInsert = Database["public"]["Tables"]["pipeline_stages"]["Insert"];
+
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
+  const { install, isInstalled } = usePWAInstall();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [appDownloadAcknowledged, setAppDownloadAcknowledged] = useState(false);
 
   // Business
   const [businessName, setBusinessName] = useState("");
@@ -102,6 +108,11 @@ export default function Onboarding() {
   const removeTeamMember = (i: number) => setTeamMembers(prev => prev.filter((_, idx) => idx !== i));
   const updateTeamMember = (i: number, field: keyof TeamMember, value: string) => {
     setTeamMembers(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
+  };
+
+  const handleInstallApp = async () => {
+    await install();
+    setAppDownloadAcknowledged(true);
   };
 
   const handleSubmit = async () => {
@@ -217,11 +228,12 @@ export default function Onboarding() {
         { stage_name: "Issue Resolved", stage_order: 2, color: "#10B981" },
         { stage_name: "Review Request Resent", stage_order: 3, color: "#3B82F6" },
       ];
-      await supabase.from("pipeline_stages").insert([
+      const defaultPipelineStages: PipelineStageInsert[] = [
         ...leadPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "lead" })),
         ...customerPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "customer" })),
         ...recoveryPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "review_recovery" })),
-      ] as any);
+      ];
+      await supabase.from("pipeline_stages").insert(defaultPipelineStages);
 
       // 7. Create default availability settings
       const defaultAvailability = [1, 2, 3, 4, 5].map(day => ({
@@ -243,7 +255,13 @@ export default function Onboarding() {
         user_id: user?.id,
         action: "onboarding_form_submitted",
         module: "onboarding",
-        metadata: { businessName, businessType, integrations_selected: Object.keys(integrations).filter(k => integrations[k]) },
+        metadata: {
+          businessName,
+          businessType,
+          app_download_step_completed: appDownloadAcknowledged || isInstalled,
+          app_download_link: `${window.location.origin}/dashboard`,
+          integrations_selected: Object.keys(integrations).filter(k => integrations[k]),
+        },
       });
 
       // 10. Create activity
@@ -253,6 +271,22 @@ export default function Onboarding() {
         activity_note: `Onboarding form submitted for ${businessName}. ${Object.values(integrations).filter(Boolean).length} integrations selected. Default pipelines, calendar availability, and event types created.`,
         created_by: user?.id,
       });
+
+      const { data: client } = await supabase.from("clients").select("business_name, owner_email, owner_phone, preferred_contact_method, sms_consent, workspace_slug").eq("id", activeClientId).maybeSingle();
+      if (client?.owner_email && client?.workspace_slug) {
+        await supabase.functions.invoke("send-handoff-message", {
+          body: {
+            client_id: activeClientId,
+            business_name: companyName || businessName || client.business_name || "your business",
+            owner_email: client.owner_email,
+            owner_phone: client.owner_phone,
+            preferred_contact_method: client.preferred_contact_method || "email",
+            sms_consent: Boolean(client.sms_consent),
+            workspace_slug: client.workspace_slug,
+            base_url: window.location.origin,
+          },
+        });
+      }
 
       toast.success("Onboarding complete! Your workspace is being configured.");
       navigate("/dashboard");
@@ -303,9 +337,9 @@ export default function Onboarding() {
               </div>
             </div>
           </div>
-          <div>
-            <Label className="text-xs mb-1.5 block">Logo URL</Label>
-            <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://... or upload in Branding Settings" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <LogoUploader value={logoUrl} onChange={setLogoUrl} label="Main Logo" />
+            <LogoUploader value={pwaIconUrl} onChange={setPwaIconUrl} label="PWA App Icon · square 512×512 recommended" />
           </div>
           {/* Live preview */}
           <div className="rounded-xl border p-4 mt-2" style={{ borderColor: `${primaryColor}30`, background: `${primaryColor}08` }}>
@@ -400,6 +434,38 @@ export default function Onboarding() {
           </div>
         </div>
       );
+      case 6: {
+        const appName = companyName || businessName || displayName || "Your App";
+        const icon = pwaIconUrl || logoUrl;
+        return (
+          <div className="space-y-5">
+            <div className="rounded-xl border border-border bg-card/70 p-5">
+              <p className="text-sm font-semibold text-foreground mb-1">Download Your App</p>
+              <p className="text-xs text-muted-foreground">Tap the button below to add your app to your home screen.</p>
+              <div className="mt-5 flex items-center gap-4">
+                <div className="h-16 w-16 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                  {icon ? <img src={icon} alt={`${appName} app icon`} className="h-full w-full object-contain" /> : <span className="text-lg font-bold text-primary">{appName.substring(0, 2).toUpperCase()}</span>}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold text-foreground truncate">{appName}</p>
+                  <p className="text-xs text-muted-foreground">Home screen app preview</p>
+                </div>
+              </div>
+              <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                <Button type="button" className="btn-gradient gap-2" onClick={handleInstallApp}>
+                  <Smartphone className="h-4 w-4" /> {isInstalled ? "App Installed" : "Install App"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setAppDownloadAcknowledged(true)}>
+                  Skip for now
+                </Button>
+              </div>
+              {(appDownloadAcknowledged || isInstalled) && (
+                <p className="mt-3 text-xs font-medium text-primary">Step complete — you can finish onboarding.</p>
+              )}
+            </div>
+          </div>
+        );
+      }
       default: return null;
     }
   };

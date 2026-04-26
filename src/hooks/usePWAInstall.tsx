@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -22,11 +23,11 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
 const standaloneQuery = "(display-mode: standalone)";
 
 function detectInstalled() {
-  return window.matchMedia?.(standaloneQuery).matches || (window.navigator as any).standalone === true;
+  return window.matchMedia?.(standaloneQuery).matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
 function detectIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
 }
 
 export function PWAInstallProvider({ children }: { children: ReactNode }) {
@@ -61,7 +62,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const install = async () => {
+  const install = useCallback(async () => {
     if (isInstalled) return true;
     if (deferredPrompt) {
       await deferredPrompt.prompt();
@@ -76,14 +77,14 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     }
     window.alert('Use your browser menu and choose "Install app" or "Add to Home screen".');
     return false;
-  };
+  }, [deferredPrompt, isInstalled, isIOS]);
 
   const value = useMemo(() => ({
     canInstall: !isInstalled,
     isInstalled,
     isIOS,
     install,
-  }), [isInstalled, isIOS, deferredPrompt]);
+  }), [isInstalled, isIOS, install]);
 
   return <PWAInstallContext.Provider value={value}>{children}</PWAInstallContext.Provider>;
 }
