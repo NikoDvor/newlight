@@ -334,9 +334,9 @@ export default function Onboarding() {
               </div>
             </div>
           </div>
-          <div>
-            <Label className="text-xs mb-1.5 block">Logo URL</Label>
-            <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://... or upload in Branding Settings" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <LogoUploader value={logoUrl} onChange={setLogoUrl} label="Main Logo" />
+            <LogoUploader value={pwaIconUrl} onChange={setPwaIconUrl} label="PWA App Icon · square 512×512 recommended" />
           </div>
           {/* Live preview */}
           <div className="rounded-xl border p-4 mt-2" style={{ borderColor: `${primaryColor}30`, background: `${primaryColor}08` }}>
@@ -431,6 +431,38 @@ export default function Onboarding() {
           </div>
         </div>
       );
+      case 6: {
+        const appName = companyName || businessName || displayName || "Your App";
+        const icon = pwaIconUrl || logoUrl;
+        return (
+          <div className="space-y-5">
+            <div className="rounded-xl border border-border bg-card/70 p-5">
+              <p className="text-sm font-semibold text-foreground mb-1">Download Your App</p>
+              <p className="text-xs text-muted-foreground">Tap the button below to add your app to your home screen.</p>
+              <div className="mt-5 flex items-center gap-4">
+                <div className="h-16 w-16 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                  {icon ? <img src={icon} alt={`${appName} app icon`} className="h-full w-full object-contain" /> : <span className="text-lg font-bold text-primary">{appName.substring(0, 2).toUpperCase()}</span>}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold text-foreground truncate">{appName}</p>
+                  <p className="text-xs text-muted-foreground">Home screen app preview</p>
+                </div>
+              </div>
+              <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                <Button type="button" className="btn-gradient gap-2" onClick={handleInstallApp}>
+                  <Smartphone className="h-4 w-4" /> {isInstalled ? "App Installed" : "Install App"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setAppDownloadAcknowledged(true)}>
+                  Skip for now
+                </Button>
+              </div>
+              {(appDownloadAcknowledged || isInstalled) && (
+                <p className="mt-3 text-xs font-medium text-primary">Step complete — you can finish onboarding.</p>
+              )}
+            </div>
+          </div>
+        );
+      }
       default: return null;
     }
   };
