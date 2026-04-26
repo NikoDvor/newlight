@@ -7,6 +7,9 @@ import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
+import { useClientManifest } from "@/hooks/useClientManifest";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
@@ -57,6 +60,7 @@ export function EmployeeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userRole, employeeProfile, isAdmin, isSessionLoading, signOut } = useWorkspace();
+  useClientManifest();
 
   if (isSessionLoading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -86,6 +90,7 @@ export function EmployeeLayout() {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
+              <PWAInstallButton />
               <div className="hidden sm:flex flex-col items-end leading-tight">
                 <span className="text-xs font-semibold text-foreground/80 max-w-40 truncate">{name}</span>
                 <span className="text-[10px] text-primary font-bold uppercase tracking-wide">{badge}</span>
@@ -102,6 +107,7 @@ export function EmployeeLayout() {
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
               <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="p-4 sm:p-6 lg:p-10 relative z-1">
+                <PWAInstallBanner />
                 <Outlet />
               </motion.div>
             </AnimatePresence>
