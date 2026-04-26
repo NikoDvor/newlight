@@ -1942,6 +1942,7 @@ export type Database = {
           logo_url: string | null
           payroll_header_title: string | null
           primary_color: string | null
+          pwa_icon_url: string | null
           report_header_title: string | null
           report_logo_url: string | null
           report_subtitle: string | null
@@ -1983,6 +1984,7 @@ export type Database = {
           logo_url?: string | null
           payroll_header_title?: string | null
           primary_color?: string | null
+          pwa_icon_url?: string | null
           report_header_title?: string | null
           report_logo_url?: string | null
           report_subtitle?: string | null
@@ -2024,6 +2026,7 @@ export type Database = {
           logo_url?: string | null
           payroll_header_title?: string | null
           primary_color?: string | null
+          pwa_icon_url?: string | null
           report_header_title?: string | null
           report_logo_url?: string | null
           report_subtitle?: string | null

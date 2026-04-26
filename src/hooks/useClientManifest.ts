@@ -18,9 +18,9 @@ export function useClientManifest() {
         : "NewLight";
     const themeColor = isClient && branding.primary_color
       ? branding.primary_color
-      : "#3B82F6";
-    const iconUrl = isClient && (branding.app_icon_url || branding.logo_url)
-      ? (branding.app_icon_url || branding.logo_url)
+      : "#0EA5E9";
+    const iconUrl = isClient && (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
+      ? (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
       : "/apple-touch-icon.png";
 
     // Update document title

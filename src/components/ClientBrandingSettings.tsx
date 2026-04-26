@@ -18,6 +18,7 @@ export function ClientBrandingSettings() {
     company_name: "",
     welcome_message: "Welcome to your business dashboard",
     app_icon_url: "",
+    pwa_icon_url: "",
     splash_logo_url: "",
     app_display_name: "",
   });
@@ -33,6 +34,7 @@ export function ClientBrandingSettings() {
           company_name: data.company_name || "",
           welcome_message: data.welcome_message || "",
           app_icon_url: (data as any).app_icon_url || "",
+          pwa_icon_url: (data as any).pwa_icon_url || "",
           splash_logo_url: (data as any).splash_logo_url || "",
           app_display_name: (data as any).app_display_name || "",
         });
@@ -104,11 +106,7 @@ export function ClientBrandingSettings() {
           <Input value={form.app_display_name} onChange={e => setForm(p => ({ ...p, app_display_name: e.target.value }))}
             placeholder="My Business App" className="h-9 text-xs bg-secondary/50" />
         </div>
-        <div>
-          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">App Icon URL (192×192+)</label>
-          <Input value={form.app_icon_url} onChange={e => setForm(p => ({ ...p, app_icon_url: e.target.value }))}
-            placeholder="https://..." className="h-9 text-xs bg-secondary/50" />
-        </div>
+        <LogoUploader value={form.pwa_icon_url} onChange={url => setForm(p => ({ ...p, pwa_icon_url: url }))} label="PWA Icon · square 512×512 recommended" dark={false} />
         <div className="sm:col-span-2">
           <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Splash / Loading Logo URL</label>
           <Input value={form.splash_logo_url} onChange={e => setForm(p => ({ ...p, splash_logo_url: e.target.value }))}

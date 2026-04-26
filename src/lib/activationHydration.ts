@@ -82,6 +82,7 @@ export async function hydrateWorkspaceFromActivation(
       company_name: form.company_name || form.business_name_confirmed || null,
       display_name: form.display_name || null,
       logo_url: form.logo_url || null,
+      pwa_icon_url: form.pwa_icon_url || null,
       primary_color: form.primary_color || null,
       secondary_color: form.secondary_color || null,
       accent_color: form.accent_color || null,

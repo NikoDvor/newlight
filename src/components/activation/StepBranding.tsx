@@ -51,6 +51,9 @@ export function StepBranding({ form, set, submitting }: StepProps) {
           <div className="sm:col-span-2">
             <LogoUploader value={form.logo_url} onChange={v => set("logo_url", v)} label="Logo" dark={true} />
           </div>
+          <div className="sm:col-span-2">
+            <LogoUploader value={form.pwa_icon_url} onChange={v => set("pwa_icon_url", v)} label="PWA Icon · square 512×512 recommended" dark={true} />
+          </div>
           <div><label className={labelCls}>Login / Welcome Branding Text</label><Input value={form.login_branding_text} onChange={e => set("login_branding_text", e.target.value)} className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}>Calendar Title</label><Input value={form.calendar_title} onChange={e => set("calendar_title", e.target.value)} className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}>Finance Dashboard Title</label><Input value={form.finance_dashboard_title} onChange={e => set("finance_dashboard_title", e.target.value)} className={inputCls} disabled={submitting} /></div>

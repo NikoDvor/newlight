@@ -10,7 +10,8 @@ import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 
@@ -133,6 +134,7 @@ export function AppLayout() {
               )}
               <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
+              <PWAInstallButton />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
@@ -177,6 +179,7 @@ export function AppLayout() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="p-4 sm:p-6 lg:p-10 relative z-1"
               >
+                <PWAInstallBanner />
                 <Outlet />
               </motion.div>
             </AnimatePresence>
@@ -187,7 +190,6 @@ export function AppLayout() {
           </main>
         </div>
         <AIAssistant />
-        {activeClientId && <PWAInstallPrompt />}
       </div>
     </SidebarProvider>
   );

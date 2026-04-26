@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const DEFAULT_ICON = "/pwa-512x512.png";
+const DEFAULT_COLOR = "#0EA5E9";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const json = (body: unknown, status = 200) =>
@@ -30,6 +31,13 @@ const cleanIcon = (value: unknown) => {
   if (icon.startsWith("https://") || icon.startsWith("/")) return icon;
   return DEFAULT_ICON;
 };
+
+const cleanColor = (value: unknown) => {
+  const color = typeof value === "string" ? value.trim() : "";
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : DEFAULT_COLOR;
+};
+
+const firstWord = (value: string) => value.trim().split(/\s+/)[0]?.slice(0, 12) || "App";
 
 const cleanOrigin = (value: string | null) => {
   if (!value) return "";
@@ -83,7 +91,7 @@ Deno.serve(async (req) => {
 
   const { data: branding, error: brandingError } = await adminClient
     .from("client_branding")
-    .select("company_name, app_display_name, logo_url, app_icon_url, primary_color")
+    .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color")
     .eq("client_id", clientId)
     .maybeSingle();
 
@@ -92,22 +100,22 @@ Deno.serve(async (req) => {
     return json({ error: "Could not load workspace branding" }, 500);
   }
 
-  const appName = cleanName(branding?.app_display_name, cleanName(branding?.company_name, cleanName(client.business_name, "NewLight")));
-  const iconUrl = cleanIcon(branding?.app_icon_url || branding?.logo_url);
-  const themeColor = cleanName(branding?.primary_color, "#3B82F6");
+  const appName = cleanName(branding?.company_name, cleanName(branding?.app_display_name, cleanName(client.business_name, "NewLight")));
+  const iconUrl = cleanIcon(branding?.pwa_icon_url || branding?.app_icon_url || branding?.logo_url);
+  const themeColor = cleanColor(branding?.primary_color);
   const startPath = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
   const startUrl = appOrigin ? `${appOrigin}${startPath}` : startPath;
   const scope = appOrigin ? `${appOrigin}/` : "/";
 
   return json({
     name: appName,
-    short_name: appName.slice(0, 12),
+    short_name: firstWord(appName),
     description: `${appName} workspace`,
     start_url: startUrl,
     scope,
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#030712",
+    background_color: themeColor,
     theme_color: themeColor,
     icons: [
       { src: iconUrl, sizes: "192x192", type: "image/png" },

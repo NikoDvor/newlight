@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
+import { PWAInstallProvider } from "@/hooks/usePWAInstall";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
@@ -184,8 +185,9 @@ const App = () => {
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <WorkspaceProvider>
-            <IntroOverlay />
-            <Routes>
+            <PWAInstallProvider>
+              <IntroOverlay />
+              <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
 
@@ -348,7 +350,8 @@ const App = () => {
               </Route>
 
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </PWAInstallProvider>
           </WorkspaceProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { LogoUploader } from "@/components/LogoUploader";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -66,6 +68,7 @@ export default function Onboarding() {
   const [primaryColor, setPrimaryColor] = useState("#3B82F6");
   const [secondaryColor, setSecondaryColor] = useState("#06B6D4");
   const [logoUrl, setLogoUrl] = useState("");
+  const [pwaIconUrl, setPwaIconUrl] = useState("");
 
   // Team
   const [ownerName, setOwnerName] = useState("");
@@ -127,6 +130,7 @@ export default function Onboarding() {
         primary_color: primaryColor,
         secondary_color: secondaryColor,
         logo_url: logoUrl,
+        pwa_icon_url: pwaIconUrl,
       }, { onConflict: "client_id" });
 
       // 3. Create integration records

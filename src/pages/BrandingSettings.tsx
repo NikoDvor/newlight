@@ -48,7 +48,7 @@ const SectionCard = ({ icon: Icon, title, desc, children }: { icon: any; title: 
 const defaultForm = {
   company_name: "", display_name: "", dashboard_title: "", welcome_message: "", tagline: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", accent_color: "",
-  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", splash_logo_url: "",
+  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", pwa_icon_url: "", splash_logo_url: "",
   favicon_url: "", avatar_logo_url: "", report_logo_url: "",
   calendar_title: "", calendar_subtitle: "", calendar_logo_url: "", calendar_primary_color: "", calendar_confirmation_message: "",
   finance_dashboard_title: "", report_header_title: "", report_subtitle: "",
@@ -155,8 +155,8 @@ export default function BrandingSettings() {
               </div>
               {/* App Icon Preview */}
               <div className="flex items-center justify-center gap-3">
-                {form.app_icon_url ? (
-                  <img src={form.app_icon_url} alt="App Icon" className="h-14 w-14 rounded-2xl object-contain shadow-lg" />
+                {form.pwa_icon_url || form.app_icon_url ? (
+                  <img src={form.pwa_icon_url || form.app_icon_url} alt="App Icon" className="h-14 w-14 rounded-2xl object-contain shadow-lg" />
                 ) : form.logo_url ? (
                   <img src={form.logo_url} alt="Logo" className="h-14 w-14 rounded-2xl object-contain shadow-lg bg-secondary p-1" />
                 ) : (
@@ -223,7 +223,8 @@ export default function BrandingSettings() {
               <LogoUploader value={form.dashboard_logo_url} onChange={set("dashboard_logo_url")} label="Dashboard Logo" dark={false} />
               <LogoUploader value={form.sidebar_logo_url} onChange={set("sidebar_logo_url")} label="Sidebar Logo" dark={false} />
               <LogoUploader value={form.favicon_url} onChange={set("favicon_url")} label="Favicon" dark={false} />
-              <LogoUploader value={form.app_icon_url} onChange={set("app_icon_url")} label="App Icon (192×192+)" dark={false} />
+              <LogoUploader value={form.pwa_icon_url} onChange={set("pwa_icon_url")} label="PWA Icon · square 512×512 recommended" dark={false} />
+              <LogoUploader value={form.app_icon_url} onChange={set("app_icon_url")} label="Legacy App Icon" dark={false} />
               <LogoUploader value={form.splash_logo_url} onChange={set("splash_logo_url")} label="Splash Logo" dark={false} />
               <LogoUploader value={form.avatar_logo_url} onChange={set("avatar_logo_url")} label="Avatar / Small Icon" dark={false} />
               <LogoUploader value={form.report_logo_url || ""} onChange={set("report_logo_url")} label="Report / PDF Logo" dark={false} />
