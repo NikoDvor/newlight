@@ -4216,6 +4216,45 @@ export type Database = {
           },
         ]
       }
+      employee_profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string
+          employee_role: Database["public"]["Enums"]["app_role"]
+          full_name: string
+          id: string
+          job_title: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email: string
+          employee_role: Database["public"]["Enums"]["app_role"]
+          full_name: string
+          id?: string
+          job_title?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string
+          employee_role?: Database["public"]["Enums"]["app_role"]
+          full_name?: string
+          id?: string
+          job_title?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       event_types: {
         Row: {
           active: boolean
@@ -10568,6 +10607,8 @@ export type Database = {
         | "client_owner"
         | "client_team"
         | "read_only"
+        | "marketing_staff"
+        | "support_staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -10701,6 +10742,8 @@ export const Constants = {
         "client_owner",
         "client_team",
         "read_only",
+        "marketing_staff",
+        "support_staff",
       ],
     },
   },
