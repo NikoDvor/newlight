@@ -9,13 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { LogoUploader } from "@/components/LogoUploader";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import {
-  Building2, Globe, Palette, Users, Plug, KeyRound, Settings2,
-  ChevronRight, ChevronLeft, Check, Rocket, Upload, Plus, Trash2
+  Building2, Palette, Users, Plug, KeyRound, Settings2,
+  ChevronRight, ChevronLeft, Check, Rocket, Plus, Trash2, Smartphone
 } from "lucide-react";
 
 const STEPS = [
@@ -25,6 +26,7 @@ const STEPS = [
   { id: "integrations", label: "Integrations", icon: Plug },
   { id: "access", label: "Access Details", icon: KeyRound },
   { id: "preferences", label: "Preferences", icon: Settings2 },
+  { id: "download", label: "Download Your App", icon: Smartphone },
 ];
 
 const INTEGRATION_OPTIONS = [
@@ -47,9 +49,11 @@ interface TeamMember {
 
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
+  const { install, isInstalled } = usePWAInstall();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [appDownloadAcknowledged, setAppDownloadAcknowledged] = useState(false);
 
   // Business
   const [businessName, setBusinessName] = useState("");
