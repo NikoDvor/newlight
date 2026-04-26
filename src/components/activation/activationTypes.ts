@@ -161,6 +161,7 @@ export interface ActivationFormState {
   secondary_color: string;
   accent_color: string;
   logo_url: string;
+  pwa_icon_url: string;
   app_display_name: string;
   workspace_header_name: string;
   calendar_title: string;
@@ -470,7 +471,7 @@ export const defaultFormState = (): ActivationFormState => ({
   main_service: "", primary_goal: "", growth_challenge: "",
   brand_personality: "", tone_of_voice: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", accent_color: "#8B5CF6",
-  logo_url: "", app_display_name: "", workspace_header_name: "",
+  logo_url: "", pwa_icon_url: "", app_display_name: "", workspace_header_name: "",
   calendar_title: "", finance_dashboard_title: "", report_header_title: "",
   login_branding_text: "",
 
