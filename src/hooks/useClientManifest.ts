@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Dynamically updates the web app manifest, theme-color, and apple-touch-icon
