@@ -13,6 +13,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
 import {
   Building2, Palette, Users, Plug, KeyRound, Settings2,
   ChevronRight, ChevronLeft, Check, Rocket, Plus, Trash2, Smartphone
@@ -45,6 +46,8 @@ interface TeamMember {
   email: string;
   role: string;
 }
+
+type PipelineStageInsert = Database["public"]["Tables"]["pipeline_stages"]["Insert"];
 
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
@@ -225,11 +228,12 @@ export default function Onboarding() {
         { stage_name: "Issue Resolved", stage_order: 2, color: "#10B981" },
         { stage_name: "Review Request Resent", stage_order: 3, color: "#3B82F6" },
       ];
-      await supabase.from("pipeline_stages").insert([
+      const defaultPipelineStages: PipelineStageInsert[] = [
         ...leadPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "lead" })),
         ...customerPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "customer" })),
         ...recoveryPipeline.map(s => ({ ...s, client_id: activeClientId, pipeline_type: "review_recovery" })),
-      ] as any);
+      ];
+      await supabase.from("pipeline_stages").insert(defaultPipelineStages);
 
       // 7. Create default availability settings
       const defaultAvailability = [1, 2, 3, 4, 5].map(day => ({
