@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
 import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { NewLightIntro, shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
 
@@ -143,6 +144,7 @@ import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
 import ActivateAccount from "./pages/ActivateAccount";
+import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
 
 const queryClient = new QueryClient();
 
@@ -254,6 +256,20 @@ const App = () => {
                 <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
+              </Route>
+
+              {/* Employee Portal */}
+              <Route path="/employee" element={<EmployeeLayout />}>
+                <Route index element={<Navigate to="/employee/generic" replace />} />
+                <Route path="bdr" element={<BDRDashboard />} />
+                <Route path="sdr" element={<SDRDashboard />} />
+                <Route path="account-manager" element={<AccountManagerDashboard />} />
+                <Route path="support" element={<SupportEmployeeDashboard />} />
+                <Route path="generic" element={<GenericEmployeeDashboard />} />
+                <Route path="training" element={<EmployeePlaceholder title="Training Center" />} />
+                <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
+                <Route path="calendar" element={<EmployeePlaceholder title="My Calendar" />} />
+                <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
               {/* Client Workspace */}
