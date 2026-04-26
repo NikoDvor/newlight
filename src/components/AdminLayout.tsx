@@ -6,10 +6,14 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
+import { useClientManifest } from "@/hooks/useClientManifest";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 export function AdminLayout() {
   const location = useLocation();
   const { viewMode, user, isAdmin } = useWorkspace();
+  useClientManifest();
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -48,6 +52,7 @@ export function AdminLayout() {
             </div>
             <div className="flex items-center gap-3">
               <WorkspaceSwitcher />
+              <PWAInstallButton />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
@@ -74,6 +79,7 @@ export function AdminLayout() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="p-4 sm:p-6 lg:p-10 relative z-1"
               >
+                <PWAInstallBanner />
                 <Outlet />
               </motion.div>
             </AnimatePresence>
