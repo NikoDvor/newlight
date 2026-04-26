@@ -20,9 +20,9 @@ export function useClientManifest() {
     const themeColor = isClient && branding.primary_color
       ? branding.primary_color
       : "#3B82F6";
-    const iconUrl = isClient && branding.app_icon_url
-      ? branding.app_icon_url
-      : "/favicon.ico";
+    const iconUrl = isClient && (branding.app_icon_url || branding.logo_url)
+      ? (branding.app_icon_url || branding.logo_url)
+      : "/apple-touch-icon.png";
 
     // Update document title
     document.title = appName;
@@ -45,53 +45,28 @@ export function useClientManifest() {
     }
     touchIcon.href = iconUrl;
 
-    // Resolve start_url: use workspace slug if client is active
-    let startUrl = "/";
-    if (isClient) {
-      // Fetch workspace slug for PWA start_url
-      supabase.from("clients").select("workspace_slug").eq("id", activeClientId).maybeSingle()
-        .then(({ data }) => {
-          if (data?.workspace_slug) {
-            injectManifest(appName, themeColor, iconUrl, `/w/${data.workspace_slug}`);
-          }
-        });
-      // Inject immediately with "/" first, then update with slug
+    // Update or create shortcut icon link
+    let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
     }
+    favicon.href = isClient ? iconUrl : "/favicon.ico";
 
-    const cleanup = injectManifest(appName, themeColor, iconUrl, startUrl);
-    return cleanup;
+    const manifestLink = ensureManifestLink();
+    manifestLink.href = isClient
+      ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/client-manifest?client_id=${encodeURIComponent(activeClientId)}&app_origin=${encodeURIComponent(window.location.origin)}`
+      : "/manifest.json";
   }, [activeClientId, branding]);
 
-  function injectManifest(appName: string, themeColor: string, iconUrl: string, startUrl: string) {
-    const manifest = {
-      name: appName,
-      short_name: appName.substring(0, 12),
-      start_url: startUrl,
-      display: "standalone" as const,
-      background_color: "#030712",
-      theme_color: themeColor,
-      icons: [
-        { src: iconUrl, sizes: "192x192", type: "image/png" },
-        { src: iconUrl, sizes: "512x512", type: "image/png" },
-      ],
-    };
-
-    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
+  function ensureManifestLink() {
     let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
     if (!manifestLink) {
       manifestLink = document.createElement("link");
       manifestLink.rel = "manifest";
       document.head.appendChild(manifestLink);
     }
-    const oldHref = manifestLink.href;
-    manifestLink.href = url;
-
-    return () => {
-      if (oldHref && oldHref.startsWith("blob:")) {
-        URL.revokeObjectURL(oldHref);
-      }
-    };
+    return manifestLink;
   }
 }
