@@ -33,7 +33,10 @@ interface ClientRow {
   portal_last_login_at: string | null;
   status: string;
   workspace_slug: string | null;
+  owner_name: string | null;
   owner_email: string | null;
+  owner_phone: string | null;
+  sms_consent: boolean | null;
   setup_total: number;
   setup_completed: number;
   setup_action_needed: number;
@@ -180,7 +183,7 @@ export default function AdminOnboardingCommandCenter() {
     try {
       const { data: rawClients, error: clientErr } = await supabase
         .from("clients")
-        .select("id, business_name, business_type, proposal_status, agreement_status, payment_status, implementation_status, portal_access_enabled, portal_invite_status, portal_last_login_at, status, workspace_slug, owner_email")
+        .select("id, business_name, business_type, proposal_status, agreement_status, payment_status, implementation_status, portal_access_enabled, portal_invite_status, portal_last_login_at, status, workspace_slug, owner_name, owner_email, owner_phone, sms_consent")
         .neq("status", "archived");
 
       if (clientErr || !rawClients) { setLoading(false); return; }

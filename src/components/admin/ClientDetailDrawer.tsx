@@ -10,9 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import {
   DollarSign, Send, AlertTriangle, Wrench, CheckCircle2,
   Clock, ExternalLink, Copy, Users, ShieldAlert, ClipboardList,
-  Eye, ArrowRight, Activity, X
+  Eye, ArrowRight, Activity, X, Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
+import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 
 interface ClientSummary {
   id: string;
@@ -24,7 +25,10 @@ interface ClientSummary {
   implementation_status: string | null;
   portal_access_enabled: boolean;
   workspace_slug: string | null;
+  owner_name?: string | null;
   owner_email: string | null;
+  owner_phone?: string | null;
+  sms_consent?: boolean | null;
   profile_name: string | null;
   // Aggregate counts from parent
   setup_total: number;
@@ -131,6 +135,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [showAppLink, setShowAppLink] = useState(false);
 
   useEffect(() => {
     if (!client || !open) return;
@@ -380,10 +385,14 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
                 <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200" onClick={copyPortalLink}>
                   <Copy className="h-3.5 w-3.5 text-primary" /> Copy Portal Link
                 </Button>
+                <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 h-9 hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200" onClick={() => setShowAppLink(true)}>
+                  <Smartphone className="h-3.5 w-3.5 text-primary" /> Send App Link
+                </Button>
               </div>
             </Section>
           </div>
         </ScrollArea>
+        <SendAppLinkDialog client={client} open={showAppLink} onOpenChange={setShowAppLink} onSent={() => loadDetail(client.id)} />
       </SheetContent>
     </Sheet>
   );

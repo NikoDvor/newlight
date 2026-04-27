@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Smartphone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
+import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { CategoryNichePicker } from "@/components/CategoryNichePicker";
+import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 interface Client {
   id: string;
@@ -61,6 +63,7 @@ export default function AdminClients() {
   const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
+  const [appLinkClient, setAppLinkClient] = useState<Client | null>(null);
   
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", provisional_profile: "" as string,
@@ -266,6 +269,11 @@ export default function AdminClients() {
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     toast.success("Link copied!");
+  };
+
+  const copyAppLink = (client: Client) => {
+    navigator.clipboard.writeText(buildAppDownloadUrl(client.workspace_slug));
+    toast.success("App download link copied!");
   };
 
   const handleResendSms = async (client: Client) => {
@@ -793,6 +801,12 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Copy className="h-3.5 w-3.5" /> Copy Workspace Link
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => copyAppLink(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Smartphone className="h-3.5 w-3.5" /> Copy App Download Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAppLinkClient(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Send className="h-3.5 w-3.5" /> Send App Link
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/auth?redirect=/setup-portal`); toast.success("Setup portal link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Link2 className="h-3.5 w-3.5" /> Copy Setup Portal Link
                           </DropdownMenuItem>
@@ -857,6 +871,13 @@ export default function AdminClients() {
         onOpenChange={(open) => { if (!open) setDeleteClient(null); }}
         client={deleteClient}
         onComplete={fetchClients}
+      />
+
+      <SendAppLinkDialog
+        client={appLinkClient}
+        open={!!appLinkClient}
+        onOpenChange={(open) => { if (!open) setAppLinkClient(null); }}
+        onSent={fetchClients}
       />
 
     </div>
