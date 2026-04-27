@@ -145,6 +145,7 @@ import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
 import ActivateAccount from "./pages/ActivateAccount";
+import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
 
 const queryClient = new QueryClient();
@@ -198,6 +199,7 @@ const App = () => {
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/get-started" element={<GetStarted />} />
+              <Route path="/app/:slug" element={<AppDownload />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
