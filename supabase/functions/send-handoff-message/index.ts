@@ -9,18 +9,23 @@ const corsHeaders = {
 interface HandoffRequest {
   client_id: string;
   business_name: string;
+  owner_name?: string | null;
   owner_email: string;
   owner_phone?: string | null;
   preferred_contact_method?: string; // "email" | "sms" | "both"
   sms_consent?: boolean;
   workspace_slug: string;
   base_url: string;
+  send_email?: boolean;
+  send_sms?: boolean;
 }
 
 function buildEmailHtml(p: {
   businessName: string;
-  workspaceUrl: string;
-  setupUrl: string;
+  ownerName?: string | null;
+  downloadUrl: string;
+  brandColor: string;
+  logoUrl?: string | null;
 }) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -28,43 +33,34 @@ function buildEmailHtml(p: {
 <body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-block;background:#3B82F610;border-radius:16px;padding:16px;">
-        <span style="font-size:28px;">🚀</span>
+      <div style="display:inline-flex;align-items:center;justify-content:center;background:${p.brandColor};border-radius:18px;width:72px;height:72px;overflow:hidden;">
+        ${p.logoUrl ? `<img src="${p.logoUrl}" alt="${p.businessName} logo" style="max-width:64px;max-height:64px;object-fit:contain;display:block;" />` : `<span style="font-size:24px;font-weight:800;color:#fff;">${p.businessName.slice(0, 2).toUpperCase()}</span>`}
       </div>
     </div>
     <h1 style="font-size:22px;font-weight:bold;color:#111;text-align:center;margin:0 0 8px;">
-      Your workspace is ready!
+      Your ${p.businessName} app is ready
     </h1>
     <p style="font-size:14px;color:#6b7280;text-align:center;margin:0 0 28px;line-height:1.5;">
-      ${p.businessName} has been set up on NewLight. Open your workspace to get started.
+      ${p.ownerName ? `Hi ${p.ownerName}, ` : ""}download your branded app and add it to your home screen in two quick steps.
     </p>
 
     <div style="text-align:center;margin-bottom:16px;">
-      <a href="${p.workspaceUrl}" style="display:inline-block;background:#3B82F6;color:#fff;font-size:14px;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-        Open Your Workspace
-      </a>
-    </div>
-    <div style="text-align:center;margin-bottom:28px;">
-      <a href="${p.setupUrl}" style="display:inline-block;background:#f3f4f6;color:#374151;font-size:13px;font-weight:500;padding:10px 24px;border-radius:8px;text-decoration:none;">
-        Continue Setup →
+      <a href="${p.downloadUrl}" style="display:inline-block;background:${p.brandColor};color:#fff;font-size:14px;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
+        Download Your App
       </a>
     </div>
 
     <div style="background:#f9fafb;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-      <p style="font-size:13px;font-weight:600;color:#111;margin:0 0 8px;">📱 Install as an app</p>
-      <p style="font-size:12px;color:#6b7280;margin:0 0 4px;line-height:1.5;">
-        Open your workspace link on your phone, then:
-      </p>
+      <p style="font-size:13px;font-weight:600;color:#111;margin:0 0 8px;">📱 Add to Home Screen</p>
       <ul style="font-size:12px;color:#6b7280;margin:8px 0 0;padding-left:18px;line-height:1.8;">
-        <li><strong>iPhone:</strong> Tap Share → "Add to Home Screen"</li>
-        <li><strong>Android:</strong> Tap ⋮ menu → "Add to Home screen"</li>
-        <li><strong>Desktop:</strong> Look for the install icon in your browser's address bar</li>
+        <li><strong>iPhone:</strong> Tap the share button, then Add to Home Screen</li>
+        <li><strong>Android:</strong> Tap Install on the Chrome prompt</li>
       </ul>
     </div>
 
     <div style="border-top:1px solid #e5e7eb;padding-top:16px;">
-      <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">Your workspace link (bookmark this):</p>
-      <p style="font-size:12px;color:#374151;margin:0;word-break:break-all;font-family:monospace;">${p.workspaceUrl}</p>
+      <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">Your permanent app download link:</p>
+      <p style="font-size:12px;color:#374151;margin:0;word-break:break-all;font-family:monospace;">${p.downloadUrl}</p>
     </div>
 
     <p style="font-size:10px;color:#d1d5db;text-align:center;margin:24px 0 0;">
@@ -77,10 +73,10 @@ function buildEmailHtml(p: {
 
 function buildSmsText(p: {
   businessName: string;
-  workspaceUrl: string;
-  setupUrl: string;
+  ownerName?: string | null;
+  downloadUrl: string;
 }) {
-  return `Your ${p.businessName} workspace is ready! 🚀\n\nOpen your app: ${p.workspaceUrl}\n\nContinue setup: ${p.setupUrl}\n\nAdd to your home screen for app access.\n\n— NewLight`;
+  return `Hi ${p.ownerName || "there"}, your ${p.businessName} app is ready. Download it here: ${p.downloadUrl} — tap the link and follow the 2 steps to add it to your home screen.`;
 }
 
 Deno.serve(async (req) => {
