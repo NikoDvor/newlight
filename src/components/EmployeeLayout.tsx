@@ -10,6 +10,7 @@ import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
@@ -107,6 +108,7 @@ export function EmployeeLayout() {
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
               <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="p-4 sm:p-6 lg:p-10 relative z-1">
+                <PWAUpdateBanner />
                 <PWAInstallBanner />
                 <Outlet />
               </motion.div>
