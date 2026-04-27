@@ -239,8 +239,24 @@ export default function AdminTeam() {
               </div>
             </DialogContent>
           </Dialog>
+          <Button onClick={() => setAppLinkClient(clients[0] ?? null)} disabled={clients.length === 0} className="bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/10">
+            <Send className="h-4 w-4 mr-1" /> Send App Link
+          </Button>
         </div>
       </div>
+
+      <Card className="border-0 bg-white/[0.04] p-4" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">Client app download links</p>
+            <p className="text-xs text-white/40 mt-1">Preview, copy, or resend any client’s branded app download link.</p>
+          </div>
+          <select onChange={e => setAppLinkClient(clients.find(c => c.id === e.target.value) ?? null)} defaultValue="" className="h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 min-w-[220px]">
+            <option value="" disabled>Select client…</option>
+            {clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}
+          </select>
+        </div>
+      </Card>
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
         <div className="overflow-x-auto">
@@ -277,6 +293,7 @@ export default function AdminTeam() {
           </table>
         </div>
       </Card>
+      <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
     </div>
   );
 }
