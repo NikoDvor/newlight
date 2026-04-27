@@ -26,6 +26,12 @@ interface Chapter {
   module_id: string;
 }
 
+interface LevelProgressRow {
+  chapter_id: string;
+  quiz_level: 1 | 2 | 3;
+  status: string;
+}
+
 interface ProgressRow {
   module_id: string;
   chapter_id: string | null;
@@ -41,6 +47,7 @@ export default function AdminTrainingTrack() {
   const [modules, setModules] = useState<Module[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
+  const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [runner, setRunner] = useState<
     | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
@@ -96,6 +103,12 @@ export default function AdminTrainingTrack() {
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
 
+        const { data: levels } = await (supabase as any)
+          .from("nl_training_chapter_level_progress")
+          .select("chapter_id, quiz_level, status")
+          .eq("user_id", user.id);
+        setLevelProgress((levels || []) as LevelProgressRow[]);
+
         if (track.track_name && (trackKey || "bdr") === "bdr") {
           const { data: cert } = await supabase
             .from("nl_training_certifications")
@@ -130,12 +143,22 @@ export default function AdminTrainingTrack() {
     [chapters, selectedModuleId]
   );
 
+  const getChapterLevelCount = (chapterId: string) =>
+    levelProgress.filter((p) => p.chapter_id === chapterId && p.status === "completed").length;
+
+  const isChapterComplete = (chapterId: string) =>
+    progress.some((p) => p.chapter_id === chapterId && p.status === "completed") || getChapterLevelCount(chapterId) === 3;
+
+  const getChapterDescription = (chapter: Chapter) => {
+    const first = (chapter.content || "").split("\n\n").find((part) => part.trim().length > 60) || "";
+    return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
+  };
+
   const moduleChapterPct = (moduleId: string) => {
-    const total = chapters.filter((c) => c.module_id === moduleId).length;
+    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    const total = moduleChapters.length * 3;
     if (total === 0) return 0;
-    const done = progress.filter(
-      (p) => p.module_id === moduleId && p.chapter_id && p.status === "completed"
-    ).length;
+    const done = moduleChapters.reduce((sum, c) => sum + getChapterLevelCount(c.id), 0);
     return Math.round((done / total) * 100);
   };
 
@@ -336,14 +359,11 @@ export default function AdminTrainingTrack() {
                   </div>
                 ) : (
                   selectedChapters.map((c, idx) => {
-                    const done = progress.some(
-                      (p) => p.chapter_id === c.id && p.status === "completed"
-                    );
+                    const levelCount = getChapterLevelCount(c.id);
+                    const done = isChapterComplete(c.id);
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
-                    const prevDone = !prev || progress.some(
-                      (p) => p.chapter_id === prev.id && p.status === "completed"
-                    );
+                    const prevDone = !prev || isChapterComplete(prev.id);
                     const unlocked = !selectedModule.is_locked && prevDone;
                     return (
                       <button
@@ -356,21 +376,43 @@ export default function AdminTrainingTrack() {
                           })
                         }
                         disabled={!unlocked}
-                        className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/40 transition-colors ${
+                        className={`w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-border/40 transition-colors ${
                           unlocked ? "hover:bg-white/[0.03] cursor-pointer" : "opacity-50 cursor-not-allowed"
                         }`}
                       >
                         {done ? (
-                          <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0 mt-0.5" />
                         ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                         )}
-                        <span className="text-[13px] text-foreground/85 flex-1">
-                          {c.chapter_number}. {c.chapter_title}
-                        </span>
-                        {unlocked && !done && (
-                          <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Open</span>
-                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[13px] text-foreground/90 font-medium">
+                              {c.chapter_number}. {c.chapter_title}
+                            </span>
+                            {unlocked && !done && (
+                              <span className="text-[10px] text-primary font-medium shrink-0">Open</span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                            {getChapterDescription(c)}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {[1, 2, 3].map((level) => {
+                              const complete = levelProgress.some((p) => p.chapter_id === c.id && p.quiz_level === level && p.status === "completed");
+                              const locked = level > levelCount + 1;
+                              return (
+                                <Badge
+                                  key={level}
+                                  variant={complete ? "default" : "outline"}
+                                  className={`h-5 px-2 text-[10px] ${locked ? "opacity-50" : ""}`}
+                                >
+                                  L{level} {complete ? "Complete" : locked ? "Locked" : "Unlocked"}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </button>
                     );
                   })
@@ -380,9 +422,7 @@ export default function AdminTrainingTrack() {
               {(() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
-                  selectedChapters.every((c) =>
-                    progress.some((p) => p.chapter_id === c.id && p.status === "completed")
-                  );
+                  selectedChapters.every((c) => isChapterComplete(c.id));
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
                 return (
                   <div className="flex flex-wrap gap-2">
@@ -390,7 +430,7 @@ export default function AdminTrainingTrack() {
                       disabled={selectedModule.is_locked || selectedChapters.length === 0}
                       onClick={() => {
                         const firstUndone = selectedChapters.find(
-                          (c) => !progress.some((p) => p.chapter_id === c.id && p.status === "completed")
+                          (c) => !isChapterComplete(c.id)
                         ) || selectedChapters[0];
                         if (firstUndone) {
                           setRunner({
