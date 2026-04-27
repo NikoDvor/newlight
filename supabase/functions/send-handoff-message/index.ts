@@ -93,12 +93,15 @@ Deno.serve(async (req) => {
     const {
       client_id,
       business_name,
+      owner_name,
       owner_email,
       owner_phone,
       preferred_contact_method = "email",
       sms_consent = false,
       workspace_slug,
       base_url,
+      send_email,
+      send_sms,
     } = body;
 
     if (!client_id || !owner_email || !workspace_slug || !base_url) {
@@ -109,7 +112,18 @@ Deno.serve(async (req) => {
     }
 
     const workspaceUrl = `${base_url}/w/${workspace_slug}`;
+    const downloadUrl = `${base_url}/app/${workspace_slug}`;
     const setupUrl = `${base_url}/auth?redirect=/setup-center`;
+
+    const { data: branding } = await adminClient
+      .from("client_branding")
+      .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color")
+      .eq("client_id", client_id)
+      .maybeSingle();
+
+    const displayName = branding?.app_display_name || branding?.company_name || business_name;
+    const brandColor = /^#[0-9a-f]{6}$/i.test(branding?.primary_color || "") ? branding!.primary_color : "#0EA5E9";
+    const logoUrl = branding?.pwa_icon_url || branding?.app_icon_url || branding?.logo_url || null;
 
     const result: {
       email_status: string;
@@ -121,8 +135,8 @@ Deno.serve(async (req) => {
       sms_status: "not_attempted",
     };
 
-    const shouldEmail = preferred_contact_method === "email" || preferred_contact_method === "both";
-    const shouldSms = (preferred_contact_method === "sms" || preferred_contact_method === "both") && sms_consent && owner_phone;
+    const shouldEmail = send_email ?? (preferred_contact_method === "email" || preferred_contact_method === "both");
+    const shouldSms = send_sms ?? ((preferred_contact_method === "sms" || preferred_contact_method === "both") && sms_consent && owner_phone);
 
     // ── EMAIL ────────────────────────────────────────────────────────
     if (shouldEmail) {
@@ -142,7 +156,7 @@ Deno.serve(async (req) => {
         try {
           // Twilio connector gateway — path auto-prefixes /2010-04-01/Accounts/{AccountSid}
           const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-          const smsText = buildSmsText({ businessName: business_name, workspaceUrl, setupUrl });
+          const smsText = buildSmsText({ businessName: displayName, ownerName: owner_name, downloadUrl });
 
           const smsResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
             method: "POST",
@@ -198,20 +212,22 @@ Deno.serve(async (req) => {
           sms_error: result.sms_error || null,
           preferred_contact_method,
           workspace_url: workspaceUrl,
+          app_download_url: downloadUrl,
         },
       }),
     ]);
 
-    const emailHtml = buildEmailHtml({ businessName: business_name, workspaceUrl, setupUrl });
+    const emailHtml = buildEmailHtml({ businessName: displayName, ownerName: owner_name, downloadUrl, brandColor, logoUrl });
 
     return new Response(
       JSON.stringify({
         success: true,
         ...result,
         workspace_url: workspaceUrl,
+        app_download_url: downloadUrl,
         setup_url: setupUrl,
         email_html_preview: result.email_status === "not_configured" ? emailHtml : undefined,
-        sms_text_preview: result.sms_status === "not_configured" ? buildSmsText({ businessName: business_name, workspaceUrl, setupUrl }) : undefined,
+        sms_text_preview: result.sms_status === "not_configured" ? buildSmsText({ businessName: displayName, ownerName: owner_name, downloadUrl }) : undefined,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
