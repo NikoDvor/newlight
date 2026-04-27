@@ -14,8 +14,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
+import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { CategoryNichePicker } from "@/components/CategoryNichePicker";
+import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 interface Client {
   id: string;
@@ -61,6 +63,7 @@ export default function AdminClients() {
   const [provisioning, setProvisioning] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
+  const [appLinkClient, setAppLinkClient] = useState<Client | null>(null);
   
   const [form, setForm] = useState({
     business_name: "", workspace_slug: "", industry: "", provisional_profile: "" as string,
@@ -266,6 +269,11 @@ export default function AdminClients() {
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     toast.success("Link copied!");
+  };
+
+  const copyAppLink = (client: Client) => {
+    navigator.clipboard.writeText(buildAppDownloadUrl(client.workspace_slug));
+    toast.success("App download link copied!");
   };
 
   const handleResendSms = async (client: Client) => {
