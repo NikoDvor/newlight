@@ -250,6 +250,8 @@ export default function Onboarding() {
         color: "#3B82F6", active: true,
       });
 
+      const { data: client } = await supabase.from("clients").select("business_name, owner_email, owner_phone, preferred_contact_method, sms_consent, workspace_slug").eq("id", activeClientId).maybeSingle();
+
       // 9. Log audit
       await supabase.from("audit_logs").insert({
         client_id: activeClientId,
@@ -273,7 +275,6 @@ export default function Onboarding() {
         created_by: user?.id,
       });
 
-      const { data: client } = await supabase.from("clients").select("business_name, owner_email, owner_phone, preferred_contact_method, sms_consent, workspace_slug").eq("id", activeClientId).maybeSingle();
       if (client?.owner_email && client?.workspace_slug) {
         await supabase.functions.invoke("send-handoff-message", {
           body: {
