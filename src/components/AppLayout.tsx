@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 
@@ -179,6 +180,7 @@ export function AppLayout() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="p-4 sm:p-6 lg:p-10 relative z-1"
               >
+                <PWAUpdateBanner />
                 <PWAInstallBanner />
                 <Outlet />
               </motion.div>
