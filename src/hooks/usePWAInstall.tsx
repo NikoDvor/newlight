@@ -29,6 +29,17 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
 const standaloneQuery = "(display-mode: standalone)";
 const updateDismissedKey = "newlight-pwa-update-dismissed";
 
+function isPreviewOrFramed() {
+  const isFramed = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  return isFramed || window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
+}
+
 function detectInstalled() {
   return window.matchMedia?.(standaloneQuery).matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
@@ -74,14 +85,24 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    if (isPreviewOrFramed()) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      }).catch(() => undefined);
+      return;
+    }
+
     let activeRegistration: ServiceWorkerRegistration | null = null;
     let refreshing = false;
 
     const markUpdateAvailable = (worker: ServiceWorker) => {
       waitingWorkerRef.current = worker;
-      if (sessionStorage.getItem(updateDismissedKey) !== "true") {
-        setUpdateAvailable(true);
+      if (localStorage.getItem(updateDismissedKey) === "true") {
+        worker.postMessage({ type: "SKIP_WAITING" });
+        localStorage.removeItem(updateDismissedKey);
+        return;
       }
+      setUpdateAvailable(true);
     };
 
     const watchWorker = (worker: ServiceWorker) => {
@@ -103,7 +124,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    navigator.serviceWorker.ready.then(bindRegistration).catch(() => undefined);
+    navigator.serviceWorker.register("/sw.js").then(bindRegistration).catch(() => undefined);
 
     const controllerChange = () => {
       if (refreshing) return;
@@ -112,10 +133,8 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     };
 
     const visibilityChange = () => {
-      if (document.visibilityState === "visible" && sessionStorage.getItem(updateDismissedKey) === "true") {
-        const waitingWorker = waitingWorkerRef.current || activeRegistration?.waiting;
-        waitingWorker?.postMessage({ type: "SKIP_WAITING" });
-        sessionStorage.removeItem(updateDismissedKey);
+      if (document.visibilityState === "visible") {
+        activeRegistration?.update().catch(() => undefined);
       }
     };
 
@@ -146,7 +165,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   }, [deferredPrompt, isInstalled, isIOS]);
 
   const updateNow = useCallback(() => {
-    sessionStorage.removeItem(updateDismissedKey);
+    localStorage.removeItem(updateDismissedKey);
     setUpdateAvailable(false);
     const waitingWorker = waitingWorkerRef.current;
     if (waitingWorker) {
@@ -157,7 +176,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissUpdate = useCallback(() => {
-    sessionStorage.setItem(updateDismissedKey, "true");
+    localStorage.setItem(updateDismissedKey, "true");
     setUpdateAvailable(false);
   }, []);
 
