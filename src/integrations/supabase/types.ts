@@ -5826,6 +5826,54 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_training_chapter_level_progress: {
+        Row: {
+          attempts: number
+          chapter_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          module_id: string
+          quiz_level: number
+          score: number | null
+          status: string
+          track_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          chapter_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          module_id: string
+          quiz_level: number
+          score?: number | null
+          status?: string
+          track_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          chapter_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          module_id?: string
+          quiz_level?: number
+          score?: number | null
+          status?: string
+          track_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nl_training_chapters: {
         Row: {
           chapter_number: number
@@ -5993,6 +6041,7 @@ export type Database = {
           options: Json
           question_text: string
           question_type: string
+          quiz_level: number
         }
         Insert: {
           chapter_id?: string | null
@@ -6004,6 +6053,7 @@ export type Database = {
           options?: Json
           question_text: string
           question_type: string
+          quiz_level?: number
         }
         Update: {
           chapter_id?: string | null
@@ -6015,6 +6065,7 @@ export type Database = {
           options?: Json
           question_text?: string
           question_type?: string
+          quiz_level?: number
         }
         Relationships: [
           {
