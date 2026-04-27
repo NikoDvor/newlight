@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
@@ -94,6 +93,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
 
     let activeRegistration: ServiceWorkerRegistration | null = null;
     let refreshing = false;
+    const cleanupCallbacks: Array<() => void> = [];
 
     const markUpdateAvailable = (worker: ServiceWorker) => {
       waitingWorkerRef.current = worker;
@@ -106,11 +106,13 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     };
 
     const watchWorker = (worker: ServiceWorker) => {
-      worker.addEventListener("statechange", () => {
+      const stateChangeHandler = () => {
         if (worker.state === "installed" && navigator.serviceWorker.controller) {
           markUpdateAvailable(worker);
         }
-      });
+      };
+      worker.addEventListener("statechange", stateChangeHandler);
+      cleanupCallbacks.push(() => worker.removeEventListener("statechange", stateChangeHandler));
     };
 
     const bindRegistration = (registration: ServiceWorkerRegistration) => {
@@ -118,10 +120,12 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       if (registration.waiting && navigator.serviceWorker.controller) {
         markUpdateAvailable(registration.waiting);
       }
-      registration.addEventListener("updatefound", () => {
+      const updateFoundHandler = () => {
         const newWorker = registration.installing;
         if (newWorker) watchWorker(newWorker);
-      });
+      };
+      registration.addEventListener("updatefound", updateFoundHandler);
+      cleanupCallbacks.push(() => registration.removeEventListener("updatefound", updateFoundHandler));
     };
 
     navigator.serviceWorker.register("/sw.js").then(bindRegistration).catch(() => undefined);
@@ -142,6 +146,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", visibilityChange);
 
     return () => {
+      cleanupCallbacks.forEach((cleanup) => cleanup());
       navigator.serviceWorker.removeEventListener("controllerchange", controllerChange);
       document.removeEventListener("visibilitychange", visibilityChange);
     };
