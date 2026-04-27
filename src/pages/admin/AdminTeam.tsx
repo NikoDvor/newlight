@@ -6,13 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send } from "lucide-react";
+import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 
 interface RoleRow {
   id: string;
   user_id: string;
   role: string;
   client_id: string | null;
+}
+
+interface ClientOption {
+  id: string;
+  business_name: string;
+  workspace_slug: string | null;
+  owner_name: string | null;
+  owner_email: string | null;
+  owner_phone: string | null;
+  sms_consent: boolean | null;
 }
 
 export default function AdminTeam() {
@@ -31,7 +42,8 @@ export default function AdminTeam() {
   const [manualClientId, setManualClientId] = useState("");
   const [showManualPassword, setShowManualPassword] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
-  const [clients, setClients] = useState<{ id: string; business_name: string }[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
   const [loading, setLoading] = useState(false);
 
   const manualRoleOptions = [
@@ -45,7 +57,7 @@ export default function AdminTeam() {
   const fetchData = async () => {
     const [rolesRes, clientsRes] = await Promise.all([
       supabase.from("user_roles").select("*").order("role"),
-      supabase.from("clients").select("id, business_name").order("business_name"),
+      supabase.from("clients").select("id, business_name, workspace_slug, owner_name, owner_email, owner_phone, sms_consent").order("business_name"),
     ]);
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
