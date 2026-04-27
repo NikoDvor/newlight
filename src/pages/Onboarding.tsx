@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
+import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import {
   Building2, Palette, Users, Plug, KeyRound, Settings2,
   ChevronRight, ChevronLeft, Check, Rocket, Plus, Trash2, Smartphone
@@ -259,7 +260,7 @@ export default function Onboarding() {
           businessName,
           businessType,
           app_download_step_completed: appDownloadAcknowledged || isInstalled,
-          app_download_link: `${window.location.origin}/dashboard`,
+          app_download_link: client?.workspace_slug ? buildAppDownloadUrl(client.workspace_slug) : `${window.location.origin}/dashboard`,
           integrations_selected: Object.keys(integrations).filter(k => integrations[k]),
         },
       });
@@ -278,12 +279,15 @@ export default function Onboarding() {
           body: {
             client_id: activeClientId,
             business_name: companyName || businessName || client.business_name || "your business",
+            owner_name: ownerName || undefined,
             owner_email: client.owner_email,
             owner_phone: client.owner_phone,
-            preferred_contact_method: client.preferred_contact_method || "email",
+            preferred_contact_method: client.preferred_contact_method || "both",
             sms_consent: Boolean(client.sms_consent),
             workspace_slug: client.workspace_slug,
             base_url: window.location.origin,
+            send_email: true,
+            send_sms: Boolean(client.owner_phone && client.sms_consent),
           },
         });
       }
