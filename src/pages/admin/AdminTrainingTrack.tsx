@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, FileText } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,7 @@ export default function AdminTrainingTrack() {
   const [savingGlossary, setSavingGlossary] = useState(false);
   const [canManageGlossary, setCanManageGlossary] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [showModule1Glossary, setShowModule1Glossary] = useState(false);
   const [runner, setRunner] = useState<
     | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
     | { mode: "module_test"; moduleId: string }
@@ -227,9 +228,14 @@ export default function AdminTrainingTrack() {
   const numberedModules = modules.filter((m) => m.module_number > 0).sort((a, b) => a.module_number - b.module_number);
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
+  const isModule1 = selectedModule?.module_number === 1;
   const selectedChapters = useMemo(
     () => chapters.filter((c) => c.module_id === selectedModuleId),
     [chapters, selectedModuleId]
+  );
+  const glossaryChapter = useMemo(
+    () => chapters.find((c) => c.module_id === glossaryModule?.id) || null,
+    [chapters, glossaryModule?.id]
   );
 
   const getChapterLevelCount = (chapterId: string) =>
@@ -292,11 +298,12 @@ export default function AdminTrainingTrack() {
 
   const selectedGlossaryTerms = useMemo(() => {
     const q = glossarySearch.trim().toLowerCase();
+    const sourceModuleId = glossaryModule?.id || selectedModuleId;
     return glossaryTerms
-      .filter((term) => term.module_id === selectedModuleId)
+      .filter((term) => term.module_id === sourceModuleId)
       .filter((term) => !q || `${term.term} ${term.definition} ${term.usage_example}`.toLowerCase().includes(q))
       .sort((a, b) => a.category.localeCompare(b.category) || a.sort_order - b.sort_order || a.term.localeCompare(b.term));
-  }, [glossarySearch, glossaryTerms, selectedModuleId]);
+  }, [glossaryModule?.id, glossarySearch, glossaryTerms, selectedModuleId]);
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
@@ -310,14 +317,15 @@ export default function AdminTrainingTrack() {
   }, [flashcards]);
 
   const markGlossaryReviewed = async () => {
-    const chapter = selectedChapters[0];
-    if (!trackId || !selectedModule || !chapter) return;
+    const targetModule = isGlossaryModule ? selectedModule : glossaryModule;
+    const chapter = isGlossaryModule ? selectedChapters[0] : glossaryChapter;
+    if (!trackId || !targetModule || !chapter) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const payload = {
       user_id: user.id,
       track_id: trackId,
-      module_id: selectedModule.id,
+      module_id: targetModule.id,
       status: "completed",
       score: 100,
       attempts: 1,
@@ -331,13 +339,15 @@ export default function AdminTrainingTrack() {
   };
 
   const addGlossaryTerm = async () => {
-    if (!trackId || !selectedModule || !selectedChapters[0] || !newTerm.term.trim() || !newTerm.definition.trim()) return;
+    const targetModule = isGlossaryModule ? selectedModule : glossaryModule;
+    const chapter = isGlossaryModule ? selectedChapters[0] : glossaryChapter;
+    if (!trackId || !targetModule || !chapter || !newTerm.term.trim() || !newTerm.definition.trim()) return;
     setSavingGlossary(true);
     try {
       const { error } = await (supabase as any).from("nl_training_glossary_terms").insert({
         track_id: trackId,
-        module_id: selectedModule.id,
-        chapter_id: selectedChapters[0].id,
+        module_id: targetModule.id,
+        chapter_id: chapter.id,
         category: newTerm.category,
         term: newTerm.term.trim(),
         definition: newTerm.definition.trim(),
@@ -403,7 +413,7 @@ export default function AdminTrainingTrack() {
         >
           <div className="p-4 border-b border-border/40">
             <h3 className="section-title">BDR Training Track</h3>
-            <p className="mt-1 text-[11px] text-muted-foreground">Reference tools and numbered modules</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Numbered modules</p>
           </div>
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
             {loading ? (
@@ -414,47 +424,16 @@ export default function AdminTrainingTrack() {
               </div>
             ) : (
               <>
-                {trackKey === "bdr" && glossaryModule && (() => {
-                  const status = moduleStatus(glossaryModule.id);
-                  const isSelected = selectedModuleId === glossaryModule.id;
-                  return (
-                    <button
-                      key={glossaryModule.id}
-                      onClick={() => setSelectedModuleId(glossaryModule.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 ${isSelected ? "bg-primary/10" : "bg-secondary/35 hover:bg-primary/5"}`}
-                      style={isSelected ? { boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))" } : undefined}
-                    >
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] font-semibold truncate ${isSelected ? "text-primary" : "text-foreground/90"}`}>Terminology & Glossary</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground font-medium">{status === "completed" ? "Complete" : "Reference"}</p>
-                      </div>
-                    </button>
-                  );
-                })()}
-                {trackKey === "bdr" && (
-                  <button
-                    onClick={() => navigate("/admin/training-center/bdr/flashcards")}
-                    className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
-                  >
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
-                      <Layers className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-foreground/90 truncate">Flashcards</p>
-                      <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
-                    </div>
-                  </button>
-                )}
                 {numberedModules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
                     return (
                     <button
                       key={m.id}
-                      onClick={() => setSelectedModuleId(m.id)}
+                      onClick={() => {
+                        setSelectedModuleId(m.id);
+                        setShowModule1Glossary(false);
+                      }}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
                         isSelected
                             ? "bg-primary/[0.08] border-border/30"
@@ -601,8 +580,19 @@ export default function AdminTrainingTrack() {
                   <h3 className="text-lg font-semibold text-foreground">Module Locked</h3>
                   <p className="mt-2 text-sm text-muted-foreground">Complete previous module to unlock.</p>
                 </div>
-              ) : isGlossaryModule ? (
+              ) : isGlossaryModule || (isModule1 && showModule1Glossary) ? (
                 <div className="space-y-5">
+                  {isModule1 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <Badge variant="secondary" className="mb-2">Chapter 1.0</Badge>
+                        <h3 className="section-title">Terminology & Glossary</h3>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setShowModule1Glossary(false)}>
+                        Back to Module 1 Chapters
+                      </Button>
+                    </div>
+                  )}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -673,7 +663,7 @@ export default function AdminTrainingTrack() {
                 </div>
               ) : <div className="space-y-2 mb-6">
                 <h3 className="section-title mb-2">Chapters</h3>
-                {selectedChapters.length === 0 ? (
+                {selectedChapters.length === 0 && !(isModule1 && glossaryModule) ? (
                   <div className="rounded-xl border border-dashed border-border/50 p-6 text-center">
                     <BookOpen className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
@@ -681,7 +671,30 @@ export default function AdminTrainingTrack() {
                     </p>
                   </div>
                 ) : (
-                  selectedChapters.map((c, idx) => {
+                  <>
+                    {isModule1 && glossaryModule && (
+                      <button
+                        type="button"
+                        onClick={() => setShowModule1Glossary(true)}
+                        className="w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10 cursor-pointer"
+                      >
+                        {glossaryChapter && isChapterComplete(glossaryChapter.id) ? (
+                          <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0 mt-0.5" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[13px] text-foreground/90 font-medium">1.0. Terminology & Glossary</span>
+                            <span className="text-[10px] text-primary font-medium shrink-0">Open</span>
+                          </div>
+                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                            Review core BDR vocabulary before starting the module content.
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                    {selectedChapters.map((c, idx) => {
                     const levelCount = getChapterLevelCount(c.id);
                     const done = isChapterComplete(c.id);
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
@@ -738,7 +751,8 @@ export default function AdminTrainingTrack() {
                         </div>
                       </button>
                     );
-                  })
+                    })}
+                  </>
                 )}
               </div>}
 
