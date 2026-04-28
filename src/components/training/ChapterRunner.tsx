@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface QuestionRow {
   id: string;
@@ -66,6 +67,8 @@ interface Props {
   moduleId: string;
   trackId: string;
   passScore?: number;
+  lockedPreview?: boolean;
+  unlockModuleNumber?: number;
   onClose: () => void;
   onCompleted: () => void;
 }
@@ -84,6 +87,8 @@ export function ChapterRunner({
   moduleId,
   trackId,
   passScore = 70,
+  lockedPreview = false,
+  unlockModuleNumber,
   onClose,
   onCompleted,
 }: Props) {
@@ -175,7 +180,7 @@ export function ChapterRunner({
         setCurrentLevel(nextLevel);
       }
 
-      if (user) {
+      if (user && !lockedPreview) {
         const { data: existingProgress } = await supabase
           .from("nl_training_progress")
           .select("status")
@@ -200,7 +205,7 @@ export function ChapterRunner({
       setLoading(false);
     };
     load();
-  }, [mode, chapter?.id, moduleId, trackId]);
+  }, [mode, chapter?.id, moduleId, trackId, lockedPreview]);
 
   const currentLevelQuestions = useMemo(
     () => mode === "chapter" ? questions.filter((q) => (q.quiz_level || 1) === currentLevel).slice(0, 3) : questions,
