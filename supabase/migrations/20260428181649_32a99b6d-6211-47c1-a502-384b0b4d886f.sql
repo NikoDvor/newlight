@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Admins and operators can manage flashcards" ON public.nl_training_flashcards;
