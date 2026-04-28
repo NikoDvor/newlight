@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 
 export interface QuestionRow {
   id: string;
@@ -27,8 +28,30 @@ export interface ChapterRow {
   module_id: string;
 }
 
-type Phase = "reading" | "quiz" | "result";
+type Phase = "reading" | "drill" | "quiz" | "result";
 type QuizLevel = 1 | 2 | 3;
+
+const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
+  "5.1": [
+    { prompt: "RAPPORT:", answer: "Build rapport first. Comment on the business, the vibe, something real and genuine." },
+    { prompt: "OPENER:", answer: "Hey, quick question — if I lined up 25 new [customers/clients] for you next month, could you handle them?" },
+    { prompt: "SILENCE RULE:", answer: "Let them respond. Don't fill the silence." },
+    { prompt: "HOOK:", answer: "Here's what I mean — right now there are people in [city] searching for exactly what you offer. They're just finding your competition first. What we do is flip that. We make sure those people find you instead and come through your door." },
+    { prompt: "REVEAL SETUP:", answer: "And honestly — I already put something together for you specifically." },
+    { prompt: "REVEAL:", answer: "This is a system I built for your business. It organizes everything on the backend and opens up revenue you're probably sitting on right now but can't see yet. Give me 5 minutes and I'll walk you through it." },
+    { prompt: "APP TIP:", answer: "It shows you exactly where your business is bleeding money and what to do about it." },
+  ],
+  "5.2": [
+    { prompt: "STEP 1 — OWNER CONFIRM:", answer: "Hey, is this the owner?" },
+    { prompt: "STEP 2 — OPENER:", answer: "Quick question — if I could line up 25 new [customers] for you next month, would you have the capacity to take them on?" },
+    { prompt: "STEP 3 — HOOK:", answer: "So the way we do it — there are people in your area searching for [their service] right now, and they're landing on your competition's page. We redirect that traffic to you instead." },
+    { prompt: "STEP 4 — REVEAL:", answer: "I actually spent time building something out for your business specifically. Do you mind if I send it over?" },
+    { prompt: "WAIT RULE:", answer: "Wait for yes." },
+    { prompt: "STEP 5 — BOOK:", answer: "I'd love just 20 minutes to walk you through it. Do mornings, afternoons, or evenings work better for you this week?" },
+    { prompt: "CALENDAR RULE:", answer: "Perfect. I'll send you a calendar link right now while we're on the phone." },
+    { prompt: "SHOW RATE RULE:", answer: "Do not hang up without a booked slot. Show rate drops significantly without this." },
+  ],
+};
 
 interface LevelProgressRow {
   quiz_level: QuizLevel;
@@ -92,6 +115,11 @@ export function ChapterRunner({
   const [lastPassed, setLastPassed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [moduleNumber, setModuleNumber] = useState<number | null>(null);
+  const [drillCompleted, setDrillCompleted] = useState(false);
+  const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
+  const drillLines = SCRIPT_DRILLS[drillKey] || [];
+  const requiresDrill = drillLines.length > 0;
 
   useEffect(() => {
     const load = async () => {
@@ -105,6 +133,13 @@ export function ChapterRunner({
 
       const { data: { user } } = await supabase.auth.getUser();
       setUserId(user?.id ?? null);
+
+      const { data: moduleRow } = await supabase
+        .from("nl_training_modules")
+        .select("module_number")
+        .eq("id", moduleId)
+        .maybeSingle();
+      setModuleNumber(moduleRow?.module_number ?? null);
 
       let q;
       if (mode === "chapter" && chapter) {
@@ -140,6 +175,15 @@ export function ChapterRunner({
           .eq("chapter_id", chapter.id);
         const levelRows = (levels || []) as LevelProgressRow[];
         setLevelProgress(levelRows);
+        const { data: drillRows } = await (supabase as any)
+          .from("nl_training_progress")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("module_id", moduleId)
+          .eq("chapter_id", chapter.id)
+          .eq("status", "drill_completed")
+          .limit(1);
+        setDrillCompleted((drillRows || []).length > 0);
         const nextLevel = ([1, 2, 3] as QuizLevel[]).find(
           (level) => !levelRows.some((row) => row.quiz_level === level && row.status === "completed")
         ) || 3;
@@ -147,7 +191,15 @@ export function ChapterRunner({
       }
 
       if (user) {
-        await supabase.from("nl_training_progress").upsert(
+        const { data: existingProgress } = await supabase
+          .from("nl_training_progress")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("module_id", moduleId)
+          .eq("chapter_id", mode === "chapter" && chapter ? chapter.id : null)
+          .maybeSingle();
+        if (!existingProgress || !["completed", "drill_completed"].includes(existingProgress.status)) {
+          await supabase.from("nl_training_progress").upsert(
           {
             user_id: user.id,
             track_id: trackId,
@@ -157,7 +209,8 @@ export function ChapterRunner({
             last_attempt_at: new Date().toISOString(),
           },
           { onConflict: "user_id,module_id,chapter_id" } as any
-        );
+          );
+        }
       }
       setLoading(false);
     };
@@ -185,6 +238,11 @@ export function ChapterRunner({
     setCorrectCount(0);
     setLastScorePct(0);
     setLastPassed(false);
+    setPhase(requiresDrill && !drillCompleted ? "drill" : "quiz");
+  };
+
+  const handleDrillComplete = () => {
+    setDrillCompleted(true);
     setPhase("quiz");
   };
 
@@ -387,10 +445,20 @@ export function ChapterRunner({
             </div>
             <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
               <Button onClick={() => resetQuiz(currentLevel)} disabled={currentLevelQuestions.length === 0} className="gap-2">
-                Take Level {currentLevel} Quiz
+                {requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
                 <CheckCircle2 className="h-4 w-4" />
               </Button>
             </div>
+          </motion.div>
+        ) : phase === "drill" && chapter && requiresDrill ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+            <ScriptDrillExercise
+              lines={drillLines}
+              trackId={trackId}
+              moduleId={moduleId}
+              chapterId={chapter.id}
+              onComplete={handleDrillComplete}
+            />
           </motion.div>
         ) : phase === "quiz" && current ? (
           <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
