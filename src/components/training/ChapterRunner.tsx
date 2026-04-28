@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare, Zap, Star, Layers, ChevronRight, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 
@@ -97,22 +98,61 @@ const renderInlineLabel = (line: string) => {
   );
 };
 
-const RichReadingContent = ({ content }: { content: string }) => {
+type ContentBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "bullets"; items: string[] }
+  | { type: "checklist"; items: string[] }
+  | { type: "callout"; text: string; warning: boolean }
+  | { type: "comparison"; good: string[]; bad: string[] }
+  | { type: "steps"; steps: { title: string; body: string[] }[] }
+  | { type: "term"; term: string; definition: string };
+
+interface ContentSection {
+  title: string;
+  blocks: ContentBlock[];
+}
+
+const isTermLine = (line: string) => /^[A-Z][A-Za-z0-9 /&()'’.-]{2,42}\s+[—–-]\s+.{12,}$/.test(line.trim());
+
+const parseTermLine = (line: string) => {
+  const [term, ...rest] = line.split(/\s+[—–-]\s+/);
+  return { term: term.trim(), definition: rest.join(" — ").trim() };
+};
+
+const parseReadingContent = (content: string): ContentSection[] => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const nodes: ReactNode[] = [];
+  const sections: ContentSection[] = [{ title: "Overview", blocks: [] }];
+  const current = () => sections[sections.length - 1];
   let i = 0;
 
   while (i < lines.length) {
     const line = lines[i];
 
-    if (isPhaseLine(line)) {
-      nodes.push(
-        <div key={`phase-${i}`} className="my-8 rounded-lg border border-primary/30 bg-primary/10 px-4 py-4 sm:px-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary">Major section</div>
-          <h2 className="mt-1 text-lg font-semibold leading-snug text-foreground sm:text-xl">{line}</h2>
-        </div>
-      );
+    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().blocks.length > 0) {
+      sections.push({ title: line.replace(/:$/, ""), blocks: [] });
       i += 1;
+      continue;
+    }
+
+    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().title === "Overview") {
+      current().title = line.replace(/:$/, "");
+      i += 1;
+      continue;
+    }
+
+    if (isStepLine(line)) {
+      const steps: { title: string; body: string[] }[] = [];
+      while (i < lines.length && isStepLine(lines[i])) {
+        const title = lines[i];
+        i += 1;
+        const body: string[] = [];
+        while (i < lines.length && !isStepLine(lines[i]) && !isSectionHeaderLine(lines[i]) && !isPhaseLine(lines[i]) && !isComparisonLine(lines[i]) && !isCheckboxLine(lines[i]) && !isBulletLine(lines[i])) {
+          body.push(lines[i]);
+          i += 1;
+        }
+        steps.push({ title, body });
+      }
+      current().blocks.push({ type: "steps", steps });
       continue;
     }
 
@@ -122,101 +162,174 @@ const RichReadingContent = ({ content }: { content: string }) => {
         comparisonLines.push(lines[i]);
         i += 1;
       }
-      const good = comparisonLines.filter((entry) => /^Good\s+/i.test(entry));
-      const bad = comparisonLines.filter((entry) => /^Bad\s+/i.test(entry));
-      nodes.push(
-        <div key={`comparison-${i}`} className="my-6 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-success/30 bg-success/10 p-4">
-            <div className="mb-3 text-sm font-semibold text-success">Good BDR</div>
-            <div className="space-y-2 text-sm leading-7 text-foreground/90">{good.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry.replace(/^Good\s+[^:]{0,32}:\s*/i, ""))}</p>)}</div>
-          </div>
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-            <div className="mb-3 text-sm font-semibold text-destructive">Bad BDR</div>
-            <div className="space-y-2 text-sm leading-7 text-foreground/90">{bad.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry.replace(/^Bad\s+[^:]{0,32}:\s*/i, ""))}</p>)}</div>
-          </div>
-        </div>
-      );
+      current().blocks.push({
+        type: "comparison",
+        good: comparisonLines.filter((entry) => /^Good\s+/i.test(entry)).map((entry) => entry.replace(/^Good\s+[^:]{0,32}:\s*/i, "")),
+        bad: comparisonLines.filter((entry) => /^Bad\s+/i.test(entry)).map((entry) => entry.replace(/^Bad\s+[^:]{0,32}:\s*/i, "")),
+      });
       continue;
     }
 
     if (isBulletLine(line)) {
-      const bulletLines: string[] = [];
+      const items: string[] = [];
       while (i < lines.length && isBulletLine(lines[i])) {
-        bulletLines.push(lines[i].replace(/^-\s+/, ""));
+        items.push(lines[i].replace(/^-\s+/, ""));
         i += 1;
       }
-      nodes.push(
-        <ul key={`bullets-${i}`} className="my-5 space-y-3 pl-1">
-          {bulletLines.map((entry, idx) => (
-            <li key={idx} className="flex gap-3 text-base leading-7 text-foreground/90">
-              <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              <span>{renderInlineLabel(entry)}</span>
-            </li>
-          ))}
-        </ul>
-      );
+      current().blocks.push({ type: "bullets", items });
       continue;
     }
 
     if (isCheckboxLine(line)) {
-      const checklistLines: string[] = [];
+      const items: string[] = [];
       while (i < lines.length && isCheckboxLine(lines[i])) {
-        checklistLines.push(lines[i].replace(/^□\s*/, ""));
+        items.push(lines[i].replace(/^□\s*/, ""));
         i += 1;
       }
-      nodes.push(
-        <div key={`checklist-${i}`} className="my-5 space-y-3">
-          {checklistLines.map((entry, idx) => (
-            <div key={idx} className="flex gap-3 rounded-lg border border-border/70 bg-secondary/35 p-3 text-base leading-7 text-foreground/90">
-              <CheckSquare className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <span>{renderInlineLabel(entry)}</span>
-            </div>
-          ))}
-        </div>
-      );
-      continue;
-    }
-
-    if (isStepLine(line)) {
-      const match = line.match(/^(STEP|Step|PHASE)\s+(\d+)/i);
-      nodes.push(
-        <div key={`step-${i}`} className="my-6 flex gap-4 rounded-lg border border-primary/25 bg-card/80 p-4 shadow-sm">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">{match?.[2] || i + 1}</div>
-          <div className="min-w-0 text-base font-semibold leading-7 text-foreground">{line}</div>
-        </div>
-      );
-      i += 1;
-      continue;
-    }
-
-    if (isSectionHeaderLine(line)) {
-      nodes.push(
-        <div key={`header-${i}`} className="pt-7 first:pt-0">
-          <h3 className="text-lg font-bold leading-snug text-primary sm:text-xl">{line}</h3>
-          <div className="mt-3 h-px w-full bg-primary/20" />
-        </div>
-      );
-      i += 1;
+      current().blocks.push({ type: "checklist", items });
       continue;
     }
 
     if (isCalloutLine(line)) {
-      const warning = /^WARNING|\bwarning\b/i.test(line);
-      nodes.push(
-        <div key={`callout-${i}`} className={`my-5 flex gap-3 rounded-lg border p-4 ${warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>
-          {warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Lightbulb className="mt-1 h-5 w-5 shrink-0 text-primary" />}
-          <p className="text-base leading-7 text-foreground/92">{renderInlineLabel(line)}</p>
-        </div>
-      );
+      current().blocks.push({ type: "callout", text: line, warning: /^WARNING|\bwarning\b/i.test(line) });
       i += 1;
       continue;
     }
 
-    nodes.push(<p key={`paragraph-${i}`} className="my-4 text-base leading-8 text-foreground/88 sm:text-[1.03rem]">{renderInlineLabel(line)}</p>);
+    if (isTermLine(line)) {
+      current().blocks.push({ type: "term", ...parseTermLine(line) });
+      i += 1;
+      continue;
+    }
+
+    current().blocks.push({ type: "paragraph", text: line });
     i += 1;
   }
 
-  return <div className="space-y-2">{nodes}</div>;
+  return sections.filter((section) => section.blocks.length > 0);
+};
+
+const StepSequence = ({ steps }: { steps: { title: string; body: string[] }[] }) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const step = steps[activeStep];
+  const match = step.title.match(/^(STEP|Step|PHASE)\s+(\d+)/i);
+
+  return (
+    <div className="rounded-lg border border-primary/25 bg-primary/5 p-3 sm:p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-primary">Step sequence</div>
+        <div className="text-xs text-muted-foreground">{activeStep + 1} / {steps.length}</div>
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={activeStep} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2 }} className="rounded-lg border border-border/70 bg-card/80 p-4">
+          <div className="mb-3 flex gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">{match?.[2] || activeStep + 1}</div>
+            <h4 className="text-base font-bold leading-snug text-foreground sm:text-lg">{step.title}</h4>
+          </div>
+          <div className="space-y-3 text-base leading-8 text-foreground/90">
+            {step.body.length > 0 ? step.body.map((line, idx) => <p key={idx}>{renderInlineLabel(line)}</p>) : <p>Complete this step before moving forward.</p>}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex gap-1.5">
+          {steps.map((_, idx) => <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === activeStep ? "w-6 bg-primary" : "w-1.5 bg-muted"}`} />)}
+        </div>
+        <Button size="sm" variant={activeStep === steps.length - 1 ? "outline" : "default"} onClick={() => setActiveStep((value) => value === steps.length - 1 ? 0 : value + 1)} className="gap-2">
+          {activeStep === steps.length - 1 ? "Review Steps" : "Next Step"}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const InteractiveChecklist = ({ items }: { items: string[] }) => {
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  return (
+    <div className="space-y-3">
+      {items.map((entry, idx) => (
+        <label key={idx} className="flex cursor-pointer gap-3 rounded-lg border border-border/70 bg-secondary/25 p-3 text-base leading-7 text-foreground/90 transition-colors hover:bg-secondary/40">
+          <Checkbox checked={!!checked[idx]} onCheckedChange={(value) => setChecked((prev) => ({ ...prev, [idx]: value === true }))} className="mt-1" />
+          <span className={checked[idx] ? "text-muted-foreground line-through" : ""}>{renderInlineLabel(entry)}</span>
+        </label>
+      ))}
+    </div>
+  );
+};
+
+const TermRevealCard = ({ term, definition }: { term: string; definition: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <button type="button" onClick={() => setOpen((value) => !value)} className="w-full rounded-lg border border-primary/20 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-bold text-primary"><Eye className="h-4 w-4" />{term}</div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tap to {open ? "hide" : "reveal"}</span>
+      </div>
+      {open && <p className="mt-3 text-base leading-8 text-foreground/90">{definition}</p>}
+    </button>
+  );
+};
+
+const renderBlock = (block: ContentBlock, key: number): ReactNode => {
+  if (block.type === "paragraph") return <p key={key} className="text-base leading-8 text-foreground/90 sm:text-[1.03rem]">{renderInlineLabel(block.text)}</p>;
+  if (block.type === "bullets") return <ul key={key} className="space-y-3">{block.items.map((entry, idx) => <li key={idx} className="flex gap-3 text-base leading-8 text-foreground/90"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" /><span>{renderInlineLabel(entry)}</span></li>)}</ul>;
+  if (block.type === "checklist") return <InteractiveChecklist key={key} items={block.items} />;
+  if (block.type === "callout") return <div key={key} className={`flex gap-3 rounded-lg border p-4 ${block.warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>{block.warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Zap className="mt-1 h-5 w-5 shrink-0 text-primary" />}<p className="text-base leading-8 text-foreground/90">{renderInlineLabel(block.text)}</p></div>;
+  if (block.type === "comparison") return <div key={key} className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg border border-success/30 bg-success/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="h-4 w-4" />Good</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.good.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div><div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive"><XCircle className="h-4 w-4" />Bad</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.bad.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div></div>;
+  if (block.type === "steps") return <StepSequence key={key} steps={block.steps} />;
+  return <TermRevealCard key={key} term={block.term} definition={block.definition} />;
+};
+
+const RichReadingContent = ({ content }: { content: string }) => {
+  const [page, setPage] = useState(0);
+  const sections = useMemo(() => parseReadingContent(content), [content]);
+  const readingMinutes = Math.max(1, Math.ceil(content.split(/\s+/).filter(Boolean).length / 180));
+  const pageCount = Math.min(3, Math.max(1, sections.length));
+  const chunkSize = Math.ceil(sections.length / pageCount);
+  const pages = Array.from({ length: pageCount }, (_, idx) => sections.slice(idx * chunkSize, idx * chunkSize + chunkSize)).filter((items) => items.length > 0);
+  const activePage = Math.min(page, pages.length - 1);
+
+  useEffect(() => setPage(0), [content]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Clock className="h-4 w-4 text-primary" />{readingMinutes} min read</div>
+        <div className="flex items-center gap-2" aria-label="Chapter pages">
+          {pages.map((_, idx) => <button key={idx} type="button" onClick={() => setPage(idx)} className={`h-2.5 rounded-full transition-all ${idx === activePage ? "w-8 bg-primary" : "w-2.5 bg-muted hover:bg-primary/50"}`} aria-label={`Go to page ${idx + 1}`} />)}
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={activePage} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }} className="space-y-5">
+          {pages[activePage]?.map((section, sectionIdx) => (
+            <section key={`${section.title}-${sectionIdx}`} className="rounded-lg border border-primary/15 bg-card/75 p-5 shadow-sm sm:p-6">
+              <div className="mb-5 flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+                  {sectionIdx % 3 === 0 ? <Layers className="h-5 w-5" /> : sectionIdx % 3 === 1 ? <Star className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Section</div>
+                  <h2 className="text-xl font-bold leading-snug text-primary sm:text-2xl">{section.title}</h2>
+                </div>
+              </div>
+              <div className="space-y-5">{section.blocks.map(renderBlock)}</div>
+            </section>
+          ))}
+        </motion.div>
+      </AnimatePresence>
+
+      {pages.length > 1 && (
+        <div className="flex justify-end">
+          <Button onClick={() => setPage((value) => Math.min(value + 1, pages.length - 1))} disabled={activePage === pages.length - 1} className="gap-2">
+            Next Page
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export function ChapterRunner({
