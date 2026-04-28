@@ -12,6 +12,7 @@ import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Module {
   id: string;
@@ -229,6 +230,8 @@ export default function AdminTrainingTrack() {
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
+  const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
+  const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
     () => chapters.filter((c) => c.module_id === selectedModuleId),
     [chapters, selectedModuleId]
@@ -376,6 +379,8 @@ export default function AdminTrainingTrack() {
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
+        lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
+        unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         onClose={() => setRunner(null)}
         onCompleted={() => setReloadTick((t) => t + 1)}
       />
@@ -572,15 +577,13 @@ export default function AdminTrainingTrack() {
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
               </div>}
 
-              {selectedModule.is_locked && !isGlossaryModule ? (
-                <div className="rounded-xl border border-border/50 bg-secondary/35 p-8 text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-                    <Lock className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">Module Locked</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">Complete previous module to unlock.</p>
+              {selectedModule.is_locked && !isGlossaryModule && (
+                <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+                  {lockedModuleMessage}
                 </div>
-              ) : isGlossaryModule || (isModule1 && showModule1Glossary) ? (
+              )}
+
+              {isGlossaryModule || (isModule1 && showModule1Glossary) ? (
                 <div className="space-y-5">
                   {isModule1 && (
                     <div className="flex items-center justify-between gap-3">
@@ -700,7 +703,7 @@ export default function AdminTrainingTrack() {
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
                     const prevDone = !prev || isChapterComplete(prev.id);
-                    const unlocked = !selectedModule.is_locked && prevDone;
+                    const unlocked = selectedModule.is_locked || prevDone;
                     return (
                       <button
                         key={c.id}
@@ -756,7 +759,7 @@ export default function AdminTrainingTrack() {
                 )}
               </div>}
 
-              {isModule6 && !isGlossaryModule && !selectedModule.is_locked && (
+              {isModule6 && !isGlossaryModule && (
                 <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -780,7 +783,7 @@ export default function AdminTrainingTrack() {
                                 type="button"
                                 onClick={() => {
                                   setFlippedFlashcards((prev) => ({ ...prev, [card.id]: !prev[card.id] }));
-                                  markFlashcardReviewed(card);
+                                  if (!selectedModule.is_locked) markFlashcardReviewed(card);
                                 }}
                                 className="min-h-[180px] rounded-xl border border-border/50 bg-secondary/35 p-4 text-left transition-colors hover:bg-secondary/55"
                               >
@@ -793,7 +796,7 @@ export default function AdminTrainingTrack() {
                                 {flipped ? (
                                   <p className="mt-3 text-sm leading-relaxed text-foreground/85">{card.back}</p>
                                 ) : (
-                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">Tap to reveal and mark reviewed</p>
+                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{selectedModule.is_locked ? "Tap to reveal preview" : "Tap to reveal and mark reviewed"}</p>
                                 )}
                               </button>
                             );
@@ -807,6 +810,8 @@ export default function AdminTrainingTrack() {
                       <Badge className="gap-2 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,65%)] hover:bg-[hsl(152,60%,50%)]/15">
                         <CheckCircle2 className="h-4 w-4" /> Drill Complete
                       </Badge>
+                    ) : selectedModule.is_locked ? (
+                      <span className="text-xs text-muted-foreground">Unlock Module 6 to submit this drill.</span>
                     ) : module6DrillReady ? (
                       <Button onClick={completeModule6Drill} className="gap-2">
                         <CheckCircle2 className="h-4 w-4" />
@@ -819,7 +824,7 @@ export default function AdminTrainingTrack() {
                 </div>
               )}
 
-              {!isGlossaryModule && !selectedModule.is_locked && (() => {
+              {!isGlossaryModule && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
@@ -828,7 +833,7 @@ export default function AdminTrainingTrack() {
                 return (
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      disabled={selectedModule.is_locked || selectedChapters.length === 0}
+                      disabled={selectedChapters.length === 0}
                       onClick={() => {
                         const firstUndone = selectedChapters.find(
                           (c) => !isChapterComplete(c.id)
@@ -847,17 +852,26 @@ export default function AdminTrainingTrack() {
                       {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
                     </Button>
 
-                    <Button
-                      variant={testUnlocked && !moduleDone ? "default" : "outline"}
-                      disabled={!testUnlocked || selectedModule.is_locked}
-                      onClick={() =>
-                        setRunner({ mode: "module_test", moduleId: selectedModule.id })
-                      }
-                      className="gap-2"
-                    >
-                      <Award className="h-4 w-4" />
-                      {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
+                              disabled={!testUnlocked || selectedModule.is_locked}
+                              onClick={() =>
+                                setRunner({ mode: "module_test", moduleId: selectedModule.id })
+                              }
+                              className="gap-2"
+                            >
+                              <Award className="h-4 w-4" />
+                              {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 );
               })()}
