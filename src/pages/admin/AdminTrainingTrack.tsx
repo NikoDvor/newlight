@@ -227,9 +227,14 @@ export default function AdminTrainingTrack() {
   const numberedModules = modules.filter((m) => m.module_number > 0).sort((a, b) => a.module_number - b.module_number);
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
+  const isModule1 = selectedModule?.module_number === 1;
   const selectedChapters = useMemo(
     () => chapters.filter((c) => c.module_id === selectedModuleId),
     [chapters, selectedModuleId]
+  );
+  const glossaryChapter = useMemo(
+    () => chapters.find((c) => c.module_id === glossaryModule?.id) || null,
+    [chapters, glossaryModule?.id]
   );
 
   const getChapterLevelCount = (chapterId: string) =>
@@ -292,11 +297,12 @@ export default function AdminTrainingTrack() {
 
   const selectedGlossaryTerms = useMemo(() => {
     const q = glossarySearch.trim().toLowerCase();
+    const sourceModuleId = glossaryModule?.id || selectedModuleId;
     return glossaryTerms
-      .filter((term) => term.module_id === selectedModuleId)
+      .filter((term) => term.module_id === sourceModuleId)
       .filter((term) => !q || `${term.term} ${term.definition} ${term.usage_example}`.toLowerCase().includes(q))
       .sort((a, b) => a.category.localeCompare(b.category) || a.sort_order - b.sort_order || a.term.localeCompare(b.term));
-  }, [glossarySearch, glossaryTerms, selectedModuleId]);
+  }, [glossaryModule?.id, glossarySearch, glossaryTerms, selectedModuleId]);
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
@@ -310,14 +316,15 @@ export default function AdminTrainingTrack() {
   }, [flashcards]);
 
   const markGlossaryReviewed = async () => {
-    const chapter = selectedChapters[0];
-    if (!trackId || !selectedModule || !chapter) return;
+    const targetModule = isGlossaryModule ? selectedModule : glossaryModule;
+    const chapter = isGlossaryModule ? selectedChapters[0] : glossaryChapter;
+    if (!trackId || !targetModule || !chapter) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const payload = {
       user_id: user.id,
       track_id: trackId,
-      module_id: selectedModule.id,
+      module_id: targetModule.id,
       status: "completed",
       score: 100,
       attempts: 1,
@@ -331,13 +338,15 @@ export default function AdminTrainingTrack() {
   };
 
   const addGlossaryTerm = async () => {
-    if (!trackId || !selectedModule || !selectedChapters[0] || !newTerm.term.trim() || !newTerm.definition.trim()) return;
+    const targetModule = isGlossaryModule ? selectedModule : glossaryModule;
+    const chapter = isGlossaryModule ? selectedChapters[0] : glossaryChapter;
+    if (!trackId || !targetModule || !chapter || !newTerm.term.trim() || !newTerm.definition.trim()) return;
     setSavingGlossary(true);
     try {
       const { error } = await (supabase as any).from("nl_training_glossary_terms").insert({
         track_id: trackId,
-        module_id: selectedModule.id,
-        chapter_id: selectedChapters[0].id,
+        module_id: targetModule.id,
+        chapter_id: chapter.id,
         category: newTerm.category,
         term: newTerm.term.trim(),
         definition: newTerm.definition.trim(),
