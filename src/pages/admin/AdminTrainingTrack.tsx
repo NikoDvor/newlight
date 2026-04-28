@@ -412,7 +412,7 @@ export default function AdminTrainingTrack() {
         >
           <div className="p-4 border-b border-border/40">
             <h3 className="section-title">BDR Training Track</h3>
-            <p className="mt-1 text-[11px] text-muted-foreground">Reference tools and numbered modules</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Numbered modules</p>
           </div>
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
             {loading ? (
@@ -423,40 +423,6 @@ export default function AdminTrainingTrack() {
               </div>
             ) : (
               <>
-                {trackKey === "bdr" && glossaryModule && (() => {
-                  const status = moduleStatus(glossaryModule.id);
-                  const isSelected = selectedModuleId === glossaryModule.id;
-                  return (
-                    <button
-                      key={glossaryModule.id}
-                      onClick={() => setSelectedModuleId(glossaryModule.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 ${isSelected ? "bg-primary/10" : "bg-secondary/35 hover:bg-primary/5"}`}
-                      style={isSelected ? { boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))" } : undefined}
-                    >
-                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] font-semibold truncate ${isSelected ? "text-primary" : "text-foreground/90"}`}>Terminology & Glossary</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground font-medium">{status === "completed" ? "Complete" : "Reference"}</p>
-                      </div>
-                    </button>
-                  );
-                })()}
-                {trackKey === "bdr" && (
-                  <button
-                    onClick={() => navigate("/admin/training-center/bdr/flashcards")}
-                    className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
-                  >
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
-                      <Layers className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-foreground/90 truncate">Flashcards</p>
-                      <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
-                    </div>
-                  </button>
-                )}
                 {numberedModules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
