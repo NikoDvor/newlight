@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -223,6 +223,8 @@ export default function AdminTrainingTrack() {
     return "not_started";
   };
 
+  const glossaryModule = modules.find((m) => m.module_number === 0) || null;
+  const numberedModules = modules.filter((m) => m.module_number > 0).sort((a, b) => a.module_number - b.module_number);
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const selectedChapters = useMemo(
