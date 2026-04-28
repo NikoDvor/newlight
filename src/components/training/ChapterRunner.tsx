@@ -137,11 +137,11 @@ interface ContentSection {
   blocks: ContentBlock[];
 }
 
-const isTermLine = (line: string) => /^[A-Z][A-Za-z0-9 /&()'’.-]{2,42}\s+[—–-]\s+.{12,}$/.test(line.trim());
+const isTermLine = (line: string) => /^[A-Z][A-Za-z0-9 /&()'’.-]{2,42}\s+[—–-]\s+.{12,}$/.test(stripMarkdown(line));
 
 const parseTermLine = (line: string) => {
-  const [term, ...rest] = line.split(/\s+[—–-]\s+/);
-  return { term: term.trim(), definition: rest.join(" — ").trim() };
+  const [term, ...rest] = stripMarkdown(line).split(/\s+[—–-]\s+/);
+  return { term: stripMarkdown(term), definition: stripMarkdown(rest.join(" — ")) };
 };
 
 const parseReadingContent = (content: string): ContentSection[] => {
@@ -153,14 +153,34 @@ const parseReadingContent = (content: string): ContentSection[] => {
   while (i < lines.length) {
     const line = lines[i];
 
-    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().blocks.length > 0) {
-      sections.push({ title: line.replace(/:$/, ""), blocks: [] });
+    if (isMarkdownH1(line)) {
+      const title = stripMarkdown(line).replace(/:$/, "");
+      if (current().blocks.length === 0 && current().title === "Overview") current().title = title;
+      else sections.push({ title, blocks: [] });
       i += 1;
       continue;
     }
 
-    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().title === "Overview") {
-      current().title = line.replace(/:$/, "");
+    if (isPhaseLine(line)) {
+      current().blocks.push({ type: "phaseDivider", text: stripMarkdown(line).replace(/:$/, "") });
+      i += 1;
+      continue;
+    }
+
+    if (isMarkdownH2(line)) {
+      current().blocks.push({ type: "subheading", text: stripMarkdown(line).replace(/:$/, "") });
+      i += 1;
+      continue;
+    }
+
+    if (isSectionHeaderLine(line) && current().blocks.length > 0) {
+      sections.push({ title: stripMarkdown(line).replace(/:$/, ""), blocks: [] });
+      i += 1;
+      continue;
+    }
+
+    if (isSectionHeaderLine(line) && current().title === "Overview") {
+      current().title = stripMarkdown(line).replace(/:$/, "");
       i += 1;
       continue;
     }
@@ -171,11 +191,11 @@ const parseReadingContent = (content: string): ContentSection[] => {
         const title = lines[i];
         i += 1;
         const body: string[] = [];
-        while (i < lines.length && !isStepLine(lines[i]) && !isSectionHeaderLine(lines[i]) && !isPhaseLine(lines[i]) && !isComparisonLine(lines[i]) && !isCheckboxLine(lines[i]) && !isBulletLine(lines[i])) {
+        while (i < lines.length && !isStepLine(lines[i]) && !isMarkdownH1(lines[i]) && !isMarkdownH2(lines[i]) && !isSectionHeaderLine(lines[i]) && !isPhaseLine(lines[i]) && !isComparisonLine(lines[i]) && !isCheckboxLine(lines[i]) && !isBulletLine(lines[i]) && !isNumberedLine(lines[i])) {
           body.push(lines[i]);
           i += 1;
         }
-        steps.push({ title, body });
+        steps.push({ title: stripMarkdown(title), body });
       }
       current().blocks.push({ type: "steps", steps });
       continue;
@@ -198,17 +218,28 @@ const parseReadingContent = (content: string): ContentSection[] => {
     if (isBulletLine(line)) {
       const items: string[] = [];
       while (i < lines.length && isBulletLine(lines[i])) {
-        items.push(lines[i].replace(/^-\s+/, ""));
+        items.push(stripMarkdown(lines[i].replace(/^[-—]\s+/, "")));
         i += 1;
       }
       current().blocks.push({ type: "bullets", items });
       continue;
     }
 
+    if (isNumberedLine(line)) {
+      const items: { number: string; text: string }[] = [];
+      while (i < lines.length && isNumberedLine(lines[i])) {
+        const match = lines[i].match(/^(\d+)\.\s+(.+)$/);
+        if (match) items.push({ number: match[1], text: stripMarkdown(match[2]) });
+        i += 1;
+      }
+      current().blocks.push({ type: "numbered", items });
+      continue;
+    }
+
     if (isCheckboxLine(line)) {
       const items: string[] = [];
       while (i < lines.length && isCheckboxLine(lines[i])) {
-        items.push(lines[i].replace(/^□\s*/, ""));
+        items.push(stripMarkdown(lines[i].replace(/^□\s*/, "")));
         i += 1;
       }
       current().blocks.push({ type: "checklist", items });
