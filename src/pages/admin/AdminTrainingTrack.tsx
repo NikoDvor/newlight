@@ -39,6 +39,7 @@ interface ProgressRow {
   module_id: string;
   chapter_id: string | null;
   status: string;
+  score?: number | null;
 }
 
 interface GlossaryTerm {
@@ -49,6 +50,21 @@ interface GlossaryTerm {
   definition: string;
   usage_example: string;
   sort_order: number;
+}
+
+interface FlashcardRow {
+  id: string;
+  category: string;
+  front: string;
+  back: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+}
+
+interface FlashcardProgressRow {
+  flashcard_id: string;
+  status: string;
+  times_seen: number;
+  last_seen_at: string | null;
 }
 
 const GLOSSARY_CATEGORIES = [
@@ -69,6 +85,9 @@ export default function AdminTrainingTrack() {
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [flashcards, setFlashcards] = useState<FlashcardRow[]>([]);
+  const [flashProgress, setFlashProgress] = useState<Record<string, FlashcardProgressRow>>({});
+  const [flippedFlashcards, setFlippedFlashcards] = useState<Record<string, boolean>>({});
   const [flashcardStats, setFlashcardStats] = useState({ total: 0, mastered: 0 });
   const [glossarySearch, setGlossarySearch] = useState("");
   const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
@@ -140,7 +159,7 @@ export default function AdminTrainingTrack() {
 
         const { data: prog } = await supabase
           .from("nl_training_progress")
-          .select("module_id, chapter_id, status")
+          .select("module_id, chapter_id, status, score")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
 
@@ -153,21 +172,28 @@ export default function AdminTrainingTrack() {
         if (track.track_name && (trackKey || "bdr") === "bdr") {
           const { data: cards } = await (supabase as any)
             .from("nl_training_flashcards")
-            .select("id")
-            .eq("track_key", "bdr");
-          const cardIds = (cards || []).map((card: { id: string }) => card.id);
+            .select("id, category, front, back, difficulty")
+            .eq("track_key", "bdr")
+            .order("category");
+          const cardRows = (cards || []) as FlashcardRow[];
+          setFlashcards(cardRows);
+          const cardIds = cardRows.map((card) => card.id);
           let mastered = 0;
+          const mappedProgress: Record<string, FlashcardProgressRow> = {};
           if (cardIds.length > 0) {
             const { data: flashProgress } = await (supabase as any)
               .from("nl_training_flashcard_progress")
-              .select("flashcard_id, status, last_seen_at")
+              .select("flashcard_id, status, times_seen, last_seen_at")
               .eq("user_id", user.id)
               .in("flashcard_id", cardIds);
             const now = Date.now();
-            mastered = (flashProgress || []).filter((row: { status: string; last_seen_at: string | null }) =>
-              row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() <= 7 * 24 * 60 * 60 * 1000
-            ).length;
+            (flashProgress || []).forEach((row: FlashcardProgressRow) => {
+              const stale = row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() > 7 * 24 * 60 * 60 * 1000;
+              mappedProgress[row.flashcard_id] = stale ? { ...row, status: "learning" } : row;
+            });
+            mastered = Object.values(mappedProgress).filter((row) => row.status === "mastered").length;
           }
+          setFlashProgress(mappedProgress);
           setFlashcardStats({ total: cardIds.length, mastered });
 
           const { data: cert } = await supabase
@@ -215,6 +241,41 @@ export default function AdminTrainingTrack() {
     return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
   };
 
+  const markFlashcardReviewed = async (card: FlashcardRow) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const current = flashProgress[card.id];
+    const next = {
+      user_id: user.id,
+      flashcard_id: card.id,
+      status: current?.status === "mastered" ? "mastered" : "learning",
+      times_seen: (current?.times_seen || 0) + 1,
+      last_seen_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any)
+      .from("nl_training_flashcard_progress")
+      .upsert(next, { onConflict: "user_id,flashcard_id" });
+    if (!error) setFlashProgress((prev) => ({ ...prev, [card.id]: next }));
+  };
+
+  const completeModule6Drill = async () => {
+    if (!trackId || !selectedModule || selectedModule.module_number !== 6) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("nl_training_progress").upsert({
+      user_id: user.id,
+      track_id: trackId,
+      module_id: selectedModule.id,
+      chapter_id: null,
+      status: "in_progress",
+      score: 100,
+      attempts: 1,
+      last_attempt_at: new Date().toISOString(),
+    }, { onConflict: "user_id,module_id,chapter_id" } as any);
+    setReloadTick((t) => t + 1);
+    toast({ title: "Objection drill complete", description: "Module 6 test is now unlocked." });
+  };
+
   const moduleChapterPct = (moduleId: string) => {
     const module = modules.find((m) => m.id === moduleId);
     const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
@@ -234,6 +295,17 @@ export default function AdminTrainingTrack() {
       .filter((term) => !q || `${term.term} ${term.definition} ${term.usage_example}`.toLowerCase().includes(q))
       .sort((a, b) => a.term.localeCompare(b.term));
   }, [glossarySearch, glossaryTerms, selectedModuleId]);
+
+  const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
+  const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
+  const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
+  const module6DrillComplete = !!selectedModule && progress.some((p) => p.module_id === selectedModule.id && !p.chapter_id && p.status === "in_progress" && p.score === 100);
+  const flashcardsByCategory = useMemo(() => {
+    return flashcards.reduce<Record<string, FlashcardRow[]>>((acc, card) => {
+      acc[card.category] = [...(acc[card.category] || []), card];
+      return acc;
+    }, {});
+  }, [flashcards]);
 
   const markGlossaryReviewed = async () => {
     const chapter = selectedChapters[0];
@@ -626,11 +698,75 @@ export default function AdminTrainingTrack() {
                 )}
               </div>}
 
+              {isModule6 && !isGlossaryModule && (
+                <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="section-title">Objection Drill</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Complete Objection Drill before taking the Module 6 test.</p>
+                    </div>
+                    <Badge variant="outline" className="w-fit border-primary/30 text-primary">{module6ReviewedCount} of {flashcards.length || 28} cards reviewed</Badge>
+                  </div>
+                  <Progress value={flashcards.length ? (module6ReviewedCount / flashcards.length) * 100 : 0} className="h-1.5" />
+                  <div className="max-h-[560px] overflow-y-auto pr-1 space-y-4">
+                    {Object.entries(flashcardsByCategory).map(([category, cards]) => (
+                      <section key={category} className="space-y-2">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{category}</h4>
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                          {cards.map((card) => {
+                            const reviewed = (flashProgress[card.id]?.times_seen || 0) > 0;
+                            const flipped = !!flippedFlashcards[card.id];
+                            return (
+                              <button
+                                key={card.id}
+                                type="button"
+                                onClick={() => {
+                                  setFlippedFlashcards((prev) => ({ ...prev, [card.id]: !prev[card.id] }));
+                                  markFlashcardReviewed(card);
+                                }}
+                                className="min-h-[180px] rounded-xl border border-border/50 bg-secondary/35 p-4 text-left transition-colors hover:bg-secondary/55"
+                              >
+                                <div className="mb-3 flex flex-wrap items-center gap-2">
+                                  <Badge variant="secondary" className="text-[10px]">{card.category}</Badge>
+                                  <Badge variant="outline" className="text-[10px] capitalize">{card.difficulty}</Badge>
+                                  {reviewed && <CheckCircle2 className="ml-auto h-4 w-4 text-[hsl(152,60%,50%)]" />}
+                                </div>
+                                <p className="text-base font-semibold leading-snug text-foreground">“{card.front}”</p>
+                                {flipped ? (
+                                  <p className="mt-3 text-sm leading-relaxed text-foreground/85">{card.back}</p>
+                                ) : (
+                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">Tap to reveal and mark reviewed</p>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                  <div className="flex justify-end">
+                    {module6DrillComplete ? (
+                      <Badge className="gap-2 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,65%)] hover:bg-[hsl(152,60%,50%)]/15">
+                        <CheckCircle2 className="h-4 w-4" /> Drill Complete
+                      </Badge>
+                    ) : module6DrillReady ? (
+                      <Button onClick={completeModule6Drill} className="gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Complete Drill
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Review every card to unlock completion.</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {!isGlossaryModule && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
+                const testUnlocked = allChaptersDone && (!isModule6 || module6DrillComplete);
                 return (
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -654,15 +790,15 @@ export default function AdminTrainingTrack() {
                     </Button>
 
                     <Button
-                      variant={allChaptersDone && !moduleDone ? "default" : "outline"}
-                      disabled={!allChaptersDone || selectedModule.is_locked}
+                      variant={testUnlocked && !moduleDone ? "default" : "outline"}
+                      disabled={!testUnlocked || selectedModule.is_locked}
                       onClick={() =>
                         setRunner({ mode: "module_test", moduleId: selectedModule.id })
                       }
                       className="gap-2"
                     >
                       <Award className="h-4 w-4" />
-                      {moduleDone ? "Module Test Passed" : "Take Module Test"}
+                      {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
                     </Button>
                   </div>
                 );
