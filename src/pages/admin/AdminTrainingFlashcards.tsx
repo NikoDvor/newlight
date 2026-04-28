@@ -165,7 +165,7 @@ export default function AdminTrainingFlashcards() {
       toast({ title: "Progress not saved", description: "Please try again.", variant: "destructive" });
       return;
     }
-    setProgress((prev) => ({ ...prev, [card.id]: { ...next, created_at: current?.created_at || new Date().toISOString() } as any }));
+    setProgress((prev) => ({ ...prev, [card.id]: next }));
   };
 
   const startDrill = () => {
