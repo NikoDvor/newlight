@@ -175,7 +175,7 @@ export function ChapterRunner({
           .eq("chapter_id", chapter.id);
         const levelRows = (levels || []) as LevelProgressRow[];
         setLevelProgress(levelRows);
-        const { data: drillRows } = await supabase
+        const { data: drillRows } = await (supabase as any)
           .from("nl_training_progress")
           .select("status")
           .eq("user_id", user.id)
@@ -191,7 +191,15 @@ export function ChapterRunner({
       }
 
       if (user) {
-        await supabase.from("nl_training_progress").upsert(
+        const { data: existingProgress } = await supabase
+          .from("nl_training_progress")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("module_id", moduleId)
+          .eq("chapter_id", mode === "chapter" && chapter ? chapter.id : null)
+          .maybeSingle();
+        if (!existingProgress || !["completed", "drill_completed"].includes(existingProgress.status)) {
+          await supabase.from("nl_training_progress").upsert(
           {
             user_id: user.id,
             track_id: trackId,
@@ -201,7 +209,8 @@ export function ChapterRunner({
             last_attempt_at: new Date().toISOString(),
           },
           { onConflict: "user_id,module_id,chapter_id" } as any
-        );
+          );
+        }
       }
       setLoading(false);
     };
