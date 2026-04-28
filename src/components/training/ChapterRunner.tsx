@@ -76,11 +76,7 @@ const LEVEL_LABELS: Record<QuizLevel, string> = {
   3: "Mastery",
 };
 
-const MarkdownReadingContent = ({ content }: { content: string }) => (
-  <div className="prose prose-invert max-w-none prose-headings:text-primary prose-p:text-foreground/88 prose-p:leading-8 prose-li:text-foreground/88 prose-strong:text-foreground prose-em:text-muted-foreground">
-    <ReactMarkdown>{content}</ReactMarkdown>
-  </div>
-);
+const MarkdownReadingContent = ({ content }: { content: string }) => <ReactMarkdown>{content}</ReactMarkdown>;
 
 export function ChapterRunner({
   mode,
