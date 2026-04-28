@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ export default function AdminTrainingTrack() {
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [flashcardStats, setFlashcardStats] = useState({ total: 0, mastered: 0 });
   const [glossarySearch, setGlossarySearch] = useState("");
   const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
   const [savingGlossary, setSavingGlossary] = useState(false);
@@ -150,6 +151,25 @@ export default function AdminTrainingTrack() {
         setLevelProgress((levels || []) as LevelProgressRow[]);
 
         if (track.track_name && (trackKey || "bdr") === "bdr") {
+          const { data: cards } = await (supabase as any)
+            .from("nl_training_flashcards")
+            .select("id")
+            .eq("track_key", "bdr");
+          const cardIds = (cards || []).map((card: { id: string }) => card.id);
+          let mastered = 0;
+          if (cardIds.length > 0) {
+            const { data: flashProgress } = await (supabase as any)
+              .from("nl_training_flashcard_progress")
+              .select("flashcard_id, status, last_seen_at")
+              .eq("user_id", user.id)
+              .in("flashcard_id", cardIds);
+            const now = Date.now();
+            mastered = (flashProgress || []).filter((row: { status: string; last_seen_at: string | null }) =>
+              row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() <= 7 * 24 * 60 * 60 * 1000
+            ).length;
+          }
+          setFlashcardStats({ total: cardIds.length, mastered });
+
           const { data: cert } = await supabase
             .from("nl_training_certifications")
             .select("id")
@@ -310,9 +330,9 @@ export default function AdminTrainingTrack() {
                 {modules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
-                  return (
+                    return (
+                      <div key={m.id}>
                     <button
-                      key={m.id}
                       onClick={() => setSelectedModuleId(m.id)}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
                         m.module_number === 0
@@ -370,39 +390,56 @@ export default function AdminTrainingTrack() {
                           )}
                         </div>
                       </div>
-                    </button>
+                      </button>
+                      {trackKey === "bdr" && m.module_number === 0 && (
+                        <button
+                          onClick={() => navigate("/admin/training-center/bdr/flashcards")}
+                          className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
+                        >
+                          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
+                            <Layers className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-foreground/90 truncate">🃏 Flashcards</p>
+                            <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
+                          </div>
+                        </button>
+                      )}
+                      </div>
                   );
                 })}
                 {trackKey === "bdr" && (
-                  <button
-                    onClick={() => overallPct === 100 && navigate("/admin/training-center/bdr/certification")}
-                    disabled={overallPct < 100}
-                    className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
-                      overallPct === 100 ? "hover:bg-white/[0.03]" : "opacity-60 cursor-not-allowed"
-                    }`}
-                  >
-                    <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-secondary">
-                      {hasCertification ? (
-                        <Star className="h-3.5 w-3.5 text-[hsl(var(--nl-gold))]" />
-                      ) : (
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-foreground/85 truncate">Certification Exam</p>
-                      <div className="flex items-center gap-1.5 mt-1">
+                  <>
+                    <button
+                      onClick={() => overallPct === 100 && navigate("/admin/training-center/bdr/certification")}
+                      disabled={overallPct < 100}
+                      className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
+                        overallPct === 100 ? "hover:bg-white/[0.03]" : "opacity-60 cursor-not-allowed"
+                      }`}
+                    >
+                      <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-secondary">
                         {hasCertification ? (
-                          <Badge className="h-5 bg-[hsl(var(--nl-gold)/.16)] text-[hsl(var(--nl-gold))] border border-[hsl(var(--nl-gold)/.28)] hover:bg-[hsl(var(--nl-gold)/.16)] px-2 text-[10px]">
-                            BDR Certified ✓
-                          </Badge>
-                        ) : overallPct === 100 ? (
-                          <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Unlocked</span>
+                          <Star className="h-3.5 w-3.5 text-[hsl(var(--nl-gold))]" />
                         ) : (
-                          <span className="text-[10px] text-muted-foreground font-medium">Certification Locked</span>
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
                       </div>
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium text-foreground/85 truncate">Certification Exam</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {hasCertification ? (
+                            <Badge className="h-5 bg-[hsl(var(--nl-gold)/.16)] text-[hsl(var(--nl-gold))] border border-[hsl(var(--nl-gold)/.28)] hover:bg-[hsl(var(--nl-gold)/.16)] px-2 text-[10px]">
+                              BDR Certified ✓
+                            </Badge>
+                          ) : overallPct === 100 ? (
+                            <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Unlocked</span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-medium">Certification Locked</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </>
                 )}
               </>
             )}
@@ -663,7 +700,7 @@ export default function AdminTrainingTrack() {
           icon={BookOpen}
         />
         <MetricCard label="Current Streak" value="0 days" icon={Flame} />
-        <MetricCard label="Certification" value={hasCertification ? "BDR Certified" : overallPct === 100 ? "Unlocked" : "Not Issued"} icon={Award} />
+        <MetricCard label="Flashcard Mastery" value={`${flashcardStats.mastered}/${flashcardStats.total || 28}`} icon={Layers} />
       </div>
     </div>
   );
