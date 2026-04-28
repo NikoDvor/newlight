@@ -99,7 +99,7 @@ const renderInlineLabel = (line: string) => {
 
 const RichReadingContent = ({ content }: { content: string }) => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const nodes: JSX.Element[] = [];
+  const nodes: React.ReactNode[] = [];
   let i = 0;
 
   while (i < lines.length) {
@@ -128,11 +128,11 @@ const RichReadingContent = ({ content }: { content: string }) => {
         <div key={`comparison-${i}`} className="my-6 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-success/30 bg-success/10 p-4">
             <div className="mb-3 text-sm font-semibold text-success">Good BDR</div>
-            <div className="space-y-2 text-sm leading-7 text-foreground/90">{good.map((entry, idx) => <p key={idx}>{entry.replace(/^Good\s+[^:]{0,32}:\s*/i, "")}</p>)}</div>
+            <div className="space-y-2 text-sm leading-7 text-foreground/90">{good.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry.replace(/^Good\s+[^:]{0,32}:\s*/i, ""))}</p>)}</div>
           </div>
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
             <div className="mb-3 text-sm font-semibold text-destructive">Bad BDR</div>
-            <div className="space-y-2 text-sm leading-7 text-foreground/90">{bad.map((entry, idx) => <p key={idx}>{entry.replace(/^Bad\s+[^:]{0,32}:\s*/i, "")}</p>)}</div>
+            <div className="space-y-2 text-sm leading-7 text-foreground/90">{bad.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry.replace(/^Bad\s+[^:]{0,32}:\s*/i, ""))}</p>)}</div>
           </div>
         </div>
       );
@@ -566,8 +566,8 @@ export function ChapterRunner({
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
             {levelBadges}
             <Progress value={(completedLevels / 3) * 100} className="h-1.5 mb-8" />
-            <div className="space-y-5 sm:space-y-6 max-w-none">
-              {(chapter.content || "").split("\n\n").filter(Boolean).map(formatReadingBlock)}
+            <div className="max-w-none">
+              <RichReadingContent content={chapter.content || ""} />
             </div>
             <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
               <Button onClick={() => resetQuiz(currentLevel)} disabled={currentLevelQuestions.length === 0} className="gap-2">
