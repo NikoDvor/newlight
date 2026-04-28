@@ -12,6 +12,7 @@ import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Module {
   id: string;
@@ -229,6 +230,8 @@ export default function AdminTrainingTrack() {
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
+  const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
+  const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
     () => chapters.filter((c) => c.module_id === selectedModuleId),
     [chapters, selectedModuleId]
@@ -376,6 +379,8 @@ export default function AdminTrainingTrack() {
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
+        lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
+        unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         onClose={() => setRunner(null)}
         onCompleted={() => setReloadTick((t) => t + 1)}
       />
