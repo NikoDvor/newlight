@@ -538,8 +538,8 @@ export function ChapterRunner({
               <Button variant="outline" onClick={onClose}>Close</Button>
               {mode === "chapter" && !passed && <Button onClick={() => resetQuiz(currentLevel)}>Retake Level</Button>}
               {mode === "chapter" && passed && currentLevel < 3 && <Button onClick={() => resetQuiz((currentLevel + 1) as QuizLevel)}>Continue to Level {currentLevel + 1}</Button>}
-              {mode === "chapter" && passed && currentLevel === 3 && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Mark Complete"}</Button>}
-              {mode === "module_test" && passed && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Continue"}</Button>}
+              {!lockedPreview && mode === "chapter" && passed && currentLevel === 3 && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Mark Complete"}</Button>}
+              {!lockedPreview && mode === "module_test" && passed && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Continue"}</Button>}
             </div>
           </motion.div>
         ) : (
