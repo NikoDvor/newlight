@@ -41,8 +41,6 @@ interface AttemptRow {
   attempted_at: string;
   passed: boolean;
   score: number;
-  total_questions: number;
-  module_scores: unknown;
 }
 
 interface StoredAttemptRow extends AttemptRow {
@@ -198,7 +196,7 @@ export default function AdminBDRCertification() {
 
       const { data: attemptData } = await supabase
         .from("nl_training_exam_attempts")
-        .select("attempted_at, passed, score, total_questions, module_scores")
+        .select("attempted_at, passed, score")
         .eq("user_id", user.id)
         .eq("track_id", track.id)
         .order("attempted_at", { ascending: false })
@@ -285,18 +283,6 @@ export default function AdminBDRCertification() {
     });
 
     const passed = correct >= PASSING_SCORE;
-    const moduleScores = modules.map((m) => {
-      const moduleQuestions = questions.filter((q) => q.module_id === m.id);
-      const moduleCorrect = moduleQuestions.filter((q) => finalAnswers[q.id] === q.correct_index).length;
-      return {
-        module_id: m.id,
-        module_number: m.module_number,
-        module_title: m.module_title,
-        correct: moduleCorrect,
-        total: moduleQuestions.length,
-        missed: moduleQuestions.length - moduleCorrect,
-      };
-    });
 
     setScore(correct);
     setReviewModules(modules.filter((m) => wrongModuleIds.has(m.id)));
@@ -308,12 +294,10 @@ export default function AdminBDRCertification() {
         user_id: user.id,
         track_id: trackId,
         score: correct,
-        total_questions: TOTAL_QUESTIONS,
         passed,
-        module_scores: moduleScores as any,
         attempted_at: submittedAt,
       })
-      .select("id, attempted_at, passed, score, total_questions, module_scores")
+      .select("id, attempted_at, passed, score")
       .maybeSingle();
 
     if (attemptError || !attempt) {
