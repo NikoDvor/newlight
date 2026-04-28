@@ -240,6 +240,41 @@ export default function AdminTrainingTrack() {
     return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
   };
 
+  const markFlashcardReviewed = async (card: FlashcardRow) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const current = flashProgress[card.id];
+    const next = {
+      user_id: user.id,
+      flashcard_id: card.id,
+      status: current?.status === "mastered" ? "mastered" : "learning",
+      times_seen: (current?.times_seen || 0) + 1,
+      last_seen_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any)
+      .from("nl_training_flashcard_progress")
+      .upsert(next, { onConflict: "user_id,flashcard_id" });
+    if (!error) setFlashProgress((prev) => ({ ...prev, [card.id]: next }));
+  };
+
+  const completeModule6Drill = async () => {
+    if (!trackId || !selectedModule || selectedModule.module_number !== 6) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("nl_training_progress").upsert({
+      user_id: user.id,
+      track_id: trackId,
+      module_id: selectedModule.id,
+      chapter_id: null,
+      status: "in_progress",
+      score: 100,
+      attempts: 1,
+      last_attempt_at: new Date().toISOString(),
+    }, { onConflict: "user_id,module_id,chapter_id" } as any);
+    setReloadTick((t) => t + 1);
+    toast({ title: "Objection drill complete", description: "Module 6 test is now unlocked." });
+  };
+
   const moduleChapterPct = (moduleId: string) => {
     const module = modules.find((m) => m.id === moduleId);
     const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
