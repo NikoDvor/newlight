@@ -491,7 +491,7 @@ export default function AdminTrainingTrack() {
                     </div>
                   )}
 
-                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  {canManageGlossary && <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                     <h3 className="section-title mb-3">Admin: Add glossary term</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <select
@@ -509,7 +509,7 @@ export default function AdminTrainingTrack() {
                       <PlusCircle className="h-4 w-4" />
                       {savingGlossary ? "Adding…" : "Add Term"}
                     </Button>
-                  </div>
+                  </div>}
 
                   <div className="flex justify-end">
                     <Button onClick={markGlossaryReviewed} className="gap-2">
