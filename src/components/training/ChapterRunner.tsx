@@ -115,6 +115,11 @@ export function ChapterRunner({
   const [lastPassed, setLastPassed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [moduleNumber, setModuleNumber] = useState<number | null>(null);
+  const [drillCompleted, setDrillCompleted] = useState(false);
+  const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
+  const drillLines = SCRIPT_DRILLS[drillKey] || [];
+  const requiresDrill = drillLines.length > 0;
 
   useEffect(() => {
     const load = async () => {
@@ -128,6 +133,13 @@ export function ChapterRunner({
 
       const { data: { user } } = await supabase.auth.getUser();
       setUserId(user?.id ?? null);
+
+      const { data: moduleRow } = await supabase
+        .from("nl_training_modules")
+        .select("module_number")
+        .eq("id", moduleId)
+        .maybeSingle();
+      setModuleNumber(moduleRow?.module_number ?? null);
 
       let q;
       if (mode === "chapter" && chapter) {
@@ -163,6 +175,15 @@ export function ChapterRunner({
           .eq("chapter_id", chapter.id);
         const levelRows = (levels || []) as LevelProgressRow[];
         setLevelProgress(levelRows);
+        const { data: drillRows } = await supabase
+          .from("nl_training_progress")
+          .select("status")
+          .eq("user_id", user.id)
+          .eq("module_id", moduleId)
+          .eq("chapter_id", chapter.id)
+          .eq("status", "drill_completed")
+          .limit(1);
+        setDrillCompleted((drillRows || []).length > 0);
         const nextLevel = ([1, 2, 3] as QuizLevel[]).find(
           (level) => !levelRows.some((row) => row.quiz_level === level && row.status === "completed")
         ) || 3;
@@ -208,6 +229,11 @@ export function ChapterRunner({
     setCorrectCount(0);
     setLastScorePct(0);
     setLastPassed(false);
+    setPhase(requiresDrill && !drillCompleted ? "drill" : "quiz");
+  };
+
+  const handleDrillComplete = () => {
+    setDrillCompleted(true);
     setPhase("quiz");
   };
 
