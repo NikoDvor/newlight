@@ -758,7 +758,7 @@ export default function AdminTrainingTrack() {
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
-                const testUnlocked = allChaptersDone && (!isModule6 || module6DrillReady);
+                const testUnlocked = allChaptersDone && (!isModule6 || module6DrillComplete);
                 return (
                   <div className="flex flex-wrap gap-2">
                     <Button
