@@ -221,6 +221,7 @@ export function ChapterRunner({
   const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
 
   const resetQuiz = (level = currentLevel) => {
+    if (lockedPreview) return;
     setCurrentLevel(level);
     setQIdx(0);
     setSelected(null);
@@ -232,12 +233,13 @@ export function ChapterRunner({
   };
 
   const handleDrillComplete = () => {
+    if (lockedPreview) return;
     setDrillCompleted(true);
     setPhase("quiz");
   };
 
   const handleSelect = (i: number) => {
-    if (revealed) return;
+    if (lockedPreview || revealed) return;
     setSelected(i);
     setRevealed(true);
     if (current && i === current.correct_index) {
@@ -246,7 +248,7 @@ export function ChapterRunner({
   };
 
   const persistLevelResult = async (finalPct: number, didPass: boolean) => {
-    if (!userId || !chapter) return;
+    if (lockedPreview || !userId || !chapter) return;
     await (supabase as any).from("nl_training_chapter_level_progress").upsert(
       {
         user_id: userId,
@@ -288,7 +290,7 @@ export function ChapterRunner({
   };
 
   const persistModuleResult = async (finalPct: number, didPass: boolean) => {
-    if (!userId) return;
+    if (lockedPreview || !userId) return;
     await supabase.from("nl_training_progress").upsert(
       {
         user_id: userId,
@@ -325,6 +327,7 @@ export function ChapterRunner({
   };
 
   const handleNext = async () => {
+    if (lockedPreview) return;
     if (qIdx < totalQ - 1) {
       setQIdx((i) => i + 1);
       setSelected(null);
@@ -349,6 +352,7 @@ export function ChapterRunner({
   };
 
   const handleMarkComplete = async () => {
+    if (lockedPreview) return;
     setSaving(true);
     try {
       if (mode === "chapter" && chapter && userId) {
