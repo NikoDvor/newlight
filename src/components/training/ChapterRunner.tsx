@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare, Zap, Star, Layers, ChevronRight, Eye } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare, Zap, Star, Layers, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
