@@ -402,9 +402,10 @@ export default function AdminTrainingTrack() {
           transition={{ duration: 0.4 }}
         >
           <div className="p-4 border-b border-border/40">
-            <h3 className="section-title">Modules</h3>
+            <h3 className="section-title">BDR Training Track</h3>
+            <p className="mt-1 text-[11px] text-muted-foreground">Reference tools and numbered modules</p>
           </div>
-          <div className="max-h-[600px] overflow-y-auto">
+          <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
             {loading ? (
               <div className="p-4 space-y-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -413,19 +414,49 @@ export default function AdminTrainingTrack() {
               </div>
             ) : (
               <>
-                {modules.map((m) => {
+                {trackKey === "bdr" && glossaryModule && (() => {
+                  const status = moduleStatus(glossaryModule.id);
+                  const isSelected = selectedModuleId === glossaryModule.id;
+                  return (
+                    <button
+                      key={glossaryModule.id}
+                      onClick={() => setSelectedModuleId(glossaryModule.id)}
+                      className={`w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 ${isSelected ? "bg-primary/10" : "bg-secondary/35 hover:bg-primary/5"}`}
+                      style={isSelected ? { boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))" } : undefined}
+                    >
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] font-semibold truncate ${isSelected ? "text-primary" : "text-foreground/90"}`}>Terminology & Glossary</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground font-medium">{status === "completed" ? "Complete" : "Reference"}</p>
+                      </div>
+                    </button>
+                  );
+                })()}
+                {trackKey === "bdr" && (
+                  <button
+                    onClick={() => navigate("/admin/training-center/bdr/flashcards")}
+                    className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
+                  >
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
+                      <Layers className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-foreground/90 truncate">Flashcards</p>
+                      <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
+                    </div>
+                  </button>
+                )}
+                {numberedModules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
                     return (
-                      <div key={m.id}>
                     <button
+                      key={m.id}
                       onClick={() => setSelectedModuleId(m.id)}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
-                        m.module_number === 0
-                          ? isSelected
-                            ? "bg-primary/10 border-primary/25"
-                            : "bg-secondary/35 border-primary/10 hover:bg-primary/5"
-                          : isSelected
+                        isSelected
                             ? "bg-primary/[0.08] border-border/30"
                             : "border-border/30 hover:bg-white/[0.03]"
                       }`}
@@ -446,12 +477,12 @@ export default function AdminTrainingTrack() {
                           color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {m.module_number === 0 ? "📖" : m.module_number}
+                        {m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
-                            {m.module_number === 0 ? "📖 Terminology & Glossary" : m.module_title}
+                            {m.module_title}
                           </p>
                           {m.is_locked && (
                             <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -471,27 +502,12 @@ export default function AdminTrainingTrack() {
                           ) : (
                             <>
                               <Circle className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground font-medium">{m.module_number === 0 ? "Reference" : "Not started"}</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">Not started</span>
                             </>
                           )}
                         </div>
                       </div>
                       </button>
-                      {trackKey === "bdr" && m.module_number === 0 && (
-                        <button
-                          onClick={() => navigate("/admin/training-center/bdr/flashcards")}
-                          className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
-                        >
-                          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
-                            <Layers className="h-3.5 w-3.5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-foreground/90 truncate">🃏 Flashcards</p>
-                            <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
-                          </div>
-                        </button>
-                      )}
-                      </div>
                   );
                 })}
                 {trackKey === "bdr" && (
