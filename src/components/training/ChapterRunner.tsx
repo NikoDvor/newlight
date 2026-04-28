@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,22 +75,148 @@ const LEVEL_LABELS: Record<QuizLevel, string> = {
   3: "Mastery",
 };
 
-const formatReadingBlock = (block: string, i: number) => {
-  const trimmed = block.trim();
-  const isHeading = trimmed.length < 90 && (/^[A-Z0-9 —&:'-]+$/.test(trimmed) || trimmed.startsWith("RULE ") || trimmed.startsWith("STEP "));
-  if (isHeading) {
-    return (
-      <div key={i} className="pt-5 first:pt-0">
-        <h3 className="text-base font-semibold text-foreground tracking-wide">{trimmed}</h3>
-        <div className="mt-2 h-px w-full bg-border/50" />
-      </div>
-    );
-  }
+const isPhaseLine = (line: string) => /^PHASE\s+\d+/i.test(line.trim());
+const isStepLine = (line: string) => /^(STEP|Step)\s+\d+|^PHASE\s+\d+/i.test(line.trim());
+const isBulletLine = (line: string) => /^-\s+/.test(line.trim());
+const isCheckboxLine = (line: string) => /^□\s*/.test(line.trim());
+const isComparisonLine = (line: string) => /^(Good|Bad)\s+[^:]{0,32}:\s*/i.test(line.trim());
+const isCalloutLine = (line: string) => /^(PRO TIP|TIP|WARNING|IMPORTANT|REMEMBER|KEY RULE|RULE)\b/i.test(line.trim()) || /\b(do not|never|must|warning)\b/i.test(line.trim());
+const isSectionHeaderLine = (line: string) => {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length > 110 || isStepLine(trimmed) || isBulletLine(trimmed) || isCheckboxLine(trimmed)) return false;
+  return /^[A-Z0-9][A-Z0-9\s—–&:'’(),.\-/]+:?$/.test(trimmed) && /[A-Z]/.test(trimmed);
+};
+
+const renderInlineLabel = (line: string) => {
+  const match = line.match(/^([^:]{2,44}:)\s*(.*)$/);
+  if (!match) return line;
   return (
-    <p key={i} className="text-base leading-8 text-foreground/88 whitespace-pre-line">
-      {trimmed}
-    </p>
+    <>
+      <span className="font-semibold text-foreground">{match[1]}</span>{" "}{match[2]}
+    </>
   );
+};
+
+const RichReadingContent = ({ content }: { content: string }) => {
+  const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const nodes: JSX.Element[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (isPhaseLine(line)) {
+      nodes.push(
+        <div key={`phase-${i}`} className="my-8 rounded-lg border border-primary/30 bg-primary/10 px-4 py-4 sm:px-5">
+          <div className="text-xs font-semibold uppercase tracking-wider text-primary">Major section</div>
+          <h2 className="mt-1 text-lg font-semibold leading-snug text-foreground sm:text-xl">{line}</h2>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (isComparisonLine(line)) {
+      const comparisonLines: string[] = [];
+      while (i < lines.length && isComparisonLine(lines[i])) {
+        comparisonLines.push(lines[i]);
+        i += 1;
+      }
+      const good = comparisonLines.filter((entry) => /^Good\s+/i.test(entry));
+      const bad = comparisonLines.filter((entry) => /^Bad\s+/i.test(entry));
+      nodes.push(
+        <div key={`comparison-${i}`} className="my-6 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+            <div className="mb-3 text-sm font-semibold text-success">Good BDR</div>
+            <div className="space-y-2 text-sm leading-7 text-foreground/90">{good.map((entry, idx) => <p key={idx}>{entry.replace(/^Good\s+[^:]{0,32}:\s*/i, "")}</p>)}</div>
+          </div>
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+            <div className="mb-3 text-sm font-semibold text-destructive">Bad BDR</div>
+            <div className="space-y-2 text-sm leading-7 text-foreground/90">{bad.map((entry, idx) => <p key={idx}>{entry.replace(/^Bad\s+[^:]{0,32}:\s*/i, "")}</p>)}</div>
+          </div>
+        </div>
+      );
+      continue;
+    }
+
+    if (isBulletLine(line)) {
+      const bulletLines: string[] = [];
+      while (i < lines.length && isBulletLine(lines[i])) {
+        bulletLines.push(lines[i].replace(/^-\s+/, ""));
+        i += 1;
+      }
+      nodes.push(
+        <ul key={`bullets-${i}`} className="my-5 space-y-3 pl-1">
+          {bulletLines.map((entry, idx) => (
+            <li key={idx} className="flex gap-3 text-base leading-7 text-foreground/90">
+              <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+              <span>{renderInlineLabel(entry)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    if (isCheckboxLine(line)) {
+      const checklistLines: string[] = [];
+      while (i < lines.length && isCheckboxLine(lines[i])) {
+        checklistLines.push(lines[i].replace(/^□\s*/, ""));
+        i += 1;
+      }
+      nodes.push(
+        <div key={`checklist-${i}`} className="my-5 space-y-3">
+          {checklistLines.map((entry, idx) => (
+            <div key={idx} className="flex gap-3 rounded-lg border border-border/70 bg-secondary/35 p-3 text-base leading-7 text-foreground/90">
+              <CheckSquare className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <span>{renderInlineLabel(entry)}</span>
+            </div>
+          ))}
+        </div>
+      );
+      continue;
+    }
+
+    if (isStepLine(line)) {
+      const match = line.match(/^(STEP|Step|PHASE)\s+(\d+)/i);
+      nodes.push(
+        <div key={`step-${i}`} className="my-6 flex gap-4 rounded-lg border border-primary/25 bg-card/80 p-4 shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">{match?.[2] || i + 1}</div>
+          <div className="min-w-0 text-base font-semibold leading-7 text-foreground">{line}</div>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (isSectionHeaderLine(line)) {
+      nodes.push(
+        <div key={`header-${i}`} className="pt-7 first:pt-0">
+          <h3 className="text-lg font-bold leading-snug text-primary sm:text-xl">{line}</h3>
+          <div className="mt-3 h-px w-full bg-primary/20" />
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (isCalloutLine(line)) {
+      const warning = /^WARNING|\bwarning\b/i.test(line);
+      nodes.push(
+        <div key={`callout-${i}`} className={`my-5 flex gap-3 rounded-lg border p-4 ${warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>
+          {warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Lightbulb className="mt-1 h-5 w-5 shrink-0 text-primary" />}
+          <p className="text-base leading-7 text-foreground/92">{renderInlineLabel(line)}</p>
+        </div>
+      );
+      i += 1;
+      continue;
+    }
+
+    nodes.push(<p key={`paragraph-${i}`} className="my-4 text-base leading-8 text-foreground/88 sm:text-[1.03rem]">{renderInlineLabel(line)}</p>);
+    i += 1;
+  }
+
+  return <div className="space-y-2">{nodes}</div>;
 };
 
 export function ChapterRunner({
