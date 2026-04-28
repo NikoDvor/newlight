@@ -330,9 +330,9 @@ export default function AdminTrainingTrack() {
                 {modules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
-                  return (
+                    return (
+                      <div key={m.id}>
                     <button
-                      key={m.id}
                       onClick={() => setSelectedModuleId(m.id)}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
                         m.module_number === 0
@@ -390,7 +390,22 @@ export default function AdminTrainingTrack() {
                           )}
                         </div>
                       </div>
-                    </button>
+                      </button>
+                      {trackKey === "bdr" && m.module_number === 0 && (
+                        <button
+                          onClick={() => navigate("/admin/training-center/bdr/flashcards")}
+                          className="w-full text-left px-4 py-3 border-b border-primary/10 transition-all duration-200 flex items-start gap-3 bg-secondary/25 hover:bg-primary/5"
+                        >
+                          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-primary/10">
+                            <Layers className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-foreground/90 truncate">🃏 Flashcards</p>
+                            <p className="mt-1 text-[10px] text-primary font-medium">{flashcardStats.mastered}/{flashcardStats.total || 28} cards mastered</p>
+                          </div>
+                        </button>
+                      )}
+                      </div>
                   );
                 })}
                 {trackKey === "bdr" && (
