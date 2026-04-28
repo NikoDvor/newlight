@@ -580,8 +580,19 @@ export default function AdminTrainingTrack() {
                   <h3 className="text-lg font-semibold text-foreground">Module Locked</h3>
                   <p className="mt-2 text-sm text-muted-foreground">Complete previous module to unlock.</p>
                 </div>
-              ) : isGlossaryModule ? (
+              ) : isGlossaryModule || (isModule1 && showModule1Glossary) ? (
                 <div className="space-y-5">
+                  {isModule1 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <Badge variant="secondary" className="mb-2">Chapter 1.0</Badge>
+                        <h3 className="section-title">Terminology & Glossary</h3>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setShowModule1Glossary(false)}>
+                        Back to Module 1 Chapters
+                      </Button>
+                    </div>
+                  )}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -652,7 +663,7 @@ export default function AdminTrainingTrack() {
                 </div>
               ) : <div className="space-y-2 mb-6">
                 <h3 className="section-title mb-2">Chapters</h3>
-                {selectedChapters.length === 0 ? (
+                {selectedChapters.length === 0 && !(isModule1 && glossaryModule) ? (
                   <div className="rounded-xl border border-dashed border-border/50 p-6 text-center">
                     <BookOpen className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
@@ -660,7 +671,30 @@ export default function AdminTrainingTrack() {
                     </p>
                   </div>
                 ) : (
-                  selectedChapters.map((c, idx) => {
+                  <>
+                    {isModule1 && glossaryModule && (
+                      <button
+                        type="button"
+                        onClick={() => setShowModule1Glossary(true)}
+                        className="w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10 cursor-pointer"
+                      >
+                        {glossaryChapter && isChapterComplete(glossaryChapter.id) ? (
+                          <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0 mt-0.5" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[13px] text-foreground/90 font-medium">1.0. Terminology & Glossary</span>
+                            <span className="text-[10px] text-primary font-medium shrink-0">Open</span>
+                          </div>
+                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                            Review core BDR vocabulary before starting the module content.
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                    {selectedChapters.map((c, idx) => {
                     const levelCount = getChapterLevelCount(c.id);
                     const done = isChapterComplete(c.id);
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
@@ -717,7 +751,8 @@ export default function AdminTrainingTrack() {
                         </div>
                       </button>
                     );
-                  })
+                    })}
+                  </>
                 )}
               </div>}
 
