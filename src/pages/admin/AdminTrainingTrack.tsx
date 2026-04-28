@@ -434,7 +434,7 @@ export default function AdminTrainingTrack() {
                 </div>
               </div>
 
-              <div className="mb-5">
+              {!isGlossaryModule && <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Chapter completion
@@ -444,9 +444,73 @@ export default function AdminTrainingTrack() {
                   </span>
                 </div>
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
-              </div>
+              </div>}
 
-              <div className="space-y-2 mb-6">
+              {isGlossaryModule ? (
+                <div className="space-y-5">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={glossarySearch}
+                      onChange={(event) => setGlossarySearch(event.target.value)}
+                      placeholder="Search terminology, definitions, or examples…"
+                      className="pl-10 h-11"
+                    />
+                  </div>
+
+                  {GLOSSARY_CATEGORIES.map((category) => {
+                    const terms = selectedGlossaryTerms.filter((term) => term.category === category);
+                    if (terms.length === 0) return null;
+                    return (
+                      <section key={category} className="space-y-2">
+                        <h3 className="section-title">{category}</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                          {terms.map((term) => (
+                            <article key={term.id} className="rounded-lg border border-border/40 bg-secondary/25 p-4">
+                              <h4 className="text-sm font-semibold text-primary">{term.term}</h4>
+                              <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{term.definition}</p>
+                              <p className="mt-2 text-[13px] italic leading-relaxed text-muted-foreground">Example: “{term.usage_example}”</p>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+
+                  {selectedGlossaryTerms.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground">
+                      No glossary terms match your search.
+                    </div>
+                  )}
+
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <h3 className="section-title mb-3">Admin: Add glossary term</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <select
+                        value={newTerm.category}
+                        onChange={(event) => setNewTerm((prev) => ({ ...prev, category: event.target.value }))}
+                        className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                      >
+                        {GLOSSARY_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                      </select>
+                      <Input value={newTerm.term} onChange={(event) => setNewTerm((prev) => ({ ...prev, term: event.target.value }))} placeholder="Term name" />
+                      <Textarea value={newTerm.definition} onChange={(event) => setNewTerm((prev) => ({ ...prev, definition: event.target.value }))} placeholder="Definition" className="sm:col-span-2" />
+                      <Textarea value={newTerm.usage_example} onChange={(event) => setNewTerm((prev) => ({ ...prev, usage_example: event.target.value }))} placeholder="Usage example" className="sm:col-span-2" />
+                    </div>
+                    <Button onClick={addGlossaryTerm} disabled={savingGlossary || !newTerm.term.trim() || !newTerm.definition.trim()} className="mt-3 gap-2">
+                      <PlusCircle className="h-4 w-4" />
+                      {savingGlossary ? "Adding…" : "Add Term"}
+                    </Button>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={markGlossaryReviewed} className="gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Mark as Reviewed
+                    </Button>
+                  </div>
+                </div>
+              ) : <div className="space-y-2 mb-6">
                 <h3 className="section-title mb-2">Chapters</h3>
                 {selectedChapters.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/50 p-6 text-center">
@@ -515,7 +579,7 @@ export default function AdminTrainingTrack() {
                     );
                   })
                 )}
-              </div>
+              </div>}
 
               {(() => {
                 const allChaptersDone =
