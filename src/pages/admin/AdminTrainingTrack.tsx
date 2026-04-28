@@ -127,7 +127,7 @@ export default function AdminTrainingTrack() {
       const moduleList = (mods || []) as Module[];
       setModules(moduleList);
       if (moduleList.length > 0 && !selectedModuleId) {
-        setSelectedModuleId(moduleList[0].id);
+        setSelectedModuleId((moduleList.find((m) => m.module_number > 0) || moduleList[0]).id);
       }
 
       if (moduleList.length > 0) {
@@ -848,17 +848,6 @@ export default function AdminTrainingTrack() {
         </motion.div>
       </div>
 
-      {runner && trackId && (
-        <ChapterRunner
-          mode={runner.mode}
-          chapter={runner.mode === "chapter" ? runner.chapter : undefined}
-          moduleId={runner.moduleId}
-          trackId={trackId}
-          onClose={() => setRunner(null)}
-          onCompleted={() => setReloadTick((t) => t + 1)}
-        />
-      )}
-
       {/* Stats bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
@@ -871,7 +860,7 @@ export default function AdminTrainingTrack() {
           value={`${completedModules} / ${totalModules}`}
           icon={BookOpen}
         />
-        <MetricCard label="Current Streak" value="0 days" icon={Flame} />
+        <MetricCard label="Certification Status" value={hasCertification ? "Certified" : overallPct === 100 ? "Ready" : "Locked"} icon={Star} />
         <MetricCard label="Flashcard Mastery" value={`${flashcardStats.mastered}/${flashcardStats.total || 28}`} icon={Layers} />
       </div>
     </div>
