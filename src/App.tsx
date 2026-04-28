@@ -73,6 +73,7 @@ import AdminMonitoring from "./pages/admin/AdminMonitoring";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminTrainingCenter from "./pages/admin/AdminTrainingCenter";
 import AdminTrainingTrack from "./pages/admin/AdminTrainingTrack";
+import AdminTrainingFlashcards from "./pages/admin/AdminTrainingFlashcards";
 import AdminBDRCertification from "./pages/admin/AdminBDRCertification";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
@@ -214,6 +215,7 @@ const App = () => {
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="training-center" element={<AdminTrainingCenter />} />
                 <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
+                <Route path="training-center/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training-center/:trackKey" element={<AdminTrainingTrack />} />
                 <Route path="prospects" element={<AdminProspects />} />
                 <Route path="provision" element={<AdminProvision />} />
