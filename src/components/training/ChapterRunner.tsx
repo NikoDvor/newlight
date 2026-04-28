@@ -436,10 +436,20 @@ export function ChapterRunner({
             </div>
             <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
               <Button onClick={() => resetQuiz(currentLevel)} disabled={currentLevelQuestions.length === 0} className="gap-2">
-                Take Level {currentLevel} Quiz
+                {requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
                 <CheckCircle2 className="h-4 w-4" />
               </Button>
             </div>
+          </motion.div>
+        ) : phase === "drill" && chapter && requiresDrill ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+            <ScriptDrillExercise
+              lines={drillLines}
+              trackId={trackId}
+              moduleId={moduleId}
+              chapterId={chapter.id}
+              onComplete={handleDrillComplete}
+            />
           </motion.div>
         ) : phase === "quiz" && current ? (
           <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
