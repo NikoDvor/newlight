@@ -697,7 +697,7 @@ export default function AdminTrainingTrack() {
           icon={BookOpen}
         />
         <MetricCard label="Current Streak" value="0 days" icon={Flame} />
-        <MetricCard label="Certification" value={hasCertification ? "BDR Certified" : overallPct === 100 ? "Unlocked" : "Not Issued"} icon={Award} />
+        <MetricCard label="Flashcard Mastery" value={`${flashcardStats.mastered}/${flashcardStats.total || 28}`} icon={Layers} />
       </div>
     </div>
   );
