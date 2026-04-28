@@ -581,7 +581,7 @@ export default function AdminTrainingTrack() {
                 )}
               </div>}
 
-              {(() => {
+              {!isGlossaryModule && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
