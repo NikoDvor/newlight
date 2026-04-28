@@ -123,10 +123,19 @@ export default function AdminTrainingFlashcards() {
           .eq("user_id", user.id);
         const now = Date.now();
         const mapped: Record<string, FlashcardProgress> = {};
+        const staleIds: string[] = [];
         (progData || []).forEach((row: FlashcardProgress) => {
           const stale = row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() > 7 * 24 * 60 * 60 * 1000;
+          if (stale) staleIds.push(row.flashcard_id);
           mapped[row.flashcard_id] = stale ? { ...row, status: "learning" } : row;
         });
+        if (staleIds.length > 0) {
+          await (supabase as any)
+            .from("nl_training_flashcard_progress")
+            .update({ status: "learning" })
+            .eq("user_id", user.id)
+            .in("flashcard_id", staleIds);
+        }
         setProgress(mapped);
       }
       setLoading(false);
