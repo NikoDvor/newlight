@@ -90,7 +90,7 @@ export function EmployeeLayout() {
                 <span className="text-sm font-semibold truncate">NewLight Employee Portal</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-3 overflow-x-auto touch-x-scroll">
               <PWAInstallButton />
               <div className="hidden sm:flex flex-col items-end leading-tight">
                 <span className="text-xs font-semibold text-foreground/80 max-w-40 truncate">{name}</span>
@@ -104,10 +104,10 @@ export function EmployeeLayout() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto nl-dark-bg relative">
+          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
-              <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="p-4 sm:p-6 lg:p-10 relative z-1">
+              <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
                 <PWAUpdateBanner />
                 <PWAInstallBanner />
                 <Outlet />
