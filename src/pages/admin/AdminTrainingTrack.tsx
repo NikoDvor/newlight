@@ -39,6 +39,7 @@ interface ProgressRow {
   module_id: string;
   chapter_id: string | null;
   status: string;
+  score?: number | null;
 }
 
 interface GlossaryTerm {
@@ -158,7 +159,7 @@ export default function AdminTrainingTrack() {
 
         const { data: prog } = await supabase
           .from("nl_training_progress")
-          .select("module_id, chapter_id, status")
+          .select("module_id, chapter_id, status, score")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
 
@@ -298,6 +299,7 @@ export default function AdminTrainingTrack() {
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
   const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
+  const module6DrillComplete = !!selectedModule && progress.some((p) => p.module_id === selectedModule.id && !p.chapter_id && p.status === "in_progress" && p.score === 100);
   const flashcardsByCategory = useMemo(() => {
     return flashcards.reduce<Record<string, FlashcardRow[]>>((acc, card) => {
       acc[card.category] = [...(acc[card.category] || []), card];
