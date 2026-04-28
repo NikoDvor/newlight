@@ -593,7 +593,15 @@ export default function AdminTrainingTrack() {
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
               </div>}
 
-              {isGlossaryModule ? (
+              {selectedModule.is_locked && !isGlossaryModule ? (
+                <div className="rounded-xl border border-border/50 bg-secondary/35 p-8 text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                    <Lock className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Module Locked</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">Complete previous module to unlock.</p>
+                </div>
+              ) : isGlossaryModule ? (
                 <div className="space-y-5">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -734,7 +742,7 @@ export default function AdminTrainingTrack() {
                 )}
               </div>}
 
-              {isModule6 && !isGlossaryModule && (
+              {isModule6 && !isGlossaryModule && !selectedModule.is_locked && (
                 <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -797,7 +805,7 @@ export default function AdminTrainingTrack() {
                 </div>
               )}
 
-              {!isGlossaryModule && (() => {
+              {!isGlossaryModule && !selectedModule.is_locked && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
