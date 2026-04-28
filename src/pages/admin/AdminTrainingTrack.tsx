@@ -703,7 +703,7 @@ export default function AdminTrainingTrack() {
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
                     const prevDone = !prev || isChapterComplete(prev.id);
-                    const unlocked = prevDone;
+                    const unlocked = selectedModule.is_locked || prevDone;
                     return (
                       <button
                         key={c.id}
