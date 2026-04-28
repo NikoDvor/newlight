@@ -577,15 +577,13 @@ export default function AdminTrainingTrack() {
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
               </div>}
 
-              {selectedModule.is_locked && !isGlossaryModule ? (
-                <div className="rounded-xl border border-border/50 bg-secondary/35 p-8 text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-                    <Lock className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">Module Locked</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">Complete previous module to unlock.</p>
+              {selectedModule.is_locked && !isGlossaryModule && (
+                <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+                  {lockedModuleMessage}
                 </div>
-              ) : isGlossaryModule || (isModule1 && showModule1Glossary) ? (
+              )}
+
+              {isGlossaryModule || (isModule1 && showModule1Glossary) ? (
                 <div className="space-y-5">
                   {isModule1 && (
                     <div className="flex items-center justify-between gap-3">
@@ -705,7 +703,7 @@ export default function AdminTrainingTrack() {
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
                     const prevDone = !prev || isChapterComplete(prev.id);
-                    const unlocked = !selectedModule.is_locked && prevDone;
+                    const unlocked = prevDone;
                     return (
                       <button
                         key={c.id}
