@@ -306,8 +306,14 @@ export default function AdminTrainingTrack() {
                     <button
                       key={m.id}
                       onClick={() => setSelectedModuleId(m.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-border/30 transition-all duration-200 flex items-start gap-3 ${
-                        isSelected ? "bg-primary/[0.08]" : "hover:bg-white/[0.03]"
+                      className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
+                        m.module_number === 0
+                          ? isSelected
+                            ? "bg-primary/10 border-primary/25"
+                            : "bg-secondary/35 border-primary/10 hover:bg-primary/5"
+                          : isSelected
+                            ? "bg-primary/[0.08] border-border/30"
+                            : "border-border/30 hover:bg-white/[0.03]"
                       }`}
                       style={
                         isSelected
@@ -326,7 +332,7 @@ export default function AdminTrainingTrack() {
                           color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {m.module_number}
+                        {m.module_number === 0 ? "📖" : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -409,7 +415,7 @@ export default function AdminTrainingTrack() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="secondary" className="font-medium">
-                      Module {selectedModule.module_number}
+                      {isGlossaryModule ? "Reference" : `Module ${selectedModule.module_number}`}
                     </Badge>
                     {selectedModule.is_locked && (
                       <Badge variant="outline" className="gap-1">
