@@ -221,6 +221,44 @@
   }
 }
 
+@layer utilities {
+  .overflow-x-auto,
+  .overflow-x-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .overflow-x-auto > table,
+  .overflow-x-scroll > table,
+  [data-radix-scroll-area-viewport] table {
+    min-width: max-content;
+  }
+
+  @media (max-width: 767px) {
+    table {
+      min-width: 640px;
+    }
+
+    .grid.grid-cols-2,
+    .grid.grid-cols-3,
+    .grid.grid-cols-4,
+    .grid.grid-cols-5,
+    .grid.grid-cols-6,
+    .grid.grid-cols-7,
+    .grid.grid-cols-8 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .card-widget,
+    .card-admin,
+    .dash-card,
+    .dash-kpi,
+    .dash-revenue-card {
+      min-width: 0;
+    }
+  }
+}
+
 @layer components {
   .touch-x-scroll {
     overflow-x: auto;
