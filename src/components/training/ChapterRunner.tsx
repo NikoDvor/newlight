@@ -410,6 +410,20 @@ export function ChapterRunner({
     </div>
   );
 
+  const lockedTooltip = `Unlock by completing Module ${unlockModuleNumber ?? "previous"} first`;
+  const lockedBanner = lockedPreview && unlockModuleNumber ? (
+    <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+      Complete Module {unlockModuleNumber} to unlock quizzes and progress tracking for this module
+    </div>
+  ) : null;
+
+  const quizButton = (
+    <Button onClick={() => resetQuiz(currentLevel)} disabled={lockedPreview || currentLevelQuestions.length === 0} className="gap-2">
+      {requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
+      <CheckCircle2 className="h-4 w-4" />
+    </Button>
+  );
+
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
       <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-4 sm:py-10">
@@ -427,6 +441,7 @@ export function ChapterRunner({
           <div className="card-widget text-center py-16 text-muted-foreground text-sm">Loading…</div>
         ) : phase === "reading" && chapter ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="card-widget w-full p-4 sm:p-8">
+            {lockedBanner}
             <div className="flex items-center gap-2 mb-2">
               <BookOpen className="h-4 w-4 text-primary" />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
@@ -436,10 +451,14 @@ export function ChapterRunner({
             <Progress value={(completedLevels / 3) * 100} className="h-1.5 mb-8" />
             <MarkdownReadingContent content={chapter.content || ""} />
             <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
-              <Button onClick={() => resetQuiz(currentLevel)} disabled={currentLevelQuestions.length === 0} className="gap-2">
-                {requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
-                <CheckCircle2 className="h-4 w-4" />
-              </Button>
+              {lockedPreview ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild><span>{quizButton}</span></TooltipTrigger>
+                    <TooltipContent>{lockedTooltip}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : quizButton}
             </div>
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
@@ -450,6 +469,7 @@ export function ChapterRunner({
               moduleId={moduleId}
               chapterId={chapter.id}
               onComplete={handleDrillComplete}
+              lockedPreview={lockedPreview}
             />
           </motion.div>
         ) : phase === "quiz" && current ? (
