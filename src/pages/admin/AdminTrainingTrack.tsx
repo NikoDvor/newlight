@@ -51,6 +51,21 @@ interface GlossaryTerm {
   sort_order: number;
 }
 
+interface FlashcardRow {
+  id: string;
+  category: string;
+  front: string;
+  back: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+}
+
+interface FlashcardProgressRow {
+  flashcard_id: string;
+  status: string;
+  times_seen: number;
+  last_seen_at: string | null;
+}
+
 const GLOSSARY_CATEGORIES = [
   "Sales Fundamentals",
   "Sales Techniques",
@@ -69,6 +84,9 @@ export default function AdminTrainingTrack() {
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [flashcards, setFlashcards] = useState<FlashcardRow[]>([]);
+  const [flashProgress, setFlashProgress] = useState<Record<string, FlashcardProgressRow>>({});
+  const [flippedFlashcards, setFlippedFlashcards] = useState<Record<string, boolean>>({});
   const [flashcardStats, setFlashcardStats] = useState({ total: 0, mastered: 0 });
   const [glossarySearch, setGlossarySearch] = useState("");
   const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
