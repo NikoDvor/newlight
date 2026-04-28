@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 
 export interface QuestionRow {
   id: string;
@@ -27,8 +28,30 @@ export interface ChapterRow {
   module_id: string;
 }
 
-type Phase = "reading" | "quiz" | "result";
+type Phase = "reading" | "drill" | "quiz" | "result";
 type QuizLevel = 1 | 2 | 3;
+
+const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
+  "5.1": [
+    { prompt: "RAPPORT:", answer: "Build rapport first. Comment on the business, the vibe, something real and genuine." },
+    { prompt: "OPENER:", answer: "Hey, quick question — if I lined up 25 new [customers/clients] for you next month, could you handle them?" },
+    { prompt: "SILENCE RULE:", answer: "Let them respond. Don't fill the silence." },
+    { prompt: "HOOK:", answer: "Here's what I mean — right now there are people in [city] searching for exactly what you offer. They're just finding your competition first. What we do is flip that. We make sure those people find you instead and come through your door." },
+    { prompt: "REVEAL SETUP:", answer: "And honestly — I already put something together for you specifically." },
+    { prompt: "REVEAL:", answer: "This is a system I built for your business. It organizes everything on the backend and opens up revenue you're probably sitting on right now but can't see yet. Give me 5 minutes and I'll walk you through it." },
+    { prompt: "APP TIP:", answer: "It shows you exactly where your business is bleeding money and what to do about it." },
+  ],
+  "5.2": [
+    { prompt: "STEP 1 — OWNER CONFIRM:", answer: "Hey, is this the owner?" },
+    { prompt: "STEP 2 — OPENER:", answer: "Quick question — if I could line up 25 new [customers] for you next month, would you have the capacity to take them on?" },
+    { prompt: "STEP 3 — HOOK:", answer: "So the way we do it — there are people in your area searching for [their service] right now, and they're landing on your competition's page. We redirect that traffic to you instead." },
+    { prompt: "STEP 4 — REVEAL:", answer: "I actually spent time building something out for your business specifically. Do you mind if I send it over?" },
+    { prompt: "WAIT RULE:", answer: "Wait for yes." },
+    { prompt: "STEP 5 — BOOK:", answer: "I'd love just 20 minutes to walk you through it. Do mornings, afternoons, or evenings work better for you this week?" },
+    { prompt: "CALENDAR RULE:", answer: "Perfect. I'll send you a calendar link right now while we're on the phone." },
+    { prompt: "SHOW RATE RULE:", answer: "Do not hang up without a booked slot. Show rate drops significantly without this." },
+  ],
+};
 
 interface LevelProgressRow {
   quiz_level: QuizLevel;
