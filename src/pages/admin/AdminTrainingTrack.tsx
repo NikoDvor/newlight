@@ -94,6 +94,7 @@ export default function AdminTrainingTrack() {
   const [savingGlossary, setSavingGlossary] = useState(false);
   const [canManageGlossary, setCanManageGlossary] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [showModule1Glossary, setShowModule1Glossary] = useState(false);
   const [runner, setRunner] = useState<
     | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
     | { mode: "module_test"; moduleId: string }
@@ -429,7 +430,10 @@ export default function AdminTrainingTrack() {
                     return (
                     <button
                       key={m.id}
-                      onClick={() => setSelectedModuleId(m.id)}
+                      onClick={() => {
+                        setSelectedModuleId(m.id);
+                        setShowModule1Glossary(false);
+                      }}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
                         isSelected
                             ? "bg-primary/[0.08] border-border/30"
