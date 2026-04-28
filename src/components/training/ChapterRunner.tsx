@@ -144,6 +144,8 @@ const parseTermLine = (line: string) => {
   return { term: stripMarkdown(term), definition: stripMarkdown(rest.join(" — ")) };
 };
 
+const isExampleLine = (line: string) => /^example\s*:/i.test(stripMarkdown(line)) || /^\*[^*]+\*$/.test(line.trim());
+
 const parseReadingContent = (content: string): ContentSection[] => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const sections: ContentSection[] = [{ title: "Overview", blocks: [] }];
@@ -253,7 +255,12 @@ const parseReadingContent = (content: string): ContentSection[] => {
     }
 
     if (isTermLine(line)) {
-      current().blocks.push({ type: "term", ...parseTermLine(line) });
+      const termBlock: Extract<ContentBlock, { type: "term" }> = { type: "term", ...parseTermLine(line) };
+      if (i + 1 < lines.length && isExampleLine(lines[i + 1])) {
+        termBlock.example = stripMarkdown(lines[i + 1]).replace(/^example\s*:\s*/i, "");
+        i += 1;
+      }
+      current().blocks.push(termBlock);
       i += 1;
       continue;
     }
