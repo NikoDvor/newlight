@@ -171,21 +171,28 @@ export default function AdminTrainingTrack() {
         if (track.track_name && (trackKey || "bdr") === "bdr") {
           const { data: cards } = await (supabase as any)
             .from("nl_training_flashcards")
-            .select("id")
-            .eq("track_key", "bdr");
-          const cardIds = (cards || []).map((card: { id: string }) => card.id);
+            .select("id, category, front, back, difficulty")
+            .eq("track_key", "bdr")
+            .order("category");
+          const cardRows = (cards || []) as FlashcardRow[];
+          setFlashcards(cardRows);
+          const cardIds = cardRows.map((card) => card.id);
           let mastered = 0;
+          const mappedProgress: Record<string, FlashcardProgressRow> = {};
           if (cardIds.length > 0) {
             const { data: flashProgress } = await (supabase as any)
               .from("nl_training_flashcard_progress")
-              .select("flashcard_id, status, last_seen_at")
+              .select("flashcard_id, status, times_seen, last_seen_at")
               .eq("user_id", user.id)
               .in("flashcard_id", cardIds);
             const now = Date.now();
-            mastered = (flashProgress || []).filter((row: { status: string; last_seen_at: string | null }) =>
-              row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() <= 7 * 24 * 60 * 60 * 1000
-            ).length;
+            (flashProgress || []).forEach((row: FlashcardProgressRow) => {
+              const stale = row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() > 7 * 24 * 60 * 60 * 1000;
+              mappedProgress[row.flashcard_id] = stale ? { ...row, status: "learning" } : row;
+            });
+            mastered = Object.values(mappedProgress).filter((row) => row.status === "mastered").length;
           }
+          setFlashProgress(mappedProgress);
           setFlashcardStats({ total: cardIds.length, mastered });
 
           const { data: cert } = await supabase
