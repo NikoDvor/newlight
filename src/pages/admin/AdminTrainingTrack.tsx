@@ -696,11 +696,67 @@ export default function AdminTrainingTrack() {
                 )}
               </div>}
 
+              {isModule6 && !isGlossaryModule && (
+                <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="section-title">Objection Drill</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Complete Objection Drill before taking the Module 6 test.</p>
+                    </div>
+                    <Badge variant="outline" className="w-fit border-primary/30 text-primary">{module6ReviewedCount} of {flashcards.length || 28} cards reviewed</Badge>
+                  </div>
+                  <Progress value={flashcards.length ? (module6ReviewedCount / flashcards.length) * 100 : 0} className="h-1.5" />
+                  <div className="max-h-[560px] overflow-y-auto pr-1 space-y-4">
+                    {Object.entries(flashcardsByCategory).map(([category, cards]) => (
+                      <section key={category} className="space-y-2">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{category}</h4>
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                          {cards.map((card) => {
+                            const reviewed = (flashProgress[card.id]?.times_seen || 0) > 0;
+                            const flipped = !!flippedFlashcards[card.id];
+                            return (
+                              <button
+                                key={card.id}
+                                type="button"
+                                onClick={() => {
+                                  setFlippedFlashcards((prev) => ({ ...prev, [card.id]: !prev[card.id] }));
+                                  markFlashcardReviewed(card);
+                                }}
+                                className="min-h-[180px] rounded-xl border border-border/50 bg-secondary/35 p-4 text-left transition-colors hover:bg-secondary/55"
+                              >
+                                <div className="mb-3 flex flex-wrap items-center gap-2">
+                                  <Badge variant="secondary" className="text-[10px]">{card.category}</Badge>
+                                  <Badge variant="outline" className="text-[10px] capitalize">{card.difficulty}</Badge>
+                                  {reviewed && <CheckCircle2 className="ml-auto h-4 w-4 text-[hsl(152,60%,50%)]" />}
+                                </div>
+                                <p className="text-base font-semibold leading-snug text-foreground">“{card.front}”</p>
+                                {flipped ? (
+                                  <p className="mt-3 text-sm leading-relaxed text-foreground/85">{card.back}</p>
+                                ) : (
+                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">Tap to reveal and mark reviewed</p>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={completeModule6Drill} disabled={!module6DrillReady} className="gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Complete Drill
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {!isGlossaryModule && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
+                const testUnlocked = allChaptersDone && (!isModule6 || module6DrillReady);
                 return (
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -724,15 +780,15 @@ export default function AdminTrainingTrack() {
                     </Button>
 
                     <Button
-                      variant={allChaptersDone && !moduleDone ? "default" : "outline"}
-                      disabled={!allChaptersDone || selectedModule.is_locked}
+                      variant={testUnlocked && !moduleDone ? "default" : "outline"}
+                      disabled={!testUnlocked || selectedModule.is_locked}
                       onClick={() =>
                         setRunner({ mode: "module_test", moduleId: selectedModule.id })
                       }
                       className="gap-2"
                     >
                       <Award className="h-4 w-4" />
-                      {moduleDone ? "Module Test Passed" : "Take Module Test"}
+                      {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
                     </Button>
                   </div>
                 );
