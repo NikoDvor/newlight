@@ -314,27 +314,39 @@ const InteractiveChecklist = ({ items }: { items: string[] }) => {
   );
 };
 
-const TermRevealCard = ({ term, definition }: { term: string; definition: string }) => {
-  const [open, setOpen] = useState(false);
+const TermRevealCard = ({ term, definition, example }: { term: string; definition: string; example?: string }) => {
   return (
-    <button type="button" onClick={() => setOpen((value) => !value)} className="w-full rounded-lg border border-primary/20 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-primary"><Eye className="h-4 w-4" />{term}</div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tap to {open ? "hide" : "reveal"}</span>
-      </div>
-      {open && <p className="mt-3 text-base leading-8 text-foreground/90">{definition}</p>}
-    </button>
+    <div className="border-b border-border/70 pb-4 last:border-b-0 last:pb-0">
+      <div className="text-base font-bold leading-7 text-primary">{renderInlineMarkdown(term)}</div>
+      <p className="mt-1 text-sm leading-7 text-foreground/90">{renderInlineMarkdown(definition)}</p>
+      {example && <p className="mt-1 text-sm italic leading-7 text-muted-foreground">{renderInlineMarkdown(example)}</p>}
+    </div>
   );
 };
 
+const NumberedList = ({ items }: { items: { number: string; text: string }[] }) => (
+  <ol className="space-y-3">
+    {items.map((entry) => (
+      <li key={`${entry.number}-${entry.text}`} className="flex gap-3 text-[15px] leading-7 text-foreground/90">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{entry.number}</span>
+        <span>{renderInlineMarkdown(entry.text)}</span>
+      </li>
+    ))}
+  </ol>
+);
+
 const renderBlock = (block: ContentBlock, key: number): ReactNode => {
-  if (block.type === "paragraph") return <p key={key} className="text-base leading-8 text-foreground/90 sm:text-[1.03rem]">{renderInlineLabel(block.text)}</p>;
-  if (block.type === "bullets") return <ul key={key} className="space-y-3">{block.items.map((entry, idx) => <li key={idx} className="flex gap-3 text-base leading-8 text-foreground/90"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" /><span>{renderInlineLabel(entry)}</span></li>)}</ul>;
+  if (block.type === "paragraph") return <p key={key} className="mb-3 text-[15px] leading-[1.7] text-foreground/90">{renderInlineLabel(block.text)}</p>;
+  if (block.type === "subheading") return <h3 key={key} className="mt-5 mb-2 text-lg font-bold leading-snug text-foreground">{renderInlineMarkdown(block.text)}</h3>;
+  if (block.type === "phaseDivider") return <div key={key} className="rounded-lg border border-primary/30 bg-primary px-4 py-3 text-base font-bold text-primary-foreground">{renderInlineMarkdown(block.text)}</div>;
+  if (block.type === "bullets") return <ul key={key} className="space-y-2 pl-2">{block.items.map((entry, idx) => <li key={idx} className="flex gap-3 text-[15px] leading-7 text-foreground/90"><span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-primary" /><span>{renderInlineMarkdown(entry)}</span></li>)}</ul>;
+  if (block.type === "numbered") return <NumberedList key={key} items={block.items} />;
   if (block.type === "checklist") return <InteractiveChecklist key={key} items={block.items} />;
-  if (block.type === "callout") return <div key={key} className={`flex gap-3 rounded-lg border p-4 ${block.warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>{block.warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Zap className="mt-1 h-5 w-5 shrink-0 text-primary" />}<p className="text-base leading-8 text-foreground/90">{renderInlineLabel(block.text)}</p></div>;
+  if (block.type === "callout") return <div key={key} className={`flex gap-3 rounded-lg border p-4 ${block.warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>{block.warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Zap className="mt-1 h-5 w-5 shrink-0 text-primary" />}<p className="text-[15px] leading-[1.7] text-foreground/90">{renderInlineLabel(block.text)}</p></div>;
   if (block.type === "comparison") return <div key={key} className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg border border-success/30 bg-success/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="h-4 w-4" />Good</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.good.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div><div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive"><XCircle className="h-4 w-4" />Bad</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.bad.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div></div>;
   if (block.type === "steps") return <StepSequence key={key} steps={block.steps} />;
-  return <TermRevealCard key={key} term={block.term} definition={block.definition} />;
+  if (block.type === "term") return <TermRevealCard key={key} term={block.term} definition={block.definition} example={block.example} />;
+  return null;
 };
 
 const RichReadingContent = ({ content }: { content: string }) => {
