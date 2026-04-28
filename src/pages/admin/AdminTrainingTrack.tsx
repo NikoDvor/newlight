@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 interface Module {
   id: string;
@@ -38,6 +41,23 @@ interface ProgressRow {
   status: string;
 }
 
+interface GlossaryTerm {
+  id: string;
+  module_id: string;
+  category: string;
+  term: string;
+  definition: string;
+  usage_example: string;
+  sort_order: number;
+}
+
+const GLOSSARY_CATEGORIES = [
+  "Sales Fundamentals",
+  "Sales Techniques",
+  "NewLight-Specific Terms",
+  "Metrics and Performance",
+];
+
 export default function AdminTrainingTrack() {
   const { trackKey } = useParams<{ trackKey: string }>();
   const navigate = useNavigate();
@@ -48,6 +68,11 @@ export default function AdminTrainingTrack() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
+  const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [glossarySearch, setGlossarySearch] = useState("");
+  const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
+  const [savingGlossary, setSavingGlossary] = useState(false);
+  const [canManageGlossary, setCanManageGlossary] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [runner, setRunner] = useState<
     | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
@@ -93,10 +118,25 @@ export default function AdminTrainingTrack() {
           .in("module_id", ids)
           .order("chapter_number");
         setChapters((chs || []) as Chapter[]);
+
+        const { data: terms } = await (supabase as any)
+          .from("nl_training_glossary_terms")
+          .select("id, module_id, category, term, definition, usage_example, sort_order")
+          .in("module_id", ids)
+          .order("category")
+          .order("term");
+        setGlossaryTerms((terms || []) as GlossaryTerm[]);
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const { data: roles } = await (supabase as any)
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .in("role", ["admin", "operator"]);
+        setCanManageGlossary((roles || []).length > 0);
+
         const { data: prog } = await supabase
           .from("nl_training_progress")
           .select("module_id, chapter_id, status")
@@ -138,6 +178,7 @@ export default function AdminTrainingTrack() {
   };
 
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
+  const isGlossaryModule = selectedModule?.module_number === 0;
   const selectedChapters = useMemo(
     () => chapters.filter((c) => c.module_id === selectedModuleId),
     [chapters, selectedModuleId]
@@ -155,15 +196,74 @@ export default function AdminTrainingTrack() {
   };
 
   const moduleChapterPct = (moduleId: string) => {
+    const module = modules.find((m) => m.id === moduleId);
     const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    if (module?.module_number === 0) {
+      return moduleChapters.some((c) => isChapterComplete(c.id)) || moduleStatus(moduleId) === "completed" ? 100 : 0;
+    }
     const total = moduleChapters.length * 3;
     if (total === 0) return 0;
     const done = moduleChapters.reduce((sum, c) => sum + getChapterLevelCount(c.id), 0);
     return Math.round((done / total) * 100);
   };
 
-  const totalModules = modules.length;
-  const completedModules = modules.filter((m) => moduleStatus(m.id) === "completed").length;
+  const selectedGlossaryTerms = useMemo(() => {
+    const q = glossarySearch.trim().toLowerCase();
+    return glossaryTerms
+      .filter((term) => term.module_id === selectedModuleId)
+      .filter((term) => !q || `${term.term} ${term.definition} ${term.usage_example}`.toLowerCase().includes(q))
+      .sort((a, b) => a.term.localeCompare(b.term));
+  }, [glossarySearch, glossaryTerms, selectedModuleId]);
+
+  const markGlossaryReviewed = async () => {
+    const chapter = selectedChapters[0];
+    if (!trackId || !selectedModule || !chapter) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const payload = {
+      user_id: user.id,
+      track_id: trackId,
+      module_id: selectedModule.id,
+      status: "completed",
+      score: 100,
+      attempts: 1,
+      last_attempt_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+    };
+    await supabase.from("nl_training_progress").upsert({ ...payload, chapter_id: chapter.id }, { onConflict: "user_id,module_id,chapter_id" } as any);
+    await supabase.from("nl_training_progress").upsert({ ...payload, chapter_id: null }, { onConflict: "user_id,module_id,chapter_id" } as any);
+    setReloadTick((t) => t + 1);
+    toast({ title: "Glossary reviewed", description: "Your review has been saved." });
+  };
+
+  const addGlossaryTerm = async () => {
+    if (!trackId || !selectedModule || !selectedChapters[0] || !newTerm.term.trim() || !newTerm.definition.trim()) return;
+    setSavingGlossary(true);
+    try {
+      const { error } = await (supabase as any).from("nl_training_glossary_terms").insert({
+        track_id: trackId,
+        module_id: selectedModule.id,
+        chapter_id: selectedChapters[0].id,
+        category: newTerm.category,
+        term: newTerm.term.trim(),
+        definition: newTerm.definition.trim(),
+        usage_example: newTerm.usage_example.trim(),
+        sort_order: glossaryTerms.length + 1,
+      });
+      if (error) throw error;
+      setNewTerm({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
+      setReloadTick((t) => t + 1);
+      toast({ title: "Term added", description: "The glossary term is now available in training." });
+    } catch (error) {
+      toast({ title: "Could not add term", description: "Check for duplicate terms or missing fields.", variant: "destructive" });
+    } finally {
+      setSavingGlossary(false);
+    }
+  };
+
+  const sequentialModules = modules.filter((m) => m.module_number > 0);
+  const totalModules = sequentialModules.length;
+  const completedModules = sequentialModules.filter((m) => moduleStatus(m.id) === "completed").length;
   const overallPct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
 
   return (
@@ -214,8 +314,14 @@ export default function AdminTrainingTrack() {
                     <button
                       key={m.id}
                       onClick={() => setSelectedModuleId(m.id)}
-                      className={`w-full text-left px-4 py-3 border-b border-border/30 transition-all duration-200 flex items-start gap-3 ${
-                        isSelected ? "bg-primary/[0.08]" : "hover:bg-white/[0.03]"
+                      className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
+                        m.module_number === 0
+                          ? isSelected
+                            ? "bg-primary/10 border-primary/25"
+                            : "bg-secondary/35 border-primary/10 hover:bg-primary/5"
+                          : isSelected
+                            ? "bg-primary/[0.08] border-border/30"
+                            : "border-border/30 hover:bg-white/[0.03]"
                       }`}
                       style={
                         isSelected
@@ -234,12 +340,12 @@ export default function AdminTrainingTrack() {
                           color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {m.module_number}
+                        {m.module_number === 0 ? "📖" : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
-                            {m.module_title}
+                            {m.module_number === 0 ? "📖 Terminology & Glossary" : m.module_title}
                           </p>
                           {m.is_locked && (
                             <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -259,7 +365,7 @@ export default function AdminTrainingTrack() {
                           ) : (
                             <>
                               <Circle className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground font-medium">Not started</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">{m.module_number === 0 ? "Reference" : "Not started"}</span>
                             </>
                           )}
                         </div>
@@ -317,7 +423,7 @@ export default function AdminTrainingTrack() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="secondary" className="font-medium">
-                      Module {selectedModule.module_number}
+                      {isGlossaryModule ? "Reference" : `Module ${selectedModule.module_number}`}
                     </Badge>
                     {selectedModule.is_locked && (
                       <Badge variant="outline" className="gap-1">
@@ -336,7 +442,7 @@ export default function AdminTrainingTrack() {
                 </div>
               </div>
 
-              <div className="mb-5">
+              {!isGlossaryModule && <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Chapter completion
@@ -346,9 +452,73 @@ export default function AdminTrainingTrack() {
                   </span>
                 </div>
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
-              </div>
+              </div>}
 
-              <div className="space-y-2 mb-6">
+              {isGlossaryModule ? (
+                <div className="space-y-5">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={glossarySearch}
+                      onChange={(event) => setGlossarySearch(event.target.value)}
+                      placeholder="Search terminology, definitions, or examples…"
+                      className="pl-10 h-11"
+                    />
+                  </div>
+
+                  {GLOSSARY_CATEGORIES.map((category) => {
+                    const terms = selectedGlossaryTerms.filter((term) => term.category === category);
+                    if (terms.length === 0) return null;
+                    return (
+                      <section key={category} className="space-y-2">
+                        <h3 className="section-title">{category}</h3>
+                        <div className="grid grid-cols-1 gap-2">
+                          {terms.map((term) => (
+                            <article key={term.id} className="rounded-lg border border-border/40 bg-secondary/25 p-4">
+                              <h4 className="text-sm font-semibold text-primary">{term.term}</h4>
+                              <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{term.definition}</p>
+                              <p className="mt-2 text-[13px] italic leading-relaxed text-muted-foreground">Example: “{term.usage_example}”</p>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+
+                  {selectedGlossaryTerms.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground">
+                      No glossary terms match your search.
+                    </div>
+                  )}
+
+                  {canManageGlossary && <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <h3 className="section-title mb-3">Admin: Add glossary term</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <select
+                        value={newTerm.category}
+                        onChange={(event) => setNewTerm((prev) => ({ ...prev, category: event.target.value }))}
+                        className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                      >
+                        {GLOSSARY_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                      </select>
+                      <Input value={newTerm.term} onChange={(event) => setNewTerm((prev) => ({ ...prev, term: event.target.value }))} placeholder="Term name" />
+                      <Textarea value={newTerm.definition} onChange={(event) => setNewTerm((prev) => ({ ...prev, definition: event.target.value }))} placeholder="Definition" className="sm:col-span-2" />
+                      <Textarea value={newTerm.usage_example} onChange={(event) => setNewTerm((prev) => ({ ...prev, usage_example: event.target.value }))} placeholder="Usage example" className="sm:col-span-2" />
+                    </div>
+                    <Button onClick={addGlossaryTerm} disabled={savingGlossary || !newTerm.term.trim() || !newTerm.definition.trim()} className="mt-3 gap-2">
+                      <PlusCircle className="h-4 w-4" />
+                      {savingGlossary ? "Adding…" : "Add Term"}
+                    </Button>
+                  </div>}
+
+                  <div className="flex justify-end">
+                    <Button onClick={markGlossaryReviewed} className="gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Mark as Reviewed
+                    </Button>
+                  </div>
+                </div>
+              ) : <div className="space-y-2 mb-6">
                 <h3 className="section-title mb-2">Chapters</h3>
                 {selectedChapters.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/50 p-6 text-center">
@@ -417,9 +587,9 @@ export default function AdminTrainingTrack() {
                     );
                   })
                 )}
-              </div>
+              </div>}
 
-              {(() => {
+              {!isGlossaryModule && (() => {
                 const allChaptersDone =
                   selectedChapters.length > 0 &&
                   selectedChapters.every((c) => isChapterComplete(c.id));
