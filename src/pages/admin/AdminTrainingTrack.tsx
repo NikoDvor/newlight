@@ -355,10 +355,22 @@ export default function AdminTrainingTrack() {
     }
   };
 
-  const sequentialModules = modules.filter((m) => m.module_number > 0);
-  const totalModules = sequentialModules.length;
-  const completedModules = sequentialModules.filter((m) => moduleStatus(m.id) === "completed").length;
+  const totalModules = numberedModules.length;
+  const completedModules = numberedModules.filter((m) => moduleStatus(m.id) === "completed").length;
   const overallPct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+
+  if (runner && trackId) {
+    return (
+      <ChapterRunner
+        mode={runner.mode}
+        chapter={runner.mode === "chapter" ? runner.chapter : undefined}
+        moduleId={runner.moduleId}
+        trackId={trackId}
+        onClose={() => setRunner(null)}
+        onCompleted={() => setReloadTick((t) => t + 1)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
