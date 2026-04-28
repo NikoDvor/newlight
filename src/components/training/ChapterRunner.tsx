@@ -76,36 +76,61 @@ const LEVEL_LABELS: Record<QuizLevel, string> = {
   3: "Mastery",
 };
 
-const isPhaseLine = (line: string) => /^PHASE\s+\d+/i.test(line.trim());
-const isStepLine = (line: string) => /^(STEP|Step)\s+\d+|^PHASE\s+\d+/i.test(line.trim());
-const isBulletLine = (line: string) => /^-\s+/.test(line.trim());
+const stripMarkdown = (value: string) => value
+  .trim()
+  .replace(/^#{1,6}\s+/, "")
+  .replace(/^\*\*(.+)\*\*:?$/, "$1")
+  .replace(/^\*(.+)\*:?$/, "$1")
+  .replace(/\*\*(.*?)\*\*/g, "$1")
+  .replace(/\*(.*?)\*/g, "$1")
+  .trim();
+
+const isMarkdownH1 = (line: string) => /^#\s+(?!#)/.test(line.trim());
+const isMarkdownH2 = (line: string) => /^##\s+/.test(line.trim());
+const isPhaseLine = (line: string) => /^PHASE\b/i.test(stripMarkdown(line));
+const isStepLine = (line: string) => /^Step\s+\d+|^STEP\s+\d+/i.test(stripMarkdown(line));
+const isBulletLine = (line: string) => /^[-—]\s+/.test(line.trim());
+const isNumberedLine = (line: string) => /^\d+\.\s+/.test(line.trim());
 const isCheckboxLine = (line: string) => /^□\s*/.test(line.trim());
 const isComparisonLine = (line: string) => /^(Good|Bad)\s+[^:]{0,32}:\s*/i.test(line.trim());
 const isCalloutLine = (line: string) => /^(PRO TIP|TIP|WARNING|IMPORTANT|REMEMBER|KEY RULE|RULE)\b/i.test(line.trim()) || /\b(do not|never|must|warning)\b/i.test(line.trim());
 const isSectionHeaderLine = (line: string) => {
-  const trimmed = line.trim();
+  const trimmed = stripMarkdown(line);
   if (!trimmed || trimmed.length > 110 || isStepLine(trimmed) || isBulletLine(trimmed) || isCheckboxLine(trimmed)) return false;
   return /^[A-Z0-9][A-Z0-9\s—–&:'’(),.\-/]+:?$/.test(trimmed) && /[A-Z]/.test(trimmed);
 };
 
 const renderInlineLabel = (line: string) => {
-  const match = line.match(/^([^:]{2,44}:)\s*(.*)$/);
-  if (!match) return line;
+  const clean = stripMarkdown(line);
+  const match = clean.match(/^([^:]{2,44}:)\s*(.*)$/);
+  if (!match) return renderInlineMarkdown(line);
   return (
     <>
-      <span className="font-semibold text-foreground">{match[1]}</span>{" "}{match[2]}
+      <span className="font-semibold text-foreground">{match[1]}</span>{" "}{renderInlineMarkdown(match[2])}
     </>
   );
 };
 
+const renderInlineMarkdown = (text: string): ReactNode => {
+  const parts = text.replace(/^#{1,6}\s+/, "").split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean);
+  return parts.map((part, idx) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={idx} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={idx} className="italic text-muted-foreground">{part.slice(1, -1)}</em>;
+    return <span key={idx}>{part}</span>;
+  });
+};
+
 type ContentBlock =
   | { type: "paragraph"; text: string }
+  | { type: "subheading"; text: string }
+  | { type: "phaseDivider"; text: string }
   | { type: "bullets"; items: string[] }
+  | { type: "numbered"; items: { number: string; text: string }[] }
   | { type: "checklist"; items: string[] }
   | { type: "callout"; text: string; warning: boolean }
   | { type: "comparison"; good: string[]; bad: string[] }
   | { type: "steps"; steps: { title: string; body: string[] }[] }
-  | { type: "term"; term: string; definition: string };
+  | { type: "term"; term: string; definition: string; example?: string };
 
 interface ContentSection {
   title: string;
