@@ -745,10 +745,18 @@ export default function AdminTrainingTrack() {
                     ))}
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={completeModule6Drill} disabled={!module6DrillReady} className="gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Complete Drill
-                    </Button>
+                    {module6DrillComplete ? (
+                      <Badge className="gap-2 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,65%)] hover:bg-[hsl(152,60%,50%)]/15">
+                        <CheckCircle2 className="h-4 w-4" /> Drill Complete
+                      </Badge>
+                    ) : module6DrillReady ? (
+                      <Button onClick={completeModule6Drill} className="gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Complete Drill
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Review every card to unlock completion.</span>
+                    )}
                   </div>
                 </div>
               )}
