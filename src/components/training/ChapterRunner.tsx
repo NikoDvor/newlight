@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare, Zap, Star, Layers, ChevronRight, Eye } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare, Zap, Star, Layers, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,48 +76,77 @@ const LEVEL_LABELS: Record<QuizLevel, string> = {
   3: "Mastery",
 };
 
-const isPhaseLine = (line: string) => /^PHASE\s+\d+/i.test(line.trim());
-const isStepLine = (line: string) => /^(STEP|Step)\s+\d+|^PHASE\s+\d+/i.test(line.trim());
-const isBulletLine = (line: string) => /^-\s+/.test(line.trim());
+const stripMarkdown = (value: string) => value
+  .trim()
+  .replace(/^#{1,6}\s+/, "")
+  .replace(/^\*\*(.+)\*\*:?$/, "$1")
+  .replace(/^\*(.+)\*:?$/, "$1")
+  .replace(/\*\*(.*?)\*\*/g, "$1")
+  .replace(/\*(.*?)\*/g, "$1")
+  .trim();
+
+const isMarkdownH1 = (line: string) => /^#\s+(?!#)/.test(line.trim());
+const isMarkdownH2 = (line: string) => /^##\s+/.test(line.trim());
+const isPhaseLine = (line: string) => /^PHASE\b/i.test(stripMarkdown(line));
+const isStepLine = (line: string) => /^Step\s+\d+|^STEP\s+\d+/i.test(stripMarkdown(line));
+const isBulletLine = (line: string) => /^[-—]\s+/.test(line.trim());
+const isNumberedLine = (line: string) => /^\d+\.\s+/.test(line.trim());
 const isCheckboxLine = (line: string) => /^□\s*/.test(line.trim());
 const isComparisonLine = (line: string) => /^(Good|Bad)\s+[^:]{0,32}:\s*/i.test(line.trim());
 const isCalloutLine = (line: string) => /^(PRO TIP|TIP|WARNING|IMPORTANT|REMEMBER|KEY RULE|RULE)\b/i.test(line.trim()) || /\b(do not|never|must|warning)\b/i.test(line.trim());
 const isSectionHeaderLine = (line: string) => {
-  const trimmed = line.trim();
+  const trimmed = stripMarkdown(line);
   if (!trimmed || trimmed.length > 110 || isStepLine(trimmed) || isBulletLine(trimmed) || isCheckboxLine(trimmed)) return false;
   return /^[A-Z0-9][A-Z0-9\s—–&:'’(),.\-/]+:?$/.test(trimmed) && /[A-Z]/.test(trimmed);
 };
 
 const renderInlineLabel = (line: string) => {
-  const match = line.match(/^([^:]{2,44}:)\s*(.*)$/);
-  if (!match) return line;
+  const clean = stripMarkdown(line);
+  const match = clean.match(/^([^:]{2,44}:)\s*(.*)$/);
+  if (!match) return renderInlineMarkdown(line);
   return (
     <>
-      <span className="font-semibold text-foreground">{match[1]}</span>{" "}{match[2]}
+      <span className="font-semibold text-foreground">{match[1]}</span>{" "}{renderInlineMarkdown(match[2])}
     </>
   );
 };
 
+const renderInlineMarkdown = (text: string): ReactNode => {
+  const parts = text.replace(/^#{1,6}\s+/, "").split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean);
+  return parts.map((part, idx) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={idx} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={idx} className="italic text-muted-foreground">{part.slice(1, -1)}</em>;
+    return <span key={idx}>{part}</span>;
+  });
+};
+
 type ContentBlock =
   | { type: "paragraph"; text: string }
+  | { type: "subheading"; text: string }
+  | { type: "phaseDivider"; text: string }
   | { type: "bullets"; items: string[] }
+  | { type: "numbered"; items: { number: string; text: string }[] }
   | { type: "checklist"; items: string[] }
   | { type: "callout"; text: string; warning: boolean }
   | { type: "comparison"; good: string[]; bad: string[] }
   | { type: "steps"; steps: { title: string; body: string[] }[] }
-  | { type: "term"; term: string; definition: string };
+  | { type: "term"; term: string; definition: string; example?: string };
 
 interface ContentSection {
   title: string;
   blocks: ContentBlock[];
 }
 
-const isTermLine = (line: string) => /^[A-Z][A-Za-z0-9 /&()'’.-]{2,42}\s+[—–-]\s+.{12,}$/.test(line.trim());
+const isTermLine = (line: string) => /^[A-Z][A-Za-z0-9 /&()'’.-]{2,42}\s+[—–-]\s+.{12,}$/.test(stripMarkdown(line));
 
 const parseTermLine = (line: string) => {
-  const [term, ...rest] = line.split(/\s+[—–-]\s+/);
-  return { term: term.trim(), definition: rest.join(" — ").trim() };
+  const [term, ...rest] = stripMarkdown(line).split(/\s+[—–-]\s+/);
+  return { term: stripMarkdown(term), definition: stripMarkdown(rest.join(" — ")) };
 };
+
+const isExampleLine = (line: string) => /^example\s*:/i.test(stripMarkdown(line)) || /^\*[^*]+\*$/.test(line.trim());
+const isStandaloneTermTitle = (line: string) => /^\*\*[^*]{2,60}\*\*:?$/.test(line.trim()) && !isSectionHeaderLine(line);
+const isStructuralLine = (line: string) => isMarkdownH1(line) || isMarkdownH2(line) || isPhaseLine(line) || isStepLine(line) || isBulletLine(line) || isNumberedLine(line) || isCheckboxLine(line) || isSectionHeaderLine(line);
 
 const parseReadingContent = (content: string): ContentSection[] => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -128,14 +157,34 @@ const parseReadingContent = (content: string): ContentSection[] => {
   while (i < lines.length) {
     const line = lines[i];
 
-    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().blocks.length > 0) {
-      sections.push({ title: line.replace(/:$/, ""), blocks: [] });
+    if (isMarkdownH1(line)) {
+      const title = stripMarkdown(line).replace(/:$/, "");
+      if (current().blocks.length === 0 && current().title === "Overview") current().title = title;
+      else sections.push({ title, blocks: [] });
       i += 1;
       continue;
     }
 
-    if ((isSectionHeaderLine(line) || isPhaseLine(line)) && current().title === "Overview") {
-      current().title = line.replace(/:$/, "");
+    if (isPhaseLine(line)) {
+      current().blocks.push({ type: "phaseDivider", text: stripMarkdown(line).replace(/:$/, "") });
+      i += 1;
+      continue;
+    }
+
+    if (isMarkdownH2(line)) {
+      current().blocks.push({ type: "subheading", text: stripMarkdown(line).replace(/:$/, "") });
+      i += 1;
+      continue;
+    }
+
+    if (isSectionHeaderLine(line) && current().blocks.length > 0) {
+      sections.push({ title: stripMarkdown(line).replace(/:$/, ""), blocks: [] });
+      i += 1;
+      continue;
+    }
+
+    if (isSectionHeaderLine(line) && current().title === "Overview") {
+      current().title = stripMarkdown(line).replace(/:$/, "");
       i += 1;
       continue;
     }
@@ -146,11 +195,11 @@ const parseReadingContent = (content: string): ContentSection[] => {
         const title = lines[i];
         i += 1;
         const body: string[] = [];
-        while (i < lines.length && !isStepLine(lines[i]) && !isSectionHeaderLine(lines[i]) && !isPhaseLine(lines[i]) && !isComparisonLine(lines[i]) && !isCheckboxLine(lines[i]) && !isBulletLine(lines[i])) {
+        while (i < lines.length && !isStepLine(lines[i]) && !isMarkdownH1(lines[i]) && !isMarkdownH2(lines[i]) && !isSectionHeaderLine(lines[i]) && !isPhaseLine(lines[i]) && !isComparisonLine(lines[i]) && !isCheckboxLine(lines[i]) && !isBulletLine(lines[i]) && !isNumberedLine(lines[i])) {
           body.push(lines[i]);
           i += 1;
         }
-        steps.push({ title, body });
+        steps.push({ title: stripMarkdown(title), body });
       }
       current().blocks.push({ type: "steps", steps });
       continue;
@@ -173,20 +222,46 @@ const parseReadingContent = (content: string): ContentSection[] => {
     if (isBulletLine(line)) {
       const items: string[] = [];
       while (i < lines.length && isBulletLine(lines[i])) {
-        items.push(lines[i].replace(/^-\s+/, ""));
+        items.push(stripMarkdown(lines[i].replace(/^[-—]\s+/, "")));
         i += 1;
       }
       current().blocks.push({ type: "bullets", items });
       continue;
     }
 
+    if (isNumberedLine(line)) {
+      const items: { number: string; text: string }[] = [];
+      while (i < lines.length && isNumberedLine(lines[i])) {
+        const match = lines[i].match(/^(\d+)\.\s+(.+)$/);
+        if (match) items.push({ number: match[1], text: stripMarkdown(match[2]) });
+        i += 1;
+      }
+      current().blocks.push({ type: "numbered", items });
+      continue;
+    }
+
     if (isCheckboxLine(line)) {
       const items: string[] = [];
       while (i < lines.length && isCheckboxLine(lines[i])) {
-        items.push(lines[i].replace(/^□\s*/, ""));
+        items.push(stripMarkdown(lines[i].replace(/^□\s*/, "")));
         i += 1;
       }
       current().blocks.push({ type: "checklist", items });
+      continue;
+    }
+
+    if (isStandaloneTermTitle(line) && i + 1 < lines.length && !isStructuralLine(lines[i + 1])) {
+      const termBlock: Extract<ContentBlock, { type: "term" }> = {
+        type: "term",
+        term: stripMarkdown(line).replace(/:$/, ""),
+        definition: stripMarkdown(lines[i + 1]),
+      };
+      if (i + 2 < lines.length && isExampleLine(lines[i + 2])) {
+        termBlock.example = stripMarkdown(lines[i + 2]).replace(/^example\s*:\s*/i, "");
+        i += 1;
+      }
+      current().blocks.push(termBlock);
+      i += 2;
       continue;
     }
 
@@ -197,7 +272,12 @@ const parseReadingContent = (content: string): ContentSection[] => {
     }
 
     if (isTermLine(line)) {
-      current().blocks.push({ type: "term", ...parseTermLine(line) });
+      const termBlock: Extract<ContentBlock, { type: "term" }> = { type: "term", ...parseTermLine(line) };
+      if (i + 1 < lines.length && isExampleLine(lines[i + 1])) {
+        termBlock.example = stripMarkdown(lines[i + 1]).replace(/^example\s*:\s*/i, "");
+        i += 1;
+      }
+      current().blocks.push(termBlock);
       i += 1;
       continue;
     }
@@ -258,27 +338,39 @@ const InteractiveChecklist = ({ items }: { items: string[] }) => {
   );
 };
 
-const TermRevealCard = ({ term, definition }: { term: string; definition: string }) => {
-  const [open, setOpen] = useState(false);
+const TermRevealCard = ({ term, definition, example }: { term: string; definition: string; example?: string }) => {
   return (
-    <button type="button" onClick={() => setOpen((value) => !value)} className="w-full rounded-lg border border-primary/20 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-primary"><Eye className="h-4 w-4" />{term}</div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tap to {open ? "hide" : "reveal"}</span>
-      </div>
-      {open && <p className="mt-3 text-base leading-8 text-foreground/90">{definition}</p>}
-    </button>
+    <div className="border-b border-border/70 pb-4 last:border-b-0 last:pb-0">
+      <div className="text-base font-bold leading-7 text-primary">{renderInlineMarkdown(term)}</div>
+      <p className="mt-1 text-sm leading-7 text-foreground/90">{renderInlineMarkdown(definition)}</p>
+      {example && <p className="mt-1 text-sm italic leading-7 text-muted-foreground">{renderInlineMarkdown(example)}</p>}
+    </div>
   );
 };
 
+const NumberedList = ({ items }: { items: { number: string; text: string }[] }) => (
+  <ol className="space-y-3">
+    {items.map((entry) => (
+      <li key={`${entry.number}-${entry.text}`} className="flex gap-3 text-[15px] leading-7 text-foreground/90">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{entry.number}</span>
+        <span>{renderInlineMarkdown(entry.text)}</span>
+      </li>
+    ))}
+  </ol>
+);
+
 const renderBlock = (block: ContentBlock, key: number): ReactNode => {
-  if (block.type === "paragraph") return <p key={key} className="text-base leading-8 text-foreground/90 sm:text-[1.03rem]">{renderInlineLabel(block.text)}</p>;
-  if (block.type === "bullets") return <ul key={key} className="space-y-3">{block.items.map((entry, idx) => <li key={idx} className="flex gap-3 text-base leading-8 text-foreground/90"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" /><span>{renderInlineLabel(entry)}</span></li>)}</ul>;
+  if (block.type === "paragraph") return <p key={key} className="mb-3 text-[15px] leading-[1.7] text-foreground/90">{renderInlineLabel(block.text)}</p>;
+  if (block.type === "subheading") return <h3 key={key} className="mt-5 mb-2 text-lg font-bold leading-snug text-foreground">{renderInlineMarkdown(block.text)}</h3>;
+  if (block.type === "phaseDivider") return <div key={key} className="rounded-lg border border-primary/30 bg-primary px-4 py-3 text-base font-bold text-primary-foreground">{renderInlineMarkdown(block.text)}</div>;
+  if (block.type === "bullets") return <ul key={key} className="space-y-2 pl-2">{block.items.map((entry, idx) => <li key={idx} className="flex gap-3 text-[15px] leading-7 text-foreground/90"><span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-primary" /><span>{renderInlineMarkdown(entry)}</span></li>)}</ul>;
+  if (block.type === "numbered") return <NumberedList key={key} items={block.items} />;
   if (block.type === "checklist") return <InteractiveChecklist key={key} items={block.items} />;
-  if (block.type === "callout") return <div key={key} className={`flex gap-3 rounded-lg border p-4 ${block.warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>{block.warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Zap className="mt-1 h-5 w-5 shrink-0 text-primary" />}<p className="text-base leading-8 text-foreground/90">{renderInlineLabel(block.text)}</p></div>;
+  if (block.type === "callout") return <div key={key} className={`flex gap-3 rounded-lg border p-4 ${block.warning ? "border-warning/30 bg-warning/10" : "border-primary/25 bg-primary/10"}`}>{block.warning ? <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-warning" /> : <Zap className="mt-1 h-5 w-5 shrink-0 text-primary" />}<p className="text-[15px] leading-[1.7] text-foreground/90">{renderInlineLabel(block.text)}</p></div>;
   if (block.type === "comparison") return <div key={key} className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg border border-success/30 bg-success/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="h-4 w-4" />Good</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.good.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div><div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive"><XCircle className="h-4 w-4" />Bad</div><div className="space-y-2 text-sm leading-7 text-foreground/90">{block.bad.map((entry, idx) => <p key={idx}>{renderInlineLabel(entry)}</p>)}</div></div></div>;
   if (block.type === "steps") return <StepSequence key={key} steps={block.steps} />;
-  return <TermRevealCard key={key} term={block.term} definition={block.definition} />;
+  if (block.type === "term") return <TermRevealCard key={key} term={block.term} definition={block.definition} example={block.example} />;
+  return null;
 };
 
 const RichReadingContent = ({ content }: { content: string }) => {
