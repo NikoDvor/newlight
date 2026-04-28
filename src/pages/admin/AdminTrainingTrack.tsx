@@ -72,6 +72,7 @@ export default function AdminTrainingTrack() {
   const [glossarySearch, setGlossarySearch] = useState("");
   const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
   const [savingGlossary, setSavingGlossary] = useState(false);
+  const [canManageGlossary, setCanManageGlossary] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [runner, setRunner] = useState<
     | { mode: "chapter"; chapter: ChapterRow; moduleId: string }
@@ -129,6 +130,13 @@ export default function AdminTrainingTrack() {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const { data: roles } = await (supabase as any)
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .in("role", ["admin", "operator"]);
+        setCanManageGlossary((roles || []).length > 0);
+
         const { data: prog } = await supabase
           .from("nl_training_progress")
           .select("module_id, chapter_id, status")
