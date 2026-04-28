@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, Flame, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ export default function AdminTrainingTrack() {
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
   const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
+  const [flashcardStats, setFlashcardStats] = useState({ total: 0, mastered: 0 });
   const [glossarySearch, setGlossarySearch] = useState("");
   const [newTerm, setNewTerm] = useState({ category: "Sales Fundamentals", term: "", definition: "", usage_example: "" });
   const [savingGlossary, setSavingGlossary] = useState(false);
@@ -150,6 +151,25 @@ export default function AdminTrainingTrack() {
         setLevelProgress((levels || []) as LevelProgressRow[]);
 
         if (track.track_name && (trackKey || "bdr") === "bdr") {
+          const { data: cards } = await (supabase as any)
+            .from("nl_training_flashcards")
+            .select("id")
+            .eq("track_key", "bdr");
+          const cardIds = (cards || []).map((card: { id: string }) => card.id);
+          let mastered = 0;
+          if (cardIds.length > 0) {
+            const { data: flashProgress } = await (supabase as any)
+              .from("nl_training_flashcard_progress")
+              .select("flashcard_id, status, last_seen_at")
+              .eq("user_id", user.id)
+              .in("flashcard_id", cardIds);
+            const now = Date.now();
+            mastered = (flashProgress || []).filter((row: { status: string; last_seen_at: string | null }) =>
+              row.status === "mastered" && row.last_seen_at && now - new Date(row.last_seen_at).getTime() <= 7 * 24 * 60 * 60 * 1000
+            ).length;
+          }
+          setFlashcardStats({ total: cardIds.length, mastered });
+
           const { data: cert } = await supabase
             .from("nl_training_certifications")
             .select("id")
