@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Lightbulb, AlertTriangle, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,7 +99,7 @@ const renderInlineLabel = (line: string) => {
 
 const RichReadingContent = ({ content }: { content: string }) => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const nodes: React.ReactNode[] = [];
+  const nodes: ReactNode[] = [];
   let i = 0;
 
   while (i < lines.length) {
