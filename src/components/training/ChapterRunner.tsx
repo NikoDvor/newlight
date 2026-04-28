@@ -145,6 +145,8 @@ const parseTermLine = (line: string) => {
 };
 
 const isExampleLine = (line: string) => /^example\s*:/i.test(stripMarkdown(line)) || /^\*[^*]+\*$/.test(line.trim());
+const isStandaloneTermTitle = (line: string) => /^\*\*[^*]{2,60}\*\*:?$/.test(line.trim()) && !isSectionHeaderLine(line);
+const isStructuralLine = (line: string) => isMarkdownH1(line) || isMarkdownH2(line) || isPhaseLine(line) || isStepLine(line) || isBulletLine(line) || isNumberedLine(line) || isCheckboxLine(line) || isSectionHeaderLine(line);
 
 const parseReadingContent = (content: string): ContentSection[] => {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -245,6 +247,21 @@ const parseReadingContent = (content: string): ContentSection[] => {
         i += 1;
       }
       current().blocks.push({ type: "checklist", items });
+      continue;
+    }
+
+    if (isStandaloneTermTitle(line) && i + 1 < lines.length && !isStructuralLine(lines[i + 1])) {
+      const termBlock: Extract<ContentBlock, { type: "term" }> = {
+        type: "term",
+        term: stripMarkdown(line).replace(/:$/, ""),
+        definition: stripMarkdown(lines[i + 1]),
+      };
+      if (i + 2 < lines.length && isExampleLine(lines[i + 2])) {
+        termBlock.example = stripMarkdown(lines[i + 2]).replace(/^example\s*:\s*/i, "");
+        i += 1;
+      }
+      current().blocks.push(termBlock);
+      i += 2;
       continue;
     }
 
