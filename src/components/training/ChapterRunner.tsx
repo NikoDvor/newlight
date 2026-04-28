@@ -359,9 +359,9 @@ export function ChapterRunner({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+      <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-4 sm:py-10">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5 sm:mb-6">
           <Button variant="ghost" size="sm" onClick={onClose} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to module
@@ -374,18 +374,18 @@ export function ChapterRunner({
         {loading ? (
           <div className="card-widget text-center py-16 text-muted-foreground text-sm">Loading…</div>
         ) : phase === "reading" && chapter ? (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="card-widget p-6 sm:p-8">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="card-widget w-full p-4 sm:p-8">
             <div className="flex items-center gap-2 mb-2">
               <BookOpen className="h-4 w-4 text-primary" />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
             </div>
-            <h1 className="text-3xl font-semibold text-foreground mb-3">{chapter.chapter_title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
             {levelBadges}
             <Progress value={(completedLevels / 3) * 100} className="h-1.5 mb-8" />
-            <div className="space-y-6 max-w-none">
+            <div className="space-y-5 sm:space-y-6 max-w-none">
               {(chapter.content || "").split("\n\n").filter(Boolean).map(formatReadingBlock)}
             </div>
-            <div className="mt-10 flex justify-end">
+            <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
               <Button onClick={() => resetQuiz(currentLevel)} disabled={currentLevelQuestions.length === 0} className="gap-2">
                 Take Level {currentLevel} Quiz
                 <CheckCircle2 className="h-4 w-4" />
@@ -393,15 +393,15 @@ export function ChapterRunner({
             </div>
           </motion.div>
         ) : phase === "quiz" && current ? (
-          <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget p-6 sm:p-8">
-            <div className="flex items-center justify-between mb-4">
+          <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {mode === "chapter" ? `Level ${currentLevel} · ${LEVEL_LABELS[currentLevel]}` : "Module Test"} · Question {qIdx + 1} of {totalQ}
               </span>
               <span className="text-[11px] font-semibold text-foreground">Score: {correctCount} / {totalQ}</span>
             </div>
             <Progress value={((qIdx + (revealed ? 1 : 0)) / totalQ) * 100} className="h-1.5 mb-6" />
-            <h2 className="text-xl font-semibold text-foreground mb-6 leading-snug">{current.question_text}</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-6 leading-snug">{current.question_text}</h2>
             <div className="space-y-3">
               {current.options.map((opt, i) => {
                 const isCorrect = i === current.correct_index;
@@ -430,12 +430,12 @@ export function ChapterRunner({
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-stretch sm:justify-end">
               <Button onClick={handleNext} disabled={!revealed} className="gap-2">{qIdx < totalQ - 1 ? "Next question" : "Finish"}</Button>
             </div>
           </motion.div>
         ) : phase === "result" ? (
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }} className="card-widget text-center p-8">
+          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }} className="card-widget text-center p-5 sm:p-8">
             <div className="mx-auto h-16 w-16 rounded-2xl flex items-center justify-center mb-4 bg-secondary">
               {passed ? <Trophy className="h-8 w-8 text-[hsl(152,60%,50%)]" /> : <Clock className="h-8 w-8 text-[hsl(0,75%,60%)]" />}
             </div>
@@ -454,7 +454,7 @@ export function ChapterRunner({
               You scored {lastScorePct}% {mode === "module_test" && `· pass mark ${passScore}%`}
             </p>
             {mode === "module_test" && !passed && <p className="text-[13px] text-muted-foreground mb-5">Retake available in 24 hours. Review the chapters and try again.</p>}
-            <div className="flex justify-center gap-2">
+            <div className="flex flex-col sm:flex-row justify-center gap-2">
               <Button variant="outline" onClick={onClose}>Close</Button>
               {mode === "chapter" && !passed && <Button onClick={() => resetQuiz(currentLevel)}>Retake Level</Button>}
               {mode === "chapter" && passed && currentLevel < 3 && <Button onClick={() => resetQuiz((currentLevel + 1) as QuizLevel)}>Continue to Level {currentLevel + 1}</Button>}
