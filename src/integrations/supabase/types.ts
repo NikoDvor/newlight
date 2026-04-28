@@ -5980,6 +5980,70 @@ export type Database = {
           },
         ]
       }
+      nl_training_glossary_terms: {
+        Row: {
+          category: string
+          chapter_id: string | null
+          created_at: string
+          definition: string
+          id: string
+          module_id: string
+          sort_order: number
+          term: string
+          track_id: string
+          updated_at: string
+          usage_example: string
+        }
+        Insert: {
+          category: string
+          chapter_id?: string | null
+          created_at?: string
+          definition: string
+          id?: string
+          module_id: string
+          sort_order?: number
+          term: string
+          track_id: string
+          updated_at?: string
+          usage_example: string
+        }
+        Update: {
+          category?: string
+          chapter_id?: string | null
+          created_at?: string
+          definition?: string
+          id?: string
+          module_id?: string
+          sort_order?: number
+          term?: string
+          track_id?: string
+          updated_at?: string
+          usage_example?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_glossary_terms_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_glossary_terms_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_glossary_terms_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_training_modules: {
         Row: {
           created_at: string
