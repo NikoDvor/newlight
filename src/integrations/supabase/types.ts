@@ -5793,7 +5793,7 @@ export type Database = {
           passed: boolean
           rep_name: string | null
           score: number
-          total_questions: number | null
+          total_questions: number
           track_id: string
           track_key: string
           user_id: string
@@ -5806,7 +5806,7 @@ export type Database = {
           passed?: boolean
           rep_name?: string | null
           score: number
-          total_questions?: number | null
+          total_questions?: number
           track_id: string
           track_key: string
           user_id: string
@@ -5819,12 +5819,20 @@ export type Database = {
           passed?: boolean
           rep_name?: string | null
           score?: number
-          total_questions?: number | null
+          total_questions?: number
           track_id?: string
           track_key?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_certifications_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nl_training_chapter_level_progress: {
         Row: {
@@ -5872,10 +5880,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_chapter_level_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_chapter_level_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_chapter_level_progress_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nl_training_chapters: {
         Row: {
+          chapter_description: string | null
           chapter_number: number
           chapter_title: string
           content: string | null
@@ -5884,6 +5915,7 @@ export type Database = {
           module_id: string
         }
         Insert: {
+          chapter_description?: string | null
           chapter_number: number
           chapter_title: string
           content?: string | null
@@ -5892,6 +5924,7 @@ export type Database = {
           module_id: string
         }
         Update: {
+          chapter_description?: string | null
           chapter_number?: number
           chapter_title?: string
           content?: string | null
@@ -5912,31 +5945,28 @@ export type Database = {
       nl_training_exam_attempts: {
         Row: {
           attempted_at: string
+          created_at: string
           id: string
-          module_scores: Json | null
           passed: boolean
           score: number
-          total_questions: number
           track_id: string
           user_id: string
         }
         Insert: {
           attempted_at?: string
+          created_at?: string
           id?: string
-          module_scores?: Json | null
           passed?: boolean
           score: number
-          total_questions: number
           track_id: string
           user_id: string
         }
         Update: {
           attempted_at?: string
+          created_at?: string
           id?: string
-          module_scores?: Json | null
           passed?: boolean
           score?: number
-          total_questions?: number
           track_id?: string
           user_id?: string
         }
@@ -6028,7 +6058,29 @@ export type Database = {
           track_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_training_progress_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nl_training_questions: {
         Row: {
