@@ -118,7 +118,7 @@ export function AppLayout() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 overflow-x-auto touch-x-scroll">
               {isAdmin && activeClientId && (
                 <button
                   onClick={() => {
@@ -168,7 +168,7 @@ export function AppLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto nl-dark-bg">
+          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg">
             <GlobalAtmosphere />
             <CursorGlow />
             <AnimatePresence mode="wait">
@@ -178,7 +178,7 @@ export function AppLayout() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-                className="p-4 sm:p-6 lg:p-10 relative z-1"
+                className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1"
               >
                 <PWAUpdateBanner />
                 <PWAInstallBanner />
