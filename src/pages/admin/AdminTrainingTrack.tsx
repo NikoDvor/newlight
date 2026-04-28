@@ -293,7 +293,7 @@ export default function AdminTrainingTrack() {
     return glossaryTerms
       .filter((term) => term.module_id === selectedModuleId)
       .filter((term) => !q || `${term.term} ${term.definition} ${term.usage_example}`.toLowerCase().includes(q))
-      .sort((a, b) => a.term.localeCompare(b.term));
+      .sort((a, b) => a.category.localeCompare(b.category) || a.sort_order - b.sort_order || a.term.localeCompare(b.term));
   }, [glossarySearch, glossaryTerms, selectedModuleId]);
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
@@ -579,14 +579,20 @@ export default function AdminTrainingTrack() {
                     const terms = selectedGlossaryTerms.filter((term) => term.category === category);
                     if (terms.length === 0) return null;
                     return (
-                      <section key={category} className="space-y-2">
-                        <h3 className="section-title">{category}</h3>
-                        <div className="grid grid-cols-1 gap-2">
+                      <section key={category} className="space-y-3">
+                        <div className="rounded-lg border border-primary/25 bg-primary/15 px-4 py-3 shadow-[0_0_24px_hsl(var(--primary)/0.08)]">
+                          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-primary">{category}</h3>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
                           {terms.map((term) => (
-                            <article key={term.id} className="rounded-lg border border-border/40 bg-secondary/25 p-4">
-                              <h4 className="text-sm font-semibold text-primary">{term.term}</h4>
-                              <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{term.definition}</p>
-                              <p className="mt-2 text-[13px] italic leading-relaxed text-muted-foreground">Example: “{term.usage_example}”</p>
+                            <article key={term.id} className="rounded-lg border border-border/45 border-l-4 border-l-primary bg-card/70 p-4 shadow-sm">
+                              <h4 className="text-base font-bold text-primary">{term.term}</h4>
+                              <p className="mt-2 text-sm leading-relaxed text-foreground">{term.definition}</p>
+                              {term.usage_example && (
+                                <blockquote className="mt-3 border-l border-primary/35 pl-3 text-sm italic leading-relaxed text-muted-foreground">
+                                  Example: {term.usage_example}
+                                </blockquote>
+                              )}
                             </article>
                           ))}
                         </div>
