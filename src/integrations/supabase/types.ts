@@ -5980,6 +5980,77 @@ export type Database = {
           },
         ]
       }
+      nl_training_flashcard_progress: {
+        Row: {
+          created_at: string
+          flashcard_id: string
+          id: string
+          last_seen_at: string | null
+          status: string
+          times_correct: number
+          times_seen: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flashcard_id: string
+          id?: string
+          last_seen_at?: string | null
+          status?: string
+          times_correct?: number
+          times_seen?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flashcard_id?: string
+          id?: string
+          last_seen_at?: string | null
+          status?: string
+          times_correct?: number
+          times_seen?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_training_flashcard_progress_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_training_flashcards: {
+        Row: {
+          back: string
+          category: string
+          created_at: string
+          difficulty: string
+          front: string
+          id: string
+          track_key: string
+        }
+        Insert: {
+          back: string
+          category: string
+          created_at?: string
+          difficulty: string
+          front: string
+          id?: string
+          track_key: string
+        }
+        Update: {
+          back?: string
+          category?: string
+          created_at?: string
+          difficulty?: string
+          front?: string
+          id?: string
+          track_key?: string
+        }
+        Relationships: []
+      }
       nl_training_glossary_terms: {
         Row: {
           category: string
