@@ -418,8 +418,12 @@ export function ChapterRunner({
   ) : null;
 
   const quizButton = (
-    <Button onClick={() => resetQuiz(currentLevel)} disabled={lockedPreview || currentLevelQuestions.length === 0} className="gap-2">
-      {requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
+    <Button
+      onClick={() => lockedPreview && requiresDrill && !drillCompleted ? setPhase("drill") : resetQuiz(currentLevel)}
+      disabled={(lockedPreview && !requiresDrill) || currentLevelQuestions.length === 0}
+      className="gap-2"
+    >
+      {lockedPreview && requiresDrill && !drillCompleted ? "Preview Script Drill" : requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
       <CheckCircle2 className="h-4 w-4" />
     </Button>
   );
