@@ -295,6 +295,16 @@ export default function AdminTrainingTrack() {
       .sort((a, b) => a.term.localeCompare(b.term));
   }, [glossarySearch, glossaryTerms, selectedModuleId]);
 
+  const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
+  const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
+  const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
+  const flashcardsByCategory = useMemo(() => {
+    return flashcards.reduce<Record<string, FlashcardRow[]>>((acc, card) => {
+      acc[card.category] = [...(acc[card.category] || []), card];
+      return acc;
+    }, {});
+  }, [flashcards]);
+
   const markGlossaryReviewed = async () => {
     const chapter = selectedChapters[0];
     if (!trackId || !selectedModule || !chapter) return;
