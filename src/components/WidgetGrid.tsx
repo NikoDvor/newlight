@@ -8,8 +8,8 @@ interface WidgetGridProps {
 export function WidgetGrid({ children, columns }: WidgetGridProps) {
   return (
     <motion.div
-      className="grid gap-6"
-      style={{ gridTemplateColumns: columns || "repeat(auto-fit, minmax(300px, 1fr))" }}
+      className="grid grid-cols-1 gap-4 sm:gap-6 md:[grid-template-columns:var(--widget-grid-columns)]"
+      style={{ "--widget-grid-columns": columns || "repeat(auto-fit, minmax(300px, 1fr))" } as React.CSSProperties}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}

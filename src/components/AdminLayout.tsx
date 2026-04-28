@@ -39,7 +39,7 @@ export function AdminLayout() {
             borderColor: "hsla(211,96%,60%,.12)",
             boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-3 overflow-x-auto touch-x-scroll">
               <SidebarTrigger className="text-white/60 hover:text-white transition-colors" />
               <div className="hidden sm:flex items-center gap-2">
                 <div className="h-6 w-6 rounded-md flex items-center justify-center" style={{
@@ -69,7 +69,7 @@ export function AdminLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto nl-dark-bg relative">
+          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg relative">
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
               <motion.div
@@ -78,7 +78,7 @@ export function AdminLayout() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-                className="p-4 sm:p-6 lg:p-10 relative z-1"
+                className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1"
               >
                 <PWAUpdateBanner />
                 <PWAInstallBanner />

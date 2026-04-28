@@ -191,6 +191,7 @@
   body {
     @apply bg-background text-foreground font-sans;
     overscroll-behavior: none;
+    overflow-x: hidden;
     /* Safe area insets for notched devices */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -206,10 +207,13 @@
 
   /* Mobile touch targets */
   @media (max-width: 768px) {
+    html { font-size: 16px; }
     button, a, [role="button"] {
       min-height: 44px;
       min-width: 44px;
+      touch-action: manipulation;
     }
+    input, select, textarea { font-size: 16px; }
     /* Tighter padding on mobile */
     .p-6 { padding: 1rem; }
     .lg\:p-10 { padding: 1rem; }
@@ -217,7 +221,61 @@
   }
 }
 
+@layer utilities {
+  .overflow-x-auto,
+  .overflow-x-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .overflow-x-auto > table,
+  .overflow-x-scroll > table,
+  [data-radix-scroll-area-viewport] table {
+    min-width: max-content;
+  }
+
+  @media (max-width: 767px) {
+    table {
+      display: block;
+      width: 100%;
+      min-width: 640px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .grid.grid-cols-2,
+    .grid.grid-cols-3,
+    .grid.grid-cols-4,
+    .grid.grid-cols-5,
+    .grid.grid-cols-6,
+    .grid.grid-cols-7,
+    .grid.grid-cols-8 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .card-widget,
+    .card-admin,
+    .dash-card,
+    .dash-kpi,
+    .dash-revenue-card {
+      min-width: 0;
+    }
+  }
+}
+
 @layer components {
+  .touch-x-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .touch-x-scroll > * {
+    min-width: max-content;
+  }
+
   /* Glass card — dark-optimized */
   .card-widget {
     @apply text-card-foreground rounded-2xl p-6;
