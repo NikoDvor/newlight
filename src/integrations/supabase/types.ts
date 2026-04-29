@@ -5787,7 +5787,11 @@ export type Database = {
       nl_practice_recordings: {
         Row: {
           chapter_id: string
+          content_type: string | null
           created_at: string
+          duration_seconds: number | null
+          file_name: string | null
+          file_size: number
           file_url: string
           id: string
           notes: string | null
@@ -5797,7 +5801,11 @@ export type Database = {
         }
         Insert: {
           chapter_id: string
+          content_type?: string | null
           created_at?: string
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_size?: number
           file_url: string
           id?: string
           notes?: string | null
@@ -5807,7 +5815,11 @@ export type Database = {
         }
         Update: {
           chapter_id?: string
+          content_type?: string | null
           created_at?: string
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_size?: number
           file_url?: string
           id?: string
           notes?: string | null
