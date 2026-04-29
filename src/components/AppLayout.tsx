@@ -186,7 +186,7 @@ export function AppLayout() {
               </motion.div>
             </AnimatePresence>
             {/* Powered by footer */}
-            <div className="sticky bottom-0 z-20 mt-auto flex items-center justify-center gap-1.5 py-3 opacity-30 hover:opacity-50 transition-opacity" style={{ background: "linear-gradient(180deg, transparent, hsla(218,42%,8%,.92) 35%, hsla(218,42%,8%,.97))" }}>
+            <div className="mt-auto flex items-center justify-center gap-1.5 py-3 opacity-30 hover:opacity-50 transition-opacity" style={{ background: "hsla(218,42%,8%,.97)" }}>
               <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: "hsla(210,40%,70%,.5)" }}>Powered by NewLight</span>
             </div>
           </main>
