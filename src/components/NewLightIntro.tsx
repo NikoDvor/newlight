@@ -147,29 +147,6 @@ export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
             New Eyes To ROI
           </motion.p>
 
-          {/* Powered badge */}
-          <motion.div
-            className="relative z-10 mt-4"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.5 }}
-          >
-            <div
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.1em] uppercase"
-              style={{
-                color: "hsl(197 92% 68%)",
-                background: "hsla(211,96%,60%,.08)",
-                border: "1px solid hsla(211,96%,60%,.18)",
-                boxShadow: "0 0 16px -3px hsla(211,96%,60%,.2)",
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-              Powered by NewLight
-            </div>
-          </motion.div>
-
           {/* Launching text */}
           <motion.p
             className="relative z-10 mt-3 text-[10px] tracking-wider uppercase"

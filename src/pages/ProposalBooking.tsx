@@ -273,9 +273,6 @@ export default function ProposalBooking() {
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Building Your Demo...</> : <><Rocket className="h-4 w-4 mr-2" /> Get My Custom Growth Demo</>}
           </Button>
 
-          <p className="text-[10px] text-white/20 text-center">
-            Powered by <span className="font-semibold">NewLight</span> · Enterprise Growth System
-          </p>
         </div>
       </motion.div>
     </div>

@@ -540,10 +540,6 @@ export default function BookingPage() {
           )}
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-[10px] text-muted-foreground">
-          Powered by {companyName || "NewLight Marketing"}
-        </p>
       </div>
     </div>
   );

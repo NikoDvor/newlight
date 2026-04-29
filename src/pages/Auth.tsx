@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket, Zap } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
@@ -271,12 +271,6 @@ export default function Auth() {
             className="inline-flex items-center gap-1.5 text-xs font-medium text-[hsl(211,96%,56%)] hover:text-white transition-colors">
             <Rocket className="h-3.5 w-3.5" /> New business? Get Started
           </Link>
-          <div className="flex items-center justify-center gap-1.5">
-            <Zap className="h-3 w-3" style={{ color: "hsla(211,96%,70%,.4)" }} />
-            <p className="text-[10px] font-semibold tracking-[0.1em] uppercase" style={{ color: "hsla(0,0%,100%,.25)" }}>
-              Powered by NewLight
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>

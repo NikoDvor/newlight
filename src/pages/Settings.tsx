@@ -797,7 +797,6 @@ export default function SettingsPage() {
               <SectionCard icon={SettingsIcon} title="Display Options" desc="UI and footer preferences">
                 <div className="space-y-3">
                   {[
-                    { label: "Show 'Powered by NewLight' in footer", desc: "Display platform attribution in the workspace footer" },
                     { label: "Show onboarding progress bar", desc: "Display setup progress on the dashboard" },
                     { label: "Compact sidebar mode", desc: "Use a narrower sidebar by default" },
                     { label: "Enable dark mode toggle", desc: "Allow users to switch between light and dark modes" },

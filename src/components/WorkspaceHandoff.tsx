@@ -355,9 +355,6 @@ export function WorkspaceHandoff({
           </div>
         )}
 
-        <p className="text-center text-[10px] text-muted-foreground mt-6">
-          Powered by <span className="font-semibold">NewLight</span>
-        </p>
       </motion.div>
     </div>
   );

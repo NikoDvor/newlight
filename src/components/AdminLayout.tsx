@@ -85,11 +85,6 @@ export function AdminLayout() {
                 <Outlet />
               </motion.div>
             </AnimatePresence>
-            {/* Powered by NewLight footer */}
-            <div className="mt-auto flex items-center justify-center gap-1.5 py-3 opacity-30 hover:opacity-50 transition-opacity" style={{ background: "hsla(218,42%,8%,.97)" }}>
-              <Zap className="h-3 w-3 text-[hsl(var(--nl-sky))]" />
-              <span className="text-[10px] font-semibold tracking-wide uppercase text-white/60">Powered by NewLight</span>
-            </div>
           </main>
         </div>
       </div>

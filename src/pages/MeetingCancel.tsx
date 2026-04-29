@@ -196,9 +196,6 @@ export default function MeetingCancel() {
           </Button>
         </div>
 
-        <p className="text-[10px] text-white/20 text-center mt-4">
-          Powered by <span className="font-semibold">NewLight</span>
-        </p>
       </motion.div>
     </div>
   );
