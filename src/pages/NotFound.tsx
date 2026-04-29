@@ -48,9 +48,6 @@ const NotFound = () => {
             </Button>
           </Link>
         </div>
-        <p className="text-[10px] text-white/20 mt-8 tracking-wide">
-          Powered by <span className="font-semibold">NewLight</span>
-        </p>
       </div>
     </div>
   );
