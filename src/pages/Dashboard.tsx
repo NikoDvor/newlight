@@ -1446,10 +1446,6 @@ export default function Dashboard() {
             <SystemStatusBar />
           </motion.div>
 
-          {/* Powered by */}
-          <div className="text-center py-6 text-[10px] tracking-widest" style={{ color: "hsla(211,96%,55%,.2)" }}>
-            Powered by <span className="font-semibold" style={{ color: "hsla(211,96%,60%,.28)" }}>NewLight</span>
-          </div>
         </div>
       </div>
   );
