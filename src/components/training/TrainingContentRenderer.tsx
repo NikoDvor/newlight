@@ -12,6 +12,26 @@ const getText = (node: React.ReactNode): string => {
   return "";
 };
 
+const listItemsFrom = (children: React.ReactNode) =>
+  React.Children.toArray(children).filter((child) => getText(child).trim().length > 0);
+
+const unwrapListItem = (node: React.ReactNode): React.ReactNode => {
+  if (!React.isValidElement<{ children?: React.ReactNode }>(node)) return node;
+  const children = node.props.children;
+  const parts = React.Children.toArray(children);
+
+  if (parts.length === 1 && React.isValidElement<{ children?: React.ReactNode }>(parts[0]) && parts[0].type === "p") {
+    return parts[0].props.children;
+  }
+
+  return parts.map((part, index) => {
+    if (React.isValidElement<{ children?: React.ReactNode }>(part) && part.type === "p") {
+      return <React.Fragment key={index}>{part.props.children}</React.Fragment>;
+    }
+    return part;
+  });
+};
+
 export function TrainingContentRenderer({ content }: TrainingContentRendererProps) {
   let ledePending = false;
   let ledeRendered = false;
@@ -30,19 +50,19 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
           h1: ({ children }) => {
             ledePending = true;
             return (
-              <div className="mb-6">
-                <h1 className="mb-6 text-2xl font-bold text-white">{children}</h1>
+              <div className="mb-4">
+                <h1 className="mb-3 text-2xl font-bold text-white">{children}</h1>
                 <div className="h-[3px] w-12 rounded-full" style={{ background: "linear-gradient(135deg, hsl(211,96%,56%), hsl(217,90%,50%))" }} />
               </div>
             );
           },
           h2: ({ children }) => (
-            <h2 className="mt-8 mb-3 border-l-2 border-[hsl(211,96%,56%)] pl-3 text-lg font-semibold text-[hsl(211,96%,65%)]">
+            <h2 className="mt-6 mb-3 border-l-2 border-[hsl(211,96%,56%)] pl-3 text-lg font-semibold text-[hsl(211,96%,65%)]">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="mt-6 mb-2 text-xs font-bold uppercase tracking-widest text-white/60">{children}</h3>
+            <h3 className="mt-5 mb-2 text-xs font-bold uppercase tracking-widest text-white/60">{children}</h3>
           ),
           p: ({ children }) => {
             const text = getText(children).trim();
@@ -65,7 +85,7 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
             }
 
             return (
-              <p className={isLede ? "mb-6 border-b border-[hsla(211,96%,60%,.1)] pb-6 text-base italic leading-relaxed text-white/90" : "mb-4 text-sm leading-relaxed text-white/80"}>
+              <p className={isLede ? "mb-3 border-b border-[hsla(211,96%,60%,.1)] pb-3 text-base italic leading-relaxed text-white/90" : "mb-3 text-sm leading-relaxed text-white/80"}>
                 {children}
               </p>
             );
@@ -73,26 +93,26 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
           strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
           hr: () => <div className="my-8 h-px w-full bg-[hsla(211,96%,60%,.1)]" />,
           ol: ({ children }) => (
-            <div className="my-5 space-y-2">
-              {React.Children.toArray(children).map((child, index) => (
+            <div className="my-4 space-y-2">
+              {listItemsFrom(children).map((child, index) => (
                 <div key={index} className="flex items-start gap-3 rounded-xl border border-[hsla(211,96%,60%,.12)] bg-[hsla(211,96%,60%,.06)] px-4 py-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, hsl(211,96%,56%), hsl(217,90%,50%))" }}>
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1 text-sm leading-relaxed text-white/80">
-                    {React.isValidElement<{ children?: React.ReactNode }>(child) ? child.props.children : child}
+                    {unwrapListItem(child)}
                   </div>
                 </div>
               ))}
             </div>
           ),
           ul: ({ children }) => (
-            <div className="my-4 space-y-2 pl-1">
-              {React.Children.toArray(children).map((child, index) => (
+            <div className="my-3 space-y-1.5 pl-1">
+              {listItemsFrom(children).map((child, index) => (
                 <div key={index} className="flex items-start gap-2 text-sm leading-relaxed text-white/75">
                   <span className="mt-1 text-xs text-[hsl(211,96%,56%)]">◆</span>
                   <div className="min-w-0 flex-1">
-                    {React.isValidElement<{ children?: React.ReactNode }>(child) ? child.props.children : child}
+                    {unwrapListItem(child)}
                   </div>
                 </div>
               ))}
