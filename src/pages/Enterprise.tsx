@@ -206,9 +206,6 @@ export default function Enterprise() {
             </a>
           </div>
         </motion.div>
-        <p className="text-[10px] text-white/15 mt-8 tracking-wide">
-          Powered by <span className="font-semibold">NewLight</span> · Enterprise Growth System
-        </p>
       </section>
     </div>
   );
