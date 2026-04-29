@@ -228,7 +228,12 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
           </div>
           <h2 className="text-xl font-semibold text-foreground">Save your reps for review</h2>
         </div>
-        {recordingType && <div className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Recording {elapsedLabel}</div>}
+        {recordingType && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+            Recording {elapsedLabel}
+          </div>
+        )}
       </div>
 
       <Textarea
@@ -240,16 +245,16 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Button type="button" variant="outline" onClick={() => startRecording("audio")} disabled={lockedPreview || saving || !!recordingType} className="gap-2 border-primary/25 bg-primary/10">
+        <Button type="button" variant="outline" onClick={() => startRecording("audio")} className="gap-2 border-primary/25 bg-primary/10">
           <Mic className="h-4 w-4" /> Record audio
         </Button>
-        <Button type="button" variant="outline" onClick={() => startRecording("video")} disabled={lockedPreview || saving || !!recordingType} className="gap-2 border-primary/25 bg-primary/10">
+        <Button type="button" variant="outline" onClick={() => startRecording("video")} className="gap-2 border-primary/25 bg-primary/10">
           <Camera className="h-4 w-4" /> Record video
         </Button>
-        <label className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-medium text-foreground transition-colors ${lockedPreview || saving || recordingType ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-primary/15"}`}>
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2 border-primary/25 bg-primary/10">
           <Upload className="h-4 w-4" /> Upload file
-          <input type="file" accept="audio/*,video/*" className="hidden" onChange={handleUpload} disabled={lockedPreview || saving || !!recordingType} />
-        </label>
+        </Button>
+        <input ref={fileInputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleUpload} />
       </div>
 
       {recordingType === "video" && <video ref={videoPreviewRef} autoPlay muted playsInline className="mt-4 aspect-video w-full rounded-xl border border-primary/15 bg-background/50 object-cover" />}
