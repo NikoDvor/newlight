@@ -168,7 +168,7 @@ export function AppLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg">
+          <main className="flex-1 min-w-0 overflow-auto nl-dark-bg flex flex-col">
             <GlobalAtmosphere />
             <CursorGlow />
             <AnimatePresence mode="wait">
@@ -178,7 +178,7 @@ export function AppLayout() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1"
+                className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1"
               >
                 <PWAUpdateBanner />
                 <PWAInstallBanner />
@@ -186,7 +186,7 @@ export function AppLayout() {
               </motion.div>
             </AnimatePresence>
             {/* Powered by footer */}
-            <div className="flex items-center justify-center gap-1.5 py-4 opacity-30 hover:opacity-50 transition-opacity">
+            <div className="sticky bottom-0 z-20 mt-auto flex items-center justify-center gap-1.5 py-3 opacity-30 hover:opacity-50 transition-opacity" style={{ background: "linear-gradient(180deg, transparent, hsla(218,42%,8%,.92) 35%, hsla(218,42%,8%,.97))" }}>
               <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: "hsla(210,40%,70%,.5)" }}>Powered by NewLight</span>
             </div>
           </main>
