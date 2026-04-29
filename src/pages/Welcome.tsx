@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Rocket, Globe, Users, Star, Megaphone, Search, BarChart3, Calendar,
   Shield, Zap, ChevronRight, CheckCircle2, ArrowRight, Brain, DollarSign,
-  Target, TrendingUp, Sparkles
+  Target, TrendingUp
 } from "lucide-react";
 
 /* ── industry-specific copy ── */
