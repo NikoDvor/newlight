@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -895,6 +895,10 @@ export default function AdminTrainingTrack() {
         />
         <MetricCard label="Certification Status" value={hasCertification ? "Certified" : overallPct === 100 ? "Ready" : "Locked"} icon={Star} />
         <MetricCard label="Flashcard Mastery" value={`${flashcardStats.mastered}/${flashcardStats.total || 28}`} icon={Layers} />
+      </div>
+      <div className="mt-8 pb-4 flex items-center justify-center gap-1.5 text-[10px] text-white/20">
+        <Zap className="h-3 w-3" />
+        <span>Powered by NewLight</span>
       </div>
     </div>
   );
