@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileAudio, Mic, Play, Search, Trash2, Upload, Vault, Video, Waves } from "lucide-react";
+import { Download, Play, Search, Trash2, Upload, Vault, Video, Waves } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
