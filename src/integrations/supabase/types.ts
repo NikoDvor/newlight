@@ -5784,6 +5784,47 @@ export type Database = {
           },
         ]
       }
+      nl_practice_recordings: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          file_url: string
+          id: string
+          notes: string | null
+          recording_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          file_url: string
+          id?: string
+          notes?: string | null
+          recording_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          file_url?: string
+          id?: string
+          notes?: string | null
+          recording_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_practice_recordings_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
