@@ -47,12 +47,14 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recordingType, setRecordingType] = useState<RecordingType | null>(null);
+  const [activePlaybackId, setActivePlaybackId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadRecordings = async (activeUserId?: string) => {
     const uid = activeUserId || userId;
@@ -127,7 +129,7 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       user_id: userId,
       chapter_id: chapterId,
       file_url: path,
-      recording_type: type,
+      recording_type: safeType,
       notes: notes.trim() || null,
     });
 
@@ -145,7 +147,14 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
   };
 
   const startRecording = async (type: Exclude<RecordingType, "upload">) => {
-    if (lockedPreview || saving || recordingType) return;
+    if (saving || recordingType) {
+      toast({ title: "Recording is already in progress", description: "Stop the current recording before starting another one." });
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast({ title: "Recording is not available", description: "Your browser does not support in-browser recording.", variant: "destructive" });
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia(type === "video" ? { audio: true, video: true } : { audio: true });
       streamRef.current = stream;
@@ -171,7 +180,7 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       setElapsed(0);
       setRecordingType(type);
     } catch (error) {
-      toast({ title: "Recording could not start", description: "Allow microphone/camera access and try again.", variant: "destructive" });
+      toast({ title: "Recording could not start", description: "Please allow microphone/camera access in your browser settings to record.", variant: "destructive" });
     }
   };
 
