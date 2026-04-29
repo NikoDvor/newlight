@@ -311,9 +311,6 @@ export default function Landing() {
           </motion.button>
         </motion.div>
 
-        <p className="mt-8 text-[10px] tracking-wider uppercase" style={{ color: "hsla(0,0%,100%,.2)" }}>
-          Powered by <span className="font-semibold">NewLight</span>
-        </p>
       </section>
     </div>
     </SessionGate>
