@@ -59,7 +59,10 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
   const focusInput = () => window.setTimeout(() => inputRef.current?.focus(), 40);
 
   const saveCompletion = async () => {
-    if (lockedPreview) return;
+    if (lockedPreview) {
+      onComplete();
+      return;
+    }
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -88,7 +91,6 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
   };
 
   const submitLine = () => {
-    if (lockedPreview) return;
     if (!current) return;
     if (similarity(answer, current.answer) >= 0.9) {
       const nextCompleted = [...completed, current.prompt];
@@ -109,10 +111,10 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
     return (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-primary/25 bg-primary/5 p-5 sm:p-6 text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-primary mb-3" />
-        <h2 className="text-2xl font-semibold text-foreground">Script Drilled ✓ — Quiz Now Unlocked</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Your memorization drill is complete. Start the chapter quiz while the script is fresh.</p>
-        <Button onClick={saveCompletion} disabled={saving || lockedPreview} className="mt-5 gap-2">
-          {saving ? "Saving…" : "Start Quiz"}
+        <h2 className="text-2xl font-semibold text-foreground">Script Drilled ✓</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Your memorization drill is complete. The quiz unlocks after the previous module is complete.</p>
+        <Button onClick={saveCompletion} disabled={saving} className="mt-5 gap-2">
+          {saving ? "Saving…" : "Continue"}
           <CheckCircle2 className="h-4 w-4" />
         </Button>
       </motion.div>
@@ -125,7 +127,7 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">Script Drill — Type From Memory</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{lockedPreview ? "Preview the script drill now. Completion unlocks after the previous module is complete." : "Type each line of the script exactly as written. You must complete all lines before the quiz unlocks."}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{lockedPreview ? "Practice the script drill now. Progress saves after the previous module is complete." : "Type each line of the script exactly as written. You must complete all lines before the quiz unlocks."}</p>
           </div>
           <div className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary shrink-0">
             {completed.length} of {lines.length} lines completed
@@ -157,7 +159,6 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
           }}
           className={`min-h-[120px] text-base leading-7 ${incorrect ? "border-destructive focus-visible:ring-destructive" : ""}`}
           placeholder="Type the full script line from memory…"
-          disabled={lockedPreview}
           autoFocus
         />
         {incorrect && (
@@ -173,7 +174,7 @@ export function ScriptDrillExercise({ lines, trackId, moduleId, chapterId, onCom
               Try Again
             </Button>
           )}
-          <Button type="button" onClick={submitLine} disabled={!answer.trim() || lockedPreview} className="gap-2">
+          <Button type="button" onClick={submitLine} disabled={!answer.trim()} className="gap-2">
             Submit Line
             <CheckCircle2 className="h-4 w-4" />
           </Button>
