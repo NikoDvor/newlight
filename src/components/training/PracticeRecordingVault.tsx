@@ -207,8 +207,11 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       return;
     }
     try {
+      setElapsed(0);
+      setRecordingType(type);
       const stream = await navigator.mediaDevices.getUserMedia(type === "video" ? { audio: true, video: true } : { audio: true });
       streamRef.current = stream;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       if (type === "video" && videoPreviewRef.current) {
         videoPreviewRef.current.srcObject = stream;
         await videoPreviewRef.current.play().catch(() => undefined);
@@ -237,8 +240,6 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
         setElapsed(0);
       };
       mediaRecorderRef.current = recorder;
-      setElapsed(0);
-      setRecordingType(type);
       recorder.start(500);
     } catch (error) {
       setRecordingType(null);
