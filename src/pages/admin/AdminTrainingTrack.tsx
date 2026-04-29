@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
+import { ScriptMemorizationVault } from "@/components/training/ScriptMemorizationVault";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -310,6 +311,7 @@ export default function AdminTrainingTrack() {
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
+  const isScriptMasteryModule = trackKey === "bdr" && selectedModule?.module_number === 4;
   const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
   const module6DrillComplete = !!selectedModule && progress.some((p) => p.module_id === selectedModule.id && !p.chapter_id && p.status === "in_progress" && p.score === 100);
   const flashcardsByCategory = useMemo(() => {
@@ -755,6 +757,8 @@ export default function AdminTrainingTrack() {
                   </>
                 )}
               </div>}
+
+              {isScriptMasteryModule && !isGlossaryModule && <ScriptMemorizationVault />}
 
               {isModule6 && !isGlossaryModule && (
                 <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
