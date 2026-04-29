@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Lock, ArrowRight } from "lucide-react";
+import { GraduationCap, Lock, ArrowRight, Vault } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PracticeRecordingVaultPage } from "@/components/training/PracticeRecordingVaultPage";
 
 interface TrackCardProps {
   title: string;
@@ -75,23 +77,40 @@ export default function AdminTrainingCenter() {
         description="Build and manage BDR and SDR training tracks"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
-        <TrackCard
-          title="BDR Training Track"
-          subtitle="Business Development Rep Certification"
-          badge="10 Modules"
-          onOpen={() => navigate("/admin/training-center/bdr")}
-          delay={0}
-        />
-        <TrackCard
-          title="SDR Training Track"
-          subtitle="Sales Development Rep Certification"
-          badge="Coming Soon"
-          badgeVariant="secondary"
-          disabled
-          delay={0.08}
-        />
-      </div>
+      <Tabs defaultValue="tracks" className="space-y-5">
+        <TabsList className="bg-background/50">
+          <TabsTrigger value="tracks" className="gap-2">
+            <GraduationCap className="h-4 w-4" /> Tracks
+          </TabsTrigger>
+          <TabsTrigger value="vault" className="gap-2">
+            <Vault className="h-4 w-4" /> Recording Vault
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tracks" className="mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
+            <TrackCard
+              title="BDR Training Track"
+              subtitle="Business Development Rep Certification"
+              badge="10 Modules"
+              onOpen={() => navigate("/admin/training-center/bdr")}
+              delay={0}
+            />
+            <TrackCard
+              title="SDR Training Track"
+              subtitle="Sales Development Rep Certification"
+              badge="Coming Soon"
+              badgeVariant="secondary"
+              disabled
+              delay={0.08}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="vault" className="mt-0">
+          <PracticeRecordingVaultPage />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
