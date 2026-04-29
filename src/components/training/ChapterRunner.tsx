@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
+import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
 
 export interface QuestionRow {
   id: string;
@@ -77,8 +77,6 @@ const LEVEL_LABELS: Record<QuizLevel, string> = {
   2: "Application",
   3: "Mastery",
 };
-
-const MarkdownReadingContent = ({ content }: { content: string }) => <ReactMarkdown>{content}</ReactMarkdown>;
 
 export function ChapterRunner({
   mode,
@@ -449,16 +447,18 @@ export function ChapterRunner({
         {loading ? (
           <div className="card-widget text-center py-16 text-muted-foreground text-sm">Loading…</div>
         ) : phase === "reading" && chapter ? (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="card-widget w-full p-4 sm:p-8">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="w-full">
             {lockedBanner}
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="h-4 w-4 text-primary" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
+            <div className="mb-5 rounded-2xl border border-border/40 bg-card/60 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
+              {levelBadges}
+              <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
-            {levelBadges}
-            <Progress value={(completedLevels / 3) * 100} className="h-1.5 mb-8" />
-            <MarkdownReadingContent content={chapter.content || ""} />
+            <TrainingContentRenderer content={chapter.content || ""} />
             {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
