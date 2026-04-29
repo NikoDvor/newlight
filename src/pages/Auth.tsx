@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket, Zap } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
