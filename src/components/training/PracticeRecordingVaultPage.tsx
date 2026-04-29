@@ -416,11 +416,11 @@ export function PracticeRecordingVaultPage() {
       )}
 
       <Dialog open={!!activeVideo} onOpenChange={(open) => !open && setActiveVideo(null)}>
-        <DialogContent className="max-w-5xl border-primary/15 bg-background p-3 sm:p-5">
+        <DialogContent className="h-[100dvh] max-h-[100dvh] w-screen max-w-none rounded-none border-primary/15 bg-background p-3 sm:p-5">
           <DialogHeader>
             <DialogTitle>{activeVideo?.file_name || "Practice video"}</DialogTitle>
           </DialogHeader>
-          {activeVideo?.playbackUrl && <video src={activeVideo.playbackUrl} controls autoPlay className="max-h-[78vh] w-full rounded-xl bg-black" />}
+          {activeVideo?.playbackUrl && <video src={activeVideo.playbackUrl} controls autoPlay className="h-[calc(100dvh-5.5rem)] w-full rounded-xl bg-black object-contain" />}
         </DialogContent>
       </Dialog>
     </div>
