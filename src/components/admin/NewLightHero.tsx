@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
 
 interface NewLightHeroProps {
   title: string;
@@ -26,18 +25,6 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
       {/* Content */}
       <div className="relative z-10 px-4 py-6 sm:px-10 sm:py-14 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
         <div className="space-y-2 sm:space-y-3">
-          <motion.div
-            className="flex items-center gap-2"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-          >
-            <div className="nl-hero-badge">
-              <Zap className="h-3.5 w-3.5" />
-              <span>Powered by NewLight</span>
-            </div>
-          </motion.div>
-
           <motion.h1
             className="text-2xl sm:text-4xl font-bold tracking-tight text-white"
             style={{ letterSpacing: "-0.03em" }}
@@ -82,12 +69,3 @@ export function NewLightHero({ title, subtitle, children }: NewLightHeroProps) {
   );
 }
 
-/** Small reusable "Powered by NewLight" chip for other surfaces */
-export function PoweredByNewLight({ className = "" }: { className?: string }) {
-  return (
-    <div className={`nl-hero-badge ${className}`}>
-      <Zap className="h-3 w-3" />
-      <span>Powered by NewLight</span>
-    </div>
-  );
-}
