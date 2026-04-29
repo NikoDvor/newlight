@@ -703,21 +703,18 @@ export default function AdminTrainingTrack() {
                     // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
                     const prevDone = !prev || isChapterComplete(prev.id);
-                    const unlocked = selectedModule.is_locked || prevDone;
+                    const unlocked = true;
                     return (
                       <button
                         key={c.id}
                         onClick={() =>
-                          unlocked && trackId && setRunner({
+                          trackId && setRunner({
                             mode: "chapter",
                             chapter: c as ChapterRow,
                             moduleId: selectedModule.id,
                           })
                         }
-                        disabled={!unlocked}
-                        className={`w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-border/40 transition-colors ${
-                          unlocked ? "hover:bg-white/[0.03] cursor-pointer" : "opacity-50 cursor-not-allowed"
-                        }`}
+                        className="w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-border/40 transition-colors hover:bg-white/[0.03] cursor-pointer"
                       >
                         {done ? (
                           <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0 mt-0.5" />
