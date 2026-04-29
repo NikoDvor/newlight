@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -463,6 +463,10 @@ export function ChapterRunner({
             <TrainingContentRenderer content={chapter.content || ""} />
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
             {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
+            <div className="mt-8 pb-4 flex items-center justify-center gap-1.5 text-[10px] text-white/20">
+              <Zap className="h-3 w-3" />
+              <span>Powered by NewLight</span>
+            </div>
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
