@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface QuestionRow {
   id: string;
@@ -233,7 +232,6 @@ export function ChapterRunner({
   };
 
   const handleDrillComplete = () => {
-    if (lockedPreview) return;
     setDrillCompleted(true);
     setPhase("quiz");
   };
@@ -410,12 +408,19 @@ export function ChapterRunner({
     </div>
   );
 
-  const lockedTooltip = `Unlock by completing Module ${unlockModuleNumber ?? "previous"} first`;
   const lockedBanner = lockedPreview && unlockModuleNumber ? (
     <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
       Complete Module {unlockModuleNumber} to unlock quizzes and progress tracking for this module
     </div>
   ) : null;
+
+  const lockedQuizState = (
+    <div className="mt-8 sm:mt-10 rounded-xl border border-primary/25 bg-primary/10 p-5 text-center">
+      <Lock className="mx-auto mb-3 h-8 w-8 text-primary" />
+      <h2 className="text-lg font-semibold text-foreground">Quiz Locked</h2>
+      <p className="mt-2 text-sm font-medium text-primary">Complete the previous module to unlock this quiz.</p>
+    </div>
+  );
 
   const quizButton = (
     <Button
@@ -454,16 +459,7 @@ export function ChapterRunner({
             {levelBadges}
             <Progress value={(completedLevels / 3) * 100} className="h-1.5 mb-8" />
             <MarkdownReadingContent content={chapter.content || ""} />
-            <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
-              {lockedPreview ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild><span>{quizButton}</span></TooltipTrigger>
-                    <TooltipContent>{lockedTooltip}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : quizButton}
-            </div>
+            {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
@@ -475,6 +471,11 @@ export function ChapterRunner({
               onComplete={handleDrillComplete}
               lockedPreview={lockedPreview}
             />
+          </motion.div>
+        ) : lockedPreview && phase === "quiz" ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+            {lockedQuizState}
+            <div className="mt-5 flex justify-center"><Button variant="outline" onClick={onClose}>Back to module</Button></div>
           </motion.div>
         ) : phase === "quiz" && current ? (
           <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
