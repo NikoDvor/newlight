@@ -278,17 +278,23 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
           <div key={recording.id} className="rounded-xl border border-primary/10 bg-background/30 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                {isVideoRecording(recording) ? <Video className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+                {isVideoRecording(recording) ? <Video className="h-4 w-4 text-primary" /> : <FileAudio className="h-4 w-4 text-primary" />}
                 {new Date(recording.created_at).toLocaleString()}
               </div>
-              <Button type="button" size="sm" variant="ghost" onClick={() => deleteRecording(recording)} className="h-8 gap-1.5 text-muted-foreground hover:text-destructive">
-                <Trash2 className="h-4 w-4" /> Delete
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => setActivePlaybackId(activePlaybackId === recording.id ? null : recording.id)} className="h-8 gap-1.5 border-primary/20 bg-primary/10">
+                  <Play className="h-4 w-4" /> Play
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => deleteRecording(recording)} className="h-8 gap-1.5 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete
+                </Button>
+              </div>
             </div>
-            {recording.playbackUrl && (isVideoRecording(recording) ? (
-              <video src={recording.playbackUrl} controls className="w-full rounded-lg border border-primary/10 bg-background/50" />
+            {recording.notes && <p className="mb-3 rounded-lg border border-primary/10 bg-background/40 p-3 text-sm text-muted-foreground">{recording.notes}</p>}
+            {activePlaybackId === recording.id && recording.playbackUrl && (isVideoRecording(recording) ? (
+              <video src={recording.playbackUrl} controls autoPlay className="w-full rounded-lg border border-primary/10 bg-background/50" />
             ) : (
-              <audio src={recording.playbackUrl} controls className="w-full" />
+              <audio src={recording.playbackUrl} controls autoPlay className="w-full" />
             ))}
             <Textarea
               value={recording.notes || ""}
