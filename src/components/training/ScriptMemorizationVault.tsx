@@ -282,8 +282,9 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
   const masteredCount = Object.values(lineStatuses).filter((status) => status === "mastered").length;
   const revealedCount = Object.values(lineStatuses).filter((status) => status === "revealed").length;
   const completedCount = masteredCount + revealedCount;
-  const complete = completedCount >= script.lines.length;
+  const complete = currentIndex >= script.lines.length;
   const currentAttempts = attemptsByLine[currentIndex] || 0;
+  const revealedLocked = lineStatuses[currentIndex] === "revealed";
 
   useEffect(() => {
     const loadProgress = async () => {
@@ -342,24 +343,23 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
     setLastPracticedAt(now);
   };
 
-  const completeLine = async (status: LineStatus) => {
+  const completeLine = async (status: LineStatus, nextAttempts = totalAttempts) => {
     const nextStatuses = { ...lineStatuses, [currentIndex]: status };
     const nextIndex = currentIndex + 1;
     setLineStatuses(nextStatuses);
     setInput("");
     setError(false);
     setCurrentIndex(nextIndex);
-    await persist(nextStatuses, totalAttempts);
+    await persist(nextStatuses, nextAttempts);
   };
 
   const submitLine = async () => {
-    if (complete || !script.lines[currentIndex]) return;
+    if (complete || revealedLocked || currentAttempts >= 3 || !script.lines[currentIndex]) return;
     const nextAttempts = totalAttempts + 1;
     setTotalAttempts(nextAttempts);
     setAttemptsByLine((prev) => ({ ...prev, [currentIndex]: (prev[currentIndex] || 0) + 1 }));
     if (lineMatches(input, script.lines[currentIndex])) {
-      await completeLine("mastered");
-      await persist({ ...lineStatuses, [currentIndex]: "mastered" }, nextAttempts);
+      await completeLine("mastered", nextAttempts);
       return;
     }
     setError(true);
@@ -368,7 +368,18 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
   };
 
   const revealLine = async () => {
-    await completeLine("revealed");
+    if (currentAttempts !== 3 || revealedLocked || complete) return;
+    const nextStatuses = { ...lineStatuses, [currentIndex]: "revealed" as LineStatus };
+    setLineStatuses(nextStatuses);
+    setInput("");
+    setError(false);
+    await persist(nextStatuses, totalAttempts);
+  };
+
+  const goToNextLine = () => {
+    setInput("");
+    setError(false);
+    setCurrentIndex((index) => Math.min(index + 1, script.lines.length));
   };
 
   const resetPractice = async () => {
