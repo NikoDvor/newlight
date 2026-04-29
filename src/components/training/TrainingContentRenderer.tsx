@@ -42,7 +42,7 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="mt-6 mb-2 text-sm font-bold uppercase tracking-widest text-white/60">{children}</h3>
+            <h3 className="mt-6 mb-2 text-xs font-bold uppercase tracking-widest text-white/60">{children}</h3>
           ),
           p: ({ children }) => {
             const text = getText(children).trim();
@@ -113,8 +113,8 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className="my-6 overflow-hidden rounded-xl border border-[hsla(211,96%,60%,.1)]">
-              <table className="w-full border-collapse">{children}</table>
+            <div className="my-6 w-full overflow-hidden rounded-xl border border-[hsla(211,96%,60%,.1)]">
+              <table className="w-full border-collapse text-left">{children}</table>
             </div>
           ),
           thead: ({ children }) => <thead className="bg-[hsla(211,96%,60%,.1)] text-[10px] font-semibold uppercase tracking-widest text-white/60">{children}</thead>,
@@ -124,7 +124,7 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
           td: ({ children }) => <td className="px-4 py-3 align-top text-sm text-white/75">{children}</td>,
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
