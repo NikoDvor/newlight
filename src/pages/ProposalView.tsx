@@ -265,7 +265,6 @@ export default function ProposalView() {
           </div>
         )}
 
-        <p className="text-center text-[10px] text-white/15 mb-4">Powered by <span className="font-semibold">NewLight</span> Marketing</p>
       </motion.div>
 
       {/* Accept Dialog */}
