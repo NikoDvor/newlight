@@ -127,10 +127,6 @@ export default function Welcome() {
           {/* Scene 3: NewLight system intro */}
           {scene === 2 && (
             <motion.div key="s3" {...sceneVariants} transition={{ duration: 0.7 }}>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: `${primaryColor}15`, border: `1px solid ${primaryColor}20` }}>
-                <Sparkles className="h-4 w-4" style={{ color: primaryColor }} />
-                <span className="text-sm text-white/60 font-medium">Powered by NewLight Marketing</span>
-              </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">This is your Growth System</h2>
               <p className="text-base text-white/40 max-w-md mx-auto">
                 An AI-powered operating system built to help {name} grow faster.
