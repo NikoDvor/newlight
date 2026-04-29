@@ -463,27 +463,43 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
                       }}
                       placeholder="Type Line from memory…"
                       className={`h-12 w-full border-primary/20 bg-background/70 text-base text-foreground placeholder:text-muted-foreground ${error ? "border-[hsl(var(--destructive))] focus-visible:ring-[hsl(var(--destructive))]" : ""}`}
+                      disabled={revealedLocked || currentAttempts >= 3}
                       autoFocus
                     />
                   </motion.div>
 
                   {error && <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--warning))]"><XCircle className="h-4 w-4" /> Not quite — try again</p>}
 
-                  {currentAttempts >= 3 && (
+                  {currentAttempts === 3 && !revealedLocked && (
                     <div className="mt-3 rounded-lg border border-primary/25 bg-primary/10 p-3">
                       <Button type="button" variant="outline" size="sm" onClick={revealLine} className="gap-2">
                         <Eye className="h-4 w-4" /> Reveal this line
                       </Button>
-                      <p className="mt-2 text-sm leading-relaxed text-primary">{script.lines[currentIndex]}</p>
-                      <Badge variant="outline" className="mt-2 border-primary/30 text-primary">Revealed</Badge>
+                    </div>
+                  )}
+
+                  {revealedLocked && (
+                    <div className="mt-3 rounded-lg border border-primary/25 bg-primary/10 p-3">
+                      <div className="mb-2 flex items-center gap-2 text-primary">
+                        <Eye className="h-4 w-4" />
+                        <Badge variant="outline" className="border-primary/30 text-primary">Revealed · editing locked</Badge>
+                      </div>
+                      <p className="text-sm leading-relaxed text-primary">{script.lines[currentIndex]}</p>
                     </div>
                   )}
 
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <Button type="button" onClick={submitLine} disabled={!input.trim() || saving} className="gap-2">
+                    {revealedLocked ? (
+                      <Button type="button" onClick={goToNextLine} disabled={saving} className="gap-2">
+                        Next Line
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                    <Button type="button" onClick={submitLine} disabled={!input.trim() || saving || currentAttempts >= 3} className="gap-2">
                       Submit Line
                       <CheckCircle2 className="h-4 w-4" />
                     </Button>
+                    )}
                   </div>
                 </div>
               )}
