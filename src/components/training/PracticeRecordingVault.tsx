@@ -47,12 +47,14 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recordingType, setRecordingType] = useState<RecordingType | null>(null);
+  const [activePlaybackId, setActivePlaybackId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadRecordings = async (activeUserId?: string) => {
     const uid = activeUserId || userId;
@@ -127,7 +129,7 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       user_id: userId,
       chapter_id: chapterId,
       file_url: path,
-      recording_type: type,
+      recording_type: safeType,
       notes: notes.trim() || null,
     });
 
@@ -145,7 +147,14 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
   };
 
   const startRecording = async (type: Exclude<RecordingType, "upload">) => {
-    if (lockedPreview || saving || recordingType) return;
+    if (saving || recordingType) {
+      toast({ title: "Recording is already in progress", description: "Stop the current recording before starting another one." });
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast({ title: "Recording is not available", description: "Your browser does not support in-browser recording.", variant: "destructive" });
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia(type === "video" ? { audio: true, video: true } : { audio: true });
       streamRef.current = stream;
@@ -171,7 +180,7 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       setElapsed(0);
       setRecordingType(type);
     } catch (error) {
-      toast({ title: "Recording could not start", description: "Allow microphone/camera access and try again.", variant: "destructive" });
+      toast({ title: "Recording could not start", description: "Please allow microphone/camera access in your browser settings to record.", variant: "destructive" });
     }
   };
 
@@ -219,7 +228,12 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
           </div>
           <h2 className="text-xl font-semibold text-foreground">Save your reps for review</h2>
         </div>
-        {recordingType && <div className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Recording {elapsedLabel}</div>}
+        {recordingType && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+            Recording {elapsedLabel}
+          </div>
+        )}
       </div>
 
       <Textarea
@@ -231,16 +245,16 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Button type="button" variant="outline" onClick={() => startRecording("audio")} disabled={lockedPreview || saving || !!recordingType} className="gap-2 border-primary/25 bg-primary/10">
+        <Button type="button" variant="outline" onClick={() => startRecording("audio")} className="gap-2 border-primary/25 bg-primary/10">
           <Mic className="h-4 w-4" /> Record audio
         </Button>
-        <Button type="button" variant="outline" onClick={() => startRecording("video")} disabled={lockedPreview || saving || !!recordingType} className="gap-2 border-primary/25 bg-primary/10">
+        <Button type="button" variant="outline" onClick={() => startRecording("video")} className="gap-2 border-primary/25 bg-primary/10">
           <Camera className="h-4 w-4" /> Record video
         </Button>
-        <label className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-medium text-foreground transition-colors ${lockedPreview || saving || recordingType ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-primary/15"}`}>
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2 border-primary/25 bg-primary/10">
           <Upload className="h-4 w-4" /> Upload file
-          <input type="file" accept="audio/*,video/*" className="hidden" onChange={handleUpload} disabled={lockedPreview || saving || !!recordingType} />
-        </label>
+        </Button>
+        <input ref={fileInputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleUpload} />
       </div>
 
       {recordingType === "video" && <video ref={videoPreviewRef} autoPlay muted playsInline className="mt-4 aspect-video w-full rounded-xl border border-primary/15 bg-background/50 object-cover" />}
@@ -264,17 +278,23 @@ export function PracticeRecordingVault({ chapterId, lockedPreview = false }: Pra
           <div key={recording.id} className="rounded-xl border border-primary/10 bg-background/30 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                {isVideoRecording(recording) ? <Video className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+                {isVideoRecording(recording) ? <Video className="h-4 w-4 text-primary" /> : <FileAudio className="h-4 w-4 text-primary" />}
                 {new Date(recording.created_at).toLocaleString()}
               </div>
-              <Button type="button" size="sm" variant="ghost" onClick={() => deleteRecording(recording)} className="h-8 gap-1.5 text-muted-foreground hover:text-destructive">
-                <Trash2 className="h-4 w-4" /> Delete
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => setActivePlaybackId(activePlaybackId === recording.id ? null : recording.id)} className="h-8 gap-1.5 border-primary/20 bg-primary/10">
+                  <Play className="h-4 w-4" /> Play
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => deleteRecording(recording)} className="h-8 gap-1.5 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete
+                </Button>
+              </div>
             </div>
-            {recording.playbackUrl && (isVideoRecording(recording) ? (
-              <video src={recording.playbackUrl} controls className="w-full rounded-lg border border-primary/10 bg-background/50" />
+            {recording.notes && <p className="mb-3 rounded-lg border border-primary/10 bg-background/40 p-3 text-sm text-muted-foreground">{recording.notes}</p>}
+            {activePlaybackId === recording.id && recording.playbackUrl && (isVideoRecording(recording) ? (
+              <video src={recording.playbackUrl} controls autoPlay className="w-full rounded-lg border border-primary/10 bg-background/50" />
             ) : (
-              <audio src={recording.playbackUrl} controls className="w-full" />
+              <audio src={recording.playbackUrl} controls autoPlay className="w-full" />
             ))}
             <Textarea
               value={recording.notes || ""}
