@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
+import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
 
 export interface QuestionRow {
   id: string;
@@ -216,6 +217,7 @@ export function ChapterRunner({
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
   const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
+  const showPracticeVault = mode === "chapter" && moduleNumber === 3 && !!chapter;
 
   const resetQuiz = (level = currentLevel) => {
     if (lockedPreview) return;
@@ -459,6 +461,7 @@ export function ChapterRunner({
               <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
+            {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
             {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
