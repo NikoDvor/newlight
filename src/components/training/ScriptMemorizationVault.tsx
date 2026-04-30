@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Eye, Flame, RotateCcw, XCircle } from "lucide-react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Camera, CheckCircle2, Download, Eye, FileAudio, Flame, Mic, Play, RotateCcw, Save, Square, Trash2, Upload, Video, X, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ interface QuizQuestion {
 
 type LineStatus = "mastered" | "revealed";
 
+type RecordingType = "audio" | "video" | "upload";
+
 type ProgressRecord = {
   mastered_count?: number | null;
   revealed_count?: number | null;
@@ -30,6 +32,32 @@ type ProgressRecord = {
   last_practiced_at?: string | null;
   line_statuses?: Record<string, LineStatus> | null;
 };
+
+type PracticeRecordingRow = {
+  id: string;
+  user_id: string;
+  chapter_id: string;
+  file_url: string;
+  recording_type: RecordingType;
+  created_at: string;
+  file_name?: string | null;
+  file_size?: number | null;
+  duration_seconds?: number | null;
+  content_type?: string | null;
+};
+
+type PracticeRecording = PracticeRecordingRow & { playbackUrl: string | null };
+
+type PendingRecording = {
+  blob: Blob;
+  url: string;
+  type: RecordingType;
+  fileName: string;
+  durationSeconds: number | null;
+  contentType: string;
+};
+
+const RECORDINGS_BUCKET = "practice-recordings";
 
 const SCRIPTS: ScriptDefinition[] = [
   {
@@ -198,6 +226,34 @@ const calculateStreak = (currentStreak: number, lastPracticedAt?: string | null)
   yesterday.setDate(yesterday.getDate() - 1);
   if (last === yesterday.toISOString().slice(0, 10)) return currentStreak + 1;
   return 1;
+};
+
+const formatDuration = (seconds?: number | null) => {
+  if (!seconds || seconds < 1) return "0:00";
+  return `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, "0")}`;
+};
+
+const fileExtensionFor = (blob: Blob, type: RecordingType, sourceName?: string) => {
+  const named = sourceName?.split(".").pop();
+  if (named && named !== sourceName) return named.toLowerCase();
+  if (blob.type.includes("mp4")) return "mp4";
+  if (blob.type.includes("mpeg")) return "mp3";
+  if (blob.type.includes("wav")) return "wav";
+  if (blob.type.includes("ogg")) return "ogg";
+  return type === "video" ? "webm" : "webm";
+};
+
+const readMediaDuration = (url: string, type: RecordingType) => new Promise<number | null>((resolve) => {
+  const media = document.createElement(type === "video" ? "video" : "audio");
+  media.preload = "metadata";
+  media.onloadedmetadata = () => resolve(Number.isFinite(media.duration) ? Math.round(media.duration) : null);
+  media.onerror = () => resolve(null);
+  media.src = url;
+});
+
+const isVideoRecording = (recording: Pick<PracticeRecording, "recording_type" | "file_url" | "content_type">) => {
+  const path = recording.file_url.toLowerCase();
+  return recording.recording_type === "video" || !!recording.content_type?.startsWith("video/") || path.endsWith(".mp4") || path.endsWith(".mov") || path.endsWith(".webm");
 };
 
 function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
