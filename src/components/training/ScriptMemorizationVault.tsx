@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "@/hooks/use-toast";
 
 interface ScriptDefinition {
   key: string;
@@ -319,28 +318,27 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
     const nextRevealed = Object.values(nextStatuses).filter((status) => status === "revealed").length;
     const now = new Date().toISOString();
     const nextStreak = reset ? streakDays : calculateStreak(streakDays, lastPracticedAt);
-    setSaving(true);
-    const { error: saveError } = await (supabase as any).from("nl_script_progress").upsert(
-      {
-        user_id: userId,
-        script_key: script.key,
-        mastered_count: nextMastered,
-        revealed_count: nextRevealed,
-        attempts: nextAttempts,
-        streak_days: nextStreak,
-        last_practiced_at: now,
-        line_statuses: nextStatuses,
-        updated_at: now,
-      },
-      { onConflict: "user_id,script_key" }
-    );
-    setSaving(false);
-    if (saveError) {
-      toast({ title: "Script progress was not saved", description: "Your practice still works, but the database save failed.", variant: "destructive" });
-      return;
-    }
-    setStreakDays(nextStreak);
-    setLastPracticedAt(now);
+    try {
+      setSaving(true);
+      const { error: saveError } = await (supabase as any).from("nl_script_progress").upsert(
+        {
+          user_id: userId,
+          script_key: script.key,
+          mastered_count: nextMastered,
+          revealed_count: nextRevealed,
+          attempts: nextAttempts,
+          streak_days: nextStreak,
+          last_practiced_at: now,
+          line_statuses: nextStatuses,
+          updated_at: now,
+        },
+        { onConflict: "user_id,script_key" }
+      );
+      setSaving(false);
+      if (saveError) return;
+      setStreakDays(nextStreak);
+      setLastPracticedAt(now);
+    } catch {}
   };
 
   const completeLine = async (status: LineStatus, nextAttempts = totalAttempts) => {
