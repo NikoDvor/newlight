@@ -217,7 +217,7 @@ export function ChapterRunner({
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
   const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
-  const showPracticeVault = mode === "chapter" && moduleNumber === 3 && !!chapter;
+  const showPracticeVault = mode === "chapter" && !!chapter && moduleNumber !== null && [3, 4, 5, 6].includes(moduleNumber);
 
   const resetQuiz = (level = currentLevel) => {
     if (lockedPreview) return;
