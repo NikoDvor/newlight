@@ -567,6 +567,267 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
   );
 }
 
+function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
+  const [activeScriptKey, setActiveScriptKey] = useState(SCRIPTS[0].key);
+  const [recordings, setRecordings] = useState<PracticeRecordingRow[]>([]);
+  const [recordingType, setRecordingType] = useState<Exclude<RecordingType, "upload"> | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [pending, setPending] = useState<PendingRecording | null>(null);
+  const [saved, setSaved] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const activeScript = SCRIPTS.find((script) => script.key === activeScriptKey) || SCRIPTS[0];
+
+  useEffect(() => {
+    if (!recordingType) return;
+    const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [recordingType]);
+
+  useEffect(() => {
+    const loadRecordings = async () => {
+      if (!userId) {
+        setRecordings([]);
+        return;
+      }
+      try {
+        const { data } = await (supabase as any)
+          .from("nl_practice_recordings")
+          .select("id,user_id,chapter_id,file_url,recording_type,created_at,file_name,file_size,duration_seconds,content_type")
+          .eq("user_id", userId)
+          .eq("script_key", activeScriptKey)
+          .order("created_at", { ascending: false });
+        setRecordings((data || []) as PracticeRecordingRow[]);
+      } catch {}
+    };
+    loadRecordings();
+  }, [activeScriptKey, userId, saved]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    if (pending?.url) URL.revokeObjectURL(pending.url);
+  }, [pending?.url]);
+
+  const stopStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (liveVideoRef.current) liveVideoRef.current.srcObject = null;
+  };
+
+  const discardPending = () => {
+    if (pending?.url) URL.revokeObjectURL(pending.url);
+    setPending(null);
+    setSaved(false);
+  };
+
+  const startRecording = async (type: Exclude<RecordingType, "upload">) => {
+    try {
+      if (pending) discardPending();
+      setSaved(false);
+      setElapsed(0);
+      setRecordingType(type);
+      const stream = await navigator.mediaDevices.getUserMedia(type === "video" ? { audio: true, video: true } : { audio: true });
+      streamRef.current = stream;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      if (type === "video" && liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
+        await liveVideoRef.current.play().catch(() => undefined);
+      }
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || (type === "video" ? "video/webm" : "audio/webm") });
+        const url = URL.createObjectURL(blob);
+        const durationSeconds = await readMediaDuration(url, type);
+        stopStream();
+        setPending({
+          blob,
+          url,
+          type,
+          fileName: `${type}-practice-${Date.now()}.${fileExtensionFor(blob, type)}`,
+          durationSeconds,
+          contentType: blob.type || (type === "video" ? "video/webm" : "audio/webm"),
+        });
+        setRecordingType(null);
+        setElapsed(0);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start(500);
+    } catch {
+      stopStream();
+      setRecordingType(null);
+      setElapsed(0);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
+  };
+
+  const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (pending) discardPending();
+    setSaved(false);
+    const url = URL.createObjectURL(file);
+    const mediaType = file.type.startsWith("video/") ? "video" : "audio";
+    const durationSeconds = await readMediaDuration(url, mediaType);
+    setPending({ blob: file, url, type: "upload", fileName: file.name, durationSeconds, contentType: file.type });
+  };
+
+  const savePending = async () => {
+    if (!pending || !userId) return;
+    try {
+      const ext = fileExtensionFor(pending.blob, pending.type, pending.fileName);
+      const path = `${userId}/${activeScriptKey}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from(RECORDINGS_BUCKET).upload(path, pending.blob, {
+        contentType: pending.contentType || pending.blob.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (uploadError) return;
+      const createdAt = new Date().toISOString();
+      const { error: rowError } = await (supabase as any).from("nl_practice_recordings").insert({
+        user_id: userId,
+        script_key: activeScriptKey,
+        file_url: path,
+        recording_type: pending.type,
+        created_at: createdAt,
+      });
+      if (rowError) return;
+      discardPending();
+      setSaved(true);
+    } catch {}
+  };
+
+  const deleteRecording = async (recording: PracticeRecordingRow) => {
+    try {
+      await (supabase as any).from("nl_practice_recordings").delete().eq("id", recording.id);
+      await supabase.storage.from(RECORDINGS_BUCKET).remove([recording.file_url]);
+      setRecordings((rows) => rows.filter((row) => row.id !== recording.id));
+    } catch {}
+  };
+
+  return (
+    <div className="mt-5 rounded-2xl border border-primary/15 bg-card/70 p-4 shadow-[0_0_32px_hsl(var(--primary)/0.06)] sm:p-5">
+      <div className="mb-4">
+        <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Script Practice Recordings</Badge>
+        <h3 className="text-lg font-semibold text-foreground">Script Practice Recordings</h3>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Record yourself delivering the full script and save it for review.</p>
+      </div>
+
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {SCRIPTS.map((script) => (
+          <Button
+            key={script.key}
+            type="button"
+            variant={activeScriptKey === script.key ? "default" : "outline"}
+            onClick={() => {
+              if (recordingType) return;
+              discardPending();
+              setActiveScriptKey(script.key);
+            }}
+            className="justify-center"
+          >
+            {script.name}
+          </Button>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-primary/15 bg-background/30 p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">{activeScript.name}</p>
+          {recordingType && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--destructive))]/40 bg-[hsl(var(--destructive))]/10 px-3 py-1 text-xs font-semibold text-[hsl(var(--destructive))]">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[hsl(var(--destructive))]" />
+              {formatDuration(elapsed)}
+            </span>
+          )}
+          {saved && <span className="text-sm font-semibold text-[hsl(var(--success))]">Saved</span>}
+        </div>
+
+        {!recordingType && !pending && (
+          <div className="grid grid-cols-1 gap-2">
+            <Button type="button" variant="outline" onClick={() => startRecording("audio")} className="h-12 justify-start gap-2 border-primary/25 bg-primary/10">
+              <Mic className="h-4 w-4" /> Record Audio
+            </Button>
+            <Button type="button" variant="outline" onClick={() => startRecording("video")} className="h-12 justify-start gap-2 border-primary/25 bg-primary/10">
+              <Camera className="h-4 w-4" /> Record Video
+            </Button>
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-12 justify-start gap-2 border-primary/25 bg-primary/10">
+              <Upload className="h-4 w-4" /> Upload File
+            </Button>
+            <input ref={fileInputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleUpload} />
+          </div>
+        )}
+
+        {recordingType && (
+          <div className="space-y-3">
+            {recordingType === "video" ? (
+              <video ref={liveVideoRef} autoPlay muted playsInline className="aspect-video w-full rounded-xl border border-primary/15 bg-background/60 object-cover" />
+            ) : (
+              <div className="flex min-h-[116px] items-center justify-center gap-1.5 rounded-xl border border-primary/15 bg-background/60">
+                {Array.from({ length: 16 }).map((_, index) => (
+                  <span key={index} className="w-1 animate-pulse rounded-full bg-primary" style={{ height: `${18 + ((index * 11) % 38)}px`, animationDelay: `${index * 50}ms` }} />
+                ))}
+              </div>
+            )}
+            <Button type="button" onClick={stopRecording} className="h-12 w-full gap-2 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:bg-[hsl(var(--destructive))]/90">
+              <Square className="h-4 w-4 fill-current" /> Stop Recording
+            </Button>
+          </div>
+        )}
+
+        {pending && (
+          <div className="space-y-3 rounded-xl border border-primary/15 bg-background/40 p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              {pending.contentType.startsWith("video/") ? <Video className="h-4 w-4 text-primary" /> : <FileAudio className="h-4 w-4 text-primary" />}
+              <span className="min-w-0 flex-1 truncate">{pending.fileName}</span>
+              <span className="text-xs text-muted-foreground">{formatDuration(pending.durationSeconds)}</span>
+            </div>
+            {pending.type !== "upload" && (pending.contentType.startsWith("video/") ? (
+              <video src={pending.url} controls className="aspect-video w-full rounded-xl border border-primary/10 bg-background/60" />
+            ) : (
+              <audio src={pending.url} controls className="w-full" />
+            ))}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" onClick={discardPending} className="gap-2"><X className="h-4 w-4" /> Discard</Button>
+              <Button type="button" onClick={savePending} className="gap-2"><Save className="h-4 w-4" /> Save</Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between gap-2 border-t border-primary/10 pt-4">
+          <p className="text-sm font-semibold text-foreground">Saved recordings</p>
+          <span className="text-xs text-muted-foreground">{recordings.length} saved</span>
+        </div>
+        {recordings.length === 0 ? (
+          <div className="rounded-xl border border-primary/10 bg-background/30 p-3 text-sm text-muted-foreground">No recordings saved for this script yet.</div>
+        ) : recordings.map((recording) => (
+          <div key={recording.id} className="flex items-center justify-between gap-3 rounded-xl border border-primary/10 bg-background/30 p-3">
+            <div className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+              {recording.recording_type === "video" ? <Video className="h-4 w-4 shrink-0 text-primary" /> : <FileAudio className="h-4 w-4 shrink-0 text-primary" />}
+              <span className="truncate">{new Date(recording.created_at).toLocaleString()}</span>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => deleteRecording(recording)} className="shrink-0 gap-1.5 text-muted-foreground hover:text-[hsl(var(--destructive))]">
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ScriptMemorizationVault() {
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -587,6 +848,7 @@ export function ScriptMemorizationVault() {
       <div className="grid grid-cols-1 gap-5">
         {SCRIPTS.map((script) => <ScriptCard key={script.key} script={script} userId={userId} />)}
       </div>
+      <ScriptPracticeRecordings userId={userId} />
     </section>
   );
 }
