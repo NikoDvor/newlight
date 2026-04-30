@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Eye, Flame, RotateCcw, XCircle } from "lucide-react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Camera, CheckCircle2, Download, Eye, FileAudio, Flame, Mic, Play, RotateCcw, Save, Square, Trash2, Upload, Video, X, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
