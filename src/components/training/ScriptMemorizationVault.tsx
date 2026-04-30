@@ -22,6 +22,8 @@ interface QuizQuestion {
 
 type LineStatus = "mastered" | "revealed";
 
+type RecordingType = "audio" | "video" | "upload";
+
 type ProgressRecord = {
   mastered_count?: number | null;
   revealed_count?: number | null;
@@ -30,6 +32,32 @@ type ProgressRecord = {
   last_practiced_at?: string | null;
   line_statuses?: Record<string, LineStatus> | null;
 };
+
+type PracticeRecordingRow = {
+  id: string;
+  user_id: string;
+  chapter_id: string;
+  file_url: string;
+  recording_type: RecordingType;
+  created_at: string;
+  file_name?: string | null;
+  file_size?: number | null;
+  duration_seconds?: number | null;
+  content_type?: string | null;
+};
+
+type PracticeRecording = PracticeRecordingRow & { playbackUrl: string | null };
+
+type PendingRecording = {
+  blob: Blob;
+  url: string;
+  type: RecordingType;
+  fileName: string;
+  durationSeconds: number | null;
+  contentType: string;
+};
+
+const RECORDINGS_BUCKET = "practice-recordings";
 
 const SCRIPTS: ScriptDefinition[] = [
   {
