@@ -138,6 +138,20 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "When does the close actually start?", back: "At the first second of the conversation. Elite closers do not have a closing moment — they have a conversation that was always moving toward one direction. The ask is just the natural conclusion." },
     { front: "What is the pre-close mindset reset?", back: "Ask yourself: Am I stating the next step or asking permission? Is my tonality going down? Am I ready to be silent? Do I believe this is right for them? If no on any — reset before asking." },
   ],
+  "6.2": [
+    { front: "What psychological shift does the Option Close create?", back: "It moves the prospect from evaluating WHETHER to meet to deciding WHICH time — the decision to meet is already made, they are just handling logistics. Both options answer in your favor." },
+    { front: "Option Close — correct delivery", back: "'Let me grab a time — mornings or afternoons better for you this week?' One sentence. Downward tonality. Immediate silence. No build-up, no softening, no permission-seeking." },
+    { front: "What is the Urgency Anchor variation?", back: "'I have something Tuesday morning or Thursday afternoon — which of those works?' Two specific real times. Specificity creates faster decisions than open availability." },
+    { front: "What do you do the moment they pick an option?", back: "Move immediately — 'Perfect — what's the best number to send the calendar link to?' Do not celebrate. Do not re-explain. Lock in the booking before the conversation continues." },
+    { front: "What are the 4 most common Option Close mistakes?", back: "1. Offering 3+ options — creates paralysis. 2. Softening before the ask. 3. Not sending the calendar link immediately. 4. Rising tonality that turns the close into a question." },
+  ],
+  "6.3": [
+    { front: "What is the Assignment Close and how does it differ from a standard close?", back: "Instead of asking for a commitment, you give the prospect a specific immediate task — 'pull up your calendar right now.' The act of doing the task IS the close. Actions are easier than decisions." },
+    { front: "Assignment Close — correct delivery", back: "'Pull up your calendar — let's find a time before I leave.' Specific, immediate, directive. The word 'now' or 'before I leave' prevents deferral. You are leading, not requesting." },
+    { front: "What is the full Assignment Close sequence?", back: "1. Positive signal. 2. 'Pull up your calendar right now.' 3. They open it. 4. Name two times. 5. They pick one. 6. Send the link immediately. 7. Confirm it landed. Booking only exists after step 6." },
+    { front: "Assignment Close on a cold call", back: "'While I have you — pull up your calendar right now and let's lock something in before we hang up.' Send the link during the call. Confirm receipt. Every step completed together is a step they will not skip later." },
+    { front: "What makes assignment closers feel helpful rather than pushy?", back: "The frame: 'I want to make this easy for you right now so you do not have to deal with scheduling later.' Said with calm confidence it feels like the natural next step — not a demand." },
+  ],
 };
 
 interface LevelProgressRow {
