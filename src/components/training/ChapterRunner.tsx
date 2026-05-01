@@ -81,7 +81,7 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "Surface the Gap response", back: "'Where do you want to be in six months, and is what you have now going to get you there?' If a gap exists — that gap is the value." },
   ],
 };
-
+interface LevelProgressRow {
   quiz_level: QuizLevel;
   status: string;
   score: number | null;
