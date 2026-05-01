@@ -88,6 +88,15 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "'I need to talk to someone' — The Ally Close", back: "'What would you do if they said no?' If they would still go ahead — close. If not — surface why the decision-maker would be opposed and address each concern before scheduling everyone together." },
     { front: "Arm Them for the Internal Sale", back: "'When you bring this to them, what objection do you think they will have? I would rather handle that together now than have it come up when I am not in the room.' Surface the real objection before it kills the deal." },
   ],
+  "5.5": [
+    { front: "'Too expensive' — what is the real objection?", back: "They can see the cost but not the return. It is not a budget problem — it is a value problem. Do not lower the price. Raise the perceived value until the price feels small." },
+    { front: "Reframe Cost vs. Revenue", back: "'Is it the price itself, or is it expensive compared to where you are right now? If you are leaving revenue on the table each month, which is actually more expensive?' You gave inaction a price tag." },
+    { front: "Do the Math Together", back: "'What is your average customer value? If we brought you 2-3 of those this month, would the investment make sense?' Their numbers move them — your numbers do not. Let them calculate the return." },
+    { front: "Separate Desire from Budget", back: "'Setting money aside — if results were guaranteed, is this something you would want?' Yes = structure problem, solve the structure. No = they do not want the outcome yet, return to discovery." },
+    { front: "'What's your pricing?' — what do you do?", back: "Redirect to outcome first. 'It depends on what you are looking for — we might not even be the right fit yet. What have you been trying to solve?' A number without context anchors on cost not value." },
+    { front: "'Your competitor is cheaper' — first response", back: "'Cheaper is only better if you get the same result. What results have they shown you they can get for a business like yours?' Let it sit. If they cannot answer — the comparison collapses." },
+    { front: "They push for a price twice — what do you say?", back: "'Most clients in your situation invest between [X] and [Y] and typically see [Z] in return within [timeframe]. But let me show you what that looks like for your business specifically.' Range tied to outcome." },
+  ],
 };
 
 interface LevelProgressRow {
