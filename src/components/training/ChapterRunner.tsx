@@ -66,7 +66,7 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
   ],
 };
 
-  quiz_level: QuizLevel;
+  interface LevelProgressRow {
   status: string;
   score: number | null;
 }
