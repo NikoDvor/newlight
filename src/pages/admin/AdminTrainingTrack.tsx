@@ -76,7 +76,11 @@ const GLOSSARY_CATEGORIES = [
   "Metrics and Performance",
 ];
 
-export default function AdminTrainingTrack() {
+interface AdminTrainingTrackProps {
+  basePath?: string;
+}
+
+export default function AdminTrainingTrack({ basePath = "/admin/training-center" }: AdminTrainingTrackProps) {
   const { trackKey } = useParams<{ trackKey: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
