@@ -97,6 +97,15 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "'Your competitor is cheaper' — first response", back: "'Cheaper is only better if you get the same result. What results have they shown you they can get for a business like yours?' Let it sit. If they cannot answer — the comparison collapses." },
     { front: "They push for a price twice — what do you say?", back: "'Most clients in your situation invest between [X] and [Y] and typically see [Z] in return within [timeframe]. But let me show you what that looks like for your business specifically.' Range tied to outcome." },
   ],
+  "5.6": [
+    { front: "'We tried it before and it didn't work' — what do you do first?", back: "Diagnose before you defend — 'What did you try and what actually happened?' Listen for: bad agency, wrong platform, poor targeting, no follow-up, unrealistic timeline. Each has a different fix. Never defend until you know which part failed." },
+    { front: "After diagnosing a bad experience — how do you respond?", back: "'The reason it did not work was not the channel — it was [specific issue]. Here is what we do differently: [specific process]. Here is a client in the same position: [specific result].' Proof of process difference — not 'we are different.'" },
+    { front: "'We already have someone' — what is your first move?", back: "'How is that going? What are they focused on and what results are you seeing?' Listen for gaps in volume, quality, speed, or channels not covered. Those gaps are your opening — not your pitch." },
+    { front: "The Gap Question for 'already have someone' or 'in-house team'", back: "'What is your current setup currently not doing that you wish it were?' If they name a gap they own the need. That need is your opening. Let them name it — never name it for them." },
+    { front: "'We handle it in-house' — how do you position without threatening their team?", back: "Position as complementary — 'We are not replacing your team. We give them the paid infrastructure that takes too long to build from scratch. Their work becomes more effective, not redundant.'" },
+    { front: "Reframe the Channel response to bad experience", back: "'If the ads had been set up correctly and leads followed up properly — do you think it could have worked?' If yes: the issue was execution not the channel. You are the execution they did not get before." },
+    { front: "The Pattern Recognition Advantage", back: "'An in-house hire gives you one person's experience. We bring a team tested across hundreds of campaigns. You cannot build that pattern recognition in-house without years and experiments your competitors have already run.'" },
+  ],
 };
 
 interface LevelProgressRow {
