@@ -72,7 +72,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "On a cold call, they ask who is calling — what do you say?", back: "'This is [your name] — I had something I wanted to run by them real quick.' Not a company name. Not a pitch. Your name and one vague but real purpose." },
     { front: "They ask you to leave a voicemail — what makes yours get returned?", back: "Make it specific — 'I was looking at your business online and I noticed something I wanted to flag. Takes two minutes.' A specific observation gets returned. A generic pitch does not." },
   ],
-};
+  "5.3": [
+    { front: "'Not interested' — what is actually happening?", back: "Autopilot. A conditioned reflex that fires before they have processed what you said. It is not a decision — it is a pattern. Interrupt the pattern, do not overcome the decision." },
+    { front: "'I don't see the value' — what went wrong?", back: "The pitch connected to your service, not their specific problem. They heard what you do. They did not feel why it matters to them. Stop pitching. Start finding the pain they have not named." },
+    { front: "Pattern Interrupt response to 'not interested'", back: "'[Name], can I be straight with you for 20 seconds?' Most say yes. Then ask what is actually going on — not to re-pitch. You broke their autopilot script with an unexpected question." },
+    { front: "Temperature Check — how does it work?", back: "'On a scale of 1 to 10 — where are you honestly?' Under 5: 'What would move you to a 5?' 5-6: 'What would move you to an 8?' 7+: close. Converts a vague dismissal into a specific conversation." },
+    { front: "The Funnel response to 'I don't see the value'", back: "'If we delivered [specific outcome], what about that would you regret?' Moves them from 'I don't see value' to 'I don't believe you can execute' — now handle it with proof, not more pitch." },
+    { front: "Surface the Gap response", back: "'Where do you want to be in six months, and is what you have now going to get you there?' If a gap exists — that gap is the value." },
+  ],
 
 interface LevelProgressRow {
   quiz_level: QuizLevel;
