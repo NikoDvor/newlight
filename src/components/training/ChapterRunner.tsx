@@ -89,6 +89,8 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "Arm Them for the Internal Sale", back: "'When you bring this to them, what objection do you think they will have? I would rather handle that together now than have it come up when I am not in the room.' Surface the real objection before it kills the deal." },
   ],
 };
+
+interface LevelProgressRow {
   quiz_level: QuizLevel;
   status: string;
   score: number | null;
