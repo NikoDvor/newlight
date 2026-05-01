@@ -80,8 +80,8 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "The Funnel response to 'I don't see the value'", back: "'If we delivered [specific outcome], what about that would you regret?' Moves them from 'I don't see value' to 'I don't believe you can execute' — now handle it with proof, not more pitch." },
     { front: "Surface the Gap response", back: "'Where do you want to be in six months, and is what you have now going to get you there?' If a gap exists — that gap is the value." },
   ],
+};
 
-interface LevelProgressRow {
   quiz_level: QuizLevel;
   status: string;
   score: number | null;
