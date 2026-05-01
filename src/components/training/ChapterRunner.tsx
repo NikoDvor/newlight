@@ -106,6 +106,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "Reframe the Channel response to bad experience", back: "'If the ads had been set up correctly and leads followed up properly — do you think it could have worked?' If yes: the issue was execution not the channel. You are the execution they did not get before." },
     { front: "The Pattern Recognition Advantage", back: "'An in-house hire gives you one person's experience. We bring a team tested across hundreds of campaigns. You cannot build that pattern recognition in-house without years and experiments your competitors have already run.'" },
   ],
+  "5.7": [
+    { front: "A prospect throws three objections at once — what do you do?", back: "'I heard a few things — let me address the most important one first. Which of those is the biggest concern right now?' Pick the one they name, resolve it fully, then ask if the others are still relevant. One at a time." },
+    { front: "You resolved an objection — what do you do immediately?", back: "Move forward — do not pause and wait for an invitation. 'So the next step is simple — are mornings or afternoons better for you this week?' You resolved it. You move. Pausing is where deals die." },
+    { front: "How do you tell a pattern objection from a genuine concern?", back: "Pattern: comes before you said enough to give real concerns, same words every time, does not change when addressed. Genuine: specific language, questions that show processing, concern about something specific you presented." },
+    { front: "Temperature Check — what does each range mean?", back: "1-3: Pattern objection — break the pattern before addressing content. 4-6: Genuine concern — ask what would move them up. 7-9: Ready — stop objection handling and close. 10: Close immediately." },
+    { front: "The Funnelling Technique", back: "Move a hard objection into an easier related one. 'I don't see value' → 'If we delivered [outcome], what would you regret?' You moved from vague and hard to specific and addressable with proof." },
+    { front: "When do you qualify out and how?", back: "Same objection twice with nothing new, no real budget path, every probe gets a deflection. Exit clean: 'This might not be the right moment — if things change I would be glad to come back. Is there a better time of year to keep in mind?'" },
+  ],
 };
 
 interface LevelProgressRow {
