@@ -474,6 +474,7 @@ export function ChapterRunner({
               <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
+            {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
             {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
