@@ -148,6 +148,7 @@ import Landing from "./pages/Landing";
 import ActivateAccount from "./pages/ActivateAccount";
 import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
+import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 
 const queryClient = new QueryClient();
 
