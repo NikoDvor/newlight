@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
+import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 
 export interface QuestionRow {
   id: string;
@@ -52,6 +53,16 @@ const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
     { prompt: "STEP 5 — BOOK:", answer: "I'd love just 20 minutes to walk you through it. Do mornings, afternoons, or evenings work better for you this week?" },
     { prompt: "CALENDAR RULE:", answer: "Perfect. I'll send you a calendar link right now while we're on the phone." },
     { prompt: "SHOW RATE RULE:", answer: "Do not hang up without a booked slot. Show rate drops significantly without this." },
+  ],
+};
+
+const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
+  "5.1": [
+    { front: "What does an objection actually signal?", back: "Something specific is unresolved — not a rejection of you, a signal that belief has not been transferred yet. Find what is unresolved and address it." },
+    { front: "'Too expensive,' 'need to think,' 'don't see the value' — how many root causes?", back: "One. All three mean the prospect cannot yet see that the return justifies the cost. Fix the belief, not the surface wording." },
+    { front: "What is the rule before any rebuttal?", back: "Acknowledge first — then dig. Never defend before you understand what is actually going on. Curiosity before counter-argument, every time." },
+    { front: "What is RAC?", back: "Recognize the objection without defending. Ask one clarifying question to get underneath it. Close forward once the real concern is addressed." },
+    { front: "When do you qualify out?", back: "When the same objection has come up twice, there is no real budget window, and the prospect gives nothing back when you probe. A fast no is worth more than a three-week maybe." },
   ],
 };
 
@@ -108,6 +119,8 @@ export function ChapterRunner({
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
+  const flashcardKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
+  const flashcards = CHAPTER_FLASHCARDS[flashcardKey] || [];
 
   useEffect(() => {
     const load = async () => {
@@ -461,6 +474,7 @@ export function ChapterRunner({
               <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
+            {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
             {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
