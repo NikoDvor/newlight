@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/ScriptDrillExercise";
 import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
+import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 
 export interface QuestionRow {
   id: string;
