@@ -148,6 +148,7 @@ import Landing from "./pages/Landing";
 import ActivateAccount from "./pages/ActivateAccount";
 import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
+import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 
 const queryClient = new QueryClient();
 
@@ -272,7 +273,10 @@ const App = () => {
                 <Route path="account-manager" element={<AccountManagerDashboard />} />
                 <Route path="support" element={<SupportEmployeeDashboard />} />
                 <Route path="generic" element={<GenericEmployeeDashboard />} />
-                <Route path="training" element={<EmployeePlaceholder title="Training Center" />} />
+                <Route path="training" element={<EmployeeTrainingCenter />} />
+                <Route path="training/bdr/certification" element={<AdminBDRCertification basePath="/employee/training" />} />
+                <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
+                <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<EmployeePlaceholder title="My Calendar" />} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />

@@ -93,7 +93,7 @@ function TrainingProgress({ trackKey }: { trackKey: "bdr" | "sdr" }) {
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">{state.complete} of {state.modules} modules complete</p>
           <Button asChild size="sm" className="gap-2">
-            <Link to={`/admin/training-center/${trackKey}`}><GraduationCap className="h-4 w-4" /> Continue Training</Link>
+            <Link to={`/employee/training/${trackKey}`}><GraduationCap className="h-4 w-4" /> Continue Training</Link>
           </Button>
         </div>
       </div>

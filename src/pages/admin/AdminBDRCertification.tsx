@@ -96,7 +96,11 @@ function escapeHtml(value: string) {
   }[char] || char));
 }
 
-export default function AdminBDRCertification() {
+interface AdminBDRCertificationProps {
+  basePath?: string;
+}
+
+export default function AdminBDRCertification({ basePath = "/admin/training-center" }: AdminBDRCertificationProps) {
   const navigate = useNavigate();
   const { user } = useWorkspace();
   const [loading, setLoading] = useState(true);
@@ -435,7 +439,7 @@ export default function AdminBDRCertification() {
   if (!allModulesComplete && !certification) {
     return (
       <div className="max-w-3xl mx-auto py-10">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/admin/training-center/bdr")} className="gap-2 mb-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/bdr`)} className="gap-2 mb-6">
           <ArrowLeft className="h-4 w-4" />
           Return to Training Center
         </Button>
@@ -549,7 +553,7 @@ export default function AdminBDRCertification() {
                 <Download className="h-4 w-4" />
                 Download Certificate
               </Button>
-              <Button variant="outline" onClick={() => navigate("/admin/training-center/bdr")} className="gap-2">
+              <Button variant="outline" onClick={() => navigate(`${basePath}/bdr`)} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Return to Training Center
               </Button>
@@ -582,14 +586,14 @@ export default function AdminBDRCertification() {
                   <p className="text-sm font-medium text-foreground">Module {m.module_number} — {m.module_title}</p>
                   <p className="text-xs text-muted-foreground mt-1">Review the module concepts before your next attempt.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => navigate(`/admin/training-center/bdr`)}>
+                <Button variant="outline" size="sm" onClick={() => navigate(`${basePath}/bdr`)}>
                   Review Module
                 </Button>
               </div>
             ))}
           </div>
           <div className="mt-6 flex justify-end">
-            <Button variant="outline" onClick={() => navigate("/admin/training-center/bdr")} className="gap-2">
+            <Button variant="outline" onClick={() => navigate(`${basePath}/bdr`)} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Return to Training Center
             </Button>
@@ -601,7 +605,7 @@ export default function AdminBDRCertification() {
 
   return (
     <div className="max-w-4xl mx-auto py-4 sm:py-8">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/training-center/bdr")} className="gap-2 mb-6">
+      <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/bdr`)} className="gap-2 mb-6">
         <ArrowLeft className="h-4 w-4" />
         Return to Training Center
       </Button>
