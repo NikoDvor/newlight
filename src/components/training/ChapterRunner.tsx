@@ -131,6 +131,13 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "CAPACITY CONCERN — 'We're too busy right now'", back: "Root: Timing stall or genuine capacity issue. Key line: 'The businesses pulling ahead are the ones who systematize their growth during their busy seasons, not after. When does your busy season end?'" },
     { front: "GENERIC SKEPTICISM — 'These things never work for businesses like mine'", back: "Root: Lack of relevant proof or identification. Key line: 'What kind of business do you consider similar to yours? I want to show you a result that is actually comparable.' Pull specific proof immediately after." },
   ],
+  "6.1": [
+    { front: "What is the single biggest mistake bad closers make?", back: "They give the prospect every opportunity to say no — permission-seeking language, softening after the ask, over-explaining. Every phrase protects the rep from rejection while signaling uncertainty to the prospect." },
+    { front: "What tonality must you use when closing and why?", back: "Downward or flat — declarative, certain, calm. A rising close sounds like you are unsure whether they want to meet. The close is not a question. It is the statement of the next step." },
+    { front: "What are the 4 separators of elite closers?", back: "1. They do not need the yes. 2. They close early and often with trial closes. 3. They protect the silence after the ask. 4. Their language always assumes the outcome — 'when' not 'if.'" },
+    { front: "When does the close actually start?", back: "At the first second of the conversation. Elite closers do not have a closing moment — they have a conversation that was always moving toward one direction. The ask is just the natural conclusion." },
+    { front: "What is the pre-close mindset reset?", back: "Ask yourself: Am I stating the next step or asking permission? Is my tonality going down? Am I ready to be silent? Do I believe this is right for them? If no on any — reset before asking." },
+  ],
 };
 
 interface LevelProgressRow {
