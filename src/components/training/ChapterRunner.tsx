@@ -56,7 +56,16 @@ const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
   ],
 };
 
-interface LevelProgressRow {
+const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
+  "5.1": [
+    { front: "What does an objection actually signal?", back: "Something specific is unresolved — not a rejection of you, a signal that belief has not been transferred yet. Find what is unresolved and address it." },
+    { front: "'Too expensive,' 'need to think,' 'don't see the value' — how many root causes?", back: "One. All three mean the prospect cannot yet see that the return justifies the cost. Fix the belief, not the surface wording." },
+    { front: "What is the rule before any rebuttal?", back: "Acknowledge first — then dig. Never defend before you understand what is actually going on. Curiosity before counter-argument, every time." },
+    { front: "What is RAC?", back: "Recognize the objection without defending. Ask one clarifying question to get underneath it. Close forward once the real concern is addressed." },
+    { front: "When do you qualify out?", back: "When the same objection has come up twice, there is no real budget window, and the prospect gives nothing back when you probe. A fast no is worth more than a three-week maybe." },
+  ],
+};
+
   quiz_level: QuizLevel;
   status: string;
   score: number | null;
