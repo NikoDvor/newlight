@@ -96,7 +96,11 @@ function escapeHtml(value: string) {
   }[char] || char));
 }
 
-export default function AdminBDRCertification() {
+interface AdminBDRCertificationProps {
+  basePath?: string;
+}
+
+export default function AdminBDRCertification({ basePath = "/admin/training-center" }: AdminBDRCertificationProps) {
   const navigate = useNavigate();
   const { user } = useWorkspace();
   const [loading, setLoading] = useState(true);
