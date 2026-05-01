@@ -399,7 +399,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/admin/training-center")}
+          onClick={() => navigate(basePath)}
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -503,7 +503,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 {trackKey === "bdr" && (
                   <>
                     <button
-                      onClick={() => overallPct === 100 && navigate("/admin/training-center/bdr/certification")}
+                      onClick={() => overallPct === 100 && navigate(`${basePath}/bdr/certification`)}
                       disabled={overallPct < 100}
                       className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
                         overallPct === 100 ? "hover:bg-white/[0.03]" : "opacity-60 cursor-not-allowed"
