@@ -80,7 +80,16 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "The Funnel response to 'I don't see the value'", back: "'If we delivered [specific outcome], what about that would you regret?' Moves them from 'I don't see value' to 'I don't believe you can execute' — now handle it with proof, not more pitch." },
     { front: "Surface the Gap response", back: "'Where do you want to be in six months, and is what you have now going to get you there?' If a gap exists — that gap is the value." },
   ],
+  "5.4": [
+    { front: "'I need to think about it' — what does it actually mean?", back: "Something specific is unresolved and the prospect does not feel safe naming it directly. They are not going to think about it. Find what is underneath it before they leave the conversation." },
+    { front: "Reframe What Thinking Requires", back: "'Decisions do not take time — they take information. The longer we wait, the less you have. What are your main concerns so I can address them?' You turned a time problem into an information problem you can solve right now." },
+    { front: "Give Three Options response", back: "'Is it more about the timing, the investment, or something about what we discussed that does not feel right?' Give three options — people pick one. Now you have a real conversation instead of a follow-up black hole." },
+    { front: "The Compounding Gap response", back: "'Every month you are not running this, businesses in your market are pulling further ahead. The gap compounds while you think. What would you need to see to move forward now?' Real urgency — not a fake deadline." },
+    { front: "'I need to talk to someone' — The Ally Close", back: "'What would you do if they said no?' If they would still go ahead — close. If not — surface why the decision-maker would be opposed and address each concern before scheduling everyone together." },
+    { front: "Arm Them for the Internal Sale", back: "'When you bring this to them, what objection do you think they will have? I would rather handle that together now than have it come up when I am not in the room.' Surface the real objection before it kills the deal." },
+  ],
 };
+
 interface LevelProgressRow {
   quiz_level: QuizLevel;
   status: string;
