@@ -64,6 +64,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "What is RAC?", back: "Recognize the objection without defending. Ask one clarifying question to get underneath it. Close forward once the real concern is addressed." },
     { front: "When do you qualify out?", back: "When the same objection has come up twice, there is no real budget window, and the prospect gives nothing back when you probe. A fast no is worth more than a three-week maybe." },
   ],
+  "5.2": [
+    { front: "What is the default opener with every gatekeeper?", back: "The Confident Ask — 'Hey, is [owner name] around?' Say the name if you have it. Do not over-explain. Do not pitch. Just ask with the energy of someone who belongs there." },
+    { front: "They ask 'What's this about?' — what do you say?", back: "The Purpose Statement — 'I put something together for the business, I just wanted to show it to [owner name] real quick.' Specific enough to be real. Creates curiosity. Does not pitch." },
+    { front: "What is the Ally Frame technique?", back: "'Maybe you can help me — I wanted to get something in front of [owner name]. Is there a good time when they are not slammed?' You gave them a role. People help when they feel respected and useful." },
+    { front: "The owner is not there. What do you do before you leave?", back: "The Return Visit Setup — 'When is the best time to catch them? And what's your name? I'll ask for you when I come back.' You created continuity. You are not a stranger on your return." },
+    { front: "On a cold call, they ask who is calling — what do you say?", back: "'This is [your name] — I had something I wanted to run by them real quick.' Not a company name. Not a pitch. Your name and one vague but real purpose." },
+    { front: "They ask you to leave a voicemail — what makes yours get returned?", back: "Make it specific — 'I was looking at your business online and I noticed something I wanted to flag. Takes two minutes.' A specific observation gets returned. A generic pitch does not." },
+  ],
 };
 
 interface LevelProgressRow {
