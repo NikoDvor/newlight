@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarClock, CheckCircle2, Clock3, DollarSign, GraduationCap, PhoneCall, Target, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
+import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
