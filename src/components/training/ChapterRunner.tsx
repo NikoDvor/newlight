@@ -10,6 +10,7 @@ import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/Scri
 import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
+import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 
 export interface QuestionRow {
   id: string;
