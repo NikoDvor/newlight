@@ -5784,6 +5784,42 @@ export type Database = {
           },
         ]
       }
+      nl_certifications: {
+        Row: {
+          answers_snapshot: Json | null
+          attempt_number: number
+          completed_at: string
+          id: string
+          passed: boolean
+          questions_snapshot: Json | null
+          score: number
+          user_id: string
+          weak_modules: Json | null
+        }
+        Insert: {
+          answers_snapshot?: Json | null
+          attempt_number?: number
+          completed_at?: string
+          id?: string
+          passed?: boolean
+          questions_snapshot?: Json | null
+          score?: number
+          user_id: string
+          weak_modules?: Json | null
+        }
+        Update: {
+          answers_snapshot?: Json | null
+          attempt_number?: number
+          completed_at?: string
+          id?: string
+          passed?: boolean
+          questions_snapshot?: Json | null
+          score?: number
+          user_id?: string
+          weak_modules?: Json | null
+        }
+        Relationships: []
+      }
       nl_practice_recordings: {
         Row: {
           chapter_id: string
