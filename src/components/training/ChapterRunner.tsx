@@ -181,6 +181,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "What makes NewLight's ads different from boosting posts?", back: "Local targeting, intent-based audiences, conversion-focused creative, and every dollar tracked to real outcomes — not vanity metrics." },
     { front: "What is retargeting and why does it matter?", back: "Retargeting reaches people who visited the site or engaged but did not convert. Most businesses lose these leads. We recapture them." },
   ],
+  "7.2": [
+    { front: "What is the core difference between SEO and paid ads?", back: "Ads require ongoing payment — stop paying, stop showing up. SEO builds authority over time and keeps working without paying per click." },
+    { front: "What is AI visibility?", back: "Being recommended by AI tools like ChatGPT, Gemini, and voice search when someone asks for a local service. The new front page." },
+    { front: "What are the five things NewLight does for SEO and AI visibility?", back: "Local SEO, on-page SEO, authority building, AI optimization, and review strategy." },
+    { front: "What is the output of a strong SEO and AI visibility strategy?", back: "Organic inbound calls and leads without paying per click — rankings that compound and get stronger every month." },
+    { front: "How do you explain SEO and AI visibility to a client in one concept?", back: "When someone searches for your service in your city or asks AI to recommend one — your competition shows up. You do not. We fix that." },
+    { front: "Why does SEO compound over time?", back: "Authority builds month over month. The longer the strategy runs, the stronger the results — without increasing spend." },
+  ],
 };
 
 interface LevelProgressRow {
