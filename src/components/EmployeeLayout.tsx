@@ -25,8 +25,47 @@ const navItems = [
 
 function EmployeeSidebar() {
   const location = useLocation();
-  const { userRole, employeeProfile } = useWorkspace();
+  const { userRole, employeeProfile, user } = useWorkspace();
   const dashboardRoute = getEmployeeRoute(userRole, employeeProfile?.job_title) || "/employee/generic";
+  const [certStatus, setCertStatus] = useState<"locked" | "attempted" | "certified">("locked");
+  const [attemptCount, setAttemptCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "bdr").maybeSingle();
+      if (!track) return;
+      const [{ data: mods }, { data: progress }, { data: certs }] = await Promise.all([
+        supabase.from("nl_training_modules").select("id, module_number").eq("track_id", track.id),
+        supabase.from("nl_training_progress").select("module_id, status, chapter_id").eq("user_id", user.id).eq("track_id", track.id),
+        (supabase as any).from("nl_certifications").select("passed").eq("user_id", user.id),
+      ]);
+      const realMods = (mods || []).filter((m: any) => m.module_number >= 1 && m.module_number <= 8);
+      const completedIds = new Set<string>();
+      for (const mod of realMods) {
+        const mp = (progress || []).filter((p: any) => p.module_id === mod.id);
+        if (mp.some((p: any) => !p.chapter_id && p.status === "completed")) completedIds.add(mod.id);
+        else {
+          const chapterDone = mp.filter((p: any) => p.chapter_id && p.status === "completed");
+          if (chapterDone.length > 0) {
+            const { count } = await supabase.from("nl_training_chapters").select("id", { count: "exact", head: true }).eq("module_id", mod.id);
+            if (count && chapterDone.length >= count) completedIds.add(mod.id);
+          }
+        }
+      }
+      const unlocked = realMods.length >= 8 && realMods.every((m: any) => completedIds.has(m.id));
+      const certRows = (certs?.data || certs || []) as any[];
+      setAttemptCount(certRows.length);
+      if (certRows.some((c: any) => c.passed)) setCertStatus("certified");
+      else if (unlocked) setCertStatus(certRows.length > 0 ? "attempted" : "attempted");
+      else setCertStatus("locked");
+      if (unlocked && certRows.some((c: any) => c.passed)) setCertStatus("certified");
+      else if (unlocked) setCertStatus("attempted");
+    })();
+  }, [user?.id]);
+
+  const certUrl = "/employee/certification/bdr";
+  const certActive = location.pathname === certUrl;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
@@ -52,6 +91,19 @@ function EmployeeSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {/* BDR Certification */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={certActive} tooltip="BDR Certification">
+                  <NavLink to={certUrl} className="text-muted-foreground hover:text-foreground">
+                    {certStatus === "locked" ? <Lock className="h-4 w-4" /> : certStatus === "certified" ? <CheckCircle2 className="h-4 w-4 text-[hsl(142,72%,42%)]" /> : <Award className="h-4 w-4" />}
+                    <span className="flex items-center gap-2">
+                      BDR Certification
+                      {certStatus === "certified" && <Badge className="h-4 text-[9px] px-1.5 bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)] border-0">Certified</Badge>}
+                      {certStatus === "attempted" && attemptCount > 0 && !certStatus.includes("certified") && <Badge variant="secondary" className="h-4 text-[9px] px-1.5">{attemptCount}</Badge>}
+                    </span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
