@@ -189,6 +189,7 @@ export function SDRDashboard() {
   return (
     <div className="space-y-6">
       <Header title={`Good morning, ${firstName(name, user?.email)}`} />
+      <MotivationCarousel />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Meetings This Week" value={meetings.length} icon={CalendarClock} />
         <StatCard label="Proposals Sent This Week" value={sentWeek} icon={Target} />
