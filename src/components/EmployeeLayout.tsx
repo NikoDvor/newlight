@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { BarChart3, CalendarDays, GraduationCap, LogOut, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Award, BarChart3, CalendarDays, CheckCircle2, GraduationCap, Lock, LogOut, Target, UserCircle, Users, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
@@ -11,6 +13,7 @@ import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
