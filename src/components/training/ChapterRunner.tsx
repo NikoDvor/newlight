@@ -189,6 +189,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "How do you explain SEO and AI visibility to a client in one concept?", back: "When someone searches for your service in your city or asks AI to recommend one — your competition shows up. You do not. We fix that." },
     { front: "Why does SEO compound over time?", back: "Authority builds month over month. The longer the strategy runs, the stronger the results — without increasing spend." },
   ],
+  "7.3": [
+    { front: "What are the four things a converting website does?", back: "Loads fast on every device, communicates the offer immediately, makes it easy to take action, and supports SEO and AI visibility." },
+    { front: "What is the output of NewLight's web design service?", back: "A fast, mobile-optimized, SEO-structured site with clear calls to action — leads captured directly into the CRM pipeline." },
+    { front: "What is the difference between a website and a landing page?", back: "A website covers the full business. A landing page is single-purpose — built for one ad campaign with one goal: convert the visitor into a lead." },
+    { front: "What is the funnel builder used for?", back: "Multi-step flows that guide a visitor from interest to booked appointment — used for higher-ticket services needing a qualification step." },
+    { front: "How do you explain web design to a client who already has a website?", back: "'When did you last update it? Is it showing up in search? Is it built for mobile? Most aren't. That is what we fix.'" },
+    { front: "Why does a website need to be SEO-structured?", back: "A site not structured for search engines is invisible. We build sites that rank on Google and that AI systems can read and pull from." },
+  ],
 };
 
 interface LevelProgressRow {
