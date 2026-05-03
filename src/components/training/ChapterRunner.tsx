@@ -677,13 +677,21 @@ export function ChapterRunner({
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
-              {levelBadges}
-              <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
+              {!isReflectionModule && levelBadges}
+              {!isReflectionModule && <Progress value={(completedLevels / 3) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
+            {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
-            {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
+            {isReflectionModule ? (
+              <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
+                <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">
+                  {saving ? "Saving…" : "Mark Complete"}
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
