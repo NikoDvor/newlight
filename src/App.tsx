@@ -149,6 +149,7 @@ import ActivateAccount from "./pages/ActivateAccount";
 import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
 import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
+import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 
 const queryClient = new QueryClient();
 
