@@ -149,6 +149,7 @@ import ActivateAccount from "./pages/ActivateAccount";
 import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
 import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
+import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 
 const queryClient = new QueryClient();
 
@@ -277,6 +278,7 @@ const App = () => {
                 <Route path="training/bdr/certification" element={<AdminBDRCertification basePath="/employee/training" />} />
                 <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
+                <Route path="certification/bdr" element={<BDRCertificationExam />} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<EmployeePlaceholder title="My Calendar" />} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
