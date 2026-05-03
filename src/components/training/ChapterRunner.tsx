@@ -228,7 +228,7 @@ export function ChapterRunner({
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
-  const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
+  const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6 || moduleNumber === 7) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
   const flashcards = CHAPTER_FLASHCARDS[flashcardKey] || [];
 
   useEffect(() => {
