@@ -76,7 +76,7 @@ export function MotivationCarousel() {
           boxShadow: "0 0 40px hsla(211,96%,56%,.08)",
         }}
       >
-        <p className="text-sm text-white/50">Complete Module 9 to unlock your personal motivation board</p>
+        <p className="text-sm text-white/50">Complete Module 8 to unlock your personal motivation board</p>
       </div>
     );
   }
