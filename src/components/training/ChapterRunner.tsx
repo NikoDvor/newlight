@@ -197,6 +197,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "How do you explain web design to a client who already has a website?", back: "'When did you last update it? Is it showing up in search? Is it built for mobile? Most aren't. That is what we fix.'" },
     { front: "Why does a website need to be SEO-structured?", back: "A site not structured for search engines is invisible. We build sites that rank on Google and that AI systems can read and pull from." },
   ],
+  "7.4": [
+    { front: "What are the three things social media does for a service business?", back: "Builds trust with prospects who look the business up, keeps the business top of mind, and drives inbound calls and messages." },
+    { front: "What does NewLight handle in social media management?", back: "Content creation, scheduling and publishing, platform management, and performance tracking — completely off the client's plate." },
+    { front: "What is the output of NewLight's social media management?", back: "A professional, active presence across all platforms — consistent content, increased trust, top-of-mind awareness, and direct inbound." },
+    { front: "How do you explain social media management to a client in one concept?", back: "'We take it completely off your plate. You do not write or design anything. Consistent, professional content — so when someone looks you up, they call you.'" },
+    { front: "Why does consistency matter more than occasional posting?", back: "Consistency builds trust and keeps the business top of mind. Occasional posts do neither — they look random and signal neglect." },
+    { front: "What platforms does NewLight manage for social media?", back: "Facebook, Instagram, and Google Business Profile — based on where the client's customers actually are." },
+  ],
 };
 
 interface LevelProgressRow {
