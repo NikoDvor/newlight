@@ -152,6 +152,27 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "Assignment Close on a cold call", back: "'While I have you — pull up your calendar right now and let's lock something in before we hang up.' Send the link during the call. Confirm receipt. Every step completed together is a step they will not skip later." },
     { front: "What makes assignment closers feel helpful rather than pushy?", back: "The frame: 'I want to make this easy for you right now so you do not have to deal with scheduling later.' Said with calm confidence it feels like the natural next step — not a demand." },
   ],
+  "6.4": [
+    { front: "What is the core psychology behind the Bandwagon Close?", back: "People do not want to be first. Showing others like them already said yes removes fear and gives permission to move." },
+    { front: "What makes social proof weak vs. strong?", back: "Weak: 'We work with a lot of businesses.' Strong: specific niche, specific city, specific result." },
+    { front: "What is the full Bandwagon Close sequence?", back: "'We are already working with [number] [niche] businesses in [city]. They are seeing [result]. You would be next. Does mornings or afternoons work better for you this week?'" },
+    { front: "When do you deploy the Bandwagon Close?", back: "After value is established — when interested but hesitant. Never as an opener." },
+    { front: "What tonality do you use?", back: "Calm and flat — stated as fact. Calm signals this is normal and expected." },
+  ],
+  "6.5": [
+    { front: "What is a buying signal?", back: "Any sign the prospect moved from evaluating to deciding — thinking 'how does this work for me' instead of 'should I do this.'" },
+    { front: "What do you do the moment you see a buying signal?", back: "Stop pitching. Close immediately. Every extra word gives them time to talk themselves out of it." },
+    { front: "What does silence after the close mean and what do you do?", back: "Silence is processing. Hold it. Say nothing. The next person to speak concedes." },
+    { front: "What is over-pitching and why does it kill deals?", back: "Continuing to pitch after the prospect is already sold. Introduces doubt and kills momentum." },
+    { front: "Name three buying signals on a cold call.", back: "Tone shifts warmer, pace slows, prospect starts asking questions instead of deflecting." },
+  ],
+  "6.6": [
+    { front: "What does 'let me think about it' after the close mean?", back: "Something specific is unresolved. Not a no — an unexpressed concern. Surface it." },
+    { front: "What is the difference between a stall and an objection?", back: "Objection is before the ask — about the pitch. Stall is after the ask — about the decision." },
+    { front: "What is the RAC framework at the close?", back: "Recognize without defending. Ask one clarifying question underneath. Close forward once the real concern is addressed." },
+    { front: "What do you say when the stall is vague?", back: "'Most people who say that never actually move forward — and I do not want that for you. What would need to be true for you to feel good about this today?'" },
+    { front: "What must you lock before leaving a prospect who will not commit today?", back: "A specific date, time, and method — then send confirmation immediately. Never leave open-ended." },
+  ],
 };
 
 interface LevelProgressRow {
