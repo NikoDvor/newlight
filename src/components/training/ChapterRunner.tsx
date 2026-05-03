@@ -10,6 +10,7 @@ import { ScriptDrillExercise, ScriptDrillLine } from "@/components/training/Scri
 import { TrainingContentRenderer } from "@/components/training/TrainingContentRenderer";
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
+import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 
 export interface QuestionRow {
   id: string;
@@ -225,6 +226,50 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
   ],
 };
 
+const REFLECTION_FIELDS: Record<string, ReflectionField[]> = {
+  "9.1": [
+    { field_key: "real_reason", label: "I am here because...", placeholder: "Write your real reason. Go deeper than the surface answer. Take your time.", rows: 8 },
+    { field_key: "what_changes", label: "What changes when I succeed at this?", placeholder: "Be specific. What looks different in your life?", rows: 6 },
+    { field_key: "who_is_watching", label: "Who am I doing this for — including myself?", placeholder: "Name them. Say why.", rows: 5 },
+  ],
+  "9.2": [
+    { field_key: "goal_1_month", label: "1 Month Goal — What I will achieve by then:", placeholder: "Be specific. Income, bookings, skills, habits. Put a number on it.", rows: 5 },
+    { field_key: "goal_3_month", label: "3 Month Goal — What I will achieve by then:", placeholder: "What does three months of consistent execution produce?", rows: 5 },
+    { field_key: "goal_6_month", label: "6 Month Goal — What I will achieve by then:", placeholder: "Half a year from now — where are you?", rows: 5 },
+    { field_key: "goal_12_month", label: "12 Month Goal — What I will achieve by then:", placeholder: "One year. Full commitment. What does that produce?", rows: 5 },
+    { field_key: "goal_why", label: "Why these goals and not smaller ones?", placeholder: "What made you choose these numbers?", rows: 4 },
+  ],
+  "9.3": [
+    { field_key: "where_you_live", label: "Where I live and what it feels like:", placeholder: "Describe your home, your city, your environment.", rows: 5 },
+    { field_key: "daily_life", label: "What a normal day looks like:", placeholder: "Walk through the day. Morning to night. What does it feel like?", rows: 6 },
+    { field_key: "people_around", label: "Who is around me and what have I built for them:", placeholder: "Family, friends, the people who matter. What does your success mean for them?", rows: 5 },
+    { field_key: "what_you_have", label: "What I have built and what I am able to do:", placeholder: "Financial freedom, experiences, opportunities, things you own, things you can give.", rows: 5 },
+    { field_key: "feeling", label: "How it feels to be living this life:", placeholder: "One word or one sentence. What is the feeling underneath all of it?", rows: 3 },
+  ],
+  "9.4": [
+    { field_key: "who_they_are", label: "The person I am becoming — how they think and how they show up:", placeholder: "Describe them. How do they handle rejection? How do they start their day? How do they respond when things go wrong?", rows: 7 },
+    { field_key: "their_habits", label: "The habits and standards that person runs on:", placeholder: "What do they do consistently that most people do not?", rows: 5 },
+    { field_key: "the_gap", label: "The gap between who I am today and who I am becoming:", placeholder: "Be honest. What is the distance? What needs to change?", rows: 5 },
+    { field_key: "one_thing", label: "The one thing I am committing to change starting now:", placeholder: "One specific behavior, habit, or decision. Not a list — one thing.", rows: 3 },
+  ],
+  "9.5": [
+    { field_key: "what_i_will", label: "What I will do — no matter what:", placeholder: "The non-negotiables. The things that happen regardless of how you feel.", rows: 6 },
+    { field_key: "what_i_will_not", label: "What I will not accept from myself:", placeholder: "The behaviors, excuses, and patterns you are done with.", rows: 6 },
+    { field_key: "my_standard", label: "My standard — written as a statement:", placeholder: "Write it in one paragraph. This is who you are.", rows: 5 },
+  ],
+  "9.6": [
+    { field_key: "hard_day_letter", label: "What I will tell myself when I want to give up:", placeholder: "Write it to yourself. Be real. Be direct. Say what you will need to hear on the worst day.", rows: 10 },
+    { field_key: "what_quitting_costs", label: "What quitting actually costs me:", placeholder: "Not abstract. Specific. What do you lose if you stop?", rows: 5 },
+    { field_key: "what_i_choose", label: "What I choose — written as a statement:", placeholder: "One clear sentence. What do you choose when it gets hard?", rows: 3 },
+  ],
+  "9.7": [
+    { field_key: "quote", label: "My quote:", placeholder: "The words you come back to. Write them exactly.", rows: 3 },
+    { field_key: "quote_why", label: "Why this quote:", placeholder: "What does it mean to you specifically?", rows: 4 },
+    { field_key: "anchor", label: "My anchor — the one thing I always come back to:", placeholder: "One image, one person, one feeling, one memory. Describe it.", rows: 5 },
+    { field_key: "final_statement", label: "My final statement — who I am and what I am building:", placeholder: "One paragraph. This is your declaration. Write it like you mean it.", rows: 6 },
+  ],
+};
+
 interface LevelProgressRow {
   quiz_level: QuizLevel;
   status: string;
@@ -280,6 +325,9 @@ export function ChapterRunner({
   const requiresDrill = drillLines.length > 0;
   const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6 || moduleNumber === 7) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
   const flashcards = CHAPTER_FLASHCARDS[flashcardKey] || [];
+  const reflectionKey = mode === "chapter" && moduleNumber === 9 && chapter ? `9.${chapter.chapter_number}` : "";
+  const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
+  const isReflectionModule = moduleNumber === 9;
 
   useEffect(() => {
     const load = async () => {
@@ -629,13 +677,21 @@ export function ChapterRunner({
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
-              {levelBadges}
-              <Progress value={(completedLevels / 3) * 100} className="h-1.5" />
+              {!isReflectionModule && levelBadges}
+              {!isReflectionModule && <Progress value={(completedLevels / 3) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
+            {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
-            {lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
+            {isReflectionModule ? (
+              <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
+                <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">
+                  {saving ? "Saving…" : "Mark Complete"}
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
