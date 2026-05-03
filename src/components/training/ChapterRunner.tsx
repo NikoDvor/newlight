@@ -325,6 +325,9 @@ export function ChapterRunner({
   const requiresDrill = drillLines.length > 0;
   const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6 || moduleNumber === 7) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
   const flashcards = CHAPTER_FLASHCARDS[flashcardKey] || [];
+  const reflectionKey = mode === "chapter" && moduleNumber === 9 && chapter ? `9.${chapter.chapter_number}` : "";
+  const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
+  const isReflectionModule = moduleNumber === 9;
 
   useEffect(() => {
     const load = async () => {
