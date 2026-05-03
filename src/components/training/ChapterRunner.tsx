@@ -205,6 +205,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "Why does consistency matter more than occasional posting?", back: "Consistency builds trust and keeps the business top of mind. Occasional posts do neither — they look random and signal neglect." },
     { front: "What platforms does NewLight manage for social media?", back: "Facebook, Instagram, and Google Business Profile — based on where the client's customers actually are." },
   ],
+  "7.5": [
+    { front: "What is a CRM in plain terms?", back: "A system that tracks every person who has shown interest in the business and makes sure they get followed up with at the right time, the right way." },
+    { front: "What are the six things the NewLight CRM does?", back: "Contact management, pipeline tracking, outcome logging, follow-up system, automated follow-up, and full client history." },
+    { front: "What is the output of the CRM?", back: "Zero leads lost to follow-up failure, full pipeline visibility, faster response times, and revenue recovered from leads that would have been forgotten." },
+    { front: "How do you explain the CRM to a client in one concept?", back: "'Right now you are losing leads you do not even know about. We build a system where every lead is tracked, followed up with automatically, and never falls through the cracks.'" },
+    { front: "What is pipeline tracking?", back: "A visual system showing where every lead stands — New Lead, Contacted, Meeting Set, Proposal Sent, Won, Lost. Full visibility at all times." },
+    { front: "What does automated follow-up do?", back: "The moment a lead comes in from the website or an ad — the CRM triggers an automatic response immediately. No lead waits." },
+  ],
 };
 
 interface LevelProgressRow {
