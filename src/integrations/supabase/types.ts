@@ -6351,6 +6351,33 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_user_reflections: {
+        Row: {
+          chapter_id: string
+          field_key: string
+          field_value: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          field_key: string
+          field_value?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          field_key?: string
+          field_value?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_send_log: {
         Row: {
           action_type: string
