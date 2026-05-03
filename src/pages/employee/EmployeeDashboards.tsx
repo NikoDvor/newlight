@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarClock, CheckCircle2, Clock3, DollarSign, GraduationCap, PhoneCall, Target, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
+import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,6 +134,7 @@ export function BDRDashboard() {
     <div className="space-y-6">
       <Header title={`Good morning, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
+      <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Today's Dials" value={dialsToday} icon={PhoneCall} />
         <StatCard label="Appointments Booked Today" value={bookedToday} icon={CalendarClock} />
@@ -190,6 +192,7 @@ export function SDRDashboard() {
     <div className="space-y-6">
       <Header title={`Good morning, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
+      <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Meetings This Week" value={meetings.length} icon={CalendarClock} />
         <StatCard label="Proposals Sent This Week" value={sentWeek} icon={Target} />
