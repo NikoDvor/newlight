@@ -173,6 +173,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "What do you say when the stall is vague?", back: "'Most people who say that never actually move forward — and I do not want that for you. What would need to be true for you to feel good about this today?'" },
     { front: "What must you lock before leaving a prospect who will not commit today?", back: "A specific date, time, and method — then send confirmation immediately. Never leave open-ended." },
   ],
+  "7.1": [
+    { front: "What is the output of NewLight's paid ads service?", back: "Inbound calls, form fills, and booked appointments from people actively looking for the service — fully tracked to real outcomes." },
+    { front: "What three ad types does NewLight run?", back: "Google Search Ads, Meta Ads (Facebook + Instagram), and Retargeting campaigns." },
+    { front: "How do you explain paid ads to a client in one concept?", back: "People in your area are searching for what you offer right now. They are finding your competition first. We make sure they find you instead." },
+    { front: "Why does paid advertising work especially well for service businesses?", back: "High ticket value per customer — one job or contract is worth hundreds to thousands, so the return on ad spend math works." },
+    { front: "What makes NewLight's ads different from boosting posts?", back: "Local targeting, intent-based audiences, conversion-focused creative, and every dollar tracked to real outcomes — not vanity metrics." },
+    { front: "What is retargeting and why does it matter?", back: "Retargeting reaches people who visited the site or engaged but did not convert. Most businesses lose these leads. We recapture them." },
+  ],
 };
 
 interface LevelProgressRow {
@@ -228,7 +236,7 @@ export function ChapterRunner({
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
-  const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
+  const flashcardKey = mode === "chapter" && (moduleNumber === 5 || moduleNumber === 6 || moduleNumber === 7) && chapter ? `${moduleNumber}.${chapter.chapter_number}` : "";
   const flashcards = CHAPTER_FLASHCARDS[flashcardKey] || [];
 
   useEffect(() => {
