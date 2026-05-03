@@ -218,8 +218,10 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "What does the Dashboard show?", back: "A live snapshot of the entire business — leads, pipeline, marketing performance, team activity, revenue, and alerts. One place, real time." },
     { front: "What does AI Insights do?", back: "Analyzes business data in the background and surfaces opportunities, gaps, and actions the owner should take — before problems happen." },
     { front: "What is the Growth Advisor?", back: "The strategic layer that translates AI data into a clear growth plan — what to focus on, invest in, and do next. Data-driven, not guesswork." },
-    { front: "What is the before vs after transformation?", back: "Before: chaos — texts, spreadsheets, memory. After: one system — every lead tracked, full visibility, nothing falls through the cracks." },
-    { front: "What modules are in Growth Systems?", back: "Website, SEO, Ads, Social Media, and CRM — every marketing channel managed inside the client's own branded app." },
+    { front: "What does the Inbox module do?", back: "Unifies every incoming message — text, email, DMs, Google messages — into one feed, with full conversation history linked to CRM records." },
+    { front: "What is the output of the Training Center inside the app?", back: "A self-training organization — every team member trained on their role, onboarded in the app, with performance tracked and SOPs accessible to everyone." },
+    { front: "What is the five-step process for selling the app?", back: "1. Make them feel the chaos. 2. Show the app. 3. Connect features to their pain. 4. Land the output. 5. Close when they lean in." },
+    { front: "What is the full experience of running a business on NewLight?", back: "The owner opens their app and sees the entire operation — leads, tasks, marketing, team activity — without logging into five different tools. The business runs on a system." },
   ],
 };
 
