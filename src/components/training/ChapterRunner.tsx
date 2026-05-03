@@ -213,6 +213,14 @@ const CHAPTER_FLASHCARDS: Record<string, FlashcardData[]> = {
     { front: "What is pipeline tracking?", back: "A visual system showing where every lead stands — New Lead, Contacted, Meeting Set, Proposal Sent, Won, Lost. Full visibility at all times." },
     { front: "What does automated follow-up do?", back: "The moment a lead comes in from the website or an ad — the CRM triggers an automatic response immediately. No lead waits." },
   ],
+  "7.6": [
+    { front: "What makes the NewLight app different from generic software?", back: "It is branded to the client's business — their name, colors, logo. It feels like something built specifically for them — because it is." },
+    { front: "What does the Dashboard show?", back: "A live snapshot of the entire business — leads, pipeline, marketing performance, team activity, revenue, and alerts. One place, real time." },
+    { front: "What does AI Insights do?", back: "Analyzes business data in the background and surfaces opportunities, gaps, and actions the owner should take — before problems happen." },
+    { front: "What is the Growth Advisor?", back: "The strategic layer that translates AI data into a clear growth plan — what to focus on, invest in, and do next. Data-driven, not guesswork." },
+    { front: "What is the before vs after transformation?", back: "Before: chaos — texts, spreadsheets, memory. After: one system — every lead tracked, full visibility, nothing falls through the cracks." },
+    { front: "What modules are in Growth Systems?", back: "Website, SEO, Ads, Social Media, and CRM — every marketing channel managed inside the client's own branded app." },
+  ],
 };
 
 interface LevelProgressRow {
