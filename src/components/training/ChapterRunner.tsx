@@ -11,6 +11,7 @@ import { TrainingContentRenderer } from "@/components/training/TrainingContentRe
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
+import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
 
 export interface QuestionRow {
   id: string;
@@ -320,6 +321,7 @@ export function ChapterRunner({
   const [userId, setUserId] = useState<string | null>(null);
   const [moduleNumber, setModuleNumber] = useState<number | null>(null);
   const [drillCompleted, setDrillCompleted] = useState(false);
+  const [unlockCategories, setUnlockCategories] = useState<string[]>([]);
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
@@ -396,6 +398,18 @@ export function ChapterRunner({
           (level) => !levelRows.some((row) => row.quiz_level === level && row.status === "completed")
         ) || 3;
         setCurrentLevel(nextLevel);
+      }
+
+      // Fetch unlock categories for this chapter (objection mastery)
+      if (mode === "chapter" && chapter) {
+        const { data: unlockQs } = await (supabase as any)
+          .from("nl_training_questions")
+          .select("unlock_category")
+          .eq("chapter_id", chapter.id)
+          .eq("is_unlock_question", true)
+          .not("unlock_category", "is", null);
+        const cats = [...new Set((unlockQs || []).map((r: any) => r.unlock_category).filter(Boolean))] as string[];
+        setUnlockCategories(cats);
       }
 
       if (user && !lockedPreview) {
@@ -684,6 +698,9 @@ export function ChapterRunner({
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
+            {unlockCategories.map((cat) => (
+              <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
+            ))}
             {isReflectionModule ? (
               <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
                 <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">

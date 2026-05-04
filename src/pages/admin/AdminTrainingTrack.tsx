@@ -108,6 +108,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   >(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
+  const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -212,6 +213,22 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .limit(1)
             .maybeSingle();
           setHasCertification(!!cert);
+        }
+
+        // Fetch objection unlock chapter IDs
+        const { data: unlockRows } = await (supabase as any)
+          .from("nl_objection_unlocks")
+          .select("objection_category")
+          .eq("user_id", user.id);
+        if (unlockRows && unlockRows.length > 0) {
+          const categories = (unlockRows as any[]).map((r: any) => r.objection_category);
+          const { data: unlockQs } = await (supabase as any)
+            .from("nl_training_questions")
+            .select("chapter_id, unlock_category")
+            .eq("is_unlock_question", true)
+            .in("unlock_category", categories);
+          const chIds = new Set((unlockQs || []).map((r: any) => r.chapter_id).filter(Boolean));
+          setUnlockedChapterIds(chIds as Set<string>);
         }
       }
 
@@ -706,13 +723,17 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     {selectedChapters.map((c, idx) => {
                     const levelCount = getChapterLevelCount(c.id);
                     const done = isChapterComplete(c.id);
-                    // A chapter is unlocked if it's the first one OR the previous chapter is complete
                     const prev = selectedChapters[idx - 1];
                     const prevDone = !prev || isChapterComplete(prev.id);
                     const unlocked = true;
+                    const isMasteryUnlocked = unlockedChapterIds.has(c.id);
+                    const otherChaptersExist = selectedChapters.length > 1;
                     return (
-                      <button
+                      <motion.button
                         key={c.id}
+                        initial={isMasteryUnlocked ? { opacity: 0, y: -8, scale: 0.98 } : undefined}
+                        animate={isMasteryUnlocked ? { opacity: 1, y: -4, scale: 1.02 } : undefined}
+                        transition={isMasteryUnlocked ? { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } : undefined}
                         onClick={() =>
                           trackId && setRunner({
                             mode: "chapter",
@@ -720,8 +741,20 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             moduleId: selectedModule.id,
                           })
                         }
-                        className="w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border border-border/40 transition-colors hover:bg-white/[0.03] cursor-pointer"
+                        className={`w-full text-left flex items-start gap-3 px-3 py-3 rounded-lg border transition-colors cursor-pointer relative ${
+                          isMasteryUnlocked
+                            ? "border-primary/50 bg-primary/[0.06] shadow-[0_0_16px_-4px_hsla(211,96%,56%,0.35)] z-10 hover:bg-primary/[0.08]"
+                            : otherChaptersExist && unlockedChapterIds.size > 0
+                              ? "border-border/40 opacity-60 hover:opacity-80 hover:bg-white/[0.03]"
+                              : "border-border/40 hover:bg-white/[0.03]"
+                        }`}
+                        style={isMasteryUnlocked ? { animation: "objection-chapter-glow 3s ease-in-out infinite" } : undefined}
                       >
+                        {isMasteryUnlocked && (
+                          <Badge className="absolute -top-2.5 right-3 text-[9px] h-5 bg-primary/20 text-primary border-primary/30 border font-semibold tracking-wide">
+                            MASTERY UNLOCKED — NEW CONTENT
+                          </Badge>
+                        )}
                         {done ? (
                           <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)] shrink-0 mt-0.5" />
                         ) : (
@@ -755,7 +788,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             })}
                           </div>
                         </div>
-                      </button>
+                      </motion.button>
                     );
                     })}
                   </>

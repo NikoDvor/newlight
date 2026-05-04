@@ -1149,3 +1149,8 @@
   );
   background-size: 200% 100%;
 }
+
+@keyframes objection-chapter-glow {
+  0%, 100% { box-shadow: 0 0 8px -2px hsla(211, 96%, 56%, 0.25), 0 4px 12px -4px hsla(211, 96%, 56%, 0.15); }
+  50% { box-shadow: 0 0 20px -2px hsla(211, 96%, 56%, 0.4), 0 4px 16px -4px hsla(211, 96%, 56%, 0.25); }
+}
