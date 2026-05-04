@@ -5943,6 +5943,48 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_objection_unlocks: {
+        Row: {
+          advanced_passed: boolean
+          advanced_unlocked: boolean
+          completed: boolean
+          foundation_passed: boolean
+          foundation_unlocked: boolean
+          id: string
+          intermediate_passed: boolean
+          intermediate_unlocked: boolean
+          objection_category: string
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          advanced_passed?: boolean
+          advanced_unlocked?: boolean
+          completed?: boolean
+          foundation_passed?: boolean
+          foundation_unlocked?: boolean
+          id?: string
+          intermediate_passed?: boolean
+          intermediate_unlocked?: boolean
+          objection_category: string
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          advanced_passed?: boolean
+          advanced_unlocked?: boolean
+          completed?: boolean
+          foundation_passed?: boolean
+          foundation_unlocked?: boolean
+          id?: string
+          intermediate_passed?: boolean
+          intermediate_unlocked?: boolean
+          objection_category?: string
+          triggered_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nl_practice_recordings: {
         Row: {
           chapter_id: string
@@ -6436,11 +6478,14 @@ export type Database = {
           created_at: string
           explanation: string | null
           id: string
+          is_unlock_question: boolean
           module_id: string
           options: Json
           question_text: string
           question_type: string
           quiz_level: number
+          unlock_category: string | null
+          unlock_level: string | null
         }
         Insert: {
           chapter_id?: string | null
@@ -6448,11 +6493,14 @@ export type Database = {
           created_at?: string
           explanation?: string | null
           id?: string
+          is_unlock_question?: boolean
           module_id: string
           options?: Json
           question_text: string
           question_type: string
           quiz_level?: number
+          unlock_category?: string | null
+          unlock_level?: string | null
         }
         Update: {
           chapter_id?: string | null
@@ -6460,11 +6508,14 @@ export type Database = {
           created_at?: string
           explanation?: string | null
           id?: string
+          is_unlock_question?: boolean
           module_id?: string
           options?: Json
           question_text?: string
           question_type?: string
           quiz_level?: number
+          unlock_category?: string | null
+          unlock_level?: string | null
         }
         Relationships: [
           {

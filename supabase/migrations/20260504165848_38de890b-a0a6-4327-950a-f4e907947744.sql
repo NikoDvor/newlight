@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.check_objection_unlock() FROM public, anon, authenticated;
