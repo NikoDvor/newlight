@@ -698,6 +698,9 @@ export function ChapterRunner({
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
             {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
+            {unlockCategories.map((cat) => (
+              <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
+            ))}
             {isReflectionModule ? (
               <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
                 <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">
