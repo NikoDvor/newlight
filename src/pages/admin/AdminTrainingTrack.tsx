@@ -791,6 +791,10 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       </motion.button>
                     );
                     })}
+                  </>
+                )}
+              </div>}
+
               {isScriptMasteryModule && !isGlossaryModule && <ScriptMemorizationVault />}
 
               {isModule6 && !isGlossaryModule && (
