@@ -400,6 +400,18 @@ export function ChapterRunner({
         setCurrentLevel(nextLevel);
       }
 
+      // Fetch unlock categories for this chapter (objection mastery)
+      if (mode === "chapter" && chapter) {
+        const { data: unlockQs } = await (supabase as any)
+          .from("nl_training_questions")
+          .select("unlock_category")
+          .eq("chapter_id", chapter.id)
+          .eq("is_unlock_question", true)
+          .not("unlock_category", "is", null);
+        const cats = [...new Set((unlockQs || []).map((r: any) => r.unlock_category).filter(Boolean))] as string[];
+        setUnlockCategories(cats);
+      }
+
       if (user && !lockedPreview) {
         const { data: existingProgress } = await supabase
           .from("nl_training_progress")
