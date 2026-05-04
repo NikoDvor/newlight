@@ -108,6 +108,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   >(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
+  const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
