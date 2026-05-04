@@ -44,6 +44,7 @@ const navGroups: NavGroup[] = [
       { title: "Clients", url: "/admin/clients", icon: Users },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
       { title: "Team & Users", url: "/admin/team", icon: Shield },
+      { title: "BDR Performance", url: "/admin/bdr-performance", icon: Activity },
       { title: "Training Center", url: "/admin/training-center", icon: GraduationCap },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
