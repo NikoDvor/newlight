@@ -5796,6 +5796,7 @@ export type Database = {
           lead_source: string
           niche: string | null
           notes: string | null
+          outcome_history: Json
           owner_name: string | null
           phone: string | null
           status: string
@@ -5814,6 +5815,7 @@ export type Database = {
           lead_source?: string
           niche?: string | null
           notes?: string | null
+          outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
           status?: string
@@ -5832,6 +5834,7 @@ export type Database = {
           lead_source?: string
           niche?: string | null
           notes?: string | null
+          outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
           status?: string

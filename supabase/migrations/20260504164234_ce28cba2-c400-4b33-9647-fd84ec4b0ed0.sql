@@ -1,0 +1,1 @@
+ALTER TABLE public.nl_bdr_leads ADD COLUMN outcome_history JSONB NOT NULL DEFAULT '[]'::jsonb;
