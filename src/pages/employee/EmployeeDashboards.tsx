@@ -135,6 +135,7 @@ export function BDRDashboard() {
     <div className="space-y-6">
       <Header title={`Good morning, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
+      <ObjectionMasteryCard />
       <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Today's Dials" value={dialsToday} icon={PhoneCall} />
