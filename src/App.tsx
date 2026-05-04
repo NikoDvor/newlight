@@ -151,6 +151,7 @@ import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmpl
 import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
+import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 
 const queryClient = new QueryClient();
 
@@ -265,6 +266,7 @@ const App = () => {
                 <Route path="clients/:clientId/implementation" element={<AdminImplementationDetail />} />
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
+                <Route path="bdr-performance" element={<AdminBDRPerformance />} />
               </Route>
 
               {/* Employee Portal */}
