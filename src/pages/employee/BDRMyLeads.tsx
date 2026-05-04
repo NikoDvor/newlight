@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
 /* ─── types ─── */
+interface OutcomeEntry { label: string; note?: string; timestamp: string }
 interface BdrLead {
   id: string;
   business_name: string;
@@ -20,8 +21,48 @@ interface BdrLead {
   city: string | null;
   status: string;
   notes: string | null;
+  crm_deal_id: string | null;
+  outcome_history: OutcomeEntry[];
   created_at: string;
 }
+
+/* ─── outcome config ─── */
+type OutcomeGroup = "positive" | "followup" | "closed";
+interface OutcomeDef {
+  label: string;
+  group: OutcomeGroup;
+  status: string;
+  pipeline: string;
+  createTask?: boolean;
+}
+
+const OUTCOMES: OutcomeDef[] = [
+  // positive
+  { label: "Booked — Appointment Set", group: "positive", status: "appointment_booked", pipeline: "appointment_booked" },
+  { label: "Won — Closed on the Spot", group: "positive", status: "closed_won", pipeline: "closed_won" },
+  // follow-up
+  { label: "Told to Call Back", group: "followup", status: "contacted", pipeline: "contacted", createTask: true },
+  { label: "Owner Wasn't There", group: "followup", status: "new_lead", pipeline: "new_lead", createTask: true },
+  { label: "Left Owner a Message", group: "followup", status: "contacted", pipeline: "contacted" },
+  { label: "Had to Think About It", group: "followup", status: "contacted", pipeline: "contacted" },
+  { label: "Asked for Info — Sent Details", group: "followup", status: "contacted", pipeline: "contacted" },
+  // closed
+  { label: "Wasn't Interested — Firm No", group: "closed", status: "closed_lost", pipeline: "closed_lost" },
+  { label: "Didn't See the Value", group: "closed", status: "closed_lost", pipeline: "closed_lost" },
+  { label: "Already Has a Marketing Company", group: "closed", status: "closed_lost", pipeline: "closed_lost" },
+  { label: "Gatekeeper Blocked", group: "closed", status: "new_lead", pipeline: "new_lead", createTask: true },
+  { label: "Bad Number / No Answer", group: "closed", status: "new_lead", pipeline: "new_lead" },
+  { label: "Business Closed", group: "closed", status: "closed_lost", pipeline: "closed_lost" },
+  { label: "Wrong Contact — Not Decision Maker", group: "closed", status: "new_lead", pipeline: "new_lead", createTask: true },
+];
+
+const GROUP_COLORS: Record<OutcomeGroup, { border: string; bg: string; accent: string }> = {
+  positive: { border: "hsla(142,72%,42%,.4)", bg: "hsla(142,72%,42%,.08)", accent: "hsl(142,72%,42%)" },
+  followup: { border: "hsla(38,92%,50%,.4)", bg: "hsla(38,92%,50%,.08)", accent: "hsl(38,92%,50%)" },
+  closed:   { border: "hsla(0,0%,50%,.3)",   bg: "hsla(0,0%,50%,.06)",   accent: "hsl(0,0%,60%)" },
+};
+
+const GROUP_LABELS: Record<OutcomeGroup, string> = { positive: "Positive", followup: "Follow-Up", closed: "Closed" };
 
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = {
   new_lead:    { label: "New Lead",    bg: "hsla(211,96%,56%,.15)", text: "hsl(211,96%,56%)" },
@@ -41,14 +82,6 @@ const FILTER_TABS = [
   { key: "closed_lost", label: "Lost" },
 ];
 
-const OUTCOME_OPTIONS = [
-  { value: "contacted", label: "Contacted — No Answer / Left VM" },
-  { value: "contacted", label: "Contacted — Spoke With Owner" },
-  { value: "appointment_booked", label: "Appointment Booked" },
-  { value: "closed_won", label: "Closed Won" },
-  { value: "closed_lost", label: "Closed Lost" },
-];
-
 /* ─── page ─── */
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
@@ -58,13 +91,14 @@ export default function BDRMyLeads() {
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const [outcomeLeadId, setOutcomeLeadId] = useState<string | null>(null);
+  const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchLeads = async () => {
     if (!user?.id) return;
     const { data } = await (supabase as any).from("nl_bdr_leads")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    setLeads(data || []);
+    setLeads((data || []).map((d: any) => ({ ...d, outcome_history: d.outcome_history || [] })));
     setLoading(false);
   };
 
@@ -95,7 +129,6 @@ export default function BDRMyLeads() {
   /* ─── CRM auto-link helper ─── */
   const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
     if (!user?.id) return;
-    // Create crm_contact
     const { data: contact } = await supabase.from("crm_contacts").insert({
       full_name: lead.owner_name || lead.business_name,
       phone: lead.phone || null,
@@ -103,9 +136,7 @@ export default function BDRMyLeads() {
       contact_status: "lead",
       contact_owner: user.id,
     } as any).select("id").single();
-
     if (contact) {
-      // Create crm_deal
       const { data: deal } = await supabase.from("crm_deals").insert({
         deal_name: `${lead.business_name} — BDR Lead`,
         pipeline_stage: "new_lead",
@@ -114,8 +145,6 @@ export default function BDRMyLeads() {
         assigned_user: user.id,
         contact_id: contact.id,
       } as any).select("id").single();
-
-      // Link back
       await (supabase as any).from("nl_bdr_leads").update({
         crm_contact_id: contact.id,
         crm_deal_id: deal?.id || null,
@@ -162,13 +191,59 @@ export default function BDRMyLeads() {
     fetchLeads();
   };
 
-  /* ─── log outcome ─── */
-  const handleOutcome = async (status: string) => {
-    if (!outcomeLeadId) return;
-    await (supabase as any).from("nl_bdr_leads").update({ status }).eq("id", outcomeLeadId);
-    setOutcomeLeadId(null);
+  /* ─── save outcome ─── */
+  const handleSaveOutcome = async (outcome: OutcomeDef, note: string) => {
+    if (!outcomeLead || !user?.id) return;
+    const lead = outcomeLead;
+
+    // Build new history
+    const entry: OutcomeEntry = { label: outcome.label, timestamp: new Date().toISOString(), ...(note ? { note } : {}) };
+    const newHistory = [...(lead.outcome_history || []), entry];
+
+    // Update lead status + history
+    await (supabase as any).from("nl_bdr_leads").update({
+      status: outcome.status,
+      outcome_history: newHistory,
+      notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
+    }).eq("id", lead.id);
+
+    // Update CRM deal pipeline
+    if (lead.crm_deal_id) {
+      await supabase.from("crm_deals").update({
+        pipeline_stage: outcome.pipeline,
+        ...(outcome.status === "closed_won" ? { status: "won" as any } : outcome.status === "closed_lost" ? { status: "lost" as any } : {}),
+      } as any).eq("id", lead.crm_deal_id);
+    }
+
+    // Create follow-up task if needed
+    if (outcome.createTask) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      await supabase.from("crm_tasks").insert({
+        title: `Follow up with ${lead.business_name}`,
+        description: `Outcome: ${outcome.label}${note ? `\nNote: ${note}` : ""}`,
+        related_type: "lead",
+        related_id: lead.id,
+        assigned_user: user.id,
+        due_date: tomorrow.toISOString(),
+        status: "open",
+        priority: "medium",
+      } as any);
+    }
+
+    setOutcomeLead(null);
+
+    // Toast
+    if (outcome.group === "positive") {
+      toast({ title: outcome.status === "closed_won" ? "🎉 Won! Great work." : "📅 Booked! Great work.", description: lead.business_name });
+    } else if (outcome.group === "followup" || outcome.createTask) {
+      toast({ title: "Got it — follow-up task created for tomorrow.", description: lead.business_name });
+    } else {
+      toast({ title: "Logged.", description: lead.business_name });
+    }
+
     fetchLeads();
-    toast({ title: "Status updated" });
   };
 
   const dateLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -238,67 +313,151 @@ export default function BDRMyLeads() {
         <div className="space-y-2">
           {filtered.map(lead => {
             const cfg = STATUS_CFG[lead.status] || STATUS_CFG.new_lead;
+            const history = lead.outcome_history || [];
+            const expanded = expandedId === lead.id;
             return (
-              <div key={lead.id} className="rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+              <div key={lead.id} className="rounded-2xl overflow-hidden"
                 style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" }}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
-                    <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
+                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                    </div>
+                    {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      {lead.phone && (
+                        <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}>
+                          <Phone className="h-3 w-3" /> {lead.phone}
+                        </a>
+                      )}
+                      {lead.website && (
+                        <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer"
+                          className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}>
+                          <ExternalLink className="h-3 w-3" /> Website
+                        </a>
+                      )}
+                      {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
+                    </div>
                   </div>
-                  {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
-                  <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    {lead.phone && (
-                      <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}>
-                        <Phone className="h-3 w-3" /> {lead.phone}
-                      </a>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</span>
+                    {history.length > 0 && (
+                      <button onClick={() => setExpandedId(expanded ? null : lead.id)}
+                        className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">
+                        {history.length} log{history.length > 1 ? "s" : ""}
+                        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </button>
                     )}
-                    {lead.website && (
-                      <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer"
-                        className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}>
-                        <ExternalLink className="h-3 w-3" /> Website
-                      </a>
+                    {(lead.status === "new_lead" || lead.status === "contacted") && (
+                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLead(lead)}>Log Outcome</Button>
                     )}
-                    {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</span>
-                  {(lead.status === "new_lead" || lead.status === "contacted") && (
-                    <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLeadId(lead.id)}>Log Outcome</Button>
+                {/* Outcome history */}
+                <AnimatePresence>
+                  {expanded && history.length > 0 && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden">
+                      <div className="px-4 pb-4 space-y-1.5 border-t" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide pt-3">Outcome History</p>
+                        {history.slice().reverse().map((h, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            <span className="text-muted-foreground whitespace-nowrap">{new Date(h.timestamp).toLocaleDateString()} {new Date(h.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            <span className="text-foreground font-medium">{h.label}</span>
+                            {h.note && <span className="text-muted-foreground italic">— {h.note}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* ─── Import Modal ─── */}
+      {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
-
-      {/* ─── Add Lead Modal ─── */}
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
-
-      {/* ─── Outcome Modal ─── */}
-      <Dialog open={!!outcomeLeadId} onOpenChange={() => setOutcomeLeadId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Log Outcome</DialogTitle>
-            <DialogDescription>Select the result of your outreach.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 pt-2">
-            {OUTCOME_OPTIONS.map((o, i) => (
-              <button key={i} onClick={() => handleOutcome(o.value)}
-                className="w-full text-left rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-primary/10"
-                style={{ border: "1px solid hsla(211,96%,60%,.15)" }}>
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSave={handleSaveOutcome} />
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════ */
+/* Outcome Bottom Sheet                            */
+/* ═══════════════════════════════════════════════ */
+function OutcomeSheet({ lead, onClose, onSave }: { lead: BdrLead | null; onClose: () => void; onSave: (o: OutcomeDef, note: string) => Promise<void> }) {
+  const [selected, setSelected] = useState<OutcomeDef | null>(null);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!lead) { setSelected(null); setNote(""); } }, [lead]);
+
+  const save = async () => {
+    if (!selected) return;
+    setSaving(true);
+    await onSave(selected, note.trim());
+    setSaving(false);
+  };
+
+  const groups: OutcomeGroup[] = ["positive", "followup", "closed"];
+
+  return (
+    <Dialog open={!!lead} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto p-0">
+        <div className="p-5 pb-0">
+          <DialogHeader>
+            <DialogTitle>What happened?</DialogTitle>
+            <DialogDescription>{lead?.business_name}</DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div className="px-5 pb-5 space-y-4">
+          {!selected ? (
+            /* ── outcome picker ── */
+            groups.map(g => {
+              const items = OUTCOMES.filter(o => o.group === g);
+              const colors = GROUP_COLORS[g];
+              return (
+                <div key={g}>
+                  <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: colors.accent }}>{GROUP_LABELS[g]}</p>
+                  <div className="space-y-1.5">
+                    {items.map(o => (
+                      <button key={o.label} onClick={() => setSelected(o)}
+                        className="w-full text-left rounded-xl px-4 py-3.5 text-sm font-medium transition-all active:scale-[0.98]"
+                        style={{ background: colors.bg, border: `1px solid ${colors.border}`, color: "var(--foreground)" }}>
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            /* ── note + save ── */
+            <div className="space-y-4 pt-2">
+              <div className="rounded-xl px-4 py-3 text-sm font-medium"
+                style={{ background: GROUP_COLORS[selected.group].bg, border: `1px solid ${GROUP_COLORS[selected.group].border}`, color: GROUP_COLORS[selected.group].accent }}>
+                {selected.label}
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Add a note (optional)</label>
+                <Textarea value={note} onChange={e => setNote(e.target.value)} rows={3} className="mt-1" placeholder="What happened on this visit..." />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setSelected(null)} className="flex-shrink-0">Back</Button>
+                <Button onClick={save} disabled={saving} className="flex-1">
+                  {saving ? "Saving..." : "Save Outcome"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -315,16 +474,10 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
   const parse = () => {
     const lines = raw.trim().split("\n").filter(Boolean);
     if (!lines.length) return;
-
-    // detect delimiter
     const delim = lines[0].includes("\t") ? "\t" : lines[0].includes("|") ? "|" : ",";
     const rows = lines.map(l => l.split(delim).map(c => c.trim()));
-
-    // detect header row
     const headerLike = rows[0].some(c => /business|name|phone|website/i.test(c));
     const dataRows = headerLike ? rows.slice(1) : rows;
-
-    // map columns — flexible
     let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3;
     if (headerLike) {
       const h = rows[0].map(c => c.toLowerCase());
@@ -335,7 +488,6 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         else if (/website|url|site/.test(c)) webIdx = i;
       });
     }
-
     const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
       business_name: r[biIdx]?.trim() || "",
       owner_name: r[owIdx]?.trim() || "",
