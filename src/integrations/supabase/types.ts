@@ -5784,6 +5784,85 @@ export type Database = {
           },
         ]
       }
+      nl_bdr_leads: {
+        Row: {
+          business_name: string
+          city: string | null
+          client_id: string | null
+          created_at: string
+          crm_contact_id: string | null
+          crm_deal_id: string | null
+          id: string
+          lead_source: string
+          niche: string | null
+          notes: string | null
+          owner_name: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          crm_contact_id?: string | null
+          crm_deal_id?: string | null
+          id?: string
+          lead_source?: string
+          niche?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          crm_contact_id?: string | null
+          crm_deal_id?: string | null
+          id?: string
+          lead_source?: string
+          niche?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_bdr_leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_bdr_leads_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_bdr_leads_crm_deal_id_fkey"
+            columns: ["crm_deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_certifications: {
         Row: {
           answers_snapshot: Json | null
