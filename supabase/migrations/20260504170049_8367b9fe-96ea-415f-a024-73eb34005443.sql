@@ -1,0 +1,2 @@
+ALTER TABLE public.nl_training_questions DROP CONSTRAINT nl_training_questions_question_type_check;
+ALTER TABLE public.nl_training_questions ADD CONSTRAINT nl_training_questions_question_type_check CHECK (question_type = ANY (ARRAY['chapter_quiz','module_test','certification','unlock_quiz']));
