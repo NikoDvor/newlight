@@ -5796,6 +5796,7 @@ export type Database = {
           lead_source: string
           niche: string | null
           notes: string | null
+          objection_category: string | null
           outcome_history: Json
           owner_name: string | null
           phone: string | null
@@ -5815,6 +5816,7 @@ export type Database = {
           lead_source?: string
           niche?: string | null
           notes?: string | null
+          objection_category?: string | null
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
@@ -5834,6 +5836,7 @@ export type Database = {
           lead_source?: string
           niche?: string | null
           notes?: string | null
+          objection_category?: string | null
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
@@ -5862,6 +5865,44 @@ export type Database = {
             columns: ["crm_deal_id"]
             isOneToOne: false
             referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_bdr_objections: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          objection_category: string
+          outcome_logged: string | null
+          user_id: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          objection_category: string
+          outcome_logged?: string | null
+          user_id: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          objection_category?: string
+          outcome_logged?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_bdr_objections_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
             referencedColumns: ["id"]
           },
         ]
