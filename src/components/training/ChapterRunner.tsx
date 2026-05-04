@@ -11,6 +11,7 @@ import { TrainingContentRenderer } from "@/components/training/TrainingContentRe
 import { PracticeRecordingVault } from "@/components/training/PracticeRecordingVault";
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
+import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
 
 export interface QuestionRow {
   id: string;
