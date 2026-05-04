@@ -214,6 +214,22 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .maybeSingle();
           setHasCertification(!!cert);
         }
+
+        // Fetch objection unlock chapter IDs
+        const { data: unlockRows } = await (supabase as any)
+          .from("nl_objection_unlocks")
+          .select("objection_category")
+          .eq("user_id", user.id);
+        if (unlockRows && unlockRows.length > 0) {
+          const categories = (unlockRows as any[]).map((r: any) => r.objection_category);
+          const { data: unlockQs } = await (supabase as any)
+            .from("nl_training_questions")
+            .select("chapter_id, unlock_category")
+            .eq("is_unlock_question", true)
+            .in("unlock_category", categories);
+          const chIds = new Set((unlockQs || []).map((r: any) => r.chapter_id).filter(Boolean));
+          setUnlockedChapterIds(chIds as Set<string>);
+        }
       }
 
       setLoading(false);
