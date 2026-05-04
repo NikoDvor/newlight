@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Award, BarChart3, CalendarDays, CheckCircle2, GraduationCap, Lock, LogOut, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, GraduationCap, Lock, LogOut, Target, UserCircle, Users, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
+  { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
   { title: "Training Center", url: "/employee/training", icon: GraduationCap },
   { title: "My Leads/Pipeline", url: "/employee/pipeline", icon: Target },
   { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
