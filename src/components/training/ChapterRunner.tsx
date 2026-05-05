@@ -12,6 +12,7 @@ import { PracticeRecordingVault } from "@/components/training/PracticeRecordingV
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
+import { useModuleCompletion } from "@/hooks/useModuleCompletion";
 
 export interface QuestionRow {
   id: string;
@@ -285,8 +286,10 @@ interface Props {
   passScore?: number;
   lockedPreview?: boolean;
   unlockModuleNumber?: number;
+  modules?: { id: string; module_number: number }[];
   onClose: () => void;
   onCompleted: () => void;
+  onModuleComplete?: () => void;
 }
 
 const LEVEL_LABELS: Record<QuizLevel, string> = {
@@ -303,8 +306,10 @@ export function ChapterRunner({
   passScore = 70,
   lockedPreview = false,
   unlockModuleNumber,
+  modules: modulesList,
   onClose,
   onCompleted,
+  onModuleComplete,
 }: Props) {
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
@@ -322,6 +327,8 @@ export function ChapterRunner({
   const [moduleNumber, setModuleNumber] = useState<number | null>(null);
   const [drillCompleted, setDrillCompleted] = useState(false);
   const [unlockCategories, setUnlockCategories] = useState<string[]>([]);
+  const [moduleCompleteTriggered, setModuleCompleteTriggered] = useState(false);
+  const { checkAndCompleteModule } = useModuleCompletion(trackId);
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
@@ -518,6 +525,15 @@ export function ChapterRunner({
         },
         { onConflict: "user_id,module_id,chapter_id" } as any
       );
+
+      // Check if all chapters in this module are now complete
+      if (modulesList && modulesList.length > 0) {
+        const completed = await checkAndCompleteModule(moduleId, modulesList);
+        if (completed && !moduleCompleteTriggered) {
+          setModuleCompleteTriggered(true);
+          onModuleComplete?.();
+        }
+      }
     }
   };
 

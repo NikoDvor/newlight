@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useModuleCompletion } from "@/hooks/useModuleCompletion";
 
 interface Module {
   id: string;
@@ -109,6 +110,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
+  const { isModuleCompleted, reload: reloadCompletions } = useModuleCompletion(trackId);
 
   useEffect(() => {
     const load = async () => {
@@ -235,16 +237,32 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
       setLoading(false);
     };
     load();
+    reloadCompletions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey, reloadTick]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
+    if (isModuleCompleted(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
     const chRows = progress.filter((p) => p.module_id === moduleId);
     if (chRows.some((r) => r.status === "in_progress" || r.status === "completed")) return "in_progress";
     return "not_started";
+  };
+
+  const isModuleUnlocked = (mod: Module): boolean => {
+    if (mod.module_number <= 1) return true;
+    if (!mod.is_locked) return true;
+    const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
+    if (!prevModule) return true;
+    return isModuleCompleted(prevModule.id) || moduleStatus(prevModule.id) === "completed";
+  };
+
+  const getModuleChapterProgress = (moduleId: string) => {
+    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    const completed = moduleChapters.filter((c) => isChapterComplete(c.id)).length;
+    return { completed, total: moduleChapters.length };
   };
 
   const glossaryModule = modules.find((m) => m.module_number === 0) || null;
@@ -404,8 +422,10 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         trackId={trackId}
         lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
+        modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
         onCompleted={() => setReloadTick((t) => t + 1)}
+        onModuleComplete={() => setReloadTick((t) => t + 1)}
       />
     );
   }
@@ -455,6 +475,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 {numberedModules.map((m) => {
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
+                  const unlocked = isModuleUnlocked(m);
+                  const chapterProg = getModuleChapterProgress(m.id);
                     return (
                     <button
                       key={m.id}
@@ -463,6 +485,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                         setShowModule1Glossary(false);
                       }}
                       className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
+                        !unlocked ? "opacity-50" : ""
+                      } ${
                         isSelected
                             ? "bg-primary/[0.08] border-border/30"
                             : "border-border/30 hover:bg-white/[0.03]"
@@ -478,22 +502,23 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <div
                         className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5"
                         style={{
-                          background: isSelected
-                            ? "hsla(211,96%,60%,.22)"
-                            : "hsla(220,15%,20%,.5)",
-                          color: isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
+                          background: status === "completed"
+                            ? "hsla(152,60%,50%,.22)"
+                            : isSelected
+                              ? "hsla(211,96%,60%,.22)"
+                              : "hsla(220,15%,20%,.5)",
+                          color: status === "completed"
+                            ? "hsl(152,60%,50%)"
+                            : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {m.module_number}
+                        {status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
                             {m.module_title}
                           </p>
-                          {m.is_locked && (
-                            <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                          )}
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
                           {status === "completed" ? (
@@ -501,10 +526,15 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                               <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
                               <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete</span>
                             </>
+                          ) : !unlocked ? (
+                            <>
+                              <Lock className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground font-medium">Locked</span>
+                            </>
                           ) : status === "in_progress" ? (
                             <>
                               <PlayCircle className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
-                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">In progress</span>
+                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">{chapterProg.completed} of {chapterProg.total} chapters</span>
                             </>
                           ) : (
                             <>

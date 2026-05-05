@@ -5943,6 +5943,38 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_module_completion: {
+        Row: {
+          completed_at: string
+          id: string
+          module_id: string
+          score_average: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          module_id: string
+          score_average?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          module_id?: string
+          score_average?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_module_completion_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "nl_training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_objection_unlocks: {
         Row: {
           advanced_passed: boolean
