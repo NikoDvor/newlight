@@ -285,8 +285,10 @@ interface Props {
   passScore?: number;
   lockedPreview?: boolean;
   unlockModuleNumber?: number;
+  modules?: { id: string; module_number: number }[];
   onClose: () => void;
   onCompleted: () => void;
+  onModuleComplete?: () => void;
 }
 
 const LEVEL_LABELS: Record<QuizLevel, string> = {
