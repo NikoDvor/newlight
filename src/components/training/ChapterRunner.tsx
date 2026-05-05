@@ -525,6 +525,15 @@ export function ChapterRunner({
         },
         { onConflict: "user_id,module_id,chapter_id" } as any
       );
+
+      // Check if all chapters in this module are now complete
+      if (modulesList && modulesList.length > 0) {
+        const completed = await checkAndCompleteModule(moduleId, modulesList);
+        if (completed && !moduleCompleteTriggered) {
+          setModuleCompleteTriggered(true);
+          onModuleComplete?.();
+        }
+      }
     }
   };
 
