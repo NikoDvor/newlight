@@ -12,6 +12,7 @@ import { PracticeRecordingVault } from "@/components/training/PracticeRecordingV
 import { ObjectionFlashcards, FlashcardData } from "@/components/training/ObjectionFlashcards";
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
+import { useModuleCompletion } from "@/hooks/useModuleCompletion";
 
 export interface QuestionRow {
   id: string;
