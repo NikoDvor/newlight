@@ -237,6 +237,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
       setLoading(false);
     };
     load();
+    reloadCompletions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey, reloadTick]);
 
