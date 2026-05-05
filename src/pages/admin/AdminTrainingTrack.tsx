@@ -404,8 +404,10 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         trackId={trackId}
         lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
+        modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
         onCompleted={() => setReloadTick((t) => t + 1)}
+        onModuleComplete={() => setReloadTick((t) => t + 1)}
       />
     );
   }
