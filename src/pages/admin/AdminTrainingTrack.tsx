@@ -241,12 +241,27 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   }, [trackKey, reloadTick]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
+    if (isModuleCompleted(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
     const chRows = progress.filter((p) => p.module_id === moduleId);
     if (chRows.some((r) => r.status === "in_progress" || r.status === "completed")) return "in_progress";
     return "not_started";
+  };
+
+  const isModuleUnlocked = (mod: Module): boolean => {
+    if (mod.module_number <= 1) return true;
+    if (!mod.is_locked) return true;
+    const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
+    if (!prevModule) return true;
+    return isModuleCompleted(prevModule.id) || moduleStatus(prevModule.id) === "completed";
+  };
+
+  const getModuleChapterProgress = (moduleId: string) => {
+    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    const completed = moduleChapters.filter((c) => isChapterComplete(c.id)).length;
+    return { completed, total: moduleChapters.length };
   };
 
   const glossaryModule = modules.find((m) => m.module_number === 0) || null;
