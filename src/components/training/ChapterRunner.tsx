@@ -305,8 +305,10 @@ export function ChapterRunner({
   passScore = 70,
   lockedPreview = false,
   unlockModuleNumber,
+  modules: modulesList,
   onClose,
   onCompleted,
+  onModuleComplete,
 }: Props) {
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [levelProgress, setLevelProgress] = useState<LevelProgressRow[]>([]);
