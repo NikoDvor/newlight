@@ -327,6 +327,8 @@ export function ChapterRunner({
   const [moduleNumber, setModuleNumber] = useState<number | null>(null);
   const [drillCompleted, setDrillCompleted] = useState(false);
   const [unlockCategories, setUnlockCategories] = useState<string[]>([]);
+  const [moduleCompleteTriggered, setModuleCompleteTriggered] = useState(false);
+  const { checkAndCompleteModule } = useModuleCompletion(trackId);
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
   const requiresDrill = drillLines.length > 0;
