@@ -457,6 +457,12 @@ export function ChapterRunner({
   const scorePct = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
   const passed = mode === "chapter" ? lastPassed : scorePct >= passScore;
 
+  // Shuffle options per question per attempt
+  const shuffled = useMemo(
+    () => current ? shuffleQuestion(current.options, current.correct_index, current.id, attemptSeed) : null,
+    [current?.id, attemptSeed]
+  );
+
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
   const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
@@ -484,7 +490,8 @@ export function ChapterRunner({
     if (lockedPreview || revealed) return;
     setSelected(i);
     setRevealed(true);
-    if (current && i === current.correct_index) {
+    // Map shuffled index back to original to check correctness
+    if (shuffled && shuffled.indexMap[i] === current?.correct_index) {
       setCorrectCount((c) => c + 1);
     }
   };
