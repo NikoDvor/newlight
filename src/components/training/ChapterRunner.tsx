@@ -329,6 +329,7 @@ export function ChapterRunner({
   const [drillCompleted, setDrillCompleted] = useState(false);
   const [unlockCategories, setUnlockCategories] = useState<string[]>([]);
   const [moduleCompleteTriggered, setModuleCompleteTriggered] = useState(false);
+  const [attemptSeed, setAttemptSeed] = useState(() => Date.now());
   const { checkAndCompleteModule } = useModuleCompletion(trackId);
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
