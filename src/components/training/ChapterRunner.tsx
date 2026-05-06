@@ -13,6 +13,7 @@ import { ObjectionFlashcards, FlashcardData } from "@/components/training/Object
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
 import { useModuleCompletion } from "@/hooks/useModuleCompletion";
+import { shuffleQuestion } from "@/lib/quizShuffle";
 
 export interface QuestionRow {
   id: string;
