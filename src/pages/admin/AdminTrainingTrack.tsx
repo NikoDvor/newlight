@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap, Bug } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,10 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
-  const { isModuleCompleted, reload: reloadCompletions } = useModuleCompletion(trackId);
+  const { isModuleCompleted, reload: reloadCompletions, forceCompleteModule, retroactiveScan, completions } = useModuleCompletion(trackId);
+  const [showDebug, setShowDebug] = useState(false);
+  const [forceCompleting, setForceCompleting] = useState(false);
+  const [retroScanDone, setRetroScanDone] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -240,6 +243,21 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     reloadCompletions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey, reloadTick]);
+
+  // Retroactive scan: on load, check if any modules should be marked complete
+  useEffect(() => {
+    if (retroScanDone || !trackId || modules.length === 0 || loading) return;
+    const numbered = modules.filter((m) => m.module_number > 0);
+    if (numbered.length === 0) return;
+    setRetroScanDone(true);
+    const moduleMap = numbered.map((m) => ({ id: m.id, module_number: m.module_number }));
+    retroactiveScan(moduleMap).then((changed) => {
+      if (changed) {
+        reloadCompletions();
+        setReloadTick((t) => t + 1);
+      }
+    });
+  }, [trackId, modules.length, loading, retroScanDone]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
     if (isModuleCompleted(moduleId)) return "completed";
@@ -899,47 +917,81 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
                 const testUnlocked = allChaptersDone && (!isModule6 || module6DrillComplete);
                 return (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      disabled={selectedChapters.length === 0}
-                      onClick={() => {
-                        const firstUndone = selectedChapters.find(
-                          (c) => !isChapterComplete(c.id)
-                        ) || selectedChapters[0];
-                        if (firstUndone) {
-                          setRunner({
-                            mode: "chapter",
-                            chapter: firstUndone as ChapterRow,
-                            moduleId: selectedModule.id,
-                          });
-                        }
-                      }}
-                      className="gap-2"
-                    >
-                      <PlayCircle className="h-4 w-4" />
-                      {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        disabled={selectedChapters.length === 0}
+                        onClick={() => {
+                          const firstUndone = selectedChapters.find(
+                            (c) => !isChapterComplete(c.id)
+                          ) || selectedChapters[0];
+                          if (firstUndone) {
+                            setRunner({
+                              mode: "chapter",
+                              chapter: firstUndone as ChapterRow,
+                              moduleId: selectedModule.id,
+                            });
+                          }
+                        }}
+                        className="gap-2"
+                      >
+                        <PlayCircle className="h-4 w-4" />
+                        {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
+                      </Button>
 
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            <Button
-                              variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
-                              disabled={!testUnlocked || selectedModule.is_locked}
-                              onClick={() =>
-                                setRunner({ mode: "module_test", moduleId: selectedModule.id })
-                              }
-                              className="gap-2"
-                            >
-                              <Award className="h-4 w-4" />
-                              {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
-                      </Tooltip>
-                    </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Button
+                                variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
+                                disabled={!testUnlocked || selectedModule.is_locked}
+                                onClick={() =>
+                                  setRunner({ mode: "module_test", moduleId: selectedModule.id })
+                                }
+                                className="gap-2"
+                              >
+                                <Award className="h-4 w-4" />
+                                {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    {/* Manual Complete Module Button — always visible */}
+                    {!moduleDone && !isModuleCompleted(selectedModule.id) && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          If auto-progression didn't trigger, manually mark this module complete:
+                        </p>
+                        <Button
+                          variant="outline"
+                          disabled={forceCompleting}
+                          onClick={async () => {
+                            setForceCompleting(true);
+                            const moduleMap = numberedModules.map((m) => ({ id: m.id, module_number: m.module_number }));
+                            await forceCompleteModule(selectedModule.id, moduleMap);
+                            setForceCompleting(false);
+                            setReloadTick((t) => t + 1);
+                            toast({ title: "Module complete", description: "Next module unlocked." });
+                          }}
+                          className="gap-2"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          {forceCompleting ? "Completing…" : "Mark Module Complete"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {moduleDone || isModuleCompleted(selectedModule.id) ? (
+                      <div className="rounded-xl border border-[hsl(152,60%,50%)]/30 bg-[hsl(152,60%,50%)]/[0.06] p-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)]" />
+                        <span className="text-sm font-medium text-[hsl(152,60%,50%)]">Module complete — next module unlocked</span>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })()}
@@ -967,6 +1019,58 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         <MetricCard label="Certification Status" value={hasCertification ? "Certified" : overallPct === 100 ? "Ready" : "Locked"} icon={Star} />
         <MetricCard label="Flashcard Mastery" value={`${flashcardStats.mastered}/${flashcardStats.total || 28}`} icon={Layers} />
       </div>
+
+      {/* Admin Debug Panel */}
+      {canManageGlossary && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setShowDebug(!showDebug)}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Bug className="h-3 w-3" />
+            {showDebug ? "Hide Debug Panel" : "Show Debug Panel"}
+          </button>
+          {showDebug && (
+            <div className="mt-3 rounded-xl border border-border/40 bg-card/60 p-4 space-y-3 text-xs font-mono">
+              <h4 className="text-sm font-semibold text-foreground mb-2">Module Completion Debug</h4>
+              {numberedModules.map((m) => {
+                const chapterProg = getModuleChapterProgress(m.id);
+                const hasCompletion = isModuleCompleted(m.id);
+                const status = moduleStatus(m.id);
+                const unlocked = isModuleUnlocked(m);
+                return (
+                  <div key={m.id} className={`rounded-lg border p-2 ${hasCompletion ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.04]" : "border-border/30"}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-foreground font-medium">M{m.module_number}: {m.module_title}</span>
+                      <div className="flex gap-2">
+                        <Badge variant={hasCompletion ? "default" : "outline"} className="text-[9px] h-4">
+                          {hasCompletion ? "COMPLETION ✓" : "NO COMPLETION"}
+                        </Badge>
+                        <Badge variant={unlocked ? "default" : "secondary"} className="text-[9px] h-4">
+                          {unlocked ? "UNLOCKED" : "LOCKED"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Status: {status} · Chapters: {chapterProg.completed}/{chapterProg.total} · is_locked: {String(m.is_locked)}
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Chapters passed: {chapters.filter((c) => c.module_id === m.id && isChapterComplete(c.id)).map((c) => c.chapter_number).join(", ") || "none"}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="mt-2 text-muted-foreground">
+                Completion records: {completions.length > 0 ? completions.map((c) => {
+                  const mod = modules.find((m) => m.id === c.module_id);
+                  return `M${mod?.module_number || "?"}`;
+                }).join(", ") : "none"}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <div className="mt-8 pb-4 flex items-center justify-center gap-1.5 text-[10px] text-white/20">
         <Zap className="h-3 w-3" />
         <span>Powered by NewLight</span>

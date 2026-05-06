@@ -633,6 +633,7 @@ export function ChapterRunner({
       {([1, 2, 3] as QuizLevel[]).map((level) => {
         const complete = isLevelComplete(level);
         const unlocked = isLevelUnlocked(level);
+        const levelScore = levelProgress.find((row) => row.quiz_level === level && row.status === "completed")?.score;
         return (
           <button
             key={level}
@@ -651,7 +652,9 @@ export function ChapterRunner({
               {complete ? <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" /> : unlocked ? <BookOpen className="h-3 w-3 text-primary" /> : <Lock className="h-3 w-3" />}
               Level {level}
             </div>
-            <div className="mt-1 text-xs font-medium text-foreground">{LEVEL_LABELS[level]}</div>
+            <div className="mt-1 text-xs font-medium text-foreground">
+              {complete ? `${LEVEL_LABELS[level]} · ${levelScore != null ? `${levelScore}%` : "Passed"}` : LEVEL_LABELS[level]}
+            </div>
           </button>
         );
       })}
