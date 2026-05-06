@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { ObjectionFlashcards, FlashcardData } from "@/components/training/Object
 import { ReflectionVault, ReflectionField } from "@/components/training/ReflectionVault";
 import { ObjectionMasteryTrack } from "@/components/training/ObjectionMasteryTrack";
 import { useModuleCompletion } from "@/hooks/useModuleCompletion";
+import { shuffleQuestion } from "@/lib/quizShuffle";
 
 export interface QuestionRow {
   id: string;
@@ -328,6 +329,7 @@ export function ChapterRunner({
   const [drillCompleted, setDrillCompleted] = useState(false);
   const [unlockCategories, setUnlockCategories] = useState<string[]>([]);
   const [moduleCompleteTriggered, setModuleCompleteTriggered] = useState(false);
+  const [attemptSeed, setAttemptSeed] = useState(() => Date.now());
   const { checkAndCompleteModule } = useModuleCompletion(trackId);
   const drillKey = mode === "chapter" && moduleNumber === 5 && chapter ? `5.${chapter.chapter_number}` : "";
   const drillLines = SCRIPT_DRILLS[drillKey] || [];
@@ -455,6 +457,12 @@ export function ChapterRunner({
   const scorePct = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
   const passed = mode === "chapter" ? lastPassed : scorePct >= passScore;
 
+  // Shuffle options per question per attempt
+  const shuffled = useMemo(
+    () => current ? shuffleQuestion(current.options, current.correct_index, current.id, attemptSeed) : null,
+    [current?.id, attemptSeed]
+  );
+
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
   const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
@@ -469,6 +477,7 @@ export function ChapterRunner({
     setCorrectCount(0);
     setLastScorePct(0);
     setLastPassed(false);
+    setAttemptSeed(Date.now());
     setPhase(requiresDrill && !drillCompleted ? "drill" : "quiz");
   };
 
@@ -481,7 +490,8 @@ export function ChapterRunner({
     if (lockedPreview || revealed) return;
     setSelected(i);
     setRevealed(true);
-    if (current && i === current.correct_index) {
+    // Map shuffled index back to original to check correctness
+    if (shuffled && shuffled.indexMap[i] === current?.correct_index) {
       setCorrectCount((c) => c + 1);
     }
   };
@@ -745,8 +755,8 @@ export function ChapterRunner({
             {lockedQuizState}
             <div className="mt-5 flex justify-center"><Button variant="outline" onClick={onClose}>Back to module</Button></div>
           </motion.div>
-        ) : phase === "quiz" && current ? (
-          <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+        ) : phase === "quiz" && current && shuffled ? (
+          <motion.div key={`${current.id}-${currentLevel}-${attemptSeed}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {mode === "chapter" ? `Level ${currentLevel} · ${LEVEL_LABELS[currentLevel]}` : "Module Test"} · Question {qIdx + 1} of {totalQ}
@@ -756,8 +766,8 @@ export function ChapterRunner({
             <Progress value={((qIdx + (revealed ? 1 : 0)) / totalQ) * 100} className="h-1.5 mb-6" />
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-6 leading-snug">{current.question_text}</h2>
             <div className="space-y-3">
-              {current.options.map((opt, i) => {
-                const isCorrect = i === current.correct_index;
+              {shuffled.options.map((opt, i) => {
+                const isCorrect = i === shuffled.correctShuffledIndex;
                 const isSelected = selected === i;
                 let stateClass = "border-border/40 hover:bg-white/[0.03]";
                 if (revealed) {
@@ -777,8 +787,8 @@ export function ChapterRunner({
             </div>
             <AnimatePresence>
               {revealed && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`mt-5 rounded-lg border p-4 ${selected === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06]" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06]"}`}>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">{selected === current.correct_index ? "Correct" : "Not quite"}</div>
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`mt-5 rounded-lg border p-4 ${selected !== null && shuffled.indexMap[selected] === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06]" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06]"}`}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">{selected !== null && shuffled.indexMap[selected] === current.correct_index ? "Correct" : "Not quite"}</div>
                   <p className="text-sm text-foreground/85 leading-relaxed">{current.explanation}</p>
                 </motion.div>
               )}

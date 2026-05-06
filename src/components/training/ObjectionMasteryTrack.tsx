@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, CheckCircle2, Zap, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
+import { shuffleQuestion } from "@/lib/quizShuffle";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,6 +45,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
   const [correctCount, setCorrectCount] = useState(0);
   const [phase, setPhase] = useState<"idle" | "quiz" | "result">("idle");
   const [lastScore, setLastScore] = useState(0);
+  const [attemptSeed, setAttemptSeed] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -93,12 +95,18 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
   const current = levelQuestions[qIdx] || null;
   const totalQ = levelQuestions.length;
 
+  const shuffled = useMemo(
+    () => current ? shuffleQuestion(current.options, current.correct_index, current.id, attemptSeed) : null,
+    [current?.id, attemptSeed]
+  );
+
   const startQuiz = (levelKey: string) => {
     setActiveLevel(levelKey);
     setQIdx(0);
     setSelected(null);
     setRevealed(false);
     setCorrectCount(0);
+    setAttemptSeed(Date.now());
     setPhase("quiz");
   };
 
@@ -106,7 +114,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
     if (revealed) return;
     setSelected(idx);
     setRevealed(true);
-    if (current && idx === current.correct_index) {
+    if (shuffled && shuffled.indexMap[idx] === current?.correct_index) {
       setCorrectCount((c) => c + 1);
     }
   };
@@ -206,7 +214,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
           </motion.div>
         )}
 
-        {phase === "quiz" && current && (
+        {phase === "quiz" && current && shuffled && (
           <motion.div key="quiz" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -217,8 +225,8 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
             <Progress value={((qIdx + (revealed ? 1 : 0)) / totalQ) * 100} className="h-1.5 mb-4" />
             <h3 className="text-sm font-semibold text-foreground mb-4 leading-snug">{current.question_text}</h3>
             <div className="space-y-2">
-              {current.options.map((opt, i) => {
-                const isCorrect = i === current.correct_index;
+              {shuffled.options.map((opt, i) => {
+                const isCorrect = i === shuffled.correctShuffledIndex;
                 const isSelected = selected === i;
                 let stateClass = "border-border/40 hover:bg-white/[0.03]";
                 if (revealed) {
@@ -239,7 +247,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
               })}
             </div>
             {revealed && (
-              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${selected === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06] text-foreground/85" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06] text-foreground/85"}`}>
+              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${selected !== null && shuffled.indexMap[selected] === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06] text-foreground/85" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06] text-foreground/85"}`}>
                 {current.explanation}
               </motion.div>
             )}
