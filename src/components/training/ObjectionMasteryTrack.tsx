@@ -95,12 +95,18 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
   const current = levelQuestions[qIdx] || null;
   const totalQ = levelQuestions.length;
 
+  const shuffled = useMemo(
+    () => current ? shuffleQuestion(current.options, current.correct_index, current.id, attemptSeed) : null,
+    [current?.id, attemptSeed]
+  );
+
   const startQuiz = (levelKey: string) => {
     setActiveLevel(levelKey);
     setQIdx(0);
     setSelected(null);
     setRevealed(false);
     setCorrectCount(0);
+    setAttemptSeed(Date.now());
     setPhase("quiz");
   };
 
@@ -108,7 +114,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
     if (revealed) return;
     setSelected(idx);
     setRevealed(true);
-    if (current && idx === current.correct_index) {
+    if (shuffled && shuffled.indexMap[idx] === current?.correct_index) {
       setCorrectCount((c) => c + 1);
     }
   };
