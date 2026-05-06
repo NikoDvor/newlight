@@ -45,6 +45,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
   const [correctCount, setCorrectCount] = useState(0);
   const [phase, setPhase] = useState<"idle" | "quiz" | "result">("idle");
   const [lastScore, setLastScore] = useState(0);
+  const [attemptSeed, setAttemptSeed] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     if (!user?.id) return;
