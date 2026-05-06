@@ -214,7 +214,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
           </motion.div>
         )}
 
-        {phase === "quiz" && current && (
+        {phase === "quiz" && current && shuffled && (
           <motion.div key="quiz" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -225,8 +225,8 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
             <Progress value={((qIdx + (revealed ? 1 : 0)) / totalQ) * 100} className="h-1.5 mb-4" />
             <h3 className="text-sm font-semibold text-foreground mb-4 leading-snug">{current.question_text}</h3>
             <div className="space-y-2">
-              {current.options.map((opt, i) => {
-                const isCorrect = i === current.correct_index;
+              {shuffled.options.map((opt, i) => {
+                const isCorrect = i === shuffled.correctShuffledIndex;
                 const isSelected = selected === i;
                 let stateClass = "border-border/40 hover:bg-white/[0.03]";
                 if (revealed) {
@@ -247,7 +247,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
               })}
             </div>
             {revealed && (
-              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${selected === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06] text-foreground/85" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06] text-foreground/85"}`}>
+              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 rounded-lg border p-3 text-xs leading-relaxed ${selected !== null && shuffled.indexMap[selected] === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06] text-foreground/85" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06] text-foreground/85"}`}>
                 {current.explanation}
               </motion.div>
             )}
