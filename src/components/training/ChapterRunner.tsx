@@ -471,6 +471,7 @@ export function ChapterRunner({
     setCorrectCount(0);
     setLastScorePct(0);
     setLastPassed(false);
+    setAttemptSeed(Date.now());
     setPhase(requiresDrill && !drillCompleted ? "drill" : "quiz");
   };
 
