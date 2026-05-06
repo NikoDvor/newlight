@@ -755,8 +755,8 @@ export function ChapterRunner({
             {lockedQuizState}
             <div className="mt-5 flex justify-center"><Button variant="outline" onClick={onClose}>Back to module</Button></div>
           </motion.div>
-        ) : phase === "quiz" && current ? (
-          <motion.div key={`${current.id}-${currentLevel}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
+        ) : phase === "quiz" && current && shuffled ? (
+          <motion.div key={`${current.id}-${currentLevel}-${attemptSeed}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {mode === "chapter" ? `Level ${currentLevel} · ${LEVEL_LABELS[currentLevel]}` : "Module Test"} · Question {qIdx + 1} of {totalQ}
@@ -766,8 +766,8 @@ export function ChapterRunner({
             <Progress value={((qIdx + (revealed ? 1 : 0)) / totalQ) * 100} className="h-1.5 mb-6" />
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-6 leading-snug">{current.question_text}</h2>
             <div className="space-y-3">
-              {current.options.map((opt, i) => {
-                const isCorrect = i === current.correct_index;
+              {shuffled.options.map((opt, i) => {
+                const isCorrect = i === shuffled.correctShuffledIndex;
                 const isSelected = selected === i;
                 let stateClass = "border-border/40 hover:bg-white/[0.03]";
                 if (revealed) {
@@ -787,8 +787,8 @@ export function ChapterRunner({
             </div>
             <AnimatePresence>
               {revealed && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`mt-5 rounded-lg border p-4 ${selected === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06]" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06]"}`}>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">{selected === current.correct_index ? "Correct" : "Not quite"}</div>
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`mt-5 rounded-lg border p-4 ${selected !== null && shuffled.indexMap[selected] === current.correct_index ? "border-[hsl(152,60%,50%)]/40 bg-[hsl(152,60%,50%)]/[0.06]" : "border-[hsl(0,75%,60%)]/40 bg-[hsl(0,75%,60%)]/[0.06]"}`}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-muted-foreground">{selected !== null && shuffled.indexMap[selected] === current.correct_index ? "Correct" : "Not quite"}</div>
                   <p className="text-sm text-foreground/85 leading-relaxed">{current.explanation}</p>
                 </motion.div>
               )}
