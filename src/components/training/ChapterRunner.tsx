@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
