@@ -244,6 +244,19 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey, reloadTick]);
 
+  // Retroactive scan: on load, check if any modules should be marked complete
+  useEffect(() => {
+    if (retroScanDone || !trackId || numberedModules.length === 0 || loading) return;
+    setRetroScanDone(true);
+    const moduleMap = numberedModules.map((m) => ({ id: m.id, module_number: m.module_number }));
+    retroactiveScan(moduleMap).then((changed) => {
+      if (changed) {
+        reloadCompletions();
+        setReloadTick((t) => t + 1);
+      }
+    });
+  }, [trackId, numberedModules.length, loading, retroScanDone]);
+
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
     if (isModuleCompleted(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
