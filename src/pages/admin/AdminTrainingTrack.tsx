@@ -246,16 +246,18 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
   // Retroactive scan: on load, check if any modules should be marked complete
   useEffect(() => {
-    if (retroScanDone || !trackId || numberedModules.length === 0 || loading) return;
+    if (retroScanDone || !trackId || modules.length === 0 || loading) return;
+    const numbered = modules.filter((m) => m.module_number > 0);
+    if (numbered.length === 0) return;
     setRetroScanDone(true);
-    const moduleMap = numberedModules.map((m) => ({ id: m.id, module_number: m.module_number }));
+    const moduleMap = numbered.map((m) => ({ id: m.id, module_number: m.module_number }));
     retroactiveScan(moduleMap).then((changed) => {
       if (changed) {
         reloadCompletions();
         setReloadTick((t) => t + 1);
       }
     });
-  }, [trackId, numberedModules.length, loading, retroScanDone]);
+  }, [trackId, modules.length, loading, retroScanDone]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
     if (isModuleCompleted(moduleId)) return "completed";
