@@ -917,47 +917,81 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 const moduleDone = moduleStatus(selectedModule.id) === "completed";
                 const testUnlocked = allChaptersDone && (!isModule6 || module6DrillComplete);
                 return (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      disabled={selectedChapters.length === 0}
-                      onClick={() => {
-                        const firstUndone = selectedChapters.find(
-                          (c) => !isChapterComplete(c.id)
-                        ) || selectedChapters[0];
-                        if (firstUndone) {
-                          setRunner({
-                            mode: "chapter",
-                            chapter: firstUndone as ChapterRow,
-                            moduleId: selectedModule.id,
-                          });
-                        }
-                      }}
-                      className="gap-2"
-                    >
-                      <PlayCircle className="h-4 w-4" />
-                      {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        disabled={selectedChapters.length === 0}
+                        onClick={() => {
+                          const firstUndone = selectedChapters.find(
+                            (c) => !isChapterComplete(c.id)
+                          ) || selectedChapters[0];
+                          if (firstUndone) {
+                            setRunner({
+                              mode: "chapter",
+                              chapter: firstUndone as ChapterRow,
+                              moduleId: selectedModule.id,
+                            });
+                          }
+                        }}
+                        className="gap-2"
+                      >
+                        <PlayCircle className="h-4 w-4" />
+                        {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
+                      </Button>
 
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            <Button
-                              variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
-                              disabled={!testUnlocked || selectedModule.is_locked}
-                              onClick={() =>
-                                setRunner({ mode: "module_test", moduleId: selectedModule.id })
-                              }
-                              className="gap-2"
-                            >
-                              <Award className="h-4 w-4" />
-                              {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
-                      </Tooltip>
-                    </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Button
+                                variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
+                                disabled={!testUnlocked || selectedModule.is_locked}
+                                onClick={() =>
+                                  setRunner({ mode: "module_test", moduleId: selectedModule.id })
+                                }
+                                className="gap-2"
+                              >
+                                <Award className="h-4 w-4" />
+                                {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    {/* Manual Complete Module Button — always visible */}
+                    {!moduleDone && !isModuleCompleted(selectedModule.id) && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          If auto-progression didn't trigger, manually mark this module complete:
+                        </p>
+                        <Button
+                          variant="outline"
+                          disabled={forceCompleting}
+                          onClick={async () => {
+                            setForceCompleting(true);
+                            const moduleMap = numberedModules.map((m) => ({ id: m.id, module_number: m.module_number }));
+                            await forceCompleteModule(selectedModule.id, moduleMap);
+                            setForceCompleting(false);
+                            setReloadTick((t) => t + 1);
+                            toast({ title: "Module complete", description: "Next module unlocked." });
+                          }}
+                          className="gap-2"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          {forceCompleting ? "Completing…" : "Mark Module Complete"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {moduleDone || isModuleCompleted(selectedModule.id) ? (
+                      <div className="rounded-xl border border-[hsl(152,60%,50%)]/30 bg-[hsl(152,60%,50%)]/[0.06] p-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)]" />
+                        <span className="text-sm font-medium text-[hsl(152,60%,50%)]">Module complete — next module unlocked</span>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })()}
