@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, CheckCircle2, Zap, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
+import { shuffleQuestion } from "@/lib/quizShuffle";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
