@@ -464,6 +464,19 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const completedModules = numberedModules.filter((m) => moduleStatus(m.id) === "completed").length;
   const overallPct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
 
+  if (examRunner && trackId) {
+    return (
+      <ModuleFinalExam
+        moduleId={examRunner.moduleId}
+        moduleName={examRunner.moduleName}
+        trackId={trackId}
+        modules={modules.map((m) => ({ id: m.id, module_number: m.module_number, module_title: m.module_title }))}
+        onClose={() => { setExamRunner(null); setReloadTick((t) => t + 1); }}
+        onPassed={() => { reloadCompletions(); setReloadTick((t) => t + 1); }}
+      />
+    );
+  }
+
   if (runner && trackId) {
     return (
       <ChapterRunner
