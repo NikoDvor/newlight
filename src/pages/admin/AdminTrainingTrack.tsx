@@ -238,9 +238,31 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           const chIds = new Set((unlockQs || []).map((r: any) => r.chapter_id).filter(Boolean));
           setUnlockedChapterIds(chIds as Set<string>);
         }
-      }
 
-      setLoading(false);
+        // Load exam history
+        const moduleIds = moduleList.map((m) => m.id);
+        if (moduleIds.length > 0) {
+          const { data: exams } = await (supabase as any)
+            .from("nl_module_exams")
+            .select("module_id, score, passed, attempt_number")
+            .eq("user_id", user.id)
+            .in("module_id", moduleIds);
+          const hist: Record<string, { bestScore: number; passed: boolean; attempts: number }> = {};
+          (exams || []).forEach((e: any) => {
+            const prev = hist[e.module_id];
+            if (!prev) {
+              hist[e.module_id] = { bestScore: e.score, passed: e.passed, attempts: e.attempt_number };
+            } else {
+              hist[e.module_id] = {
+                bestScore: Math.max(prev.bestScore, e.score),
+                passed: prev.passed || e.passed,
+                attempts: Math.max(prev.attempts, e.attempt_number),
+              };
+            }
+          });
+          setExamHistory(hist);
+        }
+      }
     };
     load();
     reloadCompletions();
