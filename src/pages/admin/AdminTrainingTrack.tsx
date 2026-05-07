@@ -540,7 +540,12 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
                   const unlocked = isModuleUnlocked(m);
-                  const chapterProg = getModuleChapterProgress(m.id);
+                  const chaptersRead = getModuleChaptersRead(m.id);
+                  const allChaptersRead = chaptersRead.total > 0 && chaptersRead.read >= chaptersRead.total;
+                  const exam = examHistory[m.id];
+                  const examPassed = exam?.passed || isModuleCompleted(m.id);
+                  const examReady = allChaptersRead && !examPassed && unlocked;
+                  const examFailed = exam && !exam.passed;
                     return (
                     <button
                       key={m.id}
@@ -566,17 +571,21 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <div
                         className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5"
                         style={{
-                          background: status === "completed"
+                          background: examPassed
                             ? "hsla(152,60%,50%,.22)"
-                            : isSelected
-                              ? "hsla(211,96%,60%,.22)"
-                              : "hsla(220,15%,20%,.5)",
-                          color: status === "completed"
+                            : examReady
+                              ? "hsla(45,90%,50%,.22)"
+                              : isSelected
+                                ? "hsla(211,96%,60%,.22)"
+                                : "hsla(220,15%,20%,.5)",
+                          color: examPassed
                             ? "hsl(152,60%,50%)"
-                            : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
+                            : examReady
+                              ? "hsl(45,90%,50%)"
+                              : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : m.module_number}
+                        {examPassed ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : examReady ? <FileCheck className="h-3.5 w-3.5" /> : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -585,20 +594,30 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
-                          {status === "completed" ? (
+                          {examPassed ? (
                             <>
                               <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
-                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete</span>
+                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.bestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
                             </>
                           ) : !unlocked ? (
                             <>
                               <Lock className="h-3 w-3 text-muted-foreground" />
                               <span className="text-[10px] text-muted-foreground font-medium">Locked</span>
                             </>
+                          ) : examReady ? (
+                            <>
+                              <FileCheck className="h-3 w-3 text-[hsl(45,90%,50%)]" />
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Exam Ready</span>
+                            </>
+                          ) : examFailed ? (
+                            <>
+                              <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.bestScore}%</span>
+                            </>
                           ) : status === "in_progress" ? (
                             <>
                               <PlayCircle className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
-                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">{chapterProg.completed} of {chapterProg.total} chapters</span>
+                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">{chaptersRead.read} of {chaptersRead.total} chapters read</span>
                             </>
                           ) : (
                             <>
