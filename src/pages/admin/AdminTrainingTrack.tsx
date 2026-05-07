@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap, Bug } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap, Bug, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
+import { ModuleFinalExam } from "@/components/training/ModuleFinalExam";
 import { ScriptMemorizationVault } from "@/components/training/ScriptMemorizationVault";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,6 +108,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     | { mode: "module_test"; moduleId: string }
     | null
   >(null);
+  const [examRunner, setExamRunner] = useState<{ moduleId: string; moduleName: string } | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
@@ -114,6 +116,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [showDebug, setShowDebug] = useState(false);
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
+  const [examHistory, setExamHistory] = useState<Record<string, { bestScore: number; passed: boolean; attempts: number }>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -235,9 +238,31 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           const chIds = new Set((unlockQs || []).map((r: any) => r.chapter_id).filter(Boolean));
           setUnlockedChapterIds(chIds as Set<string>);
         }
-      }
 
-      setLoading(false);
+        // Load exam history
+        const moduleIds = moduleList.map((m) => m.id);
+        if (moduleIds.length > 0) {
+          const { data: exams } = await (supabase as any)
+            .from("nl_module_exams")
+            .select("module_id, score, passed, attempt_number")
+            .eq("user_id", user.id)
+            .in("module_id", moduleIds);
+          const hist: Record<string, { bestScore: number; passed: boolean; attempts: number }> = {};
+          (exams || []).forEach((e: any) => {
+            const prev = hist[e.module_id];
+            if (!prev) {
+              hist[e.module_id] = { bestScore: e.score, passed: e.passed, attempts: e.attempt_number };
+            } else {
+              hist[e.module_id] = {
+                bestScore: Math.max(prev.bestScore, e.score),
+                passed: prev.passed || e.passed,
+                attempts: Math.max(prev.attempts, e.attempt_number),
+              };
+            }
+          });
+          setExamHistory(hist);
+        }
+      }
     };
     load();
     reloadCompletions();
@@ -305,6 +330,14 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const isChapterComplete = (chapterId: string) =>
     progress.some((p) => p.chapter_id === chapterId && p.status === "completed") || getChapterLevelCount(chapterId) === 3;
 
+  const isChapterRead = (chapterId: string) =>
+    progress.some((p) => p.chapter_id === chapterId);
+
+  const getModuleChaptersRead = (moduleId: string) => {
+    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    const read = moduleChapters.filter((c) => isChapterRead(c.id)).length;
+    return { read, total: moduleChapters.length };
+  };
   const getChapterDescription = (chapter: Chapter) => {
     const first = (chapter.content || "").split("\n\n").find((part) => part.trim().length > 60) || "";
     return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
@@ -431,6 +464,19 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const completedModules = numberedModules.filter((m) => moduleStatus(m.id) === "completed").length;
   const overallPct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
 
+  if (examRunner && trackId) {
+    return (
+      <ModuleFinalExam
+        moduleId={examRunner.moduleId}
+        moduleName={examRunner.moduleName}
+        trackId={trackId}
+        modules={modules.map((m) => ({ id: m.id, module_number: m.module_number, module_title: m.module_title }))}
+        onClose={() => { setExamRunner(null); setReloadTick((t) => t + 1); }}
+        onPassed={() => { reloadCompletions(); setReloadTick((t) => t + 1); }}
+      />
+    );
+  }
+
   if (runner && trackId) {
     return (
       <ChapterRunner
@@ -494,7 +540,12 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                   const status = moduleStatus(m.id);
                   const isSelected = selectedModuleId === m.id;
                   const unlocked = isModuleUnlocked(m);
-                  const chapterProg = getModuleChapterProgress(m.id);
+                  const chaptersRead = getModuleChaptersRead(m.id);
+                  const allChaptersRead = chaptersRead.total > 0 && chaptersRead.read >= chaptersRead.total;
+                  const exam = examHistory[m.id];
+                  const examPassed = exam?.passed || isModuleCompleted(m.id);
+                  const examReady = allChaptersRead && !examPassed && unlocked;
+                  const examFailed = exam && !exam.passed;
                     return (
                     <button
                       key={m.id}
@@ -520,17 +571,21 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <div
                         className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5"
                         style={{
-                          background: status === "completed"
+                          background: examPassed
                             ? "hsla(152,60%,50%,.22)"
-                            : isSelected
-                              ? "hsla(211,96%,60%,.22)"
-                              : "hsla(220,15%,20%,.5)",
-                          color: status === "completed"
+                            : examReady
+                              ? "hsla(45,90%,50%,.22)"
+                              : isSelected
+                                ? "hsla(211,96%,60%,.22)"
+                                : "hsla(220,15%,20%,.5)",
+                          color: examPassed
                             ? "hsl(152,60%,50%)"
-                            : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
+                            : examReady
+                              ? "hsl(45,90%,50%)"
+                              : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
                         }}
                       >
-                        {status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : m.module_number}
+                        {examPassed ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : examReady ? <FileCheck className="h-3.5 w-3.5" /> : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -539,20 +594,30 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
-                          {status === "completed" ? (
+                          {examPassed ? (
                             <>
                               <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
-                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete</span>
+                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.bestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
                             </>
                           ) : !unlocked ? (
                             <>
                               <Lock className="h-3 w-3 text-muted-foreground" />
                               <span className="text-[10px] text-muted-foreground font-medium">Locked</span>
                             </>
+                          ) : examReady ? (
+                            <>
+                              <FileCheck className="h-3 w-3 text-[hsl(45,90%,50%)]" />
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Exam Ready</span>
+                            </>
+                          ) : examFailed ? (
+                            <>
+                              <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.bestScore}%</span>
+                            </>
                           ) : status === "in_progress" ? (
                             <>
                               <PlayCircle className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
-                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">{chapterProg.completed} of {chapterProg.total} chapters</span>
+                              <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">{chaptersRead.read} of {chaptersRead.total} chapters read</span>
                             </>
                           ) : (
                             <>
@@ -911,24 +976,26 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
               )}
 
               {!isGlossaryModule && (() => {
-                const allChaptersDone =
-                  selectedChapters.length > 0 &&
-                  selectedChapters.every((c) => isChapterComplete(c.id));
-                const moduleDone = moduleStatus(selectedModule.id) === "completed";
-                const testUnlocked = allChaptersDone && (!isModule6 || module6DrillComplete);
+                const chaptersReadInfo = getModuleChaptersRead(selectedModule.id);
+                const allChaptersRead = chaptersReadInfo.total > 0 && chaptersReadInfo.read >= chaptersReadInfo.total;
+                const moduleDone = isModuleCompleted(selectedModule.id) || moduleStatus(selectedModule.id) === "completed";
+                const exam = examHistory[selectedModule.id];
+                const examPassed = exam?.passed || moduleDone;
                 return (
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       <Button
                         disabled={selectedChapters.length === 0}
                         onClick={() => {
-                          const firstUndone = selectedChapters.find(
+                          const firstUnread = selectedChapters.find(
+                            (c) => !isChapterRead(c.id)
+                          ) || selectedChapters.find(
                             (c) => !isChapterComplete(c.id)
                           ) || selectedChapters[0];
-                          if (firstUndone) {
+                          if (firstUnread) {
                             setRunner({
                               mode: "chapter",
-                              chapter: firstUndone as ChapterRow,
+                              chapter: firstUnread as ChapterRow,
                               moduleId: selectedModule.id,
                             });
                           }
@@ -936,62 +1003,59 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                         className="gap-2"
                       >
                         <PlayCircle className="h-4 w-4" />
-                        {moduleStatus(selectedModule.id) === "in_progress" ? "Continue" : "Start Module"}
+                        {chaptersReadInfo.read > 0 ? "Continue" : "Start Module"}
                       </Button>
-
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              <Button
-                                variant={testUnlocked && !moduleDone && !selectedModule.is_locked ? "default" : "outline"}
-                                disabled={!testUnlocked || selectedModule.is_locked}
-                                onClick={() =>
-                                  setRunner({ mode: "module_test", moduleId: selectedModule.id })
-                                }
-                                className="gap-2"
-                              >
-                                <Award className="h-4 w-4" />
-                                {moduleDone ? "Module Test Passed" : isModule6 && allChaptersDone && !module6DrillReady ? "Complete Objection Drill First" : "Take Module Test"}
-                              </Button>
-                            </span>
-                          </TooltipTrigger>
-                          {selectedModule.is_locked && <TooltipContent>Unlock by completing Module {previousModuleNumber} first</TooltipContent>}
-                        </Tooltip>
-                      </TooltipProvider>
                     </div>
 
-                    {/* Manual Complete Module Button — always visible */}
-                    {!moduleDone && !isModuleCompleted(selectedModule.id) && (
-                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-                        <p className="text-sm text-muted-foreground mb-3">
-                          If auto-progression didn't trigger, manually mark this module complete:
-                        </p>
-                        <Button
-                          variant="outline"
-                          disabled={forceCompleting}
-                          onClick={async () => {
-                            setForceCompleting(true);
-                            const moduleMap = numberedModules.map((m) => ({ id: m.id, module_number: m.module_number }));
-                            await forceCompleteModule(selectedModule.id, moduleMap);
-                            setForceCompleting(false);
-                            setReloadTick((t) => t + 1);
-                            toast({ title: "Module complete", description: "Next module unlocked." });
-                          }}
-                          className="gap-2"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                          {forceCompleting ? "Completing…" : "Mark Module Complete"}
-                        </Button>
-                      </div>
-                    )}
-
-                    {moduleDone || isModuleCompleted(selectedModule.id) ? (
-                      <div className="rounded-xl border border-[hsl(152,60%,50%)]/30 bg-[hsl(152,60%,50%)]/[0.06] p-3 flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,50%)]" />
-                        <span className="text-sm font-medium text-[hsl(152,60%,50%)]">Module complete — next module unlocked</span>
-                      </div>
-                    ) : null}
+                    {/* Module Final Exam Section */}
+                    <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
+                      {examPassed ? (
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
+                            <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
+                            <p className="text-[11px] text-foreground/50">Score: {exam?.bestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%</p>
+                          </div>
+                        </div>
+                      ) : !allChaptersRead ? (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(220,15%,20%,.6)" }}>
+                              <BookOpen className="h-5 w-5 text-foreground/40" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground/60">Complete all chapters to unlock the exam</p>
+                              <p className="text-[11px] text-foreground/40">{chaptersReadInfo.read} of {chaptersReadInfo.total} chapters read</p>
+                            </div>
+                          </div>
+                          <Progress value={(chaptersReadInfo.read / chaptersReadInfo.total) * 100} className="h-1.5" />
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.15)", boxShadow: "0 0 20px -4px hsla(211,96%,56%,.3)" }}>
+                                <Award className="h-5 w-5 text-[hsl(211,96%,56%)]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">Module Final Exam</p>
+                                <p className="text-[11px] text-foreground/50">20 questions · 80% to pass</p>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
+                            className="w-full gap-2"
+                            disabled={selectedModule.is_locked}
+                          >
+                            <Award className="h-4 w-4" />
+                            {exam && !exam.passed ? `Retake Module Exam · Best score: ${exam.bestScore}%` : "Take Module Final Exam"}
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
