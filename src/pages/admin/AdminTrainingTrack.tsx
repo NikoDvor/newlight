@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap, Bug } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, Circle, PlayCircle, Award, BookOpen, TrendingUp, Star, Search, PlusCircle, Layers, Zap, Bug, FileCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/MetricCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChapterRunner, ChapterRow } from "@/components/training/ChapterRunner";
+import { ModuleFinalExam } from "@/components/training/ModuleFinalExam";
 import { ScriptMemorizationVault } from "@/components/training/ScriptMemorizationVault";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
