@@ -330,6 +330,14 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const isChapterComplete = (chapterId: string) =>
     progress.some((p) => p.chapter_id === chapterId && p.status === "completed") || getChapterLevelCount(chapterId) === 3;
 
+  const isChapterRead = (chapterId: string) =>
+    progress.some((p) => p.chapter_id === chapterId);
+
+  const getModuleChaptersRead = (moduleId: string) => {
+    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
+    const read = moduleChapters.filter((c) => isChapterRead(c.id)).length;
+    return { read, total: moduleChapters.length };
+  };
   const getChapterDescription = (chapter: Chapter) => {
     const first = (chapter.content || "").split("\n\n").find((part) => part.trim().length > 60) || "";
     return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
