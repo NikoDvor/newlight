@@ -108,6 +108,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     | { mode: "module_test"; moduleId: string }
     | null
   >(null);
+  const [examRunner, setExamRunner] = useState<{ moduleId: string; moduleName: string } | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
@@ -115,6 +116,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [showDebug, setShowDebug] = useState(false);
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
+  const [examHistory, setExamHistory] = useState<Record<string, { bestScore: number; passed: boolean; attempts: number }>>({});
 
   useEffect(() => {
     const load = async () => {
