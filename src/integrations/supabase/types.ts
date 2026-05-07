@@ -5975,6 +5975,54 @@ export type Database = {
           },
         ]
       }
+      nl_module_exams: {
+        Row: {
+          answers_snapshot: Json | null
+          attempt_number: number
+          completed_at: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          module_id: string
+          passed: boolean
+          questions_snapshot: Json | null
+          score: number
+          started_at: string
+          user_id: string
+          weak_chapters: Json | null
+        }
+        Insert: {
+          answers_snapshot?: Json | null
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          module_id: string
+          passed?: boolean
+          questions_snapshot?: Json | null
+          score?: number
+          started_at?: string
+          user_id: string
+          weak_chapters?: Json | null
+        }
+        Update: {
+          answers_snapshot?: Json | null
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          module_id?: string
+          passed?: boolean
+          questions_snapshot?: Json | null
+          score?: number
+          started_at?: string
+          user_id?: string
+          weak_chapters?: Json | null
+        }
+        Relationships: []
+      }
       nl_objection_unlocks: {
         Row: {
           advanced_passed: boolean
