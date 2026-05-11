@@ -615,7 +615,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           {examPassed ? (
                             <>
                               <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
-                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.bestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
+                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.latestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
                             </>
                           ) : !unlocked ? (
                             <>
@@ -632,7 +632,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           ) : examFailed && exam ? (
                             <>
                               <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
-                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.bestScore}%</span>
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.latestScore}%</span>
                             </>
                           ) : status === "in_progress" ? (
                             <>
@@ -1036,7 +1036,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
-                            <p className="text-[11px] text-foreground/50">Score: {exam?.bestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%</p>
+                            <p className="text-[11px] text-foreground/50">Score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%</p>
                           </div>
                         </div>
                       ) : !allChaptersRead ? (
@@ -1071,7 +1071,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             disabled={selectedModule.is_locked}
                           >
                             <Award className="h-4 w-4" />
-                            {exam && !exam.passed ? `Retake Module Exam · Best score: ${exam.bestScore}%` : "Take Module Final Exam"}
+                            {exam && !exam.passed ? `Retake Module Exam · Best score: ${exam.latestScore}%` : "Take Module Final Exam"}
                           </Button>
                         </>
                       )}
