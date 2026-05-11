@@ -544,7 +544,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                   let status: ReturnType<typeof moduleStatus> = "not_started";
                   let unlocked = m.module_number <= 1;
                   let chaptersRead = { read: 0, total: 0 };
-                  let exam: { bestScore: number; passed: boolean; attempts: number } | undefined;
+                  let exam: { latestScore: number; passed: boolean; attempts: number } | undefined;
                   let examPassed = false;
                   let examReady = false;
                   let examFailed = false;
