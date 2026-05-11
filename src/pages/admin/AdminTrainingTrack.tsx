@@ -248,17 +248,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .select("module_id, score, passed, attempt_number")
             .eq("user_id", user.id)
             .in("module_id", moduleIds);
-          const hist: Record<string, { bestScore: number; passed: boolean; attempts: number }> = {};
+          const hist: Record<string, { latestScore: number; passed: boolean; attempts: number }> = {};
           (exams || []).forEach((e: any) => {
             const prev = hist[e.module_id];
-            if (!prev) {
-              hist[e.module_id] = { bestScore: e.score, passed: e.passed, attempts: e.attempt_number };
-            } else {
-              hist[e.module_id] = {
-                bestScore: Math.max(prev.bestScore, e.score),
-                passed: prev.passed || e.passed,
-                attempts: Math.max(prev.attempts, e.attempt_number),
-              };
+            if (!prev || e.attempt_number > prev.attempts) {
+              hist[e.module_id] = { latestScore: e.score, passed: e.passed, attempts: e.attempt_number };
             }
           });
           setExamHistory(hist);
