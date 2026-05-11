@@ -339,9 +339,28 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     const read = moduleChapters.filter((c) => isChapterRead(c.id)).length;
     return { read, total: moduleChapters.length };
   };
+  const stripMarkdown = (s: string) =>
+    s
+      .replace(/^---+$/gm, " ")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/`{1,3}([^`]*)`{1,3}/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/_([^_]+)_/g, "$1")
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^\s*[-*+]\s+/gm, "")
+      .replace(/^\s*\d+\.\s+/gm, "")
+      .replace(/^>\s?/gm, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
   const getChapterDescription = (chapter: Chapter) => {
-    const first = (chapter.content || "").split("\n\n").find((part) => part.trim().length > 60) || "";
-    return first.replace(/\s+/g, " ").slice(0, 150) + (first.length > 150 ? "…" : "");
+    const parts = (chapter.content || "").split("\n\n");
+    const first =
+      parts.map((p) => stripMarkdown(p)).find((part) => part.length > 60) || "";
+    return first.slice(0, 150) + (first.length > 150 ? "…" : "");
   };
 
   const markFlashcardReviewed = async (card: FlashcardRow) => {

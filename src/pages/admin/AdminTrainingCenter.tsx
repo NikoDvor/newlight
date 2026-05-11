@@ -92,7 +92,7 @@ export default function AdminTrainingCenter() {
             <TrackCard
               title="BDR Training Track"
               subtitle="Business Development Rep Certification"
-              badge="10 Modules"
+              badge="8 Modules"
               onOpen={() => navigate("/admin/training-center/bdr")}
               delay={0}
             />
