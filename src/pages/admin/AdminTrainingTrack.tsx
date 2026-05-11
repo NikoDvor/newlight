@@ -294,12 +294,17 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     return "not_started";
   };
 
+  // Explicit unlock chain: Module 1 always unlocked. Module N unlocked iff
+  // Module N-1 has a completion record (or is otherwise marked completed).
   const isModuleUnlocked = (mod: Module): boolean => {
     if (mod.module_number <= 1) return true;
-    if (!mod.is_locked) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
-    if (!prevModule) return true;
-    return isModuleCompleted(prevModule.id) || moduleStatus(prevModule.id) === "completed";
+    if (!prevModule) return true; // gap in numbering — fail open so card stays interactive
+    if (isModuleCompleted(prevModule.id)) return true;
+    if (moduleStatus(prevModule.id) === "completed") return true;
+    // Honor explicit DB unlock (admin-forced or migrations)
+    if (!mod.is_locked) return true;
+    return false;
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
@@ -537,34 +542,44 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             ) : (
               <>
                 {numberedModules.map((m) => {
-                  const status = moduleStatus(m.id);
+                  // Per-card defensive rendering: a single bad enrichment row
+                  // must never blank out the entire list.
+                  let status: ReturnType<typeof moduleStatus> = "not_started";
+                  let unlocked = m.module_number <= 1;
+                  let chaptersRead = { read: 0, total: 0 };
+                  let exam: { bestScore: number; passed: boolean; attempts: number } | undefined;
+                  let examPassed = false;
+                  let examReady = false;
+                  let examFailed = false;
+                  try {
+                    status = moduleStatus(m.id);
+                    unlocked = isModuleUnlocked(m);
+                    chaptersRead = getModuleChaptersRead(m.id);
+                    exam = examHistory[m.id];
+                    examPassed = !!exam?.passed || isModuleCompleted(m.id);
+                    const allChaptersRead = chaptersRead.total > 0 && chaptersRead.read >= chaptersRead.total;
+                    examReady = allChaptersRead && !examPassed && unlocked;
+                    examFailed = !!(exam && !exam.passed);
+                  } catch (err) {
+                    console.error(`[TrainingTrack] enrichment failed for module ${m.module_number}`, err);
+                  }
+                  if (typeof window !== "undefined") {
+                    console.debug(`[TrainingTrack] module ${m.module_number} "${m.module_title}" unlocked=${unlocked} status=${status} examPassed=${examPassed}`);
+                  }
                   const isSelected = selectedModuleId === m.id;
-                  const unlocked = isModuleUnlocked(m);
-                  const chaptersRead = getModuleChaptersRead(m.id);
-                  const allChaptersRead = chaptersRead.total > 0 && chaptersRead.read >= chaptersRead.total;
-                  const exam = examHistory[m.id];
-                  const examPassed = exam?.passed || isModuleCompleted(m.id);
-                  const examReady = allChaptersRead && !examPassed && unlocked;
-                  const examFailed = exam && !exam.passed;
-                    return (
+                  return (
                     <button
                       key={m.id}
                       onClick={() => {
                         setSelectedModuleId(m.id);
                         setShowModule1Glossary(false);
                       }}
-                      className={`w-full text-left px-4 py-3 border-b transition-all duration-200 flex items-start gap-3 ${
-                        !unlocked ? "opacity-50" : ""
-                      } ${
-                        isSelected
-                            ? "bg-primary/[0.08] border-border/30"
-                            : "border-border/30 hover:bg-white/[0.03]"
+                      className={`w-full text-left px-4 py-3 border-b border-border/30 transition-all duration-200 flex items-start gap-3 hover:bg-white/[0.03] ${
+                        isSelected ? "bg-primary/[0.08]" : ""
                       }`}
                       style={
                         isSelected
-                          ? {
-                              boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))",
-                            }
+                          ? { boxShadow: "inset 3px 0 0 0 hsl(var(--nl-neon))" }
                           : undefined
                       }
                     >
@@ -575,24 +590,30 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             ? "hsla(152,60%,50%,.22)"
                             : examReady
                               ? "hsla(45,90%,50%,.22)"
-                              : isSelected
-                                ? "hsla(211,96%,60%,.22)"
-                                : "hsla(220,15%,20%,.5)",
+                              : !unlocked
+                                ? "hsla(220,15%,20%,.5)"
+                                : isSelected
+                                  ? "hsla(211,96%,60%,.22)"
+                                  : "hsla(220,15%,20%,.5)",
                           color: examPassed
                             ? "hsl(152,60%,50%)"
                             : examReady
                               ? "hsl(45,90%,50%)"
-                              : isSelected ? "hsl(var(--nl-neon))" : "hsl(var(--muted-foreground))",
+                              : !unlocked
+                                ? "hsl(var(--muted-foreground))"
+                                : isSelected
+                                  ? "hsl(var(--nl-neon))"
+                                  : "hsl(var(--muted-foreground))",
+                          opacity: !unlocked ? 0.85 : 1,
                         }}
                       >
                         {examPassed ? <CheckCircle2 className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3.5 w-3.5" /> : examReady ? <FileCheck className="h-3.5 w-3.5" /> : m.module_number}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className={`text-[13px] font-medium truncate ${isSelected ? "text-foreground" : "text-foreground/85"}`}>
-                            {m.module_title}
-                          </p>
-                        </div>
+                        {/* Title is ALWAYS rendered at full readable contrast — even when locked */}
+                        <p className="text-[13px] font-medium truncate text-foreground">
+                          {m.module_title || `Module ${m.module_number}`}
+                        </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           {examPassed ? (
                             <>
@@ -602,14 +623,16 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           ) : !unlocked ? (
                             <>
                               <Lock className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground font-medium">Locked</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">
+                                Complete Module {Math.max(1, m.module_number - 1)} to unlock
+                              </span>
                             </>
                           ) : examReady ? (
                             <>
                               <FileCheck className="h-3 w-3 text-[hsl(45,90%,50%)]" />
                               <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Exam Ready</span>
                             </>
-                          ) : examFailed ? (
+                          ) : examFailed && exam ? (
                             <>
                               <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
                               <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.bestScore}%</span>
@@ -622,12 +645,12 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           ) : (
                             <>
                               <Circle className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground font-medium">Not started</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">Start Module</span>
                             </>
                           )}
                         </div>
                       </div>
-                      </button>
+                    </button>
                   );
                 })}
                 {trackKey === "bdr" && (
