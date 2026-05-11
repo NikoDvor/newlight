@@ -632,7 +632,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           ) : examFailed && exam ? (
                             <>
                               <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
-                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.latestScore}%</span>
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Last: {exam.latestScore}%</span>
                             </>
                           ) : status === "in_progress" ? (
                             <>
@@ -1081,7 +1081,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             disabled={selectedModule.is_locked}
                           >
                             <Award className="h-4 w-4" />
-                            {exam && !exam.passed ? `Retake Module Exam · Best score: ${exam.latestScore}%` : "Take Module Final Exam"}
+                            {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}
                           </Button>
                         </>
                       )}
