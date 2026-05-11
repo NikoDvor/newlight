@@ -117,7 +117,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [showDebug, setShowDebug] = useState(false);
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
-  const [examHistory, setExamHistory] = useState<Record<string, { bestScore: number; passed: boolean; attempts: number }>>({});
+  const [examHistory, setExamHistory] = useState<Record<string, { latestScore: number; passed: boolean; attempts: number }>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -248,17 +248,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .select("module_id, score, passed, attempt_number")
             .eq("user_id", user.id)
             .in("module_id", moduleIds);
-          const hist: Record<string, { bestScore: number; passed: boolean; attempts: number }> = {};
+          const hist: Record<string, { latestScore: number; passed: boolean; attempts: number }> = {};
           (exams || []).forEach((e: any) => {
             const prev = hist[e.module_id];
-            if (!prev) {
-              hist[e.module_id] = { bestScore: e.score, passed: e.passed, attempts: e.attempt_number };
-            } else {
-              hist[e.module_id] = {
-                bestScore: Math.max(prev.bestScore, e.score),
-                passed: prev.passed || e.passed,
-                attempts: Math.max(prev.attempts, e.attempt_number),
-              };
+            if (!prev || e.attempt_number > prev.attempts) {
+              hist[e.module_id] = { latestScore: e.score, passed: e.passed, attempts: e.attempt_number };
             }
           });
           setExamHistory(hist);
@@ -550,7 +544,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                   let status: ReturnType<typeof moduleStatus> = "not_started";
                   let unlocked = m.module_number <= 1;
                   let chaptersRead = { read: 0, total: 0 };
-                  let exam: { bestScore: number; passed: boolean; attempts: number } | undefined;
+                  let exam: { latestScore: number; passed: boolean; attempts: number } | undefined;
                   let examPassed = false;
                   let examReady = false;
                   let examFailed = false;
@@ -621,7 +615,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           {examPassed ? (
                             <>
                               <CheckCircle2 className="h-3 w-3 text-[hsl(152,60%,50%)]" />
-                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.bestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
+                              <span className="text-[10px] text-[hsl(152,60%,50%)] font-medium">Complete · {exam?.latestScore || completions.find(c => c.module_id === m.id)?.score_average || 100}%</span>
                             </>
                           ) : !unlocked ? (
                             <>
@@ -638,7 +632,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           ) : examFailed && exam ? (
                             <>
                               <Award className="h-3 w-3 text-[hsl(45,90%,50%)]" />
-                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Best: {exam.bestScore}%</span>
+                              <span className="text-[10px] text-[hsl(45,90%,50%)] font-medium">Retake Available · Last: {exam.latestScore}%</span>
                             </>
                           ) : status === "in_progress" ? (
                             <>
@@ -1036,14 +1030,24 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     {/* Module Final Exam Section */}
                     <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
                       {examPassed ? (
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
-                            <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
+                              <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
+                              <p className="text-[11px] text-foreground/50">Last score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%{exam?.attempts ? ` · ${exam.attempts} attempt${exam.attempts > 1 ? "s" : ""}` : ""}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
-                            <p className="text-[11px] text-foreground/50">Score: {exam?.bestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%</p>
-                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
+                            className="w-full gap-2"
+                          >
+                            <Award className="h-4 w-4" />
+                            Retake Exam
+                          </Button>
                         </div>
                       ) : !allChaptersRead ? (
                         <>
@@ -1077,7 +1081,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             disabled={selectedModule.is_locked}
                           >
                             <Award className="h-4 w-4" />
-                            {exam && !exam.passed ? `Retake Module Exam · Best score: ${exam.bestScore}%` : "Take Module Final Exam"}
+                            {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}
                           </Button>
                         </>
                       )}
