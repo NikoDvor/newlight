@@ -52,7 +52,7 @@ export default function EmployeeTrainingCenter() {
                   >
                     <GraduationCap className="h-5 w-5 text-[hsl(var(--nl-neon))] drop-shadow-[0_0_6px_hsla(211,96%,60%,.6)]" />
                   </div>
-                  <Badge variant="default" className="font-medium">10 Modules</Badge>
+                  <Badge variant="default" className="font-medium">8 Modules</Badge>
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-1.5">BDR Training Track</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">Business Development Rep Certification</p>
