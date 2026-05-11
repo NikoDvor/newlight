@@ -264,6 +264,9 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           setExamHistory(hist);
         }
       }
+      } finally {
+        setLoading(false);
+      }
     };
     load();
     reloadCompletions();
