@@ -1022,29 +1022,31 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 const examPassed = exam?.passed || moduleDone;
                 return (
                   <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        disabled={selectedChapters.length === 0}
-                        onClick={() => {
-                          const firstUnread = selectedChapters.find(
-                            (c) => !isChapterRead(c.id)
-                          ) || selectedChapters.find(
-                            (c) => !isChapterComplete(c.id)
-                          ) || selectedChapters[0];
-                          if (firstUnread) {
-                            setRunner({
-                              mode: "chapter",
-                              chapter: firstUnread as ChapterRow,
-                              moduleId: selectedModule.id,
-                            });
-                          }
-                        }}
-                        className="gap-2"
-                      >
-                        <PlayCircle className="h-4 w-4" />
-                        {chaptersReadInfo.read > 0 ? "Continue" : "Start Module"}
-                      </Button>
-                    </div>
+                    {!examPassed && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          disabled={selectedChapters.length === 0}
+                          onClick={() => {
+                            const firstUnread = selectedChapters.find(
+                              (c) => !isChapterRead(c.id)
+                            ) || selectedChapters.find(
+                              (c) => !isChapterComplete(c.id)
+                            ) || selectedChapters[0];
+                            if (firstUnread) {
+                              setRunner({
+                                mode: "chapter",
+                                chapter: firstUnread as ChapterRow,
+                                moduleId: selectedModule.id,
+                              });
+                            }
+                          }}
+                          className="gap-2"
+                        >
+                          <PlayCircle className="h-4 w-4" />
+                          {chaptersReadInfo.read > 0 ? "Continue" : "Start Module"}
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Module Final Exam Section */}
                     <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
