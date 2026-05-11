@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useModuleCompletion } from "@/hooks/useModuleCompletion";
-import { TrainingCenterSelfTest } from "@/components/training/TrainingCenterSelfTest";
+
 
 interface Module {
   id: string;
@@ -303,11 +303,9 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const isModuleUnlocked = (mod: Module): boolean => {
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
-    if (!prevModule) return true; // gap in numbering — fail open so card stays interactive
+    if (!prevModule) return false;
     if (isModuleCompleted(prevModule.id)) return true;
     if (moduleStatus(prevModule.id) === "completed") return true;
-    // Honor explicit DB unlock (admin-forced or migrations)
-    if (!mod.is_locked) return true;
     return false;
   };
 
@@ -524,7 +522,6 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         </p>
       </div>
 
-      <TrainingCenterSelfTest trackKey={trackKey || "bdr"} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5">
         {/* Module list */}
