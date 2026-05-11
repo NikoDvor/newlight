@@ -82,7 +82,7 @@ export function useModuleCompletion(trackId: string | null) {
         .eq("status", "completed")
         .maybeSingle();
 
-      if (progRow && (progRow.score ?? 0) >= 70) continue;
+      if (progRow && (progRow.score ?? 0) >= 80) continue;
 
       // This chapter is not passed
       return false;
