@@ -304,7 +304,7 @@ export function ChapterRunner({
   chapter,
   moduleId,
   trackId,
-  passScore = 70,
+  passScore = 80,
   lockedPreview = false,
   unlockModuleNumber,
   modules: modulesList,
