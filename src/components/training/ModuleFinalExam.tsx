@@ -46,7 +46,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
-  const [attemptSeed] = useState(() => Date.now());
+  const [attemptSeed, setAttemptSeed] = useState(() => Date.now());
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const startTimeRef = useRef(Date.now());
@@ -67,64 +67,72 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  // Load questions
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+  const loadQuestions = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    setUserId(user.id);
 
-      // Get all chapters for this module to build name map
-      const { data: chapters } = await supabase
-        .from("nl_training_chapters")
-        .select("id, chapter_number, chapter_title")
-        .eq("module_id", moduleId);
-      const cMap: Record<string, string> = {};
-      (chapters || []).forEach((c: any) => { cMap[c.id] = `${c.chapter_number}. ${c.chapter_title}`; });
-      setChapterMap(cMap);
+    // Get all chapters for this module to build name map
+    const { data: chapters } = await supabase
+      .from("nl_training_chapters")
+      .select("id, chapter_number, chapter_title")
+      .eq("module_id", moduleId);
+    const cMap: Record<string, string> = {};
+    (chapters || []).forEach((c: any) => { cMap[c.id] = `${c.chapter_number}. ${c.chapter_title}`; });
+    setChapterMap(cMap);
 
-      // Get all chapter_quiz questions for this module
-      const { data: allQ } = await supabase
-        .from("nl_training_questions")
-        .select("id, chapter_id, module_id, question_text, options, correct_index, explanation, quiz_level")
-        .eq("module_id", moduleId)
-        .eq("question_type", "chapter_quiz");
+    // Get all chapter_quiz questions for this module
+    const { data: allQ } = await supabase
+      .from("nl_training_questions")
+      .select("id, chapter_id, module_id, question_text, options, correct_index, explanation, quiz_level")
+      .eq("module_id", moduleId)
+      .eq("question_type", "chapter_quiz");
 
-      const pool = (allQ || []) as QuestionRow[];
+    const pool = (allQ || []) as QuestionRow[];
 
-      // Split by level
-      const l1 = pool.filter(q => (q.quiz_level || 1) === 1);
-      const l2 = pool.filter(q => (q.quiz_level || 1) === 2);
-      const l3 = pool.filter(q => (q.quiz_level || 1) === 3);
+    // Split by level
+    const l1 = pool.filter(q => (q.quiz_level || 1) === 1);
+    const l2 = pool.filter(q => (q.quiz_level || 1) === 2);
+    const l3 = pool.filter(q => (q.quiz_level || 1) === 3);
 
-      // Pick randomly: 8 L1, 8 L2, 4 L3 — adjust if not enough
-      const pick = (arr: QuestionRow[], n: number): QuestionRow[] => {
-        const shuffled = [...arr].sort(() => Math.random() - 0.5);
-        return shuffled.slice(0, n);
-      };
-
-      let selected = [
-        ...pick(l1, Math.min(8, l1.length)),
-        ...pick(l2, Math.min(8, l2.length)),
-        ...pick(l3, Math.min(4, l3.length)),
-      ];
-
-      // If we have fewer than 20, fill from remaining pool
-      if (selected.length < 20) {
-        const usedIds = new Set(selected.map(q => q.id));
-        const remaining = pool.filter(q => !usedIds.has(q.id)).sort(() => Math.random() - 0.5);
-        selected = [...selected, ...remaining.slice(0, 20 - selected.length)];
-      }
-
-      // Randomize final order
-      selected.sort(() => Math.random() - 0.5);
-
-      setQuestions(selected.slice(0, 20));
-      setLoading(false);
+    // Pick randomly: 8 L1, 8 L2, 4 L3 — adjust if not enough
+    const pick = (arr: QuestionRow[], n: number): QuestionRow[] => {
+      const shuffled = [...arr].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, n);
     };
-    load();
+
+    let selectedQ = [
+      ...pick(l1, Math.min(8, l1.length)),
+      ...pick(l2, Math.min(8, l2.length)),
+      ...pick(l3, Math.min(4, l3.length)),
+    ];
+
+    if (selectedQ.length < 20) {
+      const usedIds = new Set(selectedQ.map(q => q.id));
+      const remaining = pool.filter(q => !usedIds.has(q.id)).sort(() => Math.random() - 0.5);
+      selectedQ = [...selectedQ, ...remaining.slice(0, 20 - selectedQ.length)];
+    }
+
+    selectedQ.sort(() => Math.random() - 0.5);
+    setQuestions(selectedQ.slice(0, 20));
+    setLoading(false);
   }, [moduleId]);
+
+  useEffect(() => { loadQuestions(); }, [loadQuestions]);
+
+  const resetExam = useCallback(async () => {
+    setPhase("exam");
+    setQIdx(0);
+    setSelected(null);
+    setRevealed(false);
+    setAnswers([]);
+    setElapsed(0);
+    setShowConfetti(false);
+    setAttemptSeed(Date.now());
+    startTimeRef.current = Date.now();
+    await loadQuestions();
+  }, [loadQuestions]);
 
   const current = questions[qIdx];
   const totalQ = questions.length;
