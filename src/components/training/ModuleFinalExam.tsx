@@ -519,6 +519,10 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
                       Done
                     </Button>
                   )}
+                  <Button variant="outline" onClick={resetExam} className="gap-2">
+                    <RotateCcw className="h-4 w-4" />
+                    Retake Exam
+                  </Button>
                 </>
               ) : (
                 <>
@@ -526,7 +530,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
                     <BookOpen className="h-4 w-4" />
                     Review Chapters
                   </Button>
-                  <Button onClick={() => { window.location.reload(); }} className="gap-2">
+                  <Button onClick={resetExam} className="gap-2">
                     <RotateCcw className="h-4 w-4" />
                     Retake Exam
                   </Button>
