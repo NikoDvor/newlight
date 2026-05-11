@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useModuleCompletion } from "@/hooks/useModuleCompletion";
+import { TrainingCenterSelfTest } from "@/components/training/TrainingCenterSelfTest";
 
 interface Module {
   id: string;
@@ -519,6 +520,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           Modules, chapters, and certification progress
         </p>
       </div>
+
+      <TrainingCenterSelfTest trackKey={trackKey || "bdr"} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5">
         {/* Module list */}
