@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useModuleCompletion } from "@/hooks/useModuleCompletion";
+import { TrainingCenterSelfTest } from "@/components/training/TrainingCenterSelfTest";
 
 interface Module {
   id: string;
