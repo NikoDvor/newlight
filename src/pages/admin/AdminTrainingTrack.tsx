@@ -521,6 +521,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         </p>
       </div>
 
+      <TrainingCenterSelfTest trackKey={trackKey || "bdr"} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5">
         {/* Module list */}
         <motion.div
