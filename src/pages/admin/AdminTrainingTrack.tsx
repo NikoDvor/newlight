@@ -122,6 +122,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      try {
       const { data: track } = await supabase
         .from("nl_training_tracks")
         .select("id, track_name")
@@ -129,7 +130,6 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         .maybeSingle();
 
       if (!track) {
-        setLoading(false);
         return;
       }
       setTrackName(track.track_name);
