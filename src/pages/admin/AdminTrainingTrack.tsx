@@ -1030,14 +1030,24 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     {/* Module Final Exam Section */}
                     <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
                       {examPassed ? (
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
-                            <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
+                              <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
+                              <p className="text-[11px] text-foreground/50">Last score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%{exam?.attempts ? ` · ${exam.attempts} attempt${exam.attempts > 1 ? "s" : ""}` : ""}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
-                            <p className="text-[11px] text-foreground/50">Score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%</p>
-                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
+                            className="w-full gap-2"
+                          >
+                            <Award className="h-4 w-4" />
+                            Retake Exam
+                          </Button>
                         </div>
                       ) : !allChaptersRead ? (
                         <>
