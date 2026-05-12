@@ -354,7 +354,7 @@ export function ChapterRunner({
     previousModuleComplete: false,
     userId: null,
   });
-  const effectiveLocked = lockCheck.checked ? lockCheck.locked : true;
+  const effectiveLocked = lockCheck.checked ? lockCheck.locked : lockedPreview;
 
   // Fresh DB check on every mount/module change. Module 1 is always open; Module 2+
   // is unlocked only by an nl_module_completion row for the previous module.
@@ -438,10 +438,14 @@ export function ChapterRunner({
 
       let q;
       if (mode === "chapter" && chapter) {
+        if (chapter.module_id !== moduleId && typeof window !== "undefined") {
+          console.error("ChapterRunner chapter/module mismatch", { chapterId: chapter.id, chapterModuleId: chapter.module_id, moduleId });
+        }
         q = await supabase
           .from("nl_training_questions")
           .select("*")
           .eq("chapter_id", chapter.id)
+          .eq("module_id", moduleId)
           .eq("question_type", "chapter_quiz")
           .order("quiz_level", { ascending: true } as any)
           .order("created_at", { ascending: true });
@@ -455,7 +459,9 @@ export function ChapterRunner({
           .order("created_at");
       }
 
-      const rows = (q.data || []).map((r: any) => ({
+      const rows = (q.data || [])
+        .filter((r: any) => mode !== "chapter" || (r.chapter_id === chapter?.id && r.module_id === moduleId))
+        .map((r: any) => ({
         ...r,
         quiz_level: (r.quiz_level || 1) as QuizLevel,
         options: Array.isArray(r.options) ? r.options : (typeof r.options === "string" ? JSON.parse(r.options) : []),
