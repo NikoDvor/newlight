@@ -783,16 +783,16 @@ export function ChapterRunner({
     </div>
   );
 
-  const quizButton = (
+  const quizButton = currentLevelQuestions.length > 0 ? (
     <Button
       onClick={() => effectiveLocked && requiresDrill && !drillCompleted ? setPhase("drill") : resetQuiz(currentLevel)}
-      disabled={(effectiveLocked && !requiresDrill) || currentLevelQuestions.length === 0}
+      disabled={effectiveLocked && !requiresDrill}
       className="gap-2"
     >
       {effectiveLocked && requiresDrill && !drillCompleted ? "Preview Script Drill" : requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
       <CheckCircle2 className="h-4 w-4" />
     </Button>
-  );
+  ) : null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-14 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
