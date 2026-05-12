@@ -43,6 +43,7 @@ function timeAgo(dateStr: string) {
 
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
+  const { isAdmin } = useWorkspace();
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
