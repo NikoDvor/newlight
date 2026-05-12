@@ -968,9 +968,21 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             <span className="text-[13px] text-foreground/90 font-medium">
                               {c.chapter_number}. {c.chapter_title}
                             </span>
-                            {unlocked && !done && (
-                              <span className="text-[10px] text-primary font-medium shrink-0">Open</span>
-                            )}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {(() => {
+                                const cnt = chapterQuestionCounts[c.id];
+                                if (!cnt || cnt.total === 0) {
+                                  return <Badge variant="destructive" className="h-5 px-2 text-[10px]">Needs Questions</Badge>;
+                                }
+                                if (cnt.l1 < 2 || cnt.l2 < 2 || cnt.l3 < 2) {
+                                  return <Badge variant="secondary" className="h-5 px-2 text-[10px]">Low Coverage</Badge>;
+                                }
+                                return null;
+                              })()}
+                              {unlocked && !done && (
+                                <span className="text-[10px] text-primary font-medium">Open</span>
+                              )}
+                            </div>
                           </div>
                           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                             {getChapterDescription(c)}
