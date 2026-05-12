@@ -75,6 +75,7 @@ import AdminTrainingCenter from "./pages/admin/AdminTrainingCenter";
 import AdminTrainingTrack from "./pages/admin/AdminTrainingTrack";
 import AdminTrainingFlashcards from "./pages/admin/AdminTrainingFlashcards";
 import AdminQuestionReassignment from "./pages/admin/AdminQuestionReassignment";
+import AdminTrainingHealth from "./pages/admin/AdminTrainingHealth";
 import AdminBDRCertification from "./pages/admin/AdminBDRCertification";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
