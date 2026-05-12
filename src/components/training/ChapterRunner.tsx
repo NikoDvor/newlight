@@ -819,7 +819,7 @@ export function ChapterRunner({
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
               {!isReflectionModule && levelBadges}
-              {!isReflectionModule && <Progress value={(completedLevels / 3) * 100} className="h-1.5" />}
+              {!isReflectionModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
