@@ -340,7 +340,7 @@ export function ChapterRunner({
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
   const [prevModuleCompleted, setPrevModuleCompleted] = useState(false);
-  const effectiveLocked = effectiveLocked && !prevModuleCompleted;
+  const effectiveLocked = lockedPreview && !prevModuleCompleted;
 
   // Direct DB check: unlock chapter if previous module has completion record
   useEffect(() => {
