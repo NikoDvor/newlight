@@ -114,6 +114,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
   const { isModuleCompleted, reload: reloadCompletions, forceCompleteModule, retroactiveScan, completions } = useModuleCompletion(trackId);
+  const [freshCompletedModuleIds, setFreshCompletedModuleIds] = useState<Set<string>>(new Set());
   const [showDebug, setShowDebug] = useState(false);
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
@@ -185,6 +186,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .select("module_id")
           .eq("user_id", user.id);
         const completedModuleIds = new Set((completionRows || []).map((row: any) => row.module_id));
+        setFreshCompletedModuleIds(completedModuleIds);
         moduleList = moduleList.map((mod) => {
           if (mod.module_number <= 1) return { ...mod, is_locked: false };
           const previousModule = moduleList.find((m) => m.module_number === mod.module_number - 1);
@@ -295,7 +297,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   }, [trackId, modules.length, loading, retroScanDone]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
-    if (isModuleCompleted(moduleId)) return "completed";
+    if (freshCompletedModuleIds.has(moduleId) || isModuleCompleted(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
@@ -310,7 +312,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
     if (!prevModule) return false;
-    return isModuleCompleted(prevModule.id) || mod.is_locked === false;
+    return freshCompletedModuleIds.has(prevModule.id);
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
