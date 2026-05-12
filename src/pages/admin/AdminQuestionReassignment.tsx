@@ -143,7 +143,9 @@ export default function AdminQuestionReassignment() {
     audit.forEach(({ q, ch, issues }) => {
       if (issues.includes("mismatch") && ch) {
         updates.push(
-          supabase.from("nl_training_questions").update({ module_id: ch.module_id }).eq("id", q.id),
+          (async () => {
+            await supabase.from("nl_training_questions").update({ module_id: ch.module_id }).eq("id", q.id);
+          })(),
         );
         count++;
       }
