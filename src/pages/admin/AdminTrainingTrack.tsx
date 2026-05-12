@@ -747,6 +747,18 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                         Locked
                       </Badge>
                     )}
+                    {!selectedModuleLocked && selectedModuleStatus === "in_progress" && (
+                      <Badge variant="outline" className="gap-1 border-primary/40 text-primary">
+                        <PlayCircle className="h-3 w-3" />
+                        In Progress
+                      </Badge>
+                    )}
+                    {!selectedModuleLocked && selectedModuleStatus === "completed" && (
+                      <Badge className="gap-1 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,50%)] border border-[hsl(152,60%,50%)]/30 hover:bg-[hsl(152,60%,50%)]/15">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Complete
+                      </Badge>
+                    )}
                   </div>
                   <h2 className="text-xl font-semibold text-foreground">
                     {selectedModule.module_title}
