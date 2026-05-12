@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import SystemHealthPanel from "@/components/training/SystemHealthPanel";
 
 /* ─── constants ─── */
 const OBJECTION_CATEGORIES = [
@@ -41,6 +43,7 @@ function timeAgo(dateStr: string) {
 
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
+  const { isAdmin } = useWorkspace();
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
@@ -149,6 +152,7 @@ export default function AdminBDRPerformance() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {isAdmin && <SystemHealthPanel />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
