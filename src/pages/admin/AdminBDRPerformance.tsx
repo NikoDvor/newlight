@@ -152,6 +152,7 @@ export default function AdminBDRPerformance() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {isAdmin && <SystemHealthPanel />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
