@@ -297,8 +297,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     });
   }, [trackId, modules.length, loading, retroScanDone]);
 
+  const hasModuleCompletion = (moduleId: string) =>
+    freshCompletedModuleIds.has(moduleId) || completions.some((completion) => completion.module_id === moduleId) || isModuleCompleted(moduleId);
+
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
-    if (freshCompletedModuleIds.has(moduleId) || isModuleCompleted(moduleId)) return "completed";
+    if (hasModuleCompletion(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
@@ -313,7 +316,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
     if (!prevModule) return false;
-    return freshCompletedModuleIds.has(prevModule.id);
+    return hasModuleCompletion(prevModule.id);
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
@@ -328,6 +331,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
   const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
+  const selectedModuleStatus = selectedModule ? moduleStatus(selectedModule.id) : "not_started";
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
   const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
@@ -518,7 +522,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
-        lockedPreview={false}
+        lockedPreview={modules.find((m) => m.id === runner.moduleId) ? !isModuleUnlocked(modules.find((m) => m.id === runner.moduleId)!) : true}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
@@ -741,6 +745,18 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <Badge variant="outline" className="gap-1">
                         <Lock className="h-3 w-3" />
                         Locked
+                      </Badge>
+                    )}
+                    {!selectedModuleLocked && selectedModuleStatus === "in_progress" && (
+                      <Badge variant="outline" className="gap-1 border-primary/40 text-primary">
+                        <PlayCircle className="h-3 w-3" />
+                        In Progress
+                      </Badge>
+                    )}
+                    {!selectedModuleLocked && selectedModuleStatus === "completed" && (
+                      <Badge className="gap-1 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,50%)] border border-[hsl(152,60%,50%)]/30 hover:bg-[hsl(152,60%,50%)]/15">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Complete
                       </Badge>
                     )}
                   </div>
@@ -1165,7 +1181,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
               <h4 className="text-sm font-semibold text-foreground mb-2">Module Completion Debug</h4>
               {numberedModules.map((m) => {
                 const chapterProg = getModuleChapterProgress(m.id);
-                const hasCompletion = isModuleCompleted(m.id);
+                const hasCompletion = hasModuleCompletion(m.id);
                 const status = moduleStatus(m.id);
                 const unlocked = isModuleUnlocked(m);
                 return (
