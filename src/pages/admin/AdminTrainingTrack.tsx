@@ -297,8 +297,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     });
   }, [trackId, modules.length, loading, retroScanDone]);
 
+  const hasModuleCompletion = (moduleId: string) =>
+    freshCompletedModuleIds.has(moduleId) || completions.some((completion) => completion.module_id === moduleId) || isModuleCompleted(moduleId);
+
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
-    if (freshCompletedModuleIds.has(moduleId) || isModuleCompleted(moduleId)) return "completed";
+    if (hasModuleCompletion(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
@@ -313,7 +316,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
     if (!prevModule) return false;
-    return freshCompletedModuleIds.has(prevModule.id);
+    return hasModuleCompletion(prevModule.id);
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
@@ -328,6 +331,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
   const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
+  const selectedModuleStatus = selectedModule ? moduleStatus(selectedModule.id) : "not_started";
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
   const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
