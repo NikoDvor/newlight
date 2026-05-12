@@ -159,6 +159,26 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .order("chapter_number");
         setChapters((chs || []) as Chapter[]);
 
+        // Load chapter quiz question counts (for "Needs Questions" badge — System 1 validation)
+        const chapterIds = (chs || []).map((c: any) => c.id);
+        if (chapterIds.length > 0) {
+          const { data: qRows } = await (supabase as any)
+            .from("nl_training_questions")
+            .select("chapter_id, quiz_level")
+            .in("chapter_id", chapterIds)
+            .eq("question_type", "chapter_quiz");
+          const counts: Record<string, { total: number; l1: number; l2: number; l3: number }> = {};
+          (qRows || []).forEach((r: any) => {
+            const k = r.chapter_id;
+            if (!counts[k]) counts[k] = { total: 0, l1: 0, l2: 0, l3: 0 };
+            counts[k].total++;
+            if (r.quiz_level === 1) counts[k].l1++;
+            else if (r.quiz_level === 2) counts[k].l2++;
+            else if (r.quiz_level === 3) counts[k].l3++;
+          });
+          setChapterQuestionCounts(counts);
+        }
+
         const { data: terms } = await (supabase as any)
           .from("nl_training_glossary_terms")
           .select("id, module_id, category, term, definition, usage_example, sort_order")
