@@ -119,6 +119,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
   const [examHistory, setExamHistory] = useState<Record<string, { latestScore: number; passed: boolean; attempts: number }>>({});
+  const [chapterQuestionCounts, setChapterQuestionCounts] = useState<Record<string, { total: number; l1: number; l2: number; l3: number }>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -157,6 +158,26 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .in("module_id", ids)
           .order("chapter_number");
         setChapters((chs || []) as Chapter[]);
+
+        // Load chapter quiz question counts (for "Needs Questions" badge — System 1 validation)
+        const chapterIds = (chs || []).map((c: any) => c.id);
+        if (chapterIds.length > 0) {
+          const { data: qRows } = await (supabase as any)
+            .from("nl_training_questions")
+            .select("chapter_id, quiz_level")
+            .in("chapter_id", chapterIds)
+            .eq("question_type", "chapter_quiz");
+          const counts: Record<string, { total: number; l1: number; l2: number; l3: number }> = {};
+          (qRows || []).forEach((r: any) => {
+            const k = r.chapter_id;
+            if (!counts[k]) counts[k] = { total: 0, l1: 0, l2: 0, l3: 0 };
+            counts[k].total++;
+            if (r.quiz_level === 1) counts[k].l1++;
+            else if (r.quiz_level === 2) counts[k].l2++;
+            else if (r.quiz_level === 3) counts[k].l3++;
+          });
+          setChapterQuestionCounts(counts);
+        }
 
         const { data: terms } = await (supabase as any)
           .from("nl_training_glossary_terms")
@@ -947,9 +968,21 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             <span className="text-[13px] text-foreground/90 font-medium">
                               {c.chapter_number}. {c.chapter_title}
                             </span>
-                            {unlocked && !done && (
-                              <span className="text-[10px] text-primary font-medium shrink-0">Open</span>
-                            )}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {(() => {
+                                const cnt = chapterQuestionCounts[c.id];
+                                if (!cnt || cnt.total === 0) {
+                                  return <Badge variant="destructive" className="h-5 px-2 text-[10px]">Needs Questions</Badge>;
+                                }
+                                if (cnt.l1 < 2 || cnt.l2 < 2 || cnt.l3 < 2) {
+                                  return <Badge variant="secondary" className="h-5 px-2 text-[10px]">Low Coverage</Badge>;
+                                }
+                                return null;
+                              })()}
+                              {unlocked && !done && (
+                                <span className="text-[10px] text-primary font-medium">Open</span>
+                              )}
+                            </div>
                           </div>
                           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                             {getChapterDescription(c)}

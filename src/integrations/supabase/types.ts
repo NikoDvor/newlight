@@ -5943,6 +5943,45 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_health_check_log: {
+        Row: {
+          chapters_under_threshold: Json
+          checked_at: string
+          details: Json
+          duplicate_count: number
+          id: string
+          lock_chain_ok: boolean
+          orphan_count: number
+          overall_status: string
+          total_chapters: number
+          total_questions: number
+        }
+        Insert: {
+          chapters_under_threshold?: Json
+          checked_at?: string
+          details?: Json
+          duplicate_count?: number
+          id?: string
+          lock_chain_ok?: boolean
+          orphan_count?: number
+          overall_status?: string
+          total_chapters?: number
+          total_questions?: number
+        }
+        Update: {
+          chapters_under_threshold?: Json
+          checked_at?: string
+          details?: Json
+          duplicate_count?: number
+          id?: string
+          lock_chain_ok?: boolean
+          orphan_count?: number
+          overall_status?: string
+          total_chapters?: number
+          total_questions?: number
+        }
+        Relationships: []
+      }
       nl_module_completion: {
         Row: {
           completed_at: string
