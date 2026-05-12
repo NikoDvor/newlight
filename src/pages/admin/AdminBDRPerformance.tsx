@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import SystemHealthPanel from "@/components/training/SystemHealthPanel";
 
 /* ─── constants ─── */
 const OBJECTION_CATEGORIES = [
