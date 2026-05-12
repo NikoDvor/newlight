@@ -105,6 +105,11 @@ export default function AdminTrainingCenter() {
               delay={0.08}
             />
           </div>
+          <div className="mt-5 max-w-5xl">
+            <Button variant="outline" onClick={() => navigate("/admin/training-center/question-reassignment")}>
+              Question Reassignment Tool
+            </Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="vault" className="mt-0">
