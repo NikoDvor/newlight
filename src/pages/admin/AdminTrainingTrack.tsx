@@ -1181,7 +1181,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
               <h4 className="text-sm font-semibold text-foreground mb-2">Module Completion Debug</h4>
               {numberedModules.map((m) => {
                 const chapterProg = getModuleChapterProgress(m.id);
-                const hasCompletion = isModuleCompleted(m.id);
+                const hasCompletion = hasModuleCompletion(m.id);
                 const status = moduleStatus(m.id);
                 const unlocked = isModuleUnlocked(m);
                 return (
@@ -1189,7 +1189,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-foreground font-medium">M{m.module_number}: {m.module_title}</span>
                       <div className="flex gap-2">
-                        <Badge variant={hasModuleCompletion(m.id) ? "default" : "outline"} className="text-[9px] h-4">
+                        <Badge variant={hasCompletion ? "default" : "outline"} className="text-[9px] h-4">
                           {hasCompletion ? "COMPLETION ✓" : "NO COMPLETION"}
                         </Badge>
                         <Badge variant={unlocked ? "default" : "secondary"} className="text-[9px] h-4">
