@@ -984,7 +984,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                                 type="button"
                                 onClick={() => {
                                   setFlippedFlashcards((prev) => ({ ...prev, [card.id]: !prev[card.id] }));
-                                  if (!selectedModule.is_locked) markFlashcardReviewed(card);
+                                  if (!selectedModuleLocked) markFlashcardReviewed(card);
                                 }}
                                 className="min-h-[180px] rounded-xl border border-border/50 bg-secondary/35 p-4 text-left transition-colors hover:bg-secondary/55"
                               >
@@ -997,7 +997,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                                 {flipped ? (
                                   <p className="mt-3 text-sm leading-relaxed text-foreground/85">{card.back}</p>
                                 ) : (
-                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{selectedModule.is_locked ? "Tap to reveal preview" : "Tap to reveal and mark reviewed"}</p>
+                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{selectedModuleLocked ? "Tap to reveal preview" : "Tap to reveal and mark reviewed"}</p>
                                 )}
                               </button>
                             );
@@ -1011,7 +1011,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <Badge className="gap-2 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,65%)] hover:bg-[hsl(152,60%,50%)]/15">
                         <CheckCircle2 className="h-4 w-4" /> Drill Complete
                       </Badge>
-                    ) : selectedModule.is_locked ? (
+                    ) : selectedModuleLocked ? (
                       <span className="text-xs text-muted-foreground">Unlock Module 6 to submit this drill.</span>
                     ) : module6DrillReady ? (
                       <Button onClick={completeModule6Drill} className="gap-2">
@@ -1110,7 +1110,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           <Button
                             onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
                             className="w-full gap-2"
-                            disabled={selectedModule.is_locked}
+                            disabled={selectedModuleLocked}
                           >
                             <Award className="h-4 w-4" />
                             {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}
