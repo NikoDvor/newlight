@@ -221,6 +221,7 @@ const App = () => {
                 <Route path="training-center" element={<AdminTrainingCenter />} />
                 <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
                 <Route path="training-center/bdr/flashcards" element={<AdminTrainingFlashcards />} />
+                <Route path="training-center/question-reassignment" element={<AdminQuestionReassignment />} />
                 <Route path="training-center/:trackKey" element={<AdminTrainingTrack />} />
                 <Route path="prospects" element={<AdminProspects />} />
                 <Route path="provision" element={<AdminProvision />} />
