@@ -555,9 +555,12 @@ export function ChapterRunner({
     [current?.id, attemptSeed]
   );
 
+  const levelHasQuestions = (level: QuizLevel) => questions.some((q) => (q.quiz_level || 1) === level);
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
-  const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
+  const availableLevels = ([1, 2, 3] as QuizLevel[]).filter(levelHasQuestions);
+  const completedLevels = availableLevels.filter(isLevelComplete).length;
+  const totalAvailableLevels = availableLevels.length || 3;
   const showPracticeVault = mode === "chapter" && !!chapter && moduleNumber !== null && [3, 4, 5, 6].includes(moduleNumber);
 
   const resetQuiz = (level = currentLevel) => {
@@ -730,9 +733,12 @@ export function ChapterRunner({
     }
   };
 
-  const levelBadges = mode === "chapter" && (
-    <div className="grid grid-cols-3 gap-2 mb-6">
-      {([1, 2, 3] as QuizLevel[]).map((level) => {
+  const levelBadges = mode === "chapter" && availableLevels.length > 0 && (
+    <div
+      className="grid gap-2 mb-6"
+      style={{ gridTemplateColumns: `repeat(${availableLevels.length}, minmax(0, 1fr))` }}
+    >
+      {availableLevels.map((level) => {
         const complete = isLevelComplete(level);
         const unlocked = isLevelUnlocked(level);
         const levelScore = levelProgress.find((row) => row.quiz_level === level && row.status === "completed")?.score;
@@ -777,16 +783,16 @@ export function ChapterRunner({
     </div>
   );
 
-  const quizButton = (
+  const quizButton = currentLevelQuestions.length > 0 ? (
     <Button
       onClick={() => effectiveLocked && requiresDrill && !drillCompleted ? setPhase("drill") : resetQuiz(currentLevel)}
-      disabled={(effectiveLocked && !requiresDrill) || currentLevelQuestions.length === 0}
+      disabled={effectiveLocked && !requiresDrill}
       className="gap-2"
     >
       {effectiveLocked && requiresDrill && !drillCompleted ? "Preview Script Drill" : requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
       <CheckCircle2 className="h-4 w-4" />
     </Button>
-  );
+  ) : null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-14 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
@@ -813,7 +819,7 @@ export function ChapterRunner({
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
               {!isReflectionModule && levelBadges}
-              {!isReflectionModule && <Progress value={(completedLevels / 3) * 100} className="h-1.5" />}
+              {!isReflectionModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
