@@ -555,9 +555,12 @@ export function ChapterRunner({
     [current?.id, attemptSeed]
   );
 
+  const levelHasQuestions = (level: QuizLevel) => questions.some((q) => (q.quiz_level || 1) === level);
   const isLevelComplete = (level: QuizLevel) => levelProgress.some((row) => row.quiz_level === level && row.status === "completed");
   const isLevelUnlocked = (level: QuizLevel) => level === 1 || isLevelComplete((level - 1) as QuizLevel);
-  const completedLevels = ([1, 2, 3] as QuizLevel[]).filter(isLevelComplete).length;
+  const availableLevels = ([1, 2, 3] as QuizLevel[]).filter(levelHasQuestions);
+  const completedLevels = availableLevels.filter(isLevelComplete).length;
+  const totalAvailableLevels = availableLevels.length || 3;
   const showPracticeVault = mode === "chapter" && !!chapter && moduleNumber !== null && [3, 4, 5, 6].includes(moduleNumber);
 
   const resetQuiz = (level = currentLevel) => {
