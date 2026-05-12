@@ -485,9 +485,19 @@ export function ChapterRunner({
           .eq("status", "drill_completed")
           .limit(1);
         setDrillCompleted((drillRows || []).length > 0);
-        const nextLevel = ([1, 2, 3] as QuizLevel[]).find(
-          (level) => !levelRows.some((row) => row.quiz_level === level && row.status === "completed")
-        ) || 3;
+        // Pick the first level that is both incomplete AND has at least one question.
+        // This avoids a "Take Level X Quiz" button that is silently disabled because
+        // the level has no questions assigned.
+        const levelHasQuestions = (lvl: QuizLevel) =>
+          rows.some((r) => (r.quiz_level || 1) === lvl);
+        const nextLevel =
+          ([1, 2, 3] as QuizLevel[]).find(
+            (level) =>
+              !levelRows.some((row) => row.quiz_level === level && row.status === "completed") &&
+              levelHasQuestions(level),
+          ) ||
+          ([1, 2, 3] as QuizLevel[]).find((level) => levelHasQuestions(level)) ||
+          1;
         setCurrentLevel(nextLevel);
       }
 
