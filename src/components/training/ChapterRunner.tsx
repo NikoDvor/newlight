@@ -733,9 +733,12 @@ export function ChapterRunner({
     }
   };
 
-  const levelBadges = mode === "chapter" && (
-    <div className="grid grid-cols-3 gap-2 mb-6">
-      {([1, 2, 3] as QuizLevel[]).map((level) => {
+  const levelBadges = mode === "chapter" && availableLevels.length > 0 && (
+    <div
+      className="grid gap-2 mb-6"
+      style={{ gridTemplateColumns: `repeat(${availableLevels.length}, minmax(0, 1fr))` }}
+    >
+      {availableLevels.map((level) => {
         const complete = isLevelComplete(level);
         const unlocked = isLevelUnlocked(level);
         const levelScore = levelProgress.find((row) => row.quiz_level === level && row.status === "completed")?.score;
