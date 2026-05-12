@@ -522,7 +522,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
-        lockedPreview={false}
+        lockedPreview={modules.find((m) => m.id === runner.moduleId) ? !isModuleUnlocked(modules.find((m) => m.id === runner.moduleId)!) : true}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
@@ -1177,7 +1177,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-foreground font-medium">M{m.module_number}: {m.module_title}</span>
                       <div className="flex gap-2">
-                        <Badge variant={hasCompletion ? "default" : "outline"} className="text-[9px] h-4">
+                        <Badge variant={hasModuleCompletion(m.id) ? "default" : "outline"} className="text-[9px] h-4">
                           {hasCompletion ? "COMPLETION ✓" : "NO COMPLETION"}
                         </Badge>
                         <Badge variant={unlocked ? "default" : "secondary"} className="text-[9px] h-4">
