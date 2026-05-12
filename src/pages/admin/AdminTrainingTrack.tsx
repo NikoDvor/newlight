@@ -123,6 +123,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setFreshCompletedModuleIds(new Set());
       try {
       const { data: track } = await supabase
         .from("nl_training_tracks")
