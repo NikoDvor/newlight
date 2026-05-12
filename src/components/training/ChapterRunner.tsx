@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,14 @@ export interface ChapterRow {
 
 type Phase = "reading" | "drill" | "quiz" | "result";
 type QuizLevel = 1 | 2 | 3;
+
+interface ModuleLockCheckState {
+  checked: boolean;
+  locked: boolean;
+  moduleNumber: number | null;
+  previousModuleComplete: boolean;
+  userId: string | null;
+}
 
 const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
   "5.1": [
