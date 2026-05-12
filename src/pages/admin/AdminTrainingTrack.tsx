@@ -114,6 +114,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [hasCertification, setHasCertification] = useState(false);
   const [unlockedChapterIds, setUnlockedChapterIds] = useState<Set<string>>(new Set());
   const { isModuleCompleted, reload: reloadCompletions, forceCompleteModule, retroactiveScan, completions } = useModuleCompletion(trackId);
+  const [freshCompletedModuleIds, setFreshCompletedModuleIds] = useState<Set<string>>(new Set());
   const [showDebug, setShowDebug] = useState(false);
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
@@ -122,6 +123,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setFreshCompletedModuleIds(new Set());
       try {
       const { data: track } = await supabase
         .from("nl_training_tracks")
@@ -141,7 +143,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         .eq("track_id", track.id)
         .order("module_number");
 
-      const moduleList = (mods || []) as Module[];
+      let moduleList = (mods || []) as Module[];
       setModules(moduleList);
       if (moduleList.length > 0 && !selectedModuleId) {
         setSelectedModuleId((moduleList.find((m) => m.module_number > 0) || moduleList[0]).id);
@@ -179,6 +181,19 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .select("module_id, chapter_id, status, score")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
+
+        const { data: completionRows } = await (supabase as any)
+          .from("nl_module_completion")
+          .select("module_id")
+          .eq("user_id", user.id);
+        const completedModuleIds = new Set<string>((completionRows || []).map((row: any) => row.module_id as string));
+        setFreshCompletedModuleIds(completedModuleIds);
+        moduleList = moduleList.map((mod) => {
+          if (mod.module_number <= 1) return { ...mod, is_locked: false };
+          const previousModule = moduleList.find((m) => m.module_number === mod.module_number - 1);
+          return { ...mod, is_locked: previousModule ? !completedModuleIds.has(previousModule.id) : true };
+        });
+        setModules(moduleList);
 
         const { data: levels } = await (supabase as any)
           .from("nl_training_chapter_level_progress")
@@ -283,7 +298,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   }, [trackId, modules.length, loading, retroScanDone]);
 
   const moduleStatus = (moduleId: string): "completed" | "in_progress" | "not_started" => {
-    if (isModuleCompleted(moduleId)) return "completed";
+    if (freshCompletedModuleIds.has(moduleId) || isModuleCompleted(moduleId)) return "completed";
     const rows = progress.filter((p) => p.module_id === moduleId && !p.chapter_id);
     if (rows.some((r) => r.status === "completed")) return "completed";
     if (rows.some((r) => r.status === "in_progress")) return "in_progress";
@@ -293,14 +308,12 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   };
 
   // Explicit unlock chain: Module 1 always unlocked. Module N unlocked iff
-  // Module N-1 has a completion record (or is otherwise marked completed).
+  // Module N-1 has an nl_module_completion record for the current user.
   const isModuleUnlocked = (mod: Module): boolean => {
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
     if (!prevModule) return false;
-    if (isModuleCompleted(prevModule.id)) return true;
-    if (moduleStatus(prevModule.id) === "completed") return true;
-    return false;
+    return freshCompletedModuleIds.has(prevModule.id);
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
@@ -314,6 +327,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
+  const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
   const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
@@ -504,7 +518,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
-        lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
+        lockedPreview={false}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
@@ -723,7 +737,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     <Badge variant="secondary" className="font-medium">
                       {isGlossaryModule ? "Reference" : `Module ${selectedModule.module_number}`}
                     </Badge>
-                    {selectedModule.is_locked && (
+                    {selectedModuleLocked && (
                       <Badge variant="outline" className="gap-1">
                         <Lock className="h-3 w-3" />
                         Locked
@@ -752,7 +766,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
               </div>}
 
-              {selectedModule.is_locked && !isGlossaryModule && (
+              {selectedModuleLocked && !isGlossaryModule && (
                 <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
                   {lockedModuleMessage}
                 </div>
@@ -973,7 +987,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                                 type="button"
                                 onClick={() => {
                                   setFlippedFlashcards((prev) => ({ ...prev, [card.id]: !prev[card.id] }));
-                                  if (!selectedModule.is_locked) markFlashcardReviewed(card);
+                                  if (!selectedModuleLocked) markFlashcardReviewed(card);
                                 }}
                                 className="min-h-[180px] rounded-xl border border-border/50 bg-secondary/35 p-4 text-left transition-colors hover:bg-secondary/55"
                               >
@@ -986,7 +1000,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                                 {flipped ? (
                                   <p className="mt-3 text-sm leading-relaxed text-foreground/85">{card.back}</p>
                                 ) : (
-                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{selectedModule.is_locked ? "Tap to reveal preview" : "Tap to reveal and mark reviewed"}</p>
+                                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{selectedModuleLocked ? "Tap to reveal preview" : "Tap to reveal and mark reviewed"}</p>
                                 )}
                               </button>
                             );
@@ -1000,7 +1014,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       <Badge className="gap-2 bg-[hsl(152,60%,50%)]/15 text-[hsl(152,60%,65%)] hover:bg-[hsl(152,60%,50%)]/15">
                         <CheckCircle2 className="h-4 w-4" /> Drill Complete
                       </Badge>
-                    ) : selectedModule.is_locked ? (
+                    ) : selectedModuleLocked ? (
                       <span className="text-xs text-muted-foreground">Unlock Module 6 to submit this drill.</span>
                     ) : module6DrillReady ? (
                       <Button onClick={completeModule6Drill} className="gap-2">
@@ -1099,7 +1113,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           <Button
                             onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
                             className="w-full gap-2"
-                            disabled={selectedModule.is_locked}
+                            disabled={selectedModuleLocked}
                           >
                             <Award className="h-4 w-4" />
                             {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Clock, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,14 @@ export interface ChapterRow {
 
 type Phase = "reading" | "drill" | "quiz" | "result";
 type QuizLevel = 1 | 2 | 3;
+
+interface ModuleLockCheckState {
+  checked: boolean;
+  locked: boolean;
+  moduleNumber: number | null;
+  previousModuleComplete: boolean;
+  userId: string | null;
+}
 
 const SCRIPT_DRILLS: Record<string, ScriptDrillLine[]> = {
   "5.1": [
@@ -339,39 +347,71 @@ export function ChapterRunner({
   const reflectionKey = mode === "chapter" && moduleNumber === 8 && chapter ? `9.${chapter.chapter_number}` : "";
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
-  const [prevModuleCompleted, setPrevModuleCompleted] = useState(false);
-  const effectiveLocked = lockedPreview && !prevModuleCompleted;
+  const [lockCheck, setLockCheck] = useState<ModuleLockCheckState>({
+    checked: false,
+    locked: true,
+    moduleNumber: null,
+    previousModuleComplete: false,
+    userId: null,
+  });
+  const effectiveLocked = lockCheck.checked ? lockCheck.locked : true;
 
-  // Direct DB check: unlock chapter if previous module has completion record
+  // Fresh DB check on every mount/module change. Module 1 is always open; Module 2+
+  // is unlocked only by an nl_module_completion row for the previous module.
   useEffect(() => {
     let cancelled = false;
+    setLockCheck({ checked: false, locked: true, moduleNumber: null, previousModuleComplete: false, userId: null });
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { if (!cancelled) setPrevModuleCompleted(false); return; }
+      if (!user) {
+        if (!cancelled) {
+          setLockCheck({ checked: true, locked: true, moduleNumber: null, previousModuleComplete: false, userId: null });
+        }
+        return;
+      }
       const { data: thisMod } = await supabase
         .from("nl_training_modules")
         .select("module_number, track_id")
         .eq("id", moduleId)
         .maybeSingle();
-      if (!thisMod) return;
-      if ((thisMod.module_number ?? 0) <= 1) {
-        if (!cancelled) setPrevModuleCompleted(true);
+      const currentModuleNumber = thisMod?.module_number ?? null;
+      if (!thisMod || currentModuleNumber === null) {
+        if (!cancelled) {
+          setLockCheck({ checked: true, locked: true, moduleNumber: currentModuleNumber, previousModuleComplete: false, userId: user.id });
+        }
+        return;
+      }
+      if (currentModuleNumber <= 1) {
+        if (typeof window !== "undefined" && import.meta.env.DEV) {
+          console.log(`ChapterRunner lock check: module=${moduleId} display_order=${currentModuleNumber} previous_module_complete=true user=${user.id}`);
+        }
+        if (!cancelled) {
+          setLockCheck({ checked: true, locked: false, moduleNumber: currentModuleNumber, previousModuleComplete: true, userId: user.id });
+        }
         return;
       }
       const { data: prevMod } = await supabase
         .from("nl_training_modules")
         .select("id")
         .eq("track_id", thisMod.track_id)
-        .eq("module_number", thisMod.module_number - 1)
+        .eq("module_number", currentModuleNumber - 1)
         .maybeSingle();
-      if (!prevMod) { if (!cancelled) setPrevModuleCompleted(false); return; }
-      const { data: comp } = await (supabase as any)
-        .from("nl_module_completion")
-        .select("module_id")
-        .eq("user_id", user.id)
-        .eq("module_id", prevMod.id)
-        .maybeSingle();
-      if (!cancelled) setPrevModuleCompleted(!!comp);
+      let previousModuleComplete = false;
+      if (prevMod?.id) {
+        const { data: comp } = await (supabase as any)
+          .from("nl_module_completion")
+          .select("module_id")
+          .eq("user_id", user.id)
+          .eq("module_id", prevMod.id)
+          .maybeSingle();
+        previousModuleComplete = !!comp;
+      }
+      if (typeof window !== "undefined" && import.meta.env.DEV) {
+        console.log(`ChapterRunner lock check: module=${moduleId} display_order=${currentModuleNumber} previous_module_complete=${previousModuleComplete} user=${user.id}`);
+      }
+      if (!cancelled) {
+        setLockCheck({ checked: true, locked: !previousModuleComplete, moduleNumber: currentModuleNumber, previousModuleComplete, userId: user.id });
+      }
     })();
     return () => { cancelled = true; };
   }, [moduleId]);
