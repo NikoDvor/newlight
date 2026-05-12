@@ -305,14 +305,12 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   };
 
   // Explicit unlock chain: Module 1 always unlocked. Module N unlocked iff
-  // Module N-1 has a completion record (or is otherwise marked completed).
+  // Module N-1 has an nl_module_completion record for the current user.
   const isModuleUnlocked = (mod: Module): boolean => {
     if (mod.module_number <= 1) return true;
     const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
     if (!prevModule) return false;
-    if (isModuleCompleted(prevModule.id)) return true;
-    if (moduleStatus(prevModule.id) === "completed") return true;
-    return false;
+    return isModuleCompleted(prevModule.id) || mod.is_locked === false;
   };
 
   const getModuleChapterProgress = (moduleId: string) => {
@@ -326,6 +324,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
+  const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
   const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
   const selectedChapters = useMemo(
