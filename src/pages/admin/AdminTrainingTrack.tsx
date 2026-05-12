@@ -515,7 +515,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         chapter={runner.mode === "chapter" ? runner.chapter : undefined}
         moduleId={runner.moduleId}
         trackId={trackId}
-        lockedPreview={modules.find((m) => m.id === runner.moduleId)?.is_locked || false}
+        lockedPreview={false}
         unlockModuleNumber={(modules.find((m) => m.id === runner.moduleId)?.module_number || 1) - 1}
         modules={modules.map((m) => ({ id: m.id, module_number: m.module_number }))}
         onClose={() => setRunner(null)}
@@ -734,7 +734,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     <Badge variant="secondary" className="font-medium">
                       {isGlossaryModule ? "Reference" : `Module ${selectedModule.module_number}`}
                     </Badge>
-                    {selectedModule.is_locked && (
+                    {selectedModuleLocked && (
                       <Badge variant="outline" className="gap-1">
                         <Lock className="h-3 w-3" />
                         Locked
@@ -763,7 +763,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 <Progress value={moduleChapterPct(selectedModule.id)} className="h-1.5" />
               </div>}
 
-              {selectedModule.is_locked && !isGlossaryModule && (
+              {selectedModuleLocked && !isGlossaryModule && (
                 <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
                   {lockedModuleMessage}
                 </div>
