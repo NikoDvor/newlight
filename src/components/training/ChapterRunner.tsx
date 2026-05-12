@@ -340,7 +340,7 @@ export function ChapterRunner({
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
   const [prevModuleCompleted, setPrevModuleCompleted] = useState(false);
-  const effectiveLocked = lockedPreview && !prevModuleCompleted;
+  const effectiveLocked = effectiveLocked && !prevModuleCompleted;
 
   // Direct DB check: unlock chapter if previous module has completion record
   useEffect(() => {
@@ -457,7 +457,7 @@ export function ChapterRunner({
         setUnlockCategories(cats);
       }
 
-      if (user && !lockedPreview) {
+      if (user && !effectiveLocked) {
         const { data: existingProgress } = await supabase
           .from("nl_training_progress")
           .select("status")
@@ -482,7 +482,7 @@ export function ChapterRunner({
       setLoading(false);
     };
     load();
-  }, [mode, chapter?.id, moduleId, trackId, lockedPreview]);
+  }, [mode, chapter?.id, moduleId, trackId, effectiveLocked]);
 
   const currentLevelQuestions = useMemo(
     () => mode === "chapter" ? questions.filter((q) => (q.quiz_level || 1) === currentLevel).slice(0, 3) : questions,
@@ -505,7 +505,7 @@ export function ChapterRunner({
   const showPracticeVault = mode === "chapter" && !!chapter && moduleNumber !== null && [3, 4, 5, 6].includes(moduleNumber);
 
   const resetQuiz = (level = currentLevel) => {
-    if (lockedPreview) return;
+    if (effectiveLocked) return;
     setCurrentLevel(level);
     setQIdx(0);
     setSelected(null);
@@ -523,7 +523,7 @@ export function ChapterRunner({
   };
 
   const handleSelect = (i: number) => {
-    if (lockedPreview || revealed) return;
+    if (effectiveLocked || revealed) return;
     setSelected(i);
     setRevealed(true);
     // Map shuffled index back to original to check correctness
@@ -533,7 +533,7 @@ export function ChapterRunner({
   };
 
   const persistLevelResult = async (finalPct: number, didPass: boolean) => {
-    if (lockedPreview || !userId || !chapter) return;
+    if (effectiveLocked || !userId || !chapter) return;
     await (supabase as any).from("nl_training_chapter_level_progress").upsert(
       {
         user_id: userId,
@@ -584,7 +584,7 @@ export function ChapterRunner({
   };
 
   const persistModuleResult = async (finalPct: number, didPass: boolean) => {
-    if (lockedPreview || !userId) return;
+    if (effectiveLocked || !userId) return;
     await supabase.from("nl_training_progress").upsert(
       {
         user_id: userId,
@@ -621,7 +621,7 @@ export function ChapterRunner({
   };
 
   const handleNext = async () => {
-    if (lockedPreview) return;
+    if (effectiveLocked) return;
     if (qIdx < totalQ - 1) {
       setQIdx((i) => i + 1);
       setSelected(null);
@@ -646,7 +646,7 @@ export function ChapterRunner({
   };
 
   const handleMarkComplete = async () => {
-    if (lockedPreview) return;
+    if (effectiveLocked) return;
     setSaving(true);
     try {
       if (mode === "chapter" && chapter && userId) {
@@ -707,7 +707,7 @@ export function ChapterRunner({
     </div>
   );
 
-  const lockedBanner = lockedPreview && unlockModuleNumber ? (
+  const lockedBanner = effectiveLocked && unlockModuleNumber ? (
     <div className="mb-5 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
       Complete Module {unlockModuleNumber} to unlock quizzes and progress tracking for this module
     </div>
@@ -723,11 +723,11 @@ export function ChapterRunner({
 
   const quizButton = (
     <Button
-      onClick={() => lockedPreview && requiresDrill && !drillCompleted ? setPhase("drill") : resetQuiz(currentLevel)}
-      disabled={(lockedPreview && !requiresDrill) || currentLevelQuestions.length === 0}
+      onClick={() => effectiveLocked && requiresDrill && !drillCompleted ? setPhase("drill") : resetQuiz(currentLevel)}
+      disabled={(effectiveLocked && !requiresDrill) || currentLevelQuestions.length === 0}
       className="gap-2"
     >
-      {lockedPreview && requiresDrill && !drillCompleted ? "Preview Script Drill" : requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
+      {effectiveLocked && requiresDrill && !drillCompleted ? "Preview Script Drill" : requiresDrill && !drillCompleted ? "Start Script Drill" : `Take Level ${currentLevel} Quiz`}
       <CheckCircle2 className="h-4 w-4" />
     </Button>
   );
@@ -762,7 +762,7 @@ export function ChapterRunner({
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
-            {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={lockedPreview} />}
+            {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} effectiveLocked={effectiveLocked} />}
             {unlockCategories.map((cat) => (
               <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
             ))}
@@ -773,7 +773,7 @@ export function ChapterRunner({
                   <CheckCircle2 className="h-4 w-4" />
                 </Button>
               </div>
-            ) : lockedPreview ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
+            ) : effectiveLocked ? lockedQuizState : <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">{quizButton}</div>}
           </motion.div>
         ) : phase === "drill" && chapter && requiresDrill ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
@@ -783,10 +783,10 @@ export function ChapterRunner({
               moduleId={moduleId}
               chapterId={chapter.id}
               onComplete={handleDrillComplete}
-              lockedPreview={lockedPreview}
+              effectiveLocked={effectiveLocked}
             />
           </motion.div>
-        ) : lockedPreview && phase === "quiz" ? (
+        ) : effectiveLocked && phase === "quiz" ? (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="card-widget w-full p-4 sm:p-8">
             {lockedQuizState}
             <div className="mt-5 flex justify-center"><Button variant="outline" onClick={onClose}>Back to module</Button></div>
@@ -857,8 +857,8 @@ export function ChapterRunner({
               <Button variant="outline" onClick={onClose}>Close</Button>
               {mode === "chapter" && !passed && <Button onClick={() => resetQuiz(currentLevel)}>Retake Level</Button>}
               {mode === "chapter" && passed && currentLevel < 3 && <Button onClick={() => resetQuiz((currentLevel + 1) as QuizLevel)}>Continue to Level {currentLevel + 1}</Button>}
-              {!lockedPreview && mode === "chapter" && passed && currentLevel === 3 && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Mark Complete"}</Button>}
-              {!lockedPreview && mode === "module_test" && passed && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Continue"}</Button>}
+              {!effectiveLocked && mode === "chapter" && passed && currentLevel === 3 && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Mark Complete"}</Button>}
+              {!effectiveLocked && mode === "module_test" && passed && <Button onClick={handleMarkComplete} disabled={saving}>{saving ? "Saving…" : "Continue"}</Button>}
             </div>
           </motion.div>
         ) : (
