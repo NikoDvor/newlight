@@ -119,6 +119,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const [forceCompleting, setForceCompleting] = useState(false);
   const [retroScanDone, setRetroScanDone] = useState(false);
   const [examHistory, setExamHistory] = useState<Record<string, { latestScore: number; passed: boolean; attempts: number }>>({});
+  const [chapterQuestionCounts, setChapterQuestionCounts] = useState<Record<string, { total: number; l1: number; l2: number; l3: number }>>({});
 
   useEffect(() => {
     const load = async () => {
