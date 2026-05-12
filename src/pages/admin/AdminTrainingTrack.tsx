@@ -141,7 +141,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
         .eq("track_id", track.id)
         .order("module_number");
 
-      const moduleList = (mods || []) as Module[];
+      let moduleList = (mods || []) as Module[];
       setModules(moduleList);
       if (moduleList.length > 0 && !selectedModuleId) {
         setSelectedModuleId((moduleList.find((m) => m.module_number > 0) || moduleList[0]).id);
@@ -179,6 +179,18 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .select("module_id, chapter_id, status, score")
           .eq("user_id", user.id);
         setProgress((prog || []) as ProgressRow[]);
+
+        const { data: completionRows } = await (supabase as any)
+          .from("nl_module_completion")
+          .select("module_id")
+          .eq("user_id", user.id);
+        const completedModuleIds = new Set((completionRows || []).map((row: any) => row.module_id));
+        moduleList = moduleList.map((mod) => {
+          if (mod.module_number <= 1) return { ...mod, is_locked: false };
+          const previousModule = moduleList.find((m) => m.module_number === mod.module_number - 1);
+          return { ...mod, is_locked: previousModule ? !completedModuleIds.has(previousModule.id) : true };
+        });
+        setModules(moduleList);
 
         const { data: levels } = await (supabase as any)
           .from("nl_training_chapter_level_progress")
