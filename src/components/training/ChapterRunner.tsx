@@ -762,7 +762,7 @@ export function ChapterRunner({
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
             {flashcards.length > 0 && <ObjectionFlashcards cards={flashcards} />}
-            {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} effectiveLocked={effectiveLocked} />}
+            {showPracticeVault && <PracticeRecordingVault chapterId={chapter.id} lockedPreview={effectiveLocked} />}
             {unlockCategories.map((cat) => (
               <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
             ))}
@@ -783,7 +783,7 @@ export function ChapterRunner({
               moduleId={moduleId}
               chapterId={chapter.id}
               onComplete={handleDrillComplete}
-              effectiveLocked={effectiveLocked}
+              lockedPreview={effectiveLocked}
             />
           </motion.div>
         ) : effectiveLocked && phase === "quiz" ? (
