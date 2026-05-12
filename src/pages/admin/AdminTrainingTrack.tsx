@@ -185,7 +185,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .from("nl_module_completion")
           .select("module_id")
           .eq("user_id", user.id);
-        const completedModuleIds = new Set((completionRows || []).map((row: any) => row.module_id));
+        const completedModuleIds = new Set<string>((completionRows || []).map((row: any) => row.module_id as string));
         setFreshCompletedModuleIds(completedModuleIds);
         moduleList = moduleList.map((mod) => {
           if (mod.module_number <= 1) return { ...mod, is_locked: false };
