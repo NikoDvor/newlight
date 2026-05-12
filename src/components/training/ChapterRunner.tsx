@@ -339,6 +339,42 @@ export function ChapterRunner({
   const reflectionKey = mode === "chapter" && moduleNumber === 8 && chapter ? `9.${chapter.chapter_number}` : "";
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
+  const [prevModuleCompleted, setPrevModuleCompleted] = useState(false);
+  const effectiveLocked = lockedPreview && !prevModuleCompleted;
+
+  // Direct DB check: unlock chapter if previous module has completion record
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { if (!cancelled) setPrevModuleCompleted(false); return; }
+      const { data: thisMod } = await supabase
+        .from("nl_training_modules")
+        .select("module_number, track_id")
+        .eq("id", moduleId)
+        .maybeSingle();
+      if (!thisMod) return;
+      if ((thisMod.module_number ?? 0) <= 1) {
+        if (!cancelled) setPrevModuleCompleted(true);
+        return;
+      }
+      const { data: prevMod } = await supabase
+        .from("nl_training_modules")
+        .select("id")
+        .eq("track_id", thisMod.track_id)
+        .eq("module_number", thisMod.module_number - 1)
+        .maybeSingle();
+      if (!prevMod) { if (!cancelled) setPrevModuleCompleted(false); return; }
+      const { data: comp } = await (supabase as any)
+        .from("nl_module_completion")
+        .select("module_id")
+        .eq("user_id", user.id)
+        .eq("module_id", prevMod.id)
+        .maybeSingle();
+      if (!cancelled) setPrevModuleCompleted(!!comp);
+    })();
+    return () => { cancelled = true; };
+  }, [moduleId]);
 
   useEffect(() => {
     const load = async () => {
