@@ -642,12 +642,13 @@ function ObjectionDashboard({ userId }: { userId?: string }) {
 /* ═══════════════════════════════════════════════ */
 /* Import Modal                                    */
 /* ═══════════════════════════════════════════════ */
-function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () => void; onImport: (rows: any[]) => void }) {
+function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () => void; onImport: (rows: any[], listName: string) => void }) {
   const [raw, setRaw] = useState("");
+  const [listName, setListName] = useState("");
   const [parsed, setParsed] = useState<any[]>([]);
   const [checked, setChecked] = useState<boolean[]>([]);
 
-  useEffect(() => { if (!open) { setRaw(""); setParsed([]); setChecked([]); } }, [open]);
+  useEffect(() => { if (!open) { setRaw(""); setListName(""); setParsed([]); setChecked([]); } }, [open]);
 
   const parse = () => {
     const lines = raw.trim().split("\n").filter(Boolean);
