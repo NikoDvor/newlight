@@ -5819,6 +5819,7 @@ export type Database = {
           created_at: string
           crm_contact_id: string | null
           crm_deal_id: string | null
+          has_booking_system: boolean | null
           id: string
           lead_source: string
           niche: string | null
@@ -5839,6 +5840,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          has_booking_system?: boolean | null
           id?: string
           lead_source?: string
           niche?: string | null
@@ -5859,6 +5861,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          has_booking_system?: boolean | null
           id?: string
           lead_source?: string
           niche?: string | null

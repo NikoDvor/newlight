@@ -25,6 +25,7 @@ interface BdrLead {
   crm_deal_id: string | null;
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
+  has_booking_system: boolean | null;
   created_at: string;
 }
 
@@ -166,13 +167,14 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string }[]) => {
+  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[]) => {
     if (!user?.id) return;
     let count = 0;
     for (const row of rows) {
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
         user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
+        has_booking_system: row.has_booking_system,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
@@ -320,6 +322,12 @@ export default function BDRMyLeads() {
                           {lead.phone && <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>}
                           {lead.website && <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><ExternalLink className="h-3 w-3" /> Website</a>}
                           {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
+                          {lead.has_booking_system === true && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Booking System ✓</span>
+                          )}
+                          {lead.has_booking_system === false && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No Booking System</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -588,9 +596,9 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
     if (!lines.length) return;
     const delim = lines[0].includes("\t") ? "\t" : lines[0].includes("|") ? "|" : ",";
     const rows = lines.map(l => l.split(delim).map(c => c.trim()));
-    const headerLike = rows[0].some(c => /business|name|phone|website/i.test(c));
+    const headerLike = rows[0].some(c => /business|name|phone|website|booking/i.test(c));
     const dataRows = headerLike ? rows.slice(1) : rows;
-    let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3;
+    let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3, bkIdx = 4;
     if (headerLike) {
       const h = rows[0].map(c => c.toLowerCase());
       h.forEach((c, i) => {
@@ -598,11 +606,20 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         else if (/owner|contact/.test(c)) owIdx = i;
         else if (/phone/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
+        else if (/booking/.test(c)) bkIdx = i;
       });
     }
+    const parseBooking = (v: string): boolean | null => {
+      const s = (v || "").trim().toLowerCase();
+      if (!s) return null;
+      if (/^(y|yes|true|1|✓)$/.test(s)) return true;
+      if (/^(n|no|false|0)$/.test(s)) return false;
+      return null;
+    };
     const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
       business_name: r[biIdx]?.trim() || "", owner_name: r[owIdx]?.trim() || "",
       phone: r[phIdx]?.trim() || "", website: r[webIdx]?.trim() || "",
+      has_booking_system: parseBooking(r[bkIdx] || ""),
     }));
     setParsed(result); setChecked(result.map(() => true));
   };
@@ -620,7 +637,7 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         {parsed.length === 0 ? (
           <div className="space-y-3">
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com"} />
+              placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website | Booking System\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com | No"} />
             <Button onClick={parse} disabled={!raw.trim()} className="w-full">Parse Leads</Button>
           </div>
         ) : (
