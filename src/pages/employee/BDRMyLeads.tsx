@@ -270,6 +270,50 @@ export default function BDRMyLeads() {
     toast({ title: "Lead deleted", description: lead.business_name });
   };
 
+  const deleteLeadsByIds = async (ids: string[], successMsg: string) => {
+    if (!user?.id || ids.length === 0) return;
+    const dealIds = leads.filter(l => ids.includes(l.id) && l.crm_deal_id).map(l => l.crm_deal_id as string);
+    setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    const { error } = await (supabase as any).from("nl_bdr_leads").delete().in("id", ids).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't delete leads", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    if (dealIds.length > 0) {
+      await supabase.from("crm_deals").delete().in("id", dealIds);
+    }
+    toast({ title: successMsg });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete ${ids.length} selected lead${ids.length !== 1 ? "s" : ""} permanently? This cannot be undone.`)) return;
+    await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
+  };
+
+  const handleDeleteAllInList = async () => {
+    const ids = listScopedLeads.map(l => l.id);
+    if (ids.length === 0) return;
+    const label = activeList === "__all__" ? "all leads" : `all leads in "${activeList}"`;
+    if (!window.confirm(`Delete ${label} (${ids.length} lead${ids.length !== 1 ? "s" : ""}) permanently? This cannot be undone.`)) return;
+    await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Reset selection when switching list/tab
+  useEffect(() => { setSelectedIds(new Set()); setSelectMode(false); }, [activeList, activeTab]);
+
   const handleSaveObjection = async (leadId: string, businessName: string, outcomeLabel: string, category: string | null) => {
     if (!user?.id) return;
     if (category) {
