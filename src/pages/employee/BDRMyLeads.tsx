@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2 } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -252,6 +252,22 @@ export default function BDRMyLeads() {
     return { promptObjection: !!outcome.promptObjection, lead, outcomeLabel: outcome.label };
   };
 
+  const handleDeleteLead = async (lead: BdrLead) => {
+    if (!user?.id) return;
+    if (!window.confirm(`Delete "${lead.business_name}" permanently? This cannot be undone.`)) return;
+    setLeads(prev => prev.filter(l => l.id !== lead.id));
+    const { error } = await (supabase as any).from("nl_bdr_leads").delete().eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't delete lead", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    if (lead.crm_deal_id) {
+      await supabase.from("crm_deals").delete().eq("id", lead.crm_deal_id);
+    }
+    toast({ title: "Lead deleted", description: lead.business_name });
+  };
+
   const handleSaveObjection = async (leadId: string, businessName: string, outcomeLabel: string, category: string | null) => {
     if (!user?.id) return;
     if (category) {
@@ -398,6 +414,13 @@ export default function BDRMyLeads() {
                         {(lead.status === "new_lead" || lead.status === "contacted") && (
                           <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLead(lead)}>Log Outcome</Button>
                         )}
+                        <button
+                          onClick={() => handleDeleteLead(lead)}
+                          aria-label={`Delete ${lead.business_name}`}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                     <AnimatePresence>
