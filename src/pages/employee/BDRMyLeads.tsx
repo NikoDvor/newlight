@@ -169,8 +169,14 @@ export default function BDRMyLeads() {
 
   const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[]) => {
     if (!user?.id) return;
+    const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
+    const seenInBatch = new Set<string>();
     let count = 0;
+    let skipped = 0;
     for (const row of rows) {
+      const key = (row.business_name || "").trim().toLowerCase();
+      if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
+      seenInBatch.add(key);
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
         user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
@@ -178,7 +184,8 @@ export default function BDRMyLeads() {
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
-    toast({ title: `${count} leads imported` }); setShowImport(false); fetchLeads();
+    toast({ title: `${count} leads imported`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    setShowImport(false); fetchLeads();
   };
 
   const handleSaveOutcome = async (outcome: OutcomeDef, note: string): Promise<{ promptObjection: boolean; lead: BdrLead; outcomeLabel: string }> => {
