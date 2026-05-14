@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -26,6 +26,7 @@ interface BdrLead {
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
   has_booking_system: boolean | null;
+  list_name: string | null;
   created_at: string;
 }
 
@@ -99,6 +100,7 @@ const FILTER_TABS = [
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
   const [leads, setLeads] = useState<BdrLead[]>([]);
+  const [calledLeadIds, setCalledLeadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -107,12 +109,16 @@ export default function BDRMyLeads() {
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
+  const [activeList, setActiveList] = useState<string>("__all__");
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
     const { data } = await (supabase as any).from("nl_bdr_leads")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setLeads((data || []).map((d: any) => ({ ...d, outcome_history: d.outcome_history || [] })));
+    const { data: calls } = await (supabase as any).from("bdr_call_outcomes")
+      .select("lead_id").eq("bdr_user_id", user.id);
+    setCalledLeadIds(new Set((calls || []).map((c: any) => c.lead_id).filter(Boolean)));
     setLoading(false);
   }, [user?.id]);
 
@@ -121,8 +127,23 @@ export default function BDRMyLeads() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = leads.filter(l => l.created_at.slice(0, 10) === todayStr).length;
 
+  const lists = useMemo(() => {
+    const map = new Map<string, number>();
+    leads.forEach(l => {
+      const key = l.list_name || "Unsorted";
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [leads]);
+
+  const listScopedLeads = useMemo(() => {
+    if (activeList === "__all__") return leads;
+    if (activeList === "Unsorted") return leads.filter(l => !l.list_name);
+    return leads.filter(l => l.list_name === activeList);
+  }, [leads, activeList]);
+
   const filtered = useMemo(() => {
-    let list = leads;
+    let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => l.created_at.slice(0, 10) === todayStr);
     else if (filter !== "all") list = list.filter(l => l.status === filter);
     if (search.trim()) {
@@ -130,15 +151,16 @@ export default function BDRMyLeads() {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     return list;
-  }, [leads, filter, search, todayStr]);
+  }, [listScopedLeads, filter, search, todayStr]);
 
   const stats = useMemo(() => {
-    const total = leads.length;
-    const contacted = leads.filter(l => l.status === "contacted").length;
-    const booked = leads.filter(l => l.status === "appointment_booked").length;
-    const won = leads.filter(l => l.status === "closed_won").length;
+    const scope = listScopedLeads;
+    const total = scope.length;
+    const contacted = scope.filter(l => l.status === "contacted").length;
+    const booked = scope.filter(l => l.status === "appointment_booked").length;
+    const won = scope.filter(l => l.status === "closed_won").length;
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
-  }, [leads]);
+  }, [listScopedLeads]);
 
   const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
     if (!user?.id) return;
@@ -167,8 +189,9 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[]) => {
+  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[], listName: string) => {
     if (!user?.id) return;
+    const cleanList = listName.trim() || null;
     const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
     const seenInBatch = new Set<string>();
     let count = 0;
@@ -181,10 +204,12 @@ export default function BDRMyLeads() {
         user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
         has_booking_system: row.has_booking_system,
+        list_name: cleanList,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
-    toast({ title: `${count} leads imported`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    toast({ title: `${count} leads imported${cleanList ? ` to "${cleanList}"` : ""}`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    if (cleanList) setActiveList(cleanList);
     setShowImport(false); fetchLeads();
   };
 
@@ -288,6 +313,24 @@ export default function BDRMyLeads() {
             ))}
           </div>
 
+          {/* List pages */}
+          {lists.length > 0 && (
+            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+              <button onClick={() => setActiveList("__all__")}
+                className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                style={{ background: activeList === "__all__" ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === "__all__" ? "#fff" : "hsl(211,96%,56%)" }}>
+                All Lists <span className="opacity-70">({leads.length})</span>
+              </button>
+              {lists.map(([name, count]) => (
+                <button key={name} onClick={() => setActiveList(name)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                  style={{ background: activeList === name ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === name ? "#fff" : "hsl(211,96%,56%)" }}>
+                  {name} <span className="opacity-70">({count})</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Filters + Search */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex gap-1 flex-wrap">
@@ -334,6 +377,14 @@ export default function BDRMyLeads() {
                           )}
                           {lead.has_booking_system === false && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No Booking System</span>
+                          )}
+                          {calledLeadIds.has(lead.id) && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold flex items-center gap-1" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>
+                              <CheckCircle2 className="h-3 w-3" /> Called
+                            </span>
+                          )}
+                          {lead.list_name && activeList === "__all__" && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: "hsla(211,96%,56%,.08)", color: "hsl(211,96%,56%)" }}>{lead.list_name}</span>
                           )}
                         </div>
                       </div>
@@ -591,12 +642,13 @@ function ObjectionDashboard({ userId }: { userId?: string }) {
 /* ═══════════════════════════════════════════════ */
 /* Import Modal                                    */
 /* ═══════════════════════════════════════════════ */
-function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () => void; onImport: (rows: any[]) => void }) {
+function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () => void; onImport: (rows: any[], listName: string) => void }) {
   const [raw, setRaw] = useState("");
+  const [listName, setListName] = useState("");
   const [parsed, setParsed] = useState<any[]>([]);
   const [checked, setChecked] = useState<boolean[]>([]);
 
-  useEffect(() => { if (!open) { setRaw(""); setParsed([]); setChecked([]); } }, [open]);
+  useEffect(() => { if (!open) { setRaw(""); setListName(""); setParsed([]); setChecked([]); } }, [open]);
 
   const parse = () => {
     const lines = raw.trim().split("\n").filter(Boolean);
@@ -643,9 +695,14 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         </DialogHeader>
         {parsed.length === 0 ? (
           <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">List Name</label>
+              <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Ojai Hair Salons — State Street SB"' className="mt-1 h-9" />
+              <p className="text-[10px] text-muted-foreground mt-1">Name this batch so you can switch between lists later.</p>
+            </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
               placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website | Booking System\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com | No"} />
-            <Button onClick={parse} disabled={!raw.trim()} className="w-full">Parse Leads</Button>
+            <Button onClick={parse} disabled={!raw.trim() || !listName.trim()} className="w-full">Parse Leads</Button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -662,8 +719,8 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setParsed([]); setChecked([]); }}>Back</Button>
-              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]))} disabled={!selectedCount} className="flex-1">
-                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""}
+              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]), listName)} disabled={!selectedCount} className="flex-1">
+                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""}{listName.trim() ? ` to "${listName.trim()}"` : ""}
               </Button>
             </div>
           </div>
