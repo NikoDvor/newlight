@@ -167,13 +167,14 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string }[]) => {
+  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[]) => {
     if (!user?.id) return;
     let count = 0;
     for (const row of rows) {
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
         user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
+        has_booking_system: row.has_booking_system,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
