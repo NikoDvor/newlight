@@ -393,6 +393,33 @@ export default function BDRMyLeads() {
             </div>
           )}
 
+          {/* Bulk action toolbar */}
+          {listScopedLeads.length > 0 && (
+            <div className="flex items-center justify-between gap-2 flex-wrap rounded-xl px-3 py-2"
+              style={{ background: selectMode ? "hsla(211,96%,56%,.08)" : "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+              <p className="text-xs text-muted-foreground">
+                {selectMode ? `${selectedIds.size} selected` : `${listScopedLeads.length} lead${listScopedLeads.length !== 1 ? "s" : ""} in ${activeList === "__all__" ? "all lists" : `"${activeList}"`}`}
+              </p>
+              <div className="flex items-center gap-2">
+                {selectMode ? (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}>Cancel</Button>
+                    <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={selectedIds.size === 0} onClick={handleBulkDelete}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete Selected
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete All
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Filters + Search */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex gap-1 flex-wrap">
