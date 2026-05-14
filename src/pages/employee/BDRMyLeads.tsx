@@ -26,6 +26,7 @@ interface BdrLead {
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
   has_booking_system: boolean | null;
+  list_name: string | null;
   created_at: string;
 }
 
