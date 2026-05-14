@@ -252,6 +252,22 @@ export default function BDRMyLeads() {
     return { promptObjection: !!outcome.promptObjection, lead, outcomeLabel: outcome.label };
   };
 
+  const handleDeleteLead = async (lead: BdrLead) => {
+    if (!user?.id) return;
+    if (!window.confirm(`Delete "${lead.business_name}" permanently? This cannot be undone.`)) return;
+    setLeads(prev => prev.filter(l => l.id !== lead.id));
+    const { error } = await (supabase as any).from("nl_bdr_leads").delete().eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't delete lead", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    if (lead.crm_deal_id) {
+      await supabase.from("crm_deals").delete().eq("id", lead.crm_deal_id);
+    }
+    toast({ title: "Lead deleted", description: lead.business_name });
+  };
+
   const handleSaveObjection = async (leadId: string, businessName: string, outcomeLabel: string, category: string | null) => {
     if (!user?.id) return;
     if (category) {
