@@ -770,6 +770,33 @@ export type Database = {
           },
         ]
       }
+      bdr_call_outcomes: {
+        Row: {
+          bdr_user_id: string
+          id: string
+          lead_id: string | null
+          logged_at: string
+          objection_type: string | null
+          outcome: string
+        }
+        Insert: {
+          bdr_user_id: string
+          id?: string
+          lead_id?: string | null
+          logged_at?: string
+          objection_type?: string | null
+          outcome: string
+        }
+        Update: {
+          bdr_user_id?: string
+          id?: string
+          lead_id?: string | null
+          logged_at?: string
+          objection_type?: string | null
+          outcome?: string
+        }
+        Relationships: []
+      }
       billing_accounts: {
         Row: {
           billing_email: string | null
