@@ -596,9 +596,9 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
     if (!lines.length) return;
     const delim = lines[0].includes("\t") ? "\t" : lines[0].includes("|") ? "|" : ",";
     const rows = lines.map(l => l.split(delim).map(c => c.trim()));
-    const headerLike = rows[0].some(c => /business|name|phone|website/i.test(c));
+    const headerLike = rows[0].some(c => /business|name|phone|website|booking/i.test(c));
     const dataRows = headerLike ? rows.slice(1) : rows;
-    let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3;
+    let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3, bkIdx = 4;
     if (headerLike) {
       const h = rows[0].map(c => c.toLowerCase());
       h.forEach((c, i) => {
@@ -606,11 +606,20 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         else if (/owner|contact/.test(c)) owIdx = i;
         else if (/phone/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
+        else if (/booking/.test(c)) bkIdx = i;
       });
     }
+    const parseBooking = (v: string): boolean | null => {
+      const s = (v || "").trim().toLowerCase();
+      if (!s) return null;
+      if (/^(y|yes|true|1|✓)$/.test(s)) return true;
+      if (/^(n|no|false|0)$/.test(s)) return false;
+      return null;
+    };
     const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
       business_name: r[biIdx]?.trim() || "", owner_name: r[owIdx]?.trim() || "",
       phone: r[phIdx]?.trim() || "", website: r[webIdx]?.trim() || "",
+      has_booking_system: parseBooking(r[bkIdx] || ""),
     }));
     setParsed(result); setChecked(result.map(() => true));
   };
@@ -628,7 +637,7 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         {parsed.length === 0 ? (
           <div className="space-y-3">
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com"} />
+              placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website | Booking System\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com | No"} />
             <Button onClick={parse} disabled={!raw.trim()} className="w-full">Parse Leads</Button>
           </div>
         ) : (
