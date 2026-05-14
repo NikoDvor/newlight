@@ -276,6 +276,7 @@ export default function CRM() {
     <div>
       <PageHeader title="CRM" description="Manage contacts, deals, and your sales pipeline">
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" className="gap-1.5" onClick={() => navigate("/employee/dialer")}><Phone className="h-4 w-4" /> BDR Dialer</Button>
           <Button variant="outline" className="gap-1.5" onClick={() => setCompanyOpen(true)}><Building2 className="h-4 w-4" /> Company</Button>
           <Button variant="outline" className="gap-1.5" onClick={() => setContactOpen(true)}><UserPlus className="h-4 w-4" /> Contact</Button>
           <Button className="gap-1.5" onClick={() => setDealOpen(true)}><Briefcase className="h-4 w-4" /> Deal</Button>
