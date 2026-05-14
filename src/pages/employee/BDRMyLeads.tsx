@@ -378,6 +378,14 @@ export default function BDRMyLeads() {
                           {lead.has_booking_system === false && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No Booking System</span>
                           )}
+                          {calledLeadIds.has(lead.id) && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold flex items-center gap-1" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>
+                              <CheckCircle2 className="h-3 w-3" /> Called
+                            </span>
+                          )}
+                          {lead.list_name && activeList === "__all__" && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: "hsla(211,96%,56%,.08)", color: "hsl(211,96%,56%)" }}>{lead.list_name}</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
