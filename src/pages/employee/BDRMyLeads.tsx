@@ -127,8 +127,23 @@ export default function BDRMyLeads() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = leads.filter(l => l.created_at.slice(0, 10) === todayStr).length;
 
+  const lists = useMemo(() => {
+    const map = new Map<string, number>();
+    leads.forEach(l => {
+      const key = l.list_name || "Unsorted";
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [leads]);
+
+  const listScopedLeads = useMemo(() => {
+    if (activeList === "__all__") return leads;
+    if (activeList === "Unsorted") return leads.filter(l => !l.list_name);
+    return leads.filter(l => l.list_name === activeList);
+  }, [leads, activeList]);
+
   const filtered = useMemo(() => {
-    let list = leads;
+    let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => l.created_at.slice(0, 10) === todayStr);
     else if (filter !== "all") list = list.filter(l => l.status === filter);
     if (search.trim()) {
@@ -136,15 +151,16 @@ export default function BDRMyLeads() {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     return list;
-  }, [leads, filter, search, todayStr]);
+  }, [listScopedLeads, filter, search, todayStr]);
 
   const stats = useMemo(() => {
-    const total = leads.length;
-    const contacted = leads.filter(l => l.status === "contacted").length;
-    const booked = leads.filter(l => l.status === "appointment_booked").length;
-    const won = leads.filter(l => l.status === "closed_won").length;
+    const scope = listScopedLeads;
+    const total = scope.length;
+    const contacted = scope.filter(l => l.status === "contacted").length;
+    const booked = scope.filter(l => l.status === "appointment_booked").length;
+    const won = scope.filter(l => l.status === "closed_won").length;
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
-  }, [leads]);
+  }, [listScopedLeads]);
 
   const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
     if (!user?.id) return;
