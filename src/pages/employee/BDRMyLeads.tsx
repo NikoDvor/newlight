@@ -110,6 +110,8 @@ export default function BDRMyLeads() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
   const [activeList, setActiveList] = useState<string>("__all__");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
