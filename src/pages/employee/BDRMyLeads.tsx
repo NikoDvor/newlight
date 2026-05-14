@@ -189,8 +189,9 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[]) => {
+  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[], listName: string) => {
     if (!user?.id) return;
+    const cleanList = listName.trim() || null;
     const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
     const seenInBatch = new Set<string>();
     let count = 0;
@@ -203,10 +204,12 @@ export default function BDRMyLeads() {
         user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
         has_booking_system: row.has_booking_system,
+        list_name: cleanList,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
-    toast({ title: `${count} leads imported`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    toast({ title: `${count} leads imported${cleanList ? ` to "${cleanList}"` : ""}`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    if (cleanList) setActiveList(cleanList);
     setShowImport(false); fetchLeads();
   };
 
