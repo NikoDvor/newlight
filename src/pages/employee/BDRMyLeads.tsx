@@ -695,9 +695,14 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
         </DialogHeader>
         {parsed.length === 0 ? (
           <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">List Name</label>
+              <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Ojai Hair Salons — State Street SB"' className="mt-1 h-9" />
+              <p className="text-[10px] text-muted-foreground mt-1">Name this batch so you can switch between lists later.</p>
+            </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
               placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website | Booking System\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com | No"} />
-            <Button onClick={parse} disabled={!raw.trim()} className="w-full">Parse Leads</Button>
+            <Button onClick={parse} disabled={!raw.trim() || !listName.trim()} className="w-full">Parse Leads</Button>
           </div>
         ) : (
           <div className="space-y-3">
