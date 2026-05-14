@@ -100,6 +100,7 @@ const FILTER_TABS = [
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
   const [leads, setLeads] = useState<BdrLead[]>([]);
+  const [calledLeadIds, setCalledLeadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -108,12 +109,16 @@ export default function BDRMyLeads() {
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
+  const [activeList, setActiveList] = useState<string>("__all__");
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
     const { data } = await (supabase as any).from("nl_bdr_leads")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
     setLeads((data || []).map((d: any) => ({ ...d, outcome_history: d.outcome_history || [] })));
+    const { data: calls } = await (supabase as any).from("bdr_call_outcomes")
+      .select("lead_id").eq("bdr_user_id", user.id);
+    setCalledLeadIds(new Set((calls || []).map((c: any) => c.lead_id).filter(Boolean)));
     setLoading(false);
   }, [user?.id]);
 
