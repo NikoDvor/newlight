@@ -719,8 +719,8 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setParsed([]); setChecked([]); }}>Back</Button>
-              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]))} disabled={!selectedCount} className="flex-1">
-                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""}
+              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]), listName)} disabled={!selectedCount} className="flex-1">
+                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""}{listName.trim() ? ` to "${listName.trim()}"` : ""}
               </Button>
             </div>
           </div>
