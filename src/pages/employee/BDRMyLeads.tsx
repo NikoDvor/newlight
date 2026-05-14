@@ -313,6 +313,24 @@ export default function BDRMyLeads() {
             ))}
           </div>
 
+          {/* List pages */}
+          {lists.length > 0 && (
+            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+              <button onClick={() => setActiveList("__all__")}
+                className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                style={{ background: activeList === "__all__" ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === "__all__" ? "#fff" : "hsl(211,96%,56%)" }}>
+                All Lists <span className="opacity-70">({leads.length})</span>
+              </button>
+              {lists.map(([name, count]) => (
+                <button key={name} onClick={() => setActiveList(name)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                  style={{ background: activeList === name ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === name ? "#fff" : "hsl(211,96%,56%)" }}>
+                  {name} <span className="opacity-70">({count})</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Filters + Search */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex gap-1 flex-wrap">
