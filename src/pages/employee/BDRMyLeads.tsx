@@ -499,20 +499,22 @@ export default function BDRMyLeads() {
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-[10px] text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</span>
                         {history.length > 0 && (
-                          <button onClick={() => setExpandedId(expanded ? null : lead.id)} className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">
+                          <button onClick={(e) => { e.stopPropagation(); setExpandedId(expanded ? null : lead.id); }} className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">
                             {history.length} log{history.length > 1 ? "s" : ""} {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                           </button>
                         )}
-                        {(lead.status === "new_lead" || lead.status === "contacted") && (
-                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLead(lead)}>Log Outcome</Button>
+                        {!selectMode && (lead.status === "new_lead" || lead.status === "contacted") && (
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setOutcomeLead(lead); }}>Log Outcome</Button>
                         )}
-                        <button
-                          onClick={() => handleDeleteLead(lead)}
-                          aria-label={`Delete ${lead.business_name}`}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {!selectMode && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
+                            aria-label={`Delete ${lead.business_name}`}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <AnimatePresence>
