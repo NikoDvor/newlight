@@ -25,6 +25,7 @@ interface BdrLead {
   crm_deal_id: string | null;
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
+  has_booking_system: boolean | null;
   created_at: string;
 }
 
