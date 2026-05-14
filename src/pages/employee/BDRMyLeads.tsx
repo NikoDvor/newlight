@@ -110,6 +110,8 @@ export default function BDRMyLeads() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
   const [activeList, setActiveList] = useState<string>("__all__");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
@@ -268,6 +270,50 @@ export default function BDRMyLeads() {
     toast({ title: "Lead deleted", description: lead.business_name });
   };
 
+  const deleteLeadsByIds = async (ids: string[], successMsg: string) => {
+    if (!user?.id || ids.length === 0) return;
+    const dealIds = leads.filter(l => ids.includes(l.id) && l.crm_deal_id).map(l => l.crm_deal_id as string);
+    setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    const { error } = await (supabase as any).from("nl_bdr_leads").delete().in("id", ids).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't delete leads", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    if (dealIds.length > 0) {
+      await supabase.from("crm_deals").delete().in("id", dealIds);
+    }
+    toast({ title: successMsg });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete ${ids.length} selected lead${ids.length !== 1 ? "s" : ""} permanently? This cannot be undone.`)) return;
+    await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
+  };
+
+  const handleDeleteAllInList = async () => {
+    const ids = listScopedLeads.map(l => l.id);
+    if (ids.length === 0) return;
+    const label = activeList === "__all__" ? "all leads" : `all leads in "${activeList}"`;
+    if (!window.confirm(`Delete ${label} (${ids.length} lead${ids.length !== 1 ? "s" : ""}) permanently? This cannot be undone.`)) return;
+    await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Reset selection when switching list/tab
+  useEffect(() => { setSelectedIds(new Set()); setSelectMode(false); }, [activeList, activeTab]);
+
   const handleSaveObjection = async (leadId: string, businessName: string, outcomeLabel: string, category: string | null) => {
     if (!user?.id) return;
     if (category) {
@@ -347,6 +393,33 @@ export default function BDRMyLeads() {
             </div>
           )}
 
+          {/* Bulk action toolbar */}
+          {listScopedLeads.length > 0 && (
+            <div className="flex items-center justify-between gap-2 flex-wrap rounded-xl px-3 py-2"
+              style={{ background: selectMode ? "hsla(211,96%,56%,.08)" : "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+              <p className="text-xs text-muted-foreground">
+                {selectMode ? `${selectedIds.size} selected` : `${listScopedLeads.length} lead${listScopedLeads.length !== 1 ? "s" : ""} in ${activeList === "__all__" ? "all lists" : `"${activeList}"`}`}
+              </p>
+              <div className="flex items-center gap-2">
+                {selectMode ? (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}>Cancel</Button>
+                    <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={selectedIds.size === 0} onClick={handleBulkDelete}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete Selected
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete All
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Filters + Search */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex gap-1 flex-wrap">
@@ -376,8 +449,27 @@ export default function BDRMyLeads() {
                 const history = lead.outcome_history || [];
                 const expanded = expandedId === lead.id;
                 return (
-                  <div key={lead.id} className="rounded-2xl overflow-hidden" style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+                  <div
+                    key={lead.id}
+                    onClick={selectMode ? () => toggleSelect(lead.id) : undefined}
+                    role={selectMode ? "button" : undefined}
+                    aria-pressed={selectMode ? selectedIds.has(lead.id) : undefined}
+                    className={`rounded-2xl overflow-hidden transition-all ${selectMode ? "cursor-pointer active:scale-[0.99]" : ""}`}
+                    style={{
+                      background: selectMode && selectedIds.has(lead.id) ? "hsla(211,96%,56%,.12)" : "hsla(215,35%,10%,.8)",
+                      border: `1px solid ${selectMode && selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.12)"}`,
+                    }}
+                  >
                     <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                      {selectMode && (
+                        <div className="flex-shrink-0 h-5 w-5 rounded-md inline-flex items-center justify-center"
+                          style={{
+                            background: selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "transparent",
+                            border: `1.5px solid ${selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.4)"}`,
+                          }}>
+                          {selectedIds.has(lead.id) && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
@@ -407,20 +499,22 @@ export default function BDRMyLeads() {
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-[10px] text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</span>
                         {history.length > 0 && (
-                          <button onClick={() => setExpandedId(expanded ? null : lead.id)} className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">
+                          <button onClick={(e) => { e.stopPropagation(); setExpandedId(expanded ? null : lead.id); }} className="text-[10px] flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors">
                             {history.length} log{history.length > 1 ? "s" : ""} {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                           </button>
                         )}
-                        {(lead.status === "new_lead" || lead.status === "contacted") && (
-                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLead(lead)}>Log Outcome</Button>
+                        {!selectMode && (lead.status === "new_lead" || lead.status === "contacted") && (
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setOutcomeLead(lead); }}>Log Outcome</Button>
                         )}
-                        <button
-                          onClick={() => handleDeleteLead(lead)}
-                          aria-label={`Delete ${lead.business_name}`}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {!selectMode && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
+                            aria-label={`Delete ${lead.business_name}`}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <AnimatePresence>
