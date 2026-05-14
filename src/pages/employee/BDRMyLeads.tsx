@@ -449,8 +449,27 @@ export default function BDRMyLeads() {
                 const history = lead.outcome_history || [];
                 const expanded = expandedId === lead.id;
                 return (
-                  <div key={lead.id} className="rounded-2xl overflow-hidden" style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+                  <div
+                    key={lead.id}
+                    onClick={selectMode ? () => toggleSelect(lead.id) : undefined}
+                    role={selectMode ? "button" : undefined}
+                    aria-pressed={selectMode ? selectedIds.has(lead.id) : undefined}
+                    className={`rounded-2xl overflow-hidden transition-all ${selectMode ? "cursor-pointer active:scale-[0.99]" : ""}`}
+                    style={{
+                      background: selectMode && selectedIds.has(lead.id) ? "hsla(211,96%,56%,.12)" : "hsla(215,35%,10%,.8)",
+                      border: `1px solid ${selectMode && selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.12)"}`,
+                    }}
+                  >
                     <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                      {selectMode && (
+                        <div className="flex-shrink-0 h-5 w-5 rounded-md inline-flex items-center justify-center"
+                          style={{
+                            background: selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "transparent",
+                            border: `1.5px solid ${selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.4)"}`,
+                          }}>
+                          {selectedIds.has(lead.id) && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
