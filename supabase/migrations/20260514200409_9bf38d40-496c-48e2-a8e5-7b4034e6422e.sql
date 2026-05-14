@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.mirror_call_outcome_to_objection() FROM PUBLIC, anon, authenticated;
