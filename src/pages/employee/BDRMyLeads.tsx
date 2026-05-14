@@ -414,6 +414,13 @@ export default function BDRMyLeads() {
                         {(lead.status === "new_lead" || lead.status === "contacted") && (
                           <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setOutcomeLead(lead)}>Log Outcome</Button>
                         )}
+                        <button
+                          onClick={() => handleDeleteLead(lead)}
+                          aria-label={`Delete ${lead.business_name}`}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                     <AnimatePresence>
