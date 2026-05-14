@@ -5822,6 +5822,7 @@ export type Database = {
           has_booking_system: boolean | null
           id: string
           lead_source: string
+          list_name: string | null
           niche: string | null
           notes: string | null
           objection_category: string | null
@@ -5843,6 +5844,7 @@ export type Database = {
           has_booking_system?: boolean | null
           id?: string
           lead_source?: string
+          list_name?: string | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
@@ -5864,6 +5866,7 @@ export type Database = {
           has_booking_system?: boolean | null
           id?: string
           lead_source?: string
+          list_name?: string | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
