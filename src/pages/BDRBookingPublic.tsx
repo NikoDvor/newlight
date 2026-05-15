@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface Cal { id: string; name: string; booking_slug: string; availability: any; timezone: string; }
+interface Cal { id: string; name: string; booking_slug: string; availability: any; timezone: string; booking_title: string | null; booking_description: string | null; booking_active: boolean; }
 
 function buildSlots(availability: any) {
   const slots: { date: Date; label: string }[] = [];
@@ -43,7 +43,7 @@ export default function BDRBookingPublic() {
     if (!slug) return;
     const { data } = await (supabase as any)
       .from("bdr_calendars")
-      .select("id, name, booking_slug, availability, timezone")
+      .select("id, name, booking_slug, availability, timezone, booking_title, booking_description, booking_active")
       .eq("booking_slug", slug)
       .maybeSingle();
     setCal(data);
@@ -65,6 +65,14 @@ export default function BDRBookingPublic() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cal) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)] text-white/60">Booking link not found.</div>;
+  if (!cal.booking_active) return (
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)] p-4">
+      <div className="max-w-md w-full text-center space-y-3 p-8 rounded-xl border border-white/10 bg-white/[0.03]">
+        <h1 className="text-xl font-bold text-white">Bookings paused</h1>
+        <p className="text-sm text-white/60">This booking link isn't accepting new appointments right now. Please check back soon.</p>
+      </div>
+    </div>
+  );
 
   if (done) {
     return (
@@ -85,8 +93,8 @@ export default function BDRBookingPublic() {
       <div className="max-w-xl mx-auto space-y-5">
         <div className="text-center">
           <CalIcon className="h-8 w-8 text-[hsl(211,96%,68%)] mx-auto mb-2" />
-          <h1 className="text-2xl font-bold text-white">{cal.name}</h1>
-          <p className="text-sm text-white/55">Pick a time and we'll be in touch.</p>
+          <h1 className="text-2xl font-bold text-white">{cal.booking_title || cal.name}</h1>
+          <p className="text-sm text-white/55 whitespace-pre-wrap">{cal.booking_description || "Pick a time and we'll be in touch."}</p>
         </div>
         <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
           <div className="grid grid-cols-2 gap-2">
