@@ -174,8 +174,14 @@ export default function BDRMyLeads() {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayCount = leads.filter(l => l.created_at.slice(0, 10) === todayStr).length;
+  const localDateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const todayStr = localDateKey(new Date());
+  const isCreatedToday = (createdAt: string) => {
+    const d = new Date(createdAt);
+    if (isNaN(d.getTime())) return false;
+    return localDateKey(d) === todayStr;
+  };
+  const todayCount = leads.filter(l => isCreatedToday(l.created_at)).length;
 
   const lists = useMemo(() => {
     const map = new Map<string, number>();
