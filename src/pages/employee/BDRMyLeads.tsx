@@ -200,7 +200,7 @@ export default function BDRMyLeads() {
 
   const filtered = useMemo(() => {
     let list = listScopedLeads;
-    if (filter === "today") list = list.filter(l => l.created_at.slice(0, 10) === todayStr);
+    if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
     else if (filter.startsWith("stage:")) {
       const target = filter.slice(6) as PipelineStageKey;
       list = list.filter(l => derivePipelineStage(l) === target);
