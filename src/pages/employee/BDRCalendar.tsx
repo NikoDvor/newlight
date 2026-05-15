@@ -396,24 +396,30 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   open: boolean; onOpenChange: (v: boolean) => void; prefill: Date | null; calendar: BdrCalendar; onCreated: () => void;
 }) {
   const [title, setTitle] = useState("");
-  const [start, setStart] = useState("");
-  const [duration, setDuration] = useState(30);
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("09:30");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       const base = prefill || (() => { const d = new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours()+1); return d; })();
-      setStart(toLocalInput(base));
-      setTitle(""); setNotes(""); setDuration(30);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setDate(`${base.getFullYear()}-${pad(base.getMonth()+1)}-${pad(base.getDate())}`);
+      setStartTime(`${pad(base.getHours())}:${pad(base.getMinutes())}`);
+      const endBase = new Date(base.getTime() + 30 * 60_000);
+      setEndTime(`${pad(endBase.getHours())}:${pad(endBase.getMinutes())}`);
+      setTitle(""); setNotes("");
     }
   }, [open, prefill]);
 
   const save = async () => {
-    if (!title.trim() || !start) return;
+    if (!title.trim() || !date || !startTime || !endTime) return;
     setSaving(true);
-    const startDate = new Date(start);
-    const endDate = new Date(startDate.getTime() + duration * 60_000);
+    const startDate = new Date(`${date}T${startTime}`);
+    let endDate = new Date(`${date}T${endTime}`);
+    if (endDate <= startDate) endDate = new Date(startDate.getTime() + 30 * 60_000);
     const { error } = await (supabase as any).from("bdr_calendar_events").insert({
       user_id: calendar.user_id,
       calendar_id: calendar.id,
@@ -432,33 +438,38 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
-        <DialogHeader><DialogTitle>Add Event</DialogTitle></DialogHeader>
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white rounded-2xl">
+        <DialogHeader><DialogTitle className="text-lg">Add Event</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Title</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Follow-up call, block, reminder…" className="bg-white/5 border-white/10 text-white" />
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Follow-up call, block, reminder…" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Date</Label>
+            <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/5 border-white/10 text-white h-11" />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Start</Label>
-              <Input type="datetime-local" value={start} onChange={e => setStart(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+              <Label className="text-xs text-white/60">Start time</Label>
+              <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="bg-white/5 border-white/10 text-white h-11" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Duration (min)</Label>
-              <Input type="number" min={5} step={5} value={duration} onChange={e => setDuration(Number(e.target.value) || 30)} className="bg-white/5 border-white/10 text-white" />
+              <Label className="text-xs text-white/60">End time</Label>
+              <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="bg-white/5 border-white/10 text-white h-11" />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Notes</Label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
+              placeholder="Optional details…"
               className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/70">Cancel</Button>
-          <Button onClick={save} disabled={saving || !title.trim() || !start} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+          <Button onClick={save} disabled={saving || !title.trim() || !date} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] rounded-full px-5">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Event"}
           </Button>
         </DialogFooter>
       </DialogContent>
