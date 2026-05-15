@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -27,7 +28,56 @@ interface BdrLead {
   objection_category: string | null;
   has_booking_system: boolean | null;
   list_name: string | null;
+  pipeline_stage: string | null;
   created_at: string;
+}
+
+/* ─── pipeline stages ─── */
+type PipelineStageKey = "cold" | "warm" | "hot" | "won";
+interface PipelineStageDef {
+  key: PipelineStageKey;
+  label: string;
+  description: string;
+  bg: string;
+  text: string;
+  border: string;
+  bar: string;
+}
+const PIPELINE_STAGES: PipelineStageDef[] = [
+  { key: "cold", label: "Cold Lead",            description: "New contact, not yet reached",
+    bg: "hsla(211,80%,60%,.15)", text: "hsl(211,90%,70%)", border: "hsla(211,80%,60%,.4)", bar: "hsl(211,90%,60%)" },
+  { key: "warm", label: "Contacted / Warm Lead", description: "Reached owner, showed interest",
+    bg: "hsla(38,92%,55%,.15)",  text: "hsl(38,95%,65%)",  border: "hsla(38,92%,55%,.4)",  bar: "hsl(38,92%,55%)" },
+  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Requested callback or follow up",
+    bg: "hsla(14,90%,58%,.15)",  text: "hsl(14,95%,68%)",  border: "hsla(14,90%,58%,.4)",  bar: "hsl(14,90%,58%)" },
+  { key: "won",  label: "Won",                   description: "Appointment booked or deal closed",
+    bg: "hsla(142,72%,42%,.18)", text: "hsl(142,72%,55%)", border: "hsla(142,72%,42%,.5)", bar: "hsl(142,72%,42%)" },
+];
+const STAGE_BY_KEY: Record<PipelineStageKey, PipelineStageDef> =
+  PIPELINE_STAGES.reduce((acc, s) => { acc[s.key] = s; return acc; }, {} as any);
+
+export function pipelineStageFromOutcome(label: string | null | undefined): PipelineStageKey | null {
+  if (!label) return null;
+  const l = label.toLowerCase();
+  if (l.includes("won") || l.includes("booked") || l.includes("closed on the spot")) return "won";
+  if (l.includes("call back") || l.includes("callback") || l.includes("follow up") ||
+      l.includes("follow-up") || l.includes("owner wasn't") || l.includes("asked for info") ||
+      l.includes("left owner")) return "hot";
+  if (l === "lost") return "cold";
+  // objections / any other contacted outcome
+  return "warm";
+}
+
+function derivePipelineStage(lead: BdrLead): PipelineStageKey {
+  if (lead.pipeline_stage && (STAGE_BY_KEY as any)[lead.pipeline_stage]) {
+    return lead.pipeline_stage as PipelineStageKey;
+  }
+  const last = lead.outcome_history?.[lead.outcome_history.length - 1]?.label;
+  const fromOutcome = pipelineStageFromOutcome(last);
+  if (fromOutcome) return fromOutcome;
+  if (lead.status === "closed_won" || lead.status === "appointment_booked") return "won";
+  if (lead.status === "contacted") return "warm";
+  return "cold";
 }
 
 /* ─── outcome config ─── */
@@ -86,14 +136,10 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
   closed_lost: { label: "Closed Lost", bg: "hsla(0,0%,50%,.15)",    text: "hsl(0,0%,60%)" },
 };
 
-const FILTER_TABS = [
+const FILTER_TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "today", label: "Today" },
-  { key: "new_lead", label: "New Lead" },
-  { key: "contacted", label: "Contacted" },
-  { key: "appointment_booked", label: "Booked" },
-  { key: "closed_won", label: "Won" },
-  { key: "closed_lost", label: "Lost" },
+  ...PIPELINE_STAGES.map(s => ({ key: `stage:${s.key}`, label: s.label })),
 ];
 
 /* ─── page ─── */
@@ -149,13 +195,22 @@ export default function BDRMyLeads() {
   const filtered = useMemo(() => {
     let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => l.created_at.slice(0, 10) === todayStr);
-    else if (filter !== "all") list = list.filter(l => l.status === filter);
+    else if (filter.startsWith("stage:")) {
+      const target = filter.slice(6) as PipelineStageKey;
+      list = list.filter(l => derivePipelineStage(l) === target);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     return list;
   }, [listScopedLeads, filter, search, todayStr]);
+
+  const stageCounts = useMemo(() => {
+    const counts: Record<PipelineStageKey, number> = { cold: 0, warm: 0, hot: 0, won: 0 };
+    listScopedLeads.forEach(l => { counts[derivePipelineStage(l)] += 1; });
+    return counts;
+  }, [listScopedLeads]);
 
   const stats = useMemo(() => {
     const scope = listScopedLeads;
@@ -165,6 +220,20 @@ export default function BDRMyLeads() {
     const won = scope.filter(l => l.status === "closed_won").length;
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
   }, [listScopedLeads]);
+
+  const handleChangeStage = async (lead: BdrLead, stage: PipelineStageKey) => {
+    if (!user?.id) return;
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: stage } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ pipeline_stage: stage }).eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't update stage", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    toast({ title: `Moved to ${STAGE_BY_KEY[stage].label}`, description: lead.business_name });
+  };
+
 
   const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
     if (!user?.id) return;
@@ -223,8 +292,10 @@ export default function BDRMyLeads() {
     const entry: OutcomeEntry = { label: outcome.label, timestamp: new Date().toISOString(), ...(note ? { note } : {}) };
     const newHistory = [...(lead.outcome_history || []), entry];
 
+    const newStage = pipelineStageFromOutcome(outcome.label) ?? derivePipelineStage({ ...lead, outcome_history: newHistory });
     await (supabase as any).from("nl_bdr_leads").update({
       status: outcome.status, outcome_history: newHistory,
+      pipeline_stage: newStage,
       notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
     }).eq("id", lead.id);
 
@@ -398,7 +469,51 @@ export default function BDRMyLeads() {
             ))}
           </div>
 
-          {/* List pages */}
+          {/* Pipeline strip */}
+          <div className="rounded-2xl p-3" style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pipeline</p>
+              <p className="text-[10px] text-muted-foreground">{listScopedLeads.length} total</p>
+            </div>
+            {(() => {
+              const total = Math.max(1, listScopedLeads.length);
+              return (
+                <>
+                  <div className="flex h-2 w-full rounded-full overflow-hidden" style={{ background: "hsla(0,0%,100%,.04)" }}>
+                    {PIPELINE_STAGES.map(s => {
+                      const pct = (stageCounts[s.key] / total) * 100;
+                      if (pct === 0) return null;
+                      return <div key={s.key} title={`${s.label}: ${stageCounts[s.key]}`} style={{ width: `${pct}%`, background: s.bar }} />;
+                    })}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {PIPELINE_STAGES.map(s => {
+                      const active = filter === `stage:${s.key}`;
+                      return (
+                        <button
+                          key={s.key}
+                          onClick={() => setFilter(active ? "all" : `stage:${s.key}`)}
+                          className="text-left rounded-lg px-2 py-1.5 transition-all"
+                          style={{
+                            background: active ? s.bg : "hsla(0,0%,100%,.02)",
+                            border: `1px solid ${active ? s.border : "transparent"}`,
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.bar }} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wide truncate" style={{ color: s.text }}>{s.label}</span>
+                          </div>
+                          <p className="text-base font-bold text-foreground leading-tight mt-0.5">{stageCounts[s.key]}</p>
+                          <p className="text-[9px] text-muted-foreground leading-tight truncate">{s.description}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
           {lists.length > 0 && (
             <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
               <button onClick={() => setActiveList("__all__")}
@@ -469,6 +584,7 @@ export default function BDRMyLeads() {
             <div className="space-y-2">
               {filtered.map(lead => {
                 const cfg = STATUS_CFG[lead.status] || STATUS_CFG.new_lead;
+                const stage = STAGE_BY_KEY[derivePipelineStage(lead)];
                 const history = lead.outcome_history || [];
                 const expanded = expandedId === lead.id;
                 return (
@@ -496,7 +612,31 @@ export default function BDRMyLeads() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
-                          <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                title="Tap to change pipeline stage"
+                                className="rounded-full px-2.5 py-0.5 text-[10px] font-bold inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                                style={{ background: stage.bg, color: stage.text, border: `1px solid ${stage.border}` }}
+                              >
+                                {stage.label}
+                                <ChevronDown className="h-3 w-3" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+                              {PIPELINE_STAGES.map(s => (
+                                <DropdownMenuItem key={s.key} onClick={() => handleChangeStage(lead, s.key)}>
+                                  <span className="h-2 w-2 rounded-full mr-2" style={{ background: s.bar }} />
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-medium">{s.label}</span>
+                                    <span className="text-[10px] text-muted-foreground">{s.description}</span>
+                                  </div>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
                         </div>
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
