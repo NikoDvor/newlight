@@ -123,61 +123,75 @@ export default function BDRCalendar() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{calendar.name}</h1>
-          <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowShare(true)} className="border-white/15 text-white/80">
-            <Link2 className="h-4 w-4 mr-1" /> Booking Link
-          </Button>
-          <Button size="sm" onClick={() => { setAddPrefill(null); setShowAdd(true); }}
-            className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-            <Plus className="h-4 w-4 mr-1" /> Add Event
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
-            aria-label="Calendar settings"
-            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Title */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{calendar.name}</h1>
+        <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 p-2 rounded-lg" style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70" onClick={() => {
+      {/* Action toolbar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button variant="outline" size="sm" onClick={() => setShowShare(true)}
+          className="border-white/15 bg-white/[0.03] text-white/85 hover:bg-white/[0.06] h-9">
+          <Link2 className="h-4 w-4 mr-1.5" /> Booking Link
+        </Button>
+        <Button size="sm" onClick={() => { setAddPrefill(selectedDay); setShowAdd(true); }}
+          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] h-9">
+          <Plus className="h-4 w-4 mr-1.5" /> Add Event
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
+          aria-label="Calendar settings"
+          className="h-9 w-9 ml-auto text-white/70 hover:text-white hover:bg-white/5 rounded-lg border border-white/10">
+          <Settings className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Nav toolbar */}
+      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg"
+        style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+        <div className="flex items-center gap-0.5 min-w-0">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/5" onClick={() => {
             const d = new Date(cursor);
             if (view === "month") d.setMonth(d.getMonth() - 1); else d.setDate(d.getDate() - 7);
             setCursor(d);
           }}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm" className="text-white/70 text-xs" onClick={() => setCursor(new Date())}>Today</Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70" onClick={() => {
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-white/70 text-xs hover:text-white hover:bg-white/5" onClick={() => { const t = new Date(); setCursor(t); setSelectedDay(t); }}>Today</Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/5" onClick={() => {
             const d = new Date(cursor);
             if (view === "month") d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + 7);
             setCursor(d);
           }}><ChevronRight className="h-4 w-4" /></Button>
-          <span className="text-white text-sm font-semibold ml-2">
+          <span className="text-white text-sm font-semibold ml-2 truncate">
             {view === "month"
               ? cursor.toLocaleDateString([], { month: "long", year: "numeric" })
               : `${startOfWeek(cursor).toLocaleDateString([], { month: "short", day: "numeric" })} – ${addDays(startOfWeek(cursor),6).toLocaleDateString([], { month: "short", day: "numeric" })}`}
           </span>
         </div>
-        <div className="flex rounded-md overflow-hidden border border-white/10">
+        <div className="flex rounded-md overflow-hidden border border-white/10 shrink-0">
           {(["month","week"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
-              className="px-3 py-1.5 text-xs font-medium capitalize"
+              className="px-2.5 py-1 text-[11px] font-semibold capitalize transition-colors"
               style={{
-                background: view === v ? "hsla(211,96%,56%,.15)" : "transparent",
-                color: view === v ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
+                background: view === v ? "hsla(211,96%,56%,.18)" : "transparent",
+                color: view === v ? "hsl(211,96%,75%)" : "hsl(0,0%,65%)",
               }}>{v}</button>
           ))}
         </div>
       </div>
 
+      {/* Legend */}
+      <div className="flex items-center gap-3 flex-wrap text-[10px] text-white/55">
+        {Object.entries(SOURCE_LABEL).map(([k, label]) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: SOURCE_TONE[k] }} />
+            {label}
+          </span>
+        ))}
+      </div>
+
       {view === "month" ? (
-        <MonthView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
+        <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
+          onCellClick={(d) => { setSelectedDay(d); onCellClick(d); }} onEventClick={setSelected} />
       ) : (
         <WeekView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
       )}
