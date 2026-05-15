@@ -190,8 +190,16 @@ export default function BDRCalendar() {
       </div>
 
       {view === "month" ? (
-        <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
-          onCellClick={(d) => { setSelectedDay(d); onCellClick(d); }} onEventClick={setSelected} />
+        <>
+          <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
+            onSelectDay={(d) => setSelectedDay(d)} />
+          <DayAgenda
+            day={selectedDay}
+            events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
+            onAdd={() => { setAddPrefill((() => { const d = new Date(selectedDay); d.setHours(9,0,0,0); return d; })()); setShowAdd(true); }}
+            onEventClick={setSelected}
+          />
+        </>
       ) : (
         <WeekView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
       )}
