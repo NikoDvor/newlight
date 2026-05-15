@@ -195,13 +195,22 @@ export default function BDRMyLeads() {
   const filtered = useMemo(() => {
     let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => l.created_at.slice(0, 10) === todayStr);
-    else if (filter !== "all") list = list.filter(l => l.status === filter);
+    else if (filter.startsWith("stage:")) {
+      const target = filter.slice(6) as PipelineStageKey;
+      list = list.filter(l => derivePipelineStage(l) === target);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     return list;
   }, [listScopedLeads, filter, search, todayStr]);
+
+  const stageCounts = useMemo(() => {
+    const counts: Record<PipelineStageKey, number> = { cold: 0, warm: 0, hot: 0, won: 0 };
+    listScopedLeads.forEach(l => { counts[derivePipelineStage(l)] += 1; });
+    return counts;
+  }, [listScopedLeads]);
 
   const stats = useMemo(() => {
     const scope = listScopedLeads;
@@ -211,6 +220,20 @@ export default function BDRMyLeads() {
     const won = scope.filter(l => l.status === "closed_won").length;
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
   }, [listScopedLeads]);
+
+  const handleChangeStage = async (lead: BdrLead, stage: PipelineStageKey) => {
+    if (!user?.id) return;
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: stage } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ pipeline_stage: stage }).eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Couldn't update stage", description: error.message, variant: "destructive" });
+      fetchLeads();
+      return;
+    }
+    toast({ title: `Moved to ${STAGE_BY_KEY[stage].label}`, description: lead.business_name });
+  };
+
 
   const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
     if (!user?.id) return;
