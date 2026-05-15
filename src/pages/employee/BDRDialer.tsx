@@ -15,6 +15,7 @@ interface Lead {
   niche: string | null;
   list_name: string | null;
   called: boolean | null;
+  notes: string | null;
 }
 
 interface OutcomeRow {
@@ -56,7 +57,7 @@ export default function BDRDialer() {
       setUserId(user.id);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -113,6 +114,19 @@ export default function BDRDialer() {
     if (error) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next } : l));
       toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+    }
+  }, [userId]);
+
+  const saveNotes = useCallback(async (lead: Lead, value: string) => {
+    if (!userId) return;
+    if ((lead.notes || "") === value) return;
+    const prev = lead.notes;
+    setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: value } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ notes: value }).eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: prev } : l));
+      toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" });
     }
   }, [userId]);
 
@@ -268,12 +282,13 @@ export default function BDRDialer() {
                 <th className="px-3 py-2 font-semibold border-b border-white/10">Phone</th>
                 <th className="px-3 py-2 font-semibold border-b border-white/10 text-center w-16">Called</th>
                 <th className="px-3 py-2 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10 w-[240px]">Notes</th>
               </tr>
             </thead>
             <tbody>
               {visibleLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                  <td colSpan={7} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
@@ -322,6 +337,13 @@ export default function BDRDialer() {
                         ))}
                       </select>
                     </td>
+                    <td className="px-3 py-1.5 border-b border-white/5">
+                      <NotesCell
+                        key={lead.id + ":" + (lead.notes || "")}
+                        initial={lead.notes || ""}
+                        onSave={(v) => saveNotes(lead, v)}
+                      />
+                    </td>
                   </tr>
                 );
               })}
@@ -330,5 +352,26 @@ export default function BDRDialer() {
         </div>
       </div>
     </div>
+  );
+}
+
+function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
+  const [value, setValue] = useState(initial);
+  const [baseline, setBaseline] = useState(initial);
+  useEffect(() => { setValue(initial); setBaseline(initial); }, [initial]);
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={async () => {
+        if (value === baseline) return;
+        await onSave(value);
+        setBaseline(value);
+      }}
+      placeholder="Add notes…"
+      rows={1}
+      className="w-full bg-transparent text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[28px]"
+      style={{ background: value ? "hsla(211,96%,56%,.06)" : "hsla(0,0%,100%,.02)" }}
+    />
   );
 }

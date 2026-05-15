@@ -574,6 +574,11 @@ export default function BDRMyLeads() {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    {!selectMode && (
+                      <div className="px-4 pb-3 -mt-1" onClick={(e) => e.stopPropagation()}>
+                        <LeadNotesField leadId={lead.id} userId={user?.id || ""} initial={lead.notes || ""} />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -588,6 +593,52 @@ export default function BDRMyLeads() {
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════ */
+/* Inline notes field with auto-save on blur       */
+/* ═══════════════════════════════════════════════ */
+function LeadNotesField({ leadId, userId, initial }: { leadId: string; userId: string; initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [baseline, setBaseline] = useState(initial);
+  useEffect(() => { setValue(initial); setBaseline(initial); }, [initial, leadId]);
+
+  const save = async () => {
+    if (!userId || value === baseline) return;
+    setSaving(true);
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ notes: value }).eq("id", leadId).eq("user_id", userId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" });
+      return;
+    }
+    setBaseline(value);
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1200);
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Call notes</span>
+        {saving ? (
+          <span className="text-[10px] text-muted-foreground">Saving…</span>
+        ) : savedFlash ? (
+          <span className="text-[10px]" style={{ color: "hsl(142,72%,42%)" }}>Saved ✓</span>
+        ) : null}
+      </div>
+      <Textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        placeholder="Add notes from this call…"
+        className="min-h-[44px] text-xs resize-y bg-background/40"
+      />
     </div>
   );
 }
