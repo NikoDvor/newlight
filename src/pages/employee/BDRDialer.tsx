@@ -54,8 +54,8 @@ function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) =
         setBaseline(value);
       }}
       placeholder="Add notes…"
-      rows={1}
-      className="w-full bg-transparent text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[28px]"
+      rows={3}
+      className="w-full bg-transparent text-white text-xs px-2 py-2 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[64px] leading-snug"
       style={{ background: value ? "hsla(211,96%,56%,.06)" : "hsla(0,0%,100%,.02)" }}
     />
   );
