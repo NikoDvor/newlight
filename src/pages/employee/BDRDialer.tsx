@@ -57,7 +57,7 @@ export default function BDRDialer() {
       setUserId(user.id);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
