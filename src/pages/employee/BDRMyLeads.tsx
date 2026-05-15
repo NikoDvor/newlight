@@ -574,6 +574,11 @@ export default function BDRMyLeads() {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    {!selectMode && (
+                      <div className="px-4 pb-3 -mt-1" onClick={(e) => e.stopPropagation()}>
+                        <LeadNotesField leadId={lead.id} userId={user?.id || ""} initial={lead.notes || ""} />
+                      </div>
+                    )}
                   </div>
                 );
               })}
