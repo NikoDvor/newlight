@@ -282,6 +282,7 @@ export default function BDRDialer() {
                 <th className="px-3 py-2 font-semibold border-b border-white/10">Phone</th>
                 <th className="px-3 py-2 font-semibold border-b border-white/10 text-center w-16">Called</th>
                 <th className="px-3 py-2 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10 w-[240px]">Notes</th>
               </tr>
             </thead>
             <tbody>
