@@ -120,7 +120,9 @@ export default function BDRMyLeads() {
     setLeads((data || []).map((d: any) => ({ ...d, outcome_history: d.outcome_history || [] })));
     const { data: calls } = await (supabase as any).from("bdr_call_outcomes")
       .select("lead_id").eq("bdr_user_id", user.id);
-    setCalledLeadIds(new Set((calls || []).map((c: any) => c.lead_id).filter(Boolean)));
+    const calledSet = new Set<string>((calls || []).map((c: any) => c.lead_id).filter(Boolean));
+    (data || []).forEach((d: any) => { if (d.called) calledSet.add(d.id); });
+    setCalledLeadIds(calledSet);
     setLoading(false);
   }, [user?.id]);
 

@@ -171,7 +171,16 @@ export default function BDRDialer() {
                 <a
                   href={lead.phone ? `tel:${lead.phone}` : undefined}
                   aria-disabled={!lead.phone}
-                  onClick={(e) => { if (!lead.phone) e.preventDefault(); }}
+                  onClick={(e) => {
+                    if (!lead.phone) { e.preventDefault(); return; }
+                    // Fire-and-forget: mark lead as called the moment the call is initiated
+                    (supabase as any)
+                      .from("nl_bdr_leads")
+                      .update({ called: true })
+                      .eq("id", lead.id)
+                      .eq("user_id", userId)
+                      .then(() => {});
+                  }}
                   className={`inline-flex items-center justify-center h-12 w-12 rounded-full transition-colors ${
                     lead.phone ? "bg-emerald-500 hover:bg-emerald-600" : "bg-white/10 cursor-not-allowed"
                   }`}

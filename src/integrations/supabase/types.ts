@@ -5814,6 +5814,7 @@ export type Database = {
       nl_bdr_leads: {
         Row: {
           business_name: string
+          called: boolean
           city: string | null
           client_id: string | null
           created_at: string
@@ -5836,6 +5837,7 @@ export type Database = {
         }
         Insert: {
           business_name: string
+          called?: boolean
           city?: string | null
           client_id?: string | null
           created_at?: string
@@ -5858,6 +5860,7 @@ export type Database = {
         }
         Update: {
           business_name?: string
+          called?: boolean
           city?: string | null
           client_id?: string | null
           created_at?: string
