@@ -5830,6 +5830,7 @@ export type Database = {
           outcome_history: Json
           owner_name: string | null
           phone: string | null
+          pipeline_stage: string | null
           status: string
           updated_at: string
           user_id: string
@@ -5853,6 +5854,7 @@ export type Database = {
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
+          pipeline_stage?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -5876,6 +5878,7 @@ export type Database = {
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
+          pipeline_stage?: string | null
           status?: string
           updated_at?: string
           user_id?: string
