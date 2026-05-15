@@ -136,6 +136,15 @@ export default function BDRDialer() {
     if (error) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next } : l));
       toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (next) {
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        notes: lead.notes,
+      }).catch(() => {});
     }
   }, [userId]);
 
