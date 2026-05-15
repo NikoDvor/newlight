@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2 } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -151,6 +151,7 @@ export default function BDRMyLeads() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -439,6 +440,7 @@ export default function BDRMyLeads() {
           <p className="text-sm text-muted-foreground">{dateLabel} · {todayCount} leads today · {leads.length} total</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
           <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
           <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
         </div>
@@ -738,6 +740,7 @@ export default function BDRMyLeads() {
 
       {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
+      <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
     </div>
@@ -1129,6 +1132,93 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
           <Button onClick={handleSave} disabled={!form.business_name.trim() || saving} className="w-full">
             {saving ? "Saving..." : "Save Lead"}
           </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ──────────────────────────────────────────────── */
+/* How to Import Leads Modal                         */
+/* ──────────────────────────────────────────────── */
+function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const mobileSteps = [
+    "Download the Orion Browser app from the App Store",
+    "Open Orion → tap the three-dot menu (···) in the bottom right",
+    "Tap Settings → scroll down to Advanced → enable Chrome Extensions toggle",
+    "Go back to the menu → tap Extensions → tap the + button → search \"Instant Data Scraper\" → install it",
+    "In Orion, go to maps.google.com in the address bar",
+    "Search your target niche and city (e.g. \"hair salons Ojai CA\")",
+    "Let the results fully load and scroll through the entire list",
+    "Tap the three-dot menu (···) → tap Instant Data Scraper",
+    "If it says \"doesn't support this site\" — make sure you are on the Google Maps results page with a list visible, not a blank page",
+    "When the scraper detects the table, tap Start Crawling",
+    "Tap XLSX to download the file to your phone",
+    "Come back to My Leads → tap Import → name your list → paste or upload the data → tap Parse Leads",
+  ];
+  const desktopSteps = [
+    "Open Google Chrome on your computer",
+    "Go to chrome.google.com/webstore",
+    "Search \"Instant Data Scraper\" → click Add to Chrome → confirm install",
+    "Go to maps.google.com",
+    "Search your target niche and city (e.g. \"med spas Santa Barbara CA\")",
+    "Scroll through the full results list so all listings load",
+    "Click the Instant Data Scraper icon in your Chrome toolbar (puzzle piece icon top right → find it in your extensions)",
+    "The scraper will auto-detect the data table — click Start Crawling",
+    "Let it run through all pages",
+    "Click Download CSV or XLSX when complete",
+    "Come back to My Leads → tap Import → name your list → paste the data → tap Parse Leads",
+  ];
+  const proTips = [
+    "Always search by niche + city for best results (e.g. \"chiropractors Santa Barbara CA\")",
+    "Scroll through ALL results before scraping so everything loads",
+    "Desktop gives cleaner data than mobile",
+    "Run the master research prompt in a separate Claude chat with web search ON to find owner names and phone numbers before importing",
+  ];
+
+  const Section = ({ title, badge, steps }: { title: string; badge: string; steps: string[] }) => (
+    <div className="rounded-xl p-4" style={{ background: "hsla(215,35%,10%,.5)", border: "1px solid hsla(211,80%,60%,.15)" }}>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              style={{ background: "hsla(211,96%,56%,.15)", color: "hsl(211,96%,70%)" }}>{badge}</span>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+      <ol className="space-y-2">
+        {steps.map((s, i) => (
+          <li key={i} className="flex gap-3 text-xs leading-relaxed text-foreground/85">
+            <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                  style={{ background: "hsla(211,96%,56%,.15)", color: "hsl(211,96%,70%)" }}>{i + 1}</span>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>How to Import Leads</DialogTitle>
+          <DialogDescription>Step-by-step guide to scrape and import leads from Google Maps.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Section title="Mobile (iPhone via Orion Browser)" badge="Mobile" steps={mobileSteps} />
+          <Section title="Desktop (Chrome on laptop/computer)" badge="Desktop" steps={desktopSteps} />
+          <div className="rounded-xl p-4" style={{ background: "hsla(38,92%,55%,.08)", border: "1px solid hsla(38,92%,55%,.25)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={{ background: "hsla(38,92%,55%,.2)", color: "hsl(38,95%,70%)" }}>Pro Tips</span>
+            </div>
+            <ul className="space-y-2">
+              {proTips.map((t, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-foreground/85">
+                  <span style={{ color: "hsl(38,95%,65%)" }}>•</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
