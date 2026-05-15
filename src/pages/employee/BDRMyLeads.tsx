@@ -272,6 +272,27 @@ export default function BDRMyLeads() {
     toast({ title: "Lead deleted", description: lead.business_name });
   };
 
+  const toggleCalled = async (lead: BdrLead) => {
+    if (!user?.id) return;
+    const wasCalled = calledLeadIds.has(lead.id);
+    const next = !wasCalled;
+    setCalledLeadIds(prev => {
+      const n = new Set(prev);
+      if (next) n.add(lead.id); else n.delete(lead.id);
+      return n;
+    });
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ called: next }).eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      setCalledLeadIds(prev => {
+        const n = new Set(prev);
+        if (wasCalled) n.add(lead.id); else n.delete(lead.id);
+        return n;
+      });
+      toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+    }
+  };
+
   const deleteLeadsByIds = async (ids: string[], successMsg: string) => {
     if (!user?.id || ids.length === 0) return;
     const dealIds = leads.filter(l => ids.includes(l.id) && l.crm_deal_id).map(l => l.crm_deal_id as string);
