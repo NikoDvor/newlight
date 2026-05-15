@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { logDialerEvent } from "@/lib/bdrCalendar";
 
 interface Lead {
   id: string;
@@ -135,6 +136,15 @@ export default function BDRDialer() {
     if (error) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next } : l));
       toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (next) {
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        notes: lead.notes,
+      }).catch(() => {});
     }
   }, [userId]);
 
@@ -182,6 +192,15 @@ export default function BDRDialer() {
       if (!lead.called) leadPatch.called = true;
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+      // Mirror to BDR personal calendar (non-blocking)
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        outcome: def.label,
+        stage: pipelineStage,
+        notes: lead.notes,
+      }).catch(() => {});
       if (def.objection) {
         const { count } = await (supabase as any)
           .from("bdr_call_outcomes")
