@@ -174,12 +174,13 @@ export default function BDRMyLeads() {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
-  const localDateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const todayStr = localDateKey(new Date());
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const tomorrowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime();
   const isCreatedToday = (createdAt: string) => {
-    const d = new Date(createdAt);
-    if (isNaN(d.getTime())) return false;
-    return localDateKey(d) === todayStr;
+    const createdTime = new Date(createdAt).getTime();
+    if (Number.isNaN(createdTime)) return false;
+    return createdTime >= todayStart && createdTime < tomorrowStart;
   };
   const todayCount = leads.filter(l => isCreatedToday(l.created_at)).length;
 
@@ -210,7 +211,7 @@ export default function BDRMyLeads() {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     return list;
-  }, [listScopedLeads, filter, search, todayStr]);
+  }, [listScopedLeads, filter, search, todayStart, tomorrowStart]);
 
   const stageCounts = useMemo(() => {
     const counts: Record<PipelineStageKey, number> = { cold: 0, warm: 0, hot: 0, won: 0 };
