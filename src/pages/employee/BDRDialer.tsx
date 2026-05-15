@@ -117,6 +117,19 @@ export default function BDRDialer() {
     }
   }, [userId]);
 
+  const saveNotes = useCallback(async (lead: Lead, value: string) => {
+    if (!userId) return;
+    if ((lead.notes || "") === value) return;
+    const prev = lead.notes;
+    setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: value } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ notes: value }).eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: prev } : l));
+      toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" });
+    }
+  }, [userId]);
+
   const setOutcomeFor = useCallback(async (lead: Lead, label: string) => {
     if (!userId || !label) return;
     const def = OUTCOMES.find(o => o.label === label);
