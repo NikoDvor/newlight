@@ -136,14 +136,10 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
   closed_lost: { label: "Closed Lost", bg: "hsla(0,0%,50%,.15)",    text: "hsl(0,0%,60%)" },
 };
 
-const FILTER_TABS = [
+const FILTER_TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "today", label: "Today" },
-  { key: "new_lead", label: "New Lead" },
-  { key: "contacted", label: "Contacted" },
-  { key: "appointment_booked", label: "Booked" },
-  { key: "closed_won", label: "Won" },
-  { key: "closed_lost", label: "Lost" },
+  ...PIPELINE_STAGES.map(s => ({ key: `stage:${s.key}`, label: s.label })),
 ];
 
 /* ─── page ─── */
