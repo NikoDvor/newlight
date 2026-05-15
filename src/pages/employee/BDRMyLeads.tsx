@@ -292,8 +292,10 @@ export default function BDRMyLeads() {
     const entry: OutcomeEntry = { label: outcome.label, timestamp: new Date().toISOString(), ...(note ? { note } : {}) };
     const newHistory = [...(lead.outcome_history || []), entry];
 
+    const newStage = pipelineStageFromOutcome(outcome.label) ?? derivePipelineStage({ ...lead, outcome_history: newHistory });
     await (supabase as any).from("nl_bdr_leads").update({
       status: outcome.status, outcome_history: newHistory,
+      pipeline_stage: newStage,
       notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
     }).eq("id", lead.id);
 
