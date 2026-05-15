@@ -57,6 +57,7 @@ export default function BDRCalendar() {
   const [showSettings, setShowSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
 
   useEffect(() => { (async () => {
     const cal = await ensureBdrCalendar();
