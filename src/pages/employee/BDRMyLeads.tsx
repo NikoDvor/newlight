@@ -469,7 +469,51 @@ export default function BDRMyLeads() {
             ))}
           </div>
 
-          {/* List pages */}
+          {/* Pipeline strip */}
+          <div className="rounded-2xl p-3" style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pipeline</p>
+              <p className="text-[10px] text-muted-foreground">{listScopedLeads.length} total</p>
+            </div>
+            {(() => {
+              const total = Math.max(1, listScopedLeads.length);
+              return (
+                <>
+                  <div className="flex h-2 w-full rounded-full overflow-hidden" style={{ background: "hsla(0,0%,100%,.04)" }}>
+                    {PIPELINE_STAGES.map(s => {
+                      const pct = (stageCounts[s.key] / total) * 100;
+                      if (pct === 0) return null;
+                      return <div key={s.key} title={`${s.label}: ${stageCounts[s.key]}`} style={{ width: `${pct}%`, background: s.bar }} />;
+                    })}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {PIPELINE_STAGES.map(s => {
+                      const active = filter === `stage:${s.key}`;
+                      return (
+                        <button
+                          key={s.key}
+                          onClick={() => setFilter(active ? "all" : `stage:${s.key}`)}
+                          className="text-left rounded-lg px-2 py-1.5 transition-all"
+                          style={{
+                            background: active ? s.bg : "hsla(0,0%,100%,.02)",
+                            border: `1px solid ${active ? s.border : "transparent"}`,
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.bar }} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wide truncate" style={{ color: s.text }}>{s.label}</span>
+                          </div>
+                          <p className="text-base font-bold text-foreground leading-tight mt-0.5">{stageCounts[s.key]}</p>
+                          <p className="text-[9px] text-muted-foreground leading-tight truncate">{s.description}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
           {lists.length > 0 && (
             <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
               <button onClick={() => setActiveList("__all__")}
