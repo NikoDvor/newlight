@@ -15,6 +15,7 @@ interface Lead {
   niche: string | null;
   list_name: string | null;
   called: boolean | null;
+  notes: string | null;
 }
 
 interface OutcomeRow {
