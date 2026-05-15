@@ -294,16 +294,16 @@ export default function BDRDialer() {
       {/* Spreadsheet */}
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
         <div className="overflow-auto max-h-[calc(100vh-280px)]">
-          <table className="w-full text-xs border-collapse">
+          <table className="w-full text-sm border-collapse" style={{ minWidth: 980 }}>
             <thead className="sticky top-0 z-10" style={{ background: "hsla(215,35%,12%,.95)", backdropFilter: "blur(8px)" }}>
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
-                <th className="px-3 py-2 font-semibold border-b border-white/10 w-10">#</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10">Business Name</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10">Owner</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10">Phone</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10 text-center w-16">Called</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
-                <th className="px-3 py-2 font-semibold border-b border-white/10 w-[240px]">Notes</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10">#</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[220px]">Business Name</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[320px]">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -314,11 +314,11 @@ export default function BDRDialer() {
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 return (
-                  <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors">
-                    <td className="px-3 py-1.5 border-b border-white/5 text-white/40 text-[11px]">{i + 1}</td>
-                    <td className="px-3 py-1.5 border-b border-white/5 text-white font-medium truncate max-w-[200px]">{lead.business_name}</td>
-                    <td className="px-3 py-1.5 border-b border-white/5 text-white/70 truncate max-w-[160px]">{lead.owner_name || "—"}</td>
-                    <td className="px-3 py-1.5 border-b border-white/5">
+                  <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors align-top">
+                    <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px]">{i + 1}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug">{lead.business_name}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">{lead.owner_name || "—"}</td>
+                    <td className="px-3 py-3 border-b border-white/5 break-words">
                       {lead.phone ? (
                         <a href={`tel:${lead.phone}`}
                           onClick={() => {
@@ -330,18 +330,18 @@ export default function BDRDialer() {
                               .eq("user_id", userId)
                               .then(() => {});
                           }}
-                          className="font-mono inline-flex items-center gap-1 hover:underline" style={{ color: "hsl(211,96%,68%)" }}>
+                          className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                           <Phone className="h-3 w-3" /> {lead.phone}
                         </a>
                       ) : <span className="text-white/30">—</span>}
                     </td>
-                    <td className="px-3 py-1.5 border-b border-white/5 text-center">
+                    <td className="px-3 py-3 border-b border-white/5 text-center">
                       <input
                         type="checkbox"
                         checked={!!lead.called}
                         onChange={() => toggleCalled(lead)}
                         aria-label={`Mark ${lead.business_name} as called`}
-                        className="h-4 w-4 rounded cursor-pointer accent-[hsl(142,72%,42%)]"
+                        className="h-5 w-5 rounded cursor-pointer accent-[hsl(142,72%,42%)]"
                       />
                     </td>
                     <td className="px-3 py-1.5 border-b border-white/5">
