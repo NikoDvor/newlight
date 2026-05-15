@@ -331,7 +331,7 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
         {days.map((d, i) => {
           const isToday = sameDay(d, today);
           return (
-            <div key={i} className="px-1 py-2 text-center font-semibold border-l border-white/[0.06]">
+            <div key={i} className="min-w-0 px-1 py-2 text-center font-semibold border-l border-white/[0.06]">
               <div className="text-white/55">{["S","M","T","W","T","F","S"][d.getDay()]}</div>
               <div className="mt-1 flex justify-center">
                 <span
