@@ -28,7 +28,56 @@ interface BdrLead {
   objection_category: string | null;
   has_booking_system: boolean | null;
   list_name: string | null;
+  pipeline_stage: string | null;
   created_at: string;
+}
+
+/* ─── pipeline stages ─── */
+type PipelineStageKey = "cold" | "warm" | "hot" | "won";
+interface PipelineStageDef {
+  key: PipelineStageKey;
+  label: string;
+  description: string;
+  bg: string;
+  text: string;
+  border: string;
+  bar: string;
+}
+const PIPELINE_STAGES: PipelineStageDef[] = [
+  { key: "cold", label: "Cold Lead",            description: "New contact, not yet reached",
+    bg: "hsla(211,80%,60%,.15)", text: "hsl(211,90%,70%)", border: "hsla(211,80%,60%,.4)", bar: "hsl(211,90%,60%)" },
+  { key: "warm", label: "Contacted / Warm Lead", description: "Reached owner, showed interest",
+    bg: "hsla(38,92%,55%,.15)",  text: "hsl(38,95%,65%)",  border: "hsla(38,92%,55%,.4)",  bar: "hsl(38,92%,55%)" },
+  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Requested callback or follow up",
+    bg: "hsla(14,90%,58%,.15)",  text: "hsl(14,95%,68%)",  border: "hsla(14,90%,58%,.4)",  bar: "hsl(14,90%,58%)" },
+  { key: "won",  label: "Won",                   description: "Appointment booked or deal closed",
+    bg: "hsla(142,72%,42%,.18)", text: "hsl(142,72%,55%)", border: "hsla(142,72%,42%,.5)", bar: "hsl(142,72%,42%)" },
+];
+const STAGE_BY_KEY: Record<PipelineStageKey, PipelineStageDef> =
+  PIPELINE_STAGES.reduce((acc, s) => { acc[s.key] = s; return acc; }, {} as any);
+
+export function pipelineStageFromOutcome(label: string | null | undefined): PipelineStageKey | null {
+  if (!label) return null;
+  const l = label.toLowerCase();
+  if (l.includes("won") || l.includes("booked") || l.includes("closed on the spot")) return "won";
+  if (l.includes("call back") || l.includes("callback") || l.includes("follow up") ||
+      l.includes("follow-up") || l.includes("owner wasn't") || l.includes("asked for info") ||
+      l.includes("left owner")) return "hot";
+  if (l === "lost") return "cold";
+  // objections / any other contacted outcome
+  return "warm";
+}
+
+function derivePipelineStage(lead: BdrLead): PipelineStageKey {
+  if (lead.pipeline_stage && (STAGE_BY_KEY as any)[lead.pipeline_stage]) {
+    return lead.pipeline_stage as PipelineStageKey;
+  }
+  const last = lead.outcome_history?.[lead.outcome_history.length - 1]?.label;
+  const fromOutcome = pipelineStageFromOutcome(last);
+  if (fromOutcome) return fromOutcome;
+  if (lead.status === "closed_won" || lead.status === "appointment_booked") return "won";
+  if (lead.status === "contacted") return "warm";
+  return "cold";
 }
 
 /* ─── outcome config ─── */
