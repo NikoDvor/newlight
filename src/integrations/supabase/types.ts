@@ -841,7 +841,10 @@ export type Database = {
       bdr_calendars: {
         Row: {
           availability: Json
+          booking_active: boolean
+          booking_description: string | null
           booking_slug: string | null
+          booking_title: string | null
           created_at: string
           id: string
           name: string
@@ -851,7 +854,10 @@ export type Database = {
         }
         Insert: {
           availability?: Json
+          booking_active?: boolean
+          booking_description?: string | null
           booking_slug?: string | null
+          booking_title?: string | null
           created_at?: string
           id?: string
           name: string
@@ -861,7 +867,10 @@ export type Database = {
         }
         Update: {
           availability?: Json
+          booking_active?: boolean
+          booking_description?: string | null
           booking_slug?: string | null
+          booking_title?: string | null
           created_at?: string
           id?: string
           name?: string
