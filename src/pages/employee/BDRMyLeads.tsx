@@ -272,6 +272,27 @@ export default function BDRMyLeads() {
     toast({ title: "Lead deleted", description: lead.business_name });
   };
 
+  const toggleCalled = async (lead: BdrLead) => {
+    if (!user?.id) return;
+    const wasCalled = calledLeadIds.has(lead.id);
+    const next = !wasCalled;
+    setCalledLeadIds(prev => {
+      const n = new Set(prev);
+      if (next) n.add(lead.id); else n.delete(lead.id);
+      return n;
+    });
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ called: next }).eq("id", lead.id).eq("user_id", user.id);
+    if (error) {
+      setCalledLeadIds(prev => {
+        const n = new Set(prev);
+        if (wasCalled) n.add(lead.id); else n.delete(lead.id);
+        return n;
+      });
+      toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+    }
+  };
+
   const deleteLeadsByIds = async (ids: string[], successMsg: string) => {
     if (!user?.id || ids.length === 0) return;
     const dealIds = leads.filter(l => ids.includes(l.id) && l.crm_deal_id).map(l => l.crm_deal_id as string);
@@ -488,10 +509,28 @@ export default function BDRMyLeads() {
                           {lead.has_booking_system === false && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No Booking System</span>
                           )}
-                          {calledLeadIds.has(lead.id) && (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold flex items-center gap-1" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>
-                              <CheckCircle2 className="h-3 w-3" /> Called
-                            </span>
+                          {!selectMode && (
+                            calledLeadIds.has(lead.id) ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleCalled(lead); }}
+                                aria-pressed="true"
+                                title="Click to mark as not called"
+                                className="rounded-full px-2 py-0.5 text-[10px] font-bold flex items-center gap-1 transition-opacity hover:opacity-80"
+                                style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}
+                              >
+                                <CheckCircle2 className="h-3 w-3" /> Called
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleCalled(lead); }}
+                                aria-pressed="false"
+                                title="Mark as called"
+                                className="rounded-full px-2 py-0.5 text-[10px] font-medium flex items-center gap-1 transition-colors hover:text-foreground"
+                                style={{ background: "hsla(0,0%,50%,.10)", color: "hsl(0,0%,65%)", border: "1px solid hsla(0,0%,50%,.25)" }}
+                              >
+                                <span className="h-3 w-3 inline-block rounded-sm border border-current" /> Mark Called
+                              </button>
+                            )
                           )}
                           {lead.list_name && activeList === "__all__" && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: "hsla(211,96%,56%,.08)", color: "hsl(211,96%,56%)" }}>{lead.list_name}</span>
