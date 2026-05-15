@@ -337,6 +337,13 @@ export default function BDRDialer() {
                         ))}
                       </select>
                     </td>
+                    <td className="px-3 py-1.5 border-b border-white/5">
+                      <NotesCell
+                        key={lead.id + ":" + (lead.notes || "")}
+                        initial={lead.notes || ""}
+                        onSave={(v) => saveNotes(lead, v)}
+                      />
+                    </td>
                   </tr>
                 );
               })}
