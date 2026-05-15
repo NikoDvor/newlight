@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export default function BDRCalendar() {
   const [showAdd, setShowAdd] = useState(false);
   const [addPrefill, setAddPrefill] = useState<Date | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
 
@@ -127,6 +128,11 @@ export default function BDRCalendar() {
             className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
             <Plus className="h-4 w-4 mr-1" /> Add Event
           </Button>
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
+            aria-label="Calendar settings"
+            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5">
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -180,6 +186,14 @@ export default function BDRCalendar() {
         onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
+
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        calendar={calendar}
+        bookingUrl={bookingUrl}
+        onSaved={(updated) => setCalendar(updated)}
+      />
     </div>
   );
 }
