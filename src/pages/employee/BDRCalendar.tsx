@@ -22,10 +22,16 @@ interface Event {
 }
 
 const SOURCE_TONE: Record<string, string> = {
-  manual: "hsl(211,96%,60%)",
-  dialer: "hsl(38,92%,55%)",
-  booking_form: "hsl(142,72%,42%)",
-  sdr_mirror: "hsl(280,80%,65%)",
+  dialer: "hsl(211,96%,62%)",       // blue – call logs
+  manual: "hsl(268,82%,68%)",       // purple – manual blocks
+  booking_form: "hsl(146,68%,48%)", // green – booked appts
+  sdr_mirror: "hsl(38,92%,58%)",    // amber – mirrored
+};
+const SOURCE_LABEL: Record<string, string> = {
+  dialer: "Dialer",
+  manual: "Manual",
+  booking_form: "Booking",
+  sdr_mirror: "SDR",
 };
 
 function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
