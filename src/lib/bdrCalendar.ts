@@ -7,6 +7,9 @@ export interface BdrCalendar {
   availability: Record<string, { enabled: boolean; start: string; end: string }>;
   booking_slug: string | null;
   timezone: string;
+  booking_title: string | null;
+  booking_description: string | null;
+  booking_active: boolean;
 }
 
 function slugify(input: string) {
