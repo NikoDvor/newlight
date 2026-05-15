@@ -108,6 +108,7 @@ export default function BDRCalendar() {
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
+    setSelectedDay(d);
     if (d.getHours() === 0) d.setHours(9, 0, 0, 0);
     setAddPrefill(d);
     setShowAdd(true);
