@@ -20,7 +20,6 @@ const navItems = [
   { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
   { title: "Dialer", url: "/employee/dialer", icon: Phone },
   { title: "Training Center", url: "/employee/training", icon: GraduationCap },
-  { title: "My Leads/Pipeline", url: "/employee/pipeline", icon: Target },
   { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
   { title: "My Profile", url: "/employee/profile", icon: UserCircle },
 ];
