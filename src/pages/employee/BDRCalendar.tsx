@@ -22,10 +22,16 @@ interface Event {
 }
 
 const SOURCE_TONE: Record<string, string> = {
-  manual: "hsl(211,96%,60%)",
-  dialer: "hsl(38,92%,55%)",
-  booking_form: "hsl(142,72%,42%)",
-  sdr_mirror: "hsl(280,80%,65%)",
+  dialer: "hsl(211,96%,62%)",       // blue – call logs
+  manual: "hsl(268,82%,68%)",       // purple – manual blocks
+  booking_form: "hsl(146,68%,48%)", // green – booked appts
+  sdr_mirror: "hsl(38,92%,58%)",    // amber – mirrored
+};
+const SOURCE_LABEL: Record<string, string> = {
+  dialer: "Dialer",
+  manual: "Manual",
+  booking_form: "Booking",
+  sdr_mirror: "SDR",
 };
 
 function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
@@ -51,6 +57,7 @@ export default function BDRCalendar() {
   const [showSettings, setShowSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
 
   useEffect(() => { (async () => {
     const cal = await ensureBdrCalendar();
@@ -101,6 +108,7 @@ export default function BDRCalendar() {
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
+    setSelectedDay(d);
     if (d.getHours() === 0) d.setHours(9, 0, 0, 0);
     setAddPrefill(d);
     setShowAdd(true);
@@ -115,61 +123,75 @@ export default function BDRCalendar() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{calendar.name}</h1>
-          <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowShare(true)} className="border-white/15 text-white/80">
-            <Link2 className="h-4 w-4 mr-1" /> Booking Link
-          </Button>
-          <Button size="sm" onClick={() => { setAddPrefill(null); setShowAdd(true); }}
-            className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-            <Plus className="h-4 w-4 mr-1" /> Add Event
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
-            aria-label="Calendar settings"
-            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Title */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{calendar.name}</h1>
+        <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 p-2 rounded-lg" style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70" onClick={() => {
+      {/* Action toolbar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button variant="outline" size="sm" onClick={() => setShowShare(true)}
+          className="border-white/15 bg-white/[0.03] text-white/85 hover:bg-white/[0.06] h-9">
+          <Link2 className="h-4 w-4 mr-1.5" /> Booking Link
+        </Button>
+        <Button size="sm" onClick={() => { setAddPrefill(selectedDay); setShowAdd(true); }}
+          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] h-9">
+          <Plus className="h-4 w-4 mr-1.5" /> Add Event
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
+          aria-label="Calendar settings"
+          className="h-9 w-9 ml-auto text-white/70 hover:text-white hover:bg-white/5 rounded-lg border border-white/10">
+          <Settings className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Nav toolbar */}
+      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg"
+        style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
+        <div className="flex items-center gap-0.5 min-w-0">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/5" onClick={() => {
             const d = new Date(cursor);
             if (view === "month") d.setMonth(d.getMonth() - 1); else d.setDate(d.getDate() - 7);
             setCursor(d);
           }}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm" className="text-white/70 text-xs" onClick={() => setCursor(new Date())}>Today</Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70" onClick={() => {
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-white/70 text-xs hover:text-white hover:bg-white/5" onClick={() => { const t = new Date(); setCursor(t); setSelectedDay(t); }}>Today</Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/5" onClick={() => {
             const d = new Date(cursor);
             if (view === "month") d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + 7);
             setCursor(d);
           }}><ChevronRight className="h-4 w-4" /></Button>
-          <span className="text-white text-sm font-semibold ml-2">
+          <span className="text-white text-sm font-semibold ml-2 truncate">
             {view === "month"
               ? cursor.toLocaleDateString([], { month: "long", year: "numeric" })
               : `${startOfWeek(cursor).toLocaleDateString([], { month: "short", day: "numeric" })} – ${addDays(startOfWeek(cursor),6).toLocaleDateString([], { month: "short", day: "numeric" })}`}
           </span>
         </div>
-        <div className="flex rounded-md overflow-hidden border border-white/10">
+        <div className="flex rounded-md overflow-hidden border border-white/10 shrink-0">
           {(["month","week"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
-              className="px-3 py-1.5 text-xs font-medium capitalize"
+              className="px-2.5 py-1 text-[11px] font-semibold capitalize transition-colors"
               style={{
-                background: view === v ? "hsla(211,96%,56%,.15)" : "transparent",
-                color: view === v ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
+                background: view === v ? "hsla(211,96%,56%,.18)" : "transparent",
+                color: view === v ? "hsl(211,96%,75%)" : "hsl(0,0%,65%)",
               }}>{v}</button>
           ))}
         </div>
       </div>
 
+      {/* Legend */}
+      <div className="flex items-center gap-3 flex-wrap text-[10px] text-white/55">
+        {Object.entries(SOURCE_LABEL).map(([k, label]) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: SOURCE_TONE[k] }} />
+            {label}
+          </span>
+        ))}
+      </div>
+
       {view === "month" ? (
-        <MonthView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
+        <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
+          onCellClick={(d) => { setSelectedDay(d); onCellClick(d); }} onEventClick={setSelected} />
       ) : (
         <WeekView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
       )}
@@ -198,8 +220,8 @@ export default function BDRCalendar() {
   );
 }
 
-function MonthView({ cursor, eventsByDay, onCellClick, onEventClick }: {
-  cursor: Date; eventsByDay: Map<string, Event[]>; onCellClick: (d: Date) => void; onEventClick: (e: Event) => void;
+function MonthView({ cursor, eventsByDay, selectedDay, onCellClick, onEventClick }: {
+  cursor: Date; eventsByDay: Map<string, Event[]>; selectedDay: Date; onCellClick: (d: Date) => void; onEventClick: (e: Event) => void;
 }) {
   const first = startOfMonth(cursor);
   const last = endOfMonth(cursor);
@@ -212,34 +234,54 @@ function MonthView({ cursor, eventsByDay, onCellClick, onEventClick }: {
   }
   const today = new Date();
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)" }}>
-      <div className="grid grid-cols-7 text-[10px] uppercase tracking-wider text-white/55" style={{ background: "hsl(215,35%,12%)" }}>
-        {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => (
-          <div key={d} className="px-2 py-2 text-center font-semibold">{d}</div>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
+      <div className="grid grid-cols-7 text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
+        {["S","M","T","W","T","F","S"].map((d, i) => (
+          <div key={i} className="px-2 py-2.5 text-center font-semibold">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7" style={{ background: "hsla(215,35%,8%,.8)" }}>
+      <div className="grid grid-cols-7">
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
           const dayEvents = eventsByDay.get(key) || [];
           const isToday = sameDay(d, today);
+          const isSelected = sameDay(d, selectedDay);
           return (
             <button key={i} onClick={() => onCellClick(d)}
-              className="text-left border-b border-r border-white/5 p-1.5 min-h-[80px] hover:bg-white/[0.03] transition-colors"
-              style={{ opacity: inMonth ? 1 : 0.35 }}>
+              className="text-left border-b border-r border-white/[0.06] p-1.5 min-h-[92px] sm:min-h-[110px] transition-colors relative"
+              style={{
+                opacity: inMonth ? 1 : 0.3,
+                background: isSelected && !isToday ? "hsla(211,96%,56%,.08)" : "transparent",
+                boxShadow: isSelected ? "inset 0 0 0 1px hsla(211,96%,60%,.45)" : undefined,
+              }}>
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs ${isToday ? "text-[hsl(211,96%,72%)] font-bold" : "text-white/70"}`}>{d.getDate()}</span>
+                <span
+                  className={`inline-flex items-center justify-center text-[11px] font-semibold ${isToday ? "text-white" : "text-white/75"}`}
+                  style={isToday ? {
+                    background: "hsl(211,96%,56%)",
+                    width: 22, height: 22, borderRadius: 999,
+                    boxShadow: "0 0 12px hsla(211,96%,60%,.5)",
+                  } : { width: 22, height: 22 }}>
+                  {d.getDate()}
+                </span>
+                {dayEvents.length > 0 && (
+                  <span className="flex gap-0.5">
+                    {Array.from(new Set(dayEvents.map(e => e.source))).slice(0,3).map(s => (
+                      <span key={s} className="h-1.5 w-1.5 rounded-full" style={{ background: SOURCE_TONE[s] || "#888" }} />
+                    ))}
+                  </span>
+                )}
               </div>
               <div className="space-y-0.5">
                 {dayEvents.slice(0, 3).map(e => (
                   <div key={e.id} onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
-                    className="text-[10px] truncate px-1 py-0.5 rounded cursor-pointer"
-                    style={{ background: `${SOURCE_TONE[e.source] || "#888"}22`, color: SOURCE_TONE[e.source] || "#fff", borderLeft: `2px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
-                    {fmtTime(new Date(e.starts_at))} {e.title}
+                    className="text-[10px] leading-tight truncate px-1.5 py-0.5 rounded cursor-pointer"
+                    style={{ background: `${SOURCE_TONE[e.source] || "#888"}1f`, color: SOURCE_TONE[e.source] || "#fff", borderLeft: `2px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
+                    <span className="opacity-70 mr-1">{fmtTime(new Date(e.starts_at))}</span>{e.title}
                   </div>
                 ))}
-                {dayEvents.length > 3 && <div className="text-[9px] text-white/40 px-1">+{dayEvents.length - 3} more</div>}
+                {dayEvents.length > 3 && <div className="text-[9px] text-white/45 px-1">+{dayEvents.length - 3} more</div>}
               </div>
             </button>
           );
@@ -254,24 +296,37 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
 }) {
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7am..6pm
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am..9pm
   const today = new Date();
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)" }}>
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] text-[10px] uppercase tracking-wider text-white/55" style={{ background: "hsl(215,35%,12%)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
+      <div className="grid grid-cols-[52px_repeat(7,1fr)] text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
         <div />
-        {days.map((d, i) => (
-          <div key={i} className="px-2 py-2 text-center font-semibold">
-            <div>{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]}</div>
-            <div className={`text-sm mt-0.5 ${sameDay(d, today) ? "text-[hsl(211,96%,72%)]" : "text-white/80"}`}>{d.getDate()}</div>
-          </div>
-        ))}
+        {days.map((d, i) => {
+          const isToday = sameDay(d, today);
+          return (
+            <div key={i} className="px-1 py-2 text-center font-semibold border-l border-white/[0.06]">
+              <div className="text-white/55">{["S","M","T","W","T","F","S"][d.getDay()]}</div>
+              <div className="mt-1 flex justify-center">
+                <span
+                  className={`inline-flex items-center justify-center text-[12px] ${isToday ? "text-white font-bold" : "text-white/85 font-semibold"}`}
+                  style={isToday ? {
+                    background: "hsl(211,96%,56%)",
+                    width: 22, height: 22, borderRadius: 999,
+                    boxShadow: "0 0 12px hsla(211,96%,60%,.5)",
+                  } : undefined}>
+                  {d.getDate()}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <div className="grid grid-cols-[60px_repeat(7,1fr)]" style={{ background: "hsla(215,35%,8%,.8)" }}>
+      <div className="grid grid-cols-[52px_repeat(7,1fr)] max-h-[60vh] overflow-y-auto">
         {hours.map(h => (
           <div key={`row-${h}`} className="contents">
-            <div className="px-2 py-1 text-[10px] text-white/40 border-r border-b border-white/5">
-              {h % 12 === 0 ? 12 : h % 12}{h < 12 ? "am" : "pm"}
+            <div className="px-2 py-1 text-[10px] text-white/40 border-r border-b border-white/[0.06] text-right">
+              {h % 12 === 0 ? 12 : h % 12}{h < 12 ? "a" : "p"}
             </div>
             {days.map((d, i) => {
               const slot = new Date(d); slot.setHours(h, 0, 0, 0);
@@ -280,11 +335,11 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
               const slotEvents = dayEvents.filter(e => new Date(e.starts_at).getHours() === h);
               return (
                 <button key={`${i}-${h}`} onClick={() => onCellClick(slot)}
-                  className="border-b border-r border-white/5 p-1 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors">
+                  className="border-b border-l border-white/[0.06] p-0.5 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors">
                   {slotEvents.map(e => (
                     <div key={e.id} onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
-                      className="text-[10px] truncate px-1 py-0.5 rounded cursor-pointer mb-0.5"
-                      style={{ background: `${SOURCE_TONE[e.source] || "#888"}22`, color: SOURCE_TONE[e.source] || "#fff", borderLeft: `2px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
+                      className="text-[10px] leading-tight truncate px-1.5 py-1 rounded cursor-pointer mb-0.5"
+                      style={{ background: `${SOURCE_TONE[e.source] || "#888"}26`, color: SOURCE_TONE[e.source] || "#fff", borderLeft: `2px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
                       {e.title}
                     </div>
                   ))}
