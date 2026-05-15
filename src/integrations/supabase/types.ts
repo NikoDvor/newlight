@@ -770,6 +770,107 @@ export type Database = {
           },
         ]
       }
+      bdr_calendar_events: {
+        Row: {
+          all_day: boolean
+          calendar_id: string
+          contact_id: string | null
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          lead_id: string | null
+          metadata: Json
+          notes: string | null
+          outcome: string | null
+          source: string
+          stage: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          calendar_id: string
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          notes?: string | null
+          outcome?: string | null
+          source?: string
+          stage?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean
+          calendar_id?: string
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json
+          notes?: string | null
+          outcome?: string | null
+          source?: string
+          stage?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdr_calendar_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bdr_calendars: {
+        Row: {
+          availability: Json
+          booking_slug: string | null
+          created_at: string
+          id: string
+          name: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: Json
+          booking_slug?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: Json
+          booking_slug?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bdr_call_outcomes: {
         Row: {
           bdr_user_id: string
