@@ -40,6 +40,27 @@ const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
 
+function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
+  const [value, setValue] = useState(initial);
+  const [baseline, setBaseline] = useState(initial);
+  useEffect(() => { setValue(initial); setBaseline(initial); }, [initial]);
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={async () => {
+        if (value === baseline) return;
+        await onSave(value);
+        setBaseline(value);
+      }}
+      placeholder="Add notes…"
+      rows={1}
+      className="w-full bg-transparent text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[28px]"
+      style={{ background: value ? "hsla(211,96%,56%,.06)" : "hsla(0,0%,100%,.02)" }}
+    />
+  );
+}
+
 export default function BDRDialer() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
