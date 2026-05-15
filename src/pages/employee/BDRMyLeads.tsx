@@ -584,6 +584,7 @@ export default function BDRMyLeads() {
             <div className="space-y-2">
               {filtered.map(lead => {
                 const cfg = STATUS_CFG[lead.status] || STATUS_CFG.new_lead;
+                const stage = STAGE_BY_KEY[derivePipelineStage(lead)];
                 const history = lead.outcome_history || [];
                 const expanded = expandedId === lead.id;
                 return (
