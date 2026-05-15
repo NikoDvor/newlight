@@ -612,7 +612,31 @@ export default function BDRMyLeads() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
-                          <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                title="Tap to change pipeline stage"
+                                className="rounded-full px-2.5 py-0.5 text-[10px] font-bold inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                                style={{ background: stage.bg, color: stage.text, border: `1px solid ${stage.border}` }}
+                              >
+                                {stage.label}
+                                <ChevronDown className="h-3 w-3" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
+                              {PIPELINE_STAGES.map(s => (
+                                <DropdownMenuItem key={s.key} onClick={() => handleChangeStage(lead, s.key)}>
+                                  <span className="h-2 w-2 rounded-full mr-2" style={{ background: s.bar }} />
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-medium">{s.label}</span>
+                                    <span className="text-[10px] text-muted-foreground">{s.description}</span>
+                                  </div>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
                         </div>
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
