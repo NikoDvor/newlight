@@ -151,6 +151,7 @@ export default function BDRMyLeads() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
