@@ -154,6 +154,8 @@ import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
+import BDRCalendar from "./pages/employee/BDRCalendar";
+import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 
 const queryClient = new QueryClient();
@@ -206,6 +208,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
+              <Route path="/bdr/book/:slug" element={<BDRBookingPublic />} />
               <Route path="/get-started" element={<GetStarted />} />
               <Route path="/app/:slug" element={<AppDownload />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
@@ -290,7 +293,7 @@ const App = () => {
                 <Route path="leads" element={<BDRMyLeads />} />
                 <Route path="dialer" element={<BDRDialer />} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
-                <Route path="calendar" element={<EmployeePlaceholder title="My Calendar" />} />
+                <Route path="calendar" element={<BDRCalendar />} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
