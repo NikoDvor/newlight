@@ -1,11 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Phone, ChevronLeft, ChevronRight, Loader2, Check, BookOpen, Building2 } from "lucide-react";
+import { Loader2, BookOpen, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
 interface Lead {
@@ -15,6 +13,14 @@ interface Lead {
   phone: string | null;
   city: string | null;
   niche: string | null;
+  list_name: string | null;
+  called: boolean | null;
+}
+
+interface OutcomeRow {
+  lead_id: string | null;
+  outcome: string;
+  objection_type: string | null;
 }
 
 // Outcome -> objection_type mapping. null objection_type means non-objection outcome.
@@ -29,80 +35,136 @@ const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Stacked Objections", objection: "Stacked Objections" },
 ];
 
+const STAT_KEYS = OUTCOMES.map(o => o.label);
+
+const ALL_LIST = "__all__";
+
 export default function BDRDialer() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [index, setIndex] = useState(0);
+  const [outcomes, setOutcomes] = useState<OutcomeRow[]>([]);
+  const [latestOutcomeByLead, setLatestOutcomeByLead] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [outcome, setOutcome] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [activeList, setActiveList] = useState<string>(ALL_LIST);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
-      const { data } = await (supabase as any)
-        .from("nl_bdr_leads")
-        .select("id, business_name, owner_name, phone, city, niche")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setLeads(data || []);
+      const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
+        (supabase as any).from("nl_bdr_leads")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        (supabase as any).from("bdr_call_outcomes")
+          .select("lead_id, outcome, objection_type, created_at")
+          .eq("bdr_user_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+      setLeads(leadRows || []);
+      const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
+        lead_id: r.lead_id, outcome: r.outcome, objection_type: r.objection_type,
+      }));
+      setOutcomes(all);
+      const latest: Record<string, string> = {};
+      for (const r of (outcomeRows || [])) {
+        if (r.lead_id && !latest[r.lead_id]) latest[r.lead_id] = r.outcome;
+      }
+      setLatestOutcomeByLead(latest);
       setLoading(false);
     })();
   }, []);
 
-  const lead = leads[index];
-  const outcomeDef = useMemo(() => OUTCOMES.find(o => o.label === outcome), [outcome]);
+  const lists = useMemo(() => {
+    const map = new Map<string, number>();
+    leads.forEach(l => {
+      const name = l.list_name || "Uncategorized";
+      map.set(name, (map.get(name) || 0) + 1);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [leads]);
 
-  const goto = (delta: number) => {
-    setOutcome("");
-    setIndex(i => Math.max(0, Math.min(leads.length - 1, i + delta)));
-  };
+  const visibleLeads = useMemo(() => {
+    if (activeList === ALL_LIST) return leads;
+    return leads.filter(l => (l.list_name || "Uncategorized") === activeList);
+  }, [leads, activeList]);
 
-  const handleSubmit = useCallback(async () => {
-    if (!lead || !outcomeDef || !userId) return;
-    setSubmitting(true);
+  const stats = useMemo(() => {
+    const counts: Record<string, number> = Object.fromEntries(STAT_KEYS.map(k => [k, 0]));
+    let total = 0;
+    const visibleIds = new Set(visibleLeads.map(l => l.id));
+    for (const o of outcomes) {
+      if (activeList !== ALL_LIST && (!o.lead_id || !visibleIds.has(o.lead_id))) continue;
+      total += 1;
+      if (counts[o.outcome] !== undefined) counts[o.outcome] += 1;
+    }
+    return { total, counts };
+  }, [outcomes, visibleLeads, activeList]);
+
+  const toggleCalled = useCallback(async (lead: Lead) => {
+    if (!userId) return;
+    const next = !lead.called;
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ called: next }).eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next } : l));
+      toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
+    }
+  }, [userId]);
+
+  const setOutcomeFor = useCallback(async (lead: Lead, label: string) => {
+    if (!userId || !label) return;
+    const def = OUTCOMES.find(o => o.label === label);
+    if (!def) return;
+    setSavingId(lead.id);
+    setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
+    const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection };
+    setOutcomes(prev => [optimistic, ...prev]);
+    // Mark lead as called on outcome log
+    if (!lead.called) {
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+    }
     try {
       const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
         bdr_user_id: userId,
         lead_id: lead.id,
-        outcome: outcomeDef.label,
-        objection_type: outcomeDef.objection,
+        outcome: def.label,
+        objection_type: def.objection,
       });
       if (error) throw error;
-
-      // Threshold check for in-app unlock notification
-      if (outcomeDef.objection) {
+      if (!lead.called) {
+        await (supabase as any).from("nl_bdr_leads")
+          .update({ called: true }).eq("id", lead.id).eq("user_id", userId);
+      }
+      if (def.objection) {
         const { count } = await (supabase as any)
           .from("bdr_call_outcomes")
           .select("id", { count: "exact", head: true })
           .eq("bdr_user_id", userId)
-          .eq("objection_type", outcomeDef.objection);
+          .eq("objection_type", def.objection);
         if (count === 50) {
           toast({
             title: "🎉 Training module unlocked",
-            description: `You've logged 50 "${outcomeDef.objection}" objections. The extension training module is now unlocked in the Training Center.`,
+            description: `You've logged 50 "${def.objection}" objections. The extension training module is now unlocked.`,
           });
-        } else if (count && count < 50) {
-          toast({ title: "Outcome logged", description: `${count}/50 toward ${outcomeDef.objection} unlock.` });
         } else {
-          toast({ title: "Outcome logged" });
+          toast({ title: "Outcome logged", description: count ? `${count}/50 toward ${def.objection} unlock.` : undefined });
         }
       } else {
         toast({ title: "Outcome logged" });
       }
-
-      setOutcome("");
-      // Auto-advance to next lead if available
-      if (index < leads.length - 1) setIndex(i => i + 1);
     } catch (e: any) {
+      // Rollback optimistic
+      setOutcomes(prev => prev.filter(o => o !== optimistic));
       toast({ title: "Failed to log outcome", description: e.message, variant: "destructive" });
     } finally {
-      setSubmitting(false);
+      setSavingId(null);
     }
-  }, [lead, outcomeDef, userId, index, leads.length]);
+  }, [userId]);
 
   if (loading) {
     return (
@@ -126,104 +188,146 @@ export default function BDRDialer() {
     );
   }
 
+  const STAT_PILLS: { label: string; key: string; tone: string }[] = [
+    { label: "Total Calls", key: "__total__", tone: "hsl(211,96%,60%)" },
+    { label: "Won", key: "Won", tone: "hsl(142,72%,42%)" },
+    { label: "Lost", key: "Lost", tone: "hsl(0,72%,55%)" },
+    { label: "Gatekeeper", key: "Gatekeeper", tone: "hsl(38,92%,55%)" },
+    { label: "Not Interested / Don't See the Value", key: "Not Interested / Don't See the Value", tone: "hsl(0,0%,70%)" },
+    { label: "Need to Think / Need to Talk to Someone", key: "Need to Think / Need to Talk to Someone", tone: "hsl(48,96%,55%)" },
+    { label: "Too Expensive / What's Your Pricing", key: "Too Expensive / What's Your Pricing", tone: "hsl(280,80%,65%)" },
+    { label: "Bad Experience / Already Have Someone / In-House Team", key: "Bad Experience / Already Have Someone / In-House Team", tone: "hsl(15,80%,60%)" },
+    { label: "Stacked Objections", key: "Stacked Objections", tone: "hsl(187,80%,55%)" },
+  ];
+
   return (
-    <div className="space-y-5 max-w-xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">BDR Dialer</h1>
-          <p className="text-xs text-white/50 mt-1">Lead {index + 1} of {leads.length}</p>
+          <p className="text-xs text-white/50 mt-1">{visibleLeads.length} lead{visibleLeads.length !== 1 ? "s" : ""} {activeList !== ALL_LIST && `in "${activeList}"`}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
           <BookOpen className="h-4 w-4 mr-1" /> Training
         </Button>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={lead.id}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.18 }}
+      {/* Stats bar */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex items-stretch gap-2 min-w-max pb-1">
+          {STAT_PILLS.map(p => {
+            const count = p.key === "__total__" ? stats.total : (stats.counts[p.key] || 0);
+            return (
+              <div key={p.key}
+                className="rounded-lg px-3 py-2 flex flex-col justify-between min-w-[112px]"
+                style={{ background: "hsla(215,35%,10%,.8)", border: `1px solid ${p.tone}33` }}>
+                <span className="text-[9px] uppercase tracking-wider leading-tight text-white/55 line-clamp-2">{p.label}</span>
+                <span className="text-lg font-bold mt-1" style={{ color: p.tone }}>{count}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* List tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1">
+        <button
+          onClick={() => setActiveList(ALL_LIST)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
+          style={{
+            background: activeList === ALL_LIST ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
+            color: activeList === ALL_LIST ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
+            border: `1px solid ${activeList === ALL_LIST ? "hsla(211,96%,56%,.4)" : "hsla(211,96%,60%,.12)"}`,
+          }}
         >
-          <Card className="border-0 bg-white/[0.04] backdrop-blur-sm" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
-            <CardContent className="p-6 space-y-5">
-              <div className="flex items-start gap-3">
-                <div className="h-12 w-12 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,60%,.15)" }}>
-                  <Building2 className="h-5 w-5 text-[hsl(var(--nl-sky))]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-lg font-semibold truncate">{lead.business_name}</p>
-                  <p className="text-sm text-white/60 truncate">{lead.owner_name || "Unknown contact"}</p>
-                  {(lead.city || lead.niche) && (
-                    <p className="text-[11px] text-white/40 mt-0.5 truncate">
-                      {[lead.niche, lead.city].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                </div>
-              </div>
+          All Leads <span className="opacity-60 ml-1">{leads.length}</span>
+        </button>
+        {lists.map(([name, count]) => (
+          <button key={name}
+            onClick={() => setActiveList(name)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
+            style={{
+              background: activeList === name ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
+              color: activeList === name ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
+              border: `1px solid ${activeList === name ? "hsla(211,96%,56%,.4)" : "hsla(211,96%,60%,.12)"}`,
+            }}>
+            {name} <span className="opacity-60 ml-1">{count}</span>
+          </button>
+        ))}
+      </div>
 
-              <div className="rounded-xl bg-white/[0.04] p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Phone</p>
-                  <p className="text-white font-mono text-base">{lead.phone || "No number"}</p>
-                </div>
-                <a
-                  href={lead.phone ? `tel:${lead.phone}` : undefined}
-                  aria-disabled={!lead.phone}
-                  onClick={(e) => {
-                    if (!lead.phone) { e.preventDefault(); return; }
-                    // Fire-and-forget: mark lead as called the moment the call is initiated
-                    (supabase as any)
-                      .from("nl_bdr_leads")
-                      .update({ called: true })
-                      .eq("id", lead.id)
-                      .eq("user_id", userId)
-                      .then(() => {});
-                  }}
-                  className={`inline-flex items-center justify-center h-12 w-12 rounded-full transition-colors ${
-                    lead.phone ? "bg-emerald-500 hover:bg-emerald-600" : "bg-white/10 cursor-not-allowed"
-                  }`}
-                >
-                  <Phone className="h-5 w-5 text-white" />
-                </a>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wider text-white/50">Call outcome</label>
-                <Select value={outcome} onValueChange={setOutcome}>
-                  <SelectTrigger className="bg-white/[0.06] border-white/10 text-white">
-                    <SelectValue placeholder="Select outcome…" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[hsl(220,35%,12%)] border-white/10 text-white max-h-[60vh]">
-                    {OUTCOMES.map(o => (
-                      <SelectItem key={o.label} value={o.label} className="text-xs">
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!outcome || submitting}
-                  className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
-                >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
-                  Submit Outcome
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
-
-      <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" onClick={() => goto(-1)} disabled={index === 0} className="text-white/70">
-          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-        </Button>
-        <Button variant="ghost" onClick={() => goto(1)} disabled={index >= leads.length - 1} className="text-white/70">
-          Next <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
+      {/* Spreadsheet */}
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
+          <table className="w-full text-xs border-collapse">
+            <thead className="sticky top-0 z-10" style={{ background: "hsla(215,35%,12%,.95)", backdropFilter: "blur(8px)" }}>
+              <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
+                <th className="px-3 py-2 font-semibold border-b border-white/10 w-10">#</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10">Business Name</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10">Owner</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10">Phone</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10 text-center w-16">Called</th>
+                <th className="px-3 py-2 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleLeads.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                </tr>
+              ) : visibleLeads.map((lead, i) => {
+                const current = latestOutcomeByLead[lead.id] || "";
+                return (
+                  <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="px-3 py-1.5 border-b border-white/5 text-white/40 text-[11px]">{i + 1}</td>
+                    <td className="px-3 py-1.5 border-b border-white/5 text-white font-medium truncate max-w-[200px]">{lead.business_name}</td>
+                    <td className="px-3 py-1.5 border-b border-white/5 text-white/70 truncate max-w-[160px]">{lead.owner_name || "—"}</td>
+                    <td className="px-3 py-1.5 border-b border-white/5">
+                      {lead.phone ? (
+                        <a href={`tel:${lead.phone}`}
+                          onClick={() => {
+                            if (lead.called) return;
+                            setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+                            (supabase as any).from("nl_bdr_leads")
+                              .update({ called: true })
+                              .eq("id", lead.id)
+                              .eq("user_id", userId)
+                              .then(() => {});
+                          }}
+                          className="font-mono inline-flex items-center gap-1 hover:underline" style={{ color: "hsl(211,96%,68%)" }}>
+                          <Phone className="h-3 w-3" /> {lead.phone}
+                        </a>
+                      ) : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-1.5 border-b border-white/5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={!!lead.called}
+                        onChange={() => toggleCalled(lead)}
+                        aria-label={`Mark ${lead.business_name} as called`}
+                        className="h-4 w-4 rounded cursor-pointer accent-[hsl(142,72%,42%)]"
+                      />
+                    </td>
+                    <td className="px-3 py-1.5 border-b border-white/5">
+                      <select
+                        value={current}
+                        disabled={savingId === lead.id}
+                        onChange={(e) => setOutcomeFor(lead, e.target.value)}
+                        className="w-full bg-transparent text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none cursor-pointer"
+                        style={{ background: current ? "hsla(211,96%,56%,.08)" : "hsla(0,0%,100%,.02)" }}
+                      >
+                        <option value="" className="bg-[hsl(220,35%,12%)]">— Select outcome —</option>
+                        {OUTCOMES.map(o => (
+                          <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
