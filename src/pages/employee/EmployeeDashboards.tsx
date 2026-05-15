@@ -22,6 +22,13 @@ function firstName(name?: string | null, email?: string | null) {
   return (name || email || "there").split(/[\s@]/)[0] || "there";
 }
 
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: typeof PhoneCall }) {
   return (
     <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-4">
@@ -133,7 +140,7 @@ export function BDRDashboard() {
 
   return (
     <div className="space-y-6">
-      <Header title={`Good morning, ${firstName(name, user?.email)}`} />
+      <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
       <ObjectionMasteryCard />
       <CertificationStatusBlock />
@@ -192,7 +199,7 @@ export function SDRDashboard() {
 
   return (
     <div className="space-y-6">
-      <Header title={`Good morning, ${firstName(name, user?.email)}`} />
+      <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
       <ObjectionMasteryCard />
       <CertificationStatusBlock />
@@ -223,7 +230,7 @@ export function SDRDashboard() {
 export function GenericEmployeeDashboard() {
   const { user, employeeProfile } = useWorkspace();
   const name = employeeProfile?.full_name || user?.user_metadata?.full_name || user?.email;
-  return <div className="space-y-6"><Header title={`Good morning, ${firstName(name, user?.email)}`} /><SectionCard title="Employee Dashboard"><EmptyLine label="Your internal dashboard is ready. Role-specific widgets will appear here as your team workflow is configured." /></SectionCard></div>;
+  return <div className="space-y-6"><Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} /><SectionCard title="Employee Dashboard"><EmptyLine label="Your internal dashboard is ready. Role-specific widgets will appear here as your team workflow is configured." /></SectionCard></div>;
 }
 
 export function AccountManagerDashboard() {
