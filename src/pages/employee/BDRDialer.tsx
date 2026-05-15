@@ -344,12 +344,12 @@ export default function BDRDialer() {
                         className="h-5 w-5 rounded cursor-pointer accent-[hsl(142,72%,42%)]"
                       />
                     </td>
-                    <td className="px-3 py-1.5 border-b border-white/5">
+                    <td className="px-3 py-3 border-b border-white/5">
                       <select
                         value={current}
                         disabled={savingId === lead.id}
                         onChange={(e) => setOutcomeFor(lead, e.target.value)}
-                        className="w-full bg-transparent text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none cursor-pointer"
+                        className="w-full bg-transparent text-white text-xs px-2 py-2 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none cursor-pointer"
                         style={{ background: current ? "hsla(211,96%,56%,.08)" : "hsla(0,0%,100%,.02)" }}
                       >
                         <option value="" className="bg-[hsl(220,35%,12%)]">— Select outcome —</option>
@@ -358,7 +358,7 @@ export default function BDRDialer() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-3 py-1.5 border-b border-white/5">
+                    <td className="px-3 py-3 border-b border-white/5">
                       <NotesCell
                         key={lead.id + ":" + (lead.notes || "")}
                         initial={lead.notes || ""}
