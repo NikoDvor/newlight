@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export default function BDRCalendar() {
   const [showAdd, setShowAdd] = useState(false);
   const [addPrefill, setAddPrefill] = useState<Date | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
 
@@ -127,6 +128,11 @@ export default function BDRCalendar() {
             className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
             <Plus className="h-4 w-4 mr-1" /> Add Event
           </Button>
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
+            aria-label="Calendar settings"
+            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5">
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -180,6 +186,14 @@ export default function BDRCalendar() {
         onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
+
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        calendar={calendar}
+        bookingUrl={bookingUrl}
+        onSaved={(updated) => setCalendar(updated)}
+      />
     </div>
   );
 }
@@ -408,6 +422,189 @@ function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null;
           <Button variant="ghost" onClick={onClose} className="text-white/70"><X className="h-4 w-4 mr-1" />Close</Button>
           <Button variant="destructive" onClick={remove} disabled={deleting}>
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" />Delete</>}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const DAYS: { key: string; label: string }[] = [
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
+];
+
+const TIMEZONES = [
+  "America/Los_Angeles","America/Denver","America/Chicago","America/New_York",
+  "America/Phoenix","America/Anchorage","Pacific/Honolulu",
+  "America/Toronto","America/Vancouver","America/Mexico_City",
+  "Europe/London","Europe/Dublin","Europe/Paris","Europe/Berlin","Europe/Madrid","Europe/Rome",
+  "Africa/Johannesburg","Asia/Dubai","Asia/Kolkata","Asia/Singapore","Asia/Hong_Kong",
+  "Asia/Tokyo","Australia/Sydney","Pacific/Auckland",
+];
+
+function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  calendar: BdrCalendar;
+  bookingUrl: string;
+  onSaved: (cal: BdrCalendar) => void;
+}) {
+  const [name, setName] = useState(calendar.name);
+  const [tz, setTz] = useState(calendar.timezone);
+  const [bookingTitle, setBookingTitle] = useState(calendar.booking_title || "");
+  const [bookingDesc, setBookingDesc] = useState(calendar.booking_description || "");
+  const [bookingActive, setBookingActive] = useState(calendar.booking_active);
+  const [availability, setAvailability] = useState(calendar.availability);
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setName(calendar.name);
+      setTz(calendar.timezone);
+      setBookingTitle(calendar.booking_title || "");
+      setBookingDesc(calendar.booking_description || "");
+      setBookingActive(calendar.booking_active);
+      setAvailability(calendar.availability);
+    }
+  }, [open, calendar]);
+
+  const updateDay = (key: string, patch: Partial<{ enabled: boolean; start: string; end: string }>) => {
+    setAvailability(prev => ({
+      ...prev,
+      [key]: { enabled: true, start: "09:00", end: "17:00", ...prev[key], ...patch },
+    }));
+  };
+
+  const copyLink = () => {
+    if (!bookingUrl) return;
+    navigator.clipboard.writeText(bookingUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const save = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    const patch = {
+      name: name.trim(),
+      timezone: tz,
+      availability,
+      booking_title: bookingTitle.trim() || null,
+      booking_description: bookingDesc.trim() || null,
+      booking_active: bookingActive,
+    };
+    const { data, error } = await (supabase as any)
+      .from("bdr_calendars")
+      .update(patch)
+      .eq("id", calendar.id)
+      .select("*")
+      .single();
+    setSaving(false);
+    if (error) {
+      toast({ title: "Couldn't save", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Settings saved" });
+    onSaved(data as BdrCalendar);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white max-w-lg max-h-[85dvh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Calendar Settings</DialogTitle></DialogHeader>
+
+        <div className="space-y-5">
+          {/* Name + Timezone */}
+          <section className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Calendar name</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Timezone</Label>
+              <select value={tz} onChange={e => setTz(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
+                {TIMEZONES.map(z => <option key={z} value={z} className="bg-[hsl(215,35%,12%)]">{z}</option>)}
+              </select>
+            </div>
+          </section>
+
+          {/* Availability */}
+          <section className="space-y-2">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Availability hours</div>
+            <div className="space-y-1.5">
+              {DAYS.map(d => {
+                const cfg = availability[d.key] || { enabled: false, start: "09:00", end: "17:00" };
+                return (
+                  <div key={d.key} className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-2 w-28 shrink-0 cursor-pointer">
+                      <input type="checkbox" checked={!!cfg.enabled}
+                        onChange={e => updateDay(d.key, { enabled: e.target.checked })}
+                        className="h-4 w-4 accent-[hsl(211,96%,56%)] cursor-pointer" />
+                      <span className="text-white/80">{d.label}</span>
+                    </label>
+                    <Input type="time" value={cfg.start} disabled={!cfg.enabled}
+                      onChange={e => updateDay(d.key, { start: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white h-9 flex-1 disabled:opacity-40" />
+                    <span className="text-white/40 text-xs">to</span>
+                    <Input type="time" value={cfg.end} disabled={!cfg.enabled}
+                      onChange={e => updateDay(d.key, { end: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white h-9 flex-1 disabled:opacity-40" />
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Booking form settings */}
+          <section className="space-y-3">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Booking page</div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Page title</Label>
+              <Input value={bookingTitle} onChange={e => setBookingTitle(e.target.value)}
+                placeholder={calendar.name}
+                className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Description / bio</Label>
+              <textarea value={bookingDesc} onChange={e => setBookingDesc(e.target.value)} rows={3}
+                placeholder="Tell prospects what to expect from this call…"
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
+            </div>
+            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
+              <div>
+                <div className="text-sm text-white">Booking link active</div>
+                <div className="text-xs text-white/50">Pause to stop accepting new bookings.</div>
+              </div>
+              <input type="checkbox" checked={bookingActive}
+                onChange={e => setBookingActive(e.target.checked)}
+                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
+            </label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Your booking link</Label>
+              <div className="flex items-center gap-2">
+                <Input readOnly value={bookingUrl} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+                <Button type="button" onClick={copyLink} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] shrink-0">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/70">Cancel</Button>
+          <Button onClick={save} disabled={saving || !name.trim()}
+            className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

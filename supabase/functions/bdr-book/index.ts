@@ -25,12 +25,17 @@ Deno.serve(async (req) => {
 
     const { data: cal, error: calErr } = await supabase
       .from("bdr_calendars")
-      .select("id, user_id, name")
+      .select("id, user_id, name, booking_active")
       .eq("booking_slug", booking_slug)
       .maybeSingle();
     if (calErr || !cal) {
       return new Response(JSON.stringify({ error: "Booking link not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (cal.booking_active === false) {
+      return new Response(JSON.stringify({ error: "Bookings are paused" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
