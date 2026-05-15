@@ -325,7 +325,7 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
   const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am..9pm
   const today = new Date();
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
+    <div className="w-full rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
       <div className="grid grid-cols-[52px_repeat(7,1fr)] text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
         <div />
         {days.map((d, i) => {
