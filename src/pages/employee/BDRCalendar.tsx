@@ -190,8 +190,16 @@ export default function BDRCalendar() {
       </div>
 
       {view === "month" ? (
-        <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
-          onCellClick={(d) => { setSelectedDay(d); onCellClick(d); }} onEventClick={setSelected} />
+        <>
+          <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
+            onSelectDay={(d) => setSelectedDay(d)} />
+          <DayAgenda
+            day={selectedDay}
+            events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
+            onAdd={() => { setAddPrefill((() => { const d = new Date(selectedDay); d.setHours(9,0,0,0); return d; })()); setShowAdd(true); }}
+            onEventClick={setSelected}
+          />
+        </>
       ) : (
         <WeekView cursor={cursor} eventsByDay={eventsByDay} onCellClick={onCellClick} onEventClick={setSelected} />
       )}
@@ -220,73 +228,91 @@ export default function BDRCalendar() {
   );
 }
 
-function MonthView({ cursor, eventsByDay, selectedDay, onCellClick, onEventClick }: {
-  cursor: Date; eventsByDay: Map<string, Event[]>; selectedDay: Date; onCellClick: (d: Date) => void; onEventClick: (e: Event) => void;
+function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
+  cursor: Date; eventsByDay: Map<string, Event[]>; selectedDay: Date; onSelectDay: (d: Date) => void;
 }) {
   const first = startOfMonth(cursor);
-  const last = endOfMonth(cursor);
   const gridStart = startOfWeek(first);
-  const days: Date[] = [];
-  for (let i = 0; i < 42; i++) {
-    const d = addDays(gridStart, i);
-    days.push(d);
-    if (i >= 34 && d > last && d.getDay() === 6) break;
-  }
+  const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const today = new Date();
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
-      <div className="grid grid-cols-7 text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
+    <div className="w-full rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
+      <div className="grid grid-cols-7 w-full text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
         {["S","M","T","W","T","F","S"].map((d, i) => (
-          <div key={i} className="px-2 py-2.5 text-center font-semibold">{d}</div>
+          <div key={i} className="min-w-0 px-1 py-2 text-center font-semibold">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-7 w-full">
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
           const dayEvents = eventsByDay.get(key) || [];
           const isToday = sameDay(d, today);
           const isSelected = sameDay(d, selectedDay);
+          const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 3);
           return (
-            <button key={i} onClick={() => onCellClick(d)}
-              className="text-left border-b border-r border-white/[0.06] p-1.5 min-h-[92px] sm:min-h-[110px] transition-colors relative"
+            <button key={i} onClick={() => onSelectDay(d)}
+              className="min-w-0 aspect-square sm:aspect-auto sm:min-h-[72px] flex flex-col items-center justify-center gap-1 border-b border-r border-white/[0.06] transition-colors relative"
               style={{
-                opacity: inMonth ? 1 : 0.3,
-                background: isSelected && !isToday ? "hsla(211,96%,56%,.08)" : "transparent",
-                boxShadow: isSelected ? "inset 0 0 0 1px hsla(211,96%,60%,.45)" : undefined,
+                opacity: inMonth ? 1 : 0.35,
+                background: isSelected && !isToday ? "hsla(211,96%,56%,.10)" : "transparent",
+                boxShadow: isSelected ? "inset 0 0 0 1.5px hsla(211,96%,60%,.55)" : undefined,
               }}>
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`inline-flex items-center justify-center text-[11px] font-semibold ${isToday ? "text-white" : "text-white/75"}`}
-                  style={isToday ? {
-                    background: "hsl(211,96%,56%)",
-                    width: 22, height: 22, borderRadius: 999,
-                    boxShadow: "0 0 12px hsla(211,96%,60%,.5)",
-                  } : { width: 22, height: 22 }}>
-                  {d.getDate()}
-                </span>
-                {dayEvents.length > 0 && (
-                  <span className="flex gap-0.5">
-                    {Array.from(new Set(dayEvents.map(e => e.source))).slice(0,3).map(s => (
-                      <span key={s} className="h-1.5 w-1.5 rounded-full" style={{ background: SOURCE_TONE[s] || "#888" }} />
-                    ))}
-                  </span>
-                )}
-              </div>
-              <div className="space-y-0.5">
-                {dayEvents.slice(0, 3).map(e => (
-                  <div key={e.id} onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
-                    className="text-[10px] leading-tight truncate px-1.5 py-0.5 rounded cursor-pointer"
-                    style={{ background: `${SOURCE_TONE[e.source] || "#888"}1f`, color: SOURCE_TONE[e.source] || "#fff", borderLeft: `2px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
-                    <span className="opacity-70 mr-1">{fmtTime(new Date(e.starts_at))}</span>{e.title}
-                  </div>
+              <span
+                className={`inline-flex items-center justify-center text-[12px] font-semibold ${isToday ? "text-white" : "text-white/85"}`}
+                style={isToday ? {
+                  background: "hsl(211,96%,56%)",
+                  width: 26, height: 26, borderRadius: 999,
+                  boxShadow: "0 0 10px hsla(211,96%,60%,.55)",
+                } : { width: 26, height: 26 }}>
+                {d.getDate()}
+              </span>
+              <span className="flex gap-1 h-1.5 items-center">
+                {sources.map(s => (
+                  <span key={s} className="h-1.5 w-1.5 rounded-full" style={{ background: SOURCE_TONE[s] || "#888" }} />
                 ))}
-                {dayEvents.length > 3 && <div className="text-[9px] text-white/45 px-1">+{dayEvents.length - 3} more</div>}
-              </div>
+              </span>
             </button>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function DayAgenda({ day, events, onAdd, onEventClick }: {
+  day: Date; events: Event[]; onAdd: () => void; onEventClick: (e: Event) => void;
+}) {
+  const sorted = [...events].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+  return (
+    <div className="rounded-xl p-3" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.6)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <div className="text-white text-sm font-semibold">{day.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}</div>
+          <div className="text-[11px] text-white/50">{sorted.length} {sorted.length === 1 ? "event" : "events"}</div>
+        </div>
+        <Button size="sm" onClick={onAdd} className="h-8 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
+          <Plus className="h-3.5 w-3.5 mr-1" /> Add
+        </Button>
+      </div>
+      {sorted.length === 0 ? (
+        <div className="text-xs text-white/45 py-4 text-center">No events scheduled.</div>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map(e => (
+            <button key={e.id} onClick={() => onEventClick(e)}
+              className="w-full flex items-center gap-2 text-left px-2.5 py-2 rounded-md transition-colors hover:bg-white/[0.04]"
+              style={{ background: "hsla(215,35%,12%,.7)", borderLeft: `3px solid ${SOURCE_TONE[e.source] || "#888"}` }}>
+              <span className="text-[11px] text-white/55 font-mono w-14 shrink-0">{fmtTime(new Date(e.starts_at))}</span>
+              <span className="text-sm text-white truncate flex-1 min-w-0">{e.title}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded shrink-0"
+                style={{ background: `${SOURCE_TONE[e.source] || "#888"}22`, color: SOURCE_TONE[e.source] || "#fff" }}>
+                {SOURCE_LABEL[e.source] || e.source}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -299,13 +325,13 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
   const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am..9pm
   const today = new Date();
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
+    <div className="w-full rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.14)", background: "hsla(215,35%,8%,.85)" }}>
       <div className="grid grid-cols-[52px_repeat(7,1fr)] text-[10px] uppercase tracking-[0.12em] text-white/55 border-b border-white/10" style={{ background: "hsl(215,35%,12%)" }}>
         <div />
         {days.map((d, i) => {
           const isToday = sameDay(d, today);
           return (
-            <div key={i} className="px-1 py-2 text-center font-semibold border-l border-white/[0.06]">
+            <div key={i} className="min-w-0 px-1 py-2 text-center font-semibold border-l border-white/[0.06]">
               <div className="text-white/55">{["S","M","T","W","T","F","S"][d.getDay()]}</div>
               <div className="mt-1 flex justify-center">
                 <span
@@ -335,7 +361,7 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
               const slotEvents = dayEvents.filter(e => new Date(e.starts_at).getHours() === h);
               return (
                 <button key={`${i}-${h}`} onClick={() => onCellClick(slot)}
-                  className="border-b border-l border-white/[0.06] p-0.5 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors">
+                  className="min-w-0 border-b border-l border-white/[0.06] p-0.5 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors overflow-hidden">
                   {slotEvents.map(e => (
                     <div key={e.id} onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
                       className="text-[10px] leading-tight truncate px-1.5 py-1 rounded cursor-pointer mb-0.5"
