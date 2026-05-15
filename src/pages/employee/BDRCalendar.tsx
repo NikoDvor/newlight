@@ -361,7 +361,7 @@ function WeekView({ cursor, eventsByDay, onCellClick, onEventClick }: {
               const slotEvents = dayEvents.filter(e => new Date(e.starts_at).getHours() === h);
               return (
                 <button key={`${i}-${h}`} onClick={() => onCellClick(slot)}
-                  className="border-b border-l border-white/[0.06] p-0.5 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors">
+                  className="min-w-0 border-b border-l border-white/[0.06] p-0.5 min-h-[44px] text-left hover:bg-white/[0.03] transition-colors overflow-hidden">
                   {slotEvents.map(e => (
                     <div key={e.id} onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
                       className="text-[10px] leading-tight truncate px-1.5 py-1 rounded cursor-pointer mb-0.5"
