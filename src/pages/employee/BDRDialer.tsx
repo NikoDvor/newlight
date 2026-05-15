@@ -171,10 +171,17 @@ export default function BDRDialer() {
         objection_type: def.objection,
       });
       if (error) throw error;
-      if (!lead.called) {
-        await (supabase as any).from("nl_bdr_leads")
-          .update({ called: true }).eq("id", lead.id).eq("user_id", userId);
-      }
+      // Derive pipeline stage from outcome label
+      const l = def.label.toLowerCase();
+      let pipelineStage: "cold" | "warm" | "hot" | "won" = "warm";
+      if (l.includes("won") || l.includes("booked")) pipelineStage = "won";
+      else if (l === "lost") pipelineStage = "cold";
+      else if (l.includes("call back") || l.includes("callback") || l.includes("follow up")) pipelineStage = "hot";
+      else pipelineStage = "warm"; // any objection
+      const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
+      if (!lead.called) leadPatch.called = true;
+      await (supabase as any).from("nl_bdr_leads")
+        .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
       if (def.objection) {
         const { count } = await (supabase as any)
           .from("bdr_call_outcomes")
