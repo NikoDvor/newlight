@@ -192,6 +192,15 @@ export default function BDRDialer() {
       if (!lead.called) leadPatch.called = true;
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+      // Mirror to BDR personal calendar (non-blocking)
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        outcome: def.label,
+        stage: pipelineStage,
+        notes: lead.notes,
+      }).catch(() => {});
       if (def.objection) {
         const { count } = await (supabase as any)
           .from("bdr_call_outcomes")
