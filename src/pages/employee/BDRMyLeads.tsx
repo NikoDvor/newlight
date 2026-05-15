@@ -740,6 +740,7 @@ export default function BDRMyLeads() {
 
       {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
+      <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
     </div>
