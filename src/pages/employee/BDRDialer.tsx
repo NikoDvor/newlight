@@ -292,13 +292,16 @@ export default function BDRDialer() {
       </div>
 
       {/* Spreadsheet */}
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
-        <div className="overflow-auto max-h-[calc(100vh-280px)]">
-          <table className="w-full text-sm border-collapse" style={{ minWidth: 980 }}>
-            <thead className="sticky top-0 z-10" style={{ background: "hsla(215,35%,12%,.95)", backdropFilter: "blur(8px)" }}>
+      <div className="rounded-xl" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
+        <div
+          className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)] rounded-xl"
+          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+        >
+          <table className="text-sm border-collapse w-max">
+            <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
-                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10">#</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[220px]">Business Name</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 sticky left-0 z-40" style={{ background: "hsl(215,35%,12%)" }}>#</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px] sticky z-40 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,12%)" }}>Business Name</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
@@ -315,8 +318,8 @@ export default function BDRDialer() {
                 const current = latestOutcomeByLead[lead.id] || "";
                 return (
                   <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors align-top">
-                    <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px]">{i + 1}</td>
-                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug">{lead.business_name}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>{i + 1}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">{lead.owner_name || "—"}</td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       {lead.phone ? (
