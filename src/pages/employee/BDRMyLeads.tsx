@@ -524,19 +524,21 @@ export default function BDRMyLeads() {
           </div>
 
           {lists.length > 0 && (
-            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
-              <button onClick={() => setActiveList("__all__")}
-                className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
-                style={{ background: activeList === "__all__" ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === "__all__" ? "#fff" : "hsl(211,96%,56%)" }}>
-                All Lists <span className="opacity-70">({leads.length})</span>
-              </button>
-              {lists.map(([name, count]) => (
-                <button key={name} onClick={() => setActiveList(name)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
-                  style={{ background: activeList === name ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === name ? "#fff" : "hsl(211,96%,56%)" }}>
-                  {name} <span className="opacity-70">({count})</span>
+            <div className="-mx-4 px-4 overflow-x-auto scrollbar-none" style={{ WebkitOverflowScrolling: "touch" }}>
+              <div className="flex gap-2 pb-2 w-max">
+                <button onClick={() => setActiveList("__all__")}
+                  className="shrink-0 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                  style={{ background: activeList === "__all__" ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === "__all__" ? "#fff" : "hsl(211,96%,56%)" }}>
+                  All Lists <span className="opacity-70">({leads.length})</span>
                 </button>
-              ))}
+                {lists.map(([name, count]) => (
+                  <button key={name} onClick={() => setActiveList(name)}
+                    className="shrink-0 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                    style={{ background: activeList === name ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === name ? "#fff" : "hsl(211,96%,56%)" }}>
+                    {name} <span className="opacity-70">({count})</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
