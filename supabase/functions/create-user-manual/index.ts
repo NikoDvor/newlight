@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ROLE_PRESETS = new Set(["workspace_admin", "manager", "marketing_staff", "support_staff", "custom"]);
+const ROLE_PRESETS = new Set(["bdr", "sdr", "project_manager", "service_manager", "admin"]);
 const PLATFORM_WIDE_VALUES = new Set(["", "platform", "platform-wide", "__platform__"]);
 
 const json = (body: unknown, status = 200) =>
@@ -99,35 +99,55 @@ Deno.serve(async (req) => {
       .is("client_id", null)
       .eq("role", "client_team");
 
-    const platformRole = clientId
-      ? rolePreset === "workspace_admin" ? "client_owner" : "client_team"
-      : rolePreset === "workspace_admin"
-        ? "admin"
-        : rolePreset === "support_staff"
-          ? "support_staff"
-          : rolePreset === "marketing_staff"
-            ? "marketing_staff"
-            : "operator";
+    // Map new role presets to underlying app_role + scope
+    // bdr/sdr  -> marketing_staff (platform-wide employee, routed via job_title)
+    // project_manager -> client_team scoped to assigned client (client_id required)
+    // service_manager -> operator (platform-wide, sees all clients, no admin page)
+    // admin    -> admin (full access)
+    let platformRole: string;
+    let effectiveClientId: string | null = clientId;
+    let effectiveJobTitle = jobTitle;
+
+    if (rolePreset === "admin") {
+      platformRole = "admin";
+      effectiveClientId = null;
+    } else if (rolePreset === "service_manager") {
+      platformRole = "operator";
+      effectiveClientId = null;
+    } else if (rolePreset === "project_manager") {
+      if (!clientId) return json({ error: "Project Manager requires an assigned client" }, 400);
+      platformRole = "client_team";
+    } else if (rolePreset === "bdr") {
+      platformRole = "marketing_staff";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "BDR";
+    } else if (rolePreset === "sdr") {
+      platformRole = "marketing_staff";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "SDR";
+    } else {
+      return json({ error: "Invalid role preset" }, 400);
+    }
 
     const { error: roleError } = await adminClient.from("user_roles").insert({
       user_id: userId,
       role: platformRole,
-      client_id: clientId,
+      client_id: effectiveClientId,
     });
     if (roleError) {
-      console.error("User role insert failed", { userId, role: platformRole, clientId, message: roleError.message });
+      console.error("User role insert failed", { userId, role: platformRole, clientId: effectiveClientId, message: roleError.message });
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: roleError.message }, 400);
     }
 
-    if (!clientId) {
+    if (!effectiveClientId) {
       if (["marketing_staff", "support_staff"].includes(platformRole)) {
         const { error: employeeError } = await adminClient.from("employee_profiles").insert({
           user_id: userId,
           full_name: fullName,
           email,
           department,
-          job_title: jobTitle,
+          job_title: effectiveJobTitle,
           employee_role: platformRole,
           status: "active",
         });
@@ -153,12 +173,12 @@ Deno.serve(async (req) => {
     }
 
     const { error: workspaceError } = await adminClient.from("workspace_users").insert({
-      client_id: clientId,
+      client_id: effectiveClientId,
       user_id: userId,
       full_name: fullName,
       email,
       department,
-      job_title: jobTitle,
+      job_title: effectiveJobTitle,
       role_preset: rolePreset,
       status: "active",
       provisioning_status: "provisioned",
@@ -166,14 +186,14 @@ Deno.serve(async (req) => {
       is_bookable_staff: false,
     });
     if (workspaceError) {
-      console.error("Workspace user insert failed", { userId, clientId, message: workspaceError.message });
-      await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", clientId);
+      console.error("Workspace user insert failed", { userId, clientId: effectiveClientId, message: workspaceError.message });
+      await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", effectiveClientId);
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: workspaceError.message }, 400);
     }
 
     await adminClient.from("audit_logs").insert({
-      client_id: clientId,
+      client_id: effectiveClientId,
       user_id: caller.id,
       action: "manual_user_created",
       module: "team",

@@ -36,7 +36,7 @@ export default function AdminTeam() {
   const [manualFullName, setManualFullName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
   const [manualPassword, setManualPassword] = useState("");
-  const [manualRolePreset, setManualRolePreset] = useState("workspace_admin");
+  const [manualRolePreset, setManualRolePreset] = useState("bdr");
   const [manualDepartment, setManualDepartment] = useState("");
   const [manualJobTitle, setManualJobTitle] = useState("");
   const [manualClientId, setManualClientId] = useState("");
@@ -47,11 +47,11 @@ export default function AdminTeam() {
   const [loading, setLoading] = useState(false);
 
   const manualRoleOptions = [
-    { value: "workspace_admin", label: "Admin" },
-    { value: "manager", label: "Manager" },
-    { value: "marketing_staff", label: "Marketing Staff" },
-    { value: "support_staff", label: "Support Staff" },
-    { value: "custom", label: "Custom" },
+    { value: "bdr", label: "BDR" },
+    { value: "sdr", label: "SDR" },
+    { value: "project_manager", label: "Project Manager" },
+    { value: "service_manager", label: "Service Manager" },
+    { value: "admin", label: "Admin" },
   ];
 
   const fetchData = async () => {
@@ -108,7 +108,7 @@ export default function AdminTeam() {
     setManualFullName("");
     setManualEmail("");
     setManualPassword("");
-    setManualRolePreset("workspace_admin");
+    setManualRolePreset("bdr");
     setManualDepartment("");
     setManualJobTitle("");
     setManualClientId("");
@@ -139,14 +139,20 @@ export default function AdminTeam() {
       });
 
       if (res.error || res.data?.error) {
-        let backendError = res.data?.error;
-        const errorContext = (res.error as any)?.context;
-        if (!backendError && errorContext?.json) {
+        let backendError: string | null = res.data?.error ?? null;
+        const ctx: any = (res.error as any)?.context;
+        if (!backendError && ctx) {
           try {
-            backendError = (await errorContext.json())?.error;
-          } catch {
-            backendError = null;
-          }
+            if (typeof ctx.json === "function") {
+              const parsed = await ctx.json();
+              backendError = parsed?.error ?? null;
+            } else if (typeof ctx.text === "function") {
+              const txt = await ctx.text();
+              try { backendError = JSON.parse(txt)?.error ?? txt; } catch { backendError = txt; }
+            } else if (ctx.body && typeof ctx.body === "string") {
+              try { backendError = JSON.parse(ctx.body)?.error ?? ctx.body; } catch { backendError = ctx.body; }
+            }
+          } catch { /* ignore */ }
         }
         toast.error(backendError || res.error?.message || "Failed to create account");
       } else {
