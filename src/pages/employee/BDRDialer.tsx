@@ -18,6 +18,7 @@ interface Lead {
   list_name: string | null;
   called: boolean | null;
   notes: string | null;
+  callback_at?: string | null;
 }
 
 interface OutcomeRow {
@@ -26,16 +27,22 @@ interface OutcomeRow {
   objection_type: string | null;
 }
 
-// Outcome -> objection_type mapping. null objection_type means non-objection outcome.
+// Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
   { label: "Lost", objection: null },
   { label: "Gatekeeper", objection: "Gatekeeper" },
-  { label: "Not Interested / Don't See the Value", objection: "Not Interested" },
-  { label: "Need to Think / Need to Talk to Someone", objection: "Need to Think" },
-  { label: "Too Expensive / What's Your Pricing", objection: "Pricing" },
-  { label: "Bad Experience / Already Have Someone / In-House Team", objection: "Already Have Someone" },
+  { label: "Not Interested", objection: "Not Interested" },
+  { label: "Don't See the Value", objection: "Don't See the Value" },
+  { label: "Need to Think", objection: "Need to Think" },
+  { label: "Need to Talk to Someone", objection: "Need to Talk to Someone" },
+  { label: "Too Expensive", objection: "Too Expensive" },
+  { label: "What's Your Pricing", objection: "What's Your Pricing" },
+  { label: "Bad Experience", objection: "Bad Experience" },
+  { label: "Already Have Someone", objection: "Already Have Someone" },
+  { label: "In-House Team", objection: "In-House Team" },
   { label: "Stacked Objections", objection: "Stacked Objections" },
+  { label: "Schedule Callback", objection: null },
 ];
 
 const STAT_KEYS = OUTCOMES.map(o => o.label);
