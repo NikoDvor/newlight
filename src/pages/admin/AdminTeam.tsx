@@ -36,7 +36,7 @@ export default function AdminTeam() {
   const [manualFullName, setManualFullName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
   const [manualPassword, setManualPassword] = useState("");
-  const [manualRolePreset, setManualRolePreset] = useState("workspace_admin");
+  const [manualRolePreset, setManualRolePreset] = useState("bdr");
   const [manualDepartment, setManualDepartment] = useState("");
   const [manualJobTitle, setManualJobTitle] = useState("");
   const [manualClientId, setManualClientId] = useState("");
