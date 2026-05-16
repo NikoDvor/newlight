@@ -311,7 +311,7 @@ export default function AdminTeam() {
                     {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => handleRemove(r.id)} className="text-white/30 hover:text-red-400 transition-colors">
+                    <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </td>
