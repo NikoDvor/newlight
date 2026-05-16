@@ -47,11 +47,11 @@ export default function AdminTeam() {
   const [loading, setLoading] = useState(false);
 
   const manualRoleOptions = [
-    { value: "workspace_admin", label: "Admin" },
-    { value: "manager", label: "Manager" },
-    { value: "marketing_staff", label: "Marketing Staff" },
-    { value: "support_staff", label: "Support Staff" },
-    { value: "custom", label: "Custom" },
+    { value: "bdr", label: "BDR" },
+    { value: "sdr", label: "SDR" },
+    { value: "project_manager", label: "Project Manager" },
+    { value: "service_manager", label: "Service Manager" },
+    { value: "admin", label: "Admin" },
   ];
 
   const fetchData = async () => {
