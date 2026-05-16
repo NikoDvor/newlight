@@ -172,17 +172,28 @@ export default function BDRDialer() {
     }
   }, [userId]);
 
-  const setOutcomeFor = useCallback(async (lead: Lead, label: string) => {
+  const setOutcomeFor = useCallback(async (lead: Lead, label: string, callbackAt?: string | null) => {
     if (!userId || !label) return;
     const def = OUTCOMES.find(o => o.label === label);
     if (!def) return;
+    if (def.label === "Schedule Callback" && !callbackAt) {
+      // Open the date/time picker; actual save happens after confirmation
+      const now = new Date();
+      now.setDate(now.getDate() + 1);
+      setCallbackLead(lead);
+      setCallbackDate(now.toISOString().slice(0, 10));
+      setCallbackTime("10:00");
+      return;
+    }
     setSavingId(lead.id);
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
     const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection };
     setOutcomes(prev => [optimistic, ...prev]);
-    // Mark lead as called on outcome log
     if (!lead.called) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+    }
+    if (callbackAt) {
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: callbackAt } : l));
     }
     try {
       const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
@@ -192,18 +203,19 @@ export default function BDRDialer() {
         objection_type: def.objection,
       });
       if (error) throw error;
-      // Derive pipeline stage from outcome label
-      const l = def.label.toLowerCase();
       let pipelineStage: "cold" | "warm" | "hot" | "won" = "warm";
-      if (l.includes("won") || l.includes("booked")) pipelineStage = "won";
-      else if (l === "lost") pipelineStage = "cold";
-      else if (l.includes("call back") || l.includes("callback") || l.includes("follow up")) pipelineStage = "hot";
-      else pipelineStage = "warm"; // any objection
+      if (def.label === "Won") pipelineStage = "won";
+      else if (def.label === "Lost") pipelineStage = "cold";
+      else if (def.label === "Schedule Callback") pipelineStage = "hot";
+      else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
       if (!lead.called) leadPatch.called = true;
+      if (callbackAt) {
+        leadPatch.callback_at = callbackAt;
+        leadPatch.callback_set_at = new Date().toISOString();
+      }
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
-      // Mirror to BDR personal calendar (non-blocking)
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -226,17 +238,26 @@ export default function BDRDialer() {
         } else {
           toast({ title: "Outcome logged", description: count ? `${count}/50 toward ${def.objection} unlock.` : undefined });
         }
+      } else if (def.label === "Schedule Callback" && callbackAt) {
+        toast({ title: "Callback scheduled", description: new Date(callbackAt).toLocaleString() });
       } else {
         toast({ title: "Outcome logged" });
       }
     } catch (e: any) {
-      // Rollback optimistic
       setOutcomes(prev => prev.filter(o => o !== optimistic));
       toast({ title: "Failed to log outcome", description: e.message, variant: "destructive" });
     } finally {
       setSavingId(null);
     }
   }, [userId]);
+
+  const confirmCallback = useCallback(async () => {
+    if (!callbackLead || !callbackDate || !callbackTime) return;
+    const iso = new Date(`${callbackDate}T${callbackTime}`).toISOString();
+    const lead = callbackLead;
+    setCallbackLead(null);
+    await setOutcomeFor(lead, "Schedule Callback", iso);
+  }, [callbackLead, callbackDate, callbackTime, setOutcomeFor]);
 
   if (loading) {
     return (
