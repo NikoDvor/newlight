@@ -139,14 +139,20 @@ export default function AdminTeam() {
       });
 
       if (res.error || res.data?.error) {
-        let backendError = res.data?.error;
-        const errorContext = (res.error as any)?.context;
-        if (!backendError && errorContext?.json) {
+        let backendError: string | null = res.data?.error ?? null;
+        const ctx: any = (res.error as any)?.context;
+        if (!backendError && ctx) {
           try {
-            backendError = (await errorContext.json())?.error;
-          } catch {
-            backendError = null;
-          }
+            if (typeof ctx.json === "function") {
+              const parsed = await ctx.json();
+              backendError = parsed?.error ?? null;
+            } else if (typeof ctx.text === "function") {
+              const txt = await ctx.text();
+              try { backendError = JSON.parse(txt)?.error ?? txt; } catch { backendError = txt; }
+            } else if (ctx.body && typeof ctx.body === "string") {
+              try { backendError = JSON.parse(ctx.body)?.error ?? ctx.body; } catch { backendError = ctx.body; }
+            }
+          } catch { /* ignore */ }
         }
         toast.error(backendError || res.error?.message || "Failed to create account");
       } else {
