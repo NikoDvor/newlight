@@ -79,6 +79,9 @@ export default function BDRDialer() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
+  const [callbackDate, setCallbackDate] = useState<string>("");
+  const [callbackTime, setCallbackTime] = useState<string>("");
 
   useEffect(() => {
     (async () => {
