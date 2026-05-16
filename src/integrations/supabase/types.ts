@@ -5924,6 +5924,8 @@ export type Database = {
       nl_bdr_leads: {
         Row: {
           business_name: string
+          callback_at: string | null
+          callback_set_at: string | null
           called: boolean
           city: string | null
           client_id: string | null
@@ -5948,6 +5950,8 @@ export type Database = {
         }
         Insert: {
           business_name: string
+          callback_at?: string | null
+          callback_set_at?: string | null
           called?: boolean
           city?: string | null
           client_id?: string | null
@@ -5972,6 +5976,8 @@ export type Database = {
         }
         Update: {
           business_name?: string
+          callback_at?: string | null
+          callback_set_at?: string | null
           called?: boolean
           city?: string | null
           client_id?: string | null
