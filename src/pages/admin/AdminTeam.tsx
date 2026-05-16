@@ -108,7 +108,7 @@ export default function AdminTeam() {
     setManualFullName("");
     setManualEmail("");
     setManualPassword("");
-    setManualRolePreset("workspace_admin");
+    setManualRolePreset("bdr");
     setManualDepartment("");
     setManualJobTitle("");
     setManualClientId("");
