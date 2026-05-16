@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
     }
 
     await adminClient.from("audit_logs").insert({
-      client_id: clientId,
+      client_id: effectiveClientId,
       user_id: caller.id,
       action: "manual_user_created",
       module: "team",
