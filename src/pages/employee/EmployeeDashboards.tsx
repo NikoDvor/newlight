@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
 
 const today = new Date();
 const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -142,6 +143,7 @@ export function BDRDashboard() {
     <div className="space-y-6">
       <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
+      <BDRCallbackCountdown userId={user?.id} />
       <ObjectionMasteryCard />
       <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

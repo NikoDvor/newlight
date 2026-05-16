@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Phone } from "lucide-react";
+import { Loader2, BookOpen, Phone, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 
@@ -17,6 +18,7 @@ interface Lead {
   list_name: string | null;
   called: boolean | null;
   notes: string | null;
+  callback_at?: string | null;
 }
 
 interface OutcomeRow {
@@ -25,16 +27,22 @@ interface OutcomeRow {
   objection_type: string | null;
 }
 
-// Outcome -> objection_type mapping. null objection_type means non-objection outcome.
+// Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
   { label: "Lost", objection: null },
   { label: "Gatekeeper", objection: "Gatekeeper" },
-  { label: "Not Interested / Don't See the Value", objection: "Not Interested" },
-  { label: "Need to Think / Need to Talk to Someone", objection: "Need to Think" },
-  { label: "Too Expensive / What's Your Pricing", objection: "Pricing" },
-  { label: "Bad Experience / Already Have Someone / In-House Team", objection: "Already Have Someone" },
+  { label: "Not Interested", objection: "Not Interested" },
+  { label: "Don't See the Value", objection: "Don't See the Value" },
+  { label: "Need to Think", objection: "Need to Think" },
+  { label: "Need to Talk to Someone", objection: "Need to Talk to Someone" },
+  { label: "Too Expensive", objection: "Too Expensive" },
+  { label: "What's Your Pricing", objection: "What's Your Pricing" },
+  { label: "Bad Experience", objection: "Bad Experience" },
+  { label: "Already Have Someone", objection: "Already Have Someone" },
+  { label: "In-House Team", objection: "In-House Team" },
   { label: "Stacked Objections", objection: "Stacked Objections" },
+  { label: "Schedule Callback", objection: null },
 ];
 
 const STAT_KEYS = OUTCOMES.map(o => o.label);
@@ -71,6 +79,9 @@ export default function BDRDialer() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
+  const [callbackDate, setCallbackDate] = useState<string>("");
+  const [callbackTime, setCallbackTime] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -79,7 +90,7 @@ export default function BDRDialer() {
       setUserId(user.id);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -161,17 +172,28 @@ export default function BDRDialer() {
     }
   }, [userId]);
 
-  const setOutcomeFor = useCallback(async (lead: Lead, label: string) => {
+  const setOutcomeFor = useCallback(async (lead: Lead, label: string, callbackAt?: string | null) => {
     if (!userId || !label) return;
     const def = OUTCOMES.find(o => o.label === label);
     if (!def) return;
+    if (def.label === "Schedule Callback" && !callbackAt) {
+      // Open the date/time picker; actual save happens after confirmation
+      const now = new Date();
+      now.setDate(now.getDate() + 1);
+      setCallbackLead(lead);
+      setCallbackDate(now.toISOString().slice(0, 10));
+      setCallbackTime("10:00");
+      return;
+    }
     setSavingId(lead.id);
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
     const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection };
     setOutcomes(prev => [optimistic, ...prev]);
-    // Mark lead as called on outcome log
     if (!lead.called) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+    }
+    if (callbackAt) {
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: callbackAt } : l));
     }
     try {
       const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
@@ -181,18 +203,19 @@ export default function BDRDialer() {
         objection_type: def.objection,
       });
       if (error) throw error;
-      // Derive pipeline stage from outcome label
-      const l = def.label.toLowerCase();
       let pipelineStage: "cold" | "warm" | "hot" | "won" = "warm";
-      if (l.includes("won") || l.includes("booked")) pipelineStage = "won";
-      else if (l === "lost") pipelineStage = "cold";
-      else if (l.includes("call back") || l.includes("callback") || l.includes("follow up")) pipelineStage = "hot";
-      else pipelineStage = "warm"; // any objection
+      if (def.label === "Won") pipelineStage = "won";
+      else if (def.label === "Lost") pipelineStage = "cold";
+      else if (def.label === "Schedule Callback") pipelineStage = "hot";
+      else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
       if (!lead.called) leadPatch.called = true;
+      if (callbackAt) {
+        leadPatch.callback_at = callbackAt;
+        leadPatch.callback_set_at = new Date().toISOString();
+      }
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
-      // Mirror to BDR personal calendar (non-blocking)
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -215,17 +238,26 @@ export default function BDRDialer() {
         } else {
           toast({ title: "Outcome logged", description: count ? `${count}/50 toward ${def.objection} unlock.` : undefined });
         }
+      } else if (def.label === "Schedule Callback" && callbackAt) {
+        toast({ title: "Callback scheduled", description: new Date(callbackAt).toLocaleString() });
       } else {
         toast({ title: "Outcome logged" });
       }
     } catch (e: any) {
-      // Rollback optimistic
       setOutcomes(prev => prev.filter(o => o !== optimistic));
       toast({ title: "Failed to log outcome", description: e.message, variant: "destructive" });
     } finally {
       setSavingId(null);
     }
   }, [userId]);
+
+  const confirmCallback = useCallback(async () => {
+    if (!callbackLead || !callbackDate || !callbackTime) return;
+    const iso = new Date(`${callbackDate}T${callbackTime}`).toISOString();
+    const lead = callbackLead;
+    setCallbackLead(null);
+    await setOutcomeFor(lead, "Schedule Callback", iso);
+  }, [callbackLead, callbackDate, callbackTime, setOutcomeFor]);
 
   if (loading) {
     return (
@@ -253,11 +285,17 @@ export default function BDRDialer() {
     { label: "Total Calls", key: "__total__", tone: "hsl(211,96%,60%)" },
     { label: "Won", key: "Won", tone: "hsl(142,72%,42%)" },
     { label: "Lost", key: "Lost", tone: "hsl(0,72%,55%)" },
+    { label: "Callbacks", key: "Schedule Callback", tone: "hsl(190,90%,55%)" },
     { label: "Gatekeeper", key: "Gatekeeper", tone: "hsl(38,92%,55%)" },
-    { label: "Not Interested / Don't See the Value", key: "Not Interested / Don't See the Value", tone: "hsl(0,0%,70%)" },
-    { label: "Need to Think / Need to Talk to Someone", key: "Need to Think / Need to Talk to Someone", tone: "hsl(48,96%,55%)" },
-    { label: "Too Expensive / What's Your Pricing", key: "Too Expensive / What's Your Pricing", tone: "hsl(280,80%,65%)" },
-    { label: "Bad Experience / Already Have Someone / In-House Team", key: "Bad Experience / Already Have Someone / In-House Team", tone: "hsl(15,80%,60%)" },
+    { label: "Not Interested", key: "Not Interested", tone: "hsl(0,0%,70%)" },
+    { label: "Don't See the Value", key: "Don't See the Value", tone: "hsl(0,0%,60%)" },
+    { label: "Need to Think", key: "Need to Think", tone: "hsl(48,96%,55%)" },
+    { label: "Need to Talk to Someone", key: "Need to Talk to Someone", tone: "hsl(48,80%,45%)" },
+    { label: "Too Expensive", key: "Too Expensive", tone: "hsl(280,80%,65%)" },
+    { label: "What's Your Pricing", key: "What's Your Pricing", tone: "hsl(280,60%,55%)" },
+    { label: "Bad Experience", key: "Bad Experience", tone: "hsl(15,80%,60%)" },
+    { label: "Already Have Someone", key: "Already Have Someone", tone: "hsl(15,60%,50%)" },
+    { label: "In-House Team", key: "In-House Team", tone: "hsl(25,70%,55%)" },
     { label: "Stacked Objections", key: "Stacked Objections", tone: "hsl(187,80%,55%)" },
   ];
 
@@ -401,6 +439,38 @@ export default function BDRDialer() {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CalendarClock className="h-4 w-4" /> Schedule Callback</DialogTitle>
+          </DialogHeader>
+          {callbackLead && (
+            <div className="space-y-3">
+              <div className="text-sm text-white/70">
+                <p className="font-semibold text-white">{callbackLead.business_name}</p>
+                {callbackLead.owner_name && <p className="text-xs">{callbackLead.owner_name}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Date</label>
+                  <input type="date" value={callbackDate} onChange={(e) => setCallbackDate(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Time</label>
+                  <input type="time" value={callbackTime} onChange={(e) => setCallbackTime(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCallbackLead(null)}>Cancel</Button>
+            <Button onClick={confirmCallback} disabled={!callbackDate || !callbackTime}>Save Callback</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
