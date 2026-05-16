@@ -99,23 +99,43 @@ Deno.serve(async (req) => {
       .is("client_id", null)
       .eq("role", "client_team");
 
-    const platformRole = clientId
-      ? rolePreset === "workspace_admin" ? "client_owner" : "client_team"
-      : rolePreset === "workspace_admin"
-        ? "admin"
-        : rolePreset === "support_staff"
-          ? "support_staff"
-          : rolePreset === "marketing_staff"
-            ? "marketing_staff"
-            : "operator";
+    // Map new role presets to underlying app_role + scope
+    // bdr/sdr  -> marketing_staff (platform-wide employee, routed via job_title)
+    // project_manager -> client_team scoped to assigned client (client_id required)
+    // service_manager -> operator (platform-wide, sees all clients, no admin page)
+    // admin    -> admin (full access)
+    let platformRole: string;
+    let effectiveClientId: string | null = clientId;
+    let effectiveJobTitle = jobTitle;
+
+    if (rolePreset === "admin") {
+      platformRole = "admin";
+      effectiveClientId = null;
+    } else if (rolePreset === "service_manager") {
+      platformRole = "operator";
+      effectiveClientId = null;
+    } else if (rolePreset === "project_manager") {
+      if (!clientId) return json({ error: "Project Manager requires an assigned client" }, 400);
+      platformRole = "client_team";
+    } else if (rolePreset === "bdr") {
+      platformRole = "marketing_staff";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "BDR";
+    } else if (rolePreset === "sdr") {
+      platformRole = "marketing_staff";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "SDR";
+    } else {
+      return json({ error: "Invalid role preset" }, 400);
+    }
 
     const { error: roleError } = await adminClient.from("user_roles").insert({
       user_id: userId,
       role: platformRole,
-      client_id: clientId,
+      client_id: effectiveClientId,
     });
     if (roleError) {
-      console.error("User role insert failed", { userId, role: platformRole, clientId, message: roleError.message });
+      console.error("User role insert failed", { userId, role: platformRole, clientId: effectiveClientId, message: roleError.message });
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: roleError.message }, 400);
     }
