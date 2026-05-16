@@ -140,14 +140,14 @@ Deno.serve(async (req) => {
       return json({ error: roleError.message }, 400);
     }
 
-    if (!clientId) {
+    if (!effectiveClientId) {
       if (["marketing_staff", "support_staff"].includes(platformRole)) {
         const { error: employeeError } = await adminClient.from("employee_profiles").insert({
           user_id: userId,
           full_name: fullName,
           email,
           department,
-          job_title: jobTitle,
+          job_title: effectiveJobTitle,
           employee_role: platformRole,
           status: "active",
         });
@@ -173,12 +173,12 @@ Deno.serve(async (req) => {
     }
 
     const { error: workspaceError } = await adminClient.from("workspace_users").insert({
-      client_id: clientId,
+      client_id: effectiveClientId,
       user_id: userId,
       full_name: fullName,
       email,
       department,
-      job_title: jobTitle,
+      job_title: effectiveJobTitle,
       role_preset: rolePreset,
       status: "active",
       provisioning_status: "provisioned",
@@ -186,8 +186,8 @@ Deno.serve(async (req) => {
       is_bookable_staff: false,
     });
     if (workspaceError) {
-      console.error("Workspace user insert failed", { userId, clientId, message: workspaceError.message });
-      await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", clientId);
+      console.error("Workspace user insert failed", { userId, clientId: effectiveClientId, message: workspaceError.message });
+      await adminClient.from("user_roles").delete().eq("user_id", userId).eq("client_id", effectiveClientId);
       await adminClient.auth.admin.deleteUser(userId);
       return json({ error: workspaceError.message }, 400);
     }
