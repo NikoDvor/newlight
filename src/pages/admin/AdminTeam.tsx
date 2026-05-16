@@ -94,7 +94,32 @@ export default function AdminTeam() {
     setLoading(false);
   };
 
-  const handleRemove = async (roleId: string) => {
+  const handleRemove = async (roleId: string, userId: string) => {
+    const otherRoles = roles.filter(r => r.user_id === userId && r.id !== roleId);
+    const fullDelete = otherRoles.length === 0
+      ? window.confirm("Permanently delete this user account? This removes them from authentication so the email can be reused.")
+      : false;
+
+    if (fullDelete) {
+      try {
+        const res = await supabase.functions.invoke("delete-user-manual", { body: { user_id: userId } });
+        if (res.error || res.data?.error) {
+          let backendError: string | null = res.data?.error ?? null;
+          const ctx: any = (res.error as any)?.context;
+          if (!backendError && ctx?.json) {
+            try { backendError = (await ctx.json())?.error ?? null; } catch { /* ignore */ }
+          }
+          toast.error(backendError || res.error?.message || "Failed to delete user");
+          return;
+        }
+        toast.success("User account fully deleted");
+        fetchData();
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete user");
+      }
+      return;
+    }
+
     const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
     if (error) {
       toast.error(error.message);
