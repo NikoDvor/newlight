@@ -439,6 +439,38 @@ export default function BDRDialer() {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CalendarClock className="h-4 w-4" /> Schedule Callback</DialogTitle>
+          </DialogHeader>
+          {callbackLead && (
+            <div className="space-y-3">
+              <div className="text-sm text-white/70">
+                <p className="font-semibold text-white">{callbackLead.business_name}</p>
+                {callbackLead.owner_name && <p className="text-xs">{callbackLead.owner_name}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Date</label>
+                  <input type="date" value={callbackDate} onChange={(e) => setCallbackDate(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Time</label>
+                  <input type="time" value={callbackTime} onChange={(e) => setCallbackTime(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCallbackLead(null)}>Cancel</Button>
+            <Button onClick={confirmCallback} disabled={!callbackDate || !callbackTime}>Save Callback</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
