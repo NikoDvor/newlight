@@ -143,6 +143,7 @@ export function BDRDashboard() {
     <div className="space-y-6">
       <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
+      <BDRCallbackCountdown userId={user?.id} />
       <ObjectionMasteryCard />
       <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
