@@ -254,7 +254,7 @@ export default function BDRDialer() {
     } finally {
       setSavingId(null);
     }
-  }, [userId]);
+  }, [userId, clientId]);
 
   const confirmCallback = useCallback(async () => {
     if (!callbackLead || !callbackDate || !callbackTime) return;
