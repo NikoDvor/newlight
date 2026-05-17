@@ -334,10 +334,13 @@ export default function BDRDialer() {
       </div>
 
       {/* List tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-1">
+      <div
+        className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-1"
+        style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+      >
         <button
           onClick={() => setActiveList(ALL_LIST)}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
           style={{
             background: activeList === ALL_LIST ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
             color: activeList === ALL_LIST ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
