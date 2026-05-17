@@ -833,8 +833,8 @@ export function ChapterRunner({
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
-              {!isReflectionModule && levelBadges}
-              {!isReflectionModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
+              {!isReflectionModule && !isInfoOnlyModule && levelBadges}
+              {!isReflectionModule && !isInfoOnlyModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
@@ -843,7 +843,7 @@ export function ChapterRunner({
             {unlockCategories.map((cat) => (
               <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
             ))}
-            {isReflectionModule ? (
+            {isReflectionModule || isInfoOnlyModule ? (
               <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
                 <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">
                   {saving ? "Saving…" : "Mark Complete"}
