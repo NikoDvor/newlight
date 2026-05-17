@@ -565,6 +565,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [bookingTitle, setBookingTitle] = useState(calendar.booking_title || "");
   const [bookingDesc, setBookingDesc] = useState(calendar.booking_description || "");
   const [bookingActive, setBookingActive] = useState(calendar.booking_active);
+  const [roundRobin, setRoundRobin] = useState<boolean>((calendar as any).round_robin_pool ?? false);
   const [availability, setAvailability] = useState(calendar.availability);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -576,6 +577,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setBookingTitle(calendar.booking_title || "");
       setBookingDesc(calendar.booking_description || "");
       setBookingActive(calendar.booking_active);
+      setRoundRobin((calendar as any).round_robin_pool ?? false);
       setAvailability(calendar.availability);
     }
   }, [open, calendar]);
@@ -604,6 +606,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_title: bookingTitle.trim() || null,
       booking_description: bookingDesc.trim() || null,
       booking_active: bookingActive,
+      round_robin_pool: roundRobin,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
