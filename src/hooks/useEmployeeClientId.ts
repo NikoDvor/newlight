@@ -45,3 +45,21 @@ export function useEmployeeClientId() {
 }
 
 export const NEWLIGHT_INTERNAL_CLIENT_ID = NEWLIGHT_INTERNAL_ID;
+
+/** Imperative resolver for non-hook code paths. */
+export async function resolveEmployeeClientId(userId: string): Promise<string> {
+  if (cachedUserId === userId && cachedClientId) return cachedClientId;
+  const { data: emp } = await (supabase as any)
+    .from("employee_profiles").select("client_id").eq("user_id", userId).maybeSingle();
+  let resolved = emp?.client_id as string | undefined;
+  if (!resolved) {
+    const { data: ws } = await (supabase as any)
+      .from("workspace_users").select("client_id").eq("user_id", userId)
+      .eq("status", "active").order("created_at", { ascending: true }).limit(1).maybeSingle();
+    resolved = ws?.client_id;
+  }
+  if (!resolved) resolved = NEWLIGHT_INTERNAL_ID;
+  cachedUserId = userId;
+  cachedClientId = resolved;
+  return resolved;
+}
