@@ -157,6 +157,7 @@ import BDRDialer from "./pages/employee/BDRDialer";
 import BDRCalendar from "./pages/employee/BDRCalendar";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
+import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
 
 const queryClient = new QueryClient();
 
@@ -275,6 +276,7 @@ const App = () => {
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
+                <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
               </Route>
 
               {/* Employee Portal */}
