@@ -1155,7 +1155,6 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                               onClick={async () => {
                                 await forceCompleteModule(selectedModule.id, numberedModules.map((m) => ({ id: m.id, module_number: m.module_number })));
                                 await reloadCompletions();
-                                refreshProgress();
                               }}
                               className="w-full gap-2"
                               disabled={selectedModuleLocked}
