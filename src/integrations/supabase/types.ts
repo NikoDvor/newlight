@@ -2826,30 +2826,36 @@ export type Database = {
       }
       client_training_sop: {
         Row: {
+          bdr_training_enabled: boolean
           client_id: string
           company_intro: string
           core_offer: string
           created_at: string
+          is_demo_shell: boolean
           sales_process: string
           scripts: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          bdr_training_enabled?: boolean
           client_id: string
           company_intro?: string
           core_offer?: string
           created_at?: string
+          is_demo_shell?: boolean
           sales_process?: string
           scripts?: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          bdr_training_enabled?: boolean
           client_id?: string
           company_intro?: string
           core_offer?: string
           created_at?: string
+          is_demo_shell?: boolean
           sales_process?: string
           scripts?: string
           updated_at?: string
