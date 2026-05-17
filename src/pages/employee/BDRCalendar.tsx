@@ -704,6 +704,40 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
+          </div>
+            </div>
+          </section>
+
+          {/* Round-Robin Pool */}
+          <section className="space-y-2">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Team rotation</div>
+            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
+              <div>
+                <div className="text-sm text-white">Round-Robin Pool</div>
+                <div className="text-xs text-white/50">Share inbound bookings evenly with other pool members. Least-recently-assigned BDR receives the next booking.</div>
+              </div>
+              <input type="checkbox" checked={roundRobin}
+                onChange={e => setRoundRobin(e.target.checked)}
+                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
+            </label>
+          </section>
+
+          {/* External sync — coming soon */}
+          <section className="space-y-2">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">External calendar sync</div>
+            <div className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.02] border border-white/10 opacity-60">
+              <div>
+                <div className="text-sm text-white">Google Calendar sync</div>
+                <div className="text-xs text-white/50">Two-way sync with your personal Google Calendar.</div>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-white/5 text-white/60 border border-white/10">Coming soon</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.02] border border-white/10 opacity-60">
+              <div>
+                <div className="text-sm text-white">Outlook sync</div>
+                <div className="text-xs text-white/50">Two-way sync with your Outlook calendar.</div>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-white/5 text-white/60 border border-white/10">Coming soon</span>
             </div>
           </section>
         </div>
