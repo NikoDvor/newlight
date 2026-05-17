@@ -188,13 +188,12 @@ export default function BDRCalendar() {
           <DayAgenda
             day={selectedDay}
             events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
-            onEventClick={setSelected}
+            onEventClick={handleEventClick}
           />
         </>
       ) : (
         <WeekView cursor={cursor} events={events} selectedDay={selectedDay}
-          onSelectDay={setSelectedDay} onEventClick={setSelected} />
-      )}
+          onSelectDay={setSelectedDay} onEventClick={handleEventClick} />)}
 
       {/* Floating Add button */}
       <button
@@ -217,6 +216,13 @@ export default function BDRCalendar() {
         onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
+
+      <CustomerProfilePanel
+        open={!!profileLeadId}
+        onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
+        leadId={profileLeadId}
+        onUpdated={refresh}
+      />
 
       <SettingsDialog
         open={showSettings}
