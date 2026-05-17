@@ -347,6 +347,8 @@ export function ChapterRunner({
   const reflectionKey = mode === "chapter" && moduleNumber === 8 && chapter ? `9.${chapter.chapter_number}` : "";
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
+  // Modules 1 & 2 are info-only: no quizzes, no level system, just read + Mark Complete.
+  const isInfoOnlyModule = moduleNumber === 1 || moduleNumber === 2;
   const [lockCheck, setLockCheck] = useState<ModuleLockCheckState>({
     checked: false,
     locked: true,
