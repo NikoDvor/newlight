@@ -846,8 +846,12 @@ export type Database = {
           booking_slug: string | null
           booking_title: string | null
           created_at: string
+          google_sync_enabled: boolean
           id: string
+          last_assigned_at: string | null
           name: string
+          outlook_sync_enabled: boolean
+          round_robin_pool: boolean
           timezone: string
           updated_at: string
           user_id: string
@@ -859,8 +863,12 @@ export type Database = {
           booking_slug?: string | null
           booking_title?: string | null
           created_at?: string
+          google_sync_enabled?: boolean
           id?: string
+          last_assigned_at?: string | null
           name: string
+          outlook_sync_enabled?: boolean
+          round_robin_pool?: boolean
           timezone?: string
           updated_at?: string
           user_id: string
@@ -872,8 +880,12 @@ export type Database = {
           booking_slug?: string | null
           booking_title?: string | null
           created_at?: string
+          google_sync_enabled?: boolean
           id?: string
+          last_assigned_at?: string | null
           name?: string
+          outlook_sync_enabled?: boolean
+          round_robin_pool?: boolean
           timezone?: string
           updated_at?: string
           user_id?: string
@@ -5932,6 +5944,7 @@ export type Database = {
           created_at: string
           crm_contact_id: string | null
           crm_deal_id: string | null
+          email: string | null
           has_booking_system: boolean | null
           id: string
           lead_source: string
@@ -5958,6 +5971,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          email?: string | null
           has_booking_system?: boolean | null
           id?: string
           lead_source?: string
@@ -5984,6 +5998,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          email?: string | null
           has_booking_system?: boolean | null
           id?: string
           lead_source?: string
