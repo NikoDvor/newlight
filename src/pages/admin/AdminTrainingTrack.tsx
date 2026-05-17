@@ -357,10 +357,40 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const selectedModuleStatus = selectedModule ? moduleStatus(selectedModule.id) : "not_started";
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
   const lockedModuleMessage = `Complete Module ${previousModuleNumber} to unlock quizzes and progress tracking for this module`;
-  const selectedChapters = useMemo(
-    () => chapters.filter((c) => c.module_id === selectedModuleId),
-    [chapters, selectedModuleId]
-  );
+  const { sop } = useClientSop();
+
+  // When a client SOP exists, override Module 1 & 2 chapter content with the
+  // client's own SOP so their employees read company-specific training instead
+  // of the default NewLight content. We keep real DB chapter rows (so progress
+  // and completion still work) and only show the first two chapters when SOP
+  // is active — chapters 3+ are hidden in client view.
+  const selectedChapters = useMemo(() => {
+    const all = chapters.filter((c) => c.module_id === selectedModuleId).sort((a, b) => a.chapter_number - b.chapter_number);
+    if (!sop || !selectedModule) return all;
+    if (selectedModule.module_number === 1) {
+      const slots: Array<{ title: string; content: string }> = [
+        { title: "Company Introduction", content: sop.company_intro || "Your company introduction has not been added yet." },
+        { title: "Our Core Offer", content: sop.core_offer || "Your core offer has not been added yet." },
+      ];
+      return all.slice(0, slots.length).map((c, i) => ({
+        ...c,
+        chapter_title: slots[i].title,
+        content: slots[i].content,
+      }));
+    }
+    if (selectedModule.module_number === 2) {
+      const slots: Array<{ title: string; content: string }> = [
+        { title: "Our Sales Process", content: sop.sales_process || "Your sales process has not been added yet." },
+        { title: "Our Scripts", content: sop.scripts || "Your scripts have not been added yet." },
+      ];
+      return all.slice(0, slots.length).map((c, i) => ({
+        ...c,
+        chapter_title: slots[i].title,
+        content: slots[i].content,
+      }));
+    }
+    return all;
+  }, [chapters, selectedModuleId, selectedModule, sop]);
   const glossaryChapter = useMemo(
     () => chapters.find((c) => c.module_id === glossaryModule?.id) || null,
     [chapters, glossaryModule?.id]
