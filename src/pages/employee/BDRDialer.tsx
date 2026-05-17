@@ -202,6 +202,7 @@ export default function BDRDialer() {
     try {
       const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
         bdr_user_id: userId,
+        client_id: clientId,
         lead_id: lead.id,
         outcome: def.label,
         objection_type: def.objection,
