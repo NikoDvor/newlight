@@ -711,6 +711,9 @@ export function ChapterRunner({
     setSaving(true);
     try {
       if (mode === "chapter" && chapter && userId) {
+        // For info-only modules (1 & 2), force a passing score so module-completion
+        // checks (which require score >= 80) succeed without a quiz.
+        const completionScore = isInfoOnlyModule ? 100 : lastScorePct;
         await supabase.from("nl_training_progress").upsert(
           {
             user_id: userId,
@@ -718,13 +721,23 @@ export function ChapterRunner({
             module_id: moduleId,
             chapter_id: chapter.id,
             status: "completed",
-            score: lastScorePct,
+            score: completionScore,
             attempts: 1,
             last_attempt_at: new Date().toISOString(),
             completed_at: new Date().toISOString(),
           },
           { onConflict: "user_id,module_id,chapter_id" } as any
         );
+
+        // For info-only modules, attempt to auto-complete the module once all
+        // chapters have been marked complete.
+        if (isInfoOnlyModule && modulesList && modulesList.length > 0) {
+          const completed = await checkAndCompleteModule(moduleId, modulesList);
+          if (completed && !moduleCompleteTriggered) {
+            setModuleCompleteTriggered(true);
+            onModuleComplete?.();
+          }
+        }
       }
       onCompleted();
       onClose();
