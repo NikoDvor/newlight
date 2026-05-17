@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       .from("nl_bdr_leads")
       .insert({
         user_id: assignedCal.user_id,
+        client_id: assignedCal.client_id,
         business_name: business_name || customer_name,
         owner_name: customer_name,
         phone: phone || null,
