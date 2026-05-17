@@ -312,7 +312,7 @@ function ScheduleFollowUp({ lead, onCreated, onCancel }: { lead: LeadLite; onCre
     setSaving(true);
     const start = new Date(`${date}T${time}`);
     const end = new Date(start.getTime() + duration*60_000);
-    const { data: cal } = await (supabase as any).from("bdr_calendars").select("id").eq("user_id", lead.user_id).maybeSingle();
+    const { data: cal } = await (supabase as any).from("bdr_calendars").select("id, client_id").eq("user_id", lead.user_id).maybeSingle();
     if (!cal) {
       setSaving(false);
       toast({ title: "No calendar found", variant: "destructive" });
@@ -320,6 +320,7 @@ function ScheduleFollowUp({ lead, onCreated, onCancel }: { lead: LeadLite; onCre
     }
     const { error } = await (supabase as any).from("bdr_calendar_events").insert({
       user_id: lead.user_id,
+      client_id: (cal as any).client_id || (lead as any).client_id,
       calendar_id: cal.id,
       title: `Follow-up: ${lead.owner_name || lead.business_name}`,
       starts_at: start.toISOString(),
