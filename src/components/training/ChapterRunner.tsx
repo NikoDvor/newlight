@@ -347,6 +347,8 @@ export function ChapterRunner({
   const reflectionKey = mode === "chapter" && moduleNumber === 8 && chapter ? `9.${chapter.chapter_number}` : "";
   const reflectionFields = REFLECTION_FIELDS[reflectionKey] || [];
   const isReflectionModule = moduleNumber === 8;
+  // Modules 1 & 2 are info-only: no quizzes, no level system, just read + Mark Complete.
+  const isInfoOnlyModule = moduleNumber === 1 || moduleNumber === 2;
   const [lockCheck, setLockCheck] = useState<ModuleLockCheckState>({
     checked: false,
     locked: true,
@@ -709,6 +711,9 @@ export function ChapterRunner({
     setSaving(true);
     try {
       if (mode === "chapter" && chapter && userId) {
+        // For info-only modules (1 & 2), force a passing score so module-completion
+        // checks (which require score >= 80) succeed without a quiz.
+        const completionScore = isInfoOnlyModule ? 100 : lastScorePct;
         await supabase.from("nl_training_progress").upsert(
           {
             user_id: userId,
@@ -716,13 +721,23 @@ export function ChapterRunner({
             module_id: moduleId,
             chapter_id: chapter.id,
             status: "completed",
-            score: lastScorePct,
+            score: completionScore,
             attempts: 1,
             last_attempt_at: new Date().toISOString(),
             completed_at: new Date().toISOString(),
           },
           { onConflict: "user_id,module_id,chapter_id" } as any
         );
+
+        // For info-only modules, attempt to auto-complete the module once all
+        // chapters have been marked complete.
+        if (isInfoOnlyModule && modulesList && modulesList.length > 0) {
+          const completed = await checkAndCompleteModule(moduleId, modulesList);
+          if (completed && !moduleCompleteTriggered) {
+            setModuleCompleteTriggered(true);
+            onModuleComplete?.();
+          }
+        }
       }
       onCompleted();
       onClose();
@@ -818,8 +833,8 @@ export function ChapterRunner({
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Reading</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3 leading-tight">{chapter.chapter_title}</h1>
-              {!isReflectionModule && levelBadges}
-              {!isReflectionModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
+              {!isReflectionModule && !isInfoOnlyModule && levelBadges}
+              {!isReflectionModule && !isInfoOnlyModule && <Progress value={(completedLevels / totalAvailableLevels) * 100} className="h-1.5" />}
             </div>
             <TrainingContentRenderer content={chapter.content || ""} />
             {reflectionFields.length > 0 && <ReflectionVault chapterId={chapter.id} fields={reflectionFields} />}
@@ -828,7 +843,7 @@ export function ChapterRunner({
             {unlockCategories.map((cat) => (
               <ObjectionMasteryTrack key={cat} chapterId={chapter.id} unlockCategory={cat} />
             ))}
-            {isReflectionModule ? (
+            {isReflectionModule || isInfoOnlyModule ? (
               <div className="mt-8 sm:mt-10 flex justify-stretch sm:justify-end">
                 <Button onClick={handleMarkComplete} disabled={saving} className="gap-2">
                   {saving ? "Saving…" : "Mark Complete"}
