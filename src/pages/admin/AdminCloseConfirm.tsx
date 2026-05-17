@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, AlertCircle, Copy, Loader2, Zap, UserPlus,
-  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink
+  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink, FileText, Users, Plus, Trash2, GraduationCap
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
