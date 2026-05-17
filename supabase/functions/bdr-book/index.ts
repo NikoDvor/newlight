@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
       .from("bdr_calendar_events")
       .insert({
         user_id: assignedCal.user_id,
+        client_id: assignedCal.client_id,
         calendar_id: assignedCal.id,
         title: `Booking: ${customer_name}${business_name ? " — " + business_name : ""}`,
         description: notes || null,
