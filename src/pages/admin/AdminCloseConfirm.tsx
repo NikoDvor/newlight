@@ -34,6 +34,22 @@ const provisionChecklist = [
   "Revenue opportunities", "Fix Now monitoring", "Default automations",
 ];
 
+interface TeamMemberDraft {
+  full_name: string;
+  email: string;
+  role: string; // role for invite-user: bdr | sdr | client_team | service_manager | project_manager
+}
+
+const TEAM_ROLE_OPTIONS: { value: string; label: string }[] = [
+  { value: "client_team", label: "Team Member" },
+  { value: "bdr", label: "BDR" },
+  { value: "sdr", label: "SDR" },
+  { value: "service_manager", label: "Service Manager" },
+  { value: "project_manager", label: "Project Manager" },
+];
+
+const emptyTeamMember = (): TeamMemberDraft => ({ full_name: "", email: "", role: "client_team" });
+
 export default function AdminCloseConfirm() {
   const { buildId } = useParams<{ buildId: string }>();
   const navigate = useNavigate();
@@ -53,6 +69,23 @@ export default function AdminCloseConfirm() {
     payment_method: "credit_card",
     kickoff_contact: "",
     internal_notes: "",
+  });
+  const [sop, setSop] = useState({
+    company_intro: "",
+    core_offer: "",
+    sales_process: "",
+    scripts: "",
+  });
+  const [bdrTrainingEnabled, setBdrTrainingEnabled] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberDraft[]>([emptyTeamMember()]);
+
+  const setSopField = (k: keyof typeof sop, v: string) => setSop(p => ({ ...p, [k]: v }));
+  const updateTeamMember = (i: number, k: keyof TeamMemberDraft, v: string) =>
+    setTeamMembers(prev => prev.map((m, idx) => idx === i ? { ...m, [k]: v } : m));
+  const addTeamMember = () => setTeamMembers(prev => [...prev, emptyTeamMember()]);
+  const removeTeamMember = (i: number) => setTeamMembers(prev => {
+    const next = prev.filter((_, idx) => idx !== i);
+    return next.length === 0 ? [emptyTeamMember()] : next;
   });
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
