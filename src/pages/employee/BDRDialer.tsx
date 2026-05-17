@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
+import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 
 interface Lead {
   id: string;
