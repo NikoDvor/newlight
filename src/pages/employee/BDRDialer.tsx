@@ -352,7 +352,7 @@ export default function BDRDialer() {
         {lists.map(([name, count]) => (
           <button key={name}
             onClick={() => setActiveList(name)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
             style={{
               background: activeList === name ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
               color: activeList === name ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
