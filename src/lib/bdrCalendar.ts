@@ -20,6 +20,18 @@ function slugify(input: string) {
     .slice(0, 32) || "bdr";
 }
 
+const NEWLIGHT_INTERNAL_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
+
+async function resolveEmployeeClientId(userId: string): Promise<string> {
+  const { data: emp } = await (supabase as any)
+    .from("employee_profiles").select("client_id").eq("user_id", userId).maybeSingle();
+  if (emp?.client_id) return emp.client_id as string;
+  const { data: ws } = await (supabase as any)
+    .from("workspace_users").select("client_id").eq("user_id", userId)
+    .eq("status", "active").order("created_at", { ascending: true }).limit(1).maybeSingle();
+  return (ws?.client_id as string) || NEWLIGHT_INTERNAL_CLIENT_ID;
+}
+
 /** Ensure the current user has a personal BDR calendar. Returns it. */
 export async function ensureBdrCalendar(opts?: { firstName?: string | null; fullName?: string | null }): Promise<BdrCalendar | null> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -39,18 +51,19 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     || user.email?.split("@")[0]
     || "My";
   const baseSlug = slugify(`${display}-${user.id.slice(0, 6)}`);
+  const clientId = await resolveEmployeeClientId(user.id);
 
   const { data: created, error } = await (supabase as any)
     .from("bdr_calendars")
     .insert({
       user_id: user.id,
+      client_id: clientId,
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
     })
     .select("*")
     .single();
   if (error) {
-    // Race: another tab created it
     const { data: again } = await (supabase as any)
       .from("bdr_calendars").select("*").eq("user_id", user.id).maybeSingle();
     return (again as BdrCalendar) || null;
@@ -75,6 +88,7 @@ export async function logDialerEvent(params: {
   const outcomePart = params.outcome ? ` — ${params.outcome}` : " — Called";
   await (supabase as any).from("bdr_calendar_events").insert({
     user_id: cal.user_id,
+    client_id: (cal as any).client_id,
     calendar_id: cal.id,
     title: `${params.businessName}${ownerPart}${outcomePart}`,
     description: params.notes || null,

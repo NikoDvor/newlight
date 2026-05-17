@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // 1. Find the originating calendar
     const { data: originCal, error: calErr } = await supabase
       .from("bdr_calendars")
-      .select("id, user_id, name, booking_active, round_robin_pool")
+      .select("id, user_id, client_id, name, booking_active, round_robin_pool")
       .eq("booking_slug", booking_slug)
       .maybeSingle();
     if (calErr || !originCal) {
@@ -42,15 +42,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2. Round-robin assignment (even rotation = least-recently-assigned)
-    let assignedCal: { id: string; user_id: string; name: string } = originCal;
+    // 2. Round-robin assignment (even rotation = least-recently-assigned) — scoped to the same client tenant
+    let assignedCal: { id: string; user_id: string; client_id: string; name: string } = originCal as any;
     let roundRobin = false;
     if (originCal.round_robin_pool) {
       const { data: pool } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, name, last_assigned_at")
+        .select("id, user_id, client_id, name, last_assigned_at")
         .eq("round_robin_pool", true)
         .eq("booking_active", true)
+        .eq("client_id", originCal.client_id)
         .order("last_assigned_at", { ascending: true, nullsFirst: true })
         .limit(1);
       if (pool && pool.length) {
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
       .from("nl_bdr_leads")
       .insert({
         user_id: assignedCal.user_id,
+        client_id: assignedCal.client_id,
         business_name: business_name || customer_name,
         owner_name: customer_name,
         phone: phone || null,
@@ -92,6 +94,7 @@ Deno.serve(async (req) => {
       .from("bdr_calendar_events")
       .insert({
         user_id: assignedCal.user_id,
+        client_id: assignedCal.client_id,
         calendar_id: assignedCal.id,
         title: `Booking: ${customer_name}${business_name ? " — " + business_name : ""}`,
         description: notes || null,

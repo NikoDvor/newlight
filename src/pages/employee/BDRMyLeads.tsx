@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
@@ -146,6 +147,7 @@ const FILTER_TABS: { key: string; label: string }[] = [
 /* ─── page ─── */
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
+  const { clientId } = useEmployeeClientId();
   const [leads, setLeads] = useState<BdrLead[]>([]);
   const [calledLeadIds, setCalledLeadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -263,7 +265,7 @@ export default function BDRMyLeads() {
   const handleAddLead = async (form: Record<string, string>) => {
     if (!user?.id) return;
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
-      user_id: user.id, business_name: form.business_name, owner_name: form.owner_name || null,
+      user_id: user.id, client_id: clientId, business_name: form.business_name, owner_name: form.owner_name || null,
       phone: form.phone || null, website: form.website || null, niche: form.niche || null,
       city: form.city || null, notes: form.notes || null,
     }).select("id").single();
@@ -284,7 +286,7 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
-        user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
+        user_id: user.id, client_id: clientId, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
         has_booking_system: row.has_booking_system,
         list_name: cleanList,

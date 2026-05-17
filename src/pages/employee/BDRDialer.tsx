@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
+import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 
 interface Lead {
   id: string;
@@ -77,6 +78,7 @@ export default function BDRDialer() {
   const [latestOutcomeByLead, setLatestOutcomeByLead] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
@@ -88,6 +90,8 @@ export default function BDRDialer() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
+      const cid = await resolveEmployeeClientId(user.id);
+      setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
           .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at")
@@ -198,6 +202,7 @@ export default function BDRDialer() {
     try {
       const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
         bdr_user_id: userId,
+        client_id: clientId,
         lead_id: lead.id,
         outcome: def.label,
         objection_type: def.objection,
@@ -249,7 +254,7 @@ export default function BDRDialer() {
     } finally {
       setSavingId(null);
     }
-  }, [userId]);
+  }, [userId, clientId]);
 
   const confirmCallback = useCallback(async () => {
     if (!callbackLead || !callbackDate || !callbackTime) return;

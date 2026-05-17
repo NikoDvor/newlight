@@ -435,6 +435,7 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
     if (endDate <= startDate) endDate = new Date(startDate.getTime() + 30 * 60_000);
     const { error } = await (supabase as any).from("bdr_calendar_events").insert({
       user_id: calendar.user_id,
+      client_id: (calendar as any).client_id,
       calendar_id: calendar.id,
       title: title.trim(),
       starts_at: startDate.toISOString(),
