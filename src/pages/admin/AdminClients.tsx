@@ -180,6 +180,7 @@ export default function AdminClients() {
         welcome_message: form.welcome_message || "Welcome to your business dashboard",
       }),
       supabase.from("client_health_scores").insert({ client_id: data.id }),
+      seedDemoSopShell(data.id),
     ]);
 
 
