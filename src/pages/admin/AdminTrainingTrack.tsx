@@ -970,7 +970,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                               {c.chapter_number}. {c.chapter_title}
                             </span>
                             <div className="flex items-center gap-2 shrink-0">
-                              {(() => {
+                              {!isInfoOnlyModule && (() => {
                                 const cnt = chapterQuestionCounts[c.id];
                                 if (!cnt || cnt.total === 0) {
                                   return <Badge variant="destructive" className="h-5 px-2 text-[10px]">Needs Questions</Badge>;
