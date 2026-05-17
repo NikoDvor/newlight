@@ -751,7 +751,7 @@ export default function BDRMyLeads() {
         open={!!profileLeadId}
         onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
         leadId={profileLeadId}
-        onUpdated={loadLeads}
+        onUpdated={fetchLeads}
       />
     </div>
   );
