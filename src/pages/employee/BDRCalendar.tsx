@@ -704,7 +704,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-          </div>
             </div>
           </section>
 
