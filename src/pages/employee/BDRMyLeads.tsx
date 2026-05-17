@@ -265,7 +265,7 @@ export default function BDRMyLeads() {
   const handleAddLead = async (form: Record<string, string>) => {
     if (!user?.id) return;
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
-      user_id: user.id, business_name: form.business_name, owner_name: form.owner_name || null,
+      user_id: user.id, client_id: clientId, business_name: form.business_name, owner_name: form.owner_name || null,
       phone: form.phone || null, website: form.website || null, niche: form.niche || null,
       city: form.city || null, notes: form.notes || null,
     }).select("id").single();
