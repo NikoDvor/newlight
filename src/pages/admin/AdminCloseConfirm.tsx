@@ -351,7 +351,78 @@ export default function AdminCloseConfirm() {
                 </div>
               </div>
 
-              {/* Invite Result */}
+              {/* SOP — Real Training Content (Module 1 & 2) */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="h-3 w-3" /> Training SOP — Module 1 & 2
+                </p>
+                <p className="text-[11px] text-white/45 -mt-1">
+                  Replaces the demo placeholder content with the client's real Module 1 & 2 training. Modules 3–10 remain standard NewLight training. Leave blank to keep the demo shell.
+                </p>
+                <div>
+                  <label className={labelCls}>Company Introduction</label>
+                  <Textarea value={sop.company_intro} onChange={e => setSopField("company_intro", e.target.value)} placeholder="Who you are, what you do, the story behind the business…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Core Offer</label>
+                  <Textarea value={sop.core_offer} onChange={e => setSopField("core_offer", e.target.value)} placeholder="What you sell, the outcome it delivers, why it's worth it…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Sales Process</label>
+                  <Textarea value={sop.sales_process} onChange={e => setSopField("sales_process", e.target.value)} placeholder="Step by step: how a lead becomes a customer at your company…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Scripts</label>
+                  <Textarea value={sop.scripts} onChange={e => setSopField("scripts", e.target.value)} placeholder="Opener, qualifying questions, pitch, close, common objections…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+
+                <div className="flex items-center justify-between rounded-md bg-white/[0.04] border border-white/10 px-3 py-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+                    <div>
+                      <p className="text-xs font-medium text-white">Enable BDR Sales Training</p>
+                      <p className="text-[10px] text-white/40">Unlocks BDR sales training track for this client's team.</p>
+                    </div>
+                  </div>
+                  <Switch checked={bdrTrainingEnabled} onCheckedChange={setBdrTrainingEnabled} disabled={submitting} />
+                </div>
+              </div>
+
+              {/* Team / Employee Setup */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3 w-3" /> Team / Employee Accounts
+                  </p>
+                  <Button type="button" size="sm" variant="ghost" onClick={addTeamMember} disabled={submitting} className="text-[hsl(var(--nl-sky))] hover:bg-white/10 text-xs h-7">
+                    <Plus className="h-3 w-3 mr-1" /> Add Member
+                  </Button>
+                </div>
+                <p className="text-[11px] text-white/45 -mt-1">
+                  Real employee accounts created at go-live. Each member gets an invite email scoped to this workspace. Leave all rows blank to skip.
+                </p>
+                {teamMembers.map((m, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_140px_auto] gap-2 items-end">
+                    <div>
+                      <label className={labelCls}>Full Name</label>
+                      <Input value={m.full_name} onChange={e => updateTeamMember(i, "full_name", e.target.value)} placeholder="Jane Doe" className={inputCls} disabled={submitting} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Email</label>
+                      <Input type="email" value={m.email} onChange={e => updateTeamMember(i, "email", e.target.value)} placeholder="jane@company.com" className={inputCls} disabled={submitting} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Role</label>
+                      <select value={m.role} onChange={e => updateTeamMember(i, "role", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-2" disabled={submitting}>
+                        {TEAM_ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                      </select>
+                    </div>
+                    <button type="button" onClick={() => removeTeamMember(i)} disabled={submitting} className="text-white/30 hover:text-red-400 transition-colors p-2 h-10">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
               {inviteResult && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl p-4" style={{
                   background: inviteResult.sent ? "hsla(160,60%,40%,.12)" : "hsla(211,96%,60%,.08)",
