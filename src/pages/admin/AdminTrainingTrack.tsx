@@ -988,21 +988,23 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                           <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                             {getChapterDescription(c)}
                           </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {[1, 2, 3].map((level) => {
-                              const complete = levelProgress.some((p) => p.chapter_id === c.id && p.quiz_level === level && p.status === "completed");
-                              const locked = level > levelCount + 1;
-                              return (
-                                <Badge
-                                  key={level}
-                                  variant={complete ? "default" : "outline"}
-                                  className={`h-5 px-2 text-[10px] ${locked ? "opacity-50" : ""}`}
-                                >
-                                  L{level} {complete ? "Complete" : locked ? "Locked" : "Unlocked"}
-                                </Badge>
-                              );
-                            })}
-                          </div>
+                          {!isInfoOnlyModule && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {[1, 2, 3].map((level) => {
+                                const complete = levelProgress.some((p) => p.chapter_id === c.id && p.quiz_level === level && p.status === "completed");
+                                const locked = level > levelCount + 1;
+                                return (
+                                  <Badge
+                                    key={level}
+                                    variant={complete ? "default" : "outline"}
+                                    className={`h-5 px-2 text-[10px] ${locked ? "opacity-50" : ""}`}
+                                  >
+                                    L{level} {complete ? "Complete" : locked ? "Locked" : "Unlocked"}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </motion.button>
                     );
