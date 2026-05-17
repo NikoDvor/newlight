@@ -747,6 +747,12 @@ export default function BDRMyLeads() {
       <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+      <CustomerProfilePanel
+        open={!!profileLeadId}
+        onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
+        leadId={profileLeadId}
+        onUpdated={loadLeads}
+      />
     </div>
   );
 }
