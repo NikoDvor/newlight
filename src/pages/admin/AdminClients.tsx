@@ -846,9 +846,6 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/sop`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
-                            <FileText className="h-3.5 w-3.5" /> Training SOP (Mod 1 & 2)
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/10" />
                           <DropdownMenuItem onClick={() => handleSuspend(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-yellow-400 cursor-pointer">
                             {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-yellow-400" />}
