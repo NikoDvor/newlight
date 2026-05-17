@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const ROLE_PRESETS = new Set(["bdr", "sdr", "project_manager", "service_manager", "admin"]);
 const PLATFORM_WIDE_VALUES = new Set(["", "platform", "platform-wide", "__platform__"]);
+const NEWLIGHT_INTERNAL_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
