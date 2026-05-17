@@ -210,6 +210,49 @@ export default function AdminCloseConfirm() {
         }),
       ]);
 
+      // 5. Write the real client SOP (Module 1 & 2 content) — overwrites any
+      // demo shell auto-seeded at sub-account creation. Also stores whether
+      // BDR sales training is enabled for this client's team.
+      const hasAnySopContent = !!(sop.company_intro || sop.core_offer || sop.sales_process || sop.scripts);
+      const { data: { user: actingUser } } = await supabase.auth.getUser();
+      const { error: sopErr } = await (supabase as any)
+        .from("client_training_sop")
+        .upsert(
+          {
+            client_id: client.id,
+            company_intro: sop.company_intro,
+            core_offer: sop.core_offer,
+            sales_process: sop.sales_process,
+            scripts: sop.scripts,
+            is_demo_shell: !hasAnySopContent,
+            bdr_training_enabled: bdrTrainingEnabled,
+            updated_by: actingUser?.id ?? null,
+          },
+          { onConflict: "client_id" },
+        );
+      if (sopErr) {
+        toast.warning(`SOP save failed: ${sopErr.message}`);
+      }
+
+      // 6. Invite each filled-in team member (real employee accounts).
+      const validMembers = teamMembers.filter(m => m.email.trim() && m.full_name.trim());
+      const memberResults = await Promise.allSettled(
+        validMembers.map(m =>
+          supabase.functions.invoke("invite-user", {
+            body: {
+              email: m.email.trim().toLowerCase(),
+              role: m.role,
+              client_id: client.id,
+              full_name: m.full_name.trim(),
+            },
+          }),
+        ),
+      );
+      const memberFailures = memberResults.filter(r => r.status === "rejected" || (r as any).value?.error).length;
+      if (memberFailures > 0) {
+        toast.warning(`${memberFailures} of ${validMembers.length} team invites failed — check Team & Users.`);
+      }
+
       setStatus("ready_for_kickoff");
       toast.success(`${form.business_name_confirmed} activated successfully!`);
     } catch (err: any) {
