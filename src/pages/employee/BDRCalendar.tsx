@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
+import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 
 interface Event {
   id: string;
@@ -57,7 +58,13 @@ export default function BDRCalendar() {
   const [showSettings, setShowSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
+  const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+
+  const handleEventClick = (e: Event) => {
+    if (e.lead_id) setProfileLeadId(e.lead_id);
+    else setSelected(e);
+  };
 
   useEffect(() => { (async () => {
     const cal = await ensureBdrCalendar();
@@ -181,13 +188,12 @@ export default function BDRCalendar() {
           <DayAgenda
             day={selectedDay}
             events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
-            onEventClick={setSelected}
+            onEventClick={handleEventClick}
           />
         </>
       ) : (
         <WeekView cursor={cursor} events={events} selectedDay={selectedDay}
-          onSelectDay={setSelectedDay} onEventClick={setSelected} />
-      )}
+          onSelectDay={setSelectedDay} onEventClick={handleEventClick} />)}
 
       {/* Floating Add button */}
       <button
@@ -210,6 +216,13 @@ export default function BDRCalendar() {
         onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
+
+      <CustomerProfilePanel
+        open={!!profileLeadId}
+        onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
+        leadId={profileLeadId}
+        onUpdated={refresh}
+      />
 
       <SettingsDialog
         open={showSettings}

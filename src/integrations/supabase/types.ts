@@ -773,6 +773,7 @@ export type Database = {
       bdr_calendar_events: {
         Row: {
           all_day: boolean
+          attendance: string
           calendar_id: string
           contact_id: string | null
           created_at: string
@@ -792,6 +793,7 @@ export type Database = {
         }
         Insert: {
           all_day?: boolean
+          attendance?: string
           calendar_id: string
           contact_id?: string | null
           created_at?: string
@@ -811,6 +813,7 @@ export type Database = {
         }
         Update: {
           all_day?: boolean
+          attendance?: string
           calendar_id?: string
           contact_id?: string | null
           created_at?: string
@@ -5944,6 +5947,7 @@ export type Database = {
           created_at: string
           crm_contact_id: string | null
           crm_deal_id: string | null
+          customer_notes: string | null
           email: string | null
           has_booking_system: boolean | null
           id: string
@@ -5971,6 +5975,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          customer_notes?: string | null
           email?: string | null
           has_booking_system?: boolean | null
           id?: string
@@ -5998,6 +6003,7 @@ export type Database = {
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
+          customer_notes?: string | null
           email?: string | null
           has_booking_system?: boolean | null
           id?: string

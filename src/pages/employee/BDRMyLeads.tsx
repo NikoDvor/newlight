@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
@@ -155,6 +156,7 @@ export default function BDRMyLeads() {
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
   const [activeList, setActiveList] = useState<string>("__all__");
   const [selectMode, setSelectMode] = useState(false);
@@ -601,10 +603,10 @@ export default function BDRMyLeads() {
                 return (
                   <div
                     key={lead.id}
-                    onClick={selectMode ? () => toggleSelect(lead.id) : undefined}
-                    role={selectMode ? "button" : undefined}
+                    onClick={selectMode ? () => toggleSelect(lead.id) : () => setProfileLeadId(lead.id)}
+                    role="button"
                     aria-pressed={selectMode ? selectedIds.has(lead.id) : undefined}
-                    className={`rounded-2xl overflow-hidden transition-all ${selectMode ? "cursor-pointer active:scale-[0.99]" : ""}`}
+                    className={`rounded-2xl overflow-hidden transition-all cursor-pointer active:scale-[0.99]`}
                     style={{
                       background: selectMode && selectedIds.has(lead.id) ? "hsla(211,96%,56%,.12)" : "hsla(215,35%,10%,.8)",
                       border: `1px solid ${selectMode && selectedIds.has(lead.id) ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.12)"}`,
@@ -745,6 +747,12 @@ export default function BDRMyLeads() {
       <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+      <CustomerProfilePanel
+        open={!!profileLeadId}
+        onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
+        leadId={profileLeadId}
+        onUpdated={fetchLeads}
+      />
     </div>
   );
 }
