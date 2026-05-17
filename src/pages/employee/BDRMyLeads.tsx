@@ -286,7 +286,7 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
-        user_id: user.id, business_name: row.business_name, owner_name: row.owner_name || null,
+        user_id: user.id, client_id: clientId, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
         has_booking_system: row.has_booking_system,
         list_name: cleanList,
