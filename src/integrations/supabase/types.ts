@@ -775,6 +775,7 @@ export type Database = {
           all_day: boolean
           attendance: string
           calendar_id: string
+          client_id: string
           contact_id: string | null
           created_at: string
           description: string | null
@@ -795,6 +796,7 @@ export type Database = {
           all_day?: boolean
           attendance?: string
           calendar_id: string
+          client_id: string
           contact_id?: string | null
           created_at?: string
           description?: string | null
@@ -815,6 +817,7 @@ export type Database = {
           all_day?: boolean
           attendance?: string
           calendar_id?: string
+          client_id?: string
           contact_id?: string | null
           created_at?: string
           description?: string | null
@@ -839,6 +842,13 @@ export type Database = {
             referencedRelation: "bdr_calendars"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bdr_calendar_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bdr_calendars: {
@@ -848,6 +858,7 @@ export type Database = {
           booking_description: string | null
           booking_slug: string | null
           booking_title: string | null
+          client_id: string
           created_at: string
           google_sync_enabled: boolean
           id: string
@@ -865,6 +876,7 @@ export type Database = {
           booking_description?: string | null
           booking_slug?: string | null
           booking_title?: string | null
+          client_id: string
           created_at?: string
           google_sync_enabled?: boolean
           id?: string
@@ -882,6 +894,7 @@ export type Database = {
           booking_description?: string | null
           booking_slug?: string | null
           booking_title?: string | null
+          client_id?: string
           created_at?: string
           google_sync_enabled?: boolean
           id?: string
@@ -893,11 +906,20 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bdr_calendars_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bdr_call_outcomes: {
         Row: {
           bdr_user_id: string
+          client_id: string
           id: string
           lead_id: string | null
           logged_at: string
@@ -906,6 +928,7 @@ export type Database = {
         }
         Insert: {
           bdr_user_id: string
+          client_id: string
           id?: string
           lead_id?: string | null
           logged_at?: string
@@ -914,13 +937,22 @@ export type Database = {
         }
         Update: {
           bdr_user_id?: string
+          client_id?: string
           id?: string
           lead_id?: string | null
           logged_at?: string
           objection_type?: string | null
           outcome?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bdr_call_outcomes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       billing_accounts: {
         Row: {
@@ -4373,6 +4405,7 @@ export type Database = {
       }
       employee_profiles: {
         Row: {
+          client_id: string
           created_at: string
           department: string | null
           email: string
@@ -4385,6 +4418,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_id: string
           created_at?: string
           department?: string | null
           email: string
@@ -4397,6 +4431,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_id?: string
           created_at?: string
           department?: string | null
           email?: string
@@ -4408,7 +4443,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_types: {
         Row: {
@@ -5943,7 +5986,7 @@ export type Database = {
           callback_set_at: string | null
           called: boolean
           city: string | null
-          client_id: string | null
+          client_id: string
           created_at: string
           crm_contact_id: string | null
           crm_deal_id: string | null
@@ -5971,7 +6014,7 @@ export type Database = {
           callback_set_at?: string | null
           called?: boolean
           city?: string | null
-          client_id?: string | null
+          client_id: string
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
@@ -5999,7 +6042,7 @@ export type Database = {
           callback_set_at?: string | null
           called?: boolean
           city?: string | null
-          client_id?: string | null
+          client_id?: string
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
@@ -11408,7 +11451,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_employee_client_id: { Args: { _user_id: string }; Returns: string }
       get_proposal_token: { Args: never; Returns: string }
+      user_can_access_client: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
