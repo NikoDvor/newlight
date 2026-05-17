@@ -83,6 +83,7 @@ import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
+import AdminClientSOP from "./pages/admin/AdminClientSOP";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import AdminWelcome from "./pages/admin/AdminWelcome";
 import AdminAppSettings from "./pages/admin/AdminAppSettings";
@@ -246,6 +247,7 @@ const App = () => {
                 <Route path="demo-builds" element={<AdminDemoBuilds />} />
                 <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
                 <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
+                <Route path="clients/:clientId/sop" element={<AdminClientSOP />} />
                 <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
                 <Route path="welcome" element={<AdminWelcome />} />
                 <Route path="app-settings" element={<AdminAppSettings />} />

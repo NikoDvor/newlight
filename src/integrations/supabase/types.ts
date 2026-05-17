@@ -2824,6 +2824,47 @@ export type Database = {
           },
         ]
       }
+      client_training_sop: {
+        Row: {
+          client_id: string
+          company_intro: string
+          core_offer: string
+          created_at: string
+          sales_process: string
+          scripts: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id: string
+          company_intro?: string
+          core_offer?: string
+          created_at?: string
+          sales_process?: string
+          scripts?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          company_intro?: string
+          core_offer?: string
+          created_at?: string
+          sales_process?: string
+          scripts?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_training_sop_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           agreement_status: string
