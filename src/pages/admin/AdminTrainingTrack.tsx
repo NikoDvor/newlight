@@ -1114,65 +1114,118 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                       </div>
                     )}
 
-                    {/* Module Final Exam Section */}
-                    <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
-                      {examPassed ? (
-                        <div className="space-y-3">
+                    {/* Module Final Exam Section — hidden for info-only modules (1 & 2) */}
+                    {isInfoOnlyModule ? (
+                      <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
+                        {examPassed ? (
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
                               <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
-                              <p className="text-[11px] text-foreground/50">Last score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%{exam?.attempts ? ` · ${exam.attempts} attempt${exam.attempts > 1 ? "s" : ""}` : ""}</p>
+                              <p className="text-[11px] text-foreground/50">Informational module — no quiz required</p>
                             </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
-                            className="w-full gap-2"
-                          >
-                            <Award className="h-4 w-4" />
-                            Retake Exam
-                          </Button>
-                        </div>
-                      ) : !allChaptersRead ? (
-                        <>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(220,15%,20%,.6)" }}>
-                              <BookOpen className="h-5 w-5 text-foreground/40" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground/60">Complete all chapters to unlock the exam</p>
-                              <p className="text-[11px] text-foreground/40">{chaptersReadInfo.read} of {chaptersReadInfo.total} chapters read</p>
-                            </div>
-                          </div>
-                          <Progress value={(chaptersReadInfo.read / chaptersReadInfo.total) * 100} className="h-1.5" />
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between gap-3">
+                        ) : !allChaptersRead ? (
+                          <>
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.15)", boxShadow: "0 0 20px -4px hsla(211,96%,56%,.3)" }}>
-                                <Award className="h-5 w-5 text-[hsl(211,96%,56%)]" />
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(220,15%,20%,.6)" }}>
+                                <BookOpen className="h-5 w-5 text-foreground/40" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-foreground/60">Read all chapters to complete this module</p>
+                                <p className="text-[11px] text-foreground/40">{chaptersReadInfo.read} of {chaptersReadInfo.total} chapters read · no quiz required</p>
+                              </div>
+                            </div>
+                            <Progress value={(chaptersReadInfo.read / chaptersReadInfo.total) * 100} className="h-1.5" />
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.15)" }}>
+                                <BookOpen className="h-5 w-5 text-[hsl(211,96%,56%)]" />
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-foreground">Module Final Exam</p>
-                                <p className="text-[11px] text-foreground/50">20 questions · 80% to pass</p>
+                                <p className="text-sm font-semibold text-foreground">Ready to Mark Complete</p>
+                                <p className="text-[11px] text-foreground/50">All chapters read — no quiz required</p>
                               </div>
                             </div>
+                            <Button
+                              onClick={async () => {
+                                await forceCompleteModule(selectedModule.id, numberedModules.map((m) => ({ id: m.id, module_number: m.module_number })));
+                                await reloadCompletions();
+                                refreshProgress();
+                              }}
+                              className="w-full gap-2"
+                              disabled={selectedModuleLocked}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Mark Module Complete
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "hsla(211,96%,60%,.12)", background: "hsla(215,35%,10%,.8)" }}>
+                        {examPassed ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(142,72%,42%,.15)" }}>
+                                <CheckCircle2 className="h-5 w-5 text-[hsl(142,72%,42%)]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-[hsl(142,72%,42%)]">Module Complete ✓</p>
+                                <p className="text-[11px] text-foreground/50">Last score: {exam?.latestScore || completions.find(c => c.module_id === selectedModule.id)?.score_average || 100}%{exam?.attempts ? ` · ${exam.attempts} attempt${exam.attempts > 1 ? "s" : ""}` : ""}</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
+                              className="w-full gap-2"
+                            >
+                              <Award className="h-4 w-4" />
+                              Retake Exam
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
-                            className="w-full gap-2"
-                            disabled={selectedModuleLocked}
-                          >
-                            <Award className="h-4 w-4" />
-                            {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                        ) : !allChaptersRead ? (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(220,15%,20%,.6)" }}>
+                                <BookOpen className="h-5 w-5 text-foreground/40" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-foreground/60">Complete all chapters to unlock the exam</p>
+                                <p className="text-[11px] text-foreground/40">{chaptersReadInfo.read} of {chaptersReadInfo.total} chapters read</p>
+                              </div>
+                            </div>
+                            <Progress value={(chaptersReadInfo.read / chaptersReadInfo.total) * 100} className="h-1.5" />
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.15)", boxShadow: "0 0 20px -4px hsla(211,96%,56%,.3)" }}>
+                                  <Award className="h-5 w-5 text-[hsl(211,96%,56%)]" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground">Module Final Exam</p>
+                                  <p className="text-[11px] text-foreground/50">20 questions · 80% to pass</p>
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => setExamRunner({ moduleId: selectedModule.id, moduleName: selectedModule.module_title })}
+                              className="w-full gap-2"
+                              disabled={selectedModuleLocked}
+                            >
+                              <Award className="h-4 w-4" />
+                              {exam && !exam.passed ? `Retake Module Exam · Last score: ${exam.latestScore}%` : "Take Module Final Exam"}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
