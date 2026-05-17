@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       platformRole = "client_team";
     } else if (rolePreset === "bdr") {
       platformRole = "marketing_staff";
-      effectiveClientId = null;
+      effectiveClientId = null; // user_roles stays platform-wide
       effectiveJobTitle = jobTitle || "BDR";
     } else if (rolePreset === "sdr") {
       platformRole = "marketing_staff";
@@ -129,6 +129,12 @@ Deno.serve(async (req) => {
     } else {
       return json({ error: "Invalid role preset" }, 400);
     }
+
+    // Tenant assignment for employee_profiles (BDR/SDR/Admin/Operator share the platform-wide user_roles row,
+    // but their *data* is scoped to a client workspace — default to NewLight Internal).
+    const employeeClientId = ["bdr", "sdr", "service_manager", "admin"].includes(rolePreset)
+      ? (clientId || NEWLIGHT_INTERNAL_CLIENT_ID)
+      : null;
 
     const { error: roleError } = await adminClient.from("user_roles").insert({
       user_id: userId,
@@ -151,6 +157,7 @@ Deno.serve(async (req) => {
           job_title: effectiveJobTitle,
           employee_role: platformRole,
           status: "active",
+          client_id: employeeClientId,
         });
 
         if (employeeError) {
