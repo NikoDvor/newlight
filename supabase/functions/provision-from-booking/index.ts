@@ -179,6 +179,21 @@ Deno.serve(async (req) => {
           status: "pending",
         }))
       ),
+      // Demo SOP shell — placeholder content for Module 1 & 2 so the new
+      // sub-account has something to show until the closing/go-live form
+      // replaces it with the client's real SOPs.
+      adminClient.from("client_training_sop").upsert(
+        {
+          client_id: client.id,
+          company_intro: "[DEMO PLACEHOLDER]\n\nThis is where your company introduction will go. In the live version, your team will learn who you are, what you do, and the story behind your business — all written from your closing/go-live form.\n\nReplace this content from the Closing & Activation form.",
+          core_offer: "[DEMO PLACEHOLDER]\n\nThis is where your core offer will go: what you sell, the outcome it delivers for customers, and the reason it's worth the price.\n\nReplace this content from the Closing & Activation form.",
+          sales_process: "[DEMO PLACEHOLDER]\n\nThis is where your sales process will go, step by step — from first contact to closed customer. Your team will learn it here before they ever take a call.\n\nReplace this content from the Closing & Activation form.",
+          scripts: "[DEMO PLACEHOLDER]\n\nThis is where your scripts will go: opener, qualifying questions, pitch, close, and common objection handling.\n\nReplace this content from the Closing & Activation form.",
+          is_demo_shell: true,
+          bdr_training_enabled: false,
+        },
+        { onConflict: "client_id", ignoreDuplicates: true }
+      ),
     ]);
 
     const nowIso = new Date().toISOString();

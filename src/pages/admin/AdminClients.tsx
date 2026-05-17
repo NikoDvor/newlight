@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Smartphone, FileText } from "lucide-react";
+import { Plus, Search, Building2, ExternalLink, Copy, UserPlus, Mail, CheckCircle2, AlertCircle, Settings, Trash2, Pause, Play, Activity, Wand2, Loader2, Zap, Phone, MessageSquare, Link2, Archive, MoreVertical, ClipboardList, Send, CreditCard, Wrench, Smartphone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceRe
 import { CategoryNichePicker } from "@/components/CategoryNichePicker";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
+import { seedDemoSopShell } from "@/lib/clientSopShell";
 interface Client {
   id: string;
   business_name: string;
@@ -179,6 +180,7 @@ export default function AdminClients() {
         welcome_message: form.welcome_message || "Welcome to your business dashboard",
       }),
       supabase.from("client_health_scores").insert({ client_id: data.id }),
+      seedDemoSopShell(data.id),
     ]);
 
 
@@ -843,9 +845,6 @@ export default function AdminClients() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/sop`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
-                            <FileText className="h-3.5 w-3.5" /> Training SOP (Mod 1 & 2)
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/10" />
                           <DropdownMenuItem onClick={() => handleSuspend(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-yellow-400 cursor-pointer">

@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2, AlertCircle, Copy, Loader2, Zap, UserPlus,
-  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink
+  ClipboardCheck, Mail, Phone, ArrowLeft, ExternalLink, FileText, Users, Plus, Trash2, GraduationCap
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
@@ -33,6 +34,22 @@ const provisionChecklist = [
   "Revenue opportunities", "Fix Now monitoring", "Default automations",
 ];
 
+interface TeamMemberDraft {
+  full_name: string;
+  email: string;
+  role: string; // role for invite-user: bdr | sdr | client_team | service_manager | project_manager
+}
+
+const TEAM_ROLE_OPTIONS: { value: string; label: string }[] = [
+  { value: "client_team", label: "Team Member" },
+  { value: "bdr", label: "BDR" },
+  { value: "sdr", label: "SDR" },
+  { value: "service_manager", label: "Service Manager" },
+  { value: "project_manager", label: "Project Manager" },
+];
+
+const emptyTeamMember = (): TeamMemberDraft => ({ full_name: "", email: "", role: "client_team" });
+
 export default function AdminCloseConfirm() {
   const { buildId } = useParams<{ buildId: string }>();
   const navigate = useNavigate();
@@ -52,6 +69,23 @@ export default function AdminCloseConfirm() {
     payment_method: "credit_card",
     kickoff_contact: "",
     internal_notes: "",
+  });
+  const [sop, setSop] = useState({
+    company_intro: "",
+    core_offer: "",
+    sales_process: "",
+    scripts: "",
+  });
+  const [bdrTrainingEnabled, setBdrTrainingEnabled] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberDraft[]>([emptyTeamMember()]);
+
+  const setSopField = (k: keyof typeof sop, v: string) => setSop(p => ({ ...p, [k]: v }));
+  const updateTeamMember = (i: number, k: keyof TeamMemberDraft, v: string) =>
+    setTeamMembers(prev => prev.map((m, idx) => idx === i ? { ...m, [k]: v } : m));
+  const addTeamMember = () => setTeamMembers(prev => [...prev, emptyTeamMember()]);
+  const removeTeamMember = (i: number) => setTeamMembers(prev => {
+    const next = prev.filter((_, idx) => idx !== i);
+    return next.length === 0 ? [emptyTeamMember()] : next;
   });
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -176,6 +210,49 @@ export default function AdminCloseConfirm() {
         }),
       ]);
 
+      // 5. Write the real client SOP (Module 1 & 2 content) — overwrites any
+      // demo shell auto-seeded at sub-account creation. Also stores whether
+      // BDR sales training is enabled for this client's team.
+      const hasAnySopContent = !!(sop.company_intro || sop.core_offer || sop.sales_process || sop.scripts);
+      const { data: { user: actingUser } } = await supabase.auth.getUser();
+      const { error: sopErr } = await (supabase as any)
+        .from("client_training_sop")
+        .upsert(
+          {
+            client_id: client.id,
+            company_intro: sop.company_intro,
+            core_offer: sop.core_offer,
+            sales_process: sop.sales_process,
+            scripts: sop.scripts,
+            is_demo_shell: !hasAnySopContent,
+            bdr_training_enabled: bdrTrainingEnabled,
+            updated_by: actingUser?.id ?? null,
+          },
+          { onConflict: "client_id" },
+        );
+      if (sopErr) {
+        toast.warning(`SOP save failed: ${sopErr.message}`);
+      }
+
+      // 6. Invite each filled-in team member (real employee accounts).
+      const validMembers = teamMembers.filter(m => m.email.trim() && m.full_name.trim());
+      const memberResults = await Promise.allSettled(
+        validMembers.map(m =>
+          supabase.functions.invoke("invite-user", {
+            body: {
+              email: m.email.trim().toLowerCase(),
+              role: m.role,
+              client_id: client.id,
+              full_name: m.full_name.trim(),
+            },
+          }),
+        ),
+      );
+      const memberFailures = memberResults.filter(r => r.status === "rejected" || (r as any).value?.error).length;
+      if (memberFailures > 0) {
+        toast.warning(`${memberFailures} of ${validMembers.length} team invites failed — check Team & Users.`);
+      }
+
       setStatus("ready_for_kickoff");
       toast.success(`${form.business_name_confirmed} activated successfully!`);
     } catch (err: any) {
@@ -274,7 +351,78 @@ export default function AdminCloseConfirm() {
                 </div>
               </div>
 
-              {/* Invite Result */}
+              {/* SOP — Real Training Content (Module 1 & 2) */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="h-3 w-3" /> Training SOP — Module 1 & 2
+                </p>
+                <p className="text-[11px] text-white/45 -mt-1">
+                  Replaces the demo placeholder content with the client's real Module 1 & 2 training. Modules 3–10 remain standard NewLight training. Leave blank to keep the demo shell.
+                </p>
+                <div>
+                  <label className={labelCls}>Company Introduction</label>
+                  <Textarea value={sop.company_intro} onChange={e => setSopField("company_intro", e.target.value)} placeholder="Who you are, what you do, the story behind the business…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Core Offer</label>
+                  <Textarea value={sop.core_offer} onChange={e => setSopField("core_offer", e.target.value)} placeholder="What you sell, the outcome it delivers, why it's worth it…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Sales Process</label>
+                  <Textarea value={sop.sales_process} onChange={e => setSopField("sales_process", e.target.value)} placeholder="Step by step: how a lead becomes a customer at your company…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+                <div>
+                  <label className={labelCls}>Scripts</label>
+                  <Textarea value={sop.scripts} onChange={e => setSopField("scripts", e.target.value)} placeholder="Opener, qualifying questions, pitch, close, common objections…" className={`${inputCls} min-h-[80px]`} disabled={submitting} />
+                </div>
+
+                <div className="flex items-center justify-between rounded-md bg-white/[0.04] border border-white/10 px-3 py-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+                    <div>
+                      <p className="text-xs font-medium text-white">Enable BDR Sales Training</p>
+                      <p className="text-[10px] text-white/40">Unlocks BDR sales training track for this client's team.</p>
+                    </div>
+                  </div>
+                  <Switch checked={bdrTrainingEnabled} onCheckedChange={setBdrTrainingEnabled} disabled={submitting} />
+                </div>
+              </div>
+
+              {/* Team / Employee Setup */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3 w-3" /> Team / Employee Accounts
+                  </p>
+                  <Button type="button" size="sm" variant="ghost" onClick={addTeamMember} disabled={submitting} className="text-[hsl(var(--nl-sky))] hover:bg-white/10 text-xs h-7">
+                    <Plus className="h-3 w-3 mr-1" /> Add Member
+                  </Button>
+                </div>
+                <p className="text-[11px] text-white/45 -mt-1">
+                  Real employee accounts created at go-live. Each member gets an invite email scoped to this workspace. Leave all rows blank to skip.
+                </p>
+                {teamMembers.map((m, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_140px_auto] gap-2 items-end">
+                    <div>
+                      <label className={labelCls}>Full Name</label>
+                      <Input value={m.full_name} onChange={e => updateTeamMember(i, "full_name", e.target.value)} placeholder="Jane Doe" className={inputCls} disabled={submitting} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Email</label>
+                      <Input type="email" value={m.email} onChange={e => updateTeamMember(i, "email", e.target.value)} placeholder="jane@company.com" className={inputCls} disabled={submitting} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Role</label>
+                      <select value={m.role} onChange={e => updateTeamMember(i, "role", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-2" disabled={submitting}>
+                        {TEAM_ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                      </select>
+                    </div>
+                    <button type="button" onClick={() => removeTeamMember(i)} disabled={submitting} className="text-white/30 hover:text-red-400 transition-colors p-2 h-10">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
               {inviteResult && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl p-4" style={{
                   background: inviteResult.sent ? "hsla(160,60%,40%,.12)" : "hsla(211,96%,60%,.08)",
