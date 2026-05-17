@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
