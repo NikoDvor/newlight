@@ -1,8 +1,8 @@
 import { useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, Users, UserPlus, ListChecks, AlertTriangle,
-  ScrollText, FileCode, Package, Settings, ChevronLeft, Zap, Activity, Shield, LogOut, BarChart3, Brain, ClipboardCheck, Hammer, Smartphone, HelpCircle,
-  Briefcase, Calendar, FileText, PenTool, DollarSign, ChevronDown, Rocket, Map, Sparkles, GraduationCap
+  Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
+  Calendar, FileText, ChevronDown, Rocket, Brain,
+  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -31,18 +31,21 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Team & BDR",
+    label: "Client Intelligence",
     items: [
-      { title: "Team & Users", url: "/admin/team", icon: Shield },
-      { title: "BDR Performance", url: "/admin/bdr-performance", icon: Activity },
-      { title: "BDR Calendars", url: "/admin/bdr-calendars", icon: Calendar },
+      { title: "Client Health Scores", url: "/admin/client-intelligence/health", icon: HeartPulse },
+      { title: "Revenue Growth Tracker", url: "/admin/client-intelligence/revenue", icon: TrendingUp },
+      { title: "Priority Alerts", url: "/admin/client-intelligence/alerts", icon: AlertTriangle },
+      { title: "Broken Setup Flags", url: "/admin/client-intelligence/setup-flags", icon: Wrench },
+      { title: "Onboarding Progress", url: "/admin/client-intelligence/onboarding-progress", icon: Map },
+      { title: "Win Tracking", url: "/admin/client-intelligence/wins", icon: Trophy },
+      { title: "Optimization Flags", url: "/admin/client-intelligence/optimization", icon: Sparkles },
     ],
   },
   {
-    label: "Training",
+    label: "Team",
     items: [
-      { title: "Training Center", url: "/admin/training-center", icon: GraduationCap },
-      { title: "Training Health", url: "/admin/training-health", icon: Activity },
+      { title: "Team & Users", url: "/admin/team", icon: Shield },
     ],
   },
   {
