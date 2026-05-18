@@ -33,16 +33,7 @@ interface NavEntry {
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-  { type: "item", title: "Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
-  {
-    type: "group", label: "Client Overview",
-    items: [
-      { title: "Business Health", url: "/business-health", icon: Heart, moduleKey: "reports" },
-      { title: "Revenue Opportunities", url: "/revenue-opportunities", icon: DollarSign, moduleKey: "reports" },
-      { title: "Priority Actions", url: "/priority-actions", icon: ListChecks },
-      { title: "Live Activity Feed", url: "/live-activity", icon: Activity },
-    ],
-  },
+  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
     type: "group", label: "Growth Systems",
     items: [
@@ -54,58 +45,47 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Enterprise Services",
+    type: "group", label: "Employee Hub",
     items: [
-      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
-      { title: "Proposals", url: "/proposals", icon: PenTool, moduleKey: "proposals" },
-      { title: "Finance", url: "/finance", icon: Wallet, moduleKey: "finance" },
-      { title: "Workforce", url: "/workforce", icon: HardHat, moduleKey: "workforce" },
+      { title: "SOPs", url: "/knowledge-base", icon: BookOpen },
       { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
       { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Manage Calendars", url: "/calendar-management", icon: Settings2, moduleKey: "calendar" },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Activity, moduleKey: "meeting_intel" },
+      { title: "Employee Performance", url: "/workforce", icon: BarChart3, moduleKey: "workforce" },
+    ],
+  },
+  {
+    type: "group", label: "Finance",
+    items: [
+      { title: "Revenue Charts", url: "/finance", icon: Wallet, moduleKey: "finance" },
+      { title: "AI Accountant", url: "/finance", icon: Brain, moduleKey: "finance" },
+      { title: "Payroll", url: "/workforce", icon: UserCog, moduleKey: "workforce" },
+    ],
+  },
+  {
+    type: "group", label: "Customer Center",
+    items: [
+      { title: "Onboarding Command Center", url: "/admin/onboarding-command-center", icon: Briefcase },
+      { title: "Client Activation", url: "/admin/activation", icon: ClipboardList },
+      { title: "Client Accounts", url: "/admin/clients", icon: Users },
+      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: BarChart3 },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "Client Profiles", url: "/admin/clients", icon: Users },
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
-      { title: "Calendar Sync", url: "/calendar-integrations", icon: Plug, moduleKey: "calendar" },
-      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
-      { title: "Notifications", url: "/notifications", icon: Bell },
     ],
   },
   {
-    type: "group", label: "Business Intelligence",
+    type: "group", label: "Support",
     items: [
-      { title: "Market Research", url: "/market-research", icon: TrendingUp, moduleKey: "reports" },
-      { title: "Competitor Tracking", url: "/competitor-tracking", icon: Eye, moduleKey: "reports" },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Calendar, moduleKey: "meeting_intel" },
-      { title: "Automation Workflows", url: "/automations", icon: Workflow },
-    ],
-  },
-  {
-    type: "group", label: "Setup & Integrations",
-    items: [
-      { title: "Setup Center", url: "/setup-center", icon: Plug },
-      { title: "Services & Products", url: "/services", icon: Settings2, moduleKey: "website" },
-      { title: "Brand Assets", url: "/brand-assets", icon: Image },
-      { title: "Integrations", url: "/integrations", icon: Plug, moduleKey: "settings" },
-      { title: "Onboarding", url: "/onboarding", icon: Workflow },
-    ],
-  },
-  {
-    type: "group", label: "Training & Support",
-    items: [
-      { title: "Success Center", url: "/success-center", icon: Heart },
-      { title: "Support Tickets", url: "/support-tickets", icon: Headphones, moduleKey: "helpdesk" },
-      { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
-      { title: "Help Desk", url: "/help-desk", icon: Headphones, moduleKey: "helpdesk" },
-      { title: "Courses", url: "/training", icon: GraduationCap, moduleKey: "training" },
+      { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
+      { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
       { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
+      { title: "Billing", url: "/billing", icon: CreditCard },
     ],
   },
-  { type: "item", title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
 ];
 
-const bottomItems = [
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Billing", url: "/billing", icon: CreditCard },
-];
+const bottomItems: { title: string; url: string; icon: any }[] = [];
 
 // Field-service business types that don't need Zoom/meeting-intelligence
 const FIELD_SERVICE_TYPES = [
