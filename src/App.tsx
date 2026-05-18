@@ -352,6 +352,11 @@ const App = () => {
                 <Route path="/setup-portal" element={<SetupPortal />} />
                 <Route path="/brand-assets" element={<BrandAssets />} />
                 <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
+                <Route path="/revenue-charts" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="Revenue Charts" description="Visualize income trends, MRR, and revenue breakdowns." /></PermissionGuard>} />
+                <Route path="/ai-accountant" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="AI Accountant" description="Automated bookkeeping, categorization, and reconciliation." /></PermissionGuard>} />
+                <Route path="/sops" element={<PlaceholderPage title="SOPs" description="Standard operating procedures for your team." />} />
+                <Route path="/workflows" element={<PlaceholderPage title="Workflows" description="Internal process workflows and step-by-step playbooks." />} />
+                <Route path="/roles-permissions" element={<PlaceholderPage title="Roles & Permissions" description="Manage team roles and access levels." />} />
                 <Route path="/calendar" element={<PermissionGuard moduleKey="calendar"><CalendarPage /></PermissionGuard>} />
                 <Route path="/calendar-management" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarManagement /></PermissionGuard>} />
                 <Route path="/calendar-management/:calendarId" element={<PermissionGuard moduleKey="calendar" minLevel="edit"><CalendarDetail /></PermissionGuard>} />
