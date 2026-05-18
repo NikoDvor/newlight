@@ -355,6 +355,7 @@ const App = () => {
                 <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
                 <Route path="/revenue-charts" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="Revenue Charts" description="Visualize income trends, MRR, and revenue breakdowns." /></PermissionGuard>} />
                 <Route path="/ai-accountant" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="AI Accountant" description="Automated bookkeeping, categorization, and reconciliation." /></PermissionGuard>} />
+                <Route path="/internal-system" element={<InternalSystem />} />
                 <Route path="/sops" element={<PlaceholderPage title="SOPs" description="Standard operating procedures for your team." />} />
                 <Route path="/workflows" element={<PlaceholderPage title="Workflows" description="Internal process workflows and step-by-step playbooks." />} />
                 <Route path="/roles-permissions" element={<PlaceholderPage title="Roles & Permissions" description="Manage team roles and access levels." />} />
