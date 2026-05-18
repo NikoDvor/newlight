@@ -116,6 +116,7 @@ import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
 import BrandAssets from "./pages/BrandAssets";
 import Finance from "./pages/Finance";
+import PlaceholderPage from "./pages/PlaceholderPage";
 import CalendarPage from "./pages/CalendarPage";
 import BrandingSettings from "./pages/BrandingSettings";
 import Welcome from "./pages/Welcome";
