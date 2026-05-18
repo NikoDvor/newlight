@@ -71,8 +71,8 @@ export function AdminSidebar() {
     navGroups.forEach((g) => {
       init[g.label] = g.items.some((i) => isActive(i.url));
     });
-    // Always open Overview
-    init["Overview"] = true;
+    // Always open first group
+    init["Clients & Success"] = true;
     return init;
   });
 
