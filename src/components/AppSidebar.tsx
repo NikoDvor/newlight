@@ -34,6 +34,7 @@ const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
   { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+  { type: "item", title: "Internal System", url: "/internal-system", icon: Briefcase },
   {
     type: "group", label: "Growth Systems",
     items: [
@@ -47,18 +48,16 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Employee Hub",
     items: [
-      { title: "SOPs", url: "/knowledge-base", icon: BookOpen },
       { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
       { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Activity, moduleKey: "meeting_intel" },
       { title: "Employee Performance", url: "/workforce", icon: BarChart3, moduleKey: "workforce" },
     ],
   },
   {
     type: "group", label: "Finance",
     items: [
-      { title: "Revenue Charts", url: "/finance", icon: Wallet, moduleKey: "finance" },
-      { title: "AI Accountant", url: "/finance", icon: Brain, moduleKey: "finance" },
+      { title: "Revenue Charts", url: "/revenue-charts", icon: Wallet, moduleKey: "finance" },
+      { title: "AI Accountant", url: "/ai-accountant", icon: Brain, moduleKey: "finance" },
       { title: "Payroll", url: "/workforce", icon: UserCog, moduleKey: "workforce" },
     ],
   },

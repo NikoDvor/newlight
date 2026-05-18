@@ -20,39 +20,29 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "Overview",
-    items: [
-      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Executive Dashboard", url: "/admin/executive", icon: BarChart3 },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-    ],
-  },
-  {
-    label: "Sales",
-    items: [
-      { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: Briefcase },
-      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: DollarSign },
-      { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Zap },
-      { title: "Onboarding Form", url: "/get-started", icon: Rocket },
-      { title: "Prospects", url: "/admin/prospects", icon: UserPlus },
-      { title: "Proposal Templates", url: "/admin/proposal-templates", icon: PenTool },
-    ],
-  },
-  {
     label: "Clients & Success",
     items: [
       { title: "Clients", url: "/admin/clients", icon: Users },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
+      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
+      { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
+      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
+      { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
+    ],
+  },
+  {
+    label: "Team & BDR",
+    items: [
       { title: "Team & Users", url: "/admin/team", icon: Shield },
       { title: "BDR Performance", url: "/admin/bdr-performance", icon: Activity },
       { title: "BDR Calendars", url: "/admin/bdr-calendars", icon: Calendar },
+    ],
+  },
+  {
+    label: "Training",
+    items: [
       { title: "Training Center", url: "/admin/training-center", icon: GraduationCap },
       { title: "Training Health", url: "/admin/training-health", icon: Activity },
-      { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
-      { title: "Client Activation", url: "/admin/activation", icon: ClipboardCheck },
-      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
-      { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
-      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
     ],
   },
   {
@@ -61,32 +51,6 @@ const navGroups: NavGroup[] = [
       { title: "Conversations", url: "/admin/conversations", icon: Calendar },
       { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: ListChecks },
       { title: "Message Templates", url: "/admin/message-templates", icon: FileText },
-    ],
-  },
-  {
-    label: "Revenue & Ops",
-    items: [
-      { title: "Revenue & Billing", url: "/admin/billing", icon: DollarSign },
-      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: Sparkles },
-      { title: "Implementation Queue", url: "/admin/implementation-queue", icon: ListChecks },
-      { title: "Implementation Requests", url: "/admin/implementation-requests", icon: ClipboardCheck },
-      { title: "Automations", url: "/admin/automations", icon: Zap },
-      { title: "Reports", url: "/admin/reports", icon: BarChart3 },
-      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      { title: "Architecture", url: "/admin/architecture", icon: Map },
-      { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
-      { title: "Templates", url: "/admin/templates", icon: FileCode },
-      { title: "Package Access", url: "/admin/packages", icon: Package },
-      { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
-      { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Brain },
-      { title: "App Experience", url: "/admin/app-settings", icon: Smartphone },
-      { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
-      { title: "System Settings", url: "/admin/settings", icon: Settings },
     ],
   },
 ];
@@ -107,8 +71,8 @@ export function AdminSidebar() {
     navGroups.forEach((g) => {
       init[g.label] = g.items.some((i) => isActive(i.url));
     });
-    // Always open Overview
-    init["Overview"] = true;
+    // Always open first group
+    init["Clients & Success"] = true;
     return init;
   });
 
