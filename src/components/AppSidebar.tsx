@@ -34,7 +34,7 @@ const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
   { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
-  { type: "item", title: "Internal System", url: "/sops", icon: Briefcase },
+  { type: "item", title: "Internal System", url: "/internal-system", icon: Briefcase },
   {
     type: "group", label: "Growth Systems",
     items: [
