@@ -46,18 +46,6 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Internal System",
-    items: [
-      { title: "SOPs", url: "/sops", icon: BookOpen },
-      { title: "Workflows", url: "/workflows", icon: ClipboardList },
-      { title: "Brand Assets", url: "/brand-assets", icon: FileText },
-      { title: "Automations", url: "/automations", icon: Activity },
-      { title: "Roles & Permissions", url: "/roles-permissions", icon: UserCog },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Activity, moduleKey: "meeting_intel" },
-      { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen },
-    ],
-  },
-  {
     type: "group", label: "Employee Hub",
     items: [
       { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
