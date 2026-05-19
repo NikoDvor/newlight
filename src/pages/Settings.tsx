@@ -75,7 +75,7 @@ const sections = [
 const defaultBranding = {
   company_name: "", display_name: "", dashboard_title: "", welcome_message: "", tagline: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", accent_color: "",
-  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", splash_logo_url: "",
+  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", pwa_icon_url: "", splash_logo_url: "",
   favicon_url: "", avatar_logo_url: "", report_logo_url: "",
   calendar_title: "", calendar_subtitle: "", calendar_logo_url: "", calendar_primary_color: "", calendar_confirmation_message: "",
   finance_dashboard_title: "", report_header_title: "", report_subtitle: "",
@@ -139,8 +139,13 @@ export default function SettingsPage() {
 
   const saveBranding = async () => {
     if (!activeClientId) return;
+    // Auto-use primary logo as PWA icon (both 192 and 512) if no dedicated PWA icon set
+    const payload = { ...branding };
+    if (payload.logo_url && !payload.pwa_icon_url) payload.pwa_icon_url = payload.logo_url;
+    if (payload.logo_url && !payload.app_icon_url) payload.app_icon_url = payload.logo_url;
+    setBranding(payload);
     const { error } = await supabase.from("client_branding").upsert({
-      client_id: activeClientId, ...branding,
+      client_id: activeClientId, ...payload,
     } as any, { onConflict: "client_id" });
     if (error) { toast.error(error.message); return; }
     await auditLog("branding_updated", "branding");
@@ -321,6 +326,7 @@ export default function SettingsPage() {
                   <LogoUploader value={branding.sidebar_logo_url} onChange={setB("sidebar_logo_url")} label="Sidebar Logo" dark={false} />
                   <LogoUploader value={branding.favicon_url} onChange={setB("favicon_url")} label="Favicon" dark={false} />
                   <LogoUploader value={branding.app_icon_url} onChange={setB("app_icon_url")} label="App Icon" dark={false} />
+                  <LogoUploader value={branding.pwa_icon_url} onChange={setB("pwa_icon_url")} label="PWA Icon · 512×512 (Home Screen)" dark={false} />
                   <LogoUploader value={branding.splash_logo_url} onChange={setB("splash_logo_url")} label="Splash Logo" dark={false} />
                   <LogoUploader value={branding.avatar_logo_url} onChange={setB("avatar_logo_url")} label="Avatar Icon" dark={false} />
                   <LogoUploader value={branding.report_logo_url} onChange={setB("report_logo_url")} label="Report Logo" dark={false} />
