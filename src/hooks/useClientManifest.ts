@@ -24,7 +24,7 @@ export function useClientManifest() {
       : "NewLight";
     const themeColor = isClient && branding.primary_color
       ? branding.primary_color
-      : "#0EA5E9";
+      : "#FFFFFF";
     const iconUrl = isClient && (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
       ? (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
       : `${window.location.origin}/pwa-512x512.png`;
