@@ -45,25 +45,12 @@ const cleanColor = (value: unknown) => {
   return /^#[0-9a-f]{6}$/i.test(color) ? color : DEFAULT_COLOR;
 };
 
-const firstWord = (value: string) => value.trim().split(/\s+/)[0]?.slice(0, 12) || "App";
-
-const cleanOrigin = (value: string | null) => {
-  if (!value) return "";
-  try {
-    const origin = new URL(value).origin;
-    return origin.startsWith("http://") || origin.startsWith("https://") ? origin : "";
-  } catch {
-    return "";
-  }
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
 
   const url = new URL(req.url);
   const clientId = url.searchParams.get("client_id")?.trim() ?? "";
-  const appOrigin = cleanOrigin(url.searchParams.get("app_origin"));
 
   if (!UUID_RE.test(clientId)) {
     return json({ error: "Valid client_id is required" }, 400);
@@ -108,12 +95,13 @@ Deno.serve(async (req) => {
     return json({ error: "Could not load workspace branding" }, 500);
   }
 
-  const appName = cleanName(branding?.company_name, cleanName(branding?.app_display_name, cleanName(client.business_name, "NewLight")));
+  const appName = cleanName(
+    branding?.company_name,
+    cleanName(branding?.app_display_name, cleanName(client.business_name, "NewLight")),
+  );
   const iconUrl = cleanIcon(branding?.pwa_icon_url || branding?.app_icon_url || branding?.logo_url);
   const themeColor = cleanColor(branding?.primary_color);
-  const startPath = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
-  const startUrl = appOrigin ? `${appOrigin}${startPath}` : startPath;
-  const scope = appOrigin ? `${appOrigin}/` : "/";
+  const startUrl = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
 
   const mime = iconMime(iconUrl);
   const isSvg = mime === "image/svg+xml";
@@ -130,13 +118,13 @@ Deno.serve(async (req) => {
 
   return json({
     name: appName,
-    short_name: firstWord(appName),
+    short_name: appName.slice(0, 12),
     description: `${appName} workspace`,
     start_url: startUrl,
-    scope,
+    scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: themeColor,
+    background_color: "#030712",
     theme_color: themeColor,
     icons,
   });
