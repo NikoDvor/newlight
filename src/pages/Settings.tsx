@@ -75,7 +75,7 @@ const sections = [
 const defaultBranding = {
   company_name: "", display_name: "", dashboard_title: "", welcome_message: "", tagline: "",
   primary_color: "#3B82F6", secondary_color: "#06B6D4", accent_color: "",
-  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", splash_logo_url: "",
+  logo_url: "", dashboard_logo_url: "", sidebar_logo_url: "", app_icon_url: "", pwa_icon_url: "", splash_logo_url: "",
   favicon_url: "", avatar_logo_url: "", report_logo_url: "",
   calendar_title: "", calendar_subtitle: "", calendar_logo_url: "", calendar_primary_color: "", calendar_confirmation_message: "",
   finance_dashboard_title: "", report_header_title: "", report_subtitle: "",
