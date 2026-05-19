@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#030712",
+    background_color: "#FFFFFF",
     theme_color: themeColor,
     icons,
   });
