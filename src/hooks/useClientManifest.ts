@@ -57,7 +57,7 @@ export function useClientManifest() {
       scope: "/",
       display: "standalone",
       orientation: "portrait-primary",
-      background_color: themeColor,
+      background_color: "#FFFFFF",
       theme_color: themeColor,
       icons: isSvg
         ? [
