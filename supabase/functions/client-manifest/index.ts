@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const DEFAULT_ICON = "/pwa-512x512.png";
-const DEFAULT_COLOR = "#0EA5E9";
+const DEFAULT_COLOR = "#FFFFFF";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const json = (body: unknown, status = 200) =>
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#030712",
+    background_color: "#FFFFFF",
     theme_color: themeColor,
     icons,
   });
