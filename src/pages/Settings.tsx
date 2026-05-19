@@ -139,8 +139,13 @@ export default function SettingsPage() {
 
   const saveBranding = async () => {
     if (!activeClientId) return;
+    // Auto-use primary logo as PWA icon (both 192 and 512) if no dedicated PWA icon set
+    const payload = { ...branding };
+    if (payload.logo_url && !payload.pwa_icon_url) payload.pwa_icon_url = payload.logo_url;
+    if (payload.logo_url && !payload.app_icon_url) payload.app_icon_url = payload.logo_url;
+    setBranding(payload);
     const { error } = await supabase.from("client_branding").upsert({
-      client_id: activeClientId, ...branding,
+      client_id: activeClientId, ...payload,
     } as any, { onConflict: "client_id" });
     if (error) { toast.error(error.message); return; }
     await auditLog("branding_updated", "branding");
