@@ -32,6 +32,14 @@ const cleanIcon = (value: unknown) => {
   return DEFAULT_ICON;
 };
 
+const iconMime = (url: string) => {
+  const lower = url.split("?")[0].toLowerCase();
+  if (lower.endsWith(".svg")) return "image/svg+xml";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+  return "image/png";
+};
+
 const cleanColor = (value: unknown) => {
   const color = typeof value === "string" ? value.trim() : "";
   return /^#[0-9a-f]{6}$/i.test(color) ? color : DEFAULT_COLOR;
