@@ -326,6 +326,7 @@ export default function SettingsPage() {
                   <LogoUploader value={branding.sidebar_logo_url} onChange={setB("sidebar_logo_url")} label="Sidebar Logo" dark={false} />
                   <LogoUploader value={branding.favicon_url} onChange={setB("favicon_url")} label="Favicon" dark={false} />
                   <LogoUploader value={branding.app_icon_url} onChange={setB("app_icon_url")} label="App Icon" dark={false} />
+                  <LogoUploader value={branding.pwa_icon_url} onChange={setB("pwa_icon_url")} label="PWA Icon · 512×512 (Home Screen)" dark={false} />
                   <LogoUploader value={branding.splash_logo_url} onChange={setB("splash_logo_url")} label="Splash Logo" dark={false} />
                   <LogoUploader value={branding.avatar_logo_url} onChange={setB("avatar_logo_url")} label="Avatar Icon" dark={false} />
                   <LogoUploader value={branding.report_logo_url} onChange={setB("report_logo_url")} label="Report Logo" dark={false} />
