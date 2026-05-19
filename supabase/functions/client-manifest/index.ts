@@ -115,6 +115,19 @@ Deno.serve(async (req) => {
   const startUrl = appOrigin ? `${appOrigin}${startPath}` : startPath;
   const scope = appOrigin ? `${appOrigin}/` : "/";
 
+  const mime = iconMime(iconUrl);
+  const isSvg = mime === "image/svg+xml";
+  const icons = isSvg
+    ? [
+        { src: iconUrl, sizes: "any", type: mime, purpose: "any" },
+        { src: iconUrl, sizes: "any", type: mime, purpose: "maskable" },
+      ]
+    : [
+        { src: iconUrl, sizes: "192x192", type: mime },
+        { src: iconUrl, sizes: "512x512", type: mime },
+        { src: iconUrl, sizes: "512x512", type: mime, purpose: "any maskable" },
+      ];
+
   return json({
     name: appName,
     short_name: firstWord(appName),
@@ -125,10 +138,6 @@ Deno.serve(async (req) => {
     orientation: "portrait-primary",
     background_color: themeColor,
     theme_color: themeColor,
-    icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png" },
-      { src: iconUrl, sizes: "512x512", type: "image/png" },
-      { src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" },
-    ],
+    icons,
   });
 });
