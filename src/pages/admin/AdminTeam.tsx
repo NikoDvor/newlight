@@ -46,6 +46,7 @@ export default function AdminTeam() {
   const [manualLoading, setManualLoading] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
+  const [statsFor, setStatsFor] = useState<RoleRow | null>(null);
   const [loading, setLoading] = useState(false);
 
   const manualRoleOptions = [
