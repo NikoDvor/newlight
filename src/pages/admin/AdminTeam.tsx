@@ -57,6 +57,7 @@ export default function AdminTeam() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [appLinkClientId, setAppLinkClientId] = useState<string>("");
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
+  const [appLinkSelectKey, setAppLinkSelectKey] = useState(0);
   const [statsFor, setStatsFor] = useState<RoleRow | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -69,14 +70,27 @@ export default function AdminTeam() {
   ];
 
   const fetchData = async () => {
-    const [rolesRes, clientsRes, wsRes] = await Promise.all([
+    const [rolesRes, clientsRes, wsRes, empRes] = await Promise.all([
       supabase.from("user_roles").select("*").order("role"),
       supabase.from("clients").select("id, business_name, workspace_slug, owner_name, owner_email, owner_phone, sms_consent").order("business_name"),
       supabase.from("workspace_users").select("user_id, client_id, status"),
+      supabase.from("employee_profiles").select("user_id, client_id"),
     ]);
+    console.log("[AdminTeam] user_roles:", rolesRes.data, rolesRes.error);
+    console.log("[AdminTeam] workspace_users:", wsRes.data, wsRes.error);
+    console.log("[AdminTeam] employee_profiles:", empRes.data, empRes.error);
+    console.log("[AdminTeam] clients:", clientsRes.data?.length, clientsRes.error);
+
+    const wsMembers: WorkspaceMember[] = ((wsRes.data ?? []) as any[])
+      .filter((m) => m?.user_id && m?.client_id)
+      .map((m) => ({ user_id: m.user_id, client_id: m.client_id, status: m.status ?? null, source: "workspace_users" as const }));
+    const empMembers: WorkspaceMember[] = ((empRes.data ?? []) as any[])
+      .filter((m) => m?.user_id && m?.client_id)
+      .map((m) => ({ user_id: m.user_id, client_id: m.client_id, status: "active", source: "employee_profiles" as const }));
+
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
-    setWorkspaceMembers(((wsRes.data ?? []) as unknown) as WorkspaceMember[]);
+    setWorkspaceMembers([...wsMembers, ...empMembers]);
   };
 
 
