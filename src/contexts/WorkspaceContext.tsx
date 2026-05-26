@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { startSession, endSession, installSessionLifecycleHandlers } from "@/lib/sessionTracking";
 
 type ViewMode = "admin" | "workspace" | "employee";
 
