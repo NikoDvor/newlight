@@ -202,6 +202,7 @@ const App = () => {
           <WorkspaceProvider>
             <PWAInstallProvider>
               <IntroOverlay />
+              <ImpersonationBanner />
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
