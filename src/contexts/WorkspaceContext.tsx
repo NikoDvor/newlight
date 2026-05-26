@@ -78,6 +78,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const signOut = async () => {
+    await endSession();
     await supabase.auth.signOut();
     setUser(null);
     setIsAdmin(false);
