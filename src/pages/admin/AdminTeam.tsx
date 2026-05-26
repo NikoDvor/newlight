@@ -351,6 +351,7 @@ export default function AdminTeam() {
           if (!open) {
             setAppLinkClient(null);
             setAppLinkClientId("");
+            setAppLinkSelectKey((k) => k + 1);
           }
         }}
         onSent={fetchData}
