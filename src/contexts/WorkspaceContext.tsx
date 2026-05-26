@@ -134,10 +134,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    installSessionLifecycleHandlers();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
       setUser(u);
+      (window as any).__nl_token__ = session?.access_token;
       if (u) {
+        if (event === "SIGNED_IN") {
+          // Defer to let role fetch determine client_id
+          setTimeout(async () => {
+            const { data: roles } = await supabase
+              .from("user_roles")
+              .select("client_id")
+              .eq("user_id", u.id)
+              .limit(1);
+            await startSession(u.id, roles?.[0]?.client_id ?? null);
+          }, 100);
+        }
         setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
       } else {
         setIsAdmin(false);
@@ -149,6 +162,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setUser(u);
+      (window as any).__nl_token__ = session?.access_token;
       if (u) {
         setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
       } else {
