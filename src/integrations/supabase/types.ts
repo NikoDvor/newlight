@@ -10533,6 +10533,36 @@ export type Database = {
           },
         ]
       }
+      user_activity_log: {
+        Row: {
+          action: string
+          client_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          target: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_calendar_integrations: {
         Row: {
           client_id: string
@@ -10658,18 +10688,21 @@ export type Database = {
           client_id: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          status: string
           user_id: string
         }
         Insert: {
           client_id?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          status?: string
           user_id: string
         }
         Update: {
           client_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          status?: string
           user_id?: string
         }
         Relationships: [
@@ -10681,6 +10714,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_sessions: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          id: string
+          login_at: string
+          logout_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          id?: string
+          login_at?: string
+          logout_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          id?: string
+          login_at?: string
+          logout_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       website_content_blocks: {
         Row: {
