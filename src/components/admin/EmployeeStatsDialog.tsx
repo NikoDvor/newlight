@@ -319,7 +319,7 @@ export function EmployeeStatsDialog(props: Props) {
               <Row label="Email" value={details.email} />
               <Row label="Phone" value={details.phone} />
               <Row label="Role" value={role.replace(/_/g, " ")} />
-              <Row label="Workspace" value={clientName ?? (clientId ? clientId.slice(0, 8) : "Platform-wide")} />
+              <Row label="Workspace" value={workspaceLabel ?? (clientName && !clientName.startsWith("Platform-wide") ? clientName : null) ?? (clientId ? clientId.slice(0, 8) : "Platform-wide")} />
               <Row label="Status" value={status} />
               <Row label="Created" value={fmtDate(details.created_at)} />
               <Row label="Last login" value={fmtDate(details.last_sign_in_at ?? lastSession?.login_at)} />
