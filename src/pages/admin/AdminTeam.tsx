@@ -390,30 +390,37 @@ function GroupedUsers({ roles, workspaceMembers, clients, onStats, onRemove, rol
       const safeMembers = (workspaceMembers ?? []).filter((m) => m && m.user_id && m.client_id);
       const safeClients = (clients ?? []).filter((c) => c && c.id);
 
+      // user -> assigned client_id from workspace membership (workspace_users or employee_profiles)
+      const userToClient = new Map<string, string>();
+      safeMembers.forEach((m) => {
+        if (!userToClient.has(m.user_id)) userToClient.set(m.user_id, m.client_id);
+      });
+
       const map = new Map<string, { id: string; name: string; roles: RoleRow[] }>();
       map.set("__platform__", { id: "__platform__", name: "Platform-wide (Admin / Service Manager)", roles: [] });
       safeClients.forEach((c) => map.set(c.id, { id: c.id, name: c.business_name || c.id.slice(0, 8), roles: [] }));
 
-      const seen = new Set<string>();
-      safeRoles.forEach((r) => {
-        const key = r.client_id ?? "__platform__";
+      const ensure = (key: string) => {
         if (!map.has(key)) {
           const c = safeClients.find((cc) => cc.id === key);
           map.set(key, { id: key, name: c?.business_name || `Workspace ${String(key).slice(0, 8)}`, roles: [] });
         }
-        map.get(key)!.roles.push(r);
+        return map.get(key)!;
+      };
+
+      const seen = new Set<string>();
+      safeRoles.forEach((r) => {
+        // If role has no client_id but the user has a workspace assignment, prefer that workspace.
+        const assigned = !r.client_id && userToClient.has(r.user_id) ? userToClient.get(r.user_id)! : null;
+        const key = r.client_id ?? assigned ?? "__platform__";
+        ensure(key).roles.push({ ...r, client_id: r.client_id ?? assigned ?? null });
         seen.add(`${key}:${r.user_id}`);
       });
 
       safeMembers.forEach((m) => {
-        const key = m.client_id;
-        const sig = `${key}:${m.user_id}`;
+        const sig = `${m.client_id}:${m.user_id}`;
         if (seen.has(sig)) return;
-        if (!map.has(key)) {
-          const c = safeClients.find((cc) => cc.id === key);
-          map.set(key, { id: key, name: c?.business_name || `Workspace ${String(key).slice(0, 8)}`, roles: [] });
-        }
-        map.get(key)!.roles.push({
+        ensure(m.client_id).roles.push({
           id: `ws-${m.client_id}-${m.user_id}`,
           user_id: m.user_id,
           role: "client_team",
@@ -423,7 +430,9 @@ function GroupedUsers({ roles, workspaceMembers, clients, onStats, onRemove, rol
         seen.add(sig);
       });
 
-      return Array.from(map.values()).filter((g) => g.roles.length > 0);
+      const result = Array.from(map.values()).filter((g) => g.roles.length > 0);
+      console.log("[AdminTeam] groups:", result.map((g) => ({ name: g.name, count: g.roles.length })));
+      return result;
     } catch (err) {
       console.error("GroupedUsers grouping failed", err);
       return [];
