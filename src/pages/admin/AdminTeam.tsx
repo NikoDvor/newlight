@@ -479,10 +479,10 @@ function WorkspaceGroup({
                 {roles.map((r, i) => (
                   <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                     className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
-                    <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
+                    <td className="px-4 py-3 text-white/70 text-xs font-mono">{(r.user_id ?? "").slice(0, 8) || "—"}...</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role ?? "")}`}>{(r.role ?? "unknown").replace(/_/g, " ")}</span>
                         {r.status === "suspended" && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
                         )}
