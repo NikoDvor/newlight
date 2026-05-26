@@ -326,6 +326,18 @@ export default function TeamManagement() {
           />
         </DialogContent>
       </Dialog>
+      {statsFor?.user_id && (
+        <EmployeeStatsDialog
+          open={!!statsFor}
+          onOpenChange={(o) => { if (!o) setStatsFor(null); }}
+          userId={statsFor.user_id}
+          role={statsFor.role_preset}
+          clientId={statsFor.client_id}
+          status={(statsFor.status === "inactive" ? "suspended" : "active") as "active" | "suspended"}
+          onMutated={fetchMembers}
+          returnPath="/team"
+        />
+      )}
     </div>
   );
 }
