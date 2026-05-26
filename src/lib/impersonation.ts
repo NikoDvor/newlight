@@ -25,7 +25,14 @@ export function getImpersonation(): ImpersonationState | null {
 
 export function startImpersonation(state: Omit<ImpersonationState, "startedAt">) {
   localStorage.setItem(KEY, JSON.stringify({ ...state, startedAt: Date.now() }));
-  window.location.href = state.targetClientId ? "/dashboard" : "/employee";
+  const role = (state.targetRole || "").toLowerCase();
+  let dest = "/dashboard";
+  if (role === "admin" || role === "service_manager") dest = "/admin";
+  else if (role === "marketing_staff") dest = "/employee/bdr";
+  else if (role === "support_staff") dest = "/employee/support";
+  else if (state.targetClientId) dest = "/dashboard";
+  else dest = "/employee";
+  window.location.href = dest;
 }
 
 export function stopImpersonation() {
