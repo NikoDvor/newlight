@@ -34,6 +34,7 @@ export function EmployeeStatsDialog(props: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [details, setDetails] = useState<UserDetails>({});
   const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [workspaceLabel, setWorkspaceLabel] = useState<string | null>(null);
 
   const [sessionCount, setSessionCount] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
