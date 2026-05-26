@@ -313,15 +313,25 @@ export default function AdminTeam() {
                   className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
                   <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
                   <td className="px-4 py-3">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace("_", " ")}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
+                      {r.status === "suspended" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-white/50 text-xs">
                     {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setStatsFor(r)} className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors" title="View stats & controls">
+                        <Activity className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors" title="Remove">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -333,6 +343,19 @@ export default function AdminTeam() {
         </div>
       </Card>
       <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
+      {statsFor && (
+        <EmployeeStatsDialog
+          open={!!statsFor}
+          onOpenChange={(o) => { if (!o) setStatsFor(null); }}
+          userId={statsFor.user_id}
+          role={statsFor.role}
+          clientId={statsFor.client_id}
+          clientName={statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name : null}
+          status={(statsFor.status === "suspended" ? "suspended" : "active") as "active" | "suspended"}
+          onMutated={fetchData}
+          returnPath="/admin/team"
+        />
+      )}
     </div>
   );
 }
