@@ -143,30 +143,37 @@ export function EmployeeStatsDialog(props: Props) {
         setCertStatus(cert ? (cert.passed ? "passed" : "failed") : "not_started");
       } catch { setCertStatus("not_started"); }
 
-      // Module progress M1–M10 derived from nl_training_progress (max score per module)
+      // Module progress M1–M10 derived from nl_training_progress (max score per module_number, cross-track)
       try {
-        const { data: mods } = await (supabase as any)
+        console.log("[EmployeeStats] module % query — user_id:", userId);
+        const { data: mods, error: modsErr } = await (supabase as any)
           .from("nl_training_modules")
           .select("id, module_number")
           .order("module_number");
-        const { data: progs } = await (supabase as any)
+        const { data: progs, error: progsErr } = await (supabase as any)
           .from("nl_training_progress")
-          .select("module_id, score, completed")
+          .select("module_id, score, status")
           .eq("user_id", userId);
-        const bestByModule = new Map<string, number>();
+        console.log("[EmployeeStats] module % — modules:", mods?.length, "progress rows:", progs?.length, "errors:", modsErr, progsErr);
+        console.log("[EmployeeStats] module % — sample progress:", progs?.slice(0, 5));
+        const modNumMap = new Map<string, number>();
+        (mods ?? []).forEach((m: any) => modNumMap.set(m.id, m.module_number));
+        const bestByNumber = new Map<number, number>();
         (progs ?? []).forEach((p: any) => {
-          const s = p.completed ? Math.max(p.score ?? 0, 100) : (p.score ?? 0);
-          const prev = bestByModule.get(p.module_id) ?? 0;
-          if (s > prev) bestByModule.set(p.module_id, s);
+          const num = modNumMap.get(p.module_id);
+          if (!num || num < 1 || num > 10) return;
+          const s = p.score ?? 0;
+          const prev = bestByNumber.get(num) ?? 0;
+          if (s > prev) bestByNumber.set(num, s);
         });
-        const modList = (mods ?? []).filter((m: any) => m.module_number >= 1 && m.module_number <= 10);
-        const progress = modList.map((m: any) => ({
-          module: `M${m.module_number}`,
-          pct: Math.min(100, Math.round(bestByModule.get(m.id) ?? 0)),
+        const progress = Array.from({ length: 10 }).map((_, i) => ({
+          module: `M${i + 1}`,
+          pct: Math.min(100, Math.round(bestByNumber.get(i + 1) ?? 0)),
         }));
-        while (progress.length < 10) progress.push({ module: `M${progress.length + 1}`, pct: 0 });
+        console.log("[EmployeeStats] module % — final:", progress);
         setModuleProgress(progress);
-      } catch {
+      } catch (e) {
+        console.error("[EmployeeStats] module % error:", e);
         setModuleProgress(Array.from({ length: 10 }).map((_, i) => ({ module: `M${i + 1}`, pct: 0 })));
       }
 

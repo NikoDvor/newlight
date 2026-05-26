@@ -427,7 +427,7 @@ export default function AdminTeam() {
           userId={statsFor.user_id}
           role={statsFor.role}
           clientId={statsFor.client_id}
-          clientName={statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name ?? null : null}
+          clientName={(statsFor as any)._groupName ?? (statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name ?? null : null)}
           status={statsFor.status}
           onMutated={fetchData}
           returnPath="/admin/team"
@@ -493,7 +493,7 @@ function WorkspaceGroupCard({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => onStats(u)}
+                          onClick={() => onStats({ ...u, client_id: u.client_id ?? (group.id === "__platform__" ? null : group.id), _groupName: group.name } as any)}
                           className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors"
                           title="View stats, controls & Login As"
                         >
