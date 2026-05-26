@@ -32,9 +32,9 @@ interface ClientOption {
 interface WorkspaceMember {
   user_id: string;
   client_id: string;
-  role: string | null;
   status: string | null;
 }
+
 
 export default function AdminTeam() {
   const [roles, setRoles] = useState<RoleRow[]>([]);
