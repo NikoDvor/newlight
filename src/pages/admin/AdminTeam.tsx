@@ -15,6 +15,7 @@ interface RoleRow {
   user_id: string;
   role: string;
   client_id: string | null;
+  status?: string | null;
 }
 
 interface ClientOption {
