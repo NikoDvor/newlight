@@ -71,7 +71,7 @@ export default function AdminTeam() {
     const [rolesRes, clientsRes, wsRes] = await Promise.all([
       supabase.from("user_roles").select("*").order("role"),
       supabase.from("clients").select("id, business_name, workspace_slug, owner_name, owner_email, owner_phone, sms_consent").order("business_name"),
-      supabase.from("workspace_users").select("user_id, client_id, role, status"),
+      supabase.from("workspace_users").select("user_id, client_id, status"),
     ]);
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
