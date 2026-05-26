@@ -231,12 +231,13 @@ export default function AdminTeam() {
                   className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
                   <option value="admin">Admin</option>
                   <option value="operator">Operator</option>
+                  <option value="project_manager">Project Manager (sub-account owner)</option>
                   <option value="client_owner">Client Owner</option>
                   <option value="client_team">Client Team Member</option>
                   <option value="read_only">Read Only</option>
                 </select>
               </div>
-              {["client_owner", "client_team", "read_only"].includes(inviteRole) && (
+              {["client_owner", "client_team", "read_only", "project_manager"].includes(inviteRole) && (
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Assign to Client</label>
                   <select value={inviteClientId} onChange={e => setInviteClientId(e.target.value)}
