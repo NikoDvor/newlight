@@ -29,8 +29,16 @@ interface ClientOption {
   sms_consent: boolean | null;
 }
 
+interface WorkspaceMember {
+  user_id: string;
+  client_id: string;
+  role: string | null;
+  status: string | null;
+}
+
 export default function AdminTeam() {
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("client_owner");
@@ -46,6 +54,7 @@ export default function AdminTeam() {
   const [showManualPassword, setShowManualPassword] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [appLinkClientId, setAppLinkClientId] = useState<string>("");
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
   const [statsFor, setStatsFor] = useState<RoleRow | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,13 +68,16 @@ export default function AdminTeam() {
   ];
 
   const fetchData = async () => {
-    const [rolesRes, clientsRes] = await Promise.all([
+    const [rolesRes, clientsRes, wsRes] = await Promise.all([
       supabase.from("user_roles").select("*").order("role"),
       supabase.from("clients").select("id, business_name, workspace_slug, owner_name, owner_email, owner_phone, sms_consent").order("business_name"),
+      supabase.from("workspace_users").select("user_id, client_id, role, status"),
     ]);
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
+    setWorkspaceMembers((wsRes.data ?? []) as WorkspaceMember[]);
   };
+
 
   useEffect(() => { fetchData(); }, []);
 
