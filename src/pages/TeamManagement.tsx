@@ -48,6 +48,7 @@ export default function TeamManagement() {
   const [editMember, setEditMember] = useState<WorkspaceUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [statsFor, setStatsFor] = useState<WorkspaceUser | null>(null);
 
   const fetchMembers = async () => {
     if (!activeClientId) return;
