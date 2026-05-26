@@ -25,7 +25,7 @@ export function getImpersonation(): ImpersonationState | null {
 
 export function startImpersonation(state: Omit<ImpersonationState, "startedAt">) {
   localStorage.setItem(KEY, JSON.stringify({ ...state, startedAt: Date.now() }));
-  window.location.href = state.targetClientId ? "/dashboard" : "/employee/dashboard";
+  window.location.href = state.targetClientId ? "/dashboard" : "/employee";
 }
 
 export function stopImpersonation() {

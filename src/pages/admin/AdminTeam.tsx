@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 
@@ -297,51 +298,14 @@ export default function AdminTeam() {
         </div>
       </Card>
 
-      <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                {["User ID", "Role", "Client", "Actions"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((r, i) => (
-                <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                  className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
-                  <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
-                      {r.status === "suspended" && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-white/50 text-xs">
-                    {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => setStatsFor(r)} className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors" title="View stats & controls">
-                        <Activity className="h-3.5 w-3.5" />
-                      </button>
-                      <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors" title="Remove">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {roles.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-12 text-white/30">No users found</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <GroupedUsers
+        roles={roles}
+        clients={clients}
+        onStats={setStatsFor}
+        onRemove={handleRemove}
+        roleColor={roleColor}
+      />
+
       <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
       {statsFor && (
         <EmployeeStatsDialog
@@ -359,3 +323,120 @@ export default function AdminTeam() {
     </div>
   );
 }
+
+interface GroupedUsersProps {
+  roles: RoleRow[];
+  clients: ClientOption[];
+  onStats: (r: RoleRow) => void;
+  onRemove: (roleId: string, userId: string) => void;
+  roleColor: (r: string) => string;
+}
+
+function GroupedUsers({ roles, clients, onStats, onRemove, roleColor }: GroupedUsersProps) {
+  const groups = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; roles: RoleRow[] }>();
+    map.set("__platform__", { id: "__platform__", name: "Platform-wide (Admin / Service Manager)", roles: [] });
+    clients.forEach((c) => map.set(c.id, { id: c.id, name: c.business_name, roles: [] }));
+    roles.forEach((r) => {
+      const key = r.client_id ?? "__platform__";
+      if (!map.has(key)) map.set(key, { id: key, name: key.slice(0, 8), roles: [] });
+      map.get(key)!.roles.push(r);
+    });
+    return Array.from(map.values()).filter((g) => g.roles.length > 0);
+  }, [roles, clients]);
+
+  if (groups.length === 0) {
+    return (
+      <Card className="border-0 bg-white/[0.04] p-12 text-center text-white/30" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        No users found
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {groups.map((g) => (
+        <WorkspaceGroup
+          key={g.id}
+          name={g.name}
+          roles={g.roles}
+          clients={clients}
+          onStats={onStats}
+          onRemove={onRemove}
+          roleColor={roleColor}
+          defaultOpen={g.id === "__platform__"}
+        />
+      ))}
+    </div>
+  );
+}
+
+function WorkspaceGroup({
+  name, roles, clients, onStats, onRemove, roleColor, defaultOpen,
+}: {
+  name: string;
+  roles: RoleRow[];
+  clients: ClientOption[];
+  onStats: (r: RoleRow) => void;
+  onRemove: (roleId: string, userId: string) => void;
+  roleColor: (r: string) => string;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors">
+          <div className="flex items-center gap-3">
+            <Users className="h-4 w-4 text-white/40" />
+            <span className="text-sm font-semibold text-white">{name}</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-white/60">
+              {roles.length} {roles.length === 1 ? "member" : "members"}
+            </span>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="overflow-x-auto border-t border-white/[0.06]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  {["User ID", "Role", "Actions"].map((h) => (
+                    <th key={h} className="text-left px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {roles.map((r, i) => (
+                  <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                    className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
+                    <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
+                        {r.status === "suspended" && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => onStats(r)} className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors" title="View stats, controls & Login As">
+                          <Activity className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => onRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors" title="Remove">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
