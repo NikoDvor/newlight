@@ -319,15 +319,17 @@ export default function AdminTeam() {
             <p className="text-xs text-white/40 mt-1">Preview, copy, or resend any client’s branded app download link.</p>
           </div>
           <select
+            key={appLinkSelectKey}
             value={appLinkClientId}
             onChange={(e) => {
               const id = e.target.value;
+              if (!id) return;
               setAppLinkClientId(id);
               setAppLinkClient(clients.find((c) => c.id === id) ?? null);
             }}
             className="h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 min-w-[220px]"
           >
-            <option value="" disabled>Select client…</option>
+            <option value="">Select client…</option>
             {clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}
           </select>
         </div>
