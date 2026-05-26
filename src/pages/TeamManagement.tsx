@@ -14,6 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ROLE_PRESETS } from "@/lib/rolePresets";
 import AddTeamMemberForm from "@/components/team/AddTeamMemberForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
+import { Activity } from "lucide-react";
 
 interface WorkspaceUser {
   id: string;
