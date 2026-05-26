@@ -88,64 +88,121 @@ export function EmployeeStatsDialog(props: Props) {
       setTotalSeconds(sArr.reduce((acc, s: any) => acc + (s.duration_seconds || 0), 0));
       setLastSession(sArr[0] ? { login_at: sArr[0].login_at, device_type: (sArr[0] as any).device_type } : null);
 
-      // Pipeline counts (best effort against existing leads table)
+      // Pipeline counts from nl_bdr_leads.pipeline_stage / status
       try {
-        const { data: leads } = await supabase
-          .from("leads" as any)
-          .select("status")
-          .eq("assigned_to", userId)
-          .limit(2000);
-        const counts: Record<string, number> = {};
-        STAGES.forEach((s) => (counts[s] = 0));
+        const { data: leads } = await (supabase as any)
+          .from("nl_bdr_leads")
+          .select("status, pipeline_stage")
+          .eq("user_id", userId)
+          .limit(5000);
+        const counts: Record<string, number> = { Cold: 0, Warm: 0, Hot: 0, Won: 0 };
         (leads ?? []).forEach((l: any) => {
-          const key = String(l.status || "").toLowerCase();
-          if (key.includes("cold")) counts.Cold++;
-          else if (key.includes("warm")) counts.Warm++;
+          const key = String(l.pipeline_stage || l.status || "").toLowerCase();
+          if (key.includes("won") || key.includes("converted") || key.includes("closed")) counts.Won++;
           else if (key.includes("hot")) counts.Hot++;
-          else if (key.includes("won") || key.includes("converted")) counts.Won++;
+          else if (key.includes("warm")) counts.Warm++;
+          else counts.Cold++;
         });
         setPipelineCounts(counts);
       } catch {
         setPipelineCounts({ Cold: 0, Warm: 0, Hot: 0, Won: 0 });
       }
 
-      // Dials & appts (best effort against nl_bdr_call_outcomes / appointments)
+      // Dials from bdr_call_outcomes
+      let dials = 0;
       try {
-        const { count: dials } = await supabase
-          .from("nl_bdr_call_outcomes" as any)
+        const { count } = await (supabase as any)
+          .from("bdr_call_outcomes")
           .select("id", { count: "exact", head: true })
           .eq("bdr_user_id", userId);
-        setDialCount(dials ?? 0);
-      } catch { setDialCount(0); }
-      try {
-        const { count: appts } = await supabase
-          .from("appointments" as any)
-          .select("id", { count: "exact", head: true })
-          .eq("created_by", userId);
-        setApptCount(appts ?? 0);
-      } catch { setApptCount(0); }
-      setBookingRate(dialCount > 0 ? Math.round((apptCount / Math.max(1, dialCount)) * 100) : 0);
+        dials = count ?? 0;
+      } catch { /* ignore */ }
+      setDialCount(dials);
 
-      // BDR cert status
+      // Appointments from bdr_calendar_events
+      let appts = 0;
       try {
-        const { data: cert } = await supabase
-          .from("nl_bdr_certification" as any)
-          .select("status")
+        const { count } = await (supabase as any)
+          .from("bdr_calendar_events")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        appts = count ?? 0;
+      } catch { /* ignore */ }
+      setApptCount(appts);
+      setBookingRate(dials > 0 ? Math.round((appts / dials) * 100) : 0);
+
+      // BDR cert status from nl_certifications (latest attempt)
+      try {
+        const { data: cert } = await (supabase as any)
+          .from("nl_certifications")
+          .select("passed, completed_at")
           .eq("user_id", userId)
+          .order("completed_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
-        setCertStatus((cert as any)?.status ?? "not_started");
+        setCertStatus(cert ? (cert.passed ? "passed" : "failed") : "not_started");
       } catch { setCertStatus("not_started"); }
 
-      // Module progress M1–M10 placeholder
-      setModuleProgress(
-        Array.from({ length: 10 }).map((_, i) => ({ module: `M${i + 1}`, pct: 0 }))
-      );
-      // Quiz attempts L1/L2/L3 placeholder
-      setQuizAttempts(
-        Array.from({ length: 10 }).flatMap((_, i) =>
-          ["L1", "L2", "L3"].map((lv) => ({ module: `M${i + 1}`, level: lv, count: 0 }))
-        )
-      );
+      // Module progress M1–M10 from nl_module_completion + nl_training_modules
+      try {
+        const { data: mods } = await (supabase as any)
+          .from("nl_training_modules")
+          .select("id, module_number")
+          .order("module_number");
+        const { data: comps } = await (supabase as any)
+          .from("nl_module_completion")
+          .select("module_id, score_average")
+          .eq("user_id", userId);
+        const compMap = new Map<string, number>();
+        (comps ?? []).forEach((c: any) => compMap.set(c.module_id, c.score_average ?? 100));
+        const modList = (mods ?? []).filter((m: any) => m.module_number >= 1 && m.module_number <= 10);
+        const progress = modList.map((m: any) => ({
+          module: `M${m.module_number}`,
+          pct: Math.round(compMap.get(m.id) ?? 0),
+        }));
+        // Pad to 10
+        while (progress.length < 10) progress.push({ module: `M${progress.length + 1}`, pct: 0 });
+        setModuleProgress(progress);
+      } catch {
+        setModuleProgress(Array.from({ length: 10 }).map((_, i) => ({ module: `M${i + 1}`, pct: 0 })));
+      }
+
+      // Quiz attempts from nl_training_progress (attempts per module, grouped into L1/L2/L3 buckets via score)
+      try {
+        const { data: progs } = await (supabase as any)
+          .from("nl_training_progress")
+          .select("module_id, attempts, score")
+          .eq("user_id", userId);
+        const { data: mods2 } = await (supabase as any)
+          .from("nl_training_modules")
+          .select("id, module_number");
+        const modNumMap = new Map<string, number>();
+        (mods2 ?? []).forEach((m: any) => modNumMap.set(m.id, m.module_number));
+        const bucket = new Map<string, number>();
+        (progs ?? []).forEach((p: any) => {
+          const num = modNumMap.get(p.module_id);
+          if (!num || num < 1 || num > 10) return;
+          const score = p.score ?? 0;
+          const level = score >= 90 ? "L3" : score >= 70 ? "L2" : "L1";
+          const k = `M${num}-${level}`;
+          bucket.set(k, (bucket.get(k) ?? 0) + (p.attempts ?? 1));
+        });
+        setQuizAttempts(
+          Array.from({ length: 10 }).flatMap((_, i) =>
+            ["L1", "L2", "L3"].map((lv) => ({
+              module: `M${i + 1}`,
+              level: lv,
+              count: bucket.get(`M${i + 1}-${lv}`) ?? 0,
+            }))
+          )
+        );
+      } catch {
+        setQuizAttempts(
+          Array.from({ length: 10 }).flatMap((_, i) =>
+            ["L1", "L2", "L3"].map((lv) => ({ module: `M${i + 1}`, level: lv, count: 0 }))
+          )
+        );
+      }
 
       // Objection progress (counts toward 50)
       try {
