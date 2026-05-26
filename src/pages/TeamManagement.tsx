@@ -251,6 +251,11 @@ export default function TeamManagement() {
                           <DropdownMenuItem onClick={() => { setEditMember(m); setShowAdd(true); }}>
                             <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
                           </DropdownMenuItem>
+                          {m.user_id && (
+                            <DropdownMenuItem onClick={() => setStatsFor(m)}>
+                              <Activity className="h-3.5 w-3.5 mr-2" /> Stats & controls
+                            </DropdownMenuItem>
+                          )}
                           {m.status === "pending_invite" && (
                             <DropdownMenuItem onClick={() => handleResendInvite(m)}>
                               <Mail className="h-3.5 w-3.5 mr-2" /> Resend Invite
