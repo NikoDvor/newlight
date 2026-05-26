@@ -69,6 +69,34 @@ export function EmployeeStatsDialog(props: Props) {
         .maybeSingle();
       setProfile(prof ?? null);
 
+      // Resolve actual workspace from workspace_users -> clients (fallback to employee_profiles.client_id)
+      try {
+        const { data: wsRows } = await (supabase as any)
+          .from("workspace_users")
+          .select("client_id, status")
+          .eq("user_id", userId);
+        const activeWs = (wsRows ?? []).find((w: any) => w.status === "active") ?? (wsRows ?? [])[0];
+        let resolvedClientId: string | null = activeWs?.client_id ?? null;
+        if (!resolvedClientId) {
+          const { data: emp } = await (supabase as any)
+            .from("employee_profiles")
+            .select("client_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+          resolvedClientId = emp?.client_id ?? null;
+        }
+        if (resolvedClientId) {
+          const { data: client } = await (supabase as any)
+            .from("clients")
+            .select("business_name")
+            .eq("id", resolvedClientId)
+            .maybeSingle();
+          setWorkspaceLabel(client?.business_name ?? null);
+        } else {
+          setWorkspaceLabel(null);
+        }
+      } catch { setWorkspaceLabel(null); }
+
       // Auth details via edge function
       try {
         const { data: d } = await supabase.functions.invoke("admin-user-actions", {
