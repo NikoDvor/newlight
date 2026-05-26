@@ -298,51 +298,14 @@ export default function AdminTeam() {
         </div>
       </Card>
 
-      <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                {["User ID", "Role", "Client", "Actions"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-[10px] text-white/40 uppercase tracking-wider font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((r, i) => (
-                <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                  className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
-                  <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
-                      {r.status === "suspended" && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-white/50 text-xs">
-                    {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => setStatsFor(r)} className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors" title="View stats & controls">
-                        <Activity className="h-3.5 w-3.5" />
-                      </button>
-                      <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors" title="Remove">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {roles.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-12 text-white/30">No users found</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <GroupedUsers
+        roles={roles}
+        clients={clients}
+        onStats={setStatsFor}
+        onRemove={handleRemove}
+        roleColor={roleColor}
+      />
+
       <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
       {statsFor && (
         <EmployeeStatsDialog
