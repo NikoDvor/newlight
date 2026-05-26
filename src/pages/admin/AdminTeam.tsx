@@ -303,7 +303,15 @@ export default function AdminTeam() {
             <p className="text-sm font-semibold text-white">Client app download links</p>
             <p className="text-xs text-white/40 mt-1">Preview, copy, or resend any client’s branded app download link.</p>
           </div>
-          <select onChange={e => setAppLinkClient(clients.find(c => c.id === e.target.value) ?? null)} defaultValue="" className="h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 min-w-[220px]">
+          <select
+            value={appLinkClientId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setAppLinkClientId(id);
+              setAppLinkClient(clients.find((c) => c.id === id) ?? null);
+            }}
+            className="h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 min-w-[220px]"
+          >
             <option value="" disabled>Select client…</option>
             {clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}
           </select>
@@ -312,13 +320,25 @@ export default function AdminTeam() {
 
       <GroupedUsers
         roles={roles}
+        workspaceMembers={workspaceMembers}
         clients={clients}
         onStats={setStatsFor}
         onRemove={handleRemove}
         roleColor={roleColor}
       />
 
-      <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
+      <SendAppLinkDialog
+        client={appLinkClient}
+        open={!!appLinkClient}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAppLinkClient(null);
+            setAppLinkClientId("");
+          }
+        }}
+        onSent={fetchData}
+      />
+
       {statsFor && (
         <EmployeeStatsDialog
           open={!!statsFor}
