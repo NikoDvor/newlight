@@ -161,6 +161,7 @@ import BDRCalendar from "./pages/employee/BDRCalendar";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 
 const queryClient = new QueryClient();
 
@@ -202,6 +203,7 @@ const App = () => {
           <WorkspaceProvider>
             <PWAInstallProvider>
               <IntroOverlay />
+              <ImpersonationBanner />
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />

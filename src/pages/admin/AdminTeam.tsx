@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
+import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 
 interface RoleRow {
   id: string;
   user_id: string;
   role: string;
   client_id: string | null;
+  status?: string | null;
 }
 
 interface ClientOption {
@@ -44,6 +46,7 @@ export default function AdminTeam() {
   const [manualLoading, setManualLoading] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
+  const [statsFor, setStatsFor] = useState<RoleRow | null>(null);
   const [loading, setLoading] = useState(false);
 
   const manualRoleOptions = [
@@ -77,7 +80,7 @@ export default function AdminTeam() {
         body: {
           email: inviteEmail,
           role: inviteRole,
-          client_id: ["client_owner", "client_team", "read_only"].includes(inviteRole) ? inviteClientId || null : null,
+          client_id: ["client_owner", "client_team", "read_only", "project_manager"].includes(inviteRole) ? inviteClientId || null : null,
         },
       });
       if (res.error || res.data?.error) {
@@ -228,12 +231,13 @@ export default function AdminTeam() {
                   className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
                   <option value="admin">Admin</option>
                   <option value="operator">Operator</option>
+                  <option value="project_manager">Project Manager (sub-account owner)</option>
                   <option value="client_owner">Client Owner</option>
                   <option value="client_team">Client Team Member</option>
                   <option value="read_only">Read Only</option>
                 </select>
               </div>
-              {["client_owner", "client_team", "read_only"].includes(inviteRole) && (
+              {["client_owner", "client_team", "read_only", "project_manager"].includes(inviteRole) && (
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Assign to Client</label>
                   <select value={inviteClientId} onChange={e => setInviteClientId(e.target.value)}
@@ -309,15 +313,25 @@ export default function AdminTeam() {
                   className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
                   <td className="px-4 py-3 text-white/70 text-xs font-mono">{r.user_id.slice(0, 8)}...</td>
                   <td className="px-4 py-3">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace("_", " ")}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(r.role)}`}>{r.role.replace(/_/g, " ")}</span>
+                      {r.status === "suspended" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 uppercase tracking-wider">Suspended</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-white/50 text-xs">
                     {r.client_id ? clients.find(c => c.id === r.client_id)?.business_name || r.client_id.slice(0, 8) : "Platform-wide"}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setStatsFor(r)} className="text-white/40 hover:text-[hsl(var(--nl-electric))] transition-colors" title="View stats & controls">
+                        <Activity className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => handleRemove(r.id, r.user_id)} className="text-white/30 hover:text-red-400 transition-colors" title="Remove">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -329,6 +343,19 @@ export default function AdminTeam() {
         </div>
       </Card>
       <SendAppLinkDialog client={appLinkClient} open={!!appLinkClient} onOpenChange={(open) => { if (!open) setAppLinkClient(null); }} onSent={fetchData} />
+      {statsFor && (
+        <EmployeeStatsDialog
+          open={!!statsFor}
+          onOpenChange={(o) => { if (!o) setStatsFor(null); }}
+          userId={statsFor.user_id}
+          role={statsFor.role}
+          clientId={statsFor.client_id}
+          clientName={statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name : null}
+          status={(statsFor.status === "suspended" ? "suspended" : "active") as "active" | "suspended"}
+          onMutated={fetchData}
+          returnPath="/admin/team"
+        />
+      )}
     </div>
   );
 }

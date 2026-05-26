@@ -14,6 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ROLE_PRESETS } from "@/lib/rolePresets";
 import AddTeamMemberForm from "@/components/team/AddTeamMemberForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
+import { Activity } from "lucide-react";
 
 interface WorkspaceUser {
   id: string;
@@ -46,6 +48,7 @@ export default function TeamManagement() {
   const [editMember, setEditMember] = useState<WorkspaceUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [statsFor, setStatsFor] = useState<WorkspaceUser | null>(null);
 
   const fetchMembers = async () => {
     if (!activeClientId) return;
@@ -248,6 +251,11 @@ export default function TeamManagement() {
                           <DropdownMenuItem onClick={() => { setEditMember(m); setShowAdd(true); }}>
                             <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
                           </DropdownMenuItem>
+                          {m.user_id && (
+                            <DropdownMenuItem onClick={() => setStatsFor(m)}>
+                              <Activity className="h-3.5 w-3.5 mr-2" /> Stats & controls
+                            </DropdownMenuItem>
+                          )}
                           {m.status === "pending_invite" && (
                             <DropdownMenuItem onClick={() => handleResendInvite(m)}>
                               <Mail className="h-3.5 w-3.5 mr-2" /> Resend Invite
@@ -318,6 +326,18 @@ export default function TeamManagement() {
           />
         </DialogContent>
       </Dialog>
+      {statsFor?.user_id && (
+        <EmployeeStatsDialog
+          open={!!statsFor}
+          onOpenChange={(o) => { if (!o) setStatsFor(null); }}
+          userId={statsFor.user_id}
+          role={statsFor.role_preset}
+          clientId={statsFor.client_id}
+          status={(statsFor.status === "inactive" ? "suspended" : "active") as "active" | "suspended"}
+          onMutated={fetchMembers}
+          returnPath="/team"
+        />
+      )}
     </div>
   );
 }
