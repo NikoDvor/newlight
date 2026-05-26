@@ -34,6 +34,7 @@ export function EmployeeStatsDialog(props: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [details, setDetails] = useState<UserDetails>({});
   const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [workspaceLabel, setWorkspaceLabel] = useState<string | null>(null);
 
   const [sessionCount, setSessionCount] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
@@ -67,6 +68,34 @@ export function EmployeeStatsDialog(props: Props) {
         .eq("user_id", userId)
         .maybeSingle();
       setProfile(prof ?? null);
+
+      // Resolve actual workspace from workspace_users -> clients (fallback to employee_profiles.client_id)
+      try {
+        const { data: wsRows } = await (supabase as any)
+          .from("workspace_users")
+          .select("client_id, status")
+          .eq("user_id", userId);
+        const activeWs = (wsRows ?? []).find((w: any) => w.status === "active") ?? (wsRows ?? [])[0];
+        let resolvedClientId: string | null = activeWs?.client_id ?? null;
+        if (!resolvedClientId) {
+          const { data: emp } = await (supabase as any)
+            .from("employee_profiles")
+            .select("client_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+          resolvedClientId = emp?.client_id ?? null;
+        }
+        if (resolvedClientId) {
+          const { data: client } = await (supabase as any)
+            .from("clients")
+            .select("business_name")
+            .eq("id", resolvedClientId)
+            .maybeSingle();
+          setWorkspaceLabel(client?.business_name ?? null);
+        } else {
+          setWorkspaceLabel(null);
+        }
+      } catch { setWorkspaceLabel(null); }
 
       // Auth details via edge function
       try {
@@ -162,9 +191,10 @@ export function EmployeeStatsDialog(props: Props) {
         (progs ?? []).forEach((p: any) => {
           const num = modNumMap.get(p.module_id);
           if (!num || num < 1 || num > 10) return;
-          const s = p.score ?? 0;
+          // Treat status='completed' as 100% regardless of score (some modules log score=0 on completion)
+          const effective = p.status === "completed" ? 100 : (p.score ?? 0);
           const prev = bestByNumber.get(num) ?? 0;
-          if (s > prev) bestByNumber.set(num, s);
+          if (effective > prev) bestByNumber.set(num, effective);
         });
         const progress = Array.from({ length: 10 }).map((_, i) => ({
           module: `M${i + 1}`,
@@ -289,7 +319,7 @@ export function EmployeeStatsDialog(props: Props) {
               <Row label="Email" value={details.email} />
               <Row label="Phone" value={details.phone} />
               <Row label="Role" value={role.replace(/_/g, " ")} />
-              <Row label="Workspace" value={clientName ?? (clientId ? clientId.slice(0, 8) : "Platform-wide")} />
+              <Row label="Workspace" value={workspaceLabel ?? (clientName && !clientName.startsWith("Platform-wide") ? clientName : null) ?? (clientId ? clientId.slice(0, 8) : "Platform-wide")} />
               <Row label="Status" value={status} />
               <Row label="Created" value={fmtDate(details.created_at)} />
               <Row label="Last login" value={fmtDate(details.last_sign_in_at ?? lastSession?.login_at)} />
