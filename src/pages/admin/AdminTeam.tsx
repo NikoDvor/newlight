@@ -427,7 +427,7 @@ export default function AdminTeam() {
           userId={statsFor.user_id}
           role={statsFor.role}
           clientId={statsFor.client_id}
-          clientName={statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name ?? null : null}
+          clientName={(statsFor as any)._groupName ?? (statsFor.client_id ? clients.find(c => c.id === statsFor.client_id)?.business_name ?? null : null)}
           status={statsFor.status}
           onMutated={fetchData}
           returnPath="/admin/team"
