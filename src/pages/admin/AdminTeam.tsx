@@ -33,6 +33,7 @@ interface WorkspaceMember {
   user_id: string;
   client_id: string;
   status: string | null;
+  source?: "workspace_users" | "employee_profiles";
 }
 
 
