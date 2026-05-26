@@ -33,6 +33,7 @@ interface WorkspaceMember {
   user_id: string;
   client_id: string;
   status: string | null;
+  source?: "workspace_users" | "employee_profiles";
 }
 
 
@@ -56,6 +57,7 @@ export default function AdminTeam() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [appLinkClientId, setAppLinkClientId] = useState<string>("");
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
+  const [appLinkSelectKey, setAppLinkSelectKey] = useState(0);
   const [statsFor, setStatsFor] = useState<RoleRow | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -68,14 +70,27 @@ export default function AdminTeam() {
   ];
 
   const fetchData = async () => {
-    const [rolesRes, clientsRes, wsRes] = await Promise.all([
+    const [rolesRes, clientsRes, wsRes, empRes] = await Promise.all([
       supabase.from("user_roles").select("*").order("role"),
       supabase.from("clients").select("id, business_name, workspace_slug, owner_name, owner_email, owner_phone, sms_consent").order("business_name"),
       supabase.from("workspace_users").select("user_id, client_id, status"),
+      supabase.from("employee_profiles").select("user_id, client_id"),
     ]);
+    console.log("[AdminTeam] user_roles:", rolesRes.data, rolesRes.error);
+    console.log("[AdminTeam] workspace_users:", wsRes.data, wsRes.error);
+    console.log("[AdminTeam] employee_profiles:", empRes.data, empRes.error);
+    console.log("[AdminTeam] clients:", clientsRes.data?.length, clientsRes.error);
+
+    const wsMembers: WorkspaceMember[] = ((wsRes.data ?? []) as any[])
+      .filter((m) => m?.user_id && m?.client_id)
+      .map((m) => ({ user_id: m.user_id, client_id: m.client_id, status: m.status ?? null, source: "workspace_users" as const }));
+    const empMembers: WorkspaceMember[] = ((empRes.data ?? []) as any[])
+      .filter((m) => m?.user_id && m?.client_id)
+      .map((m) => ({ user_id: m.user_id, client_id: m.client_id, status: "active", source: "employee_profiles" as const }));
+
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
-    setWorkspaceMembers(((wsRes.data ?? []) as unknown) as WorkspaceMember[]);
+    setWorkspaceMembers([...wsMembers, ...empMembers]);
   };
 
 
@@ -304,15 +319,17 @@ export default function AdminTeam() {
             <p className="text-xs text-white/40 mt-1">Preview, copy, or resend any client’s branded app download link.</p>
           </div>
           <select
+            key={appLinkSelectKey}
             value={appLinkClientId}
             onChange={(e) => {
               const id = e.target.value;
+              if (!id) return;
               setAppLinkClientId(id);
               setAppLinkClient(clients.find((c) => c.id === id) ?? null);
             }}
             className="h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 min-w-[220px]"
           >
-            <option value="" disabled>Select client…</option>
+            <option value="">Select client…</option>
             {clients.map(c => <option key={c.id} value={c.id}>{c.business_name}</option>)}
           </select>
         </div>
@@ -334,6 +351,7 @@ export default function AdminTeam() {
           if (!open) {
             setAppLinkClient(null);
             setAppLinkClientId("");
+            setAppLinkSelectKey((k) => k + 1);
           }
         }}
         onSent={fetchData}
@@ -372,30 +390,37 @@ function GroupedUsers({ roles, workspaceMembers, clients, onStats, onRemove, rol
       const safeMembers = (workspaceMembers ?? []).filter((m) => m && m.user_id && m.client_id);
       const safeClients = (clients ?? []).filter((c) => c && c.id);
 
+      // user -> assigned client_id from workspace membership (workspace_users or employee_profiles)
+      const userToClient = new Map<string, string>();
+      safeMembers.forEach((m) => {
+        if (!userToClient.has(m.user_id)) userToClient.set(m.user_id, m.client_id);
+      });
+
       const map = new Map<string, { id: string; name: string; roles: RoleRow[] }>();
       map.set("__platform__", { id: "__platform__", name: "Platform-wide (Admin / Service Manager)", roles: [] });
       safeClients.forEach((c) => map.set(c.id, { id: c.id, name: c.business_name || c.id.slice(0, 8), roles: [] }));
 
-      const seen = new Set<string>();
-      safeRoles.forEach((r) => {
-        const key = r.client_id ?? "__platform__";
+      const ensure = (key: string) => {
         if (!map.has(key)) {
           const c = safeClients.find((cc) => cc.id === key);
           map.set(key, { id: key, name: c?.business_name || `Workspace ${String(key).slice(0, 8)}`, roles: [] });
         }
-        map.get(key)!.roles.push(r);
+        return map.get(key)!;
+      };
+
+      const seen = new Set<string>();
+      safeRoles.forEach((r) => {
+        // If role has no client_id but the user has a workspace assignment, prefer that workspace.
+        const assigned = !r.client_id && userToClient.has(r.user_id) ? userToClient.get(r.user_id)! : null;
+        const key = r.client_id ?? assigned ?? "__platform__";
+        ensure(key).roles.push({ ...r, client_id: r.client_id ?? assigned ?? null });
         seen.add(`${key}:${r.user_id}`);
       });
 
       safeMembers.forEach((m) => {
-        const key = m.client_id;
-        const sig = `${key}:${m.user_id}`;
+        const sig = `${m.client_id}:${m.user_id}`;
         if (seen.has(sig)) return;
-        if (!map.has(key)) {
-          const c = safeClients.find((cc) => cc.id === key);
-          map.set(key, { id: key, name: c?.business_name || `Workspace ${String(key).slice(0, 8)}`, roles: [] });
-        }
-        map.get(key)!.roles.push({
+        ensure(m.client_id).roles.push({
           id: `ws-${m.client_id}-${m.user_id}`,
           user_id: m.user_id,
           role: "client_team",
@@ -405,7 +430,9 @@ function GroupedUsers({ roles, workspaceMembers, clients, onStats, onRemove, rol
         seen.add(sig);
       });
 
-      return Array.from(map.values()).filter((g) => g.roles.length > 0);
+      const result = Array.from(map.values()).filter((g) => g.roles.length > 0);
+      console.log("[AdminTeam] groups:", result.map((g) => ({ name: g.name, count: g.roles.length })));
+      return result;
     } catch (err) {
       console.error("GroupedUsers grouping failed", err);
       return [];
