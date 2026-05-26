@@ -80,7 +80,7 @@ export default function AdminTeam() {
         body: {
           email: inviteEmail,
           role: inviteRole,
-          client_id: ["client_owner", "client_team", "read_only"].includes(inviteRole) ? inviteClientId || null : null,
+          client_id: ["client_owner", "client_team", "read_only", "project_manager"].includes(inviteRole) ? inviteClientId || null : null,
         },
       });
       if (res.error || res.data?.error) {
