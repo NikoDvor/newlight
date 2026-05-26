@@ -75,7 +75,7 @@ export default function AdminTeam() {
     ]);
     setRoles(rolesRes.data ?? []);
     setClients(clientsRes.data ?? []);
-    setWorkspaceMembers((wsRes.data ?? []) as WorkspaceMember[]);
+    setWorkspaceMembers(((wsRes.data ?? []) as unknown) as WorkspaceMember[]);
   };
 
 
