@@ -358,24 +358,50 @@ export default function AdminTeam() {
 
 interface GroupedUsersProps {
   roles: RoleRow[];
+  workspaceMembers: WorkspaceMember[];
   clients: ClientOption[];
   onStats: (r: RoleRow) => void;
   onRemove: (roleId: string, userId: string) => void;
   roleColor: (r: string) => string;
 }
 
-function GroupedUsers({ roles, clients, onStats, onRemove, roleColor }: GroupedUsersProps) {
+function GroupedUsers({ roles, workspaceMembers, clients, onStats, onRemove, roleColor }: GroupedUsersProps) {
   const groups = useMemo(() => {
     const map = new Map<string, { id: string; name: string; roles: RoleRow[] }>();
     map.set("__platform__", { id: "__platform__", name: "Platform-wide (Admin / Service Manager)", roles: [] });
     clients.forEach((c) => map.set(c.id, { id: c.id, name: c.business_name, roles: [] }));
+
+    // Track which (client_id, user_id) combos we've already added so workspace_users entries don't duplicate user_roles entries.
+    const seen = new Set<string>();
     roles.forEach((r) => {
       const key = r.client_id ?? "__platform__";
       if (!map.has(key)) map.set(key, { id: key, name: key.slice(0, 8), roles: [] });
       map.get(key)!.roles.push(r);
+      seen.add(`${key}:${r.user_id}`);
     });
+
+    // Surface workspace_users members that don't have a matching user_roles row for that workspace.
+    workspaceMembers.forEach((m) => {
+      const key = m.client_id;
+      const sig = `${key}:${m.user_id}`;
+      if (seen.has(sig)) return;
+      if (!map.has(key)) {
+        const c = clients.find((cc) => cc.id === key);
+        map.set(key, { id: key, name: c?.business_name ?? key.slice(0, 8), roles: [] });
+      }
+      map.get(key)!.roles.push({
+        id: `ws-${m.client_id}-${m.user_id}`,
+        user_id: m.user_id,
+        role: "client_team",
+        client_id: m.client_id,
+        status: m.status ?? null,
+      });
+      seen.add(sig);
+    });
+
     return Array.from(map.values()).filter((g) => g.roles.length > 0);
-  }, [roles, clients]);
+  }, [roles, workspaceMembers, clients]);
+
 
   if (groups.length === 0) {
     return (
