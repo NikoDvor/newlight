@@ -163,9 +163,10 @@ export function EmployeeStatsDialog(props: Props) {
         (progs ?? []).forEach((p: any) => {
           const num = modNumMap.get(p.module_id);
           if (!num || num < 1 || num > 10) return;
-          const s = p.score ?? 0;
+          // Treat status='completed' as 100% regardless of score (some modules log score=0 on completion)
+          const effective = p.status === "completed" ? 100 : (p.score ?? 0);
           const prev = bestByNumber.get(num) ?? 0;
-          if (s > prev) bestByNumber.set(num, s);
+          if (effective > prev) bestByNumber.set(num, effective);
         });
         const progress = Array.from({ length: 10 }).map((_, i) => ({
           module: `M${i + 1}`,
