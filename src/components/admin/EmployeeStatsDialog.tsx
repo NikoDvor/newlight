@@ -143,24 +143,27 @@ export function EmployeeStatsDialog(props: Props) {
         setCertStatus(cert ? (cert.passed ? "passed" : "failed") : "not_started");
       } catch { setCertStatus("not_started"); }
 
-      // Module progress M1–M10 from nl_module_completion + nl_training_modules
+      // Module progress M1–M10 derived from nl_training_progress (max score per module)
       try {
         const { data: mods } = await (supabase as any)
           .from("nl_training_modules")
           .select("id, module_number")
           .order("module_number");
-        const { data: comps } = await (supabase as any)
-          .from("nl_module_completion")
-          .select("module_id, score_average")
+        const { data: progs } = await (supabase as any)
+          .from("nl_training_progress")
+          .select("module_id, score, completed")
           .eq("user_id", userId);
-        const compMap = new Map<string, number>();
-        (comps ?? []).forEach((c: any) => compMap.set(c.module_id, c.score_average ?? 100));
+        const bestByModule = new Map<string, number>();
+        (progs ?? []).forEach((p: any) => {
+          const s = p.completed ? Math.max(p.score ?? 0, 100) : (p.score ?? 0);
+          const prev = bestByModule.get(p.module_id) ?? 0;
+          if (s > prev) bestByModule.set(p.module_id, s);
+        });
         const modList = (mods ?? []).filter((m: any) => m.module_number >= 1 && m.module_number <= 10);
         const progress = modList.map((m: any) => ({
           module: `M${m.module_number}`,
-          pct: Math.round(compMap.get(m.id) ?? 0),
+          pct: Math.min(100, Math.round(bestByModule.get(m.id) ?? 0)),
         }));
-        // Pad to 10
         while (progress.length < 10) progress.push({ module: `M${progress.length + 1}`, pct: 0 });
         setModuleProgress(progress);
       } catch {
