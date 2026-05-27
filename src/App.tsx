@@ -158,11 +158,9 @@ import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import BDRCalendar from "./pages/employee/BDRCalendar";
-import ImpersonateBDR from "./pages/ImpersonateBDR";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
-import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 
 const queryClient = new QueryClient();
 
@@ -204,7 +202,6 @@ const App = () => {
           <WorkspaceProvider>
             <PWAInstallProvider>
               <IntroOverlay />
-              <ImpersonationBanner />
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
@@ -223,9 +220,6 @@ const App = () => {
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               <Route path="/intake" element={<ClientIntakeForm />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
-
-              {/* Impersonation preview (unguarded) */}
-              <Route path="/impersonate/bdr" element={<ImpersonateBDR />} />
 
               {/* Admin Portal */}
               <Route path="/admin" element={<AdminLayout />}>

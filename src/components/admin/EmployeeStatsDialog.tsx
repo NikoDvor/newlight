@@ -348,16 +348,18 @@ export function EmployeeStatsDialog(props: Props) {
                 size="sm"
                 className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white"
                 disabled={!!busy}
-                onClick={() =>
-                  startImpersonation({
-                    targetUserId: userId,
-                    targetName: profile?.full_name ?? "",
-                    targetEmail: details.email ?? "",
-                    targetRole: role,
-                    targetClientId: clientId,
-                    returnPath: returnPath ?? window.location.pathname,
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    await startImpersonation({
+                      targetUserId: userId,
+                      targetName: profile?.full_name ?? "",
+                      targetEmail: details.email ?? "",
+                      returnPath: returnPath ?? window.location.pathname,
+                    });
+                  } catch (e: any) {
+                    toast.error(e?.message || "Failed to impersonate user");
+                  }
+                }}
               >
                 <LogIn className="h-3.5 w-3.5 mr-1" /> Login as this user
               </Button>
