@@ -53,7 +53,7 @@ export async function startImpersonation(state: Omit<ImpersonationState, "starte
   }
 
   let dest = "/dashboard";
-  if (role === "marketing_staff") dest = "/employee/bdr";
+  if (role === "marketing_staff") dest = "/impersonate/bdr";
   else if (role === "support_staff") dest = "/employee/support";
   else if (role === "admin" || role === "service_manager") dest = "/admin";
   else if (state.targetClientId) dest = "/dashboard";
