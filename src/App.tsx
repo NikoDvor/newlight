@@ -158,6 +158,7 @@ import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import BDRCalendar from "./pages/employee/BDRCalendar";
+import ImpersonateBDR from "./pages/ImpersonateBDR";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
@@ -222,6 +223,9 @@ const App = () => {
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               <Route path="/intake" element={<ClientIntakeForm />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
+
+              {/* Impersonation preview (unguarded) */}
+              <Route path="/impersonate/bdr" element={<ImpersonateBDR />} />
 
               {/* Admin Portal */}
               <Route path="/admin" element={<AdminLayout />}>
