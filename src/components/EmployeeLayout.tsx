@@ -122,9 +122,25 @@ export function EmployeeLayout() {
   if (isSessionLoading) return null;
   if (!user) return <Navigate to="/auth" replace />;
   if (!user.email_confirmed_at) return <Navigate to="/auth" replace />;
-  if (isAdmin) return <Navigate to="/admin" replace />;
+
+  // eslint-disable-next-line no-console
+  console.log("[EmployeeLayout] decision point", {
+    path: location.pathname,
+    userId: user.id,
+    email: user.email,
+    userRole,
+    isAdmin,
+    jobTitle: employeeProfile?.job_title,
+    impersonation: (() => { try { return JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return null; } })(),
+  });
+
+  if (isAdmin) {
+    console.log("[EmployeeLayout] isAdmin=true → redirecting to /admin (this is why Login As bounces back)");
+    return <Navigate to="/admin" replace />;
+  }
 
   const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
+  console.log("[EmployeeLayout] employeeRoute resolved:", employeeRoute);
   if (!employeeRoute) return <Navigate to="/dashboard" replace />;
   if (location.pathname === "/employee") return <Navigate to={employeeRoute} replace />;
 
