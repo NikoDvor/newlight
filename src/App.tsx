@@ -223,6 +223,9 @@ const App = () => {
               <Route path="/intake" element={<ClientIntakeForm />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
+              {/* Impersonation preview (unguarded) */}
+              <Route path="/impersonate/bdr" element={<ImpersonateBDR />} />
+
               {/* Admin Portal */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
