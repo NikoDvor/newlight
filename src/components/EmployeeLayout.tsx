@@ -14,6 +14,7 @@ import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
@@ -123,26 +124,9 @@ export function EmployeeLayout() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!user.email_confirmed_at) return <Navigate to="/auth" replace />;
 
-  // eslint-disable-next-line no-console
-  console.log("[EmployeeLayout] decision point", {
-    path: location.pathname,
-    userId: user.id,
-    email: user.email,
-    userRole,
-    isAdmin,
-    jobTitle: employeeProfile?.job_title,
-    impersonation: (() => { try { return JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return null; } })(),
-  });
-
-  const isImpersonating = (() => { try { return !!JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return false; } })();
-
-  if (isAdmin && !isImpersonating) {
-    console.log("[EmployeeLayout] isAdmin=true → redirecting to /admin (this is why Login As bounces back)");
-    return <Navigate to="/admin" replace />;
-  }
+  if (isAdmin) return <Navigate to="/admin" replace />;
 
   const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
-  console.log("[EmployeeLayout] employeeRoute resolved:", employeeRoute);
   if (!employeeRoute) return <Navigate to="/dashboard" replace />;
   if (location.pathname === "/employee") return <Navigate to={employeeRoute} replace />;
 
@@ -173,7 +157,19 @@ export function EmployeeLayout() {
               <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center">
                 <Users className="h-4 w-4" />
               </div>
-              <Button variant="ghost" size="icon" onClick={() => signOut().then(() => navigate("/auth", { replace: true }))} title="Sign out">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async () => {
+                  if (hasAdminBackup()) {
+                    await restoreAdminSession();
+                    return;
+                  }
+                  await signOut();
+                  navigate("/auth", { replace: true });
+                }}
+                title={hasAdminBackup() ? "Exit impersonation" : "Sign out"}
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
