@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.bdr-book]
 verify_jwt = false
+
+[functions.impersonate-user]
+verify_jwt = false
