@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, KeyRound, Ban, RotateCw, LogIn } from "lucide-react";
 import { startImpersonation } from "@/lib/impersonation";
+import { getTrainingStatsForUser } from "@/lib/trainingStatsService";
 
 interface Props {
   open: boolean;
