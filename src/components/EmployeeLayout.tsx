@@ -157,7 +157,19 @@ export function EmployeeLayout() {
               <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center">
                 <Users className="h-4 w-4" />
               </div>
-              <Button variant="ghost" size="icon" onClick={() => signOut().then(() => navigate("/auth", { replace: true }))} title="Sign out">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={async () => {
+                  if (hasAdminBackup()) {
+                    await restoreAdminSession();
+                    return;
+                  }
+                  await signOut();
+                  navigate("/auth", { replace: true });
+                }}
+                title={hasAdminBackup() ? "Exit impersonation" : "Sign out"}
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
