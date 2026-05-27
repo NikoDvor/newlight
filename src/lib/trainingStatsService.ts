@@ -89,15 +89,75 @@ export async function getTrainingStatsForUser(userId: string): Promise<TrainingS
     });
   }
 
-  // 4. Module % — same precedence the portal uses:
-  //    completion record => 100% (or stored score_average)
-  //    else => latest module-exam score
-  //    else => 0
+  // 4. Chapter + chapter-level data — canonical signal used by the BDR
+  //    Training Track page: pct = sum(min(completed_levels_per_chapter, 3))
+  //    / (chapter_count * 3) * 100. A `nl_training_progress` row with
+  //    status='completed' for a chapter counts as a full 3-level pass.
+  const chaptersByNum = new Map<number, string[]>();
+  const chapterToNum = new Map<string, number>();
+  if (moduleIds.length > 0) {
+    const { data: chRows } = await (supabase as any)
+      .from("nl_training_chapters")
+      .select("id, module_id")
+      .in("module_id", moduleIds);
+    (chRows ?? []).forEach((c: any) => {
+      const num = idToNum.get(c.module_id);
+      if (!num) return;
+      chapterToNum.set(c.id, num);
+      const arr = chaptersByNum.get(num) ?? [];
+      arr.push(c.id);
+      chaptersByNum.set(num, arr);
+    });
+  }
+
+  const completedLevelsByChapter = new Map<string, number>();
+  const allChapterIds = Array.from(chapterToNum.keys());
+  if (allChapterIds.length > 0) {
+    const { data: levels } = await (supabase as any)
+      .from("nl_training_chapter_level_progress")
+      .select("chapter_id, status")
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .in("chapter_id", allChapterIds);
+    (levels ?? []).forEach((r: any) => {
+      completedLevelsByChapter.set(
+        r.chapter_id,
+        (completedLevelsByChapter.get(r.chapter_id) ?? 0) + 1
+      );
+    });
+
+    const { data: progRows } = await (supabase as any)
+      .from("nl_training_progress")
+      .select("chapter_id, status")
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .in("chapter_id", allChapterIds);
+    (progRows ?? []).forEach((r: any) => {
+      if (!r.chapter_id) return;
+      const cur = completedLevelsByChapter.get(r.chapter_id) ?? 0;
+      if (cur < 3) completedLevelsByChapter.set(r.chapter_id, 3);
+    });
+  }
+
+  // 5. Module % — precedence:
+  //    nl_module_completion present  => stored score_average (or 100)
+  //    else chapter-level signal     => completed_levels / (chapters*3) * 100
+  //    else latest module exam score => exam.score
+  //    else                          => 0
   const moduleProgress: ModuleProgress[] = Array.from({ length: 10 }, (_, i) => {
     const num = i + 1;
     if (completedByNum.has(num)) {
       const v = completedByNum.get(num)!;
       return { module: `M${num}`, pct: v > 0 ? v : 100 };
+    }
+    const chIds = chaptersByNum.get(num) ?? [];
+    if (chIds.length > 0) {
+      const total = chIds.length * 3;
+      const done = chIds.reduce(
+        (sum, cid) => sum + Math.min(3, completedLevelsByChapter.get(cid) ?? 0),
+        0
+      );
+      if (done > 0) return { module: `M${num}`, pct: Math.min(100, Math.round((done / total) * 100)) };
     }
     const ex = latestExamByNum.get(num);
     return { module: `M${num}`, pct: ex ? Math.min(100, Math.round(ex.score)) : 0 };
