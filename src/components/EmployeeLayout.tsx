@@ -134,7 +134,9 @@ export function EmployeeLayout() {
     impersonation: (() => { try { return JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return null; } })(),
   });
 
-  if (isAdmin) {
+  const isImpersonating = (() => { try { return !!JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return false; } })();
+
+  if (isAdmin && !isImpersonating) {
     console.log("[EmployeeLayout] isAdmin=true → redirecting to /admin (this is why Login As bounces back)");
     return <Navigate to="/admin" replace />;
   }
