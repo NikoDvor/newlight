@@ -17,11 +17,20 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     if (isSessionLoading) return;
     if (user && userRole) {
       const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
+      const imp = (() => { try { return JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return null; } })();
+      // eslint-disable-next-line no-console
+      console.log("[SessionGate] redirect decision", {
+        userId: user.id, email: user.email, userRole, isAdmin,
+        jobTitle: employeeProfile?.job_title, employeeRoute, impersonation: imp,
+      });
       if (isAdmin) {
+        console.log("[SessionGate] isAdmin=true → /admin");
         navigate("/admin", { replace: true });
       } else if (employeeRoute) {
+        console.log("[SessionGate] → employeeRoute", employeeRoute);
         navigate(employeeRoute, { replace: true });
       } else {
+        console.log("[SessionGate] → /dashboard fallback");
         navigate("/dashboard", { replace: true });
       }
     }
