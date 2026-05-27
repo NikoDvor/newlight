@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, KeyRound, Ban, RotateCw, LogIn } from "lucide-react";
 import { startImpersonation } from "@/lib/impersonation";
+import { getTrainingStatsForUser } from "@/lib/trainingStatsService";
 
 interface Props {
   open: boolean;
@@ -160,83 +161,17 @@ export function EmployeeStatsDialog(props: Props) {
       setApptCount(appts);
       setBookingRate(dials > 0 ? Math.round((appts / dials) * 100) : 0);
 
-      // BDR cert status from nl_certifications (latest attempt)
+      // Training stats — pulled from the SAME shared service the BDR Training
+      // Track page (employee portal) reads from. No more parallel queries.
       try {
-        const { data: cert } = await (supabase as any)
-          .from("nl_certifications")
-          .select("passed, completed_at")
-          .eq("user_id", userId)
-          .order("completed_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        setCertStatus(cert ? (cert.passed ? "passed" : "failed") : "not_started");
-      } catch { setCertStatus("not_started"); }
-
-      // Module progress M1–M10 derived from nl_training_progress (max score per module_number, cross-track)
-      try {
-        console.log("[EmployeeStats] module % query — user_id:", userId);
-        const { data: mods, error: modsErr } = await (supabase as any)
-          .from("nl_training_modules")
-          .select("id, module_number")
-          .order("module_number");
-        const { data: progs, error: progsErr } = await (supabase as any)
-          .from("nl_training_progress")
-          .select("module_id, score, status")
-          .eq("user_id", userId);
-        console.log("[EmployeeStats] module % — modules:", mods?.length, "progress rows:", progs?.length, "errors:", modsErr, progsErr);
-        console.log("[EmployeeStats] module % — sample progress:", progs?.slice(0, 5));
-        const modNumMap = new Map<string, number>();
-        (mods ?? []).forEach((m: any) => modNumMap.set(m.id, m.module_number));
-        const bestByNumber = new Map<number, number>();
-        (progs ?? []).forEach((p: any) => {
-          const num = modNumMap.get(p.module_id);
-          if (!num || num < 1 || num > 10) return;
-          // Treat status='completed' as 100% regardless of score (some modules log score=0 on completion)
-          const effective = p.status === "completed" ? 100 : (p.score ?? 0);
-          const prev = bestByNumber.get(num) ?? 0;
-          if (effective > prev) bestByNumber.set(num, effective);
-        });
-        const progress = Array.from({ length: 10 }).map((_, i) => ({
-          module: `M${i + 1}`,
-          pct: Math.min(100, Math.round(bestByNumber.get(i + 1) ?? 0)),
-        }));
-        console.log("[EmployeeStats] module % — final:", progress);
-        setModuleProgress(progress);
+        const stats = await getTrainingStatsForUser(userId);
+        setCertStatus(stats.certStatus);
+        setModuleProgress(stats.moduleProgress);
+        setQuizAttempts(stats.quizAttempts);
       } catch (e) {
-        console.error("[EmployeeStats] module % error:", e);
-        setModuleProgress(Array.from({ length: 10 }).map((_, i) => ({ module: `M${i + 1}`, pct: 0 })));
-      }
-
-      // Quiz attempts from nl_training_progress (attempts per module, grouped into L1/L2/L3 buckets via score)
-      try {
-        const { data: progs } = await (supabase as any)
-          .from("nl_training_progress")
-          .select("module_id, attempts, score")
-          .eq("user_id", userId);
-        const { data: mods2 } = await (supabase as any)
-          .from("nl_training_modules")
-          .select("id, module_number");
-        const modNumMap = new Map<string, number>();
-        (mods2 ?? []).forEach((m: any) => modNumMap.set(m.id, m.module_number));
-        const bucket = new Map<string, number>();
-        (progs ?? []).forEach((p: any) => {
-          const num = modNumMap.get(p.module_id);
-          if (!num || num < 1 || num > 10) return;
-          const score = p.score ?? 0;
-          const level = score >= 90 ? "L3" : score >= 70 ? "L2" : "L1";
-          const k = `M${num}-${level}`;
-          bucket.set(k, (bucket.get(k) ?? 0) + (p.attempts ?? 1));
-        });
-        setQuizAttempts(
-          Array.from({ length: 10 }).flatMap((_, i) =>
-            ["L1", "L2", "L3"].map((lv) => ({
-              module: `M${i + 1}`,
-              level: lv,
-              count: bucket.get(`M${i + 1}-${lv}`) ?? 0,
-            }))
-          )
-        );
-      } catch {
+        console.error("[EmployeeStats] training stats error:", e);
+        setCertStatus("not_started");
+        setModuleProgress(Array.from({ length: 10 }, (_, i) => ({ module: `M${i + 1}`, pct: 0 })));
         setQuizAttempts(
           Array.from({ length: 10 }).flatMap((_, i) =>
             ["L1", "L2", "L3"].map((lv) => ({ module: `M${i + 1}`, level: lv, count: 0 }))
