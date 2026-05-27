@@ -14,6 +14,7 @@ import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
@@ -123,26 +124,9 @@ export function EmployeeLayout() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!user.email_confirmed_at) return <Navigate to="/auth" replace />;
 
-  // eslint-disable-next-line no-console
-  console.log("[EmployeeLayout] decision point", {
-    path: location.pathname,
-    userId: user.id,
-    email: user.email,
-    userRole,
-    isAdmin,
-    jobTitle: employeeProfile?.job_title,
-    impersonation: (() => { try { return JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return null; } })(),
-  });
-
-  const isImpersonating = (() => { try { return !!JSON.parse(localStorage.getItem("nl_impersonation") || "null"); } catch { return false; } })();
-
-  if (isAdmin && !isImpersonating) {
-    console.log("[EmployeeLayout] isAdmin=true → redirecting to /admin (this is why Login As bounces back)");
-    return <Navigate to="/admin" replace />;
-  }
+  if (isAdmin) return <Navigate to="/admin" replace />;
 
   const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
-  console.log("[EmployeeLayout] employeeRoute resolved:", employeeRoute);
   if (!employeeRoute) return <Navigate to="/dashboard" replace />;
   if (location.pathname === "/employee") return <Navigate to={employeeRoute} replace />;
 
