@@ -412,6 +412,28 @@ export default function BDRDialer() {
                           className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                           <Phone className="h-3 w-3" /> {lead.phone}
                         </a>
+                       ) : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 break-words">
+                      {lead.website ? (
+                        <a
+                          href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs hover:underline truncate inline-block max-w-[160px] align-middle"
+                          style={{ color: "hsl(211,96%,68%)" }}
+                          title={lead.website}
+                        >
+                          {lead.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "")}
+                        </a>
+                      ) : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-center">
+                      {lead.has_booking_system === true ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>
+                      ) : lead.has_booking_system === false ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>
                       ) : <span className="text-white/30">—</span>}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">
