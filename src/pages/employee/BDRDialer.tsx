@@ -20,6 +20,8 @@ interface Lead {
   called: boolean | null;
   notes: string | null;
   callback_at?: string | null;
+  website: string | null;
+  has_booking_system: boolean | null;
 }
 
 interface OutcomeRow {
@@ -94,7 +96,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -376,6 +378,8 @@ export default function BDRDialer() {
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px] sticky z-40 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,12%)" }}>Business Name</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-24 text-center">Booking Sys</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[320px]">Notes</th>
@@ -384,7 +388,7 @@ export default function BDRDialer() {
             <tbody>
               {visibleLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                  <td colSpan={9} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
@@ -408,6 +412,28 @@ export default function BDRDialer() {
                           className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                           <Phone className="h-3 w-3" /> {lead.phone}
                         </a>
+                       ) : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 break-words">
+                      {lead.website ? (
+                        <a
+                          href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs hover:underline truncate inline-block max-w-[160px] align-middle"
+                          style={{ color: "hsl(211,96%,68%)" }}
+                          title={lead.website}
+                        >
+                          {lead.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "")}
+                        </a>
+                      ) : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-center">
+                      {lead.has_booking_system === true ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>
+                      ) : lead.has_booking_system === false ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>
                       ) : <span className="text-white/30">—</span>}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">

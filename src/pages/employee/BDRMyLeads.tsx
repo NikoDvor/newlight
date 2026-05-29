@@ -656,13 +656,29 @@ export default function BDRMyLeads() {
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {lead.phone && <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>}
-                          {lead.website && <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><ExternalLink className="h-3 w-3" /> Website</a>}
-                          {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
-                          {lead.has_booking_system === true && (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Booking System ✓</span>
+                          {lead.website ? (
+                            <a
+                              href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs flex items-center gap-1 hover:underline truncate max-w-[180px]"
+                              style={{ color: "hsl(211,96%,56%)" }}
+                              title={lead.website}
+                            >
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                              {lead.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "")}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
-                          {lead.has_booking_system === false && (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No Booking System</span>
+                          {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
+                          {lead.has_booking_system === true ? (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Yes</span>
+                          ) : lead.has_booking_system === false ? (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                           {!selectMode && (
                             calledLeadIds.has(lead.id) ? (
