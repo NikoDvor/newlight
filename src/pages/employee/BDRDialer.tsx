@@ -20,6 +20,8 @@ interface Lead {
   called: boolean | null;
   notes: string | null;
   callback_at?: string | null;
+  website: string | null;
+  has_booking_system: boolean | null;
 }
 
 interface OutcomeRow {
