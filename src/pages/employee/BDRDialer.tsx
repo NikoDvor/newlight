@@ -378,6 +378,8 @@ export default function BDRDialer() {
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px] sticky z-40 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,12%)" }}>Business Name</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-24 text-center">Booking Sys</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-[260px]">Outcome</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[320px]">Notes</th>
