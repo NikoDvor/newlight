@@ -388,7 +388,7 @@ export default function BDRDialer() {
             <tbody>
               {visibleLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                  <td colSpan={9} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
