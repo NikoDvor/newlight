@@ -18,30 +18,48 @@ import { useState } from "react";
 
 interface NavGroup {
   label: string;
-  items: { title: string; url: string; icon: any }[];
+  items?: { title: string; url: string; icon: any }[];
 }
 
 const navGroups: NavGroup[] = [
   {
     label: "NewLight Ops",
     items: [
-      { title: "Ops Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
+      { title: "Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
+      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
+      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
+    ],
+  },
+  {
+    label: "Growth Systems",
+    items: [
+      { title: "Website", url: "/admin/ops/website", icon: Globe },
+      { title: "SEO", url: "/admin/ops/seo", icon: Search },
+      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
+      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
       { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
-      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+    ],
+  },
+  {
+    label: "Enterprise Services",
+    items: [
+      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+    ],
+  },
+  {
+    label: "Communications",
+    items: [
       { title: "Conversations", url: "/admin/ops/conversations", icon: MessageSquare },
       { title: "Follow-Up Queue", url: "/admin/ops/follow-ups", icon: InboxIcon },
-      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
-      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
-      { title: "SEO", url: "/admin/ops/seo", icon: Search },
-      { title: "Paid Ads", url: "/admin/ops/ads", icon: Megaphone },
-      { title: "Website", url: "/admin/ops/website", icon: Globe },
-      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Lightbulb },
-      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
-      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
     ],
+  },
+  {
+    label: "— Admin —",
   },
   {
     label: "Sales",
@@ -51,7 +69,6 @@ const navGroups: NavGroup[] = [
       { title: "Prospects", url: "/admin/prospects", icon: Contact },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
-      { title: "Onboarding Form", url: "/get-started", icon: Rocket },
     ],
   },
   {
@@ -66,15 +83,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Client Intelligence",
+    label: "Intelligence",
     items: [
+      { title: "Executive Dashboard", url: "/admin/executive", icon: LayoutDashboard },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
-      { title: "Client Health Scores", url: "/admin/client-intelligence", icon: HeartPulse },
-      { title: "Revenue Growth Tracker", url: "/admin/revenue-expansion", icon: TrendingUp },
-      { title: "Priority Alerts", url: "/admin/fix-now", icon: AlertTriangle },
-      { title: "Onboarding Progress", url: "/admin/onboarding-progress", icon: Map },
-      { title: "Win Tracking", url: "/admin/win-tracking", icon: Trophy },
-      { title: "Optimization Flags", url: "/admin/optimization-flags", icon: Sparkles },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
+      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
     ],
   },
   {
@@ -87,36 +102,15 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Communications",
-    items: [
-      { title: "Conversations", url: "/admin/conversations", icon: MessageSquare },
-      { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: InboxIcon },
-      { title: "Message Templates", url: "/admin/message-templates", icon: FileText },
-    ],
-  },
-  {
-    label: "Reports & Finance",
-    items: [
-      { title: "Executive Dashboard", url: "/admin/executive", icon: LayoutDashboard },
-      { title: "Reports", url: "/admin/reports", icon: LineChart },
-      { title: "Revenue & Billing", url: "/admin/billing", icon: Wallet },
-      { title: "Automations", url: "/admin/automations", icon: Activity },
-    ],
-  },
-  {
     label: "System",
     items: [
-      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-      { title: "Architecture", url: "/admin/architecture", icon: GitBranch },
+      { title: "Reports", url: "/admin/reports", icon: LineChart },
+      { title: "Billing", url: "/admin/billing", icon: Wallet },
+      { title: "Automations", url: "/admin/automations", icon: Activity },
       { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
       { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
-      { title: "How It Works", url: "/admin/how-it-works", icon: Lightbulb },
-      { title: "App Experience", url: "/admin/app-settings", icon: SettingsIcon },
-      { title: "Package Access", url: "/admin/packages", icon: Shield },
-      { title: "Templates", url: "/admin/templates", icon: FileText },
-      { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Sparkles },
+      { title: "Architecture", url: "/admin/architecture", icon: GitBranch },
     ],
   },
 ];
@@ -136,10 +130,13 @@ export function AdminSidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
-      init[g.label] = g.items.some((i) => isActive(i.url));
+      if (g.items) {
+        init[g.label] = g.items.some((i) => isActive(i.url));
+      }
     });
-    // NewLight Ops is default open
+    // NewLight Ops and Growth Systems default open
     init["NewLight Ops"] = true;
+    init["Growth Systems"] = true;
     return init;
   });
 
@@ -186,6 +183,24 @@ export function AdminSidebar() {
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
+          const isDivider = !group.items || group.items.length === 0;
+
+          if (isDivider) {
+            return (
+              <SidebarGroup key={group.label} className="py-2">
+                {!collapsed && (
+                  <div className="flex items-center gap-2 px-3">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
+                      {group.label}
+                    </span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+                )}
+              </SidebarGroup>
+            );
+          }
+
           return (
             <SidebarGroup key={group.label} className="py-0.5">
               {!collapsed && (
@@ -193,7 +208,6 @@ export function AdminSidebar() {
                   onClick={() => toggleGroup(group.label)}
                   className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
                 >
-
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
                 </button>
@@ -201,7 +215,7 @@ export function AdminSidebar() {
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {group.items.map((item) => {
+                    {group.items!.map((item) => {
                       const active = isActive(item.url);
                       return (
                         <SidebarMenuItem key={item.title}>
@@ -214,7 +228,6 @@ export function AdminSidebar() {
                                 ? "text-white font-semibold"
                                 : "text-white/60 hover:text-white hover:bg-white/[0.08]"
                             }`}
-
                             style={active ? {
                               background: "hsla(211,96%,60%,.18)",
                               boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
