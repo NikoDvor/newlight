@@ -75,7 +75,7 @@ export default function AdminTrainingHealth() {
         qs.forEach((q) => { lc[q.quiz_level || 1] = (lc[q.quiz_level || 1] || 0) + 1; });
         const total = qs.length;
         const lowLevels = [1, 2, 3].filter((l) => (lc[l] || 0) < 2);
-        return { ...c, total, levels: lc, empty: total === 0, low: lowLevels };
+        return { ...c, total, levels: lc, empty: total === 0, low: lowLevels, module_number: m.module_number };
       });
       const empty = chapterDetail.filter((c) => c.empty).length;
       const low = chapterDetail.filter((c) => !c.empty && c.low.length > 0).length;
@@ -275,7 +275,7 @@ export default function AdminTrainingHealth() {
                                 <TableCell className={c.levels[2] < 2 ? "text-amber-500" : ""}>{c.levels[2] || 0}</TableCell>
                                 <TableCell className={c.levels[3] < 2 ? "text-amber-500" : ""}>{c.levels[3] || 0}</TableCell>
                                 <TableCell>
-                                  {c.empty ? <Badge variant="destructive">Needs Questions</Badge>
+                                  {c.empty && c.module_number !== 8 ? <Badge variant="destructive">Needs Questions</Badge>
                                     : c.low.length ? <Badge variant="secondary">Low: {c.low.map((l) => "L" + l).join(", ")}</Badge>
                                     : <Badge variant="outline" className="text-emerald-500 border-emerald-500/30">Healthy</Badge>}
                                 </TableCell>
