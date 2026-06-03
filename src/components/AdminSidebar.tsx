@@ -38,52 +38,89 @@ const navGroups: NavGroup[] = [
       { title: "Paid Ads", url: "/admin/ops/ads", icon: Megaphone },
       { title: "Website", url: "/admin/ops/website", icon: Globe },
       { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Lightbulb },
-      { title: "Market Research", url: "/admin/ops/market-research", icon: LineChart },
-      { title: "Content Planner", url: "/admin/ops/content", icon: PenSquare },
       { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
       { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
       { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
-      { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
     ],
   },
   {
-    label: "Clients & Success",
+    label: "Sales",
+    items: [
+      { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch },
+      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
+      { title: "Prospects", url: "/admin/prospects", icon: Contact },
+      { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
+      { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
+      { title: "Onboarding Form", url: "/get-started", icon: Rocket },
+    ],
+  },
+  {
+    label: "Clients",
     items: [
       { title: "Clients", url: "/admin/clients", icon: Users },
-      { title: "Client Success", url: "/admin/client-success", icon: Shield },
-      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
+      { title: "Client Activation", url: "/admin/activation", icon: Zap },
+      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
       { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
     ],
   },
   {
     label: "Client Intelligence",
     items: [
-      { title: "Client Health Scores", url: "/admin/client-intelligence/health", icon: HeartPulse },
-      { title: "Revenue Growth Tracker", url: "/admin/client-intelligence/revenue", icon: TrendingUp },
-      { title: "Priority Alerts", url: "/admin/client-intelligence/alerts", icon: AlertTriangle },
-      { title: "Broken Setup Flags", url: "/admin/client-intelligence/setup-flags", icon: Wrench },
-      { title: "Onboarding Progress", url: "/admin/client-intelligence/onboarding-progress", icon: Map },
-      { title: "Win Tracking", url: "/admin/client-intelligence/wins", icon: Trophy },
-      { title: "Optimization Flags", url: "/admin/client-intelligence/optimization", icon: Sparkles },
+      { title: "Client Success", url: "/admin/client-success", icon: Shield },
+      { title: "Client Health Scores", url: "/admin/client-intelligence", icon: HeartPulse },
+      { title: "Revenue Growth Tracker", url: "/admin/revenue-expansion", icon: TrendingUp },
+      { title: "Priority Alerts", url: "/admin/fix-now", icon: AlertTriangle },
+      { title: "Onboarding Progress", url: "/admin/onboarding-progress", icon: Map },
+      { title: "Win Tracking", url: "/admin/win-tracking", icon: Trophy },
+      { title: "Optimization Flags", url: "/admin/optimization-flags", icon: Sparkles },
     ],
   },
   {
-    label: "Team",
+    label: "Team & Training",
     items: [
       { title: "Team & Users", url: "/admin/team", icon: Shield },
+      { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
+      { title: "Training Center", url: "/admin/training-center", icon: Brain },
+      { title: "Training Health", url: "/admin/training-health", icon: HeartPulse },
     ],
   },
   {
     label: "Communications",
     items: [
-      { title: "Conversations", url: "/admin/conversations", icon: Calendar },
-      { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: ListChecks },
+      { title: "Conversations", url: "/admin/conversations", icon: MessageSquare },
+      { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: InboxIcon },
       { title: "Message Templates", url: "/admin/message-templates", icon: FileText },
     ],
   },
+  {
+    label: "Reports & Finance",
+    items: [
+      { title: "Executive Dashboard", url: "/admin/executive", icon: LayoutDashboard },
+      { title: "Reports", url: "/admin/reports", icon: LineChart },
+      { title: "Revenue & Billing", url: "/admin/billing", icon: Wallet },
+      { title: "Automations", url: "/admin/automations", icon: Activity },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "Architecture", url: "/admin/architecture", icon: GitBranch },
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
+      { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
+      { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
+      { title: "How It Works", url: "/admin/how-it-works", icon: Lightbulb },
+      { title: "App Experience", url: "/admin/app-settings", icon: SettingsIcon },
+      { title: "Package Access", url: "/admin/packages", icon: Shield },
+      { title: "Templates", url: "/admin/templates", icon: FileText },
+      { title: "Growth Advisor", url: "/admin/growth-advisor", icon: Sparkles },
+    ],
+  },
 ];
+
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -101,11 +138,11 @@ export function AdminSidebar() {
     navGroups.forEach((g) => {
       init[g.label] = g.items.some((i) => isActive(i.url));
     });
-    // Always open first group
-    init["Clients & Success"] = true;
+    // NewLight Ops is default open
     init["NewLight Ops"] = true;
     return init;
   });
+
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -146,7 +183,7 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 relative z-10">
+      <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
           return (
@@ -154,8 +191,9 @@ export function AdminSidebar() {
               {!collapsed && (
                 <button
                   onClick={() => toggleGroup(group.label)}
-                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
+                  className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
                 >
+
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
                 </button>
@@ -171,11 +209,12 @@ export function AdminSidebar() {
                             asChild
                             isActive={active}
                             tooltip={collapsed ? item.title : undefined}
-                            className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
+                            className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
                               active
                                 ? "text-white font-semibold"
                                 : "text-white/60 hover:text-white hover:bg-white/[0.08]"
                             }`}
+
                             style={active ? {
                               background: "hsla(211,96%,60%,.18)",
                               boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
