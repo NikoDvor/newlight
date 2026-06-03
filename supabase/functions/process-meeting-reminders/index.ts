@@ -98,7 +98,7 @@ async function queueBookingConfirmation(supabase: any, body: any, supabaseUrl: s
 
   // Generate cancellation token
   const cancellationToken = crypto.randomUUID();
-  const baseUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
+  const baseUrl = Deno.env.get("SITE_URL") || "https://newlightgen.com";
   const cancelLink = `${baseUrl}/meeting/cancel/${cancellationToken}`;
 
   // Create meeting status record
@@ -177,7 +177,7 @@ async function checkAssetDelivery(supabase: any, supabaseUrl: string) {
     });
   }
 
-  const baseUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
+  const baseUrl = Deno.env.get("SITE_URL") || "https://newlightgen.com";
   let processed = 0;
 
   for (const meeting of meetings) {
@@ -228,7 +228,7 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
     });
   }
 
-  const baseUrl = supabaseUrl.replace(".supabase.co", ".lovable.app");
+  const baseUrl = Deno.env.get("SITE_URL") || "https://newlightgen.com";
   let processed = 0;
 
   for (const reminder of reminders) {
