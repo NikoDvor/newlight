@@ -130,10 +130,13 @@ export function AdminSidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
-      init[g.label] = g.items.some((i) => isActive(i.url));
+      if (g.items) {
+        init[g.label] = g.items.some((i) => isActive(i.url));
+      }
     });
-    // NewLight Ops is default open
+    // NewLight Ops and Growth Systems default open
     init["NewLight Ops"] = true;
+    init["Growth Systems"] = true;
     return init;
   });
 
