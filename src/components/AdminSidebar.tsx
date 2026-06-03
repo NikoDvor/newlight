@@ -183,7 +183,7 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 relative z-10">
+      <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
           return (
@@ -191,8 +191,9 @@ export function AdminSidebar() {
               {!collapsed && (
                 <button
                   onClick={() => toggleGroup(group.label)}
-                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
+                  className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
                 >
+
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
                 </button>
