@@ -103,6 +103,7 @@ export function AdminSidebar() {
     });
     // Always open first group
     init["Clients & Success"] = true;
+    init["NewLight Ops"] = true;
     return init;
   });
 
