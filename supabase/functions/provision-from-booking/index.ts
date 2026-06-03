@@ -547,7 +547,7 @@ Deno.serve(async (req) => {
     let handoffResult: Record<string, unknown> = {};
     try {
       const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "";
-      const baseUrl = origin || "https://newlight.lovable.app";
+      const baseUrl = origin || "https://newlightgen.com";
 
       const handoffResp = await adminClient.functions.invoke("send-handoff-message", {
         body: {
