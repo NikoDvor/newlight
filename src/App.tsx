@@ -289,6 +289,27 @@ const App = () => {
                 <Route path="client-intelligence/onboarding-progress" element={<PlaceholderPage title="Onboarding Progress" description="Where each client is in the setup flow." />} />
                 <Route path="client-intelligence/wins" element={<PlaceholderPage title="Win Tracking" description="Appointments booked and deals closed across all clients." />} />
                 <Route path="client-intelligence/optimization" element={<PlaceholderPage title="Optimization Flags" description="Suggested actions per client." />} />
+
+                {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
+                <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />
+                <Route path="ops/crm" element={<AdminOpsProvider><CRM /></AdminOpsProvider>} />
+                <Route path="ops/pipeline" element={<AdminOpsProvider><Pipeline /></AdminOpsProvider>} />
+                <Route path="ops/calendar" element={<AdminOpsProvider><CalendarPage /></AdminOpsProvider>} />
+                <Route path="ops/conversations" element={<AdminOpsProvider><ConversationsPage /></AdminOpsProvider>} />
+                <Route path="ops/follow-ups" element={<AdminOpsProvider><FollowUpQueue /></AdminOpsProvider>} />
+                <Route path="ops/proposals" element={<AdminOpsProvider><Proposals /></AdminOpsProvider>} />
+                <Route path="ops/reviews" element={<AdminOpsProvider><Reviews /></AdminOpsProvider>} />
+                <Route path="ops/social" element={<AdminOpsProvider><SocialMedia /></AdminOpsProvider>} />
+                <Route path="ops/seo" element={<AdminOpsProvider><SEO /></AdminOpsProvider>} />
+                <Route path="ops/ads" element={<AdminOpsProvider><PaidAds /></AdminOpsProvider>} />
+                <Route path="ops/website" element={<AdminOpsProvider><Website /></AdminOpsProvider>} />
+                <Route path="ops/ai-insights" element={<AdminOpsProvider><AIInsights /></AdminOpsProvider>} />
+                <Route path="ops/market-research" element={<AdminOpsProvider><MarketResearch /></AdminOpsProvider>} />
+                <Route path="ops/content" element={<AdminOpsProvider><ContentPlanner /></AdminOpsProvider>} />
+                <Route path="ops/workforce" element={<AdminOpsProvider><Workforce /></AdminOpsProvider>} />
+                <Route path="ops/finance" element={<AdminOpsProvider><Finance /></AdminOpsProvider>} />
+                <Route path="ops/integrations" element={<AdminOpsProvider><Integrations /></AdminOpsProvider>} />
+                <Route path="ops/settings" element={<AdminOpsProvider><SettingsPage /></AdminOpsProvider>} />
               </Route>
 
               {/* Employee Portal */}
