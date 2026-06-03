@@ -352,7 +352,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
-  const isInfoOnlyModule = selectedModule?.module_number === 1 || selectedModule?.module_number === 2;
+  const isInfoOnlyModule = selectedModule?.module_number === 1 || selectedModule?.module_number === 2 || selectedModule?.module_number === 8;
   const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
   const selectedModuleStatus = selectedModule ? moduleStatus(selectedModule.id) : "not_started";
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
