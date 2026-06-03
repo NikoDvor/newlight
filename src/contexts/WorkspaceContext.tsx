@@ -51,7 +51,7 @@ interface WorkspaceContextType {
   signOut: () => Promise<void>;
 }
 
-const WorkspaceContext = createContext<WorkspaceContextType>({
+export const WorkspaceContext = createContext<WorkspaceContextType>({
   viewMode: "workspace",
   setViewMode: () => {},
   activeClientId: null,
