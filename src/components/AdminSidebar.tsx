@@ -2,7 +2,10 @@ import { useLocation, Link } from "react-router-dom";
 import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
-  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles
+  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles,
+  LayoutDashboard, Contact, GitBranch, MessageSquare, Inbox as InboxIcon,
+  FileSignature, Star, Share2, Search, Megaphone, Globe, Lightbulb,
+  LineChart, PenSquare, Briefcase, Wallet, Plug, Settings as SettingsIcon
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -54,6 +57,30 @@ const navGroups: NavGroup[] = [
       { title: "Conversations", url: "/admin/conversations", icon: Calendar },
       { title: "Follow-Up Queue", url: "/admin/follow-ups", icon: ListChecks },
       { title: "Message Templates", url: "/admin/message-templates", icon: FileText },
+    ],
+  },
+  {
+    label: "NewLight Ops",
+    items: [
+      { title: "Ops Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
+      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "Conversations", url: "/admin/ops/conversations", icon: MessageSquare },
+      { title: "Follow-Up Queue", url: "/admin/ops/follow-ups", icon: InboxIcon },
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
+      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
+      { title: "SEO", url: "/admin/ops/seo", icon: Search },
+      { title: "Paid Ads", url: "/admin/ops/ads", icon: Megaphone },
+      { title: "Website", url: "/admin/ops/website", icon: Globe },
+      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Lightbulb },
+      { title: "Market Research", url: "/admin/ops/market-research", icon: LineChart },
+      { title: "Content Planner", url: "/admin/ops/content", icon: PenSquare },
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
     ],
   },
 ];
