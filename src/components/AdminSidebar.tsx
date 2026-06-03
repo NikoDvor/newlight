@@ -209,11 +209,12 @@ export function AdminSidebar() {
                             asChild
                             isActive={active}
                             tooltip={collapsed ? item.title : undefined}
-                            className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-200 group ${
+                            className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
                               active
                                 ? "text-white font-semibold"
                                 : "text-white/60 hover:text-white hover:bg-white/[0.08]"
                             }`}
+
                             style={active ? {
                               background: "hsla(211,96%,60%,.18)",
                               boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
