@@ -47,7 +47,6 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-
     label: "Clients & Success",
     items: [
       { title: "Clients", url: "/admin/clients", icon: Users },
