@@ -183,6 +183,24 @@ export function AdminSidebar() {
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
+          const isDivider = !group.items || group.items.length === 0;
+
+          if (isDivider) {
+            return (
+              <SidebarGroup key={group.label} className="py-2">
+                {!collapsed && (
+                  <div className="flex items-center gap-2 px-3">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
+                      {group.label}
+                    </span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+                )}
+              </SidebarGroup>
+            );
+          }
+
           return (
             <SidebarGroup key={group.label} className="py-0.5">
               {!collapsed && (
@@ -190,7 +208,6 @@ export function AdminSidebar() {
                   onClick={() => toggleGroup(group.label)}
                   className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
                 >
-
                   <span>{group.label}</span>
                   <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
                 </button>
@@ -198,7 +215,7 @@ export function AdminSidebar() {
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {group.items.map((item) => {
+                    {group.items!.map((item) => {
                       const active = isActive(item.url);
                       return (
                         <SidebarMenuItem key={item.title}>
@@ -211,7 +228,6 @@ export function AdminSidebar() {
                                 ? "text-white font-semibold"
                                 : "text-white/60 hover:text-white hover:bg-white/[0.08]"
                             }`}
-
                             style={active ? {
                               background: "hsla(211,96%,60%,.18)",
                               boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
