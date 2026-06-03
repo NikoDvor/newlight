@@ -138,11 +138,11 @@ export function AdminSidebar() {
     navGroups.forEach((g) => {
       init[g.label] = g.items.some((i) => isActive(i.url));
     });
-    // Always open first group
-    init["Clients & Success"] = true;
+    // NewLight Ops is default open
     init["NewLight Ops"] = true;
     return init;
   });
+
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
