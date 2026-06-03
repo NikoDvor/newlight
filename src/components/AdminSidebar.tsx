@@ -2,7 +2,10 @@ import { useLocation, Link } from "react-router-dom";
 import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
-  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles
+  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles,
+  LayoutDashboard, Contact, GitBranch, MessageSquare, Inbox as InboxIcon,
+  FileSignature, Star, Share2, Search, Megaphone, Globe, Lightbulb,
+  LineChart, PenSquare, Briefcase, Wallet, Plug, Settings as SettingsIcon
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
