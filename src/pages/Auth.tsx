@@ -178,9 +178,9 @@ export default function Auth() {
             border: "1px solid hsla(211,96%,60%,.15)",
             boxShadow: "0 24px 80px -16px hsla(211,96%,56%,.25), 0 0 0 1px hsla(211,96%,60%,.08), inset 0 1px 0 0 hsla(211,96%,70%,.08)",
           }}
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.84, y: 22 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22, delay: 0.2 }}
         >
           {/* Card shimmer accent */}
           <div className="absolute inset-0 pointer-events-none" style={{
