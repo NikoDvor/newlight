@@ -7,7 +7,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { SessionGate } from "@/components/SessionGate";
 
 type AuthMode = "signin" | "signup" | "forgot";
@@ -136,18 +136,18 @@ export default function Auth() {
       ))}
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
         className="w-full max-w-md relative z-10"
       >
         {/* Logo area */}
         <div className="text-center mb-8">
           <motion.div
             className="inline-flex items-center justify-center mb-3 relative"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ ease: [0.34, 1.4, 0.64, 1], duration: 0.5, delay: 0.5 }}
           >
             <img src={newlightLogo} alt="NewLight" className="h-16 sm:h-20 w-auto object-contain relative z-10"
               style={{ filter: "drop-shadow(0 0 30px hsla(211,96%,56%,.4))" }} />
@@ -159,13 +159,14 @@ export default function Auth() {
           <motion.p
             className="text-xs font-semibold tracking-[0.15em] uppercase"
             style={{ color: "hsla(211,96%,70%,.5)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.4 }}
           >
             {mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : "Sign in to your account"}
           </motion.p>
         </div>
+
 
         {/* Glass card */}
         <motion.div
@@ -177,9 +178,9 @@ export default function Auth() {
             border: "1px solid hsla(211,96%,60%,.15)",
             boxShadow: "0 24px 80px -16px hsla(211,96%,56%,.25), 0 0 0 1px hsla(211,96%,60%,.08), inset 0 1px 0 0 hsla(211,96%,70%,.08)",
           }}
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.84, y: 22 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22, delay: 0.2 }}
         >
           {/* Card shimmer accent */}
           <div className="absolute inset-0 pointer-events-none" style={{
@@ -189,80 +190,110 @@ export default function Auth() {
           }} />
 
           <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-            <div>
-              <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Email</label>
-              <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
-                <Input
-                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com" required
-                  className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
-                />
-              </div>
-            </div>
-
-            {mode !== "forgot" && (
+            <motion.div
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.85, duration: 0.38 }}
+            >
               <div>
-                <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Password</label>
+                <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Email</label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
                   <Input
-                    type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••" required minLength={6}
-                    className="pl-9 pr-10 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
+                    type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com" required
+                    className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
               </div>
+            </motion.div>
+
+            {mode !== "forgot" && (
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.98, duration: 0.38 }}
+              >
+                <div>
+                  <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Password</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
+                    <Input
+                      type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••" required minLength={6}
+                      className="pl-9 pr-10 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             )}
 
-            <Button type="submit" disabled={loading}
-              className="w-full h-11 text-sm font-bold text-white border-0 relative overflow-hidden group"
-              style={{
-                background: "linear-gradient(135deg, hsl(217 90% 54%), hsl(211 96% 52%), hsl(197 90% 50%))",
-                backgroundSize: "200% 200%",
-                boxShadow: "0 6px 28px -6px hsla(211,96%,56%,.5), inset 0 1px 0 0 hsla(0,0%,100%,.15)",
-              }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22, delay: 1.1 }}
             >
-              <span className="relative z-10">
-                {loading ? "Please wait..." : mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
-              </span>
-              {/* Button hover shimmer */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              <Button type="submit" disabled={loading}
+                className="w-full h-11 text-sm font-bold text-white border-0 relative overflow-hidden group"
                 style={{
-                  background: "linear-gradient(115deg, transparent 30%, hsla(0,0%,100%,.12) 48%, transparent 70%)",
-                  backgroundSize: "250% 100%",
-                  animation: "nl-shimmer 3s ease-in-out infinite",
+                  background: "linear-gradient(135deg, hsl(217 90% 54%), hsl(211 96% 52%), hsl(197 90% 50%))",
+                  backgroundSize: "200% 200%",
+                  boxShadow: "0 6px 28px -6px hsla(211,96%,56%,.5), inset 0 1px 0 0 hsla(0,0%,100%,.15)",
                 }}
-              />
-            </Button>
+              >
+                <span className="relative z-10">
+                  {loading ? "Please wait..." : mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
+                </span>
+                {/* Button hover shimmer */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{
+                    background: "linear-gradient(115deg, transparent 30%, hsla(0,0%,100%,.12) 48%, transparent 70%)",
+                    backgroundSize: "250% 100%",
+                    animation: "nl-shimmer 3s ease-in-out infinite",
+                  }}
+                />
+              </Button>
+            </motion.div>
           </form>
 
-          <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
-            {mode === "signin" && (
-              <>
-                <button onClick={() => setMode("forgot")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
-                  Forgot your password?
-                </button>
-                <button onClick={() => setMode("signup")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
-                  Don't have an account? <span className="text-[hsl(211,96%,60%)] font-medium">Sign Up</span>
-                </button>
-              </>
-            )}
-            {mode === "signup" && (
-              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to Sign In
-              </button>
-            )}
-            {mode === "forgot" && (
-              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to Sign In
-              </button>
-            )}
-          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
+                {mode === "signin" && (
+                  <>
+                    <button onClick={() => setMode("forgot")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
+                      Forgot your password?
+                    </button>
+                    <button onClick={() => setMode("signup")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
+                      Don't have an account? <span className="text-[hsl(211,96%,60%)] font-medium">Sign Up</span>
+                    </button>
+                  </>
+                )}
+                {mode === "signup" && (
+                  <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
+                    <ArrowLeft className="h-3 w-3" /> Back to Sign In
+                  </button>
+                )}
+                {mode === "forgot" && (
+                  <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
+                    <ArrowLeft className="h-3 w-3" /> Back to Sign In
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
         </motion.div>
 
         {/* Bottom links */}
