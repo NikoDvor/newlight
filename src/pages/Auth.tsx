@@ -7,7 +7,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowLeft, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { SessionGate } from "@/components/SessionGate";
 
 type AuthMode = "signin" | "signup" | "forgot";
