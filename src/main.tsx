@@ -15,7 +15,7 @@ createRoot(document.getElementById("root")!).render(<App />);
 
 // Hide after a brief moment to let the first paint render
 requestAnimationFrame(() => {
-  setTimeout(hideSplash, 2800);
+  setTimeout(hideSplash, 300);
 });
 
 // Safety: force-hide splash if still visible after 4s (covers slow mobile loads)
