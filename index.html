@@ -35,8 +35,6 @@
       #splash-logo {
         width: 160px; height: auto;
         filter: drop-shadow(0 0 40px hsla(211,96%,56%,.4));
-        opacity: 0;
-        animation: nl-spl-logo 0.5s ease-out 1.0s forwards;
       }
       #splash-logo img { width: 100%; height: auto; }
       #splash-text {
@@ -47,8 +45,6 @@
         font-weight: 700;
         letter-spacing: 0.15em;
         text-transform: uppercase;
-        opacity: 0;
-        animation: nl-spl-tag 0.5s ease-out 1.32s forwards;
       }
       #splash-fallback { display: none; margin-top: 24px; }
       #splash-fallback a {
@@ -56,94 +52,6 @@
         font-family: system-ui; font-weight: 600; color: #fff; text-decoration: none;
         background: linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%));
         box-shadow: 0 4px 20px -4px hsla(211,96%,56%,.4);
-      }
-      @keyframes nl-spl-flash {
-        0% { opacity:0; transform:translate(-50%,-50%) scale(0); }
-        45% { opacity:1; transform:translate(-50%,-50%) scale(2.4); }
-        100% { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
-      }
-      @keyframes nl-spl-r1 {
-        0% { transform:translate(-50%,-50%) scale(0); opacity:1; }
-        100% { transform:translate(-50%,-50%) scale(28); opacity:0; }
-      }
-      @keyframes nl-spl-r2 {
-        0% { transform:translate(-50%,-50%) scale(0); opacity:0.6; }
-        100% { transform:translate(-50%,-50%) scale(20); opacity:0; }
-      }
-      @keyframes nl-spl-r3 {
-        0% { transform:translate(-50%,-50%) scale(0); opacity:0.35; }
-        100% { transform:translate(-50%,-50%) scale(36); opacity:0; }
-      }
-      @keyframes nl-spl-edge {
-        0% { transform:translate(-50%,-50%) scale(0); opacity:1; }
-        70% { opacity:0.55; }
-        100% { transform:translate(-50%,-50%) scale(90); opacity:0; }
-      }
-      @keyframes nl-spl-circ {
-        from { clip-path:circle(0% at 50% 50%); }
-        to   { clip-path:circle(150% at 50% 50%); }
-      }
-      @keyframes nl-spl-logo {
-        from { opacity:0; transform:translateY(11px); }
-        to   { opacity:1; transform:translateY(0); }
-      }
-      @keyframes nl-spl-tag {
-        from { opacity:0; transform:translateY(7px); }
-        to   { opacity:0.4; transform:translateY(0); }
-      }
-      #splash-flash {
-        position:absolute; left:50%; top:50%;
-        width:8px; height:8px; border-radius:50%;
-        background:#a8d8ff; opacity:0;
-        pointer-events:none; z-index:6;
-        animation:nl-spl-flash 0.38s ease-out 0.15s forwards;
-      }
-      #splash-ring-1 {
-        position:absolute; left:50%; top:50%;
-        width:10px; height:10px; border-radius:50%;
-        border:3px solid rgba(80,170,255,0.9); opacity:0;
-        pointer-events:none; z-index:5;
-        animation:nl-spl-r1 0.95s ease-out 0.18s forwards;
-      }
-      #splash-ring-2 {
-        position:absolute; left:50%; top:50%;
-        width:18px; height:18px; border-radius:50%;
-        border:2px solid rgba(59,158,255,0.5); opacity:0;
-        pointer-events:none; z-index:5;
-        animation:nl-spl-r2 1.25s ease-out 0.23s forwards;
-      }
-      #splash-ring-3 {
-        position:absolute; left:50%; top:50%;
-        width:14px; height:14px; border-radius:50%;
-        border:1px solid rgba(126,200,255,0.3); opacity:0;
-        pointer-events:none; z-index:5;
-        animation:nl-spl-r3 1.65s ease-out 0.28s forwards;
-      }
-      #splash-edge {
-        position:absolute; left:50%; top:50%;
-        width:5px; height:5px; border-radius:50%;
-        border:1.5px solid rgba(160,225,255,0.95); opacity:0;
-        pointer-events:none; z-index:5;
-        animation:nl-spl-edge 1.3s cubic-bezier(0.2,0,0.3,1) 0.3s forwards;
-      }
-      #splash-reveal {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 2;
-        background: linear-gradient(135deg,
-          hsl(218 38% 8%) 0%,
-          hsl(220 42% 14%) 50%,
-          hsl(218 38% 8%) 100%);
-        clip-path: circle(0% at 50% 50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        animation: nl-spl-circ 0.88s cubic-bezier(0.2,0,0.3,1)
-                   0.3s forwards;
       }
     </style>
     <script>
@@ -156,17 +64,10 @@
   </head>
   <body>
     <div id="splash-screen">
-      <div id="splash-flash"></div>
-      <div id="splash-ring-1"></div>
-      <div id="splash-ring-2"></div>
-      <div id="splash-ring-3"></div>
-      <div id="splash-edge"></div>
-      <div id="splash-reveal">
-        <div id="splash-logo">
-          <img src="/newlight-logo.jpg" alt="NewLight" onerror="this.style.display='none'" />
-        </div>
-        <div id="splash-text">New Eyes To ROI</div>
+      <div id="splash-logo">
+        <img src="/newlight-logo.jpg" alt="NewLight" onerror="this.style.display='none'" />
       </div>
+      <div id="splash-text">New Eyes To ROI</div>
       <div id="splash-fallback">
         <a href="/">Open App</a>
       </div>
