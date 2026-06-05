@@ -261,28 +261,39 @@ export default function Auth() {
           </form>
 
 
-          <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
-            {mode === "signin" && (
-              <>
-                <button onClick={() => setMode("forgot")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
-                  Forgot your password?
-                </button>
-                <button onClick={() => setMode("signup")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
-                  Don't have an account? <span className="text-[hsl(211,96%,60%)] font-medium">Sign Up</span>
-                </button>
-              </>
-            )}
-            {mode === "signup" && (
-              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to Sign In
-              </button>
-            )}
-            {mode === "forgot" && (
-              <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to Sign In
-              </button>
-            )}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
+                {mode === "signin" && (
+                  <>
+                    <button onClick={() => setMode("forgot")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
+                      Forgot your password?
+                    </button>
+                    <button onClick={() => setMode("signup")} className="text-xs text-white/35 hover:text-white/65 transition-colors">
+                      Don't have an account? <span className="text-[hsl(211,96%,60%)] font-medium">Sign Up</span>
+                    </button>
+                  </>
+                )}
+                {mode === "signup" && (
+                  <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
+                    <ArrowLeft className="h-3 w-3" /> Back to Sign In
+                  </button>
+                )}
+                {mode === "forgot" && (
+                  <button onClick={() => setMode("signin")} className="text-xs text-white/35 hover:text-white/65 transition-colors inline-flex items-center gap-1">
+                    <ArrowLeft className="h-3 w-3" /> Back to Sign In
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
         </motion.div>
 
         {/* Bottom links */}
