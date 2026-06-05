@@ -190,57 +190,76 @@ export default function Auth() {
           }} />
 
           <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-            <div>
-              <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Email</label>
-              <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
-                <Input
-                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com" required
-                  className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
-                />
-              </div>
-            </div>
-
-            {mode !== "forgot" && (
+            <motion.div
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.85, duration: 0.38 }}
+            >
               <div>
-                <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Password</label>
+                <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Email</label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
                   <Input
-                    type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••" required minLength={6}
-                    className="pl-9 pr-10 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
+                    type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com" required
+                    className="pl-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
               </div>
+            </motion.div>
+
+            {mode !== "forgot" && (
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.98, duration: 0.38 }}
+              >
+                <div>
+                  <label className="text-[11px] text-white/45 mb-1.5 block font-semibold tracking-wider uppercase">Password</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 group-focus-within:text-[hsl(211,96%,60%)] transition-colors" />
+                    <Input
+                      type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••" required minLength={6}
+                      className="pl-9 pr-10 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 h-11 focus:border-[hsla(211,96%,60%,.4)] focus:ring-[hsla(211,96%,60%,.2)] focus:bg-white/[0.06] transition-all"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             )}
 
-            <Button type="submit" disabled={loading}
-              className="w-full h-11 text-sm font-bold text-white border-0 relative overflow-hidden group"
-              style={{
-                background: "linear-gradient(135deg, hsl(217 90% 54%), hsl(211 96% 52%), hsl(197 90% 50%))",
-                backgroundSize: "200% 200%",
-                boxShadow: "0 6px 28px -6px hsla(211,96%,56%,.5), inset 0 1px 0 0 hsla(0,0%,100%,.15)",
-              }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22, delay: 1.1 }}
             >
-              <span className="relative z-10">
-                {loading ? "Please wait..." : mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
-              </span>
-              {/* Button hover shimmer */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              <Button type="submit" disabled={loading}
+                className="w-full h-11 text-sm font-bold text-white border-0 relative overflow-hidden group"
                 style={{
-                  background: "linear-gradient(115deg, transparent 30%, hsla(0,0%,100%,.12) 48%, transparent 70%)",
-                  backgroundSize: "250% 100%",
-                  animation: "nl-shimmer 3s ease-in-out infinite",
+                  background: "linear-gradient(135deg, hsl(217 90% 54%), hsl(211 96% 52%), hsl(197 90% 50%))",
+                  backgroundSize: "200% 200%",
+                  boxShadow: "0 6px 28px -6px hsla(211,96%,56%,.5), inset 0 1px 0 0 hsla(0,0%,100%,.15)",
                 }}
-              />
-            </Button>
+              >
+                <span className="relative z-10">
+                  {loading ? "Please wait..." : mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Create Account" : "Sign In"}
+                </span>
+                {/* Button hover shimmer */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{
+                    background: "linear-gradient(115deg, transparent 30%, hsla(0,0%,100%,.12) 48%, transparent 70%)",
+                    backgroundSize: "250% 100%",
+                    animation: "nl-shimmer 3s ease-in-out infinite",
+                  }}
+                />
+              </Button>
+            </motion.div>
           </form>
+
 
           <div className="mt-5 flex flex-col items-center gap-2 relative z-10">
             {mode === "signin" && (
