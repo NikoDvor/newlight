@@ -88,6 +88,7 @@
   var dpr=window.devicePixelRatio||1;
   var W=window.innerWidth, H=window.innerHeight;
   cv.width=W*dpr; cv.height=H*dpr;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
   var ctx=cv.getContext('2d');
   ctx.scale(dpr,dpr);
   var CX=W/2, CY=H*0.44, DUR=3200, t0=null, raf;
