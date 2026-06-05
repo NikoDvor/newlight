@@ -136,18 +136,18 @@ export default function Auth() {
       ))}
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
         className="w-full max-w-md relative z-10"
       >
         {/* Logo area */}
         <div className="text-center mb-8">
           <motion.div
             className="inline-flex items-center justify-center mb-3 relative"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ ease: [0.34, 1.4, 0.64, 1], duration: 0.5, delay: 0.5 }}
           >
             <img src={newlightLogo} alt="NewLight" className="h-16 sm:h-20 w-auto object-contain relative z-10"
               style={{ filter: "drop-shadow(0 0 30px hsla(211,96%,56%,.4))" }} />
@@ -159,13 +159,14 @@ export default function Auth() {
           <motion.p
             className="text-xs font-semibold tracking-[0.15em] uppercase"
             style={{ color: "hsla(211,96%,70%,.5)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.4 }}
           >
             {mode === "forgot" ? "Reset your password" : mode === "signup" ? "Create your account" : "Sign in to your account"}
           </motion.p>
         </div>
+
 
         {/* Glass card */}
         <motion.div
