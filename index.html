@@ -24,53 +24,8 @@
     <meta name="twitter:title" content="NewLight">
     <meta property="og:description" content="New Eyes To ROI">
     <meta name="twitter:description" content="New Eyes To ROI">
-    <style>
-      #splash-screen {
-        position: fixed; inset: 0; z-index: 9999;
-        display: flex; align-items: center; justify-content: center; flex-direction: column;
-        background: linear-gradient(135deg, hsl(218 38% 6%) 0%, hsl(220 42% 12%) 50%, hsl(218 38% 6%) 100%);
-        transition: opacity 0.4s ease;
-      }
-      #splash-screen.hide { opacity: 0; pointer-events: none; }
-      #splash-logo {
-        width: 160px; height: auto;
-        filter: drop-shadow(0 0 40px hsla(211,96%,56%,.4));
-      }
-      #splash-logo img { width: 100%; height: auto; }
-      #splash-text {
-        margin-top: 16px;
-        color: rgba(255,255,255,0.4);
-        font-size: 11px;
-        font-family: system-ui;
-        font-weight: 700;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
-      #splash-fallback { display: none; margin-top: 24px; }
-      #splash-fallback a {
-        display: inline-block; padding: 10px 28px; border-radius: 12px; font-size: 14px;
-        font-family: system-ui; font-weight: 600; color: #fff; text-decoration: none;
-        background: linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%));
-        box-shadow: 0 4px 20px -4px hsla(211,96%,56%,.4);
-      }
-      #sunrise-canvas {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-      }
-      #splash-logo { display: none; }
-      #splash-text  { display: none; }
-
-    </style>
-    <script>
-      setTimeout(function() {
-        var s = document.getElementById("splash-screen");
-        var f = document.getElementById("splash-fallback");
-        if (s && !s.classList.contains("hide") && f) { f.style.display = "block"; }
-      }, 6000);
-    </script>
   </head>
-  <body>
+  <body style="background:#030608;">
     <div id="root"></div>
 
     <script type="module" src="/src/main.tsx"></script>
