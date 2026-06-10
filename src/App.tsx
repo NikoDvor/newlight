@@ -195,10 +195,11 @@ function IntroOverlay() {
 }
 
 const App = () => {
-  const [splashDone, setSplashDone] = useState(false);
-  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} onStartFade={() => {}} />;
+  const [splashDone, setSplashDone]     = useState(false);
+  const [splashFading, setSplashFading] = useState(false);
 
   return (
+    <>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -423,7 +424,15 @@ const App = () => {
           </WorkspaceProvider>
         </BrowserRouter>
       </TooltipProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+
+      {!splashDone && (
+        <SplashScreen
+          onStartFade={() => setSplashFading(true)}
+          onComplete={() => setSplashDone(true)}
+        />
+      )}
+    </>
   );
 };
 
