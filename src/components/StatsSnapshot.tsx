@@ -135,7 +135,7 @@ export default function StatsSnapshot() {
 
       </motion.h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, maxWidth: 660, margin: '0 auto' }}>
 
         {stats.map((s, i) => <StatCard key={s.label} stat={s} index={i} active={inView} />)}
 
