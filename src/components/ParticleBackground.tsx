@@ -49,11 +49,11 @@ export default function ParticleBackground() {
 
       pos[i*3+2] = (Math.random()-0.5)*116;
 
-      vel[i*3]   = (Math.random()-0.5)*0.065;
+      vel[i*3]   = (Math.random()-0.5)*0.10;
 
-      vel[i*3+1] = (Math.random()-0.5)*0.065;
+      vel[i*3+1] = (Math.random()-0.5)*0.10;
 
-      vel[i*3+2] = (Math.random()-0.5)*0.028;
+      vel[i*3+2] = (Math.random()-0.5)*0.045;
 
     }
 
@@ -101,7 +101,7 @@ export default function ParticleBackground() {
 
     })));
 
-    const CONN_SQ = 32 * 32;
+    const CONN_SQ = 38 * 38;
 
     const rings: THREE.Mesh[] = [];
 
@@ -113,7 +113,7 @@ export default function ParticleBackground() {
 
       const hub = new THREE.Mesh(
 
-        new THREE.SphereGeometry(1.5,16,16),
+        new THREE.SphereGeometry(2.8,16,16),
 
         new THREE.MeshBasicMaterial({ color: 0x70c8ff, transparent: true, opacity: 0.9 })
 
@@ -123,7 +123,7 @@ export default function ParticleBackground() {
 
       const ring = new THREE.Mesh(
 
-        new THREE.TorusGeometry(3.2,0.14,8,32),
+        new THREE.TorusGeometry(5.0,0.2,8,32),
 
         new THREE.MeshBasicMaterial({ color: 0x70c8ff, transparent: true, opacity: 0.3, wireframe: true })
 
@@ -137,17 +137,29 @@ export default function ParticleBackground() {
 
     });
 
-    const grid = new THREE.GridHelper(220,22,0x0f2a50,0x0f2a50);
+    const grid = new THREE.GridHelper(320, 32, 0x1a5fff, 0x1a5fff);
 
-    grid.position.y = -72;
+    grid.position.y = -65;
 
     (Array.isArray(grid.material) ? grid.material : [grid.material]).forEach(m => {
 
-      m.transparent = true; (m as THREE.Material & {opacity:number}).opacity = 0.08;
+      m.transparent = true; (m as THREE.Material & {opacity:number}).opacity = 0.28;
 
     });
 
     scene.add(grid);
+
+    const grid2 = new THREE.GridHelper(320, 16, 0x0a2a6a, 0x0a2a6a);
+
+    grid2.position.y = -120;
+
+    (Array.isArray(grid2.material) ? grid2.material : [grid2.material]).forEach(m => {
+
+      m.transparent = true; (m as THREE.Material & {opacity:number}).opacity = 0.12;
+
+    });
+
+    scene.add(grid2);
 
     let mouseX = 0, mouseY = 0, camX = 0, camY = 0, t = 0;
 
@@ -231,7 +243,7 @@ export default function ParticleBackground() {
 
       });
 
-      group.rotation.y += 0.0006;
+      group.rotation.y += 0.0012;
 
       camX += (mouseX*20 - camX)*0.05;
 
