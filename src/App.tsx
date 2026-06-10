@@ -196,7 +196,7 @@ function IntroOverlay() {
 
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
-  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
+  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} onStartFade={() => {}} />;
 
   return (
     <QueryClientProvider client={queryClient}>
