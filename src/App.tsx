@@ -200,6 +200,11 @@ const App = () => {
 
   return (
     <>
+    <div style={{
+      opacity: splashFading ? 1 : 0,
+      visibility: splashFading ? 'visible' : 'hidden',
+      transition: splashFading ? 'opacity 1.1s ease' : 'none',
+    }}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -425,6 +430,7 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
       </QueryClientProvider>
+    </div>
 
       {!splashDone && (
         <SplashScreen
