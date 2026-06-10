@@ -4,7 +4,7 @@ import * as THREE from 'three';
 const LETTERS = ['N','E','W','L','I','G','H','T'];
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
 
-interface Props { onComplete: () => void; }
+interface Props { onComplete: () => void; onStartFade: () => void; }
 
 function ThreeBackground({ outerRef, phase }: { outerRef: React.RefObject<HTMLDivElement>; phase: number }) {
   const mountRef = useRef(null);
@@ -102,7 +102,7 @@ function ThreeBackground({ outerRef, phase }: { outerRef: React.RefObject<HTMLDi
     };
     window.addEventListener('resize', onResize);
 
-    let t = 0, raf: number, burstStart: number | null = null, fadeStartT: number | null = null, frame = 0;
+    let t = 0, raf: number, burstStart: number | null = null, frame = 0;
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -156,12 +156,6 @@ function ThreeBackground({ outerRef, phase }: { outerRef: React.RefObject<HTMLDi
       grp.rotation.y += 0.0008;
       cam.position.z = 145 + Math.sin(t * 0.3) * 5;
 
-      if (p >= 5) {
-        if (!fadeStartT) fadeStartT = t;
-        const fd = Math.min((t - fadeStartT) * 0.65, 1);
-        const v  = (1 - fd) * 0.032;
-        scene.background = new THREE.Color(v * 0.38, v * 0.75, v);
-      }
 
       ren.render(scene, cam);
     };
@@ -337,7 +331,7 @@ function TextReveal({ phase }: { phase: number }) {
   );
 }
 
-export default function SplashScreen({ onComplete }: Props) {
+export default function SplashScreen({ onComplete, onStartFade }: Props) {
   const outerRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
 
@@ -347,16 +341,19 @@ export default function SplashScreen({ onComplete }: Props) {
       setTimeout(() => setPhase(2), 700),
       setTimeout(() => setPhase(3), 1800),
       setTimeout(() => setPhase(4), 4000),
-      setTimeout(() => setPhase(5), 4800),
-      setTimeout(() => onComplete(), 5800),
+      setTimeout(() => { setPhase(5); onStartFade(); }, 4800),
+      setTimeout(() => onComplete(), 5900),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, [onComplete, onStartFade]);
 
   return (
     <div ref={outerRef} style={{
       position: 'fixed', inset: 0, zIndex: 99999,
       background: '#030608', overflow: 'hidden',
+      opacity: phase >= 5 ? 0 : 1,
+      transition: 'opacity 1.1s ease',
+      pointerEvents: phase >= 5 ? 'none' : 'auto',
     }}>
       <ThreeBackground outerRef={outerRef} phase={phase} />
       <IgnitionBurst phase={phase} />
