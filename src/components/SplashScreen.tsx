@@ -184,8 +184,8 @@ function IgnitionBurst({ phase }: { phase: number }) {
     const cv = canRef.current;
     if (!cv) return;
     const ctx = cv.getContext('2d')!;
-    cv.width  = cv.offsetWidth  || window.innerWidth;
-    cv.height = cv.offsetHeight || window.innerHeight;
+    cv.width  = window.innerWidth;
+    cv.height = window.innerHeight;
     const cx = cv.width / 2, cy = cv.height / 2;
     if (phase < 1) { ctx.clearRect(0, 0, cv.width, cv.height); return; }
     let raf: number, start: number | null = null;
