@@ -340,9 +340,9 @@ export default function SplashScreen({ onComplete, onStartFade }: Props) {
       setTimeout(() => setPhase(1), 150),
       setTimeout(() => setPhase(2), 700),
       setTimeout(() => setPhase(3), 1800),
-      setTimeout(() => setPhase(4), 4000),
-      setTimeout(() => { setPhase(5); onStartFade(); }, 4800),
-      setTimeout(() => onComplete(), 5900),
+      setTimeout(() => setPhase(4), 3200),
+      setTimeout(() => { setPhase(5); onStartFade(); }, 3800),
+      setTimeout(() => onComplete(), 4900),
     ];
     return () => timers.forEach(clearTimeout);
   }, [onComplete, onStartFade]);
