@@ -6,7 +6,7 @@ const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
 
 interface Props { onComplete: () => void; }
 
-function ThreeBackground({ outerRef, phase }: { outerRef: React.RefObject; phase: number }) {
+function ThreeBackground({ outerRef, phase }: { outerRef: React.RefObject<HTMLDivElement>; phase: number }) {
   const mountRef = useRef(null);
   const phaseRef = useRef(phase);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
