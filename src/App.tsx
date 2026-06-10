@@ -195,6 +195,9 @@ function IntroOverlay() {
 }
 
 const App = () => {
+  const [splashDone, setSplashDone] = useState(false);
+  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
