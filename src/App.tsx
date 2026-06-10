@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import SplashScreen from '@/components/SplashScreen';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -194,6 +195,9 @@ function IntroOverlay() {
 }
 
 const App = () => {
+  const [splashDone, setSplashDone] = useState(false);
+  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
