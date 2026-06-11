@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import newlightLogo from "@/assets/newlight-logo.jpg";
 
-const SESSION_KEY = "nl_intro_played";
+const SESSION_KEY = "nlIntroPlayed";
 
 interface NewLightIntroProps {
   onComplete: () => void;
@@ -11,6 +10,7 @@ interface NewLightIntroProps {
 
 export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
   const [visible, setVisible] = useState(true);
+  const [phase, setPhase] = useState<1 | 2 | 3>(1);
   const completedRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -18,15 +18,30 @@ export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
     completedRef.current = true;
     sessionStorage.setItem(SESSION_KEY, "1");
     setVisible(false);
-    // Let exit animation play, then call onComplete
-    setTimeout(onComplete, 350);
+    setTimeout(onComplete, 300);
   }, [onComplete]);
 
   useEffect(() => {
-    // Auto-dismiss after 1.5s
-    const timer = setTimeout(finish, 1500);
-    return () => clearTimeout(timer);
+    const timers = [
+      setTimeout(() => setPhase(2), 1000),
+      setTimeout(() => setPhase(3), 2500),
+      setTimeout(finish, 4900),
+    ];
+    // Hard failsafe
+    const failsafe = setTimeout(finish, 5000);
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(failsafe);
+    };
   }, [finish]);
+
+  // Background transitions dark -> navy -> electric blue -> light
+  const bg =
+    phase === 1
+      ? "#020814"
+      : phase === 2
+      ? "linear-gradient(180deg, #020814 0%, #0a1a3a 35%, #1e6fff 70%, #EDF6FF 100%)"
+      : "#EDF6FF";
 
   return (
     <AnimatePresence>
@@ -34,158 +49,79 @@ export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
         <motion.div
           key="nl-intro"
           className="fixed inset-0 z-[99999] flex flex-col items-center justify-center overflow-hidden"
-          style={{ background: "hsl(218 38% 8%)" }}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
+          style={{
+            background: bg,
+            transition: "background 1.5s ease",
+          }}
         >
-          {/* Scan line — fast sweep */}
-          <motion.div
-            className="absolute left-0 right-0 h-[2px] pointer-events-none"
-            style={{
-              background: "linear-gradient(90deg, transparent 5%, hsla(211,96%,60%,.8) 30%, hsla(197,92%,68%,.6) 70%, transparent 95%)",
-              boxShadow: "0 0 40px 6px hsla(211,96%,60%,.35)",
-            }}
-            initial={{ top: "-2px" }}
-            animate={{ top: "105%" }}
-            transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-          />
+          {/* Phase 1: tagline */}
+          <AnimatePresence>
+            {phase === 1 && (
+              <motion.h1
+                key="tagline"
+                className="text-center px-6 font-bold tracking-tight"
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: "clamp(1.5rem, 5vw, 3rem)",
+                  textShadow: "0 0 40px rgba(170,221,255,0.4)",
+                }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                WE BRING YOU READY-TO-BUY CUSTOMERS.
+              </motion.h1>
+            )}
+          </AnimatePresence>
 
-          {/* Grid background — instant */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage:
-                "linear-gradient(hsla(211,96%,60%,.2) 1px, transparent 1px), linear-gradient(90deg, hsla(211,96%,60%,.2) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-              opacity: 0.12,
-              maskImage: "radial-gradient(ellipse 65% 65% at 50% 50%, black, transparent)",
-              WebkitMaskImage: "radial-gradient(ellipse 65% 65% at 50% 50%, black, transparent)",
-            }}
-          />
+          {/* Phase 3: reveal content */}
+          <AnimatePresence>
+            {phase === 3 && (
+              <motion.div
+                key="reveal"
+                className="flex flex-col items-center gap-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+              >
+                <motion.p
+                  className="text-xs font-semibold tracking-[0.25em] uppercase"
+                  style={{ color: "#1e6fff" }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  NewLight
+                </motion.p>
+                <motion.p
+                  className="text-[11px] tracking-wider uppercase"
+                  style={{ color: "rgba(10,30,70,0.55)" }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.25 }}
+                >
+                  {launchLabel || "Launching workspace…"}
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Orb A */}
-          <motion.div
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: 420, height: 420,
-              background: "radial-gradient(circle, hsla(211,96%,60%,.3), transparent 70%)",
-              filter: "blur(60px)",
-              top: "15%", left: "10%",
-            }}
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1.1, opacity: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-
-          {/* Orb B */}
-          <motion.div
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: 320, height: 320,
-              background: "radial-gradient(circle, hsla(197,92%,68%,.22), transparent 70%)",
-              filter: "blur(50px)",
-              bottom: "10%", right: "10%",
-            }}
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
-          />
-
-          {/* Particles — static positions, animate once */}
-          {[
-            { l: "15%", t: "25%", s: 3 }, { l: "80%", t: "20%", s: 4 },
-            { l: "30%", t: "70%", s: 3 }, { l: "65%", t: "75%", s: 5 },
-            { l: "50%", t: "15%", s: 3 }, { l: "85%", t: "55%", s: 4 },
-            { l: "20%", t: "50%", s: 3 }, { l: "70%", t: "40%", s: 4 },
-          ].map((p, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: p.s, height: p.s,
-                background: "hsla(211,96%,70%,.7)",
-                left: p.l, top: p.t,
-                filter: "blur(0.5px)",
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.9, 0], scale: [0, 1, 0.3] }}
-              transition={{ duration: 1, delay: 0.1 + i * 0.06 }}
-            />
-          ))}
-
-          {/* Logo — fast reveal */}
-          <motion.div
-            className="relative z-10"
-            initial={{ opacity: 0, scale: 0.7, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-          >
-            <img
-              src={newlightLogo}
-              alt="NewLight"
-              className="h-16 sm:h-20 w-auto object-contain"
-              style={{ filter: "drop-shadow(0 0 30px hsla(211,96%,56%,.5))" }}
-            />
-            <motion.div
-              className="absolute -inset-5 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, hsla(211,96%,60%,.18), transparent 70%)" }}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: [1, 1.2], opacity: [0, 0.5, 0.25] }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            />
-          </motion.div>
-
-          {/* Tagline */}
-          <motion.p
-            className="relative z-10 mt-3 text-xs font-semibold tracking-[0.18em] uppercase"
-            style={{ color: "hsla(211,96%,70%,.65)" }}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.35 }}
-          >
-            New Eyes To ROI
-          </motion.p>
-
-          {/* Launching text */}
-          <motion.p
-            className="relative z-10 mt-3 text-[10px] tracking-wider uppercase"
-            style={{ color: "hsla(0,0%,100%,.25)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.25, delay: 0.7 }}
-          >
-            {launchLabel || "Launching workspace…"}
-          </motion.p>
-
-          {/* Bottom accent line */}
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 h-[2px]"
-            style={{
-              background: "linear-gradient(90deg, transparent 5%, hsla(211,96%,60%,.55) 50%, transparent 95%)",
-              boxShadow: "0 0 20px 2px hsla(211,96%,60%,.2)",
-            }}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          />
-
-          {/* Skip button */}
-          <motion.button
+          {/* Skip */}
+          <button
             onClick={finish}
             className="absolute bottom-5 right-5 z-20 text-[10px] font-medium tracking-wider uppercase px-3 py-1.5 rounded-lg transition-colors"
             style={{
-              color: "hsla(0,0%,100%,.3)",
-              background: "hsla(0,0%,100%,.04)",
-              border: "1px solid hsla(0,0%,100%,.08)",
+              color: phase === 3 ? "rgba(10,30,70,0.5)" : "rgba(255,255,255,0.5)",
+              background: phase === 3 ? "rgba(10,30,70,0.06)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${phase === 3 ? "rgba(10,30,70,0.12)" : "rgba(255,255,255,0.12)"}`,
             }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            whileHover={{ color: "hsla(0,0%,100%,.7)", background: "hsla(0,0%,100%,.1)" }}
           >
             Skip
-          </motion.button>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
