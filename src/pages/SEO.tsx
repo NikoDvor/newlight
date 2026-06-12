@@ -78,6 +78,12 @@ export default function SEO() {
 
   useEffect(() => { fetchData(); }, [activeClientId]);
 
+  useEffect(() => {
+    if (!activeClientId) { setClientType(null); return; }
+    supabase.from("clients").select("business_type").eq("id", activeClientId).maybeSingle()
+      .then(({ data }) => setClientType((data as any)?.business_type ?? null));
+  }, [activeClientId]);
+
   const addKeyword = async () => {
     if (!activeClientId || !newKw.keyword) return;
     const { error } = await supabase.from("seo_keywords").insert({
