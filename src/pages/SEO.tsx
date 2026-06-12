@@ -260,8 +260,9 @@ export default function SEO() {
             <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="keywords" className="mt-4">
+          <TabsContent value="rankings" className="mt-4">
             <DataCard title="Keyword Rankings">
+              <p className="text-xs text-muted-foreground -mt-2 mb-3">AI estimates · Connect GSC for real position data</p>
               {keywords.length === 0 ? (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
