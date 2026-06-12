@@ -269,27 +269,29 @@ export default function SEO() {
                   </div>
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {keywords.map((k) => (
-                      <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="text-sm py-3">{k.keyword}</td>
-                        <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
-                        <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                <>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="text-xs text-muted-foreground mt-2 px-1">
-                  Volumes are AI estimates until Search Console is connected.
-                </p>
+                    </thead>
+                    <tbody>
+                      {keywords.map((k) => (
+                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                          <td className="text-sm py-3">{k.keyword}</td>
+                          <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
+                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-muted-foreground mt-2 px-1">
+                    Volumes are AI estimates until Search Console is connected.
+                  </p>
+                </>
               )}
             </DataCard>
           </TabsContent>
