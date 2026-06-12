@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText } from "lucide-react";
+import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -52,6 +52,7 @@ export default function SEO() {
   const [newIssue, setNewIssue] = useState({ issue_title: "", category: "technical", severity: "medium", recommendation: "" });
   const [newContent, setNewContent] = useState({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
   const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
+  const [generating, setGenerating] = useState(false);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -143,6 +144,30 @@ export default function SEO() {
     fetchData();
   };
 
+  const generatePlan = async () => {
+    if (!activeClientId) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-generate-plan", {
+        body: { client_id: activeClientId },
+      });
+      if (error) throw error;
+      toast({
+        title: "SEO plan generated",
+        description: `${data.keywords_created} keywords, ${data.content_created} content ideas, ${data.issues_created} issues found`,
+      });
+      fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Error generating plan",
+        description: err.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const hasRealData = keywords.length > 0 || competitors.length > 0 || issues.length > 0 || contentOpps.length > 0 || localItems.length > 0;
   const rankedKws = keywords.filter(k => k.position);
   const openIssues = issues.filter(i => i.status === "open").length;
@@ -162,6 +187,10 @@ export default function SEO() {
     <div>
       <PageHeader title="SEO" description="Monitor search visibility and keyword performance">
         <div className="flex gap-2">
+          <Button variant="outline" className="gap-1.5" onClick={generatePlan} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {generating ? "Generating…" : "Generate SEO Plan"}
+          </Button>
           <Button variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <AlertTriangle className="h-4 w-4" /> Log Issue
           </Button>
@@ -178,8 +207,8 @@ export default function SEO() {
           icon={Search}
           title="Track Your Search Rankings"
           description="Add your target keywords and competitors to start monitoring your SEO performance and discover growth opportunities."
-          actionLabel="Add Keywords"
-          onAction={() => setKwOpen(true)}
+          actionLabel="Generate SEO Plan"
+          onAction={generatePlan}
           secondaryLabel="Connect Search Console"
           onSecondary={() => navigate("/integrations")}
         />
@@ -240,24 +269,29 @@ export default function SEO() {
                   </div>
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {keywords.map((k) => (
-                      <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="text-sm py-3">{k.keyword}</td>
-                        <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
-                        <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                <>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {keywords.map((k) => (
+                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                          <td className="text-sm py-3">{k.keyword}</td>
+                          <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
+                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-muted-foreground mt-2 px-1">
+                    Volumes are AI estimates until Search Console is connected.
+                  </p>
+                </>
               )}
             </DataCard>
           </TabsContent>
