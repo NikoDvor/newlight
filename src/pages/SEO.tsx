@@ -199,6 +199,10 @@ export default function SEO() {
         title="SEO"
         description={
           <>
+      <PageHeader
+        title="Search Intelligence"
+        description={
+          <>
             Monitor search visibility and keyword performance
             {runLog[0] && (
               <span className="block mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -209,7 +213,12 @@ export default function SEO() {
           </> as any
         }
       >
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {clientType === "financial_firm" && (
+            <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-blue-950 text-blue-300 border border-blue-800">
+              <Shield className="h-3 w-3" /> Compliance mode
+            </span>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={generatePlan} disabled={generating}>
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {generating ? "Generating…" : "Generate SEO Plan"}
@@ -223,7 +232,7 @@ export default function SEO() {
         </div>
       </PageHeader>
 
-      <ModuleHelpPanel moduleName="SEO" description="Track keyword rankings, monitor competitors, detect technical SEO issues, and discover content opportunities. Data can be manually entered or synced from Google Search Console." tips={["Add target keywords to track ranking positions over time", "Log competitors to compare authority and traffic", "SEO issues are flagged for action and can be resolved inline"]} />
+      <ModuleHelpPanel moduleName="Search Intelligence" description="Track keyword rankings, run technical audits, manage content, monitor local visibility, and analyse competitors — all in one place." tips={["Connect Google Search Console to replace AI volume estimates with real ranking data", "Financial firm clients include E-E-A-T audit checks and compliance mode", "Run the weekly audit to keep all client data fresh automatically"]} />
 
       {!hasRealData && (
         <SetupBanner
