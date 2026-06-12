@@ -196,10 +196,6 @@ export default function SEO() {
   return (
     <div>
       <PageHeader
-        title="SEO"
-        description={
-          <>
-      <PageHeader
         title="Search Intelligence"
         description={
           <>
