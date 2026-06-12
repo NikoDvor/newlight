@@ -53,6 +53,7 @@ export default function SEO() {
   const [newContent, setNewContent] = useState({ topic_title: "", target_keyword: "", opportunity_type: "blog_post", priority: "medium" });
   const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
   const [generating, setGenerating] = useState(false);
+  const [runLog, setRunLog] = useState<any[]>([]);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
