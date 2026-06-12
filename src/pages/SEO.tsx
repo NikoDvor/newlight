@@ -70,6 +70,8 @@ export default function SEO() {
     setIssues(iRes.data || []);
     setContentOpps(coRes.data || []);
     setLocalItems(lRes.data || []);
+    const logRes = await supabase.from("seo_run_log").select("*").order("created_at", { ascending: false }).limit(3);
+    setRunLog(logRes.data || []);
     setLoading(false);
   };
 
@@ -186,7 +188,20 @@ export default function SEO() {
 
   return (
     <div>
-      <PageHeader title="SEO" description="Monitor search visibility and keyword performance">
+      <PageHeader
+        title="SEO"
+        description={
+          <>
+            Monitor search visibility and keyword performance
+            {runLog[0] && (
+              <span className="block mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                Last refreshed {new Date(runLog[0].created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at {new Date(runLog[0].created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase()} · {runLog[0].triggered_by}
+              </span>
+            )}
+          </> as any
+        }
+      >
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={generatePlan} disabled={generating}>
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -293,6 +308,32 @@ export default function SEO() {
                     Volumes are AI estimates until Search Console is connected.
                   </p>
                 </>
+              )}
+            </DataCard>
+            <DataCard title="Recent SEO runs" className="mt-4">
+              {runLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No runs recorded yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {runLog.map((run) => (
+                    <div key={run.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {new Date(run.created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at {new Date(run.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{run.triggered_by}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {run.total_keywords} kw · {run.total_content} content · {run.total_issues} issues
+                        </span>
+                        <Badge className={run.failures?.length > 0 ? "text-[10px] bg-amber-50 text-amber-700" : "text-[10px] bg-emerald-50 text-emerald-700"}>
+                          {run.failures?.length > 0 ? `${run.failures.length} client failed` : "success"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </DataCard>
           </TabsContent>
