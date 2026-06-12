@@ -54,6 +54,7 @@ export default function SEO() {
   const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
   const [generating, setGenerating] = useState(false);
   const [runLog, setRunLog] = useState<any[]>([]);
+  const [clientType, setClientType] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
