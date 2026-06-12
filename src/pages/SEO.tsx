@@ -388,7 +388,7 @@ export default function SEO() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="issues" className="mt-4">
+          <TabsContent value="audit" className="mt-4">
             <DataCard title="SEO Issues">
               {issues.length === 0 ? (
                 <div className="py-8 text-center">
@@ -416,6 +416,19 @@ export default function SEO() {
                 </div>
               )}
             </DataCard>
+            {clientType === "financial_firm" && (
+              <>
+                <DataCard title="E-E-A-T audit" className="mt-4">
+                  {["Author bios with credentials", "ADV Part 2 link in footer", "Disclaimer in footer"].map((label) => (
+                    <div key={label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <span className="text-sm">{label}</span>
+                      <Badge className="text-[10px] bg-amber-50 text-amber-700">check required</Badge>
+                    </div>
+                  ))}
+                </DataCard>
+                <p className="text-xs text-muted-foreground mt-2">E-E-A-T signals are manually verified. Run the site audit to refresh technical issues.</p>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="content" className="mt-4">
