@@ -185,7 +185,7 @@ export default function SEO() {
   if (!activeClientId) {
     return (
       <div>
-        <PageHeader title="SEO" description="Monitor search visibility and keyword performance" />
+        <PageHeader title="Search Intelligence" description="Monitor search visibility and keyword performance" />
         <div className="card-widget p-8 rounded-2xl text-center mt-6">
           <p className="text-muted-foreground">Select a workspace to view SEO data.</p>
         </div>
