@@ -54,6 +54,7 @@ export default function SEO() {
   const [newLocal, setNewLocal] = useState({ location_name: "", visibility_status: "unknown", notes: "" });
   const [generating, setGenerating] = useState(false);
   const [runLog, setRunLog] = useState<any[]>([]);
+  const [clientType, setClientType] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -76,6 +77,12 @@ export default function SEO() {
   };
 
   useEffect(() => { fetchData(); }, [activeClientId]);
+
+  useEffect(() => {
+    if (!activeClientId) { setClientType(null); return; }
+    supabase.from("clients").select("business_type").eq("id", activeClientId).maybeSingle()
+      .then(({ data }) => setClientType((data as any)?.business_type ?? null));
+  }, [activeClientId]);
 
   const addKeyword = async () => {
     if (!activeClientId || !newKw.keyword) return;
@@ -189,7 +196,7 @@ export default function SEO() {
   return (
     <div>
       <PageHeader
-        title="SEO"
+        title="Search Intelligence"
         description={
           <>
             Monitor search visibility and keyword performance
@@ -202,7 +209,12 @@ export default function SEO() {
           </> as any
         }
       >
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {clientType === "financial_firm" && (
+            <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-blue-950 text-blue-300 border border-blue-800">
+              <Shield className="h-3 w-3" /> Compliance mode
+            </span>
+          )}
           <Button variant="outline" className="gap-1.5" onClick={generatePlan} disabled={generating}>
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {generating ? "Generating…" : "Generate SEO Plan"}
@@ -216,7 +228,7 @@ export default function SEO() {
         </div>
       </PageHeader>
 
-      <ModuleHelpPanel moduleName="SEO" description="Track keyword rankings, monitor competitors, detect technical SEO issues, and discover content opportunities. Data can be manually entered or synced from Google Search Console." tips={["Add target keywords to track ranking positions over time", "Log competitors to compare authority and traffic", "SEO issues are flagged for action and can be resolved inline"]} />
+      <ModuleHelpPanel moduleName="Search Intelligence" description="Track keyword rankings, run technical audits, manage content, monitor local visibility, and analyse competitors — all in one place." tips={["Connect Google Search Console to replace AI volume estimates with real ranking data", "Financial firm clients include E-E-A-T audit checks and compliance mode", "Run the weekly audit to keep all client data fresh automatically"]} />
 
       {!hasRealData && (
         <SetupBanner
@@ -233,22 +245,24 @@ export default function SEO() {
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
         <MetricCard label="Keywords Tracked" value={hasRealData ? String(keywords.length) : "—"} change={hasRealData ? `${rankedKws.length} ranked` : "Add keywords to track"} changeType="neutral" icon={Search} />
         <MetricCard label="Avg Position" value={rankedKws.length > 0 ? `#${Math.round(rankedKws.reduce((s, k) => s + k.position, 0) / rankedKws.length)}` : "—"} change={hasRealData ? "Tracked keywords" : "Track to measure"} changeType="neutral" icon={TrendingUp} />
-        <MetricCard label="Competitors" value={hasRealData ? String(competitors.length) : "—"} change={hasRealData ? "Being tracked" : "Add competitors"} changeType="neutral" icon={Shield} />
         <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Run SEO audit"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
+        <MetricCard label="Content Pipeline" value={String(contentOpps.length)} change="View in Content tab" changeType="neutral" icon={FileText} />
+        <MetricCard label="GBP Status" value="—" change="Not connected" changeType="neutral" icon={MapPin} />
       </WidgetGrid>
 
       <div className="mt-6">
-        <Tabs defaultValue="keywords">
+        <Tabs defaultValue="rankings">
           <TabsList className="bg-secondary h-10 rounded-lg">
-            <TabsTrigger value="keywords" className="rounded-md text-sm">Keywords</TabsTrigger>
+            <TabsTrigger value="rankings" className="rounded-md text-sm">Rankings</TabsTrigger>
+            <TabsTrigger value="audit" className="rounded-md text-sm">Site Audit</TabsTrigger>
+            <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
+            <TabsTrigger value="local" className="rounded-md text-sm">Local</TabsTrigger>
             <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
-            <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="content" className="rounded-md text-sm">Content Opps</TabsTrigger>
-            <TabsTrigger value="local" className="rounded-md text-sm">Local SEO</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="keywords" className="mt-4">
+          <TabsContent value="rankings" className="mt-4">
             <DataCard title="Keyword Rankings">
+              <p className="text-xs text-muted-foreground -mt-2 mb-3">AI estimates · Connect GSC for real position data</p>
               {keywords.length === 0 ? (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
@@ -374,7 +388,7 @@ export default function SEO() {
             </DataCard>
           </TabsContent>
 
-          <TabsContent value="issues" className="mt-4">
+          <TabsContent value="audit" className="mt-4">
             <DataCard title="SEO Issues">
               {issues.length === 0 ? (
                 <div className="py-8 text-center">
@@ -402,6 +416,19 @@ export default function SEO() {
                 </div>
               )}
             </DataCard>
+            {clientType === "financial_firm" && (
+              <>
+                <DataCard title="E-E-A-T audit" className="mt-4">
+                  {["Author bios with credentials", "ADV Part 2 link in footer", "Disclaimer in footer"].map((label) => (
+                    <div key={label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <span className="text-sm">{label}</span>
+                      <Badge className="text-[10px] bg-amber-50 text-amber-700">check required</Badge>
+                    </div>
+                  ))}
+                </DataCard>
+                <p className="text-xs text-muted-foreground mt-2">E-E-A-T signals are manually verified. Run the site audit to refresh technical issues.</p>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="content" className="mt-4">
@@ -435,6 +462,9 @@ export default function SEO() {
                     </div>
                   ))}
                 </div>
+              )}
+              {clientType === "financial_firm" && (
+                <p className="text-xs text-muted-foreground mt-3">Auto-publish is disabled for this client. All content requires compliance approval before publishing.</p>
               )}
             </DataCard>
           </TabsContent>
