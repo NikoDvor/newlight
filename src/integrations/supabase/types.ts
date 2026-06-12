@@ -9281,6 +9281,100 @@ export type Database = {
           },
         ]
       }
+      seo_backlinks: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          link_type: string
+          notes: string | null
+          source_name: string | null
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          link_type?: string
+          notes?: string | null
+          source_name?: string | null
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          link_type?: string
+          notes?: string | null
+          source_name?: string | null
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_backlinks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_citation_listings: {
+        Row: {
+          client_has_login: boolean | null
+          client_id: string
+          created_at: string
+          directory_name: string
+          id: string
+          listing_exists: boolean | null
+          listing_url: string | null
+          login_email: string | null
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_has_login?: boolean | null
+          client_id: string
+          created_at?: string
+          directory_name: string
+          id?: string
+          listing_exists?: boolean | null
+          listing_url?: string | null
+          login_email?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_has_login?: boolean | null
+          client_id?: string
+          created_at?: string
+          directory_name?: string
+          id?: string
+          listing_exists?: boolean | null
+          listing_url?: string | null
+          login_email?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_citation_listings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_competitors: {
         Row: {
           authority_score: number | null
@@ -9288,9 +9382,12 @@ export type Database = {
           created_at: string
           domain: string
           estimated_traffic: string | null
+          gbp_profile_url: string | null
           id: string
           keywords_count: number | null
+          strengths: string[] | null
           updated_at: string
+          weaknesses: string[] | null
         }
         Insert: {
           authority_score?: number | null
@@ -9298,9 +9395,12 @@ export type Database = {
           created_at?: string
           domain: string
           estimated_traffic?: string | null
+          gbp_profile_url?: string | null
           id?: string
           keywords_count?: number | null
+          strengths?: string[] | null
           updated_at?: string
+          weaknesses?: string[] | null
         }
         Update: {
           authority_score?: number | null
@@ -9308,9 +9408,12 @@ export type Database = {
           created_at?: string
           domain?: string
           estimated_traffic?: string | null
+          gbp_profile_url?: string | null
           id?: string
           keywords_count?: number | null
+          strengths?: string[] | null
           updated_at?: string
+          weaknesses?: string[] | null
         }
         Relationships: [
           {
@@ -9361,6 +9464,165 @@ export type Database = {
             foreignKeyName: "seo_content_opportunities_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_gbp_competitor_profiles: {
+        Row: {
+          business_name: string
+          client_id: string
+          created_at: string
+          gbp_url: string | null
+          id: string
+          notes: string | null
+          review_count: number | null
+          review_rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          client_id: string
+          created_at?: string
+          gbp_url?: string | null
+          id?: string
+          notes?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          client_id?: string
+          created_at?: string
+          gbp_url?: string | null
+          id?: string
+          notes?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_gbp_competitor_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_gbp_photos: {
+        Row: {
+          caption: string | null
+          client_id: string
+          created_at: string
+          id: string
+          photo_category: string
+          photo_url: string
+          updated_at: string
+          upload_status: string
+          uploaded_to_gbp: boolean
+          uploaded_to_gbp_at: string | null
+        }
+        Insert: {
+          caption?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          photo_category?: string
+          photo_url: string
+          updated_at?: string
+          upload_status?: string
+          uploaded_to_gbp?: boolean
+          uploaded_to_gbp_at?: string | null
+        }
+        Update: {
+          caption?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          photo_category?: string
+          photo_url?: string
+          updated_at?: string
+          upload_status?: string
+          uploaded_to_gbp?: boolean
+          uploaded_to_gbp_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_gbp_photos_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_gbp_profile: {
+        Row: {
+          address_canonical: string | null
+          avoid_topics: string | null
+          business_hours: Json | null
+          business_name_canonical: string | null
+          client_id: string
+          created_at: string
+          gbp_access_granted: boolean
+          gbp_access_granted_at: string | null
+          gbp_invite_email: string
+          gsc_access_granted: boolean
+          gsc_access_granted_at: string | null
+          gsc_invite_email: string
+          id: string
+          is_service_area_only: boolean
+          phone_canonical: string | null
+          review_response_tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_canonical?: string | null
+          avoid_topics?: string | null
+          business_hours?: Json | null
+          business_name_canonical?: string | null
+          client_id: string
+          created_at?: string
+          gbp_access_granted?: boolean
+          gbp_access_granted_at?: string | null
+          gbp_invite_email?: string
+          gsc_access_granted?: boolean
+          gsc_access_granted_at?: string | null
+          gsc_invite_email?: string
+          id?: string
+          is_service_area_only?: boolean
+          phone_canonical?: string | null
+          review_response_tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_canonical?: string | null
+          avoid_topics?: string | null
+          business_hours?: Json | null
+          business_name_canonical?: string | null
+          client_id?: string
+          created_at?: string
+          gbp_access_granted?: boolean
+          gbp_access_granted_at?: string | null
+          gbp_invite_email?: string
+          gsc_access_granted?: boolean
+          gsc_access_granted_at?: string | null
+          gsc_invite_email?: string
+          id?: string
+          is_service_area_only?: boolean
+          phone_canonical?: string | null
+          review_response_tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_gbp_profile_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
