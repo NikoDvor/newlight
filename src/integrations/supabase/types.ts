@@ -9495,6 +9495,42 @@ export type Database = {
           },
         ]
       }
+      seo_run_log: {
+        Row: {
+          clients_processed: number
+          created_at: string
+          failures: Json
+          id: string
+          total_content: number
+          total_issues: number
+          total_keywords: number
+          total_locations: number
+          triggered_by: string
+        }
+        Insert: {
+          clients_processed?: number
+          created_at?: string
+          failures?: Json
+          id?: string
+          total_content?: number
+          total_issues?: number
+          total_keywords?: number
+          total_locations?: number
+          triggered_by: string
+        }
+        Update: {
+          clients_processed?: number
+          created_at?: string
+          failures?: Json
+          id?: string
+          total_content?: number
+          total_issues?: number
+          total_keywords?: number
+          total_locations?: number
+          triggered_by?: string
+        }
+        Relationships: []
+      }
       service_catalog: {
         Row: {
           client_id: string
