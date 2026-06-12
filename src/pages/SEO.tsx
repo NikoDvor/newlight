@@ -245,18 +245,19 @@ export default function SEO() {
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
         <MetricCard label="Keywords Tracked" value={hasRealData ? String(keywords.length) : "—"} change={hasRealData ? `${rankedKws.length} ranked` : "Add keywords to track"} changeType="neutral" icon={Search} />
         <MetricCard label="Avg Position" value={rankedKws.length > 0 ? `#${Math.round(rankedKws.reduce((s, k) => s + k.position, 0) / rankedKws.length)}` : "—"} change={hasRealData ? "Tracked keywords" : "Track to measure"} changeType="neutral" icon={TrendingUp} />
-        <MetricCard label="Competitors" value={hasRealData ? String(competitors.length) : "—"} change={hasRealData ? "Being tracked" : "Add competitors"} changeType="neutral" icon={Shield} />
         <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Run SEO audit"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
+        <MetricCard label="Content Pipeline" value={String(contentOpps.length)} change="View in Content tab" changeType="neutral" icon={FileText} />
+        <MetricCard label="GBP Status" value="—" change="Not connected" changeType="neutral" icon={MapPin} />
       </WidgetGrid>
 
       <div className="mt-6">
-        <Tabs defaultValue="keywords">
+        <Tabs defaultValue="rankings">
           <TabsList className="bg-secondary h-10 rounded-lg">
-            <TabsTrigger value="keywords" className="rounded-md text-sm">Keywords</TabsTrigger>
+            <TabsTrigger value="rankings" className="rounded-md text-sm">Rankings</TabsTrigger>
+            <TabsTrigger value="audit" className="rounded-md text-sm">Site Audit</TabsTrigger>
+            <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
+            <TabsTrigger value="local" className="rounded-md text-sm">Local</TabsTrigger>
             <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
-            <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
-            <TabsTrigger value="content" className="rounded-md text-sm">Content Opps</TabsTrigger>
-            <TabsTrigger value="local" className="rounded-md text-sm">Local SEO</TabsTrigger>
           </TabsList>
 
           <TabsContent value="keywords" className="mt-4">
