@@ -293,6 +293,15 @@ async function generateForClient(
       const { error: insErr } = await supabase.from("seo_issues").insert(issuesToInsert);
       if (!insErr) issuesCreated = issuesToInsert.length;
     }
+
+    const { issues: perfIssues, scoreRow } = await runPageSpeedAudit(supabase, clientId, siteUrl);
+    if (perfIssues.length > 0) {
+      const { error: perfErr } = await supabase.from("seo_issues").insert(perfIssues);
+      if (!perfErr) issuesCreated += perfIssues.length;
+    }
+    if (scoreRow) {
+      await supabase.from("seo_performance_scores").insert(scoreRow);
+    }
   }
 
   // 4. AI generation
