@@ -463,6 +463,9 @@ export default function SEO() {
                   ))}
                 </div>
               )}
+              {clientType === "financial_firm" && (
+                <p className="text-xs text-muted-foreground mt-3">Auto-publish is disabled for this client. All content requires compliance approval before publishing.</p>
+              )}
             </DataCard>
           </TabsContent>
 
