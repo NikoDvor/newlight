@@ -428,6 +428,16 @@ Deno.serve(async (req) => {
         }
       }
 
+      await supabase.from("seo_run_log").insert({
+        triggered_by: cronHeader && cronSecret && cronHeader === cronSecret ? "cron" : "manual",
+        clients_processed: processed,
+        total_keywords: totalKeywords,
+        total_content: totalContent,
+        total_issues: totalIssues,
+        total_locations: totalLocations,
+        failures,
+      });
+
       return json({
         clients_processed: processed,
         total_issues: totalIssues,
@@ -442,6 +452,17 @@ Deno.serve(async (req) => {
     if (!clientId) return json({ error: "client_id required" }, 400);
 
     const result = await generateForClient(supabase, clientId, lovableKey);
+
+    await supabase.from("seo_run_log").insert({
+      triggered_by: "manual",
+      clients_processed: 1,
+      total_keywords: result.keywords_created,
+      total_content: result.content_created,
+      total_issues: result.issues_created,
+      total_locations: result.locations_created,
+      failures: [],
+    });
+
     return json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal error";
