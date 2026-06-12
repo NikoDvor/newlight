@@ -223,7 +223,25 @@ Deno.serve(async (req) => {
     }
 
     // 4. AI generation
-    if (lovableKey) {
+    const KW_CEILING = 15;
+    const CONTENT_CEILING = 8;
+
+    const { count: existingKwCount } = await supabase
+      .from("seo_keywords")
+      .select("*", { count: "exact", head: true })
+      .eq("client_id", clientId);
+
+    const { count: existingOpenContentCount } = await supabase
+      .from("seo_content_opportunities")
+      .select("*", { count: "exact", head: true })
+      .eq("client_id", clientId)
+      .eq("status", "open");
+
+    const kwCount = existingKwCount || 0;
+    const openContentCount = existingOpenContentCount || 0;
+    const skipAi = kwCount >= KW_CEILING && openContentCount >= CONTENT_CEILING;
+
+    if (lovableKey && !skipAi) {
       const locations = [serviceAreas, client.primary_location].filter(Boolean).join("; ");
       const prompt = `You are an SEO strategist. Generate a localized SEO plan for this business:
 
@@ -267,15 +285,18 @@ Requirements:
           parsed = {};
         }
 
+        const maxNewKeywords = Math.max(0, KW_CEILING - kwCount);
+        const maxNewContent = Math.max(0, CONTENT_CEILING - openContentCount);
+
         // Keywords
-        if (Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
+        if (Array.isArray(parsed.keywords) && parsed.keywords.length > 0 && maxNewKeywords > 0) {
           const { data: existingKw } = await supabase
             .from("seo_keywords")
             .select("keyword")
             .eq("client_id", clientId);
           const have = new Set((existingKw || []).map(r => (r.keyword || "").toLowerCase()));
           const rows: Array<Record<string, unknown>> = [];
-          for (const k of parsed.keywords) {
+          for (const k of parsed.keywords.slice(0, maxNewKeywords)) {
             if (!k?.keyword) continue;
             const kw = String(k.keyword).trim();
             if (!kw) continue;
@@ -295,7 +316,7 @@ Requirements:
         }
 
         // Content opportunities
-        if (Array.isArray(parsed.content_opportunities) && parsed.content_opportunities.length > 0) {
+        if (Array.isArray(parsed.content_opportunities) && parsed.content_opportunities.length > 0 && maxNewContent > 0) {
           const { data: existingCo } = await supabase
             .from("seo_content_opportunities")
             .select("topic_title")
@@ -304,7 +325,7 @@ Requirements:
           const allowedType = new Set(["blog_post", "new_page", "location_page", "faq", "optimization"]);
           const allowedPriority = new Set(["low", "medium", "high"]);
           const rows: Array<Record<string, unknown>> = [];
-          for (const c of parsed.content_opportunities) {
+          for (const c of parsed.content_opportunities.slice(0, maxNewContent)) {
             const title = String(c?.topic_title || "").trim();
             if (!title) continue;
             if (haveCo.has(title.toLowerCase())) continue;
