@@ -9757,6 +9757,47 @@ export type Database = {
           },
         ]
       }
+      seo_performance_scores: {
+        Row: {
+          client_id: string
+          cls: number | null
+          fetched_at: string
+          id: string
+          lcp_ms: number | null
+          mobile_score: number | null
+          performance_score: number | null
+          tbt_ms: number | null
+        }
+        Insert: {
+          client_id: string
+          cls?: number | null
+          fetched_at?: string
+          id?: string
+          lcp_ms?: number | null
+          mobile_score?: number | null
+          performance_score?: number | null
+          tbt_ms?: number | null
+        }
+        Update: {
+          client_id?: string
+          cls?: number | null
+          fetched_at?: string
+          id?: string
+          lcp_ms?: number | null
+          mobile_score?: number | null
+          performance_score?: number | null
+          tbt_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_performance_scores_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_run_log: {
         Row: {
           clients_processed: number
