@@ -55,6 +55,7 @@ export default function SEO() {
   const [generating, setGenerating] = useState(false);
   const [runLog, setRunLog] = useState<any[]>([]);
   const [clientType, setClientType] = useState<string | null>(null);
+  const [perfScore, setPerfScore] = useState<any>(null);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -73,6 +74,14 @@ export default function SEO() {
     setLocalItems(lRes.data || []);
     const logRes = await supabase.from("seo_run_log").select("*").order("created_at", { ascending: false }).limit(3);
     setRunLog(logRes.data || []);
+    const perfRes = await supabase
+      .from("seo_performance_scores")
+      .select("*")
+      .eq("client_id", activeClientId)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setPerfScore(perfRes.data || null);
     setLoading(false);
   };
 
@@ -389,25 +398,111 @@ export default function SEO() {
           </TabsContent>
 
           <TabsContent value="audit" className="mt-4">
-            <DataCard title="SEO Issues">
-              {issues.length === 0 ? (
+            {perfScore ? (
+              <DataCard title="Core Web Vitals" className="mb-4">
+                <p className="text-xs text-muted-foreground -mt-2 mb-4">
+                  Powered by Google PageSpeed Insights · Last run {new Date(perfScore.fetched_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at {new Date(perfScore.fetched_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase()}
+                </p>
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                  {[
+                    {
+                      label: "Performance",
+                      value: String(perfScore.performance_score),
+                      unit: "/ 100",
+                      good: perfScore.performance_score >= 90,
+                      warn: perfScore.performance_score >= 50 && perfScore.performance_score < 90,
+                    },
+                    {
+                      label: "Mobile",
+                      value: String(perfScore.mobile_score),
+                      unit: "/ 100",
+                      good: perfScore.mobile_score >= 90,
+                      warn: perfScore.mobile_score >= 50 && perfScore.mobile_score < 90,
+                    },
+                    {
+                      label: "LCP",
+                      value: perfScore.lcp_ms ? (perfScore.lcp_ms / 1000).toFixed(1) + "s" : "—",
+                      unit: "target < 2.5s",
+                      good: perfScore.lcp_ms <= 2500,
+                      warn: perfScore.lcp_ms > 2500 && perfScore.lcp_ms <= 4000,
+                    },
+                    {
+                      label: "TBT",
+                      value: perfScore.tbt_ms ? perfScore.tbt_ms + "ms" : "—",
+                      unit: "target < 200ms",
+                      good: perfScore.tbt_ms <= 200,
+                      warn: perfScore.tbt_ms > 200 && perfScore.tbt_ms <= 600,
+                    },
+                    {
+                      label: "CLS",
+                      value: perfScore.cls != null ? Number(perfScore.cls).toFixed(3) : "—",
+                      unit: "target < 0.1",
+                      good: Number(perfScore.cls) <= 0.1,
+                      warn: Number(perfScore.cls) > 0.1 && Number(perfScore.cls) <= 0.25,
+                    },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-secondary rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-1">{s.label}</p>
+                      <p className={`text-xl font-medium ${s.good ? "text-emerald-600" : s.warn ? "text-amber-600" : "text-red-500"}`}>
+                        {s.value}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{s.unit}</p>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium mt-1 ${s.good ? "bg-emerald-50 text-emerald-700" : s.warn ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
+                        {s.good ? "good" : s.warn ? "needs work" : "poor"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {issues.filter(i => i.category === "performance").length > 0 && (
+                  <>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Performance issues</p>
+                    <div className="space-y-1">
+                      {issues.filter(i => i.category === "performance").map((i) => (
+                        <div key={i.id} className="flex items-start justify-between py-2.5 border-b border-border last:border-0 gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">{i.issue_title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{i.recommendation || "No recommendation"}</p>
+                          </div>
+                          <div className="flex gap-1.5 shrink-0">
+                            <Badge className={`text-[10px] ${i.severity === "high" ? "bg-red-50 text-red-600" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{i.severity}</Badge>
+                            <Badge className={`text-[10px] ${i.status === "open" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>{i.status}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <p className="text-xs text-muted-foreground mt-3">Performance issues refresh on each audit run.</p>
+              </DataCard>
+            ) : (
+              <div className="card-widget p-6 rounded-2xl text-center mb-4">
+                <p className="text-sm font-medium text-foreground mb-1">No performance data yet</p>
+                <p className="text-xs text-muted-foreground mb-3">Run the SEO plan to fetch Core Web Vitals from Google PageSpeed Insights.</p>
+                <Button size="sm" variant="outline" onClick={generatePlan} disabled={generating}>
+                  {generating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                  {generating ? "Running…" : "Run audit"}
+                </Button>
+              </div>
+            )}
+            <DataCard title="Technical issues">
+              {issues.filter(i => i.category !== "performance").length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <AlertTriangle className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No SEO issues logged</p>
-                  <p className="text-xs text-muted-foreground mb-4">Log issues to track and resolve SEO problems systematically.</p>
+                  <p className="text-sm font-medium text-foreground mb-1">No technical issues found</p>
+                  <p className="text-xs text-muted-foreground mb-4">Run the audit to check for technical SEO issues.</p>
                   <Button size="sm" onClick={() => setIssueOpen(true)}><AlertTriangle className="h-4 w-4 mr-1" /> Log Issue</Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {issues.map((i) => (
-                    <div key={i.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div>
+                <div className="space-y-1">
+                  {issues.filter(i => i.category !== "performance").map((i) => (
+                    <div key={i.id} className="flex items-start justify-between py-2.5 border-b border-border last:border-0 gap-3">
+                      <div className="min-w-0">
                         <p className="text-sm font-medium">{i.issue_title}</p>
-                        <p className="text-xs text-muted-foreground">{i.category} · {i.recommendation || "No recommendation"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{i.category} · {i.recommendation || "No recommendation"}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 shrink-0">
                         <Badge className={`text-[10px] ${i.severity === "high" ? "bg-red-50 text-red-600" : i.severity === "medium" ? "bg-amber-50 text-amber-700" : "bg-secondary text-muted-foreground"}`}>{i.severity}</Badge>
                         <Badge className={`text-[10px] ${i.status === "open" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>{i.status}</Badge>
                       </div>
@@ -415,6 +510,7 @@ export default function SEO() {
                   ))}
                 </div>
               )}
+              <p className="text-xs text-muted-foreground mt-3">Technical issues refresh on each audit run. Resolve issues on the site then re-run to clear them.</p>
             </DataCard>
             {clientType === "financial_firm" && (
               <>
