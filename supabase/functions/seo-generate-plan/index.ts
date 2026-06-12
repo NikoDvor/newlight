@@ -52,6 +52,94 @@ type GenResult = {
   locations_created: number;
 };
 
+async function runPageSpeedAudit(
+  supabase: SupabaseClient,
+  clientId: string,
+  siteUrl: string,
+): Promise<{ issues: Array<Record<string, unknown>>; scoreRow: Record<string, unknown> | null }> {
+  const encoded = encodeURIComponent(siteUrl);
+  const [desktopRes, mobileRes] = await Promise.all([
+    fetchWithTimeout(
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encoded}&strategy=desktop&category=performance`,
+      20000,
+    ),
+    fetchWithTimeout(
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encoded}&strategy=mobile&category=performance`,
+      20000,
+    ),
+  ]);
+  if (!desktopRes?.ok || !mobileRes?.ok) return { issues: [], scoreRow: null };
+  const [desktop, mobile] = await Promise.all([desktopRes.json(), mobileRes.json()]);
+  const perfScore = Math.round((desktop?.lighthouseResult?.categories?.performance?.score ?? 0) * 100);
+  const mobileScore = Math.round((mobile?.lighthouseResult?.categories?.performance?.score ?? 0) * 100);
+  const audits = desktop?.lighthouseResult?.audits ?? {};
+  const lcpMs = Math.round((audits["largest-contentful-paint"]?.numericValue ?? 0));
+  const tbtMs = Math.round((audits["total-blocking-time"]?.numericValue ?? 0));
+  const cls = parseFloat((audits["cumulative-layout-shift"]?.numericValue ?? 0).toFixed(3));
+  const scoreRow: Record<string, unknown> = {
+    client_id: clientId,
+    performance_score: perfScore,
+    mobile_score: mobileScore,
+    lcp_ms: lcpMs,
+    tbt_ms: tbtMs,
+    cls,
+  };
+  const performanceIssueTitles = [
+    "Slow Largest Contentful Paint (LCP)",
+    "High Cumulative Layout Shift (CLS)",
+    "High Total Blocking Time (TBT)",
+    "Low overall performance score",
+  ];
+  await supabase
+    .from("seo_issues")
+    .delete()
+    .eq("client_id", clientId)
+    .eq("category", "performance")
+    .in("issue_title", performanceIssueTitles);
+  const issues: Array<Record<string, unknown>> = [];
+  if (lcpMs > 2500) {
+    issues.push({
+      client_id: clientId,
+      issue_title: "Slow Largest Contentful Paint (LCP)",
+      category: "performance",
+      severity: lcpMs > 4000 ? "high" : "medium",
+      status: "open",
+      recommendation: `LCP is ${(lcpMs / 1000).toFixed(1)}s, exceeding the 2.5s target. Optimize hero images, use a CDN, and eliminate render-blocking resources.`,
+    });
+  }
+  if (cls > 0.1) {
+    issues.push({
+      client_id: clientId,
+      issue_title: "High Cumulative Layout Shift (CLS)",
+      category: "performance",
+      severity: cls > 0.25 ? "high" : "medium",
+      status: "open",
+      recommendation: `CLS is ${cls.toFixed(3)}, exceeding the 0.1 target. Add explicit width and height attributes to images and embeds to prevent layout shifts.`,
+    });
+  }
+  if (tbtMs > 200) {
+    issues.push({
+      client_id: clientId,
+      issue_title: "High Total Blocking Time (TBT)",
+      category: "performance",
+      severity: tbtMs > 600 ? "high" : "medium",
+      status: "open",
+      recommendation: `TBT is ${tbtMs}ms, exceeding the 200ms target. Reduce JavaScript execution time and break up long tasks.`,
+    });
+  }
+  if (perfScore < 90) {
+    issues.push({
+      client_id: clientId,
+      issue_title: "Low overall performance score",
+      category: "performance",
+      severity: perfScore < 50 ? "high" : "medium",
+      status: "open",
+      recommendation: `Performance score is ${perfScore}/100. Review the full PageSpeed Insights report at https://pagespeed.web.dev/ for a detailed breakdown.`,
+    });
+  }
+  return { issues, scoreRow };
+}
+
 async function generateForClient(
   supabase: SupabaseClient,
   clientId: string,
