@@ -287,6 +287,9 @@ export default function SEO() {
                     ))}
                   </tbody>
                 </table>
+                <p className="text-xs text-muted-foreground mt-2 px-1">
+                  Volumes are AI estimates until Search Console is connected.
+                </p>
               )}
             </DataCard>
           </TabsContent>
