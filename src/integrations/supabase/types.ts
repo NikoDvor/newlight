@@ -9730,11 +9730,13 @@ export type Database = {
       }
       seo_keywords: {
         Row: {
+          clicks: number | null
           client_id: string
           created_at: string
           difficulty: number | null
           id: string
           keyword: string
+          last_synced_at: string | null
           position: number | null
           previous_position: number | null
           search_volume: number | null
@@ -9742,11 +9744,13 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          clicks?: number | null
           client_id: string
           created_at?: string
           difficulty?: number | null
           id?: string
           keyword: string
+          last_synced_at?: string | null
           position?: number | null
           previous_position?: number | null
           search_volume?: number | null
@@ -9754,11 +9758,13 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          clicks?: number | null
           client_id?: string
           created_at?: string
           difficulty?: number | null
           id?: string
           keyword?: string
+          last_synced_at?: string | null
           position?: number | null
           previous_position?: number | null
           search_volume?: number | null
