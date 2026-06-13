@@ -9425,6 +9425,44 @@ export type Database = {
           },
         ]
       }
+      seo_competitor_gaps: {
+        Row: {
+          client_id: string
+          competitor_domains: string
+          content_gaps: Json
+          generated_at: string
+          id: string
+          keyword_gaps: Json
+          positioning_opportunities: Json
+        }
+        Insert: {
+          client_id: string
+          competitor_domains: string
+          content_gaps?: Json
+          generated_at?: string
+          id?: string
+          keyword_gaps?: Json
+          positioning_opportunities?: Json
+        }
+        Update: {
+          client_id?: string
+          competitor_domains?: string
+          content_gaps?: Json
+          generated_at?: string
+          id?: string
+          keyword_gaps?: Json
+          positioning_opportunities?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitor_gaps_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_competitors: {
         Row: {
           authority_score: number | null
