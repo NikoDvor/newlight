@@ -864,6 +864,110 @@ Requirements:
           </div>
         </SheetContent>
       </Sheet>
+
+      <Sheet open={briefOpen} onOpenChange={setBriefOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Content brief</SheetTitle>
+            <SheetDescription>
+              {briefOpp?.topic_title}
+              {briefOpp?.brief_generated_at && (
+                <span className="block mt-0.5 text-xs">
+                  Generated {new Date(briefOpp.brief_generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          {generatingBrief ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Generating brief…</p>
+            </div>
+          ) : briefOpp?.brief ? (() => {
+            let parsed: any = {};
+            try { parsed = JSON.parse(briefOpp.brief); } catch {}
+            const isFinancial = clientType === "financial_firm";
+            return (
+              <div className="mt-6 space-y-5">
+                {isFinancial && (
+                  <div className="flex gap-2 items-start p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <Shield className="h-4 w-4 text-blue-700 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 leading-relaxed">Compliance mode active. Review all flagged claims before publishing. No performance guarantees or specific return figures should appear in the final content.</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Primary keyword</p>
+                  <p className="text-sm">{parsed.primary_keyword}</p>
+                </div>
+                {parsed.secondary_keywords?.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Secondary keywords</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {parsed.secondary_keywords.map((kw: string, i: number) => (
+                        <span key={i} className="px-2 py-1 rounded-full text-xs border border-border text-muted-foreground">{kw}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Suggested title</p>
+                  <p className="text-sm font-medium">{parsed.suggested_title}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Meta description</p>
+                  <p className="text-sm text-muted-foreground">{parsed.meta_description}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Recommended word count</p>
+                  <p className="text-sm">{parsed.word_count}</p>
+                </div>
+                {parsed.h2_sections?.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">H2 structure</p>
+                    <div className="space-y-0">
+                      {parsed.h2_sections.map((s: any, i: number) => (
+                        <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-0">
+                          <span className="text-xs font-medium text-primary shrink-0 min-w-[32px]">H2 {i + 1}</span>
+                          <div>
+                            <p className="text-sm font-medium">{s.heading}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{s.note}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Internal link suggestions</p>
+                  <p className="text-sm text-muted-foreground">{parsed.internal_link_suggestions}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Call to action</p>
+                  <p className="text-sm">{parsed.call_to_action}</p>
+                </div>
+                {isFinancial && parsed.compliance_flags && (
+                  <div>
+                    <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide mb-2">Compliance flags</p>
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                      <p className="text-xs text-amber-800 leading-relaxed">{parsed.compliance_flags}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1 gap-1.5" onClick={() => copyBrief(briefOpp.brief)}>
+                    <Copy className="h-4 w-4" /> Copy brief
+                  </Button>
+                  {isAdmin && (
+                    <Button variant="outline" className="gap-1.5" onClick={() => generateBrief(briefOpp)}>
+                      <Sparkles className="h-4 w-4" /> Regenerate
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })() : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
