@@ -87,6 +87,13 @@ export default function SEO() {
       .limit(1)
       .maybeSingle();
     setPerfScore(perfRes.data || null);
+    const gscRes = await supabase
+      .from("client_oauth_connections")
+      .select("*")
+      .eq("client_id", activeClientId)
+      .eq("integration_type", "gsc")
+      .maybeSingle();
+    setGscConnection(gscRes.data || null);
     setLoading(false);
   };
 
