@@ -214,6 +214,43 @@ export default function SEO() {
     }
   };
 
+  const connectGsc = async () => {
+    if (!activeClientId) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(
+        `${(supabase as any).supabaseUrl}/functions/v1/gsc-oauth-start?client_id=${activeClientId}`,
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else toast({ title: "Failed to start GSC connection", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const syncGsc = async () => {
+    if (!activeClientId) return;
+    setSyncingGsc(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gsc-data-sync", {
+        body: { client_id: activeClientId },
+      });
+      if (error) throw error;
+      toast({
+        title: "GSC sync complete",
+        description: `${data.keywords_updated} keywords updated with real data.`,
+      });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "GSC sync failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSyncingGsc(false);
+    }
+  };
+
   const generateBrief = async (opp: any) => {
     if (!activeClientId) return;
     setGeneratingBrief(true);
@@ -335,7 +372,13 @@ export default function SEO() {
         <MetricCard label="Avg Position" value={rankedKws.length > 0 ? `#${Math.round(rankedKws.reduce((s, k) => s + k.position, 0) / rankedKws.length)}` : "—"} change={hasRealData ? "Tracked keywords" : "Track to measure"} changeType="neutral" icon={TrendingUp} />
         <MetricCard label="Open Issues" value={hasRealData ? String(openIssues) : "—"} change={hasRealData ? `${issues.length} total` : "Run SEO audit"} changeType={openIssues > 0 ? "negative" : "neutral"} icon={AlertTriangle} />
         <MetricCard label="Content Pipeline" value={String(contentOpps.length)} change="View in Content tab" changeType="neutral" icon={FileText} />
-        <MetricCard label="GBP Status" value="—" change="Not connected" changeType="neutral" icon={MapPin} />
+        <MetricCard
+          label="GSC Status"
+          value={gscConnection?.status === "active" ? "Connected" : "—"}
+          change={gscConnection?.status === "active" ? gscConnection.property_url || "Active" : "Not connected"}
+          changeType={gscConnection?.status === "active" ? "positive" : "neutral"}
+          icon={Link}
+        />
       </WidgetGrid>
 
       <div className="mt-6">
@@ -350,7 +393,25 @@ export default function SEO() {
 
           <TabsContent value="rankings" className="mt-4">
             <DataCard title="Keyword Rankings">
-              <p className="text-xs text-muted-foreground -mt-2 mb-3">AI estimates · Connect GSC for real position data</p>
+              <div className="flex items-center justify-between -mt-2 mb-3">
+                <p className="text-xs text-muted-foreground">
+                  {gscConnection?.status === "active"
+                    ? `Real data from Google Search Console · ${gscConnection.property_url || "Connected"}`
+                    : "AI estimates · Connect GSC for real position data"}
+                </p>
+                <div className="flex gap-2">
+                  {gscConnection?.status === "active" ? (
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-[11px] gap-1" onClick={syncGsc} disabled={syncingGsc}>
+                      {syncingGsc ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      {syncingGsc ? "Syncing…" : "Sync GSC"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-[11px] gap-1" onClick={connectGsc}>
+                      <Link className="h-3 w-3" /> Connect GSC
+                    </Button>
+                  )}
+                </div>
+              </div>
               {keywords.length === 0 ? (
                 <div>
                   <div className="flex items-center gap-2 mb-4">
@@ -393,7 +454,12 @@ export default function SEO() {
                       <tr className="border-b border-border">
                         <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
                         <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">
+                          {gscConnection?.status === "active" ? "Impressions" : "Volume"}
+                        </th>
+                        {gscConnection?.status === "active" && (
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -402,13 +468,23 @@ export default function SEO() {
                           <td className="text-sm py-3">{k.keyword}</td>
                           <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
                           <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                          {gscConnection?.status === "active" && (
+                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-xs text-muted-foreground mt-2 px-1">
-                    Volumes are AI estimates until Search Console is connected.
-                  </p>
+                  {gscConnection?.status !== "active" && (
+                    <p className="text-xs text-muted-foreground mt-2 px-1">
+                      Volumes are AI estimates until Search Console is connected.
+                    </p>
+                  )}
+                  {gscConnection?.status === "active" && keywords.some(k => k.last_synced_at) && (
+                    <p className="text-xs text-muted-foreground mt-2 px-1">
+                      Last synced from Google Search Console · Showing last 28 days of data.
+                    </p>
+                  )}
                 </>
               )}
             </DataCard>
