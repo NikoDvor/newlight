@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2, BookOpen, Copy, CheckCheck, Link, RefreshCw, CheckCircle, XCircle, BarChart2 } from "lucide-react";
+import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2, BookOpen, Copy, CheckCheck, Link, RefreshCw, CheckCircle, XCircle, BarChart2, Trash } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -64,6 +64,9 @@ export default function SEO() {
   const [gapAnalysis, setGapAnalysis] = useState<any>(null);
   const [gapOpen, setGapOpen] = useState(false);
   const [runningGap, setRunningGap] = useState(false);
+  const [deletingKwId, setDeletingKwId] = useState<string | null>(null);
+  const [deletingOppId, setDeletingOppId] = useState<string | null>(null);
+  const [deleteOppConfirm, setDeleteOppConfirm] = useState<any>(null);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -315,6 +318,39 @@ export default function SEO() {
     fetchData();
   };
 
+  const deleteKeyword = async (id: string) => {
+    setDeletingKwId(id);
+    try {
+      const { error } = await supabase.from("seo_keywords").delete().eq("id", id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Keyword deleted" });
+      fetchData();
+    } finally {
+      setDeletingKwId(null);
+    }
+  };
+
+  const deleteContentOpp = async (opp: any) => {
+    if (opp.brief) {
+      setDeleteOppConfirm(opp);
+      return;
+    }
+    await confirmDeleteContentOpp(opp.id);
+  };
+
+  const confirmDeleteContentOpp = async (id: string) => {
+    setDeleteOppConfirm(null);
+    setDeletingOppId(id);
+    try {
+      const { error } = await supabase.from("seo_content_opportunities").delete().eq("id", id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Content opportunity deleted" });
+      fetchData();
+    } finally {
+      setDeletingOppId(null);
+    }
+  };
+
   const generateBrief = async (opp: any) => {
     if (!activeClientId) return;
     setGeneratingBrief(true);
@@ -524,16 +560,28 @@ export default function SEO() {
                         {gscConnection?.status === "active" && (
                           <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
                         )}
+                        {isAdmin && <th className="w-8"></th>}
                       </tr>
                     </thead>
                     <tbody>
                       {keywords.map((k) => (
-                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors group">
                           <td className="text-sm py-3">{k.keyword}</td>
                           <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
                           <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
                           {gscConnection?.status === "active" && (
                             <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                          )}
+                          {isAdmin && (
+                            <td className="text-right py-3">
+                              <button
+                                onClick={() => deleteKeyword(k.id)}
+                                disabled={deletingKwId === k.id}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                              >
+                                {deletingKwId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
+                              </button>
+                            </td>
                           )}
                         </tr>
                       ))}
@@ -792,7 +840,7 @@ export default function SEO() {
               ) : (
                 <div className="space-y-1">
                   {contentOpps.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-3">
+                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-3 group">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                           <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
@@ -818,6 +866,15 @@ export default function SEO() {
                             <Sparkles className="h-3 w-3 mr-1" /> Brief
                           </Button>
                         ) : null}
+                        {isAdmin && (
+                          <button
+                            onClick={() => deleteContentOpp(c)}
+                            disabled={deletingOppId === c.id}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                          >
+                            {deletingOppId === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1206,6 +1263,37 @@ export default function SEO() {
               </div>
             </div>
           ) : null}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={!!deleteOppConfirm} onOpenChange={(open) => { if (!open) setDeleteOppConfirm(null); }}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Delete content opportunity</SheetTitle>
+            <SheetDescription>
+              This opportunity has a generated brief attached. Deleting it will permanently remove both the opportunity and the brief.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {deleteOppConfirm && (
+              <div className="p-3 rounded-lg bg-secondary">
+                <p className="text-sm font-medium">{deleteOppConfirm.topic_title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{deleteOppConfirm.target_keyword ? `Target: ${deleteOppConfirm.target_keyword}` : deleteOppConfirm.opportunity_type}</p>
+              </div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteOppConfirm(null)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                disabled={!!deletingOppId}
+                onClick={() => deleteOppConfirm && confirmDeleteContentOpp(deleteOppConfirm.id)}
+              >
+                {deletingOppId ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Trash className="h-4 w-4 mr-1" />}
+                Delete permanently
+              </Button>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
