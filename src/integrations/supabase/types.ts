@@ -2505,6 +2505,56 @@ export type Database = {
           },
         ]
       }
+      client_oauth_connections: {
+        Row: {
+          access_token: string | null
+          client_id: string
+          connected_at: string
+          connected_by: string | null
+          id: string
+          integration_type: string
+          location_id: string | null
+          property_url: string | null
+          refresh_token: string | null
+          status: string
+          token_expiry: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          client_id: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: string
+          integration_type: string
+          location_id?: string | null
+          property_url?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_expiry?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          client_id?: string
+          connected_at?: string
+          connected_by?: string | null
+          id?: string
+          integration_type?: string
+          location_id?: string | null
+          property_url?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_oauth_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reports: {
         Row: {
           ai_summary: string | null
