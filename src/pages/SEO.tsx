@@ -56,6 +56,9 @@ export default function SEO() {
   const [runLog, setRunLog] = useState<any[]>([]);
   const [clientType, setClientType] = useState<string | null>(null);
   const [perfScore, setPerfScore] = useState<any>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [briefOpp, setBriefOpp] = useState<any>(null);
+  const [generatingBrief, setGeneratingBrief] = useState(false);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
