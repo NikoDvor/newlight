@@ -9427,6 +9427,8 @@ export type Database = {
       }
       seo_content_opportunities: {
         Row: {
+          brief: string | null
+          brief_generated_at: string | null
           client_id: string
           created_at: string
           id: string
@@ -9438,6 +9440,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          brief?: string | null
+          brief_generated_at?: string | null
           client_id: string
           created_at?: string
           id?: string
@@ -9449,6 +9453,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          brief?: string | null
+          brief_generated_at?: string | null
           client_id?: string
           created_at?: string
           id?: string
