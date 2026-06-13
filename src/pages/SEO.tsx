@@ -59,6 +59,8 @@ export default function SEO() {
   const [briefOpen, setBriefOpen] = useState(false);
   const [briefOpp, setBriefOpp] = useState<any>(null);
   const [generatingBrief, setGeneratingBrief] = useState(false);
+  const [gscConnection, setGscConnection] = useState<any>(null);
+  const [syncingGsc, setSyncingGsc] = useState(false);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
