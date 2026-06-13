@@ -196,73 +196,11 @@ export default function SEO() {
     setBriefOpp(opp);
     setBriefOpen(true);
     try {
-      const { data: clientData } = await supabase
-        .from("clients")
-        .select("business_name, industry, primary_location, business_type")
-        .eq("id", activeClientId)
-        .maybeSingle();
-      const isFinancial = (clientData as any)?.business_type === "financial_firm";
-      const complianceInstruction = isFinancial
-        ? `\n\nCOMPLIANCE MODE: This client is a regulated financial firm. In the compliance_flags field, identify any specific claims in your brief that require substantiation, any language that implies guaranteed outcomes, and any statements that may require FINRA/SEC review. Be specific about which section contains the flag. If the CTA implies guaranteed results flag it. If no flags exist write "No compliance flags identified."`
-        : "";
-      const prompt = `You are an expert SEO content strategist. Generate a detailed content brief for the following opportunity.
-Business: ${(clientData as any)?.business_name || "Unknown"}
-Industry: ${(clientData as any)?.industry || "Unknown"}
-Location: ${(clientData as any)?.primary_location || "Unknown"}
-Topic: ${opp.topic_title}
-Primary keyword: ${opp.target_keyword || opp.topic_title}
-Content type: ${opp.opportunity_type}
-Priority: ${opp.priority}
-${complianceInstruction}
-
-Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
-{
-  "primary_keyword": "string",
-  "secondary_keywords": ["string", "string", "string", "string", "string"],
-  "suggested_title": "string",
-  "meta_description": "string (under 160 characters)",
-  "word_count": "string (e.g. 1500-1800 words)",
-  "h2_sections": [
-    { "heading": "string", "note": "string (one sentence on what this section covers)" }
-  ],
-  "internal_link_suggestions": "string",
-  "call_to_action": "string",
-  "compliance_flags": "string"
-}
-
-Requirements:
-- secondary_keywords: exactly 5 entries, specific and varied
-- h2_sections: 5 entries minimum
-- meta_description: must be under 160 characters
-- compliance_flags: only include if clientType is financial_firm, otherwise return empty string`;
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_LOVABLE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: "You output strict JSON only." },
-            { role: "user", content: prompt },
-          ],
-        }),
+      const { data, error } = await supabase.functions.invoke("seo-generate-brief", {
+        body: { client_id: activeClientId, opp_id: opp.id },
       });
-      if (!response.ok) throw new Error("AI request failed");
-      const aiData = await response.json();
-      const raw = aiData?.choices?.[0]?.message?.content || "";
-      let clean = raw.trim();
-      if (clean.startsWith("```")) {
-        clean = clean.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
-      }
-      const parsed = JSON.parse(clean);
-      const briefText = JSON.stringify(parsed);
-      await supabase
-        .from("seo_content_opportunities")
-        .update({ brief: briefText, brief_generated_at: new Date().toISOString() })
-        .eq("id", opp.id);
-      setBriefOpp({ ...opp, brief: briefText, brief_generated_at: new Date().toISOString() });
+      if (error) throw error;
+      setBriefOpp({ ...opp, brief: data.brief, brief_generated_at: data.brief_generated_at });
       fetchData();
     } catch (err: any) {
       toast({
