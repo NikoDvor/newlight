@@ -102,7 +102,7 @@ Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
   ],
   "internal_link_suggestions": "string",
   "call_to_action": "string",
-  "compliance_flags": "string"
+  "compliance_notes": "string"
 }
 
 Requirements:
