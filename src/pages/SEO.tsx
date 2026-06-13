@@ -105,6 +105,21 @@ export default function SEO() {
       .then(({ data }) => setClientType((data as any)?.business_type ?? null));
   }, [activeClientId]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("gsc_connected");
+    const error = params.get("gsc_error");
+    if (connected === "true") {
+      toast({ title: "Google Search Console connected", description: "Your GSC data will sync shortly." });
+      window.history.replaceState({}, "", window.location.pathname);
+      fetchData();
+    }
+    if (error) {
+      toast({ title: "GSC connection failed", description: error, variant: "destructive" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const addKeyword = async () => {
     if (!activeClientId || !newKw.keyword) return;
     const { error } = await supabase.from("seo_keywords").insert({
