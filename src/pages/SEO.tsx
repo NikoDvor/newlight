@@ -34,7 +34,7 @@ const DEMO_CONTENT = [
 ];
 
 export default function SEO() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, isAdmin } = useWorkspace();
   const navigate = useNavigate();
   const [keywords, setKeywords] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
