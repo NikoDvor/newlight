@@ -62,7 +62,21 @@ Deno.serve(async (req) => {
     const isFinancial = client.business_type === "financial_firm";
 
     const complianceInstruction = isFinancial
-      ? `\n\nCOMPLIANCE MODE: This client is a regulated financial firm. In the compliance_flags field, identify any specific claims in your brief that require substantiation, any language that implies guaranteed outcomes, and any statements that may require FINRA/SEC review. Be specific about which section contains the flag. If the CTA implies guaranteed results flag it. If no flags exist write "No compliance flags identified."`
+      ? `\n\nCOMPLIANCE STANDARD: This content is being produced by NewLight on behalf of a regulated financial firm as part of a managed SEO service. All content must be built to SEC and FINRA standards from the ground up — not flagged after the fact. Apply the following rules throughout the entire brief:
+
+1. No performance guarantees, projected returns, or specific yield figures in any section including the CTA.
+
+2. All claims must be factual and capable of substantiation — avoid superlatives like "best", "guaranteed", "proven" unless they can be documented.
+
+3. Use balanced, educational language — present information, do not promise outcomes.
+
+4. The CTA must invite consultation or further information, never imply a guaranteed result.
+
+5. Include a suggested disclaimer in the compliance_notes field that should appear at the bottom of the published content, appropriate for the content type and topic.
+
+6. In the compliance_notes field, confirm which SEC/FINRA standards were applied (e.g. FINRA Rule 2210 for communications with the public, SEC Marketing Rule for testimonials if relevant) and note any topic-specific considerations the writer should be aware of.
+
+The compliance_notes field is not a warning list — it is a confirmation of the regulatory framework applied and guidance for the writer to maintain that standard throughout drafting.`
       : "";
 
     const prompt = `You are an expert SEO content strategist. Generate a detailed content brief for the following opportunity.
@@ -88,14 +102,14 @@ Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
   ],
   "internal_link_suggestions": "string",
   "call_to_action": "string",
-  "compliance_flags": "string"
+  "compliance_notes": "string"
 }
 
 Requirements:
 - secondary_keywords: exactly 5 entries, specific and varied
 - h2_sections: 5 entries minimum
 - meta_description: must be under 160 characters
-- compliance_flags: only include if this is a financial firm, otherwise return empty string`;
+- compliance_notes: for financial firms, confirm the regulatory framework applied and include a suggested disclaimer. For non-financial clients return empty string.`;
 
     if (!lovableKey) return json({ error: "AI gateway not configured" }, 500);
 
