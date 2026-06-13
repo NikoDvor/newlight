@@ -470,8 +470,8 @@ Requirements:
     }
   }
 
-  // 5. Local seeding
-  if (serviceAreas && serviceAreas.trim()) {
+  // 5. Local seeding (skip for financial firms)
+  if (!isFinancial && serviceAreas && serviceAreas.trim()) {
     const cities = serviceAreas.split(",").map(s => s.trim()).filter(Boolean);
     if (cities.length > 0) {
       const { data: existingLoc } = await supabase
