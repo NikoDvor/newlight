@@ -109,7 +109,7 @@ Requirements:
 - secondary_keywords: exactly 5 entries, specific and varied
 - h2_sections: 5 entries minimum
 - meta_description: must be under 160 characters
-- compliance_flags: only include if this is a financial firm, otherwise return empty string`;
+- compliance_notes: for financial firms, confirm the regulatory framework applied and include a suggested disclaimer. For non-financial clients return empty string.`;
 
     if (!lovableKey) return json({ error: "AI gateway not configured" }, 500);
 
