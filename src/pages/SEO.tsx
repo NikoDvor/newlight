@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2 } from "lucide-react";
+import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2, BookOpen, Copy, CheckCheck } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -34,7 +34,7 @@ const DEMO_CONTENT = [
 ];
 
 export default function SEO() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, isAdmin } = useWorkspace();
   const navigate = useNavigate();
   const [keywords, setKeywords] = useState<any[]>([]);
   const [competitors, setCompetitors] = useState<any[]>([]);
@@ -56,6 +56,9 @@ export default function SEO() {
   const [runLog, setRunLog] = useState<any[]>([]);
   const [clientType, setClientType] = useState<string | null>(null);
   const [perfScore, setPerfScore] = useState<any>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [briefOpp, setBriefOpp] = useState<any>(null);
+  const [generatingBrief, setGeneratingBrief] = useState(false);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -184,6 +187,120 @@ export default function SEO() {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const generateBrief = async (opp: any) => {
+    if (!activeClientId) return;
+    setGeneratingBrief(true);
+    setBriefOpp(opp);
+    setBriefOpen(true);
+    try {
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("business_name, industry, primary_location, business_type")
+        .eq("id", activeClientId)
+        .maybeSingle();
+      const isFinancial = (clientData as any)?.business_type === "financial_firm";
+      const complianceInstruction = isFinancial
+        ? `\n\nCOMPLIANCE MODE: This client is a regulated financial firm. In the compliance_flags field, identify any specific claims in your brief that require substantiation, any language that implies guaranteed outcomes, and any statements that may require FINRA/SEC review. Be specific about which section contains the flag. If the CTA implies guaranteed results flag it. If no flags exist write "No compliance flags identified."`
+        : "";
+      const prompt = `You are an expert SEO content strategist. Generate a detailed content brief for the following opportunity.
+Business: ${(clientData as any)?.business_name || "Unknown"}
+Industry: ${(clientData as any)?.industry || "Unknown"}
+Location: ${(clientData as any)?.primary_location || "Unknown"}
+Topic: ${opp.topic_title}
+Primary keyword: ${opp.target_keyword || opp.topic_title}
+Content type: ${opp.opportunity_type}
+Priority: ${opp.priority}
+${complianceInstruction}
+
+Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
+{
+  "primary_keyword": "string",
+  "secondary_keywords": ["string", "string", "string", "string", "string"],
+  "suggested_title": "string",
+  "meta_description": "string (under 160 characters)",
+  "word_count": "string (e.g. 1500-1800 words)",
+  "h2_sections": [
+    { "heading": "string", "note": "string (one sentence on what this section covers)" }
+  ],
+  "internal_link_suggestions": "string",
+  "call_to_action": "string",
+  "compliance_flags": "string"
+}
+
+Requirements:
+- secondary_keywords: exactly 5 entries, specific and varied
+- h2_sections: 5 entries minimum
+- meta_description: must be under 160 characters
+- compliance_flags: only include if clientType is financial_firm, otherwise return empty string`;
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You output strict JSON only." },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+      if (!response.ok) throw new Error("AI request failed");
+      const aiData = await response.json();
+      const raw = aiData?.choices?.[0]?.message?.content || "";
+      let clean = raw.trim();
+      if (clean.startsWith("```")) {
+        clean = clean.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+      }
+      const parsed = JSON.parse(clean);
+      const briefText = JSON.stringify(parsed);
+      await supabase
+        .from("seo_content_opportunities")
+        .update({ brief: briefText, brief_generated_at: new Date().toISOString() })
+        .eq("id", opp.id);
+      setBriefOpp({ ...opp, brief: briefText, brief_generated_at: new Date().toISOString() });
+      fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Brief generation failed",
+        description: err.message || "Something went wrong",
+        variant: "destructive",
+      });
+      setBriefOpen(false);
+    } finally {
+      setGeneratingBrief(false);
+    }
+  };
+
+  const viewBrief = (opp: any) => {
+    setBriefOpp(opp);
+    setBriefOpen(true);
+  };
+
+  const copyBrief = async (briefText: string) => {
+    try {
+      let parsed: any = {};
+      try { parsed = JSON.parse(briefText); } catch { parsed = {}; }
+      const formatted = [
+        `PRIMARY KEYWORD: ${parsed.primary_keyword || ""}`,
+        `SECONDARY KEYWORDS: ${(parsed.secondary_keywords || []).join(", ")}`,
+        `SUGGESTED TITLE: ${parsed.suggested_title || ""}`,
+        `META DESCRIPTION: ${parsed.meta_description || ""}`,
+        `WORD COUNT: ${parsed.word_count || ""}`,
+        `H2 STRUCTURE:`,
+        ...(parsed.h2_sections || []).map((s: any, i: number) => `  H2 ${i + 1}: ${s.heading}\n  Note: ${s.note}`),
+        `INTERNAL LINKS: ${parsed.internal_link_suggestions || ""}`,
+        `CALL TO ACTION: ${parsed.call_to_action || ""}`,
+        parsed.compliance_flags ? `COMPLIANCE FLAGS:\n${parsed.compliance_flags}` : "",
+      ].filter(Boolean).join("\n\n");
+      await navigator.clipboard.writeText(formatted);
+      toast({ title: "Brief copied to clipboard" });
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" });
     }
   };
 
@@ -539,21 +656,34 @@ export default function SEO() {
                   <Button size="sm" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Opportunity</Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {contentOpps.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div className="flex items-center gap-3">
+                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                           <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{c.topic_title}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{c.topic_title}</p>
                           <p className="text-xs text-muted-foreground">{c.target_keyword ? `Target: ${c.target_keyword}` : c.opportunity_type}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <Badge className={`text-[10px] ${c.priority === "high" ? "bg-blue-50 text-blue-700" : c.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{c.priority}</Badge>
-                        <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
+                        {c.brief ? (
+                          <Badge className="text-[10px] bg-emerald-50 text-emerald-700">brief ready</Badge>
+                        ) : (
+                          <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
+                        )}
+                        {c.brief ? (
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => viewBrief(c)}>
+                            <BookOpen className="h-3 w-3 mr-1" /> View brief
+                          </Button>
+                        ) : isAdmin ? (
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => generateBrief(c)}>
+                            <Sparkles className="h-3 w-3 mr-1" /> Brief
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -732,6 +862,110 @@ export default function SEO() {
               <Button className="flex-1" onClick={addLocalItem}>Add</Button>
             </div>
           </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={briefOpen} onOpenChange={setBriefOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Content brief</SheetTitle>
+            <SheetDescription>
+              {briefOpp?.topic_title}
+              {briefOpp?.brief_generated_at && (
+                <span className="block mt-0.5 text-xs">
+                  Generated {new Date(briefOpp.brief_generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          {generatingBrief ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Generating brief…</p>
+            </div>
+          ) : briefOpp?.brief ? (() => {
+            let parsed: any = {};
+            try { parsed = JSON.parse(briefOpp.brief); } catch {}
+            const isFinancial = clientType === "financial_firm";
+            return (
+              <div className="mt-6 space-y-5">
+                {isFinancial && (
+                  <div className="flex gap-2 items-start p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <Shield className="h-4 w-4 text-blue-700 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 leading-relaxed">Compliance mode active. Review all flagged claims before publishing. No performance guarantees or specific return figures should appear in the final content.</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Primary keyword</p>
+                  <p className="text-sm">{parsed.primary_keyword}</p>
+                </div>
+                {parsed.secondary_keywords?.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Secondary keywords</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {parsed.secondary_keywords.map((kw: string, i: number) => (
+                        <span key={i} className="px-2 py-1 rounded-full text-xs border border-border text-muted-foreground">{kw}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Suggested title</p>
+                  <p className="text-sm font-medium">{parsed.suggested_title}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Meta description</p>
+                  <p className="text-sm text-muted-foreground">{parsed.meta_description}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Recommended word count</p>
+                  <p className="text-sm">{parsed.word_count}</p>
+                </div>
+                {parsed.h2_sections?.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">H2 structure</p>
+                    <div className="space-y-0">
+                      {parsed.h2_sections.map((s: any, i: number) => (
+                        <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-0">
+                          <span className="text-xs font-medium text-primary shrink-0 min-w-[32px]">H2 {i + 1}</span>
+                          <div>
+                            <p className="text-sm font-medium">{s.heading}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{s.note}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Internal link suggestions</p>
+                  <p className="text-sm text-muted-foreground">{parsed.internal_link_suggestions}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Call to action</p>
+                  <p className="text-sm">{parsed.call_to_action}</p>
+                </div>
+                {isFinancial && parsed.compliance_flags && (
+                  <div>
+                    <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide mb-2">Compliance flags</p>
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                      <p className="text-xs text-amber-800 leading-relaxed">{parsed.compliance_flags}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1 gap-1.5" onClick={() => copyBrief(briefOpp.brief)}>
+                    <Copy className="h-4 w-4" /> Copy brief
+                  </Button>
+                  {isAdmin && (
+                    <Button variant="outline" className="gap-1.5" onClick={() => generateBrief(briefOpp)}>
+                      <Sparkles className="h-4 w-4" /> Regenerate
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })() : null}
         </SheetContent>
       </Sheet>
     </div>
