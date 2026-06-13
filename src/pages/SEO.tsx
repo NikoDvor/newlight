@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2, BookOpen, Copy, CheckCheck, Link, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import { Search, TrendingUp, Shield, Eye, Plus, AlertTriangle, ArrowUp, ArrowDown, Minus, Target, MapPin, FileText, Sparkles, Loader2, BookOpen, Copy, CheckCheck, Link, RefreshCw, CheckCircle, XCircle, BarChart2 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -61,6 +61,9 @@ export default function SEO() {
   const [generatingBrief, setGeneratingBrief] = useState(false);
   const [gscConnection, setGscConnection] = useState<any>(null);
   const [syncingGsc, setSyncingGsc] = useState(false);
+  const [gapAnalysis, setGapAnalysis] = useState<any>(null);
+  const [gapOpen, setGapOpen] = useState(false);
+  const [runningGap, setRunningGap] = useState(false);
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
@@ -94,6 +97,12 @@ export default function SEO() {
       .eq("integration_type", "gsc")
       .maybeSingle();
     setGscConnection(gscRes.data || null);
+    const gapRes = await supabase
+      .from("seo_competitor_gaps")
+      .select("*")
+      .eq("client_id", activeClientId)
+      .maybeSingle();
+    setGapAnalysis(gapRes.data || null);
     setLoading(false);
   };
 
@@ -249,6 +258,61 @@ export default function SEO() {
     } finally {
       setSyncingGsc(false);
     }
+  };
+
+  const runGapAnalysis = async () => {
+    if (!activeClientId) return;
+    setRunningGap(true);
+    setGapOpen(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-competitor-analysis", {
+        body: { client_id: activeClientId },
+      });
+      if (error) throw error;
+      setGapAnalysis(data);
+      fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Gap analysis failed",
+        description: err.message || "Something went wrong",
+        variant: "destructive",
+      });
+      setGapOpen(false);
+    } finally {
+      setRunningGap(false);
+    }
+  };
+
+  const addGapsAsOpportunities = async () => {
+    if (!activeClientId || !gapAnalysis) return;
+    const gaps = (gapAnalysis.keyword_gaps || []).filter((g: any) => g.priority !== "low");
+    if (gaps.length === 0) return;
+    const { data: existing } = await supabase
+      .from("seo_content_opportunities")
+      .select("topic_title")
+      .eq("client_id", activeClientId);
+    const have = new Set((existing || []).map((r: any) => (r.topic_title || "").toLowerCase()));
+    const rows = gaps
+      .filter((g: any) => !have.has(g.keyword.toLowerCase()))
+      .map((g: any) => ({
+        client_id: activeClientId,
+        topic_title: g.keyword,
+        target_keyword: g.keyword,
+        opportunity_type: "new_page",
+        priority: g.priority,
+        status: "open",
+      }));
+    if (rows.length === 0) {
+      toast({ title: "All gaps already in content opportunities" });
+      return;
+    }
+    const { error } = await supabase.from("seo_content_opportunities").insert(rows);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: `${rows.length} gaps added to content opportunities` });
+    fetchData();
   };
 
   const generateBrief = async (opp: any) => {
