@@ -656,21 +656,34 @@ Requirements:
                   <Button size="sm" onClick={() => setContentOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Opportunity</Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {contentOpps.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div className="flex items-center gap-3">
+                    <div key={c.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,56%,.08)" }}>
                           <FileText className="h-4 w-4" style={{ color: "hsl(211 96% 56%)" }} />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{c.topic_title}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{c.topic_title}</p>
                           <p className="text-xs text-muted-foreground">{c.target_keyword ? `Target: ${c.target_keyword}` : c.opportunity_type}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <Badge className={`text-[10px] ${c.priority === "high" ? "bg-blue-50 text-blue-700" : c.priority === "medium" ? "bg-cyan-50 text-cyan-700" : "bg-secondary text-muted-foreground"}`}>{c.priority}</Badge>
-                        <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
+                        {c.brief ? (
+                          <Badge className="text-[10px] bg-emerald-50 text-emerald-700">brief ready</Badge>
+                        ) : (
+                          <Badge className={`text-[10px] ${c.status === "open" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{c.status}</Badge>
+                        )}
+                        {c.brief ? (
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => viewBrief(c)}>
+                            <BookOpen className="h-3 w-3 mr-1" /> View brief
+                          </Button>
+                        ) : isAdmin ? (
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => generateBrief(c)}>
+                            <Sparkles className="h-3 w-3 mr-1" /> Brief
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   ))}
