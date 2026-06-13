@@ -233,7 +233,7 @@ export default function SEO() {
         ...(parsed.h2_sections || []).map((s: any, i: number) => `  H2 ${i + 1}: ${s.heading}\n  Note: ${s.note}`),
         `INTERNAL LINKS: ${parsed.internal_link_suggestions || ""}`,
         `CALL TO ACTION: ${parsed.call_to_action || ""}`,
-        parsed.compliance_flags ? `COMPLIANCE FLAGS:\n${parsed.compliance_flags}` : "",
+        parsed.compliance_notes ? `COMPLIANCE NOTES:\n${parsed.compliance_notes}` : "",
       ].filter(Boolean).join("\n\n");
       await navigator.clipboard.writeText(formatted);
       toast({ title: "Brief copied to clipboard" });
@@ -569,15 +569,22 @@ export default function SEO() {
             </DataCard>
             {clientType === "financial_firm" && (
               <>
-                <DataCard title="E-E-A-T audit" className="mt-4">
-                  {["Author bios with credentials", "ADV Part 2 link in footer", "Disclaimer in footer"].map((label) => (
-                    <div key={label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <span className="text-sm">{label}</span>
-                      <Badge className="text-[10px] bg-amber-50 text-amber-700">check required</Badge>
+                <DataCard title="E-E-A-T signals" className="mt-4">
+                  {[
+                    { label: "Author bios with credentials", note: "Confirm credentials are visible on published content" },
+                    { label: "ADV Part 2 link in footer", note: "Required disclosure for registered investment advisors" },
+                    { label: "Disclaimer in footer", note: "Confirm regulatory disclaimer is present site-wide" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start justify-between py-3 border-b border-border last:border-0 gap-3">
+                      <div>
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.note}</p>
+                      </div>
+                      <Badge className="text-[10px] bg-blue-50 text-blue-700 shrink-0">verify</Badge>
                     </div>
                   ))}
                 </DataCard>
-                <p className="text-xs text-muted-foreground mt-2">E-E-A-T signals are manually verified. Run the site audit to refresh technical issues.</p>
+                <p className="text-xs text-muted-foreground mt-2">E-E-A-T signals support your compliance standard. Verify these are in place on the client's live site.</p>
               </>
             )}
           </TabsContent>
@@ -830,7 +837,7 @@ export default function SEO() {
                 {isFinancial && (
                   <div className="flex gap-2 items-start p-3 rounded-lg bg-blue-50 border border-blue-200">
                     <Shield className="h-4 w-4 text-blue-700 shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700 leading-relaxed">Compliance mode active. Review all flagged claims before publishing. No performance guarantees or specific return figures should appear in the final content.</p>
+                    <p className="text-xs text-blue-700 leading-relaxed">This brief has been produced to SEC and FINRA standards by NewLight as part of your managed SEO service. Content is built compliant from the ground up. Review compliance notes below before sending to your approval contact.</p>
                   </div>
                 )}
                 <div>
@@ -883,11 +890,11 @@ export default function SEO() {
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">Call to action</p>
                   <p className="text-sm">{parsed.call_to_action}</p>
                 </div>
-                {isFinancial && parsed.compliance_flags && (
+                {isFinancial && parsed.compliance_notes && (
                   <div>
-                    <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide mb-2">Compliance flags</p>
-                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
-                      <p className="text-xs text-amber-800 leading-relaxed">{parsed.compliance_flags}</p>
+                    <p className="text-[10px] font-medium text-blue-700 uppercase tracking-wide mb-2">Compliance notes</p>
+                    <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                      <p className="text-xs text-blue-800 leading-relaxed">{parsed.compliance_notes}</p>
                     </div>
                   </div>
                 )}
