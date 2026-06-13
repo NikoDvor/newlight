@@ -118,7 +118,7 @@ export function AppLayout() {
                 </div>
               )}
             </div>
-            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 overflow-x-auto touch-x-scroll">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 overflow-x-auto touch-x-scroll scrollbar-hide">
               {isAdmin && activeClientId && (
                 <button
                   onClick={() => {
