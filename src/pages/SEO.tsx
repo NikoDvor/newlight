@@ -581,37 +581,62 @@ export default function SEO() {
           </TabsContent>
 
           <TabsContent value="competitors" className="mt-4">
-            <DataCard title="Competitor Overview">
+            <DataCard
+              title="Competitor overview"
+              action={
+                <div className="flex gap-2">
+                  {competitors.length > 0 && isAdmin && (
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={runGapAnalysis} disabled={runningGap}>
+                      {runningGap ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      {runningGap ? "Analysing…" : gapAnalysis ? "Re-run analysis" : "Run gap analysis"}
+                    </Button>
+                  )}
+                  {gapAnalysis && (
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setGapOpen(true)}>
+                      <BarChart2 className="h-4 w-4" /> View analysis
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setCompOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                </div>
+              }
+            >
               {competitors.length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <Shield className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">Track Your Competitors</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add competitor domains to monitor their SEO performance and find opportunities.</p>
+                  <p className="text-sm font-medium text-foreground mb-1">Track your competitors</p>
+                  <p className="text-xs text-muted-foreground mb-4">Add competitor domains to run AI-powered gap analysis and find growth opportunities.</p>
                   <Button size="sm" onClick={() => setCompOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Competitor</Button>
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
-                      <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {competitors.map((c) => (
-                      <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                        <td className="text-sm font-medium py-3">{c.domain}</td>
-                        <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
-                        <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
-                        <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                <>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
+                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {competitors.map((c) => (
+                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                          <td className="text-sm font-medium py-3">{c.domain}</td>
+                          <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
+                          <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
+                          <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {gapAnalysis && (
+                    <p className="text-xs text-muted-foreground mt-2 px-1">
+                      Gap analysis generated {new Date(gapAnalysis.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {(gapAnalysis.keyword_gaps || []).length} keyword gaps · {(gapAnalysis.content_gaps || []).length} content gaps
+                    </p>
+                  )}
+                </>
               )}
             </DataCard>
           </TabsContent>
@@ -1075,6 +1100,112 @@ export default function SEO() {
               </div>
             );
           })() : null}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={gapOpen} onOpenChange={setGapOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Competitor gap analysis</SheetTitle>
+            <SheetDescription>
+              {gapAnalysis?.competitor_domains && `vs ${gapAnalysis.competitor_domains}`}
+              {gapAnalysis?.generated_at && (
+                <span className="block mt-0.5 text-xs">
+                  Generated {new Date(gapAnalysis.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          {runningGap ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Analysing competitors…</p>
+            </div>
+          ) : gapAnalysis ? (
+            <div className="mt-6 space-y-6">
+              {(gapAnalysis.keyword_gaps || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-3">Keyword gaps</p>
+                  <div className="space-y-0">
+                    {(gapAnalysis.keyword_gaps || []).map((g: any, i: number) => (
+                      <div key={i} className="flex items-start justify-between py-2.5 border-b border-border last:border-0 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{g.keyword}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{g.note}</p>
+                        </div>
+                        <Badge className={`text-[10px] shrink-0 ${g.priority === "high" ? "bg-amber-50 text-amber-700" : g.priority === "medium" ? "bg-blue-50 text-blue-700" : "bg-secondary text-muted-foreground"}`}>
+                          {g.priority}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(gapAnalysis.content_gaps || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-3">Content gaps</p>
+                  <div className="space-y-0">
+                    {(gapAnalysis.content_gaps || []).map((g: any, i: number) => (
+                      <div key={i} className="flex items-start justify-between py-2.5 border-b border-border last:border-0 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{g.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{g.note}</p>
+                        </div>
+                        <Badge className={`text-[10px] shrink-0 ${g.priority === "high" ? "bg-amber-50 text-amber-700" : g.priority === "medium" ? "bg-blue-50 text-blue-700" : "bg-secondary text-muted-foreground"}`}>
+                          {g.priority}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(gapAnalysis.positioning_opportunities || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-3">Positioning opportunities</p>
+                  <div className="space-y-0">
+                    {(gapAnalysis.positioning_opportunities || []).map((o: any, i: number) => (
+                      <div key={i} className="flex gap-3 py-2.5 border-b border-border last:border-0">
+                        <span className="text-xs font-medium text-primary shrink-0 min-w-[20px]">{i + 1}</span>
+                        <div>
+                          <p className="text-sm font-medium">{o.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{o.note}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-1.5"
+                  onClick={async () => {
+                    const formatted = [
+                      `COMPETITOR GAP ANALYSIS`,
+                      `vs ${gapAnalysis.competitor_domains}`,
+                      `Generated ${new Date(gapAnalysis.generated_at).toLocaleDateString()}`,
+                      ``,
+                      `KEYWORD GAPS:`,
+                      ...(gapAnalysis.keyword_gaps || []).map((g: any) => `- [${g.priority.toUpperCase()}] ${g.keyword}: ${g.note}`),
+                      ``,
+                      `CONTENT GAPS:`,
+                      ...(gapAnalysis.content_gaps || []).map((g: any) => `- [${g.priority.toUpperCase()}] ${g.title}: ${g.note}`),
+                      ``,
+                      `POSITIONING OPPORTUNITIES:`,
+                      ...(gapAnalysis.positioning_opportunities || []).map((o: any, i: number) => `${i + 1}. ${o.title}: ${o.note}`),
+                    ].join("\n");
+                    await navigator.clipboard.writeText(formatted);
+                    toast({ title: "Analysis copied to clipboard" });
+                  }}
+                >
+                  <Copy className="h-4 w-4" /> Copy analysis
+                </Button>
+                <Button className="gap-1.5" onClick={addGapsAsOpportunities}>
+                  <Plus className="h-4 w-4" /> Add gaps as opportunities
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </SheetContent>
       </Sheet>
     </div>
