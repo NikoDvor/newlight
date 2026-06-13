@@ -325,22 +325,62 @@ async function generateForClient(
 
   const isFinancial = client.business_type === "financial_firm";
   if (lovableKey && !skipAi) {
+    const isFinancial = client.business_type === "financial_firm";
+
     const locations = [serviceAreas, client.primary_location].filter(Boolean).join("; ");
-    const prompt = `You are an SEO strategist. Generate a localized SEO plan for this business:
+
+    const prompt = isFinancial
+
+      ? `You are an SEO strategist specialising in financial services. Generate a national SEO plan for this regulated financial firm. All content must be built to SEC and FINRA standards — balanced, educational, no performance guarantees.
 
 Business name: ${client.business_name || "Unknown"}
+
 Industry: ${client.industry || "Unknown"}
-Business type: ${client.business_type || "Unknown"}
-Locations / service areas: ${locations || "Unknown"}
+
+Business type: financial firm
+
+Geographic scope: national/regional
 
 Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
+
 {
+
   "keywords": [ { "keyword": "string", "volume_tier": "high"|"medium"|"low" } ],
+
   "content_opportunities": [ { "topic_title": "string", "target_keyword": "string", "opportunity_type": "blog_post"|"new_page"|"location_page"|"faq"|"optimization", "priority": "low"|"medium"|"high" } ]
+
 }
 
 Requirements:
+
+- keywords: 12 to 15 entries targeting national/regional financial services search intent. Focus on: credential-based terms (fiduciary, CFP, CFA, RIA, fee-only), problem-aware terms (retirement planning, estate planning, wealth management, tax strategies), trust-signal terms (independent advisor, fiduciary duty, transparent fees). Do not include city-based local keywords. Mix high/medium/low volume.
+
+- content_opportunities: 6 to 8 entries focused on thought leadership, educational guides, regulatory explainers, and credential spotlights that build E-E-A-T and drive national organic traffic. Content types should be blog_post, new_page, or faq. No location_page entries.`
+
+      : `You are an SEO strategist. Generate a localized SEO plan for this business:
+
+Business name: ${client.business_name || "Unknown"}
+
+Industry: ${client.industry || "Unknown"}
+
+Business type: ${client.business_type || "Unknown"}
+
+Locations / service areas: ${locations || "Unknown"}
+
+Return STRICT JSON ONLY (no prose, no markdown fences) with this exact shape:
+
+{
+
+  "keywords": [ { "keyword": "string", "volume_tier": "high"|"medium"|"low" } ],
+
+  "content_opportunities": [ { "topic_title": "string", "target_keyword": "string", "opportunity_type": "blog_post"|"new_page"|"location_page"|"faq"|"optimization", "priority": "low"|"medium"|"high" } ]
+
+}
+
+Requirements:
+
 - keywords: 12 to 15 entries, localized to the cities listed and the industry. Mix high/medium/low volume.
+
 - content_opportunities: 6 to 8 entries focused on driving local organic traffic.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
