@@ -99,6 +99,9 @@ export default function SettingsPage() {
   const [branding, setBranding] = useState(defaultBranding);
   const [general, setGeneral] = useState(defaultGeneral);
   const [showPreview, setShowPreview] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+  const [svcSheet, setSvcSheet] = useState<{ item: any | null } | null>(null);
+  const [svcForm, setSvcForm] = useState<any>({ service_name: "", service_description: "", display_price_text: "", service_status: "draft" });
 
   const setB = (key: string) => (val: string) => setBranding(p => ({ ...p, [key]: val }));
   const setG = (key: string) => (val: string) => setGeneral(p => ({ ...p, [key]: val }));
