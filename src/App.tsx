@@ -410,6 +410,7 @@ const App = () => {
                 <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
                 <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
+                <Route path="/help-desk" element={<Navigate to="/support-tickets" replace />} />
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
                 <Route path="/team" element={<TeamManagement />} />
