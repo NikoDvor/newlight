@@ -860,6 +860,20 @@ export default function Dashboard() {
   const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
   const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [healthRecord, setHealthRecord] = useState<any>(null);
+  const [healthMilestones, setHealthMilestones] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!activeClientId) return;
+    Promise.all([
+      supabase.from("client_health_records" as any).select("*").eq("client_id", activeClientId).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("client_success_milestones" as any).select("*").eq("client_id", activeClientId),
+    ]).then(([h, m]) => {
+      setHealthRecord(h.data || null);
+      setHealthMilestones((m.data as any[]) || []);
+    });
+  }, [activeClientId]);
+
 
   useEffect(() => {
     if (!activeClientId) return;
