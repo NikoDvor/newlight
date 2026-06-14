@@ -11,7 +11,7 @@ import {
   Plug, Rocket, FileText, Clock, Briefcase,
   Plus, UserPlus, Send, BarChart3, Zap, Cpu, Radio,
   Wifi, Brain, Sparkles, AlertTriangle,
-  ChevronRight, LineChart, Eye, Shield, Layers, ArrowUp
+  ChevronRight, LineChart, Eye, Shield, Layers, ArrowUp, Heart
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
