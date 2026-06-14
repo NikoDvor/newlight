@@ -130,17 +130,51 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes, calRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes, atRes] = await Promise.all([
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
       supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
+      supabase.from("calendar_appointment_types").select("*").eq("client_id", activeClientId),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
     setContacts(cRes.data || []);
     setCalendars(calRes.data || []);
+    const grouped: Record<string, any[]> = {};
+    (atRes.data || []).forEach((t: any) => {
+      grouped[t.calendar_id] = grouped[t.calendar_id] || [];
+      grouped[t.calendar_id].push(t);
+    });
+    setApptTypesByCal(grouped);
     setLoading(false);
+  };
+
+  const createCalendarWithTypes = async () => {
+    if (!activeClientId || !manageCal.calendar_name.trim()) {
+      toast({ title: "Calendar name is required", variant: "destructive" });
+      return;
+    }
+    const duration = parseInt(manageCal.default_duration) || 30;
+    const { data: cal, error } = await supabase.from("calendars").insert({
+      client_id: activeClientId,
+      calendar_name: manageCal.calendar_name,
+      calendar_type: "general",
+    }).select().single();
+    if (error || !cal) { toast({ title: "Error", description: error?.message, variant: "destructive" }); return; }
+    const typeNames = manageCal.appointment_types.map(t => t.trim()).filter(Boolean);
+    if (typeNames.length) {
+      await supabase.from("calendar_appointment_types").insert(
+        typeNames.map(name => ({
+          client_id: activeClientId, calendar_id: cal.id, name, duration_minutes: duration,
+          location_type: "video", is_active: true,
+        }))
+      );
+    }
+    toast({ title: "Calendar created" });
+    setManageCal({ calendar_name: "", appointment_types: [""], default_duration: "30" });
+    setManageSheetOpen(false);
+    fetchData();
   };
 
   const createCalendar = async () => {
