@@ -108,6 +108,11 @@ export default function CalendarPage() {
   const [detailEvent, setDetailEvent] = useState<any>(null);
   const [newCalOpen, setNewCalOpen] = useState(false);
   const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+  const [manageSheetOpen, setManageSheetOpen] = useState(false);
+  const [manageCal, setManageCal] = useState<{ calendar_name: string; appointment_types: string[]; default_duration: string }>({
+    calendar_name: "", appointment_types: [""], default_duration: "30",
+  });
+  const [apptTypesByCal, setApptTypesByCal] = useState<Record<string, any[]>>({});
   const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
   const defaultLocation = zoomEnabled === false ? "" : zoomEnabled === true ? "zoom" : "";
   const [newEvent, setNewEvent] = useState({
