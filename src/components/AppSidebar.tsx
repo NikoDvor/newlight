@@ -5,7 +5,8 @@ import {
   Calendar, FileText, CreditCard,
   ChevronLeft, ChevronDown, Wallet, HelpCircle,
   Headphones, BookOpen, ClipboardList, BarChart3,
-  Briefcase, LifeBuoy, UserCog, Activity
+  Briefcase, LifeBuoy, UserCog, Activity,
+  Video, Zap, MessageSquare, Mail, ListChecks
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -46,6 +47,13 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
+    type: "group", label: "Intelligence",
+    items: [
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
+      { title: "Automation Workflows", url: "/automations", icon: Zap, moduleKey: "automations" },
+    ],
+  },
+  {
     type: "group", label: "Employee Hub",
     items: [
       { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
@@ -71,6 +79,16 @@ const navStructure: NavEntry[] = [
       { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
       { title: "Client Profiles", url: "/admin/clients", icon: Users },
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
+    ],
+  },
+  {
+    type: "group", label: "Communications",
+    items: [
+      { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
+      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
+      { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
+      { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
     ],
   },
   {
