@@ -11,7 +11,7 @@ import {
   Plug, Rocket, FileText, Clock, Briefcase,
   Plus, UserPlus, Send, BarChart3, Zap, Cpu, Radio,
   Wifi, Brain, Sparkles, AlertTriangle,
-  ChevronRight, LineChart, Eye, Shield, Layers, ArrowUp
+  ChevronRight, LineChart, Eye, Shield, Layers, ArrowUp, Heart
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -860,6 +860,20 @@ export default function Dashboard() {
   const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
   const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [healthRecord, setHealthRecord] = useState<any>(null);
+  const [healthMilestones, setHealthMilestones] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!activeClientId) return;
+    Promise.all([
+      supabase.from("client_health_records" as any).select("*").eq("client_id", activeClientId).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("client_success_milestones" as any).select("*").eq("client_id", activeClientId),
+    ]).then(([h, m]) => {
+      setHealthRecord(h.data || null);
+      setHealthMilestones((m.data as any[]) || []);
+    });
+  }, [activeClientId]);
+
 
   useEffect(() => {
     if (!activeClientId) return;
@@ -1203,7 +1217,89 @@ export default function Dashboard() {
           {/* ══════ PRIORITY INSIGHTS ══════ */}
           <PriorityInsights metrics={metrics} isNewClient={isNewClient} />
 
+          {/* ══════ CLIENT HEALTH ══════ */}
+          {(() => {
+            const score = healthRecord?.health_score_total ?? null;
+            const status = score == null
+              ? { label: "No Data", color: "hsl(var(--muted-foreground))", bg: "hsla(210,40%,94%,.4)" }
+              : score >= 75
+                ? { label: "Healthy", color: "hsl(152 60% 44%)", bg: "hsla(152,60%,44%,.12)" }
+                : score >= 50
+                  ? { label: "At Risk", color: "hsl(38 92% 50%)", bg: "hsla(38,92%,50%,.12)" }
+                  : { label: "Critical", color: "hsl(0 72% 51%)", bg: "hsla(0,72%,51%,.12)" };
+            const completedMs = healthMilestones.filter((m: any) => m.milestone_status === "Completed").length;
+            const signals: string[] = [];
+            if (healthRecord) {
+              if (completedMs > 0) signals.push(`${completedMs} milestone${completedMs > 1 ? "s" : ""} completed`);
+              if (integrationStats.connected > 0) signals.push(`${integrationStats.connected} integration${integrationStats.connected > 1 ? "s" : ""} connected`);
+              if (setupPct > 0) signals.push(`Onboarding ${setupPct}% complete`);
+              if (healthRecord.engagement_score != null) signals.push(`Engagement ${healthRecord.engagement_score}/100`);
+              if (healthRecord.billing_health_score != null) signals.push(`Billing ${healthRecord.billing_health_score}/100`);
+            }
+            const topSignals = signals.slice(0, 3);
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.5 }}
+                className="card-widget rounded-2xl p-5"
+              >
+                <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: status.bg }}>
+                      <Heart className="h-5 w-5" style={{ color: status.color }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Client Health</p>
+                      <p className="text-xs text-muted-foreground">Overall workspace wellbeing</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => navigate("/success-center")}>
+                    View Details <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {healthRecord ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="text-4xl font-bold text-foreground leading-none">
+                          {score}<span className="text-base font-normal text-muted-foreground">/100</span>
+                        </p>
+                        <span
+                          className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                          style={{ background: status.bg, color: status.color }}
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 space-y-1.5">
+                      {topSignals.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No recent signals yet.</p>
+                      ) : (
+                        topSignals.map((s, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                            <div className="h-1.5 w-1.5 rounded-full" style={{ background: status.color }} />
+                            <span>{s}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Heart className="h-7 w-7 mx-auto text-muted-foreground mb-2 opacity-60" />
+                    <p className="text-xs text-muted-foreground">Health scoring will appear here once your workspace has activity.</p>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })()}
+
           {/* ══════ OPPORTUNITIES / REVENUE EXPANSION (NEW) ══════ */}
+
           <OpportunitiesSection metrics={metrics} intel={intel} />
 
           {/* ══════ QUICK ACTIONS ══════ */}
