@@ -362,6 +362,7 @@ const App = () => {
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
+                <Route path="/inbox" element={<Navigate to="/conversations" replace />} />
                 <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
                 <Route path="/proposal-booking" element={<ProposalBooking />} />
                 <Route path="/prospect-detail" element={<ProspectDetail />} />
