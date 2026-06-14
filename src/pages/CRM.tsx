@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock,
   Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote, Search, Download, Upload,
-  Calendar, Mail, Star, Activity, Phone
+  Calendar, Mail, Star, Activity, Phone, ListChecks, AlarmClock
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
