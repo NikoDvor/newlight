@@ -133,7 +133,46 @@ export default function SettingsPage() {
           setBranding(merged);
         }
       });
+    loadServices();
   }, [activeClientId]);
+
+  const loadServices = async () => {
+    if (!activeClientId) return;
+    const { data } = await supabase.from("service_catalog" as any)
+      .select("*").eq("client_id", activeClientId).order("display_order");
+    setServices((data || []) as any);
+  };
+
+  const openNewService = () => {
+    setSvcForm({ service_name: "", service_description: "", display_price_text: "", service_status: "draft" });
+    setSvcSheet({ item: null });
+  };
+  const openEditService = (item: any) => {
+    setSvcForm({
+      service_name: item.service_name || "",
+      service_description: item.service_description || "",
+      display_price_text: item.display_price_text || "",
+      service_status: item.service_status || "draft",
+    });
+    setSvcSheet({ item });
+  };
+  const saveService = async () => {
+    if (!activeClientId) return;
+    if (!svcForm.service_name?.trim()) { toast.error("Service name is required"); return; }
+    const payload = { ...svcForm, client_id: activeClientId };
+    const { error } = svcSheet?.item
+      ? await supabase.from("service_catalog" as any).update(payload).eq("id", svcSheet.item.id)
+      : await supabase.from("service_catalog" as any).insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success(svcSheet?.item ? "Service updated" : "Service added");
+    setSvcSheet(null);
+    loadServices();
+  };
+  const removeService = async (id: string) => {
+    await supabase.from("service_catalog" as any).delete().eq("id", id);
+    toast.success("Service deleted");
+    loadServices();
+  };
 
   const saveGeneral = async () => {
     if (!activeClientId) return;
