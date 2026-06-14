@@ -373,6 +373,14 @@ export default function CalendarPage() {
         tips={["Reminders are sent 24h, 3h, and 30min before appointments", "Completed appointments can trigger automatic review requests", "No-shows are flagged for follow-up"]}
       />
 
+      <Tabs defaultValue="calendar" className="mt-4">
+        <TabsList>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="manage">Manage Calendars</TabsTrigger>
+        </TabsList>
+        <TabsContent value="calendar">
+
+
       {events.length === 0 && (
         <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
           description="Create events, manage appointments, and automate booking workflows."
