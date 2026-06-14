@@ -76,6 +76,9 @@ export default function CRM() {
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
   const [companyOpen, setCompanyOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [followUps, setFollowUps] = useState<any[]>([]);
   const [crmMode, setCrmMode] = useState<string>("native");
   const [crmConnection, setCrmConnection] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState("");
@@ -88,6 +91,8 @@ export default function CRM() {
   });
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
+  const [newTask, setNewTask] = useState({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
+  const [newFollowUp, setNewFollowUp] = useState({ notes: "", contact_id: "", due_at: "", priority: "Medium" });
   const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
