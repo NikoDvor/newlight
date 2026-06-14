@@ -63,6 +63,8 @@ const SectionCard = ({ icon: Icon, title, desc, children, action }: {
 const sections = [
   { id: "general", label: "General", icon: Building2 },
   { id: "branding", label: "Branding", icon: Palette },
+  { id: "brand_basics", label: "Brand Basics", icon: Sparkles },
+  { id: "services", label: "Services & Products", icon: ShoppingBag },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "finance", label: "Finance", icon: DollarSign },
   { id: "notifications", label: "Notifications", icon: Bell },
