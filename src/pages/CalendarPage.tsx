@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +108,11 @@ export default function CalendarPage() {
   const [detailEvent, setDetailEvent] = useState<any>(null);
   const [newCalOpen, setNewCalOpen] = useState(false);
   const [newCal, setNewCal] = useState({ calendar_name: "", calendar_type: "general", description: "", default_location: "" });
+  const [manageSheetOpen, setManageSheetOpen] = useState(false);
+  const [manageCal, setManageCal] = useState<{ calendar_name: string; appointment_types: string[]; default_duration: string }>({
+    calendar_name: "", appointment_types: [""], default_duration: "30",
+  });
+  const [apptTypesByCal, setApptTypesByCal] = useState<Record<string, any[]>>({});
   const zoomEnabled = useWorkspaceZoomEnabled(activeClientId);
   const defaultLocation = zoomEnabled === false ? "" : zoomEnabled === true ? "zoom" : "";
   const [newEvent, setNewEvent] = useState({
@@ -124,17 +130,51 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes, calRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes, atRes] = await Promise.all([
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
       supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
+      supabase.from("calendar_appointment_types").select("*").eq("client_id", activeClientId),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
     setContacts(cRes.data || []);
     setCalendars(calRes.data || []);
+    const grouped: Record<string, any[]> = {};
+    (atRes.data || []).forEach((t: any) => {
+      grouped[t.calendar_id] = grouped[t.calendar_id] || [];
+      grouped[t.calendar_id].push(t);
+    });
+    setApptTypesByCal(grouped);
     setLoading(false);
+  };
+
+  const createCalendarWithTypes = async () => {
+    if (!activeClientId || !manageCal.calendar_name.trim()) {
+      toast({ title: "Calendar name is required", variant: "destructive" });
+      return;
+    }
+    const duration = parseInt(manageCal.default_duration) || 30;
+    const { data: cal, error } = await supabase.from("calendars").insert({
+      client_id: activeClientId,
+      calendar_name: manageCal.calendar_name,
+      calendar_type: "general",
+    }).select().single();
+    if (error || !cal) { toast({ title: "Error", description: error?.message, variant: "destructive" }); return; }
+    const typeNames = manageCal.appointment_types.map(t => t.trim()).filter(Boolean);
+    if (typeNames.length) {
+      await supabase.from("calendar_appointment_types").insert(
+        typeNames.map(name => ({
+          client_id: activeClientId, calendar_id: cal.id, name, duration_minutes: duration,
+          location_type: "video", is_active: true,
+        }))
+      );
+    }
+    toast({ title: "Calendar created" });
+    setManageCal({ calendar_name: "", appointment_types: [""], default_duration: "30" });
+    setManageSheetOpen(false);
+    fetchData();
   };
 
   const createCalendar = async () => {
@@ -332,6 +372,14 @@ export default function CalendarPage() {
         description="This is where your appointments are scheduled and tracked. Bookings create CRM records, reminders go out automatically, and completed appointments can trigger review requests."
         tips={["Reminders are sent 24h, 3h, and 30min before appointments", "Completed appointments can trigger automatic review requests", "No-shows are flagged for follow-up"]}
       />
+
+      <Tabs defaultValue="calendar" className="mt-4">
+        <TabsList>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="manage">Manage Calendars</TabsTrigger>
+        </TabsList>
+        <TabsContent value="calendar">
+
 
       {events.length === 0 && (
         <SetupBanner icon={CalendarIcon} title="Set Up Your Calendar"
@@ -604,8 +652,134 @@ export default function CalendarPage() {
           )}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="manage">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Your Calendars</h3>
+                <p className="text-xs text-muted-foreground">Manage calendars, appointment types, and default durations.</p>
+              </div>
+              <Sheet open={manageSheetOpen} onOpenChange={setManageSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" /> Add Calendar</Button>
+                </SheetTrigger>
+                <SheetContent className="bg-card border-border w-full sm:max-w-md overflow-y-auto">
+                  <SheetHeader><SheetTitle className="text-foreground">New Calendar</SheetTitle></SheetHeader>
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <Label>Calendar Name *</Label>
+                      <Input
+                        value={manageCal.calendar_name}
+                        onChange={e => setManageCal(p => ({ ...p, calendar_name: e.target.value }))}
+                        placeholder="e.g. Sales Consultations"
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div>
+                      <Label>Appointment Types</Label>
+                      <div className="space-y-2 mt-1">
+                        {manageCal.appointment_types.map((t, i) => (
+                          <div key={i} className="flex gap-2">
+                            <Input
+                              value={t}
+                              onChange={e => setManageCal(p => {
+                                const arr = [...p.appointment_types]; arr[i] = e.target.value; return { ...p, appointment_types: arr };
+                              })}
+                              placeholder="e.g. Discovery Call"
+                              className="bg-background border-border"
+                            />
+                            {manageCal.appointment_types.length > 1 && (
+                              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setManageCal(p => ({ ...p, appointment_types: p.appointment_types.filter((_, idx) => idx !== i) }))}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={() => setManageCal(p => ({ ...p, appointment_types: [...p.appointment_types, ""] }))}>
+                          <Plus className="h-3 w-3" /> Add Type
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Default Duration (minutes)</Label>
+                      <Input
+                        type="number"
+                        min="5"
+                        step="5"
+                        value={manageCal.default_duration}
+                        onChange={e => setManageCal(p => ({ ...p, default_duration: e.target.value }))}
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <Button className="w-full" onClick={createCalendarWithTypes}>Create Calendar</Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {calendars.length === 0 ? (
+              <DataCard title="Calendars">
+                <div className="py-10 text-center">
+                  <p className="text-sm font-medium text-foreground mb-1">No calendars yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Create your first calendar to start scheduling.</p>
+                  <Button size="sm" onClick={() => setManageSheetOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Calendar</Button>
+                </div>
+              </DataCard>
+            ) : (
+              <div className="space-y-3">
+                {calendars.map(cal => {
+                  const types = apptTypesByCal[cal.id] || [];
+                  return (
+                    <div key={cal.id} className="card-widget p-4 rounded-2xl">
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                            <CalendarIcon className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{cal.calendar_name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <Badge variant="outline" className="text-[9px]">{cal.calendar_type}</Badge>
+                              {cal.is_active !== false && <Badge className="text-[9px] bg-emerald-50 text-emerald-700">active</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => window.location.assign(`/calendar-management/${cal.id}`)}>
+                            <Settings2 className="h-3 w-3" /> Edit
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteCalendar(cal.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-[10px] text-muted-foreground uppercase mb-1.5">Appointment Types</p>
+                        {types.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No appointment types yet.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {types.map(t => (
+                              <Badge key={t.id} variant="secondary" className="text-[10px]">
+                                {t.name} · {t.duration_minutes}m
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* EVENT DETAIL DIALOG */}
+
       <Dialog open={!!detailEvent} onOpenChange={open => !open && setDetailEvent(null)}>
         <DialogContent className="bg-card border-border max-h-[85vh] overflow-y-auto">
           {detailEvent && (
