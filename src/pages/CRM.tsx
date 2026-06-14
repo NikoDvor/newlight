@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, Building2, DollarSign, TrendingUp, Plus, UserPlus, Briefcase, Target, Clock,
   Link2, RefreshCw, CheckCircle, AlertCircle, StickyNote, Search, Download, Upload,
-  Calendar, Mail, Star, Activity, Phone
+  Calendar, Mail, Star, Activity, Phone, ListChecks, AlarmClock
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +76,9 @@ export default function CRM() {
   const [contactOpen, setContactOpen] = useState(false);
   const [dealOpen, setDealOpen] = useState(false);
   const [companyOpen, setCompanyOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [followUps, setFollowUps] = useState<any[]>([]);
   const [crmMode, setCrmMode] = useState<string>("native");
   const [crmConnection, setCrmConnection] = useState<any>(null);
   const [selectedProvider, setSelectedProvider] = useState("");
@@ -88,12 +91,14 @@ export default function CRM() {
   });
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
+  const [newTask, setNewTask] = useState({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
+  const [newFollowUp, setNewFollowUp] = useState({ notes: "", contact_id: "", due_at: "", priority: "Medium" });
   const [newNote, setNewNote] = useState("");
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes, tmRes] = await Promise.all([
+    const [cRes, coRes, dRes, lRes, aRes, tRes, clientRes, connRes, notesRes, apRes, emRes, tmRes, fuRes] = await Promise.all([
       supabase.from("crm_contacts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_companies").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_deals").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
@@ -106,6 +111,7 @@ export default function CRM() {
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: false }).limit(50),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
       supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", activeClientId),
+      supabase.from("follow_up_queues").select("*").eq("client_id", activeClientId).order("due_at", { ascending: true, nullsFirst: false }),
     ]);
     setContacts(cRes.data || []);
     setCompanies(coRes.data || []);
@@ -117,6 +123,7 @@ export default function CRM() {
     setAppointments(apRes.data || []);
     setEmails(emRes.data || []);
     setTeamMembers(tmRes.data || []);
+    setFollowUps(fuRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
     setLoading(false);
@@ -221,6 +228,55 @@ export default function CRM() {
   const updateTaskStatus = async (taskId: string, status: string) => {
     await supabase.from("crm_tasks").update({ status }).eq("id", taskId);
     toast({ title: `Task ${status}` });
+    fetchData();
+  };
+
+  const addTask = async () => {
+    if (!activeClientId || !newTask.title.trim()) return;
+    const { error } = await supabase.from("crm_tasks").insert({
+      client_id: activeClientId,
+      title: newTask.title,
+      description: newTask.description || null,
+      priority: newTask.priority,
+      due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null,
+      contact_id: newTask.contact_id || null,
+      status: "open",
+    } as any);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Task added" });
+    setNewTask({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
+    setTaskOpen(false);
+    fetchData();
+  };
+
+  const addFollowUp = async () => {
+    if (!activeClientId || !newFollowUp.notes.trim()) return;
+    const { error } = await supabase.from("follow_up_queues").insert({
+      client_id: activeClientId,
+      notes: newFollowUp.notes,
+      priority: newFollowUp.priority,
+      due_at: newFollowUp.due_at ? new Date(newFollowUp.due_at).toISOString() : null,
+      related_type: newFollowUp.contact_id ? "contact" : null,
+      related_id: newFollowUp.contact_id || null,
+      status: "Pending",
+    } as any);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Follow-up added" });
+    setNewFollowUp({ notes: "", contact_id: "", due_at: "", priority: "Medium" });
+    setFollowUpOpen(false);
+    fetchData();
+  };
+
+  const completeFollowUp = async (id: string) => {
+    await supabase.from("follow_up_queues").update({ status: "completed" }).eq("id", id);
+    toast({ title: "Follow-up completed" });
+    fetchData();
+  };
+
+  const snoozeFollowUp = async (id: string) => {
+    const next = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await supabase.from("follow_up_queues").update({ due_at: next }).eq("id", id);
+    toast({ title: "Snoozed 1 day" });
     fetchData();
   };
 
@@ -391,6 +447,7 @@ export default function CRM() {
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
             <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="followups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
             <TabsTrigger value="appointments" className="rounded-md text-sm">Appointments</TabsTrigger>
             <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
             <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
@@ -603,42 +660,147 @@ export default function CRM() {
 
           {/* TASKS TABLE */}
           <TabsContent value="tasks" className="mt-4">
-            <DataCard title="Tasks">
+            <DataCard title="Tasks" action={
+              <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setTaskOpen(true)}>
+                <Plus className="h-3 w-3" /> Add Task
+              </Button>
+            }>
               {tasks.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No tasks yet. Tasks are auto-created during automation and onboarding.</p>
+                <div className="py-8 text-center">
+                  <ListChecks className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No tasks yet. Tasks are created automatically from automations and follow-up actions.</p>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead><tr className="border-b border-border">
-                      {["Title", "Due Date", "Priority", "Status", "Action"].map(h => (
+                      {["Title", "Contact", "Due", "Priority", "Status", "Action"].map(h => (
                         <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">{h}</th>
                       ))}
                     </tr></thead>
                     <tbody>
-                      {tasks.map(t => (
-                        <tr key={t.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                          <td className="text-sm font-medium py-3 pr-3">
-                            {t.title}
-                            {t.description && <p className="text-[10px] text-muted-foreground">{t.description}</p>}
-                          </td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{t.due_date ? new Date(t.due_date).toLocaleDateString() : "—"}</td>
-                          <td className="py-3 pr-3">
-                            <Badge variant="outline" className={`text-[10px] ${t.priority === "high" ? "border-red-300 text-red-600" : t.priority === "medium" ? "border-amber-300 text-amber-600" : ""}`}>
-                              {t.priority}
-                            </Badge>
-                          </td>
-                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{t.status}</Badge></td>
-                          <td className="py-3">
-                            {t.status === "open" && (
-                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>Complete</Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {tasks.map(t => {
+                        const statusColor =
+                          t.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                          t.status === "in_progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          t.status === "cancelled" ? "bg-muted text-muted-foreground" :
+                          "bg-amber-50 text-amber-700 border-amber-200";
+                        const priorityColor =
+                          t.priority === "high" ? "bg-red-50 text-red-700 border-red-200" :
+                          t.priority === "medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          "bg-muted text-muted-foreground";
+                        return (
+                          <tr key={t.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                            <td className="text-sm font-medium py-3 pr-3">
+                              {t.title}
+                              {t.description && <p className="text-[10px] text-muted-foreground">{t.description}</p>}
+                            </td>
+                            <td className="text-xs text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                              onClick={() => t.contact_id && navigate(`/crm/contacts/${t.contact_id}`)}>
+                              {t.contact_id ? getContactName(t.contact_id) : "—"}
+                            </td>
+                            <td className="text-sm text-muted-foreground py-3 pr-3">{t.due_date ? new Date(t.due_date).toLocaleDateString() : "—"}</td>
+                            <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${priorityColor}`}>{t.priority}</Badge></td>
+                            <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${statusColor}`}>{t.status}</Badge></td>
+                            <td className="py-3">
+                              {t.status !== "completed" && (
+                                <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>Complete</Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
+            </DataCard>
+          </TabsContent>
+
+          {/* FOLLOW-UPS */}
+          <TabsContent value="followups" className="mt-4">
+            <DataCard title="Follow-Ups" action={
+              <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setFollowUpOpen(true)}>
+                <Plus className="h-3 w-3" /> Add Follow-Up
+              </Button>
+            }>
+              {followUps.length === 0 ? (
+                <div className="py-8 text-center">
+                  <AlarmClock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No follow-ups. Follow-ups are created when deals go quiet or proposals go unread.</p>
+                </div>
+              ) : (() => {
+                const now = Date.now();
+                const isCompleted = (s: string) => (s || "").toLowerCase() === "completed";
+                const overdue = followUps.filter(f => !isCompleted(f.status) && f.due_at && new Date(f.due_at).getTime() < now);
+                const upcoming = followUps.filter(f => isCompleted(f.status) || !f.due_at || new Date(f.due_at).getTime() >= now);
+
+                const relLabel = (due: string | null) => {
+                  if (!due) return "No due date";
+                  const d = new Date(due).getTime();
+                  const diff = d - now;
+                  const day = 86400000;
+                  if (diff < 0) {
+                    const days = Math.ceil(-diff / day);
+                    return `Overdue ${days}d`;
+                  }
+                  if (diff < day) return "Due Today";
+                  if (diff < 2 * day) return "Due Tomorrow";
+                  return `Due ${new Date(due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+                };
+
+                const priorityColor = (p: string) => {
+                  const v = (p || "").toLowerCase();
+                  if (v === "high") return "bg-red-50 text-red-700 border-red-200";
+                  if (v === "medium") return "bg-amber-50 text-amber-700 border-amber-200";
+                  return "bg-muted text-muted-foreground";
+                };
+
+                const renderRow = (f: any, isOverdue: boolean) => {
+                  const contactId = f.related_type === "contact" ? f.related_id : null;
+                  return (
+                    <div key={f.id} className="flex items-center justify-between gap-3 py-3 border-b border-border last:border-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{f.notes || f.queue_type || "Follow-up"}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {contactId && (
+                            <span className="text-[10px] text-muted-foreground cursor-pointer hover:text-primary" onClick={() => navigate(`/crm/contacts/${contactId}`)}>
+                              {getContactName(contactId)}
+                            </span>
+                          )}
+                          <Badge variant="outline" className={`text-[10px] ${priorityColor(f.priority)}`}>{f.priority}</Badge>
+                          <span className={`text-[10px] ${isOverdue ? "text-red-600" : "text-muted-foreground"}`}>{relLabel(f.due_at)}</span>
+                        </div>
+                      </div>
+                      {!isCompleted(f.status) && (
+                        <div className="flex gap-1.5 shrink-0">
+                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => snoozeFollowUp(f.id)}>Snooze</Button>
+                          <Button size="sm" className="h-7 text-[10px]" onClick={() => completeFollowUp(f.id)}>Mark Done</Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                };
+
+                return (
+                  <div className="space-y-6">
+                    {overdue.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-red-600 mb-2">Overdue ({overdue.length})</p>
+                        <div>{overdue.map(f => renderRow(f, true))}</div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Upcoming ({upcoming.length})</p>
+                      {upcoming.length === 0 ? (
+                        <p className="text-xs text-muted-foreground py-3">Nothing upcoming.</p>
+                      ) : (
+                        <div>{upcoming.map(f => renderRow(f, false))}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </DataCard>
           </TabsContent>
 
@@ -875,6 +1037,77 @@ export default function CRM() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setCompanyOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addCompany}>Add Company</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Task Sheet */}
+      <Sheet open={taskOpen} onOpenChange={setTaskOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Task</SheetTitle><SheetDescription>Create a new CRM task</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Title *</Label><Input value={newTask.title} onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newTask.priority} onValueChange={v => setNewTask(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Due Date</Label><Input type="date" value={newTask.due_date} onChange={e => setNewTask(p => ({ ...p, due_date: e.target.value }))} /></div>
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link to Contact</Label>
+                <Select value={newTask.contact_id} onValueChange={v => setNewTask(p => ({ ...p, contact_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2"><Label>Notes</Label><Textarea value={newTask.description} onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))} /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setTaskOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addTask}>Add Task</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Follow-Up Sheet */}
+      <Sheet open={followUpOpen} onOpenChange={setFollowUpOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Follow-Up</SheetTitle><SheetDescription>Queue a new follow-up</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Subject *</Label><Input value={newFollowUp.notes} onChange={e => setNewFollowUp(p => ({ ...p, notes: e.target.value }))} /></div>
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link to Contact</Label>
+                <Select value={newFollowUp.contact_id} onValueChange={v => setNewFollowUp(p => ({ ...p, contact_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2"><Label>Due Date</Label><Input type="date" value={newFollowUp.due_at} onChange={e => setNewFollowUp(p => ({ ...p, due_at: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newFollowUp.priority} onValueChange={v => setNewFollowUp(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setFollowUpOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addFollowUp}>Add Follow-Up</Button>
             </div>
           </div>
         </SheetContent>
