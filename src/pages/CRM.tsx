@@ -1041,6 +1041,77 @@ export default function CRM() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Add Task Sheet */}
+      <Sheet open={taskOpen} onOpenChange={setTaskOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Task</SheetTitle><SheetDescription>Create a new CRM task</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Title *</Label><Input value={newTask.title} onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newTask.priority} onValueChange={v => setNewTask(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Due Date</Label><Input type="date" value={newTask.due_date} onChange={e => setNewTask(p => ({ ...p, due_date: e.target.value }))} /></div>
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link to Contact</Label>
+                <Select value={newTask.contact_id} onValueChange={v => setNewTask(p => ({ ...p, contact_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2"><Label>Notes</Label><Textarea value={newTask.description} onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))} /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setTaskOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addTask}>Add Task</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Follow-Up Sheet */}
+      <Sheet open={followUpOpen} onOpenChange={setFollowUpOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Add Follow-Up</SheetTitle><SheetDescription>Queue a new follow-up</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Subject *</Label><Input value={newFollowUp.notes} onChange={e => setNewFollowUp(p => ({ ...p, notes: e.target.value }))} /></div>
+            {contacts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link to Contact</Label>
+                <Select value={newFollowUp.contact_id} onValueChange={v => setNewFollowUp(p => ({ ...p, contact_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>{contacts.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2"><Label>Due Date</Label><Input type="date" value={newFollowUp.due_at} onChange={e => setNewFollowUp(p => ({ ...p, due_at: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={newFollowUp.priority} onValueChange={v => setNewFollowUp(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setFollowUpOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={addFollowUp}>Add Follow-Up</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
