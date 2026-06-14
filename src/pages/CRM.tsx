@@ -447,6 +447,7 @@ export default function CRM() {
             <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
             <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="followups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
             <TabsTrigger value="appointments" className="rounded-md text-sm">Appointments</TabsTrigger>
             <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
             <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
