@@ -4,7 +4,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Calendar, DollarSign, Bell,
   Users, Plug, Shield, Sliders, Save, Eye, Image, Smartphone, FileText,
   Plus, Mail, MessageSquare, Clock, UserPlus, MoreHorizontal, Check, X,
-  Globe, Phone, MapPin, Briefcase, Link2
+  Globe, Phone, MapPin, Briefcase, Link2, ShoppingBag, Pencil, Trash2, Sparkles
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LogoUploader } from "@/components/LogoUploader";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,8 @@ const SectionCard = ({ icon: Icon, title, desc, children, action }: {
 const sections = [
   { id: "general", label: "General", icon: Building2 },
   { id: "branding", label: "Branding", icon: Palette },
+  { id: "brand_basics", label: "Brand Basics", icon: Sparkles },
+  { id: "services", label: "Services & Products", icon: ShoppingBag },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "finance", label: "Finance", icon: DollarSign },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -96,6 +99,9 @@ export default function SettingsPage() {
   const [branding, setBranding] = useState(defaultBranding);
   const [general, setGeneral] = useState(defaultGeneral);
   const [showPreview, setShowPreview] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+  const [svcSheet, setSvcSheet] = useState<{ item: any | null } | null>(null);
+  const [svcForm, setSvcForm] = useState<any>({ service_name: "", service_description: "", display_price_text: "", service_status: "draft" });
 
   const setB = (key: string) => (val: string) => setBranding(p => ({ ...p, [key]: val }));
   const setG = (key: string) => (val: string) => setGeneral(p => ({ ...p, [key]: val }));
@@ -127,7 +133,46 @@ export default function SettingsPage() {
           setBranding(merged);
         }
       });
+    loadServices();
   }, [activeClientId]);
+
+  const loadServices = async () => {
+    if (!activeClientId) return;
+    const { data } = await supabase.from("service_catalog" as any)
+      .select("*").eq("client_id", activeClientId).order("display_order");
+    setServices((data || []) as any);
+  };
+
+  const openNewService = () => {
+    setSvcForm({ service_name: "", service_description: "", display_price_text: "", service_status: "draft" });
+    setSvcSheet({ item: null });
+  };
+  const openEditService = (item: any) => {
+    setSvcForm({
+      service_name: item.service_name || "",
+      service_description: item.service_description || "",
+      display_price_text: item.display_price_text || "",
+      service_status: item.service_status || "draft",
+    });
+    setSvcSheet({ item });
+  };
+  const saveService = async () => {
+    if (!activeClientId) return;
+    if (!svcForm.service_name?.trim()) { toast.error("Service name is required"); return; }
+    const payload = { ...svcForm, client_id: activeClientId };
+    const { error } = svcSheet?.item
+      ? await supabase.from("service_catalog" as any).update(payload).eq("id", svcSheet.item.id)
+      : await supabase.from("service_catalog" as any).insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success(svcSheet?.item ? "Service updated" : "Service added");
+    setSvcSheet(null);
+    loadServices();
+  };
+  const removeService = async (id: string) => {
+    await supabase.from("service_catalog" as any).delete().eq("id", id);
+    toast.success("Service deleted");
+    loadServices();
+  };
 
   const saveGeneral = async () => {
     if (!activeClientId) return;
@@ -374,7 +419,127 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ─── CALENDAR SETTINGS ─── */}
+          {/* ─── BRAND BASICS ─── */}
+          {activeSection === "brand_basics" && (
+            <>
+              <SectionCard
+                icon={Sparkles}
+                title="Brand Basics"
+                desc="Quick branding essentials: logo, colors, and welcome message"
+                action={<Button onClick={saveBranding} size="sm" className="btn-gradient h-8 px-4 rounded-xl text-xs"><Save className="h-3 w-3 mr-1.5" /> Save</Button>}
+              >
+                <div className="space-y-4">
+                  <Field label="Logo URL" value={branding.logo_url} onChange={setB("logo_url")} placeholder="https://..." />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ColorField label="Primary Color" value={branding.primary_color} onChange={setB("primary_color")} />
+                    <ColorField label="Secondary Color" value={branding.secondary_color} onChange={setB("secondary_color")} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Welcome Message</label>
+                    <Textarea
+                      value={branding.welcome_message}
+                      onChange={e => setB("welcome_message")(e.target.value)}
+                      placeholder="Welcome to your dashboard"
+                      className="text-xs bg-secondary/50 min-h-[70px]"
+                    />
+                  </div>
+                  {branding.logo_url && (
+                    <div className="flex items-center gap-3 pt-2 border-t border-border">
+                      <img src={branding.logo_url} alt="Logo preview" className="h-12 w-12 rounded-xl object-contain bg-secondary p-1" />
+                      <div className="flex gap-1.5">
+                        <div className="h-6 w-6 rounded-md border" style={{ background: branding.primary_color }} />
+                        <div className="h-6 w-6 rounded-md border" style={{ background: branding.secondary_color }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {/* ─── SERVICES & PRODUCTS ─── */}
+          {activeSection === "services" && (
+            <>
+              <SectionCard
+                icon={ShoppingBag}
+                title="Services & Products"
+                desc="Manage your service catalog and offerings"
+                action={<Button onClick={openNewService} size="sm" className="btn-gradient h-8 px-4 rounded-xl text-xs gap-1"><Plus className="h-3 w-3" /> Add Service</Button>}
+              >
+                {services.length === 0 ? (
+                  <div className="text-center py-10">
+                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-primary/10">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground mb-1">No services yet</p>
+                    <p className="text-xs text-muted-foreground mb-4">Add services your business offers so they appear on your booking pages and website.</p>
+                    <Button size="sm" onClick={openNewService} className="btn-gradient gap-1"><Plus className="h-3.5 w-3.5" /> Add First Service</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {services.map(s => (
+                      <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-secondary/30 group">
+                        <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-primary/10 shrink-0">
+                          <ShoppingBag className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground truncate">{s.service_name}</p>
+                            <Badge variant="outline" className="text-[9px]">{s.service_status || "draft"}</Badge>
+                          </div>
+                          {s.service_description && <p className="text-[11px] text-muted-foreground truncate">{s.service_description}</p>}
+                          {s.display_price_text && <p className="text-[11px] text-primary">{s.display_price_text}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditService(s)}><Pencil className="h-3 w-3" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeService(s.id)}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+
+              <Sheet open={!!svcSheet} onOpenChange={o => !o && setSvcSheet(null)}>
+                <SheetContent className="sm:max-w-md overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>{svcSheet?.item ? "Edit Service" : "Add Service"}</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-4 mt-6">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Name *</label>
+                      <Input value={svcForm.service_name} onChange={e => setSvcForm({ ...svcForm, service_name: e.target.value })} placeholder="e.g. Consultation" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Description</label>
+                      <Textarea value={svcForm.service_description} onChange={e => setSvcForm({ ...svcForm, service_description: e.target.value })} rows={3} className="text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Price (display)</label>
+                      <Input value={svcForm.display_price_text} onChange={e => setSvcForm({ ...svcForm, display_price_text: e.target.value })} placeholder="e.g. Starting at $99" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Status</label>
+                      <Select value={svcForm.service_status} onValueChange={v => setSvcForm({ ...svcForm, service_status: v })}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="live">Live</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" className="flex-1" onClick={() => setSvcSheet(null)}>Cancel</Button>
+                      <Button className="flex-1 btn-gradient" onClick={saveService}>{svcSheet?.item ? "Save" : "Add"}</Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          )}
+
+
           {activeSection === "calendar" && (
             <>
               <SectionCard icon={Calendar} title="Calendar Defaults" desc="Default meeting durations, buffers, and timezone"
