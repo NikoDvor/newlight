@@ -4,7 +4,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Calendar, DollarSign, Bell,
   Users, Plug, Shield, Sliders, Save, Eye, Image, Smartphone, FileText,
   Plus, Mail, MessageSquare, Clock, UserPlus, MoreHorizontal, Check, X,
-  Globe, Phone, MapPin, Briefcase, Link2
+  Globe, Phone, MapPin, Briefcase, Link2, ShoppingBag, Pencil, Trash2, Sparkles
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LogoUploader } from "@/components/LogoUploader";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
