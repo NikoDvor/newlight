@@ -231,6 +231,55 @@ export default function CRM() {
     fetchData();
   };
 
+  const addTask = async () => {
+    if (!activeClientId || !newTask.title.trim()) return;
+    const { error } = await supabase.from("crm_tasks").insert({
+      client_id: activeClientId,
+      title: newTask.title,
+      description: newTask.description || null,
+      priority: newTask.priority,
+      due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null,
+      contact_id: newTask.contact_id || null,
+      status: "open",
+    } as any);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Task added" });
+    setNewTask({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
+    setTaskOpen(false);
+    fetchData();
+  };
+
+  const addFollowUp = async () => {
+    if (!activeClientId || !newFollowUp.notes.trim()) return;
+    const { error } = await supabase.from("follow_up_queues").insert({
+      client_id: activeClientId,
+      notes: newFollowUp.notes,
+      priority: newFollowUp.priority,
+      due_at: newFollowUp.due_at ? new Date(newFollowUp.due_at).toISOString() : null,
+      related_type: newFollowUp.contact_id ? "contact" : null,
+      related_id: newFollowUp.contact_id || null,
+      status: "Pending",
+    } as any);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Follow-up added" });
+    setNewFollowUp({ notes: "", contact_id: "", due_at: "", priority: "Medium" });
+    setFollowUpOpen(false);
+    fetchData();
+  };
+
+  const completeFollowUp = async (id: string) => {
+    await supabase.from("follow_up_queues").update({ status: "completed" }).eq("id", id);
+    toast({ title: "Follow-up completed" });
+    fetchData();
+  };
+
+  const snoozeFollowUp = async (id: string) => {
+    const next = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await supabase.from("follow_up_queues").update({ due_at: next }).eq("id", id);
+    toast({ title: "Snoozed 1 day" });
+    fetchData();
+  };
+
   const exportCsv = (data: any[], filename: string) => {
     if (data.length === 0) return;
     const headers = Object.keys(data[0]).join(",");
