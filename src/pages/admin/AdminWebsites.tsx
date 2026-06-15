@@ -99,7 +99,7 @@ export default function AdminWebsites() {
 
       <div className="mt-6 space-y-3">
         {loading ? (
-          <DataCard title="Loading">
+          <DataCard title="Loading Websites">
             <div className="py-10 text-center">
               <Globe className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Loading websites...</p>
