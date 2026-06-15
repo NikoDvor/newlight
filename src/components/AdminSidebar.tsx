@@ -36,7 +36,7 @@ const navGroups: NavGroup[] = [
       { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch },
       { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Prospects", url: "/admin/prospects", icon: Contact },
-      { title: "Sales Meetings", url: "/admin/sales-pipeline", icon: MessageSquare },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: MessageSquare },
       { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
@@ -48,9 +48,7 @@ const navGroups: NavGroup[] = [
       { title: "Client Accounts", url: "/admin/clients", icon: Users },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Client Activation", url: "/admin/activation", icon: Zap },
-      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
       { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
-      { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
       { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
     ],
@@ -77,9 +75,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Reports", url: "/admin/reports", icon: LineChart },
       { title: "Billing", url: "/admin/billing", icon: Wallet },
-      { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
-      { title: "Architecture", url: "/admin/architecture", icon: GitBranch },
     ],
   },
 ];
