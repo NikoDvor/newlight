@@ -35,7 +35,7 @@ const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
   {
-    type: "group", label: "Growth Systems",
+    type: "group", label: "Growth",
     items: [
       { title: "Website", url: "/website", icon: Globe, moduleKey: "website" },
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
@@ -44,19 +44,11 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Sales & CRM",
+    type: "group", label: "CRM",
     items: [
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
-    ],
-  },
-  {
-    type: "group", label: "Employee Hub",
-    items: [
-      { title: "Workforce", url: "/workforce", icon: Briefcase, moduleKey: "workforce" },
       { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
       { title: "Tasks", url: "/tasks", icon: ListChecks },
-      { title: "Team & Users", url: "/team", icon: UserCog, moduleKey: "settings" },
     ],
   },
   {
@@ -69,28 +61,17 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Customer Center",
-    items: [
-      { title: "Client Accounts", url: "/admin/clients", icon: Users },
-      { title: "Onboarding Command Center", url: "/admin/onboarding-command-center", icon: Briefcase },
-      { title: "Client Activation", url: "/admin/activation", icon: ClipboardList },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
-    ],
-  },
-  {
     type: "group", label: "Finance",
     items: [
       { title: "Revenue Charts", url: "/revenue-charts", icon: Wallet, moduleKey: "finance" },
       { title: "AI Accountant", url: "/ai-accountant", icon: Brain, moduleKey: "finance" },
-      { title: "Payroll", url: "/workforce", icon: UserCog, moduleKey: "workforce" },
     ],
   },
   {
-    type: "group", label: "Intelligence",
+    type: "group", label: "Tools",
     items: [
       { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
-      { title: "Automation Workflows", url: "/automations", icon: Zap, moduleKey: "automations" },
+      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
     ],
   },
   {
