@@ -23,43 +23,12 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "NewLight Ops",
+    label: "Command Center",
     items: [
-      { title: "Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
-      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
-      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
+      { title: "Admin Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+      { title: "Executive Dashboard", url: "/admin/executive", icon: Sparkles },
+      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
     ],
-  },
-  {
-    label: "Growth Systems",
-    items: [
-      { title: "Website", url: "/admin/ops/website", icon: Globe },
-      { title: "SEO", url: "/admin/ops/seo", icon: Search },
-      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
-      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
-      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-    ],
-  },
-  {
-    label: "Enterprise Services",
-    items: [
-      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
-      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
-      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-    ],
-  },
-  {
-    label: "Communications",
-    items: [
-      { title: "Conversations", url: "/admin/ops/conversations", icon: MessageSquare },
-      { title: "Follow-Up Queue", url: "/admin/ops/follow-ups", icon: InboxIcon },
-      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
-      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-    ],
-  },
-  {
-    label: "— Admin —",
   },
   {
     label: "Sales",
@@ -67,6 +36,8 @@ const navGroups: NavGroup[] = [
       { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch },
       { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Prospects", url: "/admin/prospects", icon: Contact },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: MessageSquare },
+      { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
     ],
@@ -74,31 +45,33 @@ const navGroups: NavGroup[] = [
   {
     label: "Clients",
     items: [
-      { title: "Clients", url: "/admin/clients", icon: Users },
+      { title: "Client Accounts", url: "/admin/clients", icon: Users },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
-      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
       { title: "Client Activation", url: "/admin/activation", icon: Zap },
+      { title: "Master Activation", url: "/admin/master-activation", icon: Zap },
       { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
       { title: "Demo Builds", url: "/admin/demo-builds", icon: Hammer },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "Client Success", url: "/admin/client-success", icon: Shield },
+    ],
+  },
+  {
+    label: "Employee Hub",
+    items: [
+      { title: "Team & Users", url: "/admin/team", icon: Shield },
+      { title: "Staff Calendars", url: "/admin/team", icon: Calendar },
+      { title: "Training Center", url: "/admin/training-center", icon: Brain },
+      { title: "Training Health", url: "/admin/training-health", icon: HeartPulse },
     ],
   },
   {
     label: "Intelligence",
     items: [
-      { title: "Executive Dashboard", url: "/admin/executive", icon: LayoutDashboard },
-      { title: "Client Success", url: "/admin/client-success", icon: Shield },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "AI Insights", url: "/ai-insights", icon: Sparkles },
+      { title: "Growth Advisor", url: "/growth-advisor", icon: Brain },
       { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
-      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
-    ],
-  },
-  {
-    label: "Team & Training",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Shield },
-      { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
-      { title: "Training Center", url: "/admin/training-center", icon: Brain },
-      { title: "Training Health", url: "/admin/training-health", icon: HeartPulse },
+      { title: "Automations", url: "/admin/automations", icon: Activity },
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
     ],
   },
   {
@@ -106,8 +79,6 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Reports", url: "/admin/reports", icon: LineChart },
       { title: "Billing", url: "/admin/billing", icon: Wallet },
-      { title: "Automations", url: "/admin/automations", icon: Activity },
-      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
       { title: "Launch Readiness", url: "/admin/launch-checklist", icon: Rocket },
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
       { title: "Architecture", url: "/admin/architecture", icon: GitBranch },
