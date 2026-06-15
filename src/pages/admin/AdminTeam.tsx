@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +73,8 @@ export default function AdminTeam() {
   // Stats dialog
   const [statsFor, setStatsFor] = useState<UserRow | null>(null);
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "users";
+  const location = useLocation();
+  const initialTab = (location.state as any)?.tab || searchParams.get("tab") || "users";
   const [staffCalendars, setStaffCalendars] = useState([]);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 

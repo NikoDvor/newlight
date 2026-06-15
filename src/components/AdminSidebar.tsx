@@ -59,7 +59,7 @@ const navGroups: NavGroup[] = [
     label: "Employee Hub",
     items: [
       { title: "Team & Users", url: "/admin/team", icon: Shield },
-      { title: "Staff Calendars", url: "/admin/team?tab=calendars", icon: Calendar },
+      { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
       { title: "Training Center", url: "/admin/training-center", icon: Brain },
       { title: "Training Health", url: "/admin/training-health", icon: HeartPulse },
     ],
