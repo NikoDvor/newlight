@@ -326,6 +326,8 @@ const App = () => {
                 <Route path="ops/crm" element={<AdminOpsProvider><CRM /></AdminOpsProvider>} />
                 <Route path="ops/pipeline" element={<AdminOpsProvider><Pipeline /></AdminOpsProvider>} />
                 <Route path="ops/calendar" element={<AdminOpsProvider><CalendarPage /></AdminOpsProvider>} />
+                <Route path="ops/calendar-management" element={<AdminOpsProvider><CalendarManagement /></AdminOpsProvider>} />
+                <Route path="ops/calendar-management/:calendarId" element={<AdminOpsProvider><CalendarDetail /></AdminOpsProvider>} />
                 <Route path="ops/conversations" element={<AdminOpsProvider><ConversationsPage /></AdminOpsProvider>} />
                 <Route path="ops/follow-ups" element={<AdminOpsProvider><FollowUpQueue /></AdminOpsProvider>} />
                 <Route path="ops/proposals" element={<AdminOpsProvider><Proposals /></AdminOpsProvider>} />
