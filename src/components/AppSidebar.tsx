@@ -34,8 +34,6 @@ interface NavEntry {
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
-  { type: "item", title: "Internal System", url: "/internal-system", icon: Briefcase },
   {
     type: "group", label: "Growth Systems",
     items: [
@@ -43,22 +41,42 @@ const navStructure: NavEntry[] = [
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
-      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
     ],
   },
   {
-    type: "group", label: "Intelligence",
+    type: "group", label: "Sales & CRM",
     items: [
+      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
-      { title: "Automation Workflows", url: "/automations", icon: Zap, moduleKey: "automations" },
+      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: BarChart3 },
     ],
   },
   {
     type: "group", label: "Employee Hub",
     items: [
-      { title: "Team & Users", url: "/team", icon: Users, moduleKey: "settings" },
+      { title: "Workforce", url: "/workforce", icon: Briefcase, moduleKey: "workforce" },
       { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Employee Performance", url: "/workforce", icon: BarChart3, moduleKey: "workforce" },
+      { title: "Tasks", url: "/tasks", icon: ListChecks },
+      { title: "Team & Users", url: "/team", icon: UserCog, moduleKey: "settings" },
+    ],
+  },
+  {
+    type: "group", label: "Communications",
+    items: [
+      { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
+      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
+      { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
+    ],
+  },
+  {
+    type: "group", label: "Customer Center",
+    items: [
+      { title: "Client Accounts", url: "/admin/clients", icon: Users },
+      { title: "Onboarding Command Center", url: "/admin/onboarding-command-center", icon: Briefcase },
+      { title: "Client Activation", url: "/admin/activation", icon: ClipboardList },
+      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
+      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
     ],
   },
   {
@@ -70,25 +88,10 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Customer Center",
+    type: "group", label: "Intelligence",
     items: [
-      { title: "Onboarding Command Center", url: "/admin/onboarding-command-center", icon: Briefcase },
-      { title: "Client Activation", url: "/admin/activation", icon: ClipboardList },
-      { title: "Client Accounts", url: "/admin/clients", icon: Users },
-      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: BarChart3 },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-      { title: "Client Profiles", url: "/admin/clients", icon: Users },
-      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
-    ],
-  },
-  {
-    type: "group", label: "Communications",
-    items: [
-      { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
-      { title: "Chat", url: "/chat", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
-      { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
+      { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+      { title: "Automation Workflows", url: "/automations", icon: Zap, moduleKey: "automations" },
     ],
   },
   {
@@ -96,8 +99,8 @@ const navStructure: NavEntry[] = [
     items: [
       { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
       { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
-      { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
       { title: "Billing", url: "/billing", icon: CreditCard },
+      { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
 ];
