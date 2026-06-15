@@ -54,6 +54,7 @@ const navGroups: NavGroup[] = [
       { title: "Website Portfolio", url: "/admin/websites", icon: Globe },
     ],
   },
+  {
     label: "Employee Hub",
     items: [
       { title: "Team & Users", url: "/admin/team", icon: Shield },
