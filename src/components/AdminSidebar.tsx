@@ -25,7 +25,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Command Center",
     items: [
-      { title: "Admin Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
       { title: "Executive Dashboard", url: "/admin/executive", icon: Sparkles },
       { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
     ],
