@@ -7,9 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface ClientOption {
   id: string;
@@ -69,6 +71,8 @@ export default function AdminTeam() {
 
   // Stats dialog
   const [statsFor, setStatsFor] = useState<UserRow | null>(null);
+  const [staffCalendars, setStaffCalendars] = useState([]);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
 
   const manualRoleOptions = [
     { value: "bdr", label: "BDR" },
@@ -174,7 +178,19 @@ export default function AdminTeam() {
     setGroups(result);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchStaffCalendars = async () => {
+    setLoadingCalendars(true);
+    const { data } = await supabase
+      .from("calendars")
+      .select("*, workers(id, full_name, role_title, department, status, client_id)")
+      .eq("calendar_type", "staff")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    setStaffCalendars(data || []);
+    setLoadingCalendars(false);
+  };
+
+  useEffect(() => { fetchData(); fetchStaffCalendars(); }, []);
 
   const handleInvite = async () => {
     if (!inviteEmail) { toast.error("Email is required"); return; }
@@ -266,6 +282,17 @@ export default function AdminTeam() {
 
   return (
     <div className="space-y-6">
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="mb-4 bg-white/[0.04] border border-white/[0.06]">
+          <TabsTrigger value="users" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="calendars" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
+            Staff Calendars
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Team & Users</h1>
