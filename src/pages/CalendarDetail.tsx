@@ -148,10 +148,20 @@ export default function CalendarDetail() {
   // ── CRUD helpers ──
   const addUser = async () => {
     if (!newUser.email.trim()) { toast.error("Email required"); return; }
-    // Find user by email — in a real system we'd look up profiles
-    const { data, error } = await supabase.from("calendar_users").insert({
-      client_id: activeClientId, calendar_id: calendarId,
-      user_id: crypto.randomUUID(), // placeholder — real implementation would resolve from profiles
+    const { data: profileMatch } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", newUser.email.trim())
+      .maybeSingle();
+    const userId = profileMatch?.id;
+    if (!userId) {
+      toast.error("No user found with that email. Make sure they have a NewLight account.");
+      return;
+    }
+    const { error } = await supabase.from("calendar_users").insert({
+      client_id: activeClientId,
+      calendar_id: calendarId,
+      user_id: userId,
       role: newUser.role,
     });
     if (error) { toast.error(error.message); return; }
