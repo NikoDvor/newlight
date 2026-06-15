@@ -62,7 +62,7 @@ export default function AdminWebsites() {
 
       <WidgetGrid columns="repeat(auto-fit, minmax(180px, 1fr))">
         <MetricCard label="Live Sites" value={String(liveCount)} change={String(inProgressCount) + " in progress"} changeType="positive" icon={Globe} />
-        <MetricCard label="Needs Update" value={String(needsUpdateCount)} change="require attention" changeType={needsUpdateCount > 0 ? "negative" : "neutral" icon={Settings} />
+        <MetricCard label="Needs Update" value={String(needsUpdateCount)} change="require attention" changeType={needsUpdateCount > 0 ? "negative" : "neutral"} icon={Settings} />
         <MetricCard label="Connected Domains" value={String(connectedDomains)} change="custom domains active" changeType="positive" icon={ExternalLink} />
         <MetricCard label="Total Records" value={String(rows.length)} change="tracked websites" changeType="neutral" icon={Filter} />
       </WidgetGrid>
