@@ -51,6 +51,7 @@ const navGroups: NavGroup[] = [
       { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
       { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
+      { title: "Website Portfolio", url: "/admin/websites", icon: Globe },
     ],
   },
   {
