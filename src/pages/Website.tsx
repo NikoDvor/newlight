@@ -140,6 +140,40 @@ export default function Website() {
     setRecommendations(data || []);
   };
 
+  const saveCw = async () => {
+    if (!activeClientId) return;
+    if (clientWebsite) {
+      const { data } = await supabase.from('client_websites').update({ ...cwForm, last_updated_at: new Date().toISOString() }).eq('client_id', activeClientId).select().single();
+      setClientWebsite(data);
+    } else {
+      const { data } = await supabase.from('client_websites').insert({ client_id: activeClientId, ...cwForm }).select().single();
+      setClientWebsite(data);
+    }
+    toast({ title: 'Website record saved' });
+    setCwSheetOpen(false);
+  };
+
+  const openCwSheet = () => {
+    if (clientWebsite) setCwForm({
+      site_type: clientWebsite.site_type || 'newlight_build',
+      published_url: clientWebsite.published_url || '',
+      lovable_project_url: clientWebsite.lovable_project_url || '',
+      custom_domain: clientWebsite.custom_domain || '',
+      domain_status: clientWebsite.domain_status || 'none',
+      build_status: clientWebsite.build_status || 'not_started',
+      external_url: clientWebsite.external_url || '',
+      snippet_status: clientWebsite.snippet_status || 'not_installed',
+      notes: clientWebsite.notes || '',
+    });
+    setCwSheetOpen(true);
+  };
+
+  const snippetCode = `<!-- NewLight Analytics -->
+<script>
+  window.__NL_CLIENT__ = "${activeClientId}";
+</script>
+<script async src="https://cdn.newlightapp.com/tracker.js"></script>`;
+
   const resolveRecommendation = async (id: string) => {
     await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
     const { data } = await supabase.from("website_recommendations").select("*").eq("client_id", activeClientId!).order("created_at", { ascending: false });
@@ -187,6 +221,7 @@ export default function Website() {
       <div className="mt-6">
         <Tabs defaultValue="pages">
           <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
+          <TabsTrigger value="site" className="rounded-md text-sm">Site</TabsTrigger>
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
             <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
             <TabsTrigger value="theme" className="rounded-md text-sm">Theme</TabsTrigger>
