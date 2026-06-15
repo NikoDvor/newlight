@@ -177,7 +177,7 @@ export function triggerIntroReplay() {
 function IntroOverlay() {
   const [showIntro, setShowIntro] = useState(() => {
     try {
-      if (sessionStorage.getItem('nl_splash_done') === '1') return false;
+      if (sessionStorage.getItem('nl_splash_done') !== '1') return false;
     } catch {}
     return shouldPlayIntro();
   });
