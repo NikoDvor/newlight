@@ -50,7 +50,7 @@ const INITIAL: FormState = {
   secondary_color: "#06B6D4", assigned_salesman: "", assigned_operator: "",
   lead_source: "cold_call", internal_tags: "", meeting_type: "discovery_call",
   meeting_date: "", meeting_time: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  template_id: "",
+  template_id: "none",
 };
 
 const NEED_OPTIONS = [
@@ -185,6 +185,7 @@ export default function AdminSalesDemoCreator() {
             industry: form.industry || null,
             location: form.location || null,
             website: form.website || null,
+            template_id: form.template_id === "none" ? null : form.template_id || null,
           },
         }
       );
@@ -350,7 +351,7 @@ export default function AdminSalesDemoCreator() {
                 <Select value={form.template_id} onValueChange={v => set("template_id", v)}>
                   <SelectTrigger className={inputCls}><SelectValue placeholder="Auto-select or choose template" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Template</SelectItem>
+                    <SelectItem value="none">No Template</SelectItem>
                     {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.template_name} ({t.industry_type})</SelectItem>)}
                   </SelectContent>
                 </Select>
