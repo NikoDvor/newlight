@@ -561,6 +561,7 @@ export default function AdminTeam() {
           returnPath="/admin/team"
         />
       )}
+      </Tabs>
     </div>
   );
 }
