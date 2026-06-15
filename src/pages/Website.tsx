@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
   Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
+  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings,
+
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +51,7 @@ const DEMO_TRAFFIC = [
 ];
 
 export default function Website() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, isAdmin } = useWorkspace();
   const navigate = useNavigate();
 
   // Website CMS hooks
@@ -70,6 +72,23 @@ export default function Website() {
   const [recOpen, setRecOpen] = useState(false);
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
   const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+
+  // client_websites state
+  const [clientWebsite, setClientWebsite] = useState<any>(null);
+  const [cwLoading, setCwLoading] = useState(true);
+  const [cwSheetOpen, setCwSheetOpen] = useState(false);
+  const [cwForm, setCwForm] = useState({
+    site_type: 'newlight_build',
+    published_url: '',
+    lovable_project_url: '',
+    custom_domain: '',
+    domain_status: 'none',
+    build_status: 'not_started',
+    external_url: '',
+    snippet_status: 'not_installed',
+    notes: '',
+  });
+
 
   // Auto-select first page
   useEffect(() => {
@@ -92,6 +111,13 @@ export default function Website() {
       setRecommendations(rRes.data || []);
       setAnalyticsLoading(false);
     });
+  }, [activeClientId]);
+
+  useEffect(() => {
+    if (!activeClientId) { setCwLoading(false); return; }
+    setCwLoading(true);
+    supabase.from('client_websites').select('*').eq('client_id', activeClientId).maybeSingle()
+      .then(({ data }) => { setClientWebsite(data); setCwLoading(false); });
   }, [activeClientId]);
 
   const addIssue = async () => {
