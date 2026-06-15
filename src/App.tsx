@@ -195,11 +195,23 @@ function IntroOverlay() {
 }
 
 const App = () => {
-  const [splashDone, setSplashDone]     = useState(false);
+  const [splashDone, setSplashDone]     = useState(() => {
+    try { return sessionStorage.getItem('nl_splash_done') === '1'; }
+    catch { return false; }
+  });
   const [splashFading, setSplashFading] = useState(false);
 
   return (
     <>
+      {!splashDone && (
+        <SplashScreen
+          onStartFade={() => setSplashFading(true)}
+          onComplete={() => {
+            try { sessionStorage.setItem('nl_splash_done', '1'); } catch {}
+            setSplashDone(true);
+          }}
+        />
+      )}
     <div style={{
       opacity: splashFading ? 1 : 0,
       visibility: splashFading ? 'visible' : 'hidden',
@@ -434,12 +446,6 @@ const App = () => {
       </QueryClientProvider>
     </div>
 
-      {!splashDone && (
-        <SplashScreen
-          onStartFade={() => setSplashFading(true)}
-          onComplete={() => setSplashDone(true)}
-        />
-      )}
     </>
   );
 };
