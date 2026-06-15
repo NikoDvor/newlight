@@ -48,7 +48,6 @@ const navStructure: NavEntry[] = [
     items: [
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
-      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: BarChart3 },
     ],
   },
   {
