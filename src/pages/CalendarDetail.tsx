@@ -149,11 +149,11 @@ export default function CalendarDetail() {
   const addUser = async () => {
     if (!newUser.email.trim()) { toast.error("Email required"); return; }
     const { data: profileMatch } = await supabase
-      .from("profiles")
-      .select("id")
+      .from("employee_profiles")
+      .select("user_id")
       .eq("email", newUser.email.trim())
       .maybeSingle();
-    const userId = profileMatch?.id;
+    const userId = profileMatch?.user_id;
     if (!userId) {
       toast.error("No user found with that email. Make sure they have a NewLight account.");
       return;
