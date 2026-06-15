@@ -129,7 +129,7 @@ export default function AdminWebsites() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
               >
-                <DataCard>
+                <DataCard title={`${r.clients?.business_name || "Website Record"}`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
