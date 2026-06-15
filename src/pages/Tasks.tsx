@@ -94,14 +94,14 @@ export default function Tasks() {
       related_type: newTask.related_type || null,
       related_id: newTask.related_id || null,
       assigned_worker_id: newTask.assigned_worker_id || null,
-    });
+    } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({
       client_id: activeClientId, activity_type: "task_created",
       activity_note: `Task "${newTask.title}" created`,
     });
     toast({ title: "Task created" });
-    setNewTask({ title: "", description: "", due_date: "", priority: "medium", status: "open", related_type: "", related_id: "" });
+    setNewTask({ title: "", description: "", due_date: "", priority: "medium", status: "open", related_type: "", related_id: "", assigned_worker_id: "" });
     setCreateOpen(false);
     fetchData();
   };
