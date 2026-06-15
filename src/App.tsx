@@ -166,6 +166,8 @@ import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
 import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
+import AdminWebsites from "./pages/admin/AdminWebsites";
+
 
 const queryClient = new QueryClient();
 
@@ -318,6 +320,7 @@ const App = () => {
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
+                <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
                 <Route path="client-intelligence/health" element={<PlaceholderPage title="Client Health Scores" description="Composite score per client based on activity, engagement, and results." />} />
                 <Route path="client-intelligence/revenue" element={<PlaceholderPage title="Revenue Growth Tracker" description="Revenue growth or decrease per client over time." />} />
