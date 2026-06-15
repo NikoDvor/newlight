@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
   Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
+  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings,
+
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +51,7 @@ const DEMO_TRAFFIC = [
 ];
 
 export default function Website() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, isAdmin } = useWorkspace();
   const navigate = useNavigate();
 
   // Website CMS hooks
@@ -70,6 +72,23 @@ export default function Website() {
   const [recOpen, setRecOpen] = useState(false);
   const [newIssue, setNewIssue] = useState({ issue_title: "", description: "", severity: "medium" });
   const [newRec, setNewRec] = useState({ title: "", description: "", recommendation_type: "optimization", priority: "medium" });
+
+  // client_websites state
+  const [clientWebsite, setClientWebsite] = useState<any>(null);
+  const [cwLoading, setCwLoading] = useState(true);
+  const [cwSheetOpen, setCwSheetOpen] = useState(false);
+  const [cwForm, setCwForm] = useState({
+    site_type: 'newlight_build',
+    published_url: '',
+    lovable_project_url: '',
+    custom_domain: '',
+    domain_status: 'none',
+    build_status: 'not_started',
+    external_url: '',
+    snippet_status: 'not_installed',
+    notes: '',
+  });
+
 
   // Auto-select first page
   useEffect(() => {
@@ -94,6 +113,13 @@ export default function Website() {
     });
   }, [activeClientId]);
 
+  useEffect(() => {
+    if (!activeClientId) { setCwLoading(false); return; }
+    setCwLoading(true);
+    supabase.from('client_websites').select('*').eq('client_id', activeClientId).maybeSingle()
+      .then(({ data }) => { setClientWebsite(data); setCwLoading(false); });
+  }, [activeClientId]);
+
   const addIssue = async () => {
     if (!activeClientId || !newIssue.issue_title) return;
     await supabase.from("website_issues").insert({ client_id: activeClientId, issue_title: newIssue.issue_title, description: newIssue.description || null, severity: newIssue.severity });
@@ -113,6 +139,40 @@ export default function Website() {
     const { data } = await supabase.from("website_recommendations").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false });
     setRecommendations(data || []);
   };
+
+  const saveCw = async () => {
+    if (!activeClientId) return;
+    if (clientWebsite) {
+      const { data } = await supabase.from('client_websites').update({ ...cwForm, last_updated_at: new Date().toISOString() }).eq('client_id', activeClientId).select().single();
+      setClientWebsite(data);
+    } else {
+      const { data } = await supabase.from('client_websites').insert({ client_id: activeClientId, ...cwForm }).select().single();
+      setClientWebsite(data);
+    }
+    toast({ title: 'Website record saved' });
+    setCwSheetOpen(false);
+  };
+
+  const openCwSheet = () => {
+    if (clientWebsite) setCwForm({
+      site_type: clientWebsite.site_type || 'newlight_build',
+      published_url: clientWebsite.published_url || '',
+      lovable_project_url: clientWebsite.lovable_project_url || '',
+      custom_domain: clientWebsite.custom_domain || '',
+      domain_status: clientWebsite.domain_status || 'none',
+      build_status: clientWebsite.build_status || 'not_started',
+      external_url: clientWebsite.external_url || '',
+      snippet_status: clientWebsite.snippet_status || 'not_installed',
+      notes: clientWebsite.notes || '',
+    });
+    setCwSheetOpen(true);
+  };
+
+  const snippetCode = `<!-- NewLight Analytics -->
+<script>
+  window.__NL_CLIENT__ = "${activeClientId}";
+</script>
+<script async src="https://cdn.newlightapp.com/tracker.js"></script>`;
 
   const resolveRecommendation = async (id: string) => {
     await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
@@ -161,6 +221,7 @@ export default function Website() {
       <div className="mt-6">
         <Tabs defaultValue="pages">
           <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
+          <TabsTrigger value="site" className="rounded-md text-sm">Site</TabsTrigger>
             <TabsTrigger value="pages" className="rounded-md text-sm">Pages</TabsTrigger>
             <TabsTrigger value="content" className="rounded-md text-sm">Content</TabsTrigger>
             <TabsTrigger value="theme" className="rounded-md text-sm">Theme</TabsTrigger>
@@ -173,6 +234,139 @@ export default function Website() {
             <TabsTrigger value="issues" className="rounded-md text-sm">Issues</TabsTrigger>
             <TabsTrigger value="recs" className="rounded-md text-sm">Recs</TabsTrigger>
           </TabsList>
+
+          {/* ─── Site Tab ─── */}
+          <TabsContent value="site" className="mt-4">
+            {cwLoading ? (
+              <div className="card-widget p-8 rounded-2xl text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+              </div>
+            ) : !clientWebsite ? (
+              <DataCard title="Website Tracking">
+                <div className="py-10 text-center">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Globe className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No website record yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {isAdmin ? "Set up website tracking for this client — choose a NewLight Build or link their existing site." : "Your website is being set up. Check back soon."}
+                  </p>
+                  {isAdmin && (
+                    <Button size="sm" onClick={openCwSheet}><Plus className="h-4 w-4 mr-1" /> Set Up Website</Button>
+                  )}
+                </div>
+              </DataCard>
+            ) : clientWebsite.site_type === 'newlight_build' ? (
+              /* ── TRACK 1: NewLight Build ── */
+              <div className="space-y-4">
+                <DataCard title="Your NewLight Website">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Live URL</p>
+                        {clientWebsite.published_url ? (
+                          <a href={clientWebsite.published_url} target="_blank" rel="noopener noreferrer"
+                            className="text-sm font-medium text-primary flex items-center gap-1 hover:underline">
+                            {clientWebsite.published_url} <ExternalLinkIcon className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Not yet published</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${clientWebsite.domain_status === 'connected' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.domain_status === 'pending' ? 'bg-amber-50 text-amber-700' : clientWebsite.domain_status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-muted-foreground'}`}>
+                          Domain: {clientWebsite.domain_status}
+                        </Badge>
+                        <Badge className={`text-[10px] ${clientWebsite.build_status === 'live' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.build_status === 'in_progress' ? 'bg-primary/10 text-primary' : clientWebsite.build_status === 'needs_update' ? 'bg-amber-50 text-amber-700' : 'bg-secondary text-muted-foreground'}`}>
+                          {clientWebsite.build_status?.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    </div>
+                    {clientWebsite.custom_domain && (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Custom Domain</p>
+                        <p className="text-sm font-medium">{clientWebsite.custom_domain}</p>
+                      </div>
+                    )}
+                    {isAdmin && clientWebsite.lovable_project_url && (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Lovable Project</p>
+                        <a href={clientWebsite.lovable_project_url} target="_blank" rel="noopener noreferrer"
+                          className="text-sm text-primary flex items-center gap-1 hover:underline">
+                          Open in Lovable <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                    {clientWebsite.last_updated_at && (
+                      <p className="text-xs text-muted-foreground">Last updated: {new Date(clientWebsite.last_updated_at).toLocaleDateString()}</p>
+                    )}
+                    <div className="flex gap-2 pt-2 flex-wrap">
+                      <Button size="sm" onClick={() => setIssueOpen(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Request a Change
+                      </Button>
+                      {isAdmin && (
+                        <Button size="sm" variant="outline" onClick={openCwSheet}>
+                          <Settings className="h-3.5 w-3.5 mr-1" /> Edit Record
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </DataCard>
+              </div>
+            ) : (
+              /* ── TRACK 2: External Site ── */
+              <div className="space-y-4">
+                <DataCard title="Your Existing Website">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Website URL</p>
+                      {clientWebsite.external_url ? (
+                        <a href={clientWebsite.external_url} target="_blank" rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary flex items-center gap-1 hover:underline">
+                          {clientWebsite.external_url} <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No URL on file</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[10px] ${clientWebsite.snippet_status === 'installed' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.snippet_status === 'pending' ? 'bg-amber-50 text-amber-700' : clientWebsite.snippet_status === 'error' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-muted-foreground'}`}>
+                        Snippet: {clientWebsite.snippet_status?.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                </DataCard>
+                <DataCard title="Install Tracking Snippet">
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Add this snippet to your website's &lt;head&gt; section to connect analytics and CRM tracking.</p>
+                    <div className="relative">
+                      <pre className="text-[11px] bg-secondary rounded-lg p-3 overflow-x-auto text-foreground font-mono leading-relaxed whitespace-pre-wrap">{snippetCode}</pre>
+                      <Button size="sm" variant="ghost" className="absolute top-2 right-2 h-7 gap-1"
+                        onClick={() => { navigator.clipboard.writeText(snippetCode); toast({ title: 'Snippet copied' }); }}>
+                        <Copy className="h-3 w-3" /> Copy
+                      </Button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {isAdmin && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            const { data } = await supabase.from('client_websites').update({ snippet_status: 'installed', snippet_installed: true }).eq('client_id', activeClientId!).select().single();
+                            setClientWebsite(data);
+                            toast({ title: 'Marked as installed' });
+                          }}>
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark as Installed
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={openCwSheet}>
+                            <Settings className="h-3.5 w-3.5 mr-1" /> Edit Record
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </DataCard>
+              </div>
+            )}
+          </TabsContent>
 
           {/* ─── Pages Tab ─── */}
           <TabsContent value="pages" className="mt-4">
@@ -479,6 +673,73 @@ export default function Website() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setRecOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={addRecommendation}>Add</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Website Record Sheet */}
+      <Sheet open={cwSheetOpen} onOpenChange={setCwSheetOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>{clientWebsite ? 'Edit Website Record' : 'Set Up Website'}</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Site Type</Label>
+              <Select value={cwForm.site_type} onValueChange={v => setCwForm(p => ({ ...p, site_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newlight_build">NewLight Build</SelectItem>
+                  <SelectItem value="external">External Site</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {cwForm.site_type === 'newlight_build' ? (
+              <>
+                <div className="space-y-2"><Label>Published URL</Label><Input value={cwForm.published_url} onChange={e => setCwForm(p => ({ ...p, published_url: e.target.value }))} placeholder="https://riviera-salon.newlightapp.com" /></div>
+                <div className="space-y-2"><Label>Lovable Project URL</Label><Input value={cwForm.lovable_project_url} onChange={e => setCwForm(p => ({ ...p, lovable_project_url: e.target.value }))} placeholder="https://lovable.dev/projects/..." /></div>
+                <div className="space-y-2"><Label>Custom Domain</Label><Input value={cwForm.custom_domain} onChange={e => setCwForm(p => ({ ...p, custom_domain: e.target.value }))} placeholder="www.rivierasalon.com" /></div>
+                <div className="space-y-2"><Label>Domain Status</Label>
+                  <Select value={cwForm.domain_status} onValueChange={v => setCwForm(p => ({ ...p, domain_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="connected">Connected</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label>Build Status</Label>
+                  <Select value={cwForm.build_status} onValueChange={v => setCwForm(p => ({ ...p, build_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_started">Not Started</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="needs_update">Needs Update</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2"><Label>External Website URL</Label><Input value={cwForm.external_url} onChange={e => setCwForm(p => ({ ...p, external_url: e.target.value }))} placeholder="https://www.clientsite.com" /></div>
+                <div className="space-y-2"><Label>Snippet Status</Label>
+                  <Select value={cwForm.snippet_status} onValueChange={v => setCwForm(p => ({ ...p, snippet_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_installed">Not Installed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="installed">Installed</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            <div className="space-y-2"><Label>Notes</Label><Input value={cwForm.notes} onChange={e => setCwForm(p => ({ ...p, notes: e.target.value }))} placeholder="Internal notes..." /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCwSheetOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveCw}>Save</Button>
             </div>
           </div>
         </SheetContent>
