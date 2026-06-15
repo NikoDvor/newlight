@@ -101,6 +101,7 @@ export default function CalendarPage() {
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
   const [calendars, setCalendars] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "agenda" | "calendars">("month");
@@ -118,7 +119,7 @@ export default function CalendarPage() {
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
     start_date: "", start_time: "", duration: "30", location: defaultLocation,
-    event_type_id: "", notes: "", contact_id: "",
+    event_type_id: "", notes: "", contact_id: "", assigned_worker_id: "",
   });
   // Sync default location when workspace config loads
   useEffect(() => {
@@ -130,12 +131,13 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes, calRes, atRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes, atRes, wRes] = await Promise.all([
       supabase.from("appointments").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
       supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
       supabase.from("calendar_appointment_types").select("*").eq("client_id", activeClientId),
+      supabase.from("workers").select("id, full_name, role_title").eq("client_id", activeClientId).eq("status", "Active").order("full_name"),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
@@ -147,6 +149,7 @@ export default function CalendarPage() {
       grouped[t.calendar_id].push(t);
     });
     setApptTypesByCal(grouped);
+    setWorkers((wRes as any)?.data || []);
     setLoading(false);
   };
 
@@ -211,7 +214,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
       calendar_id: newEvent.event_type_id || null,
       appointment_type_id: newEvent.event_type_id || null,
-      assigned_user_id: null,
+      assigned_user_id: newEvent.assigned_worker_id || null,
       start_time: startTime.toISOString(),
       end_time: endTime.toISOString(),
       location: newEvent.location,
@@ -228,7 +231,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
-    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "", assigned_worker_id: "" });
     setNewEventOpen(false);
     fetchData();
   };
@@ -362,6 +365,21 @@ export default function CalendarPage() {
                 />
               )}
               <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
+              {workers.length > 0 && (
+                <div>
+                  <Label>Assign To</Label>
+                  <Select value={newEvent.assigned_worker_id} onValueChange={v => setNewEvent(p => ({ ...p, assigned_worker_id: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent>
+                      {workers.map(w => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.full_name}{w.role_title ? ` — ${w.role_title}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
                 <div><Label>Phone</Label><Input value={newEvent.contact_phone} onChange={e => setNewEvent(p => ({ ...p, contact_phone: e.target.value }))} className="bg-background border-border" /></div>
