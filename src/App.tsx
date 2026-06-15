@@ -166,6 +166,8 @@ import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
 import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
+import AdminWebsites from "./pages/admin/AdminWebsites";
+
 
 const queryClient = new QueryClient();
 
