@@ -2931,6 +2931,71 @@ export type Database = {
           },
         ]
       }
+      client_websites: {
+        Row: {
+          build_status: string
+          client_id: string
+          created_at: string
+          custom_domain: string | null
+          domain_status: string
+          external_url: string | null
+          id: string
+          last_updated_at: string | null
+          lovable_project_url: string | null
+          notes: string | null
+          published_url: string | null
+          site_type: string
+          snippet_installed: boolean
+          snippet_status: string
+          template_version: string | null
+          updated_at: string
+        }
+        Insert: {
+          build_status?: string
+          client_id: string
+          created_at?: string
+          custom_domain?: string | null
+          domain_status?: string
+          external_url?: string | null
+          id?: string
+          last_updated_at?: string | null
+          lovable_project_url?: string | null
+          notes?: string | null
+          published_url?: string | null
+          site_type?: string
+          snippet_installed?: boolean
+          snippet_status?: string
+          template_version?: string | null
+          updated_at?: string
+        }
+        Update: {
+          build_status?: string
+          client_id?: string
+          created_at?: string
+          custom_domain?: string | null
+          domain_status?: string
+          external_url?: string | null
+          id?: string
+          last_updated_at?: string | null
+          lovable_project_url?: string | null
+          notes?: string | null
+          published_url?: string | null
+          site_type?: string
+          snippet_installed?: boolean
+          snippet_status?: string
+          template_version?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_websites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           agreement_status: string
