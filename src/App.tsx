@@ -175,7 +175,12 @@ export function triggerIntroReplay() {
 
 /** Context-aware intro overlay that reads workspace state */
 function IntroOverlay() {
-  const [showIntro, setShowIntro] = useState(shouldPlayIntro);
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      if (sessionStorage.getItem('nl_splash_done') === '1') return false;
+    } catch {}
+    return shouldPlayIntro();
+  });
   const handleIntroComplete = useCallback(() => setShowIntro(false), []);
   const { isAdmin, activeClientName, branding } = useWorkspace();
 
@@ -199,17 +204,21 @@ const App = () => {
     try { return sessionStorage.getItem('nl_splash_done') === '1'; }
     catch { return false; }
   });
-  const [splashFading, setSplashFading] = useState(false);
+  const [splashFading, setSplashFading] = useState(() => {
+    try { return sessionStorage.getItem('nl_splash_done') === '1'; }
+    catch { return false; }
+  });
 
   return (
     <>
       {!splashDone && (
         <SplashScreen
           onStartFade={() => setSplashFading(true)}
-          onComplete={() => {
-            try { sessionStorage.setItem('nl_splash_done', '1'); } catch {}
-            setSplashDone(true);
-          }}
+        onComplete={() => {
+          try { sessionStorage.setItem('nl_splash_done', '1'); } catch {}
+          setSplashDone(true);
+          setSplashFading(true);
+        }}
         />
       )}
     <div style={{
