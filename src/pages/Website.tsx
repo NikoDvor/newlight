@@ -677,6 +677,73 @@ export default function Website() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Website Record Sheet */}
+      <Sheet open={cwSheetOpen} onOpenChange={setCwSheetOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>{clientWebsite ? 'Edit Website Record' : 'Set Up Website'}</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label>Site Type</Label>
+              <Select value={cwForm.site_type} onValueChange={v => setCwForm(p => ({ ...p, site_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newlight_build">NewLight Build</SelectItem>
+                  <SelectItem value="external">External Site</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {cwForm.site_type === 'newlight_build' ? (
+              <>
+                <div className="space-y-2"><Label>Published URL</Label><Input value={cwForm.published_url} onChange={e => setCwForm(p => ({ ...p, published_url: e.target.value }))} placeholder="https://riviera-salon.newlightapp.com" /></div>
+                <div className="space-y-2"><Label>Lovable Project URL</Label><Input value={cwForm.lovable_project_url} onChange={e => setCwForm(p => ({ ...p, lovable_project_url: e.target.value }))} placeholder="https://lovable.dev/projects/..." /></div>
+                <div className="space-y-2"><Label>Custom Domain</Label><Input value={cwForm.custom_domain} onChange={e => setCwForm(p => ({ ...p, custom_domain: e.target.value }))} placeholder="www.rivierasalon.com" /></div>
+                <div className="space-y-2"><Label>Domain Status</Label>
+                  <Select value={cwForm.domain_status} onValueChange={v => setCwForm(p => ({ ...p, domain_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="connected">Connected</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label>Build Status</Label>
+                  <Select value={cwForm.build_status} onValueChange={v => setCwForm(p => ({ ...p, build_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_started">Not Started</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="needs_update">Needs Update</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2"><Label>External Website URL</Label><Input value={cwForm.external_url} onChange={e => setCwForm(p => ({ ...p, external_url: e.target.value }))} placeholder="https://www.clientsite.com" /></div>
+                <div className="space-y-2"><Label>Snippet Status</Label>
+                  <Select value={cwForm.snippet_status} onValueChange={v => setCwForm(p => ({ ...p, snippet_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_installed">Not Installed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="installed">Installed</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            <div className="space-y-2"><Label>Notes</Label><Input value={cwForm.notes} onChange={e => setCwForm(p => ({ ...p, notes: e.target.value }))} placeholder="Internal notes..." /></div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCwSheetOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveCw}>Save</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
