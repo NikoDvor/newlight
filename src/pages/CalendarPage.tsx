@@ -131,7 +131,7 @@ export default function CalendarPage() {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
     const [evRes, etRes, cRes, calRes, atRes] = await Promise.all([
-      supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
+      supabase.from("appointments").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
       supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
@@ -205,14 +205,20 @@ export default function CalendarPage() {
     if (!activeClientId || !newEvent.title || !newEvent.start_date || !newEvent.start_time) return;
     const startTime = new Date(`${newEvent.start_date}T${newEvent.start_time}`);
     const endTime = new Date(startTime.getTime() + parseInt(newEvent.duration) * 60000);
-    const { error } = await supabase.from("calendar_events").insert({
-      client_id: activeClientId, title: newEvent.title,
-      contact_name: newEvent.contact_name || null, contact_email: newEvent.contact_email || null,
-      contact_phone: newEvent.contact_phone || null, start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(), location: newEvent.location,
-      event_type_id: newEvent.event_type_id || null, calendar_status: "scheduled",
-      notes: newEvent.notes || null, contact_id: newEvent.contact_id || null,
+    const { error } = await supabase.from("appointments").insert({
+      client_id: activeClientId,
+      title: newEvent.title,
+      contact_id: newEvent.contact_id || null,
+      calendar_id: newEvent.event_type_id || null,
+      appointment_type_id: newEvent.event_type_id || null,
+      assigned_user_id: null,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      location: newEvent.location,
+      status: "scheduled",
+      customer_notes: newEvent.notes || null,
       booking_source: "manual",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     // Fire automation hooks
@@ -228,10 +234,10 @@ export default function CalendarPage() {
   };
 
   const updateEventStatus = async (eventId: string, status: string, reason?: string) => {
-    const updateData: any = { calendar_status: status };
+    const updateData: any = { status: status };
     if (status === "cancelled" && reason) updateData.cancellation_reason = reason;
     if (status === "rescheduled" && reason) updateData.reschedule_reason = reason;
-    await supabase.from("calendar_events").update(updateData).eq("id", eventId);
+    await supabase.from("appointments").update(updateData).eq("id", eventId);
     const event = events.find(e => e.id === eventId);
     if (event) {
       if (status === "completed") await onAppointmentCompleted(activeClientId!, event);
@@ -244,10 +250,10 @@ export default function CalendarPage() {
   };
 
   const now = new Date();
-  const upcomingEvents = events.filter(e => new Date(e.start_time) >= now && e.calendar_status !== "cancelled");
-  const completedCount = events.filter(e => e.calendar_status === "completed").length;
-  const noShowCount = events.filter(e => e.calendar_status === "no_show").length;
-  const cancelledCount = events.filter(e => e.calendar_status === "cancelled").length;
+  const upcomingEvents = events.filter(e => new Date(e.start_time) >= now && e.status !== "cancelled");
+  const completedCount = events.filter(e => e.status === "completed").length;
+  const noShowCount = events.filter(e => e.status === "no_show").length;
+  const cancelledCount = events.filter(e => e.status === "cancelled").length;
 
   const monthGrid = useMemo(() => getMonthGrid(currentDate.getFullYear(), currentDate.getMonth()), [currentDate]);
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
@@ -510,7 +516,7 @@ export default function CalendarPage() {
                         <p className="text-[10px] text-muted-foreground">{ev.contact_name || "No contact"} · {Math.round((new Date(ev.end_time).getTime() - new Date(ev.start_time).getTime()) / 60000)} min</p>
                       </div>
                       {locationIcon(ev.location || "other")}
-                      <Badge variant="outline" className={`text-[9px] ${STATUS_STYLE[ev.calendar_status] || ""}`}>{STATUS_LABEL[ev.calendar_status] || ev.calendar_status}</Badge>
+                      <Badge variant="outline" className={`text-[9px] ${STATUS_STYLE[ev.status] || ""}`}>{STATUS_LABEL[ev.status] || ev.status}</Badge>
                     </div>
                   ))}
                 </div>
@@ -552,7 +558,7 @@ export default function CalendarPage() {
                       <span>{new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className={STATUS_STYLE[ev.calendar_status] || ""}>{STATUS_LABEL[ev.calendar_status] || ev.calendar_status}</Badge>
+                  <Badge variant="outline" className={STATUS_STYLE[ev.status] || ""}>{STATUS_LABEL[ev.status] || ev.status}</Badge>
                 </div>
               </motion.div>
             ))
@@ -618,7 +624,7 @@ export default function CalendarPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {calendars.map(cal => {
                 const calEvents = events.filter(e => e.calendar_id === cal.id);
-                const upcomingCal = calEvents.filter(e => new Date(e.start_time) >= new Date() && e.calendar_status !== "cancelled");
+                const upcomingCal = calEvents.filter(e => new Date(e.start_time) >= new Date() && e.status !== "cancelled");
                 return (
                   <div key={cal.id} className="card-widget p-4 rounded-2xl">
                     <div className="flex items-center justify-between mb-2">
@@ -798,7 +804,7 @@ export default function CalendarPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><p className="text-[10px] text-muted-foreground uppercase">Status</p>
-                    <Badge variant="outline" className={STATUS_STYLE[detailEvent.calendar_status] || ""}>{STATUS_LABEL[detailEvent.calendar_status] || detailEvent.calendar_status}</Badge></div>
+                    <Badge variant="outline" className={STATUS_STYLE[detailEvent.status] || ""}>{STATUS_LABEL[detailEvent.status] || detailEvent.status}</Badge></div>
                   <div><p className="text-[10px] text-muted-foreground uppercase">Location</p>
                     <div className="flex items-center gap-1 text-sm text-foreground">{locationIcon(detailEvent.location || "other")}{detailEvent.location || "—"}</div></div>
                 </div>
@@ -819,7 +825,7 @@ export default function CalendarPage() {
                 <div className="border-t border-border pt-3">
                   <p className="text-[10px] text-muted-foreground uppercase mb-2">Update Status</p>
                   <div className="flex flex-wrap gap-2">
-                    {["confirmed", "completed", "cancelled", "no_show", "rescheduled"].filter(s => s !== detailEvent.calendar_status).map(s => (
+                    {["confirmed", "completed", "cancelled", "no_show", "rescheduled"].filter(s => s !== detailEvent.status).map(s => (
                       <Button key={s} size="sm" variant="outline" className="text-xs" onClick={() => updateEventStatus(detailEvent.id, s)}>
                         {STATUS_LABEL[s]}
                       </Button>
