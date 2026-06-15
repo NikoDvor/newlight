@@ -165,6 +165,7 @@ import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
 import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
+import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
 
 const queryClient = new QueryClient();
 
@@ -294,6 +295,7 @@ const App = () => {
                 <Route path="proposal-templates" element={<AdminProposalTemplates />} />
                 <Route path="sales-demo-creator" element={<AdminSalesDemoCreator />} />
                 <Route path="meeting-intelligence" element={<AdminMeetingIntelligence />} />
+                <Route path="employee-performance" element={<AdminEmployeePerformance />} />
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="automations" element={<AdminAutomations />} />
