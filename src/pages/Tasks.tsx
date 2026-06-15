@@ -54,6 +54,7 @@ export default function Tasks() {
   const { activeClientId, user } = useWorkspace();
   const [tasks, setTasks] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTask, setDetailTask] = useState<any>(null);
@@ -62,18 +63,20 @@ export default function Tasks() {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [newTask, setNewTask] = useState({
     title: "", description: "", due_date: "", priority: "medium", status: "open",
-    related_type: "", related_id: "",
+    related_type: "", related_id: "", assigned_worker_id: "",
   });
 
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [tRes, cRes] = await Promise.all([
+    const [tRes, cRes, wRes] = await Promise.all([
       supabase.from("crm_tasks").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name").eq("client_id", activeClientId).limit(200),
+      supabase.from("workers").select("id, full_name, role_title").eq("client_id", activeClientId).eq("status", "Active").order("full_name"),
     ]);
     setTasks(tRes.data || []);
     setContacts(cRes.data || []);
+    setWorkers(wRes.data || []);
     setLoading(false);
   };
 
@@ -90,6 +93,7 @@ export default function Tasks() {
       status: newTask.status,
       related_type: newTask.related_type || null,
       related_id: newTask.related_id || null,
+      assigned_worker_id: newTask.assigned_worker_id || null,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("crm_activities").insert({

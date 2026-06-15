@@ -110,7 +110,7 @@ export default function CRM() {
       supabase.from("crm_notes").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(30),
       supabase.from("calendar_events").select("*").eq("client_id", activeClientId).order("start_time", { ascending: false }).limit(50),
       supabase.from("email_messages").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(50),
-      supabase.from("workspace_users").select("id, user_id, full_name").eq("client_id", activeClientId),
+      supabase.from("workers").select("id, full_name, role_title, client_id").eq("status", "Active").order("full_name"),
       supabase.from("follow_up_queues").select("*").eq("client_id", activeClientId).order("due_at", { ascending: true, nullsFirst: false }),
     ]);
     setContacts(cRes.data || []);
@@ -122,7 +122,7 @@ export default function CRM() {
     setNotes(notesRes.data || []);
     setAppointments(apRes.data || []);
     setEmails(emRes.data || []);
-    setTeamMembers(tmRes.data || []);
+    setTeamMembers((tmRes.data || []).map((w: any) => ({ user_id: w.id, full_name: w.full_name, role_title: w.role_title, client_id: w.client_id })));
     setFollowUps(fuRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
@@ -317,7 +317,7 @@ export default function CRM() {
 
   const getContactName = (id: string) => contacts.find(c => c.id === id)?.full_name || "—";
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.company_name || "—";
-  const getOwnerName = (userId: string) => teamMembers.find(t => t.user_id === userId)?.full_name || "—";
+  const getOwnerName = (workerId: string) => teamMembers.find(t => t.user_id === workerId)?.full_name || "—";
 
   if (!activeClientId) {
     return (
@@ -970,7 +970,7 @@ export default function CRM() {
                 <Label>Assigned Owner</Label>
                 <Select value={newContact.contact_owner} onValueChange={v => setNewContact(p => ({ ...p, contact_owner: v }))}>
                   <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}{t.role_title ? ` — ${t.role_title}` : ""}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
@@ -1012,7 +1012,7 @@ export default function CRM() {
                 <Label>Assigned Owner</Label>
                 <Select value={newDeal.assigned_user} onValueChange={v => setNewDeal(p => ({ ...p, assigned_user: v }))}>
                   <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}{t.role_title ? ` — ${t.role_title}` : ""}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
