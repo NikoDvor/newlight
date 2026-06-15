@@ -243,6 +243,48 @@ export default function Workforce() {
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Worker added" });
+    // Auto-create personal calendar for this worker
+    try {
+      const workerRes = await supabase
+        .from("workers")
+        .select("id, first_name, last_name")
+        .eq("client_id", activeClientId)
+        .eq("first_name", wf.first_name)
+        .eq("last_name", wf.last_name)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (workerRes.data) {
+        const { data: cal } = await supabase.from("calendars").insert({
+          client_id: activeClientId,
+          calendar_name: `${wf.first_name} ${wf.last_name}`,
+          calendar_type: "staff",
+          description: `Personal calendar for ${wf.first_name} ${wf.last_name}`,
+          timezone: "America/Los_Angeles",
+          is_active: true,
+          worker_id: workerRes.data.id,
+          color: "#3B82F6",
+        }).select().single();
+        if (cal && wf.email) {
+          // Link worker to their calendar as owner
+          const { data: profile } = await supabase
+            .from("employee_profiles")
+            .select("user_id")
+            .eq("email", wf.email)
+            .maybeSingle();
+          if (profile?.user_id) {
+            await supabase.from("calendar_users").insert({
+              client_id: activeClientId,
+              calendar_id: (cal as any).id,
+              user_id: profile.user_id,
+              role: "owner",
+            });
+          }
+        }
+      }
+    } catch {
+      // Calendar auto-creation is non-blocking — worker was still added successfully
+    }
     setAddWorkerOpen(false);
     setWf({ first_name: "", last_name: "", email: "", phone: "", role_title: "", department: "", worker_type: "Employee", pay_type: "Hourly", hourly_rate: "", salary_amount: "", payroll_frequency: "Biweekly" });
     fetchData();
