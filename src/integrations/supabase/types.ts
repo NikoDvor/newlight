@@ -1847,6 +1847,7 @@ export type Database = {
           status: string
           timezone: string | null
           updated_at: string
+          worker_id: string | null
         }
         Insert: {
           calendar_name: string
@@ -1862,6 +1863,7 @@ export type Database = {
           status?: string
           timezone?: string | null
           updated_at?: string
+          worker_id?: string | null
         }
         Update: {
           calendar_name?: string
@@ -1877,6 +1879,7 @@ export type Database = {
           status?: string
           timezone?: string | null
           updated_at?: string
+          worker_id?: string | null
         }
         Relationships: [
           {
@@ -1884,6 +1887,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendars_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
             referencedColumns: ["id"]
           },
         ]
