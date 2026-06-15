@@ -235,6 +235,139 @@ export default function Website() {
             <TabsTrigger value="recs" className="rounded-md text-sm">Recs</TabsTrigger>
           </TabsList>
 
+          {/* ─── Site Tab ─── */}
+          <TabsContent value="site" className="mt-4">
+            {cwLoading ? (
+              <div className="card-widget p-8 rounded-2xl text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+              </div>
+            ) : !clientWebsite ? (
+              <DataCard title="Website Tracking">
+                <div className="py-10 text-center">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Globe className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">No website record yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {isAdmin ? "Set up website tracking for this client — choose a NewLight Build or link their existing site." : "Your website is being set up. Check back soon."}
+                  </p>
+                  {isAdmin && (
+                    <Button size="sm" onClick={openCwSheet}><Plus className="h-4 w-4 mr-1" /> Set Up Website</Button>
+                  )}
+                </div>
+              </DataCard>
+            ) : clientWebsite.site_type === 'newlight_build' ? (
+              /* ── TRACK 1: NewLight Build ── */
+              <div className="space-y-4">
+                <DataCard title="Your NewLight Website">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Live URL</p>
+                        {clientWebsite.published_url ? (
+                          <a href={clientWebsite.published_url} target="_blank" rel="noopener noreferrer"
+                            className="text-sm font-medium text-primary flex items-center gap-1 hover:underline">
+                            {clientWebsite.published_url} <ExternalLinkIcon className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Not yet published</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-[10px] ${clientWebsite.domain_status === 'connected' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.domain_status === 'pending' ? 'bg-amber-50 text-amber-700' : clientWebsite.domain_status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-muted-foreground'}`}>
+                          Domain: {clientWebsite.domain_status}
+                        </Badge>
+                        <Badge className={`text-[10px] ${clientWebsite.build_status === 'live' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.build_status === 'in_progress' ? 'bg-primary/10 text-primary' : clientWebsite.build_status === 'needs_update' ? 'bg-amber-50 text-amber-700' : 'bg-secondary text-muted-foreground'}`}>
+                          {clientWebsite.build_status?.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    </div>
+                    {clientWebsite.custom_domain && (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Custom Domain</p>
+                        <p className="text-sm font-medium">{clientWebsite.custom_domain}</p>
+                      </div>
+                    )}
+                    {isAdmin && clientWebsite.lovable_project_url && (
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase mb-1">Lovable Project</p>
+                        <a href={clientWebsite.lovable_project_url} target="_blank" rel="noopener noreferrer"
+                          className="text-sm text-primary flex items-center gap-1 hover:underline">
+                          Open in Lovable <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                    {clientWebsite.last_updated_at && (
+                      <p className="text-xs text-muted-foreground">Last updated: {new Date(clientWebsite.last_updated_at).toLocaleDateString()}</p>
+                    )}
+                    <div className="flex gap-2 pt-2 flex-wrap">
+                      <Button size="sm" onClick={() => setIssueOpen(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Request a Change
+                      </Button>
+                      {isAdmin && (
+                        <Button size="sm" variant="outline" onClick={openCwSheet}>
+                          <Settings className="h-3.5 w-3.5 mr-1" /> Edit Record
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </DataCard>
+              </div>
+            ) : (
+              /* ── TRACK 2: External Site ── */
+              <div className="space-y-4">
+                <DataCard title="Your Existing Website">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase mb-1">Website URL</p>
+                      {clientWebsite.external_url ? (
+                        <a href={clientWebsite.external_url} target="_blank" rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary flex items-center gap-1 hover:underline">
+                          {clientWebsite.external_url} <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No URL on file</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[10px] ${clientWebsite.snippet_status === 'installed' ? 'bg-emerald-50 text-emerald-700' : clientWebsite.snippet_status === 'pending' ? 'bg-amber-50 text-amber-700' : clientWebsite.snippet_status === 'error' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-muted-foreground'}`}>
+                        Snippet: {clientWebsite.snippet_status?.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                </DataCard>
+                <DataCard title="Install Tracking Snippet">
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Add this snippet to your website's &lt;head&gt; section to connect analytics and CRM tracking.</p>
+                    <div className="relative">
+                      <pre className="text-[11px] bg-secondary rounded-lg p-3 overflow-x-auto text-foreground font-mono leading-relaxed whitespace-pre-wrap">{snippetCode}</pre>
+                      <Button size="sm" variant="ghost" className="absolute top-2 right-2 h-7 gap-1"
+                        onClick={() => { navigator.clipboard.writeText(snippetCode); toast({ title: 'Snippet copied' }); }}>
+                        <Copy className="h-3 w-3" /> Copy
+                      </Button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {isAdmin && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            const { data } = await supabase.from('client_websites').update({ snippet_status: 'installed', snippet_installed: true }).eq('client_id', activeClientId!).select().single();
+                            setClientWebsite(data);
+                            toast({ title: 'Marked as installed' });
+                          }}>
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark as Installed
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={openCwSheet}>
+                            <Settings className="h-3.5 w-3.5 mr-1" /> Edit Record
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </DataCard>
+              </div>
+            )}
+          </TabsContent>
+
           {/* ─── Pages Tab ─── */}
           <TabsContent value="pages" className="mt-4">
             <DataCard title="Website Pages">
