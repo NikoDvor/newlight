@@ -101,6 +101,7 @@ export default function CalendarPage() {
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
   const [calendars, setCalendars] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "agenda" | "calendars">("month");
@@ -118,7 +119,7 @@ export default function CalendarPage() {
   const [newEvent, setNewEvent] = useState({
     title: "", contact_name: "", contact_email: "", contact_phone: "",
     start_date: "", start_time: "", duration: "30", location: defaultLocation,
-    event_type_id: "", notes: "", contact_id: "",
+    event_type_id: "", notes: "", contact_id: "", assigned_worker_id: "",
   });
   // Sync default location when workspace config loads
   useEffect(() => {
@@ -130,12 +131,13 @@ export default function CalendarPage() {
   const fetchData = async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [evRes, etRes, cRes, calRes, atRes] = await Promise.all([
+    const [evRes, etRes, cRes, calRes, atRes, wRes] = await Promise.all([
       supabase.from("appointments").select("*").eq("client_id", activeClientId).order("start_time", { ascending: true }),
       supabase.from("event_types").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("crm_contacts").select("id, full_name, email, phone").eq("client_id", activeClientId).order("full_name").limit(200),
       supabase.from("calendars").select("*").eq("client_id", activeClientId).order("created_at", { ascending: true }),
       supabase.from("calendar_appointment_types").select("*").eq("client_id", activeClientId),
+      supabase.from("workers").select("id, full_name, role_title").eq("client_id", activeClientId).eq("status", "Active").order("full_name"),
     ]);
     setEvents(evRes.data || []);
     setEventTypes(etRes.data || []);
@@ -147,6 +149,7 @@ export default function CalendarPage() {
       grouped[t.calendar_id].push(t);
     });
     setApptTypesByCal(grouped);
+    setWorkers((wRes as any)?.data || []);
     setLoading(false);
   };
 

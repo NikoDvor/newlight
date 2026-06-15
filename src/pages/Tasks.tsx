@@ -311,6 +311,21 @@ export default function Tasks() {
                 </SelectContent>
               </Select>
             </div>
+            {workers.length > 0 && (
+              <div className="space-y-2">
+                <Label>Assign To</Label>
+                <Select value={newTask.assigned_worker_id} onValueChange={v => setNewTask(p => ({ ...p, assigned_worker_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>
+                    {workers.map(w => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.full_name}{w.role_title ? ` — ${w.role_title}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancel</Button>
               <Button className="flex-1 gap-1.5" onClick={createTask} disabled={!newTask.title.trim()}>
