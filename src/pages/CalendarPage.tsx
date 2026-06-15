@@ -214,7 +214,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
       calendar_id: newEvent.event_type_id || null,
       appointment_type_id: newEvent.event_type_id || null,
-      assigned_user_id: null,
+      assigned_user_id: newEvent.assigned_worker_id || null,
       start_time: startTime.toISOString(),
       end_time: endTime.toISOString(),
       location: newEvent.location,
@@ -231,7 +231,7 @@ export default function CalendarPage() {
       contact_id: newEvent.contact_id || null,
     });
     toast({ title: "Event Created" });
-    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "" });
+    setNewEvent({ title: "", contact_name: "", contact_email: "", contact_phone: "", start_date: "", start_time: "", duration: "30", location: zoomEnabled ? "zoom" : "", event_type_id: "", notes: "", contact_id: "", assigned_worker_id: "" });
     setNewEventOpen(false);
     fetchData();
   };
@@ -365,6 +365,21 @@ export default function CalendarPage() {
                 />
               )}
               <div><Label>Contact Name</Label><Input value={newEvent.contact_name} onChange={e => setNewEvent(p => ({ ...p, contact_name: e.target.value }))} className="bg-background border-border" /></div>
+              {workers.length > 0 && (
+                <div>
+                  <Label>Assign To</Label>
+                  <Select value={newEvent.assigned_worker_id} onValueChange={v => setNewEvent(p => ({ ...p, assigned_worker_id: v }))}>
+                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent>
+                      {workers.map(w => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.full_name}{w.role_title ? ` — ${w.role_title}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Email</Label><Input type="email" value={newEvent.contact_email} onChange={e => setNewEvent(p => ({ ...p, contact_email: e.target.value }))} className="bg-background border-border" /></div>
                 <div><Label>Phone</Label><Input value={newEvent.contact_phone} onChange={e => setNewEvent(p => ({ ...p, contact_phone: e.target.value }))} className="bg-background border-border" /></div>
