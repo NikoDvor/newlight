@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,8 @@ export default function AdminTeam() {
 
   // Stats dialog
   const [statsFor, setStatsFor] = useState<UserRow | null>(null);
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "users";
   const [staffCalendars, setStaffCalendars] = useState([]);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 
@@ -282,7 +285,7 @@ export default function AdminTeam() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="users" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="mb-4 bg-white/[0.04] border border-white/[0.06]">
           <TabsTrigger value="users" className="text-xs data-[state=active]:bg-white/[0.08] data-[state=active]:text-white text-white/50">
             Users

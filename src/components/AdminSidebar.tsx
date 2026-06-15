@@ -36,7 +36,7 @@ const navGroups: NavGroup[] = [
       { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch },
       { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Prospects", url: "/admin/prospects", icon: Contact },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: MessageSquare },
+      { title: "Sales Meetings", url: "/admin/sales-pipeline", icon: MessageSquare },
       { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
@@ -67,8 +67,6 @@ const navGroups: NavGroup[] = [
   {
     label: "Intelligence",
     items: [
-      { title: "AI Insights", url: "/ai-insights", icon: Sparkles },
-      { title: "Growth Advisor", url: "/growth-advisor", icon: Brain },
       { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
       { title: "Automations", url: "/admin/automations", icon: Activity },
       { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
