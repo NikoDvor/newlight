@@ -434,6 +434,107 @@ export default function AdminTeam() {
       )}
 
       {/* Send App Link modal - lives on this page; closing resets the dropdown */}
+      </TabsContent>
+
+      <TabsContent value="calendars">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
+                Staff Calendars
+              </h2>
+              <p className="text-xs text-white/40 mt-1">
+                All employee personal calendars across every client workspace. View or book on behalf of any staff member.
+              </p>
+            </div>
+          </div>
+
+          {loadingCalendars ? (
+            <div className="text-center text-white/30 py-12 text-sm">
+              Loading calendars...
+            </div>
+          ) : staffCalendars.length === 0 ? (
+            <Card className="border-0 bg-white/[0.04] p-12 text-center" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+              <div className="flex flex-col items-center gap-3">
+                <CalendarPlus className="h-8 w-8 text-white/20" />
+                <div>
+                  <p className="text-white/50 text-sm font-medium">No staff calendars yet</p>
+                  <p className="text-white/30 text-xs mt-1">
+                    Staff calendars are created automatically when workers are added in Workforce.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    {["Employee", "Role", "Department", "Client Workspace", "Calendar", "Status", "Actions"].map(h => (
+                      <th key={h} className="text-left px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider font-semibold">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {staffCalendars.map((cal) => {
+                    const worker = (cal.workers as any) || {};
+                    const clientName = clients.find(c => c.id === worker.client_id)?.business_name || "—";
+                    return (
+                      <tr key={cal.id} className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] text-white/60">
+                              {(worker.full_name || "?").substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-white/90 text-sm">{worker.full_name || "Unknown"}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-white/60 text-xs">{worker.role_title || "—"}</td>
+                        <td className="px-4 py-3 text-white/60 text-xs">{worker.department || "—"}</td>
+                        <td className="px-4 py-3 text-white/60 text-xs">{clientName}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-3 w-3 text-[hsl(var(--nl-sky))]" />
+                            <span className="text-white/80 text-xs">{cal.calendar_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-[10px] border-white/10 text-white/50">
+                            {worker.status || "—"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => window.location.assign(`/calendar-management/${cal.id}`)}
+                              className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.06] text-white/60 hover:bg-white/[0.1] hover:text-white transition-colors flex items-center gap-1"
+                              title="View calendar"
+                            >
+                              <Eye className="h-3 w-3" /> View
+                            </button>
+                            <button
+                              onClick={() => window.location.assign(`/book/${cal.id}`)}
+                              className="text-[10px] px-2 py-1 rounded-lg bg-[hsla(211,96%,60%,.12)] text-[hsl(var(--nl-sky))] hover:bg-[hsla(211,96%,60%,.2)] transition-colors flex items-center gap-1"
+                              title="Book on behalf"
+                            >
+                              <CalendarPlus className="h-3 w-3" /> Book
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </TabsContent>
+
+      {/* Send App Link modal - lives on this page; closing resets the dropdown */}
       <SendAppLinkDialog
         client={appLinkClient}
         open={!!appLinkClient}
