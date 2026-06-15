@@ -5,7 +5,7 @@ import { WorkspaceContext, useWorkspace } from "@/contexts/WorkspaceContext";
  * Reserved internal client id for NewLight's own admin operations workspace.
  * Used to isolate Niko's internal ops data from all real client workspaces.
  */
-export const ADMIN_OPS_CLIENT_ID = "newlight-internal";
+export const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 export const ADMIN_OPS_CLIENT_NAME = "NewLight Ops";
 
 /**
