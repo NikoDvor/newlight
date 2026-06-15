@@ -98,7 +98,7 @@ export default function MeetingIntelligence() {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : meetings.length === 0 ? (
-          <DataCard>
+          <DataCard title="Meetings">
             <div className="text-center py-12">
               <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-lg font-semibold text-foreground">No meetings yet</p>
