@@ -176,6 +176,31 @@ export default function Website() {
     setCwSheetOpen(true);
   };
 
+  const submitChangeRequest = async () => {
+    if (!activeClientId || !changeForm.description.trim()) {
+      toast({ title: 'Description required', variant: 'destructive' }); return;
+    }
+    const structured = [
+      `Page/Area: ${changeForm.page_area || 'Not specified'}`,
+      `Change Type: ${changeForm.change_type.replace(/_/g, ' ')}`,
+      `Priority: ${changeForm.priority}`,
+      `Description: ${changeForm.description}`,
+      changeForm.reference_url ? `Reference: ${changeForm.reference_url}` : null,
+    ].filter(Boolean).join('\n');
+    await supabase.from('website_issues').insert({
+      client_id: activeClientId,
+      issue_title: `Change Request: ${changeForm.change_type.replace(/_/g, ' ')} — ${changeForm.page_area || 'General'}`,
+      description: structured,
+      severity: changeForm.priority === 'urgent' ? 'high' : changeForm.priority === 'high' ? 'high' : changeForm.priority === 'medium' ? 'medium' : 'low',
+      status: 'open',
+    });
+    toast({ title: 'Change request submitted' });
+    setChangeForm({ page_area: '', change_type: 'copy_edit', priority: 'medium', description: '', reference_url: '' });
+    setChangeOpen(false);
+    const { data } = await supabase.from('website_issues').select('*').eq('client_id', activeClientId).order('created_at', { ascending: false });
+    setIssues(data || []);
+  };
+
   const snippetCode = `<!-- NewLight Analytics -->
 <script>
   window.__NL_CLIENT__ = "${activeClientId}";
