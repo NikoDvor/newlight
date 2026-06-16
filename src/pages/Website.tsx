@@ -77,6 +77,14 @@ export default function Website() {
   const [clientWebsite, setClientWebsite] = useState<any>(null);
   const [cwLoading, setCwLoading] = useState(true);
   const [cwSheetOpen, setCwSheetOpen] = useState(false);
+  const [changeOpen, setChangeOpen] = useState(false);
+  const [changeForm, setChangeForm] = useState({
+    page_area: '',
+    change_type: 'copy_edit',
+    priority: 'medium',
+    description: '',
+    reference_url: '',
+  });
   const [cwForm, setCwForm] = useState({
     site_type: 'newlight_build',
     published_url: '',
