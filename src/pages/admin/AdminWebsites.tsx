@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe, ExternalLink, Search, Filter, Plus, Settings } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { Globe, ExternalLink, Search, Filter, Plus, Settings, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 const BUILD_STATUS_STYLE: Record<string, string> = {
