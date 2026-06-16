@@ -207,6 +207,27 @@ export default function Website() {
 </script>
 <script async src="https://cdn.newlightapp.com/tracker.js"></script>`;
 
+  const DOMAIN_STEPS = [
+    { key: 'dns_record', label: 'Wildcard DNS record set on domain registrar' },
+    { key: 'lovable_domain', label: 'Custom domain configured in Lovable project' },
+    { key: 'dns_propagated', label: 'DNS propagation confirmed (allow 24–48h)' },
+    { key: 'ssl_active', label: 'SSL certificate active (https:// loads correctly)' },
+    { key: 'final_test', label: 'Final URL tested and confirmed working' },
+  ];
+
+  const toggleDomainStep = async (key: string) => {
+    if (!activeClientId || !clientWebsite) return;
+    const current = (clientWebsite.domain_checklist as Record<string, boolean>) || {};
+    const updated = { ...current, [key]: !current[key] };
+    const { data } = await supabase
+      .from('client_websites')
+      .update({ domain_checklist: updated })
+      .eq('client_id', activeClientId)
+      .select()
+      .single();
+    if (data) setClientWebsite(data);
+  };
+
   const resolveRecommendation = async (id: string) => {
     await supabase.from("website_recommendations").update({ status: "resolved" }).eq("id", id);
     const { data } = await supabase.from("website_recommendations").select("*").eq("client_id", activeClientId!).order("created_at", { ascending: false });
