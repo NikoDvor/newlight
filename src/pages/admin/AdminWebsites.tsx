@@ -56,6 +56,28 @@ export default function AdminWebsites() {
     return true;
   });
 
+  const openEdit = (r: any) => {
+    setEditRow(r);
+    setEditForm({
+      build_status: r.build_status || 'not_started',
+      domain_status: r.domain_status || 'none',
+      snippet_status: r.snippet_status || 'not_installed',
+      notes: r.notes || '',
+    });
+  };
+  const saveEdit = async () => {
+    if (!editRow) return;
+    const { data } = await supabase
+      .from('client_websites')
+      .update({ ...editForm, last_updated_at: new Date().toISOString() })
+      .eq('id', editRow.id)
+      .select('*, clients(business_name, industry, primary_location)')
+      .single();
+    if (data) setRows(prev => prev.map(r => r.id === data.id ? data : r));
+    toast({ title: 'Updated' });
+    setEditRow(null);
+  };
+
   const liveCount = rows.filter(r => r.build_status === "live").length;
   const inProgressCount = rows.filter(r => r.build_status === "in_progress").length;
   const needsUpdateCount = rows.filter(r => r.build_status === "needs_update").length;
