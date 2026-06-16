@@ -2937,6 +2937,7 @@ export type Database = {
           client_id: string
           created_at: string
           custom_domain: string | null
+          domain_checklist: Json
           domain_status: string
           external_url: string | null
           id: string
@@ -2955,6 +2956,7 @@ export type Database = {
           client_id: string
           created_at?: string
           custom_domain?: string | null
+          domain_checklist?: Json
           domain_status?: string
           external_url?: string | null
           id?: string
@@ -2973,6 +2975,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           custom_domain?: string | null
+          domain_checklist?: Json
           domain_status?: string
           external_url?: string | null
           id?: string
