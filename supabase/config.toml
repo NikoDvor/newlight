@@ -13,3 +13,6 @@ verify_jwt = true
 
 [functions.seo-generate-plan]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
