@@ -77,6 +77,14 @@ export default function Website() {
   const [clientWebsite, setClientWebsite] = useState<any>(null);
   const [cwLoading, setCwLoading] = useState(true);
   const [cwSheetOpen, setCwSheetOpen] = useState(false);
+  const [changeOpen, setChangeOpen] = useState(false);
+  const [changeForm, setChangeForm] = useState({
+    page_area: '',
+    change_type: 'copy_edit',
+    priority: 'medium',
+    description: '',
+    reference_url: '',
+  });
   const [cwForm, setCwForm] = useState({
     site_type: 'newlight_build',
     published_url: '',
@@ -166,6 +174,31 @@ export default function Website() {
       notes: clientWebsite.notes || '',
     });
     setCwSheetOpen(true);
+  };
+
+  const submitChangeRequest = async () => {
+    if (!activeClientId || !changeForm.description.trim()) {
+      toast({ title: 'Description required', variant: 'destructive' }); return;
+    }
+    const structured = [
+      `Page/Area: ${changeForm.page_area || 'Not specified'}`,
+      `Change Type: ${changeForm.change_type.replace(/_/g, ' ')}`,
+      `Priority: ${changeForm.priority}`,
+      `Description: ${changeForm.description}`,
+      changeForm.reference_url ? `Reference: ${changeForm.reference_url}` : null,
+    ].filter(Boolean).join('\n');
+    await supabase.from('website_issues').insert({
+      client_id: activeClientId,
+      issue_title: `Change Request: ${changeForm.change_type.replace(/_/g, ' ')} — ${changeForm.page_area || 'General'}`,
+      description: structured,
+      severity: changeForm.priority === 'urgent' ? 'high' : changeForm.priority === 'high' ? 'high' : changeForm.priority === 'medium' ? 'medium' : 'low',
+      status: 'open',
+    });
+    toast({ title: 'Change request submitted' });
+    setChangeForm({ page_area: '', change_type: 'copy_edit', priority: 'medium', description: '', reference_url: '' });
+    setChangeOpen(false);
+    const { data } = await supabase.from('website_issues').select('*').eq('client_id', activeClientId).order('created_at', { ascending: false });
+    setIssues(data || []);
   };
 
   const snippetCode = `<!-- NewLight Analytics -->
@@ -301,7 +334,7 @@ export default function Website() {
                       <p className="text-xs text-muted-foreground">Last updated: {new Date(clientWebsite.last_updated_at).toLocaleDateString()}</p>
                     )}
                     <div className="flex gap-2 pt-2 flex-wrap">
-                      <Button size="sm" onClick={() => setIssueOpen(true)}>
+                      <Button size="sm" onClick={() => setChangeOpen(true)}>
                         <Plus className="h-3.5 w-3.5 mr-1" /> Request a Change
                       </Button>
                       {isAdmin && (
@@ -740,6 +773,66 @@ export default function Website() {
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setCwSheetOpen(false)}>Cancel</Button>
               <Button className="flex-1" onClick={saveCw}>Save</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Change Request Sheet */}
+      <Sheet open={changeOpen} onOpenChange={setChangeOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Request a Change</SheetTitle>
+            <SheetDescription>Describe what needs to be updated on your website</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label>Page or Area</Label>
+              <Input value={changeForm.page_area} onChange={e => setChangeForm(p => ({ ...p, page_area: e.target.value }))} placeholder="e.g. Home page, Services section, Contact form" />
+            </div>
+            <div className="space-y-2">
+              <Label>Type of Change</Label>
+              <Select value={changeForm.change_type} onValueChange={v => setChangeForm(p => ({ ...p, change_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="copy_edit">Copy / Text Edit</SelectItem>
+                  <SelectItem value="design_change">Design Change</SelectItem>
+                  <SelectItem value="new_section">Add New Section</SelectItem>
+                  <SelectItem value="new_page">Add New Page</SelectItem>
+                  <SelectItem value="bug_fix">Bug Fix</SelectItem>
+                  <SelectItem value="image_update">Image Update</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={changeForm.priority} onValueChange={v => setChangeForm(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low — whenever you get to it</SelectItem>
+                  <SelectItem value="medium">Medium — this week</SelectItem>
+                  <SelectItem value="high">High — within 48 hours</SelectItem>
+                  <SelectItem value="urgent">Urgent — today</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Description *</Label>
+              <textarea
+                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                value={changeForm.description}
+                onChange={e => setChangeForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Describe exactly what you want changed. The more detail the better."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reference URL</Label>
+              <Input value={changeForm.reference_url} onChange={e => setChangeForm(p => ({ ...p, reference_url: e.target.value }))} placeholder="Link to example, screenshot, or inspiration" />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setChangeOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={submitChangeRequest}>Submit Request</Button>
             </div>
           </div>
         </SheetContent>
