@@ -36,6 +36,8 @@ export default function AdminWebsites() {
   const [search, setSearch] = useState("");
   const [filterBuild, setFilterBuild] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [editRow, setEditRow] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ build_status: '', domain_status: '', snippet_status: '', notes: '' });
 
   useEffect(() => {
     setLoading(true);
