@@ -198,6 +198,9 @@ export default function AdminWebsites() {
                           <Globe className="h-3.5 w-3.5 mr-1" /> Open in Lovable
                         </Button>
                       )}
+                      <Button size="sm" variant="outline" onClick={() => openEdit(r)}>
+                        <Settings className="h-3.5 w-3.5 mr-1" /> Edit
+                      </Button>
                     </div>
                   </div>
                   {r.notes && (
