@@ -212,6 +212,66 @@ export default function AdminWebsites() {
           })
         )}
       </div>
+
+      {/* Quick Edit Sheet */}
+      <Sheet open={!!editRow} onOpenChange={open => !open && setEditRow(null)}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Quick Edit — {editRow?.clients?.business_name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {editRow?.site_type === 'newlight_build' ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Build Status</Label>
+                  <Select value={editForm.build_status} onValueChange={v => setEditForm(p => ({ ...p, build_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_started">Not Started</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="needs_update">Needs Update</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Domain Status</Label>
+                  <Select value={editForm.domain_status} onValueChange={v => setEditForm(p => ({ ...p, domain_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="connected">Connected</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Label>Snippet Status</Label>
+                <Select value={editForm.snippet_status} onValueChange={v => setEditForm(p => ({ ...p, snippet_status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_installed">Not Installed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="installed">Installed</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Input value={editForm.notes} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} placeholder="Internal notes..." />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEditRow(null)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveEdit}>Save</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
