@@ -3037,6 +3037,9 @@ export type Database = {
           sms_delivery_status: string | null
           source_appointment_id: string | null
           status: string
+          stripe_customer_id: string | null
+          stripe_status: string | null
+          stripe_subscription_id: string | null
           timezone: string | null
           updated_at: string
           website_url: string | null
@@ -3081,6 +3084,9 @@ export type Database = {
           sms_delivery_status?: string | null
           source_appointment_id?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_status?: string | null
+          stripe_subscription_id?: string | null
           timezone?: string | null
           updated_at?: string
           website_url?: string | null
@@ -3125,6 +3131,9 @@ export type Database = {
           sms_delivery_status?: string | null
           source_appointment_id?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_status?: string | null
+          stripe_subscription_id?: string | null
           timezone?: string | null
           updated_at?: string
           website_url?: string | null
