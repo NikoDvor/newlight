@@ -366,6 +366,29 @@ export default function Website() {
                     </div>
                   </div>
                 </DataCard>
+                <DataCard title="Domain Connection Checklist">
+                  <div className="space-y-1">
+                    {DOMAIN_STEPS.map(step => {
+                      const checklist = (clientWebsite.domain_checklist as Record<string, boolean>) || {};
+                      const checked = checklist[step.key] === true;
+                      return (
+                        <div key={step.key}
+                          onClick={() => isAdmin && toggleDomainStep(step.key)}
+                          className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${isAdmin ? 'cursor-pointer hover:bg-secondary/50' : ''}`}>
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-emerald-500 border-emerald-500' : 'border-border'}`}>
+                            {checked && <CheckCircle2 className="h-3 w-3 text-white" />}
+                          </div>
+                          <span className={`text-sm ${checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                            {step.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <p className="text-[10px] text-muted-foreground pt-2 px-2">
+                      {isAdmin ? 'Click each step to mark complete.' : 'Your NewLight team manages domain connection.'}
+                    </p>
+                  </div>
+                </DataCard>
               </div>
             ) : (
               /* ── TRACK 2: External Site ── */
