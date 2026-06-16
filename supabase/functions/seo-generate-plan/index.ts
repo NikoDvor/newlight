@@ -325,7 +325,6 @@ async function generateForClient(
 
   const isFinancial = client.business_type === "financial_firm";
   if (lovableKey && !skipAi) {
-    const isFinancial = client.business_type === "financial_firm";
 
     const locations = [serviceAreas, client.primary_location].filter(Boolean).join("; ");
 
