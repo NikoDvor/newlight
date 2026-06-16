@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe, ExternalLink, Search, Filter, Plus, Settings } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { Globe, ExternalLink, Search, Filter, Plus, Settings, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 const BUILD_STATUS_STYLE: Record<string, string> = {
@@ -33,6 +36,8 @@ export default function AdminWebsites() {
   const [search, setSearch] = useState("");
   const [filterBuild, setFilterBuild] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [editRow, setEditRow] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ build_status: '', domain_status: '', snippet_status: '', notes: '' });
 
   useEffect(() => {
     setLoading(true);
@@ -50,6 +55,28 @@ export default function AdminWebsites() {
     if (filterType !== "all" && r.site_type !== filterType) return false;
     return true;
   });
+
+  const openEdit = (r: any) => {
+    setEditRow(r);
+    setEditForm({
+      build_status: r.build_status || 'not_started',
+      domain_status: r.domain_status || 'none',
+      snippet_status: r.snippet_status || 'not_installed',
+      notes: r.notes || '',
+    });
+  };
+  const saveEdit = async () => {
+    if (!editRow) return;
+    const { data } = await supabase
+      .from('client_websites')
+      .update({ ...editForm, last_updated_at: new Date().toISOString() })
+      .eq('id', editRow.id)
+      .select('*, clients(business_name, industry, primary_location)')
+      .single();
+    if (data) setRows(prev => prev.map(r => r.id === data.id ? data : r));
+    toast({ title: 'Updated' });
+    setEditRow(null);
+  };
 
   const liveCount = rows.filter(r => r.build_status === "live").length;
   const inProgressCount = rows.filter(r => r.build_status === "in_progress").length;
@@ -171,6 +198,9 @@ export default function AdminWebsites() {
                           <Globe className="h-3.5 w-3.5 mr-1" /> Open in Lovable
                         </Button>
                       )}
+                      <Button size="sm" variant="outline" onClick={() => openEdit(r)}>
+                        <Settings className="h-3.5 w-3.5 mr-1" /> Edit
+                      </Button>
                     </div>
                   </div>
                   {r.notes && (
@@ -182,6 +212,66 @@ export default function AdminWebsites() {
           })
         )}
       </div>
+
+      {/* Quick Edit Sheet */}
+      <Sheet open={!!editRow} onOpenChange={open => !open && setEditRow(null)}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Quick Edit — {editRow?.clients?.business_name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {editRow?.site_type === 'newlight_build' ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Build Status</Label>
+                  <Select value={editForm.build_status} onValueChange={v => setEditForm(p => ({ ...p, build_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_started">Not Started</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="needs_update">Needs Update</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Domain Status</Label>
+                  <Select value={editForm.domain_status} onValueChange={v => setEditForm(p => ({ ...p, domain_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="connected">Connected</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Label>Snippet Status</Label>
+                <Select value={editForm.snippet_status} onValueChange={v => setEditForm(p => ({ ...p, snippet_status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_installed">Not Installed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="installed">Installed</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Input value={editForm.notes} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} placeholder="Internal notes..." />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEditRow(null)}>Cancel</Button>
+              <Button className="flex-1" onClick={saveEdit}>Save</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
