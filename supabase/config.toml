@@ -16,3 +16,6 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.create-daily-room]
+verify_jwt = false

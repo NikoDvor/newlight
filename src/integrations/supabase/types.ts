@@ -299,11 +299,15 @@ export type Database = {
           contact_id: string | null
           created_at: string
           customer_notes: string | null
+          daily_room_name: string | null
+          daily_room_url: string | null
           description: string | null
           end_time: string
           id: string
           internal_notes: string | null
           location: string | null
+          meeting_ended_at: string | null
+          meeting_started_at: string | null
           reschedule_reason: string | null
           start_time: string
           status: string
@@ -322,11 +326,15 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           customer_notes?: string | null
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           description?: string | null
           end_time: string
           id?: string
           internal_notes?: string | null
           location?: string | null
+          meeting_ended_at?: string | null
+          meeting_started_at?: string | null
           reschedule_reason?: string | null
           start_time: string
           status?: string
@@ -345,11 +353,15 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           customer_notes?: string | null
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           description?: string | null
           end_time?: string
           id?: string
           internal_notes?: string | null
           location?: string | null
+          meeting_ended_at?: string | null
+          meeting_started_at?: string | null
           reschedule_reason?: string | null
           start_time?: string
           status?: string
@@ -9313,12 +9325,16 @@ export type Database = {
           company_id: string | null
           contact_id: string | null
           created_at: string
+          daily_room_name: string | null
+          daily_room_url: string | null
           deal_id: string | null
           description: string | null
           end_time: string | null
           id: string
           location: string | null
+          meeting_ended_at: string | null
           meeting_outcome: string | null
+          meeting_started_at: string | null
           meeting_type: string
           prospect_id: string | null
           source_calendar_id: string | null
@@ -9338,12 +9354,16 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           deal_id?: string | null
           description?: string | null
           end_time?: string | null
           id?: string
           location?: string | null
+          meeting_ended_at?: string | null
           meeting_outcome?: string | null
+          meeting_started_at?: string | null
           meeting_type?: string
           prospect_id?: string | null
           source_calendar_id?: string | null
@@ -9363,12 +9383,16 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           deal_id?: string | null
           description?: string | null
           end_time?: string | null
           id?: string
           location?: string | null
+          meeting_ended_at?: string | null
           meeting_outcome?: string | null
+          meeting_started_at?: string | null
           meeting_type?: string
           prospect_id?: string | null
           source_calendar_id?: string | null
