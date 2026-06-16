@@ -777,6 +777,66 @@ export default function Website() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Change Request Sheet */}
+      <Sheet open={changeOpen} onOpenChange={setChangeOpen}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Request a Change</SheetTitle>
+            <SheetDescription>Describe what needs to be updated on your website</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label>Page or Area</Label>
+              <Input value={changeForm.page_area} onChange={e => setChangeForm(p => ({ ...p, page_area: e.target.value }))} placeholder="e.g. Home page, Services section, Contact form" />
+            </div>
+            <div className="space-y-2">
+              <Label>Type of Change</Label>
+              <Select value={changeForm.change_type} onValueChange={v => setChangeForm(p => ({ ...p, change_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="copy_edit">Copy / Text Edit</SelectItem>
+                  <SelectItem value="design_change">Design Change</SelectItem>
+                  <SelectItem value="new_section">Add New Section</SelectItem>
+                  <SelectItem value="new_page">Add New Page</SelectItem>
+                  <SelectItem value="bug_fix">Bug Fix</SelectItem>
+                  <SelectItem value="image_update">Image Update</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={changeForm.priority} onValueChange={v => setChangeForm(p => ({ ...p, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low — whenever you get to it</SelectItem>
+                  <SelectItem value="medium">Medium — this week</SelectItem>
+                  <SelectItem value="high">High — within 48 hours</SelectItem>
+                  <SelectItem value="urgent">Urgent — today</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Description *</Label>
+              <textarea
+                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                value={changeForm.description}
+                onChange={e => setChangeForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Describe exactly what you want changed. The more detail the better."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reference URL</Label>
+              <Input value={changeForm.reference_url} onChange={e => setChangeForm(p => ({ ...p, reference_url: e.target.value }))} placeholder="Link to example, screenshot, or inspiration" />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setChangeOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={submitChangeRequest}>Submit Request</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
