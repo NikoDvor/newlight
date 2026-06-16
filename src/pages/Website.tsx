@@ -334,7 +334,7 @@ export default function Website() {
                       <p className="text-xs text-muted-foreground">Last updated: {new Date(clientWebsite.last_updated_at).toLocaleDateString()}</p>
                     )}
                     <div className="flex gap-2 pt-2 flex-wrap">
-                      <Button size="sm" onClick={() => setIssueOpen(true)}>
+                      <Button size="sm" onClick={() => setChangeOpen(true)}>
                         <Plus className="h-3.5 w-3.5 mr-1" /> Request a Change
                       </Button>
                       {isAdmin && (
