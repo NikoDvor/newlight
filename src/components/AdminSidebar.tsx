@@ -176,10 +176,26 @@ export function AdminSidebar() {
     return init;
   });
 
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    navGroups.forEach((g) => {
+      g.sections?.forEach((s) => {
+        const key = `${g.label}::${s.label}`;
+        init[key] = s.items.some((i) => isActive(i.url));
+      });
+    });
+    return init;
+  });
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
+
+  const toggleSection = (groupLabel: string, sectionLabel: string) => {
+    const key = `${groupLabel}::${sectionLabel}`;
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
