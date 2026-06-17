@@ -36,7 +36,7 @@ const statusMeta: Record<SectionStatus, { label: string; color: string; bg: stri
   completed: { label: "Completed", color: "hsl(152 60% 44%)", bg: "hsla(152,60%,44%,.12)", icon: CheckCircle2 },
 };
 
-export default function SetupCenter() {
+function SetupCenterInner() {
   const { activeClientId, branding, userRole } = useWorkspace();
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
