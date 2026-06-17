@@ -44,7 +44,7 @@ const SOPS = [
   { title: "Lead Qualification Checklist", dept: "Sales", steps: 10, lastUpdated: "2026-03-12" },
 ];
 
-export default function KnowledgeBase() {
+function KnowledgeBaseInner() {
   const { activeClientId } = useWorkspace();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
