@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
   Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
-  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings,
+  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings, Wand2,
 
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -96,6 +96,9 @@ export default function Website() {
     snippet_status: 'not_installed',
     notes: '',
   });
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [websiteBrief, setWebsiteBrief] = useState<string | null>(null);
+  const [buildUrl, setBuildUrl] = useState<string | null>(null);
 
 
   // Auto-select first page
@@ -127,6 +130,11 @@ export default function Website() {
     supabase.from('client_websites').select('*').eq('client_id', activeClientId).maybeSingle()
       .then(({ data }) => { setClientWebsite(data); setCwLoading(false); });
   }, [activeClientId]);
+
+  useEffect(() => {
+    if (clientWebsite?.website_brief) setWebsiteBrief(clientWebsite.website_brief);
+    if (clientWebsite?.website_build_url) setBuildUrl(clientWebsite.website_build_url);
+  }, [clientWebsite]);
 
   const addIssue = async () => {
     if (!activeClientId || !newIssue.issue_title) return;
@@ -226,6 +234,37 @@ export default function Website() {
       .select()
       .single();
     if (data) setClientWebsite(data);
+  };
+
+  const generateBrief = async () => {
+    if (!activeClientId) return;
+    setBriefLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-website-brief`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ client_id: activeClientId }),
+        }
+      );
+      const json = await res.json();
+      if (json.brief) {
+        setWebsiteBrief(json.brief);
+        setBuildUrl(json.build_url);
+        toast({ title: 'Site brief generated' });
+      } else {
+        toast({ title: 'Generation failed', description: json.error || 'Unknown error', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: String(err), variant: 'destructive' });
+    } finally {
+      setBriefLoading(false);
+    }
   };
 
   const resolveRecommendation = async (id: string) => {
@@ -389,6 +428,52 @@ export default function Website() {
                     </p>
                   </div>
                 </DataCard>
+                {isAdmin && (
+                  <DataCard title="AI Site Brief">
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        Generate a complete Lovable prompt for this client's website using their business details, service areas, and SEO keywords.
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          size="sm"
+                          onClick={generateBrief}
+                          disabled={briefLoading}
+                        >
+                          {briefLoading ? (
+                            <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Generating...</>
+                          ) : (
+                            <><Wand2 className="h-3.5 w-3.5 mr-1" /> Generate Site Brief</>
+                          )}
+                        </Button>
+                        {buildUrl && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(buildUrl, '_blank')}
+                          >
+                            <ExternalLinkIcon className="h-3.5 w-3.5 mr-1" /> Build Site in Lovable
+                          </Button>
+                        )}
+                      </div>
+                      {websiteBrief && (
+                        <div className="relative mt-2">
+                          <div className="max-h-48 overflow-y-auto rounded-lg bg-secondary p-3 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
+                            {websiteBrief}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute top-2 right-2 h-7 gap-1"
+                            onClick={() => { navigator.clipboard.writeText(websiteBrief); toast({ title: 'Brief copied' }); }}
+                          >
+                            <Copy className="h-3 w-3" /> Copy
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </DataCard>
+                )}
               </div>
             ) : (
               /* ── TRACK 2: External Site ── */
