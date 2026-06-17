@@ -304,21 +304,29 @@ export function AdminSidebar() {
                       {group.items!.map(renderItem)}
                     </SidebarMenu>
                   )}
-                  {hasSections && group.sections!.map((section) => (
-                    <div key={section.label} className="mt-2">
-                      {!collapsed && (
-                        <div className="flex items-center gap-2 px-3 pb-1 pt-1">
-                          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/30">
-                            {section.label}
-                          </span>
-                          <div className="flex-1 h-px bg-white/5" />
-                        </div>
-                      )}
-                      <SidebarMenu>
-                        {section.items.map(renderItem)}
-                      </SidebarMenu>
-                    </div>
-                  ))}
+                  {hasSections && group.sections!.map((section) => {
+                    const sectionKey = `${group.label}::${section.label}`;
+                    const sectionOpen = openSections[sectionKey] ?? false;
+                    return (
+                      <div key={section.label} className="mt-1">
+                        {!collapsed && (
+                          <button
+                            onClick={() => toggleSection(group.label, section.label)}
+                            className="flex items-center justify-between w-full px-3 py-2 md:py-1 min-h-[36px] md:min-h-0 text-[9px] font-semibold uppercase tracking-wider text-white/30 hover:text-white/60 transition-colors"
+                          >
+                            <span>{section.label}</span>
+                            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${sectionOpen ? "" : "-rotate-90"}`} />
+                          </button>
+                        )}
+                        {(collapsed || sectionOpen) && (
+                          <SidebarMenu>
+                            {section.items.map(renderItem)}
+                          </SidebarMenu>
+                        )}
+                      </div>
+                    );
+                  })}
+
                 </SidebarGroupContent>
               )}
             </SidebarGroup>
