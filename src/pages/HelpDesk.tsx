@@ -213,3 +213,19 @@ function HelpDeskInner() {
     </div>
   );
 }
+
+import { Tabs as _HDTabs, TabsList as _HDTabsList, TabsTrigger as _HDTabsTrigger, TabsContent as _HDTabsContent } from "@/components/ui/tabs";
+import SupportTickets from "@/pages/SupportTickets";
+
+export default function HelpDesk() {
+  return (
+    <_HDTabs defaultValue="help" className="w-full">
+      <_HDTabsList className="mx-6 mt-4">
+        <_HDTabsTrigger value="help">Help Desk</_HDTabsTrigger>
+        <_HDTabsTrigger value="tickets">Support Tickets</_HDTabsTrigger>
+      </_HDTabsList>
+      <_HDTabsContent value="help"><HelpDeskInner /></_HDTabsContent>
+      <_HDTabsContent value="tickets"><SupportTickets /></_HDTabsContent>
+    </_HDTabs>
+  );
+}

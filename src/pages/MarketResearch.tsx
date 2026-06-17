@@ -219,3 +219,19 @@ function MarketResearchInner() {
     </div>
   );
 }
+
+import { Tabs as _MRTabs, TabsList as _MRTabsList, TabsTrigger as _MRTabsTrigger, TabsContent as _MRTabsContent } from "@/components/ui/tabs";
+import CompetitorTracking from "@/pages/CompetitorTracking";
+
+export default function MarketResearch() {
+  return (
+    <_MRTabs defaultValue="research" className="w-full">
+      <_MRTabsList className="mx-6 mt-4">
+        <_MRTabsTrigger value="research">Market Research</_MRTabsTrigger>
+        <_MRTabsTrigger value="competitors">Competitors</_MRTabsTrigger>
+      </_MRTabsList>
+      <_MRTabsContent value="research"><MarketResearchInner /></_MRTabsContent>
+      <_MRTabsContent value="competitors"><CompetitorTracking /></_MRTabsContent>
+    </_MRTabs>
+  );
+}

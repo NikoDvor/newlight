@@ -352,3 +352,19 @@ function SetupCenterInner() {
     </div>
   );
 }
+
+import { Tabs as _SCTabs, TabsList as _SCTabsList, TabsTrigger as _SCTabsTrigger, TabsContent as _SCTabsContent } from "@/components/ui/tabs";
+import Onboarding from "@/pages/Onboarding";
+
+export default function SetupCenter() {
+  return (
+    <_SCTabs defaultValue="setup" className="w-full">
+      <_SCTabsList className="mx-6 mt-4">
+        <_SCTabsTrigger value="setup">Setup Center</_SCTabsTrigger>
+        <_SCTabsTrigger value="onboarding">Onboarding Steps</_SCTabsTrigger>
+      </_SCTabsList>
+      <_SCTabsContent value="setup"><SetupCenterInner /></_SCTabsContent>
+      <_SCTabsContent value="onboarding"><Onboarding /></_SCTabsContent>
+    </_SCTabs>
+  );
+}
