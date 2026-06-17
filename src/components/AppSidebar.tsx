@@ -83,6 +83,12 @@ const navStructure: NavEntry[] = [
       { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
+  {
+    type: "group", label: "Employee Hub",
+    items: [
+      { title: "Onboarding", url: "/sops", icon: BookOpen, moduleKey: "training" },
+    ],
+  },
 ];
 
 const bottomItems: { title: string; url: string; icon: any }[] = [];
