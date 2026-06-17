@@ -63,6 +63,7 @@ import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCombinedDashboard from "./pages/admin/AdminCombinedDashboard";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminProspects from "./pages/admin/AdminProspects";
 import AdminProvision from "./pages/admin/AdminProvision";
@@ -265,7 +266,7 @@ const App = () => {
 
               {/* Admin Portal */}
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
+                <Route index element={<AdminCombinedDashboard />} />
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
@@ -308,7 +309,7 @@ const App = () => {
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="automations" element={<AdminAutomations />} />
-                <Route path="executive" element={<AdminExecutiveDashboard />} />
+                <Route path="executive" element={<Navigate to="/admin" replace />} />
                 <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
                 <Route path="client-success" element={<AdminClientSuccess />} />
                 <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
