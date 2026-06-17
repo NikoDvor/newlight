@@ -34,6 +34,7 @@ interface NavEntry {
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
     type: "group", label: "Growth",
     items: [
@@ -41,14 +42,14 @@ const navStructure: NavEntry[] = [
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
+      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
+      { title: "Tasks", url: "/tasks", icon: ListChecks },
     ],
   },
   {
     type: "group", label: "CRM",
     items: [
-      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Tasks", url: "/tasks", icon: ListChecks },
     ],
   },
   {
@@ -58,19 +59,6 @@ const navStructure: NavEntry[] = [
       { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
       { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
       { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
-    ],
-  },
-  {
-    type: "group", label: "Finance",
-    items: [
-      { title: "Revenue Charts", url: "/revenue-charts", icon: Wallet, moduleKey: "finance" },
-      { title: "AI Accountant", url: "/ai-accountant", icon: Brain, moduleKey: "finance" },
-    ],
-  },
-  {
-    type: "group", label: "Tools",
-    items: [
-      { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
     ],
   },
@@ -99,6 +87,7 @@ const navStructure: NavEntry[] = [
       { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
       { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
       { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
+      { title: "AI Accountant", url: "/ai-accountant", icon: Brain, moduleKey: "finance" },
     ],
   },
 ];
