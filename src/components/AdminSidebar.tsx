@@ -157,34 +157,13 @@ export function AdminSidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
-      if (g.items) {
-        init[g.label] = g.items.some((i) => isActive(i.url));
-      }
-    });
-    // NewLight Ops and Growth Systems default open
-    init["NewLight Ops"] = true;
-    init["Growth Systems"] = true;
-    return init;
-  });
-
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    navGroups.forEach((g) => {
-      g.sections?.forEach((s) => {
-        const key = `${g.label}::${s.label}`;
-        init[key] = s.items.some((i) => isActive(i.url));
-      });
+      init[g.label] = g.items.some((i) => isActive(i.url));
     });
     return init;
   });
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
-  const toggleSection = (groupLabel: string, sectionLabel: string) => {
-    const key = `${groupLabel}::${sectionLabel}`;
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
 
@@ -226,25 +205,6 @@ export function AdminSidebar() {
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
-          const hasItems = !!(group.items && group.items.length > 0);
-          const hasSections = !!(group.sections && group.sections.length > 0);
-          const isDivider = !hasItems && !hasSections;
-
-          if (isDivider) {
-            return (
-              <SidebarGroup key={group.label} className="py-2">
-                {!collapsed && (
-                  <div className="flex items-center gap-2 px-3">
-                    <div className="flex-1 h-px bg-white/10" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                      {group.label}
-                    </span>
-                    <div className="flex-1 h-px bg-white/10" />
-                  </div>
-                )}
-              </SidebarGroup>
-            );
-          }
 
           const renderItem = (item: NavItem) => {
             const active = isActive(item.url);
@@ -277,6 +237,19 @@ export function AdminSidebar() {
             );
           };
 
+          // Ungrouped: render items flat with no group header (same as AppSidebar top-level)
+          if (group.ungrouped) {
+            return (
+              <SidebarGroup key={group.label} className="py-0.5">
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map(renderItem)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
+
           return (
             <SidebarGroup key={group.label} className="py-0.5">
               {!collapsed && (
@@ -290,34 +263,9 @@ export function AdminSidebar() {
               )}
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
-                  {hasItems && (
-                    <SidebarMenu>
-                      {group.items!.map(renderItem)}
-                    </SidebarMenu>
-                  )}
-                  {hasSections && group.sections!.map((section) => {
-                    const sectionKey = `${group.label}::${section.label}`;
-                    const sectionOpen = openSections[sectionKey] ?? false;
-                    return (
-                      <div key={section.label} className="mt-1">
-                        {!collapsed && (
-                          <button
-                            onClick={() => toggleSection(group.label, section.label)}
-                            className="flex items-center justify-between w-full px-3 py-2 md:py-1 min-h-[36px] md:min-h-0 text-[9px] font-semibold uppercase tracking-wider text-white/30 hover:text-white/60 transition-colors"
-                          >
-                            <span>{section.label}</span>
-                            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${sectionOpen ? "" : "-rotate-90"}`} />
-                          </button>
-                        )}
-                        {(collapsed || sectionOpen) && (
-                          <SidebarMenu>
-                            {section.items.map(renderItem)}
-                          </SidebarMenu>
-                        )}
-                      </div>
-                    );
-                  })}
-
+                  <SidebarMenu>
+                    {group.items.map(renderItem)}
+                  </SidebarMenu>
                 </SidebarGroupContent>
               )}
             </SidebarGroup>
