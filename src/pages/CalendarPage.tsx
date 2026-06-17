@@ -858,3 +858,22 @@ function CalendarPageInner() {
     </div>
   );
 }
+
+import { Tabs as _CPTabs, TabsList as _CPTabsList, TabsTrigger as _CPTabsTrigger, TabsContent as _CPTabsContent } from "@/components/ui/tabs";
+import CalendarManagement from "@/pages/CalendarManagement";
+import CalendarIntegrations from "@/pages/CalendarIntegrations";
+
+export default function CalendarPage() {
+  return (
+    <_CPTabs defaultValue="my" className="w-full">
+      <_CPTabsList className="mx-6 mt-4">
+        <_CPTabsTrigger value="my">My Calendar</_CPTabsTrigger>
+        <_CPTabsTrigger value="manage">Manage Calendars</_CPTabsTrigger>
+        <_CPTabsTrigger value="sync">Sync & Integrations</_CPTabsTrigger>
+      </_CPTabsList>
+      <_CPTabsContent value="my"><CalendarPageInner /></_CPTabsContent>
+      <_CPTabsContent value="manage"><CalendarManagement /></_CPTabsContent>
+      <_CPTabsContent value="sync"><CalendarIntegrations /></_CPTabsContent>
+    </_CPTabs>
+  );
+}
