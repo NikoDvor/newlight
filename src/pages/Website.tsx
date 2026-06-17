@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
   Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
-  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings,
+  Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings, Wand2,
 
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
