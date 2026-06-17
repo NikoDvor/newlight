@@ -2962,6 +2962,8 @@ export type Database = {
           snippet_status: string
           template_version: string | null
           updated_at: string
+          website_brief: string | null
+          website_build_url: string | null
         }
         Insert: {
           build_status?: string
@@ -2981,6 +2983,8 @@ export type Database = {
           snippet_status?: string
           template_version?: string | null
           updated_at?: string
+          website_brief?: string | null
+          website_build_url?: string | null
         }
         Update: {
           build_status?: string
@@ -3000,6 +3004,8 @@ export type Database = {
           snippet_status?: string
           template_version?: string | null
           updated_at?: string
+          website_brief?: string | null
+          website_build_url?: string | null
         }
         Relationships: [
           {
