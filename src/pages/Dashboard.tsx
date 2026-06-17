@@ -662,6 +662,147 @@ function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
   );
 }
 
+/* ── NEW: Revenue Trends Section (real billing data) ── */
+function RevenueTrendsSection({ data }: {
+  data: {
+    mrr: number;
+    arr: number;
+    activeSubs: number;
+    collectedLast30: number;
+    outstanding: number;
+    trend: { name: string; collected: number; invoiced: number }[];
+    breakdown: { name: string; value: number }[];
+  };
+}) {
+  const mrrCount = useCountUp(data.mrr, 1600);
+  const arrCount = useCountUp(data.arr, 1600);
+  const collectedCount = useCountUp(data.collectedLast30, 1600);
+  const outstandingCount = useCountUp(data.outstanding, 1600);
+  const hasTrend = data.trend.some(d => d.collected > 0 || d.invoiced > 0);
+  const breakdownTotal = data.breakdown.reduce((s, b) => s + b.value, 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6 }}
+    >
+      <SectionHeader icon={LineChart} label="Revenue Trends" extra={
+        <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.35)" }}>
+          {data.activeSubs} Active Sub{data.activeSubs !== 1 ? "s" : ""}
+        </span>
+      } />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        {[
+          { label: "MRR", value: mrrCount, sub: "Monthly recurring", icon: TrendingUp },
+          { label: "ARR", value: arrCount, sub: "Annualized run-rate", icon: BarChart3 },
+          { label: "Collected · 30d", value: collectedCount, sub: "Last 30 days", icon: DollarSign },
+          { label: "Outstanding", value: outstandingCount, sub: "Awaiting payment", icon: Clock },
+        ].map((m, i) => (
+          <motion.div key={m.label} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            transition={{ delay: i * 0.06 }}>
+            <div className="dash-card p-4 h-full">
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.45)" }}>{m.label}</p>
+                <m.icon className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+              </div>
+              <p className="text-xl font-bold tabular-nums relative z-10"
+                style={{
+                  background: "linear-gradient(135deg, hsl(211 96% 70%), hsl(197 88% 60%))",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>
+                ${m.value.toLocaleString()}
+              </p>
+              <p className="text-[10px] mt-1 relative z-10" style={{ color: "hsla(210,50%,65%,.45)" }}>{m.sub}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="lg:col-span-2">
+          <div className="dash-card p-5 h-full">
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <div>
+                <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Income Trend · Last 6 months</h3>
+                <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>Collected vs invoiced from billing records</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(211 96% 62%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Collected</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(197 88% 55%)" }} /><span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Invoiced</span></div>
+              </div>
+            </div>
+            <div className="relative z-10" style={{ height: 220 }}>
+              {hasTrend ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.trend} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                    <defs>
+                      <linearGradient id="revCollected" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="revInvoiced" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(197 88% 55%)" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="hsl(197 88% 55%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
+                    <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area type="monotone" dataKey="invoiced" name="Invoiced $" stroke="hsl(197 88% 55%)" strokeWidth={2}
+                      fill="url(#revInvoiced)" dot={false} strokeDasharray="6 3" />
+                    <Area type="monotone" dataKey="collected" name="Collected $" stroke="hsl(211 96% 62%)" strokeWidth={2}
+                      fill="url(#revCollected)" dot={false}
+                      style={{ filter: "drop-shadow(0 0 6px hsla(211,96%,60%,.3))" }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center">
+                  <DollarSign className="h-6 w-6 mb-2" style={{ color: "hsla(211,96%,60%,.3)" }} />
+                  <p className="text-xs" style={{ color: "hsla(210,40%,65%,.5)" }}>No billing activity yet</p>
+                  <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.35)" }}>Invoices will populate this chart automatically</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <div className="dash-card p-5 h-full">
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Revenue Breakdown</h3>
+              <Layers className="h-3.5 w-3.5" style={{ color: "hsla(211,96%,68%,.5)" }} />
+            </div>
+            <div className="relative z-10 space-y-3">
+              {data.breakdown.length === 0 ? (
+                <p className="text-xs py-6 text-center" style={{ color: "hsla(210,40%,65%,.45)" }}>No active subscriptions</p>
+              ) : data.breakdown.map((b, i) => {
+                const pct = breakdownTotal > 0 ? (b.value / breakdownTotal) * 100 : 0;
+                return (
+                  <div key={b.name + i}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-semibold" style={{ color: "hsl(210 40% 80%)" }}>{b.name}</span>
+                      <span className="text-[11px] tabular-nums" style={{ color: "hsl(211 96% 68%)" }}>${b.value.toLocaleString()}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(211,96%,60%,.06)" }}>
+                      <motion.div initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }}
+                        transition={{ duration: 1, delay: 0.2 + i * 0.08, ease: "easeOut" }}
+                        style={{ height: "100%", background: "linear-gradient(90deg, hsl(211 96% 62%), hsl(197 88% 55%))", boxShadow: "0 0 8px hsla(211,96%,60%,.4)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ── Revenue Expansion with Psychology ── */
 function OpportunitiesSection({ metrics, intel }: { metrics: any; intel: ClientIntelligenceOutput | null }) {
   const totalPotential = useMemo(() => {
