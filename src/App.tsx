@@ -360,6 +360,12 @@ const App = () => {
                 <Route path="ops/finance" element={<AdminOpsProvider><Finance /></AdminOpsProvider>} />
                 <Route path="ops/integrations" element={<AdminOpsProvider><Integrations /></AdminOpsProvider>} />
                 <Route path="ops/settings" element={<AdminOpsProvider><SettingsPage /></AdminOpsProvider>} />
+                <Route path="ops/tasks" element={<AdminOpsProvider><Tasks /></AdminOpsProvider>} />
+                <Route path="ops/email" element={<AdminOpsProvider><EmailPage /></AdminOpsProvider>} />
+                <Route path="ops/message-templates" element={<AdminOpsProvider><MessageTemplates /></AdminOpsProvider>} />
+                <Route path="ops/forms" element={<AdminOpsProvider><FormBuilder /></AdminOpsProvider>} />
+                <Route path="ops/reports" element={<AdminOpsProvider><Reports /></AdminOpsProvider>} />
+                <Route path="ops/help-desk" element={<AdminOpsProvider><HelpDesk /></AdminOpsProvider>} />
               </Route>
 
               {/* Employee Portal */}

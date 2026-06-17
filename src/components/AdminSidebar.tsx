@@ -5,7 +5,8 @@ import {
   HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles,
   LayoutDashboard, Contact, GitBranch, MessageSquare, Inbox as InboxIcon,
   FileSignature, Star, Share2, Search, Megaphone, Globe, Lightbulb,
-  LineChart, PenSquare, Briefcase, Wallet, Plug, Settings as SettingsIcon
+  LineChart, PenSquare, Briefcase, Wallet, Plug, Settings as SettingsIcon,
+  Mail, Send, ClipboardList, CalendarCog
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -16,9 +17,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 
+interface NavItem { title: string; url: string; icon: any }
+interface NavSection { label: string; items: NavItem[] }
 interface NavGroup {
   label: string;
-  items?: { title: string; url: string; icon: any }[];
+  items?: NavItem[];
+  sections?: NavSection[];
 }
 
 const navGroups: NavGroup[] = [
@@ -70,8 +74,82 @@ const navGroups: NavGroup[] = [
       { title: "Onboarding", url: "/admin/sops", icon: FileText },
       { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
     ],
+    sections: [
+      {
+        label: "Overview",
+        items: [
+          { title: "Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
+          { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
+          { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
+        ],
+      },
+      {
+        label: "Growth",
+        items: [
+          { title: "Website", url: "/admin/ops/website", icon: Globe },
+          { title: "SEO", url: "/admin/ops/seo", icon: Search },
+          { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
+          { title: "Social", url: "/admin/ops/social", icon: Share2 },
+          { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+          { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
+          { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
+        ],
+      },
+      {
+        label: "Calendar",
+        items: [
+          { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+          { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
+        ],
+      },
+      {
+        label: "Communications",
+        items: [
+          { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
+          { title: "Email", url: "/admin/ops/email", icon: Mail },
+          { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
+          { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
+          { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
+        ],
+      },
+      {
+        label: "Employee Hub",
+        items: [
+          { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
+          { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
+        ],
+      },
+      {
+        label: "Intelligence",
+        items: [
+          { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
+          { title: "Automations", url: "/admin/automations", icon: Zap },
+          { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
+        ],
+      },
+      {
+        label: "Sales & Research",
+        items: [
+          { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+          { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
+        ],
+      },
+      {
+        label: "Operations",
+        items: [
+          { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+          { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+          { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
+          { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
+          { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+          { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
+        ],
+      },
+    ],
   },
 ];
+
+
 
 
 export function AdminSidebar() {
@@ -141,7 +219,9 @@ export function AdminSidebar() {
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
-          const isDivider = !group.items || group.items.length === 0;
+          const hasItems = !!(group.items && group.items.length > 0);
+          const hasSections = !!(group.sections && group.sections.length > 0);
+          const isDivider = !hasItems && !hasSections;
 
           if (isDivider) {
             return (
@@ -159,6 +239,37 @@ export function AdminSidebar() {
             );
           }
 
+          const renderItem = (item: NavItem) => {
+            const active = isActive(item.url);
+            return (
+              <SidebarMenuItem key={item.title + item.url}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={collapsed ? item.title : undefined}
+                  className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
+                    active
+                      ? "text-white font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/[0.08]"
+                  }`}
+                  style={active ? {
+                    background: "hsla(211,96%,60%,.18)",
+                    boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
+                  } : undefined}
+                >
+                  <Link to={item.url}>
+                    <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
+                      active
+                        ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
+                        : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
+                    }`} />
+                    {!collapsed && <span>{item.title}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          };
+
           return (
             <SidebarGroup key={group.label} className="py-0.5">
               {!collapsed && (
@@ -172,43 +283,32 @@ export function AdminSidebar() {
               )}
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items!.map((item) => {
-                      const active = isActive(item.url);
-                      return (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={active}
-                            tooltip={collapsed ? item.title : undefined}
-                            className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
-                              active
-                                ? "text-white font-semibold"
-                                : "text-white/60 hover:text-white hover:bg-white/[0.08]"
-                            }`}
-                            style={active ? {
-                              background: "hsla(211,96%,60%,.18)",
-                              boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
-                            } : undefined}
-                          >
-                            <Link to={item.url}>
-                              <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
-                                active
-                                  ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
-                                  : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
-                              }`} />
-                              {!collapsed && <span>{item.title}</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
+                  {hasItems && (
+                    <SidebarMenu>
+                      {group.items!.map(renderItem)}
+                    </SidebarMenu>
+                  )}
+                  {hasSections && group.sections!.map((section) => (
+                    <div key={section.label} className="mt-2">
+                      {!collapsed && (
+                        <div className="flex items-center gap-2 px-3 pb-1 pt-1">
+                          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/30">
+                            {section.label}
+                          </span>
+                          <div className="flex-1 h-px bg-white/5" />
+                        </div>
+                      )}
+                      <SidebarMenu>
+                        {section.items.map(renderItem)}
+                      </SidebarMenu>
+                    </div>
+                  ))}
                 </SidebarGroupContent>
               )}
             </SidebarGroup>
           );
         })}
+
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3 relative z-10">
