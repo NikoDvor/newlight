@@ -68,7 +68,6 @@ const navStructure: NavEntry[] = [
       { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
       { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
       { title: "Billing", url: "/billing", icon: CreditCard },
-      { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
   {
