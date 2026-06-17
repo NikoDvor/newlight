@@ -20,13 +20,13 @@ Deno.serve(async (req) => {
     if (!client_id) return new Response(JSON.stringify({ error: "client_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Pull client data
-    const { data: client } = await supabase
+    const { data: client, error: clientError } = await supabase
       .from("clients")
       .select("business_name, business_type, primary_location, phone, email, slug")
       .eq("id", client_id)
-      .single();
+      .maybeSingle();
 
-    if (!client) return new Response(JSON.stringify({ error: "Client not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (clientError || !client) return new Response(JSON.stringify({ error: "Client not found", detail: clientError?.message || "no row returned" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Pull SEO keywords (top 10 by search volume)
     const { data: keywords } = await supabase
