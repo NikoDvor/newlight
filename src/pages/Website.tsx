@@ -241,6 +241,7 @@ export default function Website() {
     setBriefLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Calling edge function at:", `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-website-brief`);
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-website-brief`,
         {
