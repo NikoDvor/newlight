@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
+import NotificationsPage from "@/pages/Notifications";
 
 /* ── Shared helpers ── */
 const Field = ({ label, value, onChange, placeholder = "", type = "text" }: {
