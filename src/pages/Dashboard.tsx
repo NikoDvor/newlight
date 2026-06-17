@@ -1315,6 +1315,11 @@ export default function Dashboard() {
             </motion.div>
           </motion.div>
 
+          {/* ══════ REVENUE TRENDS (real billing data) ══════ */}
+          <RevenueTrendsSection data={revenueData} />
+
+
+
           {/* ══════ KPI MODULES ══════ */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
