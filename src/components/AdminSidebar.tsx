@@ -55,24 +55,6 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Employee Hub",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Shield },
-      { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
-      { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
-      { title: "Training Center", url: "/admin/training-center", icon: Brain },
-      { title: "Training Health", url: "/admin/training-health", icon: HeartPulse },
-    ],
-  },
-  {
-    label: "Intelligence",
-    items: [
-      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
-      { title: "Automations", url: "/admin/automations", icon: Activity },
-      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
-    ],
-  },
-  {
     label: "System",
     items: [
       { title: "Reports", url: "/admin/reports", icon: LineChart },
