@@ -40,7 +40,7 @@ interface AuditEntry {
   metadata: any;
 }
 
-export default function TeamManagement() {
+function TeamManagementInner() {
   const { activeClientId } = useWorkspace();
   const [members, setMembers] = useState<WorkspaceUser[]>([]);
   const [search, setSearch] = useState("");
