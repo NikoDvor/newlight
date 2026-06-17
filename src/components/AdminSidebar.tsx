@@ -2,11 +2,12 @@ import { useLocation, Link } from "react-router-dom";
 import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
-  HeartPulse, TrendingUp, AlertTriangle, Wrench, Map, Trophy, Sparkles,
-  LayoutDashboard, Contact, GitBranch, MessageSquare, Inbox as InboxIcon,
-  FileSignature, Star, Share2, Search, Megaphone, Globe, Lightbulb,
-  LineChart, PenSquare, Briefcase, Wallet, Plug, Settings as SettingsIcon,
-  Mail, Send, ClipboardList, CalendarCog
+  HeartPulse, TrendingUp, AlertTriangle, Sparkles,
+  LayoutDashboard, Contact, GitBranch, MessageSquare,
+  FileSignature, Star, Share2, Search, Megaphone, Globe,
+  LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
+  Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
+  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -20,90 +21,18 @@ import { useState } from "react";
 interface NavItem { title: string; url: string; icon: any }
 interface NavGroup {
   label: string;
-  ungrouped?: boolean; // render items with no group header
+  ungrouped?: boolean;
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
+// SECTION 1 — Admin modules (unchanged)
+const adminGroups: NavGroup[] = [
   {
     label: "Top",
     ungrouped: true,
     items: [
       { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
       { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
-    ],
-  },
-  {
-    label: "AI & Insights",
-    items: [
-      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
-      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Growth",
-    items: [
-      { title: "Website", url: "/admin/ops/website", icon: Globe },
-      { title: "SEO", url: "/admin/ops/seo", icon: Search },
-      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
-      { title: "Social", url: "/admin/ops/social", icon: Share2 },
-      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-      { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
-      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
-    ],
-  },
-  {
-    label: "Calendar",
-    items: [
-      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
-    ],
-  },
-  {
-    label: "Communications",
-    items: [
-      { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
-      { title: "Email", url: "/admin/ops/email", icon: Mail },
-      { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
-      { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
-      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
-    ],
-  },
-  {
-    label: "Employee Hub",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Users },
-      { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
-      { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
-      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
-      { title: "Onboarding", url: "/admin/sops", icon: FileText },
-    ],
-  },
-  {
-    label: "Intelligence",
-    items: [
-      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
-      { title: "Automations", url: "/admin/automations", icon: Zap },
-      { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
-      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
-    ],
-  },
-  {
-    label: "Sales & Research",
-    items: [
-      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-      { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
-      { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
-      { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
-      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
-      { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
     ],
   },
   {
@@ -119,7 +48,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Clients",
+    label: "Clients & Success",
     items: [
       { title: "Client Accounts", url: "/admin/clients", icon: Users },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
@@ -140,8 +69,88 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-
-
+// SECTION 2 — NewLight Operations (mirrors AppSidebar.tsx navStructure, minus Dashboard)
+const opsGroups: NavGroup[] = [
+  {
+    label: "Ops Top",
+    ungrouped: true,
+    items: [
+      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
+      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
+    ],
+  },
+  {
+    label: "Client Overview",
+    items: [
+      { title: "Business Health", url: "/admin/ops/business-health", icon: HeartPulse },
+      { title: "Revenue Opportunities", url: "/admin/ops/revenue-opportunities", icon: TrendingUp },
+      { title: "Priority Actions", url: "/admin/ops/priority-actions", icon: AlertTriangle },
+      { title: "Live Activity Feed", url: "/admin/ops/live-activity", icon: Activity },
+    ],
+  },
+  {
+    label: "Growth Systems",
+    items: [
+      { title: "Website", url: "/admin/ops/website", icon: Globe },
+      { title: "SEO", url: "/admin/ops/seo", icon: Search },
+      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
+      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
+      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+    ],
+  },
+  {
+    label: "Enterprise Services",
+    items: [
+      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+      { title: "Team & Users", url: "/admin/team", icon: Users },
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
+      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
+      { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog },
+      { title: "Email", url: "/admin/ops/email", icon: Mail },
+      { title: "Notifications", url: "/admin/ops/notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Business Intelligence",
+    items: [
+      { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
+      { title: "Competitor Tracking", url: "/admin/ops/competitor-tracking", icon: TrendingUp },
+      { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare },
+      { title: "Automation Workflows", url: "/admin/automations", icon: Zap },
+    ],
+  },
+  {
+    label: "Setup & Integrations",
+    items: [
+      { title: "Setup Center", url: "/admin/ops/setup-center", icon: ClipboardCheck },
+      { title: "Services & Products", url: "/admin/ops/services", icon: Package },
+      { title: "Brand Assets", url: "/admin/ops/brand-assets", icon: ImageIcon },
+      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Onboarding", url: "/admin/ops/onboarding", icon: Rocket },
+    ],
+  },
+  {
+    label: "Training & Support",
+    items: [
+      { title: "Support Tickets", url: "/admin/ops/support-tickets", icon: LifeBuoy },
+      { title: "Knowledge Base", url: "/admin/ops/knowledge-base", icon: BookOpen },
+      { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
+      { title: "Courses", url: "/admin/ops/training", icon: GraduationCap },
+      { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
+    ],
+  },
+  {
+    label: "Ops Bottom",
+    ungrouped: true,
+    items: [
+      { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
+    ],
+  },
+];
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -154,9 +163,10 @@ export function AdminSidebar() {
     return location.pathname.startsWith(path);
   };
 
+  const allGroups = [...adminGroups, ...opsGroups];
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
-    navGroups.forEach((g) => {
+    allGroups.forEach((g) => {
       init[g.label] = g.items.some((i) => isActive(i.url));
     });
     return init;
@@ -166,6 +176,67 @@ export function AdminSidebar() {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const renderItem = (item: NavItem) => {
+    const active = isActive(item.url);
+    return (
+      <SidebarMenuItem key={item.title + item.url}>
+        <SidebarMenuButton
+          asChild
+          isActive={active}
+          tooltip={collapsed ? item.title : undefined}
+          className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
+            active
+              ? "text-white font-semibold"
+              : "text-white/60 hover:text-white hover:bg-white/[0.08]"
+          }`}
+          style={active ? {
+            background: "hsla(211,96%,60%,.18)",
+            boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
+          } : undefined}
+        >
+          <Link to={item.url}>
+            <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
+              active
+                ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
+                : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
+            }`} />
+            {!collapsed && <span>{item.title}</span>}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
+  const renderGroup = (group: NavGroup) => {
+    if (group.ungrouped) {
+      return (
+        <SidebarGroup key={group.label} className="py-0.5">
+          <SidebarGroupContent>
+            <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      );
+    }
+    const isOpen = openGroups[group.label] ?? false;
+    return (
+      <SidebarGroup key={group.label} className="py-0.5">
+        {!collapsed && (
+          <button
+            onClick={() => toggleGroup(group.label)}
+            className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
+          >
+            <span>{group.label}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
+          </button>
+        )}
+        {(collapsed || isOpen) && (
+          <SidebarGroupContent>
+            <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+          </SidebarGroupContent>
+        )}
+      </SidebarGroup>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
@@ -203,75 +274,18 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
-        {navGroups.map((group) => {
-          const isOpen = openGroups[group.label] ?? false;
+        {/* SECTION 1 — Admin modules */}
+        {adminGroups.map(renderGroup)}
 
-          const renderItem = (item: NavItem) => {
-            const active = isActive(item.url);
-            return (
-              <SidebarMenuItem key={item.title + item.url}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={active}
-                  tooltip={collapsed ? item.title : undefined}
-                  className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
-                    active
-                      ? "text-white font-semibold"
-                      : "text-white/60 hover:text-white hover:bg-white/[0.08]"
-                  }`}
-                  style={active ? {
-                    background: "hsla(211,96%,60%,.18)",
-                    boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
-                  } : undefined}
-                >
-                  <Link to={item.url}>
-                    <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
-                      active
-                        ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
-                        : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
-                    }`} />
-                    {!collapsed && <span>{item.title}</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          };
-
-          // Ungrouped: render items flat with no group header (same as AppSidebar top-level)
-          if (group.ungrouped) {
-            return (
-              <SidebarGroup key={group.label} className="py-0.5">
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items.map(renderItem)}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            );
-          }
-
-          return (
-            <SidebarGroup key={group.label} className="py-0.5">
-              {!collapsed && (
-                <button
-                  onClick={() => toggleGroup(group.label)}
-                  className="flex items-center justify-between w-full px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 text-[10px] font-semibold uppercase tracking-widest text-white/40 hover:text-white/60 transition-colors"
-                >
-                  <span>{group.label}</span>
-                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
-                </button>
-              )}
-              {(collapsed || isOpen) && (
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items.map(renderItem)}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              )}
-            </SidebarGroup>
-          );
-        })}
-
+        {/* SECTION 2 — NewLight Operations (non-collapsible header) */}
+        <div className="mt-4 mb-1 mx-2 pt-3 border-t border-white/10">
+          {!collapsed && (
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--nl-neon))]/80">
+              NewLight Operations
+            </div>
+          )}
+        </div>
+        {opsGroups.map(renderGroup)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3 relative z-10">
