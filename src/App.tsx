@@ -406,7 +406,7 @@ const App = () => {
                 <Route path="/funnel-builder" element={<PermissionGuard moduleKey="website"><FunnelBuilder /></PermissionGuard>} />
                 <Route path="/landing-pages" element={<PermissionGuard moduleKey="website"><LandingPageEditor /></PermissionGuard>} />
                 <Route path="/forms" element={<PermissionGuard moduleKey="forms"><FormBuilder /></PermissionGuard>} />
-                <Route path="/automations" element={<Automations />} />
+                <Route path="/automations" element={<PermissionGuard moduleKey="intelligence"><AdminAutomations /></PermissionGuard>} />
                 <Route path="/client-performance" element={<PermissionGuard moduleKey="reports"><ClientPerformance /></PermissionGuard>} />
                 <Route path="/client-report" element={<PermissionGuard moduleKey="reports"><ClientReport /></PermissionGuard>} />
                 <Route path="/notifications" element={<Notifications />} />
@@ -447,7 +447,13 @@ const App = () => {
                 <Route path="/help-desk" element={<Navigate to="/support-tickets" replace />} />
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
-                <Route path="/team" element={<TeamManagement />} />
+                <Route path="/team" element={<PermissionGuard moduleKey="team"><AdminTeam /></PermissionGuard>} />
+                <Route path="/staff-calendars" element={<PermissionGuard moduleKey="team"><AdminStaffCalendars /></PermissionGuard>} />
+                <Route path="/employee-performance" element={<PermissionGuard moduleKey="team"><AdminEmployeePerformance /></PermissionGuard>} />
+                <Route path="/training-center" element={<PermissionGuard moduleKey="training"><AdminTrainingCenter /></PermissionGuard>} />
+                <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
+                <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
+                <Route path="/team-management" element={<TeamManagement />} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />

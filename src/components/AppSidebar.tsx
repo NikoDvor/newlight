@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronDown, Wallet, HelpCircle,
   Headphones, BookOpen, ClipboardList, BarChart3,
   Briefcase, LifeBuoy, UserCog, Activity,
-  Video, Zap, MessageSquare, Mail, ListChecks
+  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -86,7 +86,19 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Employee Hub",
     items: [
+      { title: "Team & Users", url: "/team", icon: Users, moduleKey: "team" },
+      { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
+      { title: "Employee Performance", url: "/employee-performance", icon: TrendingUp, moduleKey: "team" },
+      { title: "Training Center", url: "/training-center", icon: GraduationCap, moduleKey: "training" },
       { title: "Onboarding", url: "/sops", icon: BookOpen, moduleKey: "training" },
+    ],
+  },
+  {
+    type: "group", label: "Intelligence",
+    items: [
+      { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
+      { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
+      { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
     ],
   },
 ];
