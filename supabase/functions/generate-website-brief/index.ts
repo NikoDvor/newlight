@@ -100,7 +100,10 @@ The prompt should be self-contained — someone should be able to paste it direc
     });
 
     const aiData = await aiResponse.json();
+    console.log("AI response status:", aiResponse.status);
+    console.log("AI response data:", JSON.stringify(aiData));
     const brief = aiData.choices?.[0]?.message?.content;
+    console.log("Brief extracted:", brief ? "yes, length=" + brief.length : "null/undefined");
 
     if (!brief) return new Response(JSON.stringify({ error: "AI generation failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
