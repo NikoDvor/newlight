@@ -18,20 +18,92 @@ import {
 import { useState } from "react";
 
 interface NavItem { title: string; url: string; icon: any }
-interface NavSection { label: string; items: NavItem[] }
 interface NavGroup {
   label: string;
-  items?: NavItem[];
-  sections?: NavSection[];
+  ungrouped?: boolean; // render items with no group header
+  items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
   {
-    label: "Command Center",
+    label: "Top",
+    ungrouped: true,
     items: [
-      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Executive Dashboard", url: "/admin/executive", icon: Sparkles },
+      { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
       { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "AI & Insights",
+    items: [
+      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
+      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { title: "Website", url: "/admin/ops/website", icon: Globe },
+      { title: "SEO", url: "/admin/ops/seo", icon: Search },
+      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
+      { title: "Social", url: "/admin/ops/social", icon: Share2 },
+      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+      { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
+      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
+    ],
+  },
+  {
+    label: "Calendar",
+    items: [
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
+    ],
+  },
+  {
+    label: "Communications",
+    items: [
+      { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
+      { title: "Email", url: "/admin/ops/email", icon: Mail },
+      { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
+      { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
+      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Employee Hub",
+    items: [
+      { title: "Team & Users", url: "/admin/team", icon: Users },
+      { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
+      { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
+      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
+      { title: "Onboarding", url: "/admin/sops", icon: FileText },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
+      { title: "Automations", url: "/admin/automations", icon: Zap },
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
+      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
+    ],
+  },
+  {
+    label: "Sales & Research",
+    items: [
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+      { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
+      { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
+      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
     ],
   },
   {
@@ -64,87 +136,6 @@ const navGroups: NavGroup[] = [
       { title: "Reports", url: "/admin/reports", icon: LineChart },
       { title: "Billing", url: "/admin/billing", icon: Wallet },
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
-    ],
-  },
-  {
-    label: "NewLight Ops",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Users },
-      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
-      { title: "Onboarding", url: "/admin/sops", icon: FileText },
-      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
-    ],
-    sections: [
-      {
-        label: "Overview",
-        items: [
-          { title: "Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
-          { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
-          { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
-        ],
-      },
-      {
-        label: "Growth",
-        items: [
-          { title: "Website", url: "/admin/ops/website", icon: Globe },
-          { title: "SEO", url: "/admin/ops/seo", icon: Search },
-          { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
-          { title: "Social", url: "/admin/ops/social", icon: Share2 },
-          { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-          { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
-          { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
-        ],
-      },
-      {
-        label: "Calendar",
-        items: [
-          { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-          { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
-        ],
-      },
-      {
-        label: "Communications",
-        items: [
-          { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
-          { title: "Email", url: "/admin/ops/email", icon: Mail },
-          { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
-          { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
-          { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
-        ],
-      },
-      {
-        label: "Employee Hub",
-        items: [
-          { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
-          { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
-        ],
-      },
-      {
-        label: "Intelligence",
-        items: [
-          { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
-          { title: "Automations", url: "/admin/automations", icon: Zap },
-          { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
-        ],
-      },
-      {
-        label: "Sales & Research",
-        items: [
-          { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-          { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
-        ],
-      },
-      {
-        label: "Operations",
-        items: [
-          { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-          { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
-          { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
-          { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
-          { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
-          { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
-        ],
-      },
     ],
   },
 ];
