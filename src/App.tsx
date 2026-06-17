@@ -270,6 +270,8 @@ const App = () => {
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="training-center" element={<AdminTrainingCenter />} />
+                <Route path="sops" element={<PlaceholderPage title="Standard Operating Procedures" description="Standard operating procedures for your team." />} />
+                <Route path="ai-accountant" element={<PlaceholderPage title="AI Accountant" description="Automated bookkeeping, categorization, and reconciliation." />} />
                 <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
                 <Route path="training-center/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training-center/question-reassignment" element={<AdminQuestionReassignment />} />
