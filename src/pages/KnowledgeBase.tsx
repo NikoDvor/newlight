@@ -44,7 +44,7 @@ const SOPS = [
   { title: "Lead Qualification Checklist", dept: "Sales", steps: 10, lastUpdated: "2026-03-12" },
 ];
 
-export default function KnowledgeBase() {
+function KnowledgeBaseInner() {
   const { activeClientId } = useWorkspace();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -151,5 +151,20 @@ export default function KnowledgeBase() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+import { Tabs as _KBTabs, TabsList as _KBTabsList, TabsTrigger as _KBTabsTrigger, TabsContent as _KBTabsContent } from "@/components/ui/tabs";
+import HowItWorks from "@/pages/HowItWorks";
+
+export default function KnowledgeBase() {
+  return (
+    <_KBTabs defaultValue="kb" className="w-full">
+      <_KBTabsList className="mx-6 mt-4">
+        <_KBTabsTrigger value="kb">Knowledge Base</_KBTabsTrigger>
+        <_KBTabsTrigger value="how">How It Works</_KBTabsTrigger>
+      </_KBTabsList>
+      <_KBTabsContent value="kb"><KnowledgeBaseInner /></_KBTabsContent>
+      <_KBTabsContent value="how"><HowItWorks /></_KBTabsContent>
+    </_KBTabs>
   );
 }

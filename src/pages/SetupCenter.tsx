@@ -36,7 +36,7 @@ const statusMeta: Record<SectionStatus, { label: string; color: string; bg: stri
   completed: { label: "Completed", color: "hsl(152 60% 44%)", bg: "hsla(152,60%,44%,.12)", icon: CheckCircle2 },
 };
 
-export default function SetupCenter() {
+function SetupCenterInner() {
   const { activeClientId, branding, userRole } = useWorkspace();
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -350,5 +350,21 @@ export default function SetupCenter() {
         })}
       </div>
     </div>
+  );
+}
+
+import { Tabs as _SCTabs, TabsList as _SCTabsList, TabsTrigger as _SCTabsTrigger, TabsContent as _SCTabsContent } from "@/components/ui/tabs";
+import Onboarding from "@/pages/Onboarding";
+
+export default function SetupCenter() {
+  return (
+    <_SCTabs defaultValue="setup" className="w-full">
+      <_SCTabsList className="mx-6 mt-4">
+        <_SCTabsTrigger value="setup">Setup Center</_SCTabsTrigger>
+        <_SCTabsTrigger value="onboarding">Onboarding Steps</_SCTabsTrigger>
+      </_SCTabsList>
+      <_SCTabsContent value="setup"><SetupCenterInner /></_SCTabsContent>
+      <_SCTabsContent value="onboarding"><Onboarding /></_SCTabsContent>
+    </_SCTabs>
   );
 }

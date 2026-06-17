@@ -40,7 +40,7 @@ interface AuditEntry {
   metadata: any;
 }
 
-export default function TeamManagement() {
+function TeamManagementInner() {
   const { activeClientId } = useWorkspace();
   const [members, setMembers] = useState<WorkspaceUser[]>([]);
   const [search, setSearch] = useState("");
@@ -339,5 +339,21 @@ export default function TeamManagement() {
         />
       )}
     </div>
+  );
+}
+
+import { Tabs as _TMTabs, TabsList as _TMTabsList, TabsTrigger as _TMTabsTrigger, TabsContent as _TMTabsContent } from "@/components/ui/tabs";
+import Workforce from "@/pages/Workforce";
+
+export default function TeamManagement() {
+  return (
+    <_TMTabs defaultValue="team" className="w-full">
+      <_TMTabsList className="mx-6 mt-4">
+        <_TMTabsTrigger value="team">Team & Roster</_TMTabsTrigger>
+        <_TMTabsTrigger value="workforce">Workforce</_TMTabsTrigger>
+      </_TMTabsList>
+      <_TMTabsContent value="team"><TeamManagementInner /></_TMTabsContent>
+      <_TMTabsContent value="workforce"><Workforce /></_TMTabsContent>
+    </_TMTabs>
   );
 }

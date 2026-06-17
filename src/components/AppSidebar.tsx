@@ -49,7 +49,7 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "CRM",
     items: [
-      { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
     ],
   },
   {
@@ -68,13 +68,12 @@ const navStructure: NavEntry[] = [
       { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
       { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
       { title: "Billing", url: "/billing", icon: CreditCard },
-      { title: "How It Works", url: "/how-it-works", icon: HelpCircle },
     ],
   },
   {
     type: "group", label: "Employee Hub",
     items: [
-      { title: "Team & Users", url: "/team", icon: Users, moduleKey: "team" },
+      { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
       { title: "Employee Performance", url: "/employee-performance", icon: TrendingUp, moduleKey: "team" },
       { title: "Training Center", url: "/training-center", icon: GraduationCap, moduleKey: "training" },
