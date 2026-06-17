@@ -183,6 +183,8 @@ function IntroOverlay() {
   const [showIntro, setShowIntro] = useState(() => {
     try {
       if (sessionStorage.getItem('nl_splash_done') !== '1') return false;
+      const splashTime = parseInt(sessionStorage.getItem('nl_splash_time') || '0', 10);
+      if (Date.now() - splashTime < 15000) return false;
     } catch {}
     return shouldPlayIntro();
   });
@@ -220,7 +222,10 @@ const App = () => {
         <SplashScreen
           onStartFade={() => setSplashFading(true)}
         onComplete={() => {
-          try { sessionStorage.setItem('nl_splash_done', '1'); } catch {}
+          try {
+            sessionStorage.setItem('nl_splash_done', '1');
+            sessionStorage.setItem('nl_splash_time', String(Date.now()));
+          } catch {}
           setSplashDone(true);
           setSplashFading(true);
         }}
