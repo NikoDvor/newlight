@@ -40,7 +40,7 @@ const PRIORITY_STYLE: Record<string, string> = {
   Low: "bg-secondary text-muted-foreground",
 };
 
-export default function HelpDesk() {
+function HelpDeskInner() {
   const { activeClientId, user } = useWorkspace();
   const [tickets, setTickets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
