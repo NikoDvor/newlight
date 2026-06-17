@@ -715,6 +715,7 @@ export default function SettingsPage() {
           {/* ─── NOTIFICATIONS ─── */}
           {activeSection === "notifications" && (
             <>
+              <NotificationsPage />
               <SectionCard icon={Bell} title="Notification Channels" desc="Configure how notifications are delivered"
                 action={<Button size="sm" className="btn-gradient h-8 px-4 rounded-xl text-xs" onClick={() => toast.success("Notification preferences saved!")}><Save className="h-3 w-3 mr-1.5" /> Save</Button>}
               >
