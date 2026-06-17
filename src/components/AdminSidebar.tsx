@@ -18,20 +18,92 @@ import {
 import { useState } from "react";
 
 interface NavItem { title: string; url: string; icon: any }
-interface NavSection { label: string; items: NavItem[] }
 interface NavGroup {
   label: string;
-  items?: NavItem[];
-  sections?: NavSection[];
+  ungrouped?: boolean; // render items with no group header
+  items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
   {
-    label: "Command Center",
+    label: "Top",
+    ungrouped: true,
     items: [
-      { title: "Admin Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Executive Dashboard", url: "/admin/executive", icon: Sparkles },
+      { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
       { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "AI & Insights",
+    items: [
+      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
+      { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { title: "Website", url: "/admin/ops/website", icon: Globe },
+      { title: "SEO", url: "/admin/ops/seo", icon: Search },
+      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
+      { title: "Social", url: "/admin/ops/social", icon: Share2 },
+      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+      { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
+      { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
+    ],
+  },
+  {
+    label: "Calendar",
+    items: [
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
+    ],
+  },
+  {
+    label: "Communications",
+    items: [
+      { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
+      { title: "Email", url: "/admin/ops/email", icon: Mail },
+      { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
+      { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
+      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Employee Hub",
+    items: [
+      { title: "Team & Users", url: "/admin/team", icon: Users },
+      { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
+      { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
+      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
+      { title: "Onboarding", url: "/admin/sops", icon: FileText },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
+      { title: "Automations", url: "/admin/automations", icon: Zap },
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
+      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
+    ],
+  },
+  {
+    label: "Sales & Research",
+    items: [
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+      { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
+      { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
+      { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
+      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
     ],
   },
   {
@@ -66,87 +138,6 @@ const navGroups: NavGroup[] = [
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
-  {
-    label: "NewLight Ops",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Users },
-      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
-      { title: "Onboarding", url: "/admin/sops", icon: FileText },
-      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
-    ],
-    sections: [
-      {
-        label: "Overview",
-        items: [
-          { title: "Dashboard", url: "/admin/ops/dashboard", icon: LayoutDashboard },
-          { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
-          { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: TrendingUp },
-        ],
-      },
-      {
-        label: "Growth",
-        items: [
-          { title: "Website", url: "/admin/ops/website", icon: Globe },
-          { title: "SEO", url: "/admin/ops/seo", icon: Search },
-          { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
-          { title: "Social", url: "/admin/ops/social", icon: Share2 },
-          { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-          { title: "Tasks", url: "/admin/ops/tasks", icon: ClipboardList },
-          { title: "Pipeline", url: "/admin/ops/pipeline", icon: GitBranch },
-        ],
-      },
-      {
-        label: "Calendar",
-        items: [
-          { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-          { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
-        ],
-      },
-      {
-        label: "Communications",
-        items: [
-          { title: "Inbox", url: "/admin/ops/conversations", icon: InboxIcon },
-          { title: "Email", url: "/admin/ops/email", icon: Mail },
-          { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: Send },
-          { title: "Templates", url: "/admin/ops/message-templates", icon: FileText },
-          { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
-        ],
-      },
-      {
-        label: "Employee Hub",
-        items: [
-          { title: "Staff Calendars", url: "/admin/staff-calendars", icon: Calendar },
-          { title: "Employee Performance", url: "/admin/employee-performance", icon: TrendingUp },
-        ],
-      },
-      {
-        label: "Intelligence",
-        items: [
-          { title: "Revenue Expansion", url: "/admin/revenue-expansion", icon: TrendingUp },
-          { title: "Automations", url: "/admin/automations", icon: Zap },
-          { title: "Audit Logs", url: "/admin/audit-logs", icon: Shield },
-        ],
-      },
-      {
-        label: "Sales & Research",
-        items: [
-          { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-          { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
-        ],
-      },
-      {
-        label: "Operations",
-        items: [
-          { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-          { title: "Finance", url: "/admin/ops/finance", icon: Wallet },
-          { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
-          { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
-          { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
-          { title: "Settings", url: "/admin/ops/settings", icon: SettingsIcon },
-        ],
-      },
-    ],
-  },
 ];
 
 
@@ -166,34 +157,13 @@ export function AdminSidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     navGroups.forEach((g) => {
-      if (g.items) {
-        init[g.label] = g.items.some((i) => isActive(i.url));
-      }
-    });
-    // NewLight Ops and Growth Systems default open
-    init["NewLight Ops"] = true;
-    init["Growth Systems"] = true;
-    return init;
-  });
-
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    navGroups.forEach((g) => {
-      g.sections?.forEach((s) => {
-        const key = `${g.label}::${s.label}`;
-        init[key] = s.items.some((i) => isActive(i.url));
-      });
+      init[g.label] = g.items.some((i) => isActive(i.url));
     });
     return init;
   });
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
-  const toggleSection = (groupLabel: string, sectionLabel: string) => {
-    const key = `${groupLabel}::${sectionLabel}`;
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
 
@@ -235,25 +205,6 @@ export function AdminSidebar() {
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
         {navGroups.map((group) => {
           const isOpen = openGroups[group.label] ?? false;
-          const hasItems = !!(group.items && group.items.length > 0);
-          const hasSections = !!(group.sections && group.sections.length > 0);
-          const isDivider = !hasItems && !hasSections;
-
-          if (isDivider) {
-            return (
-              <SidebarGroup key={group.label} className="py-2">
-                {!collapsed && (
-                  <div className="flex items-center gap-2 px-3">
-                    <div className="flex-1 h-px bg-white/10" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                      {group.label}
-                    </span>
-                    <div className="flex-1 h-px bg-white/10" />
-                  </div>
-                )}
-              </SidebarGroup>
-            );
-          }
 
           const renderItem = (item: NavItem) => {
             const active = isActive(item.url);
@@ -286,6 +237,19 @@ export function AdminSidebar() {
             );
           };
 
+          // Ungrouped: render items flat with no group header (same as AppSidebar top-level)
+          if (group.ungrouped) {
+            return (
+              <SidebarGroup key={group.label} className="py-0.5">
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map(renderItem)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
+
           return (
             <SidebarGroup key={group.label} className="py-0.5">
               {!collapsed && (
@@ -299,34 +263,9 @@ export function AdminSidebar() {
               )}
               {(collapsed || isOpen) && (
                 <SidebarGroupContent>
-                  {hasItems && (
-                    <SidebarMenu>
-                      {group.items!.map(renderItem)}
-                    </SidebarMenu>
-                  )}
-                  {hasSections && group.sections!.map((section) => {
-                    const sectionKey = `${group.label}::${section.label}`;
-                    const sectionOpen = openSections[sectionKey] ?? false;
-                    return (
-                      <div key={section.label} className="mt-1">
-                        {!collapsed && (
-                          <button
-                            onClick={() => toggleSection(group.label, section.label)}
-                            className="flex items-center justify-between w-full px-3 py-2 md:py-1 min-h-[36px] md:min-h-0 text-[9px] font-semibold uppercase tracking-wider text-white/30 hover:text-white/60 transition-colors"
-                          >
-                            <span>{section.label}</span>
-                            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${sectionOpen ? "" : "-rotate-90"}`} />
-                          </button>
-                        )}
-                        {(collapsed || sectionOpen) && (
-                          <SidebarMenu>
-                            {section.items.map(renderItem)}
-                          </SidebarMenu>
-                        )}
-                      </div>
-                    );
-                  })}
-
+                  <SidebarMenu>
+                    {group.items.map(renderItem)}
+                  </SidebarMenu>
                 </SidebarGroupContent>
               )}
             </SidebarGroup>
