@@ -28,7 +28,10 @@ export const MODULE_KEYS = [
   { key: "ai", label: "Ask AI" },
   { key: "training", label: "Training Courses" },
   { key: "meeting_intel", label: "Meeting Intelligence" },
+  { key: "team", label: "Team Hub" },
+  { key: "intelligence", label: "Intelligence" },
   { key: "settings", label: "Settings" },
+
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number]["key"];
