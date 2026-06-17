@@ -62,6 +62,15 @@ const navGroups: NavGroup[] = [
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
+  {
+    label: "NewLight Ops",
+    items: [
+      { title: "Team & Users", url: "/admin/team", icon: Users },
+      { title: "Training Center", url: "/admin/training-center", icon: Trophy },
+      { title: "Onboarding", url: "/admin/sops", icon: FileText },
+      { title: "AI Accountant", url: "/admin/ai-accountant", icon: Brain },
+    ],
+  },
 ];
 
 
