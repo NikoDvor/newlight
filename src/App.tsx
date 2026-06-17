@@ -367,6 +367,21 @@ const App = () => {
                 <Route path="ops/forms" element={<AdminOpsProvider><FormBuilder /></AdminOpsProvider>} />
                 <Route path="ops/reports" element={<AdminOpsProvider><Reports /></AdminOpsProvider>} />
                 <Route path="ops/help-desk" element={<AdminOpsProvider><HelpDesk /></AdminOpsProvider>} />
+                <Route path="ops/business-health" element={<AdminOpsProvider><BusinessHealth /></AdminOpsProvider>} />
+                <Route path="ops/revenue-opportunities" element={<AdminOpsProvider><RevenueOpportunities /></AdminOpsProvider>} />
+                <Route path="ops/priority-actions" element={<AdminOpsProvider><PriorityActions /></AdminOpsProvider>} />
+                <Route path="ops/live-activity" element={<AdminOpsProvider><LiveActivity /></AdminOpsProvider>} />
+                <Route path="ops/competitor-tracking" element={<AdminOpsProvider><CompetitorTracking /></AdminOpsProvider>} />
+                <Route path="ops/meeting-intelligence" element={<AdminOpsProvider><MeetingIntelligence /></AdminOpsProvider>} />
+                <Route path="ops/services" element={<AdminOpsProvider><ServiceManager /></AdminOpsProvider>} />
+                <Route path="ops/brand-assets" element={<AdminOpsProvider><BrandAssets /></AdminOpsProvider>} />
+                <Route path="ops/onboarding" element={<AdminOpsProvider><Onboarding /></AdminOpsProvider>} />
+                <Route path="ops/notifications" element={<AdminOpsProvider><Notifications /></AdminOpsProvider>} />
+                <Route path="ops/calendar-integrations" element={<AdminOpsProvider><CalendarIntegrations /></AdminOpsProvider>} />
+                <Route path="ops/training" element={<AdminOpsProvider><Training /></AdminOpsProvider>} />
+                <Route path="ops/support-tickets" element={<AdminOpsProvider><SupportTickets /></AdminOpsProvider>} />
+                <Route path="ops/knowledge-base" element={<AdminOpsProvider><KnowledgeBase /></AdminOpsProvider>} />
+                <Route path="ops/setup-center" element={<AdminOpsProvider><SetupCenter /></AdminOpsProvider>} />
               </Route>
 
               {/* Employee Portal */}
