@@ -1003,6 +1003,73 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [healthRecord, setHealthRecord] = useState<any>(null);
   const [healthMilestones, setHealthMilestones] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<{
+    mrr: number; arr: number; activeSubs: number; collectedLast30: number; outstanding: number;
+    trend: { name: string; collected: number; invoiced: number }[];
+    breakdown: { name: string; value: number }[];
+  }>({ mrr: 0, arr: 0, activeSubs: 0, collectedLast30: 0, outstanding: 0, trend: [], breakdown: [] });
+
+  useEffect(() => {
+    if (!activeClientId) return;
+    Promise.all([
+      supabase.from("subscriptions" as any).select("subscription_status, service_package_type, monthly_amount, billing_frequency").eq("client_id", activeClientId),
+      supabase.from("invoices" as any).select("total_amount, amount_paid, invoice_status, issued_at, paid_at, due_date").eq("client_id", activeClientId),
+      supabase.from("billing_accounts" as any).select("monthly_fee, billing_status").eq("client_id", activeClientId),
+    ]).then(([subsRes, invRes, baRes]) => {
+      const subs = (subsRes.data as any[]) || [];
+      const invs = (invRes.data as any[]) || [];
+      const accts = (baRes.data as any[]) || [];
+
+      const active = subs.filter(s => ["active", "Active", "trialing"].includes(s.subscription_status));
+      const subsMrr = active.reduce((s, x) => {
+        const amt = Number(x.monthly_amount) || 0;
+        const freq = (x.billing_frequency || "monthly").toLowerCase();
+        const factor = freq.includes("annual") || freq.includes("year") ? 1 / 12 : freq.includes("quarter") ? 1 / 3 : 1;
+        return s + amt * factor;
+      }, 0);
+      const acctMrr = accts.filter(a => !["cancelled", "paused"].includes((a.billing_status || "").toLowerCase()))
+        .reduce((s, a) => s + (Number(a.monthly_fee) || 0), 0);
+      const mrr = Math.round(subsMrr + acctMrr);
+
+      const now = new Date();
+      const cutoff30 = new Date(now); cutoff30.setDate(cutoff30.getDate() - 30);
+      const collectedLast30 = Math.round(invs
+        .filter(i => i.paid_at && new Date(i.paid_at) >= cutoff30)
+        .reduce((s, i) => s + (Number(i.amount_paid) || 0), 0));
+      const outstanding = Math.round(invs
+        .filter(i => !["paid", "void", "cancelled"].includes((i.invoice_status || "").toLowerCase()))
+        .reduce((s, i) => s + Math.max(0, (Number(i.total_amount) || 0) - (Number(i.amount_paid) || 0)), 0));
+
+      // 6-month trend
+      const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const trend: { name: string; collected: number; invoiced: number }[] = [];
+      for (let k = 5; k >= 0; k--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
+        const next = new Date(now.getFullYear(), now.getMonth() - k + 1, 1);
+        const invoiced = invs.filter(i => i.issued_at && new Date(i.issued_at) >= d && new Date(i.issued_at) < next)
+          .reduce((s, i) => s + (Number(i.total_amount) || 0), 0);
+        const collected = invs.filter(i => i.paid_at && new Date(i.paid_at) >= d && new Date(i.paid_at) < next)
+          .reduce((s, i) => s + (Number(i.amount_paid) || 0), 0);
+        trend.push({ name: monthLabels[d.getMonth()], invoiced: Math.round(invoiced), collected: Math.round(collected) });
+      }
+
+      // Breakdown by package
+      const map = new Map<string, number>();
+      active.forEach(s => {
+        const key = (s.service_package_type || "Other").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+        const amt = Number(s.monthly_amount) || 0;
+        map.set(key, (map.get(key) || 0) + amt);
+      });
+      const breakdown = Array.from(map.entries()).map(([name, value]) => ({ name, value: Math.round(value) }))
+        .sort((a, b) => b.value - a.value).slice(0, 5);
+
+      setRevenueData({
+        mrr, arr: mrr * 12, activeSubs: active.length,
+        collectedLast30, outstanding, trend, breakdown,
+      });
+    });
+  }, [activeClientId]);
+
 
   useEffect(() => {
     if (!activeClientId) return;
