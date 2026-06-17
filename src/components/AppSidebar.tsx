@@ -49,7 +49,7 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "CRM",
     items: [
-      { title: "Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
     ],
   },
   {
