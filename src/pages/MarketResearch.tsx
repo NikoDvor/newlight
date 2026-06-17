@@ -28,7 +28,7 @@ const BUYER_INSIGHTS = [
   { insight: "Customers prefer text over phone calls by 3:1", action: "Enable SMS booking and follow-up" },
 ];
 
-export default function MarketResearch() {
+function MarketResearchInner() {
   const { activeClientId } = useWorkspace();
   const navigate = useNavigate();
   const [keywords, setKeywords] = useState<any[]>([]);
