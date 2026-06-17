@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     // Pull client data
     const { data: client } = await supabase
       .from("clients")
-      .select("business_name, business_type, city, state, phone, email, slug")
+      .select("business_name, business_type, primary_location, phone, email, slug")
       .eq("id", client_id)
       .single();
 
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Build context string
     const keywordList = keywords?.map(k => k.keyword).join(", ") || "none yet";
     const contentList = content?.map(c => c.title).join(", ") || "none yet";
-    const serviceAreas = activation?.service_areas || client.city || "local area";
+    const serviceAreas = activation?.service_areas || client.primary_location || "local area";
     const modules = activation?.selected_modules?.join(", ") || "general services";
 
     const userPrompt = `You are building a complete website for a service business using Lovable (a React/TypeScript builder). Generate a detailed, ready-to-use Lovable project prompt that will build a professional 4-page website.
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 Business Details:
 - Name: ${client.business_name}
 - Industry: ${client.business_type}
-- Location: ${client.city}, ${client.state}
+- Location: ${client.primary_location || "local area"}
 - Phone: ${client.phone || "TBD"}
 - Email: ${client.email || "TBD"}
 - Service Areas: ${serviceAreas}
@@ -77,7 +77,7 @@ Generate a Lovable prompt that builds:
 4. Contact page — contact form, phone, email, service area map placeholder, Google Maps embed placeholder
 
 Design requirements:
-- Professional, modern design appropriate for a ${client.business_type} business
+- Professional, modern design appropriate for a ${client.business_type || "service"} business
 - Mobile-first responsive layout
 - Color scheme that fits the industry
 - Clear CTAs on every page
