@@ -1,0 +1,2 @@
+[functions.generate-website-brief]
+verify_jwt = false
