@@ -457,13 +457,16 @@ export default function AdminSalesPipeline() {
                           onDragStart={e => (e as any).dataTransfer?.setData("dealId", deal.id)}
                           onClick={() => navigate(`/admin/deals/${deal.id}`)}
                           className="p-3 rounded-lg bg-muted/15 hover:bg-muted/25 border border-border/10 hover:border-primary/15 cursor-grab active:cursor-grabbing transition-colors">
-                          <p className="text-xs font-medium text-foreground truncate">{deal.deal_name}</p>
-                          <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">
-                            {deal.crm_companies?.company_name || deal.crm_contacts?.full_name || "—"}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-[10px] font-semibold text-primary">${Number(deal.deal_value || 0).toLocaleString()}</span>
-                            <GripVertical className="h-3 w-3 text-muted-foreground/20" />
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-foreground truncate">
+                                {deal.crm_companies?.company_name || deal.crm_contacts?.full_name || deal.deal_name || "—"}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground/50 truncate mt-0.5">
+                                {deal.workspace_users?.full_name || "Unassigned"}
+                              </p>
+                            </div>
+                            <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
                           </div>
                         </motion.div>
                       ))}
