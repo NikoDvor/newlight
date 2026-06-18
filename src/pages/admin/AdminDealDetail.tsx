@@ -259,7 +259,7 @@ export default function AdminDealDetail() {
             ))}
           </CardContent>
         </Card>
-      </div>
+
         {/* Salesman Notes */}
         <Card className="border-0 bg-white/[0.04] lg:col-span-2" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
           <CardHeader className="pb-2">
