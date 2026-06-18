@@ -282,5 +282,6 @@ export default function AdminDealDetail() {
           </CardContent>
         </Card>
       </div>
+    </div>
   );
 }
