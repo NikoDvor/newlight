@@ -337,7 +337,7 @@ export default function AdminSalesPipeline() {
 
   const fetchData = useCallback(async () => {
     const [dealsRes, clientsRes] = await Promise.all([
-      supabase.from("crm_deals").select("*, crm_contacts(full_name, email), crm_companies(company_name)").order("created_at", { ascending: false }).limit(500),
+      supabase.from("crm_deals").select("*, crm_contacts(full_name, email), crm_companies(company_name), workspace_users!crm_deals_assigned_user_fkey(full_name)").order("created_at", { ascending: false }).limit(500),
       supabase.from("clients").select("id, business_name, business_type, proposal_status, payment_status, implementation_status, agreement_status, portal_access_enabled, created_at").order("created_at", { ascending: false }).limit(200),
     ]);
     setDeals(dealsRes.data || []);
