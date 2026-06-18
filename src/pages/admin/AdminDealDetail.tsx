@@ -37,6 +37,8 @@ export default function AdminDealDetail() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
+  const [notesSummary, setNotesSummary] = useState<string>("");
+  const [notesSaving, setNotesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
