@@ -1,0 +1,2 @@
+[functions.deal-closed-won-email]
+verify_jwt = false
