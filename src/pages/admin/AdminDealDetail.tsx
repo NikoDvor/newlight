@@ -37,6 +37,8 @@ export default function AdminDealDetail() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
+  const [notesSummary, setNotesSummary] = useState<string>("");
+  const [notesSaving, setNotesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function AdminDealDetail() {
       supabase.from("audit_logs").select("*").eq("module", "sales").order("created_at", { ascending: false }).limit(20),
     ]).then(([dRes, mRes, pRes, tRes, aRes]) => {
       setDeal(dRes.data);
+      setNotesSummary(dRes.data?.notes_summary || "");
       setMeetings(mRes.data || []);
       setProposals(pRes.data || []);
       setTasks(tRes.data || []);
@@ -89,6 +92,15 @@ export default function AdminDealDetail() {
       toast.success("Proposal draft created");
       navigate(`/admin/proposals/${proposal.id}`);
     }
+  };
+
+  const saveNotes = async () => {
+    if (!deal?.id) return;
+    setNotesSaving(true);
+    await supabase.from("crm_deals").update({ notes_summary: notesSummary } as any).eq("id", deal.id);
+    setDeal({ ...deal, notes_summary: notesSummary });
+    toast.success("Notes saved");
+    setNotesSaving(false);
   };
 
   const contact = deal.crm_contacts;
@@ -245,6 +257,28 @@ export default function AdminDealDetail() {
                 <Badge className={`text-[9px] ${t.status === "open" ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}`}>{t.status}</Badge>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Salesman Notes */}
+        <Card className="border-0 bg-white/[0.04] lg:col-span-2" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-white/80 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-[hsl(var(--nl-sky))]" /> Salesman Notes
+              </CardTitle>
+              <Button size="sm" variant="ghost" className="text-[hsl(var(--nl-neon))] text-xs h-7" onClick={saveNotes} disabled={notesSaving}>
+                {notesSaving ? "Saving..." : "Save Notes"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={notesSummary}
+              onChange={e => setNotesSummary(e.target.value)}
+              placeholder="Add notes about this deal — objections, timeline, decision makers, next steps..."
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/20 text-sm min-h-[120px] resize-none focus:border-primary/30"
+            />
           </CardContent>
         </Card>
       </div>
