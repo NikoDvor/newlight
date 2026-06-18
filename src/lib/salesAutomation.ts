@@ -221,6 +221,27 @@ export async function onDealClosedWon(dealId: string, deal: any) {
   }));
 
   await Promise.all(promises);
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deal-closed-won-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          deal_id: dealId,
+          company_name: deal?.crm_companies?.company_name || deal?.deal_name || "Unknown",
+          deal_value: deal?.deal_value || 0,
+        }),
+      }
+    );
+  } catch (err) {
+    console.error("Deal won email failed:", err);
+  }
 }
 
 // ─── DEAL CLOSED LOST ──────────────────────────────────────────────
