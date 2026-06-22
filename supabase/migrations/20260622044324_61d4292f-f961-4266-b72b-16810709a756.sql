@@ -1,0 +1,7 @@
+UPDATE public.nl_training_chapters
+
+SET content = content || E'\n\n---\n\n## Updated Objection Responses — Priority\n*Updated June 21, 2026 — Use pattern interrupt after every objection*\n\n### Need to Think About It\n1. "Every month you aren\'t running this system, other businesses in your industry are. And that gap doesn\'t sit there while you think about it — it compounds. What would you need to see today in order to feel confident enough to move forward?"\n2. "Alright [name], I get that you aren\'t interested enough to move on today. We can tack it, and I\'ll call back at a later time. But just so I\'m proactive for when I call — what exactly are you not interested enough in to make you need more time to think about it?"\n\n### Need to Talk to Someone\n1. "Before you bring this to them, what kinds of objections do you think they\'ll have? Because I would rather handle that now rather than have it come up later when I\'m not in the room."\n2. "What would you do if they said no?"\n3. "Who would I need to involve on this call and is there a way to get y\'all on the phone together?"\n\n### Gatekeeper: "Why do you need to talk to [owner]?"\n"I\'m checking in on his availability in [month]. I\'m looking to line up 15 clients for them and was wondering if they could handle them. I believe I already talked to someone about this. And weekdays actually work better for me — if you could put me down for [day], you\'d be a hero."'
+
+WHERE module_id = '49e85e03-72b0-4297-95ec-03d60f7db51c'
+
+AND chapter_number = 4;
