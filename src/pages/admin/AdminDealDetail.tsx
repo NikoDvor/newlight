@@ -15,14 +15,10 @@ import {
 } from "lucide-react";
 
 const STAGES = [
-  "new_lead", "contacted", "booked_meeting", "meeting_completed",
-  "qualified", "proposal_drafted", "proposal_sent", "negotiation",
-  "closed_won", "closed_lost",
+  "cold_lead", "warm_lead", "hot_lead", "won_lead",
 ];
 const STAGE_LABELS: Record<string, string> = {
-  new_lead: "New Lead", contacted: "Contacted", booked_meeting: "Booked Meeting",
-  meeting_completed: "Meeting Done", qualified: "Qualified", proposal_drafted: "Proposal Draft",
-  proposal_sent: "Proposal Sent", negotiation: "Negotiation", closed_won: "Won", closed_lost: "Lost",
+  cold_lead: "Cold Lead", warm_lead: "Warm Lead", hot_lead: "Hot Lead", won_lead: "Won Lead",
 };
 const QUAL_LABELS: Record<string, string> = {
   unqualified: "Unqualified", needs_review: "Needs Review", qualified: "Qualified",
