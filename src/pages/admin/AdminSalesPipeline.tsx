@@ -32,16 +32,10 @@ import {
 // Pipeline Kanban Stages
 // ═══════════════════════════════════════════════
 const STAGES = [
-  { key: "new_lead", label: "New Lead", color: "hsla(211,96%,60%,.6)" },
-  { key: "contacted", label: "Contacted", color: "hsla(197,92%,68%,.6)" },
-  { key: "booked_meeting", label: "Booked Meeting", color: "hsla(187,70%,58%,.6)" },
-  { key: "meeting_completed", label: "Meeting Done", color: "hsla(160,70%,50%,.6)" },
-  { key: "qualified", label: "Qualified", color: "hsla(140,60%,50%,.6)" },
-  { key: "proposal_drafted", label: "Proposal Draft", color: "hsla(45,90%,55%,.6)" },
-  { key: "proposal_sent", label: "Proposal Sent", color: "hsla(30,90%,55%,.6)" },
-  { key: "negotiation", label: "Negotiation", color: "hsla(280,60%,60%,.6)" },
-  { key: "closed_won", label: "Won", color: "hsla(140,70%,45%,.8)" },
-  { key: "closed_lost", label: "Lost", color: "hsla(0,70%,50%,.6)" },
+  { key: "cold_lead", label: "Cold Lead", color: "hsla(211,96%,60%,.6)" },
+  { key: "warm_lead", label: "Warm Lead", color: "hsla(45,90%,55%,.6)" },
+  { key: "hot_lead", label: "Hot Lead", color: "hsla(30,90%,55%,.6)" },
+  { key: "won_lead", label: "Won Lead", color: "hsla(140,70%,45%,.8)" },
 ];
 const STAGE_LABELS: Record<string, string> = {};
 STAGES.forEach(s => { STAGE_LABELS[s.key] = s.label; });
