@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const userId = created.user.id;
+    const _unused = userId; // userId now resolved (created or existing)
     await adminClient
       .from("user_roles")
       .delete()
