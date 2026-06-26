@@ -36,15 +36,19 @@ Deno.serve(async (req) => {
       return json({ error: "Manual account creation is not configured" }, 500);
     }
 
-    const callerClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser();
-    if (callerError || !caller) return json({ error: "Not authenticated" }, 401);
-
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const { data: callerData, error: callerError } = await adminClient.auth.getUser(token);
+    const caller = callerData?.user;
+    if (callerError || !caller) {
+      console.error("Caller auth validation failed", { message: callerError?.message });
+      return json({ error: "Not authenticated" }, 401);
+    }
+
+
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
