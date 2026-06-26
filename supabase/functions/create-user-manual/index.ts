@@ -40,13 +40,17 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const { data: callerData, error: callerError } = await adminClient.auth.getUser(token);
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: callerData, error: callerError } = await userClient.auth.getUser();
     const caller = callerData?.user;
     if (callerError || !caller) {
       console.error("Caller auth validation failed", { message: callerError?.message });
       return json({ error: "Not authenticated" }, 401);
     }
+
 
 
     const { data: callerRole } = await adminClient
