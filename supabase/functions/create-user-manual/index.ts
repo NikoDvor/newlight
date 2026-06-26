@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const _unused = userId; // userId now resolved (created or existing)
+    // userId is resolved above (either newly created or existing user whose password was reset)
     await adminClient
       .from("user_roles")
       .delete()
