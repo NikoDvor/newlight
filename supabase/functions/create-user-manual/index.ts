@@ -95,26 +95,25 @@ Deno.serve(async (req) => {
       const alreadyExists = msg.includes("already been registered") || msg.includes("already exists") || msg.includes("already registered");
 
       if (alreadyExists) {
-        // Look up the existing auth user by email and reset their password to the new temporary one.
+        // Silently hard-delete the stale auth user and retry as a fresh create.
         const { data: list, error: listError } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 200 });
         if (listError) {
-          console.error("Existing user lookup failed", { email, message: listError.message });
           return json({ error: listError.message }, 400);
         }
         const existing = list?.users?.find((u) => (u.email || "").toLowerCase() === email);
-        if (!existing) {
-          return json({ error: createError?.message || "Could not create user account" }, 400);
+        if (existing) {
+          await adminClient.auth.admin.deleteUser(existing.id);
         }
-        const { error: updateError } = await adminClient.auth.admin.updateUserById(existing.id, {
+        const retry = await adminClient.auth.admin.createUser({
+          email,
           password: temporaryPassword,
           email_confirm: true,
-          user_metadata: { ...(existing.user_metadata || {}), full_name: fullName, role_preset: rolePreset, created_manually: true },
+          user_metadata: { full_name: fullName, role_preset: rolePreset, created_manually: true },
         });
-        if (updateError) {
-          console.error("Existing user password reset failed", { userId: existing.id, message: updateError.message });
-          return json({ error: updateError.message }, 400);
+        if (retry.error || !retry.data?.user?.id) {
+          return json({ error: retry.error?.message || "Could not create user account" }, 400);
         }
-        userId = existing.id;
+        userId = retry.data.user.id;
       } else {
         return json({ error: createError?.message || "Could not create user account" }, 400);
       }
