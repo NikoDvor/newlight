@@ -15,7 +15,7 @@ import {
   Globe, Plus, AlertTriangle, Zap, BarChart3, Plug, Eye,
   Upload, Palette, Search, FileText, Pencil, CheckCircle, ExternalLink,
   Code2, Copy, CheckCircle2, Loader2, ExternalLink as ExternalLinkIcon, Settings, Wand2,
-
+  MessageSquare,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
