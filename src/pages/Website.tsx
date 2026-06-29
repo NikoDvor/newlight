@@ -667,6 +667,62 @@ export default function Website() {
             </DataCard>
           </TabsContent>
 
+          {/* ─── AI Chat Tab ─── */}
+          <TabsContent value="ai-chat" className="mt-4">
+            <DataCard title="AI Chat Widget">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Embed a chat widget on your website to capture leads and answer visitor questions automatically.
+                </p>
+              </div>
+
+              <div className="space-y-4 max-w-md mx-auto">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-widget-name" className="text-sm">Widget Name</Label>
+                  <Input
+                    id="ai-widget-name"
+                    value={aiWidgetName}
+                    onChange={(e) => setAiWidgetName(e.target.value)}
+                    placeholder="e.g. Chat with us"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-greeting" className="text-sm">Greeting Message</Label>
+                  <Input
+                    id="ai-greeting"
+                    value={aiGreeting}
+                    onChange={(e) => setAiGreeting(e.target.value)}
+                    placeholder="e.g. Hi! How can we help you today?"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-assign-to" className="text-sm">Assign to</Label>
+                  <Select value={aiAssignTo} onValueChange={setAiAssignTo}>
+                    <SelectTrigger id="ai-assign-to" className="w-full">
+                      <SelectValue placeholder="Select assignment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="first_available">First available</SelectItem>
+                      <SelectItem value="specific_team_member">Specific team member</SelectItem>
+                      <SelectItem value="ai_only">AI only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-6 max-w-md mx-auto">
+                <Button size="sm" onClick={() => toast({ title: "AI Chat settings saved" })}>
+                  Save Settings
+                </Button>
+              </div>
+            </DataCard>
+          </TabsContent>
+
           {/* ─── Traffic Tab ─── */}
           <TabsContent value="traffic" className="mt-4">
             <DataCard title="Traffic Overview">
