@@ -360,6 +360,42 @@ export default function Reports() {
               </div>
             </DataCard>
           </TabsContent>
+
+          {/* TRACKING TAB */}
+          <TabsContent value="tracking" className="mt-4">
+            <DataCard title="Call & Link Tracking">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                  <PhoneCall className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Track how many calls and bookings come through each of your links and phone numbers.
+                </p>
+              </div>
+
+              <div className="space-y-0 max-w-md mx-auto">
+                {[
+                  { label: "Tracking Links", value: "—" },
+                  { label: "Total Calls Tracked", value: "—" },
+                  { label: "Bookings from Links", value: "—" },
+                ].map((stat, i) => (
+                  <div key={stat.label}>
+                    <div className="flex items-center justify-between py-3">
+                      <span className="text-sm font-medium text-foreground">{stat.label}</span>
+                      <span className="text-sm font-bold tabular-nums text-foreground">{stat.value}</span>
+                    </div>
+                    {i < 2 && <div className="border-b border-border/50" />}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end mt-6 max-w-md mx-auto">
+                <Button size="sm" variant="outline" className="gap-1.5">
+                  <Plus className="h-4 w-4" /> Create Tracking Link
+                </Button>
+              </div>
+            </DataCard>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
