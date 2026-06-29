@@ -56,7 +56,7 @@ const navStructure: NavEntry[] = [
     type: "group", label: "Communications",
     items: [
       { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Communications", url: "/email", icon: Mail, moduleKey: "email" },
       { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
       { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
