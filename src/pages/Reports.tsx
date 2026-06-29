@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText, BarChart3, TrendingUp, Download, Calendar, Users, DollarSign,
-  Target, Zap, ArrowDown, Mail, Clock, Sparkles, PieChart
+  Target, Zap, ArrowDown, Mail, Clock, Sparkles, PieChart, PhoneCall, Plus
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
