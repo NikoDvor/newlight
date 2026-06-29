@@ -149,6 +149,7 @@ export default function Reports() {
             <TabsTrigger value="marketing" className="rounded-md text-sm">Marketing</TabsTrigger>
             <TabsTrigger value="charts" className="rounded-md text-sm">Charts</TabsTrigger>
             <TabsTrigger value="schedule" className="rounded-md text-sm">Schedule</TabsTrigger>
+            <TabsTrigger value="tracking" className="rounded-md text-sm">Tracking</TabsTrigger>
           </TabsList>
 
           {/* FUNNEL TAB */}
