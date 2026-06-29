@@ -306,7 +306,7 @@ export default function EmailPage() {
                 <MessageSquare className="h-6 w-6 text-primary" />
               </div>
               <p className="text-sm text-muted-foreground max-w-md">
-                Send targeted text message campaigns to your contact list.
+                Send targeted SMS campaigns to your contact list. Delivered via Twilio.
               </p>
             </div>
 
