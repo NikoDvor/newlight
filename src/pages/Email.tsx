@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Mail, Send, Inbox as InboxIcon, FileText, Plus, Search, Star, StarOff,
-  ArrowLeft, Reply, Trash2, UserPlus, Plug, CheckCircle, AlertCircle, RefreshCw
+  ArrowLeft, Reply, Trash2, UserPlus, Plug, CheckCircle, AlertCircle, RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
