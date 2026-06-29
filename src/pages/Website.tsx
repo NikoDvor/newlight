@@ -100,6 +100,13 @@ export default function Website() {
   const [websiteBrief, setWebsiteBrief] = useState<string | null>(null);
   const [buildUrl, setBuildUrl] = useState<string | null>(null);
 
+  // AI Chat widget local settings
+  const [aiWidgetName, setAiWidgetName] = useState("");
+  const [aiGreeting, setAiGreeting] = useState("");
+  const [aiAssignTo, setAiAssignTo] = useState("");
+
+
+
 
   // Auto-select first page
   useEffect(() => {
