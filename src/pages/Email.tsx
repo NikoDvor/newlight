@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import {
   Mail, Send, Inbox as InboxIcon, FileText, Plus, Search, Star, StarOff,
-  ArrowLeft, Reply, Trash2, UserPlus, Plug, CheckCircle, AlertCircle, RefreshCw
+  ArrowLeft, Reply, Trash2, UserPlus, Plug, CheckCircle, AlertCircle, RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,116 +180,160 @@ export default function EmailPage() {
         tips={["Emails are matched to CRM contacts automatically", "You can create new contacts from unknown senders", "Reply to emails without leaving the platform"]}
       />
 
-      {/* Connection status banner */}
-      {primaryConnection && primaryConnection.status !== "connected" && (
-        <div className="mb-4 p-3 rounded-xl border border-border bg-secondary/50 flex items-center gap-3">
-          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-          <div className="flex-1">
-            <p className="text-xs font-medium text-foreground">Email connection: {CONNECTION_STATUS[primaryConnection.status]?.label || primaryConnection.status}</p>
-            <p className="text-[10px] text-muted-foreground">{primaryConnection.provider === "gmail" ? "Google Workspace / Gmail" : "Microsoft / Outlook"} · {primaryConnection.email_address || "No email configured"}</p>
-          </div>
-          <Badge className={CONNECTION_STATUS[primaryConnection.status]?.color || "bg-muted text-muted-foreground"}>{CONNECTION_STATUS[primaryConnection.status]?.label || "Unknown"}</Badge>
-        </div>
-      )}
+      <Tabs defaultValue="inbox" className="h-[calc(100%-6rem)]">
+        <TabsList className="bg-secondary h-10 rounded-lg mb-4">
+          <TabsTrigger value="inbox" className="rounded-md text-sm">Inbox</TabsTrigger>
+          <TabsTrigger value="sms-campaigns" className="rounded-md text-sm">SMS Campaigns</TabsTrigger>
+        </TabsList>
 
-      {messages.length === 0 && !primaryConnection && (
-        <SetupBanner icon={Mail} title="Connect Your Email"
-          description="Connect your business email to manage customer communication inside NewLight. Support for Gmail and Outlook."
-          actionLabel="Connect Email" onAction={() => {
-            supabase.from("email_connections").insert({ client_id: activeClientId, provider: "gmail", status: "access_needed" }).then(() => fetchData());
-            toast({ title: "Email connection initiated" });
-          }} />
-      )}
-
-      <div className="flex gap-0 h-[calc(100%-6rem)] rounded-2xl overflow-hidden border border-border bg-card">
-        {/* LEFT — folder nav + message list */}
-        <div className="w-[300px] shrink-0 border-r border-border flex flex-col">
-          <div className="p-3 border-b border-border space-y-2">
-            <div className="flex gap-1">
-              {[
-                { key: "inbox", label: "Inbox", count: unreadCount },
-                { key: "sent", label: "Sent", count: 0 },
-              ].map(f => (
-                <button key={f.key} onClick={() => { setFolder(f.key); setSelectedMsg(null); }}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors flex-1 ${folder === f.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}>
-                  {f.label} {f.count > 0 && <span className="ml-1 text-[10px] bg-primary text-primary-foreground rounded-full px-1.5">{f.count}</span>}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search emails..." className="pl-8 h-8 text-xs bg-background border-border" />
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {filteredMessages.length === 0 ? (
-              <div className="p-6 text-center"><p className="text-xs text-muted-foreground">No emails in {folder}</p></div>
-            ) : filteredMessages.map(msg => (
-              <button key={msg.id} onClick={() => markAsRead(msg)}
-                className={`w-full text-left px-3 py-3 border-b border-border transition-colors ${selectedMsg?.id === msg.id ? "bg-secondary" : "hover:bg-secondary/50"} ${!msg.is_read ? "bg-primary/[0.03]" : ""}`}>
-                <div className="flex items-center gap-2">
-                  <button onClick={(e) => toggleStar(msg, e)} className="shrink-0">
-                    {msg.is_starred ? <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> : <StarOff className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </button>
-                  <span className={`text-sm truncate flex-1 ${!msg.is_read ? "font-semibold text-foreground" : "text-foreground"}`}>
-                    {msg.direction === "outbound" ? `To: ${msg.to_address}` : msg.from_name || msg.from_address}
-                  </span>
-                </div>
-                <p className={`text-xs truncate mt-0.5 ml-5 ${!msg.is_read ? "font-medium text-foreground" : "text-muted-foreground"}`}>{msg.subject || "(no subject)"}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : ""}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* RIGHT — message detail */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {selectedMsg ? (
-            <>
-              <div className="px-4 py-3 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => setSelectedMsg(null)}><ArrowLeft className="h-3 w-3" /> Back</Button>
-                  <div className="flex gap-1.5">
-                    {selectedMsg.contact_id ? (
-                      <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700">CRM Linked</Badge>
-                    ) : (
-                      <Select onValueChange={v => linkContactToEmail(selectedMsg.id, v)}>
-                        <SelectTrigger className="h-7 text-[10px] w-auto gap-1"><UserPlus className="h-3 w-3" /><SelectValue placeholder="Link Contact" /></SelectTrigger>
-                        <SelectContent>{contacts.filter(c => c.email).map(c => <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                </div>
-                <h3 className="text-sm font-semibold text-foreground mt-2">{selectedMsg.subject || "(no subject)"}</h3>
-                <p className="text-xs text-muted-foreground">
-                  {selectedMsg.direction === "outbound" ? `To: ${selectedMsg.to_address}` : `From: ${selectedMsg.from_name || selectedMsg.from_address}`}
-                  {" · "}{selectedMsg.sent_at ? new Date(selectedMsg.sent_at).toLocaleString() : ""}
-                </p>
+        <TabsContent value="inbox" className="mt-0 h-full flex flex-col">
+          {/* Connection status banner */}
+          {primaryConnection && primaryConnection.status !== "connected" && (
+            <div className="mb-4 p-3 rounded-xl border border-border bg-secondary/50 flex items-center gap-3">
+              <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-medium text-foreground">Email connection: {CONNECTION_STATUS[primaryConnection.status]?.label || primaryConnection.status}</p>
+                <p className="text-[10px] text-muted-foreground">{primaryConnection.provider === "gmail" ? "Google Workspace / Gmail" : "Microsoft / Outlook"} · {primaryConnection.email_address || "No email configured"}</p>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="prose prose-sm max-w-none text-foreground">
-                  <p className="whitespace-pre-wrap text-sm">{selectedMsg.body_text || selectedMsg.body_html || "(empty message)"}</p>
-                </div>
-              </div>
-              {selectedMsg.direction === "inbound" && (
-                <div className="p-3 border-t border-border">
-                  <div className="flex gap-2">
-                    <Textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Type your reply…" className="min-h-[44px] flex-1 resize-none bg-background border-border" rows={2} />
-                    <Button size="icon" className="shrink-0 self-end" onClick={sendReply} disabled={!replyText.trim()}><Send className="h-4 w-4" /></Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center flex-col gap-3">
-              <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                <Mail className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-              </div>
-              <p className="text-sm text-muted-foreground">Select an email to read</p>
+              <Badge className={CONNECTION_STATUS[primaryConnection.status]?.color || "bg-muted text-muted-foreground"}>{CONNECTION_STATUS[primaryConnection.status]?.label || "Unknown"}</Badge>
             </div>
           )}
-        </div>
-      </div>
+
+          {messages.length === 0 && !primaryConnection && (
+            <SetupBanner icon={Mail} title="Connect Your Email"
+              description="Connect your business email to manage customer communication inside NewLight. Support for Gmail and Outlook."
+              actionLabel="Connect Email" onAction={() => {
+                supabase.from("email_connections").insert({ client_id: activeClientId, provider: "gmail", status: "access_needed" }).then(() => fetchData());
+                toast({ title: "Email connection initiated" });
+              }} />
+          )}
+
+          <div className="flex gap-0 flex-1 rounded-2xl overflow-hidden border border-border bg-card">
+            {/* LEFT — folder nav + message list */}
+            <div className="w-[300px] shrink-0 border-r border-border flex flex-col">
+              <div className="p-3 border-b border-border space-y-2">
+                <div className="flex gap-1">
+                  {[
+                    { key: "inbox", label: "Inbox", count: unreadCount },
+                    { key: "sent", label: "Sent", count: 0 },
+                  ].map(f => (
+                    <button key={f.key} onClick={() => { setFolder(f.key); setSelectedMsg(null); }}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors flex-1 ${folder === f.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}>
+                      {f.label} {f.count > 0 && <span className="ml-1 text-[10px] bg-primary text-primary-foreground rounded-full px-1.5">{f.count}</span>}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search emails..." className="pl-8 h-8 text-xs bg-background border-border" />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {filteredMessages.length === 0 ? (
+                  <div className="p-6 text-center"><p className="text-xs text-muted-foreground">No emails in {folder}</p></div>
+                ) : filteredMessages.map(msg => (
+                  <button key={msg.id} onClick={() => markAsRead(msg)}
+                    className={`w-full text-left px-3 py-3 border-b border-border transition-colors ${selectedMsg?.id === msg.id ? "bg-secondary" : "hover:bg-secondary/50"} ${!msg.is_read ? "bg-primary/[0.03]" : ""}`}>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => toggleStar(msg, e)} className="shrink-0">
+                        {msg.is_starred ? <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" /> : <StarOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </button>
+                      <span className={`text-sm truncate flex-1 ${!msg.is_read ? "font-semibold text-foreground" : "text-foreground"}`}>
+                        {msg.direction === "outbound" ? `To: ${msg.to_address}` : msg.from_name || msg.from_address}
+                      </span>
+                    </div>
+                    <p className={`text-xs truncate mt-0.5 ml-5 ${!msg.is_read ? "font-medium text-foreground" : "text-muted-foreground"}`}>{msg.subject || "(no subject)"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : ""}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT — message detail */}
+            <div className="flex-1 flex flex-col min-w-0">
+              {selectedMsg ? (
+                <>
+                  <div className="px-4 py-3 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => setSelectedMsg(null)}><ArrowLeft className="h-3 w-3" /> Back</Button>
+                      <div className="flex gap-1.5">
+                        {selectedMsg.contact_id ? (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700">CRM Linked</Badge>
+                        ) : (
+                          <Select onValueChange={v => linkContactToEmail(selectedMsg.id, v)}>
+                            <SelectTrigger className="h-7 text-[10px] w-auto gap-1"><UserPlus className="h-3 w-3" /><SelectValue placeholder="Link Contact" /></SelectTrigger>
+                            <SelectContent>{contacts.filter(c => c.email).map(c => <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>)}</SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground mt-2">{selectedMsg.subject || "(no subject)"}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedMsg.direction === "outbound" ? `To: ${selectedMsg.to_address}` : `From: ${selectedMsg.from_name || selectedMsg.from_address}`}
+                      {" · "}{selectedMsg.sent_at ? new Date(selectedMsg.sent_at).toLocaleString() : ""}
+                    </p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <div className="prose prose-sm max-w-none text-foreground">
+                      <p className="whitespace-pre-wrap text-sm">{selectedMsg.body_text || selectedMsg.body_html || "(empty message)"}</p>
+                    </div>
+                  </div>
+                  {selectedMsg.direction === "inbound" && (
+                    <div className="p-3 border-t border-border">
+                      <div className="flex gap-2">
+                        <Textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Type your reply…" className="min-h-[44px] flex-1 resize-none bg-background border-border" rows={2} />
+                        <Button size="icon" className="shrink-0 self-end" onClick={sendReply} disabled={!replyText.trim()}><Send className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center flex-col gap-3">
+                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                    <Mail className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Select an email to read</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sms-campaigns" className="mt-0">
+          <DataCard title="SMS Campaigns">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                <MessageSquare className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Send targeted text message campaigns to your contact list.
+              </p>
+            </div>
+
+            <div className="space-y-0 max-w-md mx-auto">
+              {[
+                { label: "Campaigns Sent", value: "—" },
+                { label: "Total Recipients", value: "—" },
+                { label: "Avg Open Rate", value: "—" },
+              ].map((stat, i) => (
+                <div key={stat.label}>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="text-sm font-medium text-foreground">{stat.label}</span>
+                    <span className="text-sm font-bold tabular-nums text-foreground">{stat.value}</span>
+                  </div>
+                  {i < 2 && <div className="border-b border-border/50" />}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end mt-6 max-w-md mx-auto">
+              <Button size="sm" className="gap-1.5">
+                <Plus className="h-4 w-4" /> New Campaign
+              </Button>
+            </div>
+          </DataCard>
+        </TabsContent>
+      </Tabs>
 
       {/* COMPOSE DIALOG */}
       <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
