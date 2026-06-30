@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   FileText, Plus, GripVertical, Trash2, Eye, Users, Mail,
   Phone, MessageSquare, Settings2, ClipboardList, Copy, Calendar,
-  Sparkles, ChevronRight, CheckCircle2, LayoutTemplate
+  Sparkles, ChevronRight, CheckCircle2, LayoutTemplate, FileSignature
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FormEditorSheet } from "@/components/forms/FormEditorSheet";
@@ -214,42 +214,43 @@ export default function FormBuilder() {
         <MetricCard label="Templates Available" value="5" change="Ready to use" changeType="positive" icon={LayoutTemplate} />
       </WidgetGrid>
 
-      {emptyState ? (
-        <motion.div
-          className="mt-8 rounded-2xl border-2 border-dashed border-border p-12 text-center"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Forms Yet</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-            Create your first form to start capturing leads, booking appointments, and collecting customer information.
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => setTemplateDialogOpen(true)}>
-              <LayoutTemplate className="h-4 w-4 mr-2" /> Start From Template
-            </Button>
-            <Button onClick={() => {
-              setSelectedForm(null);
-              setEditFields([
-                { id: `nf-1`, field_label: "Full Name", field_key: "full_name", field_type: "short_text", is_required: true, field_order: 0 },
-                { id: `nf-2`, field_label: "Email", field_key: "email", field_type: "email", is_required: true, field_order: 1 },
-              ]);
-              setEditorOpen(true);
-            }}>
-              <Plus className="h-4 w-4 mr-2" /> Create Custom Form
-            </Button>
-          </div>
-        </motion.div>
-      ) : (
-        <div className="mt-8">
-          <Tabs defaultValue="forms">
-            <TabsList className="bg-secondary h-10 rounded-lg">
-              <TabsTrigger value="forms" className="rounded-md text-sm">Forms</TabsTrigger>
-              <TabsTrigger value="submissions" className="rounded-md text-sm">Submissions</TabsTrigger>
-            </TabsList>
+      <div className="mt-8">
+        <Tabs defaultValue="forms">
+          <TabsList className="bg-secondary h-10 rounded-lg">
+            <TabsTrigger value="forms" className="rounded-md text-sm">Forms</TabsTrigger>
+            <TabsTrigger value="submissions" className="rounded-md text-sm">Submissions</TabsTrigger>
+            <TabsTrigger value="e-signatures" className="gap-1.5 rounded-md text-sm"><FileSignature className="h-3.5 w-3.5" /> E-Signatures</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="forms" className="mt-4">
+          <TabsContent value="forms" className="mt-4">
+            {emptyState ? (
+              <motion.div
+                className="rounded-2xl border-2 border-dashed border-border p-12 text-center"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Forms Yet</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                  Create your first form to start capturing leads, booking appointments, and collecting customer information.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button variant="outline" onClick={() => setTemplateDialogOpen(true)}>
+                    <LayoutTemplate className="h-4 w-4 mr-2" /> Start From Template
+                  </Button>
+                  <Button onClick={() => {
+                    setSelectedForm(null);
+                    setEditFields([
+                      { id: `nf-1`, field_label: "Full Name", field_key: "full_name", field_type: "short_text", is_required: true, field_order: 0 },
+                      { id: `nf-2`, field_label: "Email", field_key: "email", field_type: "email", is_required: true, field_order: 1 },
+                    ]);
+                    setEditorOpen(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" /> Create Custom Form
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {forms.map((form) => (
                   <motion.div
@@ -290,14 +291,43 @@ export default function FormBuilder() {
                   </motion.div>
                 ))}
               </div>
-            </TabsContent>
+            )}
+          </TabsContent>
 
-            <TabsContent value="submissions" className="mt-4">
-              <FormSubmissionsView submissions={submissions} forms={forms} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
+          <TabsContent value="submissions" className="mt-4">
+            <FormSubmissionsView submissions={submissions} forms={forms} />
+          </TabsContent>
+
+          <TabsContent value="e-signatures" className="mt-4">
+            <DataCard title="E-Signature Vault">
+              <div className="text-center py-8">
+                <div className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                  <FileSignature className="h-7 w-7" style={{ color: "hsl(211 96% 56%)" }} />
+                </div>
+                <p className="text-sm font-bold text-foreground mb-1">E-Signature Vault</p>
+                <p className="text-xs text-muted-foreground mb-8 max-w-md mx-auto">Send documents for electronic signature and collect signed agreements from your clients.</p>
+                <div className="border-t">
+                  <div className="flex items-center justify-between py-3">
+                    <p className="text-sm text-muted-foreground">Documents Sent</p>
+                    <p className="text-sm font-semibold text-foreground">—</p>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-t">
+                    <p className="text-sm text-muted-foreground">Awaiting Signature</p>
+                    <p className="text-sm font-semibold text-foreground">—</p>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-t">
+                    <p className="text-sm text-muted-foreground">Completed</p>
+                    <p className="text-sm font-semibold text-foreground">—</p>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6">
+                  <Button className="gap-1.5"><Plus className="h-4 w-4" /> Send for Signature</Button>
+                </div>
+              </div>
+            </DataCard>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       <FormEditorSheet
         open={editorOpen}
