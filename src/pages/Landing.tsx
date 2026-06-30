@@ -184,9 +184,18 @@ export default function Landing() {
         aria-hidden
       />
 
-      {/* Animated curved streak background */}
+      {/* Breathing particle / node network (canvas 2D) */}
+      <canvas
+        ref={particlesRef}
+        className="fixed inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 0, width: "100vw", height: "100vh" }}
+        aria-hidden
+      />
+
+      {/* Animated curved streak background (verbatim from newlightgen.com) */}
       <svg
         className="fixed inset-0 w-full h-full pointer-events-none"
+        preserveAspectRatio="none"
         preserveAspectRatio="none"
         viewBox="0 0 100 100"
         style={{ zIndex: 0 }}
