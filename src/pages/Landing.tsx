@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
+import { HomeFX } from "@/components/HomeFX";
 
 // Palette mirrored from newlightgen.com post-intro state
 const BG = "#EDF6FF";
@@ -172,6 +173,9 @@ export default function Landing() {
     >
       {/* Keyframes for streak flow (sourced from newlightgen.com) */}
       <style>{`@keyframes nl-streak-flow { 0% { stroke-dashoffset: 410; } 100% { stroke-dashoffset: 0; } }`}</style>
+
+      {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
+      <HomeFX />
 
       {/* Top radial glow tint (matches site) */}
       <div
