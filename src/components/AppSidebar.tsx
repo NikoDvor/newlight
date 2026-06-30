@@ -44,6 +44,7 @@ const navStructure: NavEntry[] = [
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Tasks", url: "/tasks", icon: ListChecks },
+      { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
     ],
   },
   {
