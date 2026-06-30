@@ -171,13 +171,6 @@ export default function Landing() {
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
             <NavItem
               href="/get-started"
-              label="Download the App"
-              icon={<DownloadIcon />}
-              navigate={navigate}
-            />
-            <span className="hidden sm:block w-px h-4 bg-white/10" />
-            <NavItem
-              href="/get-started"
               label="Schedule a Walkthrough"
               icon={<CalendarIcon />}
               navigate={navigate}
