@@ -120,11 +120,20 @@ export default function Landing() {
           zIndex: 0,
           isolation: "isolate",
           pointerEvents: "none",
+          animation: "nl-home-breath 4.6s ease-in-out infinite",
+          willChange: "opacity",
         }}
         aria-hidden
       >
+        <style>{`
+          @keyframes nl-home-breath {
+            0%, 100% { opacity: 0.85; }
+            50%      { opacity: 1; }
+          }
+        `}</style>
         <HomeFX />
       </div>
+
 
       {/* Nav */}
       <header
