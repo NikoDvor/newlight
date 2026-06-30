@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
-// Palette mirrored from newlightgen.com post-intro state
 const ELECTRIC = "#00B4FF";
+const FG = "#ffffff";
+const FG_SOFT = "rgba(255,255,255,0.72)";
+const BORDER_TINT = "rgba(0,180,255,0.4)";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -19,7 +21,6 @@ const fadeUp = {
 export default function Landing() {
   const navigate = useNavigate();
 
-  // Load Rajdhani + Inter (same as newlightgen.com)
   useEffect(() => {
     const id = "nl-fonts";
     if (document.getElementById(id)) return;
@@ -31,32 +32,29 @@ export default function Landing() {
     document.head.appendChild(link);
   }, []);
 
-
   const display = "'Rajdhani', 'Inter', system-ui, sans-serif";
   const body = "'Inter', system-ui, sans-serif";
 
   return (
     <div
-      className="nl-phase-root relative min-h-screen overflow-x-hidden"
-      style={{ fontFamily: body }}
+      className="relative min-h-screen overflow-x-hidden"
+      style={{ fontFamily: body, background: "#000000", color: FG }}
     >
-      {/* Phase background layer — painted behind HomeFX */}
-      <div className="nl-phase-bg" aria-hidden />
-
-      {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
-      <HomeFX />
-
-      {/* Top radial glow tint (phase-driven) */}
+      {/* HomeFX — sole background layer. Wrapped in an isolated stacking context
+          so its internal z-index:-1 renders above the black page fallback but
+          below page content (which sits at z-index 10+). */}
       <div
-        className="fixed inset-x-0 top-0 pointer-events-none"
         style={{
-          height: "60vh",
+          position: "fixed",
+          inset: 0,
           zIndex: 0,
-          background: `radial-gradient(ellipse 50% 100% at 50% 0%, var(--nl-glow-tint) 0%, transparent 70%)`,
+          isolation: "isolate",
+          pointerEvents: "none",
         }}
         aria-hidden
-      />
-
+      >
+        <HomeFX />
+      </div>
 
       {/* Nav */}
       <header
@@ -64,8 +62,8 @@ export default function Landing() {
         style={{
           zIndex: 100,
           height: 64,
-          background: "color-mix(in srgb, var(--nl-bg) 60%, transparent)",
-          borderColor: "var(--nl-border-tint)",
+          background: "rgba(0,0,0,0.4)",
+          borderColor: BORDER_TINT,
         }}
       >
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
@@ -80,7 +78,7 @@ export default function Landing() {
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block"
             style={{
-              color: "var(--nl-fg)",
+              color: FG,
               fontSize: 16,
               letterSpacing: "0.32em",
               fontWeight: 700,
@@ -111,7 +109,6 @@ export default function Landing() {
         </nav>
       </header>
 
-
       {/* Hero */}
       <main className="relative" style={{ zIndex: 10 }}>
         <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-32">
@@ -129,7 +126,7 @@ export default function Landing() {
           <motion.h1
             className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto"
             style={{
-              color: "var(--nl-fg)",
+              color: FG,
               fontSize: "clamp(40px, 6.8vw, 88px)",
               maxWidth: 960,
               fontFamily: display,
@@ -154,7 +151,7 @@ export default function Landing() {
 
           <motion.p
             className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
-            style={{ color: "var(--nl-fg-soft)", fontFamily: body }}
+            style={{ color: FG_SOFT, fontFamily: body }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -194,8 +191,8 @@ export default function Landing() {
               className="inline-flex items-center justify-center font-bold transition-colors"
               style={{
                 background: "transparent",
-                color: "var(--nl-fg)",
-                border: "2px solid var(--nl-fg)",
+                color: FG,
+                border: `2px solid ${FG}`,
                 borderRadius: 24,
                 padding: "14px 34px",
                 fontSize: 13,
@@ -207,7 +204,6 @@ export default function Landing() {
               LOG IN
             </button>
           </motion.div>
-
 
           <motion.div
             className="mt-16 text-xs"
@@ -232,9 +228,9 @@ export default function Landing() {
       {/* Footer */}
       <footer
         className="relative w-full text-center py-5"
-        style={{ zIndex: 10, borderTop: "1px solid var(--nl-border-tint)" }}
+        style={{ zIndex: 10, borderTop: `1px solid ${BORDER_TINT}` }}
       >
-        <p className="text-[11px]" style={{ color: "var(--nl-fg-soft)" }}>
+        <p className="text-[11px]" style={{ color: FG_SOFT }}>
           © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
         </p>
       </footer>
