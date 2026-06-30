@@ -1162,3 +1162,32 @@
   0%, 100% { box-shadow: 0 0 8px -2px hsla(211, 96%, 56%, 0.25), 0 4px 12px -4px hsla(211, 96%, 56%, 0.15); }
   50% { box-shadow: 0 0 20px -2px hsla(211, 96%, 56%, 0.4), 0 4px 16px -4px hsla(211, 96%, 56%, 0.25); }
 }
+
+/* ============================================================
+   nl-phase — cinematic background phase animation
+   (ported from newlightgen.com — scoped to .nl-phase-root)
+   ============================================================ */
+@property --nl-bg { syntax: "<color>"; inherits: true; initial-value: #020814; }
+@property --nl-fg { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --nl-fg-soft { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --nl-glow-tint { syntax: "<color>"; inherits: true; initial-value: rgba(0,180,255,0.18); }
+@property --nl-border-tint { syntax: "<color>"; inherits: true; initial-value: rgba(0,180,255,0.4); }
+
+@keyframes nl-phase {
+  0%   { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.05); --nl-border-tint: rgba(0,180,255,0.4); }
+  46%  { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.08); --nl-border-tint: rgba(0,180,255,0.4); }
+  65%  { --nl-bg: #041830; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.45); --nl-border-tint: rgba(0,180,255,0.5); }
+  85%  { --nl-bg: #062544; --nl-fg: #E6F4FF; --nl-fg-soft: #AADDFF;
+         --nl-glow-tint: rgba(0,180,255,0.4); --nl-border-tint: rgba(0,180,255,0.5); }
+  100% { --nl-bg: #03070F; --nl-fg: #FFFFFF; --nl-fg-soft: #AADDFF;
+         --nl-glow-tint: rgba(0,180,255,0.35); --nl-border-tint: rgba(0,180,255,0.45); }
+}
+
+.nl-phase-root {
+  animation: nl-phase 6.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  background: var(--nl-bg);
+  color: var(--nl-fg);
+}
