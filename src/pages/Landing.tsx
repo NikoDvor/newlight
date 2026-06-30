@@ -230,8 +230,8 @@ export default function Landing() {
         style={{
           zIndex: 100,
           height: 64,
-          background: `color-mix(in srgb, ${BG} 60%, transparent)`,
-          borderColor: BORDER_TINT,
+          background: "color-mix(in srgb, var(--nl-bg) 60%, transparent)",
+          borderColor: "var(--nl-border-tint)",
         }}
       >
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
@@ -246,7 +246,7 @@ export default function Landing() {
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block"
             style={{
-              color: NAVY,
+              color: "var(--nl-fg)",
               fontSize: 16,
               letterSpacing: "0.32em",
               fontWeight: 700,
@@ -276,6 +276,7 @@ export default function Landing() {
           </button>
         </nav>
       </header>
+
 
       {/* Hero */}
       <main className="relative" style={{ zIndex: 10 }}>
