@@ -416,6 +416,7 @@ const App = () => {
                 <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
                 <Route path="/paid-ads" element={<PermissionGuard moduleKey="ads"><PaidAds /></PermissionGuard>} />
                 <Route path="/reviews" element={<PermissionGuard moduleKey="reviews"><Reviews /></PermissionGuard>} />
+                <Route path="/approvals" element={<PermissionGuard moduleKey="approvals"><Approvals /></PermissionGuard>} />
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/reports" element={<PermissionGuard moduleKey="reports"><Reports /></PermissionGuard>} />
                 <Route path="/intelligence" element={<Intelligence />} />
