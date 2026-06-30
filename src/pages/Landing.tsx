@@ -295,10 +295,11 @@ export default function Landing() {
           <motion.h1
             className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto"
             style={{
-              color: NAVY,
+              color: "var(--nl-fg)",
               fontSize: "clamp(40px, 6.8vw, 88px)",
               maxWidth: 960,
               fontFamily: display,
+              textShadow: "0 0 30px rgba(0,180,255,0.25)",
             }}
             initial="hidden"
             animate="show"
@@ -319,7 +320,7 @@ export default function Landing() {
 
           <motion.p
             className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
-            style={{ color: NAVY_SOFT, fontFamily: body }}
+            style={{ color: "var(--nl-fg-soft)", fontFamily: body }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -359,8 +360,8 @@ export default function Landing() {
               className="inline-flex items-center justify-center font-bold transition-colors"
               style={{
                 background: "transparent",
-                color: NAVY,
-                border: `2px solid ${NAVY}`,
+                color: "var(--nl-fg)",
+                border: "2px solid var(--nl-fg)",
                 borderRadius: 24,
                 padding: "14px 34px",
                 fontSize: 13,
@@ -372,6 +373,7 @@ export default function Landing() {
               LOG IN
             </button>
           </motion.div>
+
 
           <motion.div
             className="mt-16 text-xs"
