@@ -1,51 +1,123 @@
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
-
-const steps = [
-  { n: "01", title: "WE BUILD YOUR SYSTEM", desc: "A fully branded Command Center built for your business before we launch anything." },
-  { n: "02", title: "WE IGNITE YOUR VISIBILITY", desc: "AI-powered SEO puts you in front of the right people at the right moment." },
-  { n: "03", title: "WE LAUNCH THE ATTACK", desc: "Ads, social, and outreach go live engineered to drive high-intent leads." },
-  { n: "04", title: "WE QUALIFY THE LEADS", desc: "Automated scoring and follow-ups turn inquiries into booked appointments." },
-  { n: "05", title: "WE MAXIMIZE YOUR CLOSE RATE", desc: "Built-in CRM sequences close more of what you already have." },
-  { n: "06", title: "YOU RUN THE COMPANY", desc: "Your system runs the growth. AI-powered, always optimizing." },
-];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   show: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: 0.08 * i, duration: 0.55, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
+    transition: {
+      delay: 0.08 * i,
+      duration: 0.55,
+      ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+    },
   }),
 };
 
 export default function Landing() {
   const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const N = 50;
+    const nodes = Array.from({ length: N }).map(() => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: 1.5 + Math.random() * 1.5,
+    }));
+
+    const onResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", onResize);
+
+    let raf = 0;
+    let t = 0;
+    const render = () => {
+      t += 0.016;
+      ctx.fillStyle = "hsl(218, 42%, 4%)";
+      ctx.fillRect(0, 0, width, height);
+
+      const breathe = 0.88 + (Math.sin(t * 1.2) + 1) * 0.06; // 0.88 -> 1.0
+      ctx.globalAlpha = breathe;
+
+      // Move nodes
+      for (const n of nodes) {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+      }
+
+      // Lines
+      ctx.lineWidth = 1;
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 130) {
+            const op = (1 - dist / 130) * 0.2;
+            ctx.strokeStyle = `hsla(197, 88%, 72%, ${op})`;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Nodes with glow
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "hsla(211,96%,80%,0.5)";
+      ctx.fillStyle = "hsla(211, 96%, 78%, 0.85)";
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+
+      raf = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   return (
     <div
       className="relative min-h-screen overflow-x-hidden text-white"
-      style={{ background: "hsl(218, 38%, 5%)" }}
+      style={{ background: "hsl(218, 42%, 4%)" }}
     >
-      {/* Fixed cinematic background layers */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 nl-hero-bg" />
-        <div className="absolute inset-0 nl-hero-grid" />
-        <div className="absolute inset-0 nl-hero-orb nl-hero-orb--a" />
-        <div className="absolute inset-0 nl-hero-orb nl-hero-orb--b" />
-        <div className="absolute inset-0 nl-hero-shimmer" />
-      </div>
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{ width: "100vw", height: "100vh" }}
+      />
 
       {/* Nav */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
         style={{
-          background: "hsla(218,38%,5%,.8)",
+          background: "hsla(218,42%,4%,.8)",
           borderBottom: "1px solid hsla(211,96%,60%,.08)",
         }}
       >
@@ -58,20 +130,7 @@ export default function Landing() {
           />
           <button
             onClick={() => navigate("/auth")}
-            className="text-xs font-semibold tracking-wider uppercase px-5 py-2 rounded-full transition-all"
-            style={{
-              color: "rgba(255,255,255,0.9)",
-              border: "1px solid hsla(211,96%,60%,.25)",
-              background: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "hsla(211,96%,60%,.08)";
-              e.currentTarget.style.borderColor = "hsla(211,96%,60%,.45)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.borderColor = "hsla(211,96%,60%,.25)";
-            }}
+            className="border border-[hsla(211,96%,60%,.3)] text-white/70 px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[hsla(211,96%,60%,.08)] transition"
           >
             Log In
           </button>
@@ -79,49 +138,44 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 min-h-screen flex items-center justify-center px-6 sm:px-10 pt-24 pb-16">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="relative z-10 min-h-screen flex items-center justify-center text-center px-6 pt-20">
+        <div className="max-w-2xl mx-auto w-full">
           <motion.div
-            className="inline-flex mb-8 px-4 py-1.5 rounded-full uppercase tracking-widest text-[11px] font-semibold"
-            style={{
-              background: "hsla(211,96%,60%,.1)",
-              border: "1px solid hsla(211,96%,60%,.25)",
-              color: "hsl(197,92%,68%)",
-            }}
+            className="text-[11px] font-bold tracking-[0.2em] uppercase mb-6"
+            style={{ color: "hsl(197,92%,68%)" }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
             custom={0}
           >
-            // AI MODERN MARKETING SYSTEMS
+            // NEWLIGHT COMMAND CENTER
           </motion.div>
 
           <motion.h1
-            className="font-extrabold tracking-tight text-4xl sm:text-6xl leading-[0.95] mb-8"
-            style={{ letterSpacing: "-0.04em" }}
+            className="text-5xl sm:text-7xl font-black tracking-tight leading-tight"
             initial="hidden"
             animate="show"
             variants={fadeUp}
             custom={1}
           >
-            <span className="block text-white">WE BRING YOU</span>
-            <span className="block bg-gradient-to-r from-[hsl(211,96%,60%)] to-[hsl(197,92%,68%)] bg-clip-text text-transparent">
-              READY-TO-BUY CUSTOMERS.
+            <span className="block text-white">YOUR BUSINESS.</span>
+            <span className="block bg-gradient-to-r from-[hsl(211,96%,65%)] to-[hsl(197,92%,72%)] bg-clip-text text-transparent">
+              FULLY AUTOMATED.
             </span>
           </motion.h1>
 
           <motion.p
-            className="text-base text-white/50 max-w-xl mx-auto leading-relaxed mb-10"
+            className="mt-5 text-base text-white/45 max-w-sm mx-auto"
             initial="hidden"
             animate="show"
             variants={fadeUp}
             custom={2}
           >
-            NewLight builds, automates, and scales your entire growth system — so you never miss revenue again.
+            One system. Every lead, appointment, and revenue stream — automated and tracked.
           </motion.p>
 
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="mt-10 flex flex-col gap-3 items-center"
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -129,128 +183,44 @@ export default function Landing() {
           >
             <button
               onClick={() => navigate("/get-started")}
-              className="btn-gradient px-8 py-4 text-base font-bold rounded-2xl"
+              className="bg-gradient-to-r from-[hsl(211,96%,56%)] to-[hsl(197,92%,60%)] text-white font-bold px-10 py-4 rounded-2xl text-base shadow-[0_0_40px_-8px_hsla(211,96%,56%,.6)] hover:shadow-[0_0_60px_-8px_hsla(211,96%,56%,.8)] transition-all w-full max-w-xs"
             >
-              Get Started
+              Download the App
             </button>
             <button
-              onClick={() => scrollTo("how-it-works")}
-              className="px-8 py-4 text-base font-semibold rounded-full transition-all"
-              style={{
-                color: "rgba(255,255,255,0.6)",
-                border: "1px solid hsla(0,0%,100%,.2)",
-                background: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "rgba(255,255,255,0.95)";
-                e.currentTarget.style.borderColor = "hsla(0,0%,100%,.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "rgba(255,255,255,0.6)";
-                e.currentTarget.style.borderColor = "hsla(0,0%,100%,.2)";
-              }}
+              onClick={() => navigate("/auth")}
+              className="border border-white/15 text-white/60 font-medium px-10 py-4 rounded-2xl text-base hover:border-white/30 transition-all w-full max-w-xs"
             >
-              See How It Works
+              Log In
             </button>
           </motion.div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="relative z-10 px-6 sm:px-10 py-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <motion.div
-              className="inline-flex mb-6 px-4 py-1.5 rounded-full uppercase tracking-widest text-[11px] font-semibold"
-              style={{
-                background: "hsla(211,96%,60%,.1)",
-                border: "1px solid hsla(211,96%,60%,.25)",
-                color: "hsl(197,92%,68%)",
-              }}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              // HOW WE DO IT
-            </motion.div>
-            <motion.h2
-              className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white"
-              style={{ letterSpacing: "-0.035em" }}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.55, delay: 0.1 }}
-            >
-              SIX STEPS. ONE OUTCOME.
-            </motion.h2>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {steps.map((s, i) => (
-              <motion.div
-                key={s.n}
-                className="card-glass rounded-2xl p-6"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: i * 0.06 }}
-              >
-                <div
-                  className="text-4xl font-black mb-4"
-                  style={{ color: "hsl(211,96%,56%)" }}
-                >
-                  {s.n}
-                </div>
-                <h3 className="text-white font-bold text-sm uppercase tracking-wide mt-2">
-                  {s.title}
-                </h3>
-                <p className="text-white/50 text-sm mt-1 leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="relative z-10 px-6 sm:px-10 py-24">
-        <div className="max-w-2xl mx-auto">
           <motion.div
-            className="card-glass rounded-2xl p-10 text-center"
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            className="mt-6 text-white/25 text-xs"
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={4}
           >
-            <p className="text-white/80 text-lg leading-relaxed">
-              ZERO RISK — We make your money back in 90 days or we work for free until we do.
-            </p>
-            <button
-              onClick={() => navigate("/get-started")}
-              className="btn-gradient px-10 py-4 text-base font-bold rounded-2xl mt-6"
+            Want to learn more about what we do?{" "}
+            <a
+              href="https://newlightgen.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "hsl(211,96%,60%)" }}
+              className="font-semibold hover:underline"
             >
-              Get Started →
-            </button>
+              Visit newlightgen.com →
+            </a>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer
-        className="relative z-10 px-6 sm:px-10 py-8"
-        style={{ borderTop: "1px solid hsla(211,96%,60%,.08)" }}
-      >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <img
-            src={newlightLogo}
-            alt="NewLight"
-            className="h-6 w-auto object-contain opacity-70"
-          />
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-sm text-white/25">
-            <span>(805) 836-3557</span>
-            <span>team@newlightgen.com</span>
-          </div>
-        </div>
+      <footer className="absolute bottom-0 left-0 right-0 py-6 w-full text-center z-10">
+        <p className="text-white/20 text-xs">
+          © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
+        </p>
       </footer>
     </div>
   );
