@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   FileText, Plus, GripVertical, Trash2, Eye, Users, Mail,
   Phone, MessageSquare, Settings2, ClipboardList, Copy, Calendar,
-  Sparkles, ChevronRight, CheckCircle2, LayoutTemplate
+  Sparkles, ChevronRight, CheckCircle2, LayoutTemplate, FileSignature
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FormEditorSheet } from "@/components/forms/FormEditorSheet";
