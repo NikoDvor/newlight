@@ -168,8 +168,8 @@ export default function Landing() {
 
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden"
-      style={{ background: BG, color: NAVY, fontFamily: body }}
+      className="nl-phase-root relative min-h-screen overflow-x-hidden"
+      style={{ fontFamily: body }}
     >
       {/* Keyframes for streak flow (sourced from newlightgen.com) */}
       <style>{`@keyframes nl-streak-flow { 0% { stroke-dashoffset: 410; } 100% { stroke-dashoffset: 0; } }`}</style>
@@ -177,16 +177,17 @@ export default function Landing() {
       {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
       <HomeFX />
 
-      {/* Top radial glow tint (matches site) */}
+      {/* Top radial glow tint (phase-driven) */}
       <div
         className="fixed inset-x-0 top-0 pointer-events-none"
         style={{
           height: "60vh",
           zIndex: 0,
-          background: `radial-gradient(ellipse 50% 100% at 50% 0%, ${GLOW} 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 50% 100% at 50% 0%, var(--nl-glow-tint) 0%, transparent 70%)`,
         }}
         aria-hidden
       />
+
 
       {/* Breathing particle / node network (canvas 2D) */}
       <canvas
@@ -229,8 +230,8 @@ export default function Landing() {
         style={{
           zIndex: 100,
           height: 64,
-          background: `color-mix(in srgb, ${BG} 60%, transparent)`,
-          borderColor: BORDER_TINT,
+          background: "color-mix(in srgb, var(--nl-bg) 60%, transparent)",
+          borderColor: "var(--nl-border-tint)",
         }}
       >
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
@@ -245,7 +246,7 @@ export default function Landing() {
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block"
             style={{
-              color: NAVY,
+              color: "var(--nl-fg)",
               fontSize: 16,
               letterSpacing: "0.32em",
               fontWeight: 700,
@@ -276,6 +277,7 @@ export default function Landing() {
         </nav>
       </header>
 
+
       {/* Hero */}
       <main className="relative" style={{ zIndex: 10 }}>
         <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-32">
@@ -293,10 +295,11 @@ export default function Landing() {
           <motion.h1
             className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto"
             style={{
-              color: NAVY,
+              color: "var(--nl-fg)",
               fontSize: "clamp(40px, 6.8vw, 88px)",
               maxWidth: 960,
               fontFamily: display,
+              textShadow: "0 0 30px rgba(0,180,255,0.25)",
             }}
             initial="hidden"
             animate="show"
@@ -317,7 +320,7 @@ export default function Landing() {
 
           <motion.p
             className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
-            style={{ color: NAVY_SOFT, fontFamily: body }}
+            style={{ color: "var(--nl-fg-soft)", fontFamily: body }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -357,8 +360,8 @@ export default function Landing() {
               className="inline-flex items-center justify-center font-bold transition-colors"
               style={{
                 background: "transparent",
-                color: NAVY,
-                border: `2px solid ${NAVY}`,
+                color: "var(--nl-fg)",
+                border: "2px solid var(--nl-fg)",
                 borderRadius: 24,
                 padding: "14px 34px",
                 fontSize: 13,
@@ -370,6 +373,7 @@ export default function Landing() {
               LOG IN
             </button>
           </motion.div>
+
 
           <motion.div
             className="mt-16 text-xs"
@@ -394,9 +398,9 @@ export default function Landing() {
       {/* Footer */}
       <footer
         className="relative w-full text-center py-5"
-        style={{ zIndex: 10, borderTop: `1px solid ${BORDER_TINT}` }}
+        style={{ zIndex: 10, borderTop: "1px solid var(--nl-border-tint)" }}
       >
-        <p className="text-[11px]" style={{ color: NAVY_SOFT }}>
+        <p className="text-[11px]" style={{ color: "var(--nl-fg-soft)" }}>
           © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
         </p>
       </footer>

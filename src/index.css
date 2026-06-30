@@ -1162,3 +1162,37 @@
   0%, 100% { box-shadow: 0 0 8px -2px hsla(211, 96%, 56%, 0.25), 0 4px 12px -4px hsla(211, 96%, 56%, 0.15); }
   50% { box-shadow: 0 0 20px -2px hsla(211, 96%, 56%, 0.4), 0 4px 16px -4px hsla(211, 96%, 56%, 0.25); }
 }
+
+/* ============================================================
+   nl-phase — cinematic background phase animation
+   (ported from newlightgen.com — scoped to .nl-phase-root)
+   ============================================================ */
+@property --nl-bg { syntax: "<color>"; inherits: true; initial-value: #020814; }
+@property --nl-fg { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --nl-fg-soft { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --nl-glow-tint { syntax: "<color>"; inherits: true; initial-value: rgba(0,180,255,0.18); }
+@property --nl-border-tint { syntax: "<color>"; inherits: true; initial-value: rgba(0,180,255,0.4); }
+
+@keyframes nl-phase {
+  /* 0s — deep navy blackout */
+  0%   { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.05); --nl-border-tint: rgba(0,180,255,0.4); }
+  /* 3.0s / 46% — still dark */
+  46%  { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.08); --nl-border-tint: rgba(0,180,255,0.4); }
+  /* 4.25s / 65% — navy with growing blue bloom */
+  65%  { --nl-bg: #041830; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
+         --nl-glow-tint: rgba(0,180,255,0.45); --nl-border-tint: rgba(0,180,255,0.5); }
+  /* 5.5s / 85% — daylight bloom */
+  85%  { --nl-bg: #7EC8F0; --nl-fg: #001A3D; --nl-fg-soft: #001A3D;
+         --nl-glow-tint: rgba(0,180,255,0.3); --nl-border-tint: rgba(0,180,255,0.35); }
+  /* 6.5s — settled icy blue */
+  100% { --nl-bg: #EDF6FF; --nl-fg: #001A3D; --nl-fg-soft: #334155;
+         --nl-glow-tint: rgba(0,180,255,0.18); --nl-border-tint: rgba(0,180,255,0.3); }
+}
+
+.nl-phase-root {
+  animation: nl-phase 6.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  background: var(--nl-bg);
+  color: var(--nl-fg);
+}
