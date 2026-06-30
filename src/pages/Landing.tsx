@@ -174,6 +174,9 @@ export default function Landing() {
       {/* Keyframes for streak flow (sourced from newlightgen.com) */}
       <style>{`@keyframes nl-streak-flow { 0% { stroke-dashoffset: 410; } 100% { stroke-dashoffset: 0; } }`}</style>
 
+      {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
+      <HomeFX />
+
       {/* Top radial glow tint (matches site) */}
       <div
         className="fixed inset-x-0 top-0 pointer-events-none"
