@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronDown, Wallet, HelpCircle,
   Headphones, BookOpen, ClipboardList, BarChart3,
   Briefcase, LifeBuoy, UserCog, Activity,
-  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp
+  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -44,6 +44,7 @@ const navStructure: NavEntry[] = [
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Tasks", url: "/tasks", icon: ListChecks },
+      { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
     ],
   },
   {
