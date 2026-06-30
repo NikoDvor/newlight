@@ -40,8 +40,8 @@ export default function Landing() {
       className="nl-phase-root relative min-h-screen overflow-x-hidden"
       style={{ fontFamily: body }}
     >
-      {/* Keyframes for streak flow (sourced from newlightgen.com) */}
-      <style>{`@keyframes nl-streak-flow { 0% { stroke-dashoffset: 410; } 100% { stroke-dashoffset: 0; } }`}</style>
+      {/* Phase background layer — painted behind HomeFX */}
+      <div className="nl-phase-bg" aria-hidden />
 
       {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
       <HomeFX />
@@ -57,41 +57,6 @@ export default function Landing() {
         aria-hidden
       />
 
-
-      {/* Breathing particle / node network (canvas 2D) */}
-      <canvas
-        ref={particlesRef}
-        className="fixed inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 0, width: "100vw", height: "100vh" }}
-        aria-hidden
-      />
-
-      {/* Animated curved streak background (verbatim from newlightgen.com) */}
-      <svg
-        className="fixed inset-0 w-full h-full pointer-events-none"
-        preserveAspectRatio="none"
-        viewBox="0 0 100 100"
-        style={{ zIndex: 0 }}
-        aria-hidden
-      >
-        {STREAKS.map((s, i) => (
-          <path
-            key={i}
-            d={s.d}
-            stroke={ELECTRIC}
-            strokeWidth={s.w}
-            strokeLinecap="round"
-            fill="none"
-            vectorEffect="non-scaling-stroke"
-            style={{
-              opacity: s.op,
-              strokeDasharray: "8 400",
-              animation: `nl-streak-flow ${s.dur}s linear ${s.delay}s infinite`,
-              filter: "drop-shadow(0 0 1.5px rgba(0,180,255,0.6))",
-            }}
-          />
-        ))}
-      </svg>
 
       {/* Nav */}
       <header
