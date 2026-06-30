@@ -168,8 +168,8 @@ export default function Landing() {
 
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden"
-      style={{ background: BG, color: NAVY, fontFamily: body }}
+      className="nl-phase-root relative min-h-screen overflow-x-hidden"
+      style={{ fontFamily: body }}
     >
       {/* Keyframes for streak flow (sourced from newlightgen.com) */}
       <style>{`@keyframes nl-streak-flow { 0% { stroke-dashoffset: 410; } 100% { stroke-dashoffset: 0; } }`}</style>
@@ -177,16 +177,17 @@ export default function Landing() {
       {/* HomeFX — full-screen 3D/canvas background (mounted behind all content) */}
       <HomeFX />
 
-      {/* Top radial glow tint (matches site) */}
+      {/* Top radial glow tint (phase-driven) */}
       <div
         className="fixed inset-x-0 top-0 pointer-events-none"
         style={{
           height: "60vh",
           zIndex: 0,
-          background: `radial-gradient(ellipse 50% 100% at 50% 0%, ${GLOW} 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 50% 100% at 50% 0%, var(--nl-glow-tint) 0%, transparent 70%)`,
         }}
         aria-hidden
       />
+
 
       {/* Breathing particle / node network (canvas 2D) */}
       <canvas
