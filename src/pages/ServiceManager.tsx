@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/PageHeader";
+import { DataCard } from "@/components/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingBag, Plus, Pencil, Trash2, Calendar, Link2, Package, Tag,
-  Archive, HelpCircle, FileText, ChevronRight, MessageSquare
+  Archive, HelpCircle, FileText, ChevronRight, MessageSquare, Crown
 } from "lucide-react";
 
 interface Service {
@@ -202,6 +203,7 @@ export default function ServiceManager() {
           <TabsTrigger value="products" className="gap-1.5"><Package className="h-3.5 w-3.5" /> Products</TabsTrigger>
           <TabsTrigger value="offers" className="gap-1.5"><Tag className="h-3.5 w-3.5" /> Offers</TabsTrigger>
           <TabsTrigger value="faqs" className="gap-1.5"><HelpCircle className="h-3.5 w-3.5" /> FAQs</TabsTrigger>
+          <TabsTrigger value="membership" className="gap-1.5"><Crown className="h-3.5 w-3.5" /> Membership</TabsTrigger>
         </TabsList>
 
         <TabsContent value="services">
@@ -225,6 +227,35 @@ export default function ServiceManager() {
           <TabSection type="faq" items={faqs} nameKey="question" statusKey="status"
             emptyTitle="No FAQs Yet" emptyDesc="Add frequently asked questions that can appear on your website and booking pages." icon={HelpCircle}
             subtitleFn={f => f.answer?.substring(0, 80) || undefined} />
+        </TabsContent>
+
+        <TabsContent value="membership">
+          <DataCard title="Membership & Loyalty">
+            <div className="text-center py-8">
+              <div className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                <Crown className="h-7 w-7" style={{ color: "hsl(211 96% 56%)" }} />
+              </div>
+              <p className="text-sm font-bold text-foreground mb-1">Membership & Loyalty</p>
+              <p className="text-xs text-muted-foreground mb-8 max-w-md mx-auto">Create membership plans and loyalty programs to generate recurring revenue and retain customers.</p>
+              <div className="border-t">
+                <div className="flex items-center justify-between py-3">
+                  <p className="text-sm text-muted-foreground">Active Members</p>
+                  <p className="text-sm font-semibold text-foreground">—</p>
+                </div>
+                <div className="flex items-center justify-between py-3 border-t">
+                  <p className="text-sm text-muted-foreground">Plans Available</p>
+                  <p className="text-sm font-semibold text-foreground">—</p>
+                </div>
+                <div className="flex items-center justify-between py-3 border-t">
+                  <p className="text-sm text-muted-foreground">Avg Retention</p>
+                  <p className="text-sm font-semibold text-foreground">—</p>
+                </div>
+              </div>
+              <div className="flex justify-end mt-6">
+                <Button size="sm" className="btn-gradient gap-1"><Plus className="h-3.5 w-3.5" /> Create Plan</Button>
+              </div>
+            </div>
+          </DataCard>
         </TabsContent>
       </Tabs>
 
