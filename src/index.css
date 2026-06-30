@@ -1174,16 +1174,21 @@
 @property --nl-border-tint { syntax: "<color>"; inherits: true; initial-value: rgba(0,180,255,0.4); }
 
 @keyframes nl-phase {
+  /* 0s — deep navy blackout */
   0%   { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
          --nl-glow-tint: rgba(0,180,255,0.05); --nl-border-tint: rgba(0,180,255,0.4); }
+  /* 3.0s / 46% — still dark */
   46%  { --nl-bg: #020814; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
          --nl-glow-tint: rgba(0,180,255,0.08); --nl-border-tint: rgba(0,180,255,0.4); }
+  /* 4.25s / 65% — navy with growing blue bloom */
   65%  { --nl-bg: #041830; --nl-fg: #ffffff; --nl-fg-soft: #ffffff;
          --nl-glow-tint: rgba(0,180,255,0.45); --nl-border-tint: rgba(0,180,255,0.5); }
-  85%  { --nl-bg: #062544; --nl-fg: #E6F4FF; --nl-fg-soft: #AADDFF;
-         --nl-glow-tint: rgba(0,180,255,0.4); --nl-border-tint: rgba(0,180,255,0.5); }
-  100% { --nl-bg: #03070F; --nl-fg: #FFFFFF; --nl-fg-soft: #AADDFF;
-         --nl-glow-tint: rgba(0,180,255,0.35); --nl-border-tint: rgba(0,180,255,0.45); }
+  /* 5.5s / 85% — daylight bloom */
+  85%  { --nl-bg: #7EC8F0; --nl-fg: #001A3D; --nl-fg-soft: #001A3D;
+         --nl-glow-tint: rgba(0,180,255,0.3); --nl-border-tint: rgba(0,180,255,0.35); }
+  /* 6.5s — settled icy blue */
+  100% { --nl-bg: #EDF6FF; --nl-fg: #001A3D; --nl-fg-soft: #334155;
+         --nl-glow-tint: rgba(0,180,255,0.18); --nl-border-tint: rgba(0,180,255,0.3); }
 }
 
 .nl-phase-root {
