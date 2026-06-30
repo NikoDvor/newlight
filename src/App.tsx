@@ -168,6 +168,7 @@ import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
 import AdminWebsites from "./pages/admin/AdminWebsites";
+import Approvals from "./pages/Approvals";
 
 
 const queryClient = new QueryClient();
