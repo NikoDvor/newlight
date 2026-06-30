@@ -89,23 +89,33 @@ export default function Landing() {
             NEWLIGHT
           </div>
 
-          <button
-            onClick={() => navigate("/auth")}
-            className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
-            style={{
-              background: ELECTRIC,
-              color: "#FFFFFF",
-              borderRadius: 20,
-              padding: "8px 18px",
-              fontSize: 11,
-              letterSpacing: "0.1em",
-              fontFamily: display,
-              boxShadow: "0 0 10px rgba(0,180,255,0.4)",
-              zIndex: 2,
-            }}
-          >
-            LOG IN
-          </button>
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+            <NavItem
+              href="/get-started"
+              label="Download the App"
+              icon={<DownloadIcon />}
+              navigate={navigate}
+            />
+            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <NavItem
+              href="/get-started"
+              label="Schedule a Walkthrough"
+              icon={<CalendarIcon />}
+              navigate={navigate}
+            />
+            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <NavItem
+              href="mailto:team@newlightgen.com"
+              label="Contact Support"
+              icon={<SupportIcon />}
+            />
+            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <NavItem
+              href="tel:+18058363557"
+              label="Call Now"
+              icon={<PhoneIcon />}
+            />
+          </div>
         </nav>
       </header>
 
