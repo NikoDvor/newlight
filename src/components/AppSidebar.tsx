@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronDown, Wallet, HelpCircle,
   Headphones, BookOpen, ClipboardList, BarChart3,
   Briefcase, LifeBuoy, UserCog, Activity,
-  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp
+  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
