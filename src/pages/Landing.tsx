@@ -1,28 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
 // Palette mirrored from newlightgen.com post-intro state
-const BG = "#EDF6FF";
-const NAVY = "#001A3D";
-const NAVY_SOFT = "#334155";
 const ELECTRIC = "#00B4FF";
-const GLOW = "#00b4ff2e";
-const BORDER_TINT = "#00b4ff4d";
-
-// The 8 curved streak paths used on newlightgen.com (verbatim path data)
-const STREAKS = [
-  { d: "M 39.7 -8.0 C 36.5 -2.9, 38.4 14.8, 29.7 21.0 C 26.4 26.2, 30.3 40.7, 33.2 50.0 C 39.6 55.4, 40.5 69.5, 37.1 79.0 C 31.5 87.6, 32.7 97.8, 26.9 108.0", w: 0.21, op: 0.55, dur: 7.31, delay: 0.54 },
-  { d: "M -8.0 85.5 C 7.4 86.4, 11.5 81.7, 21.0 82.1 C 31.8 93.7, 36.4 91.6, 50.0 99.3 C 63.3 94.8, 71.9 96.4, 79.0 99.0 C 90.0 104.2, 94.9 101.4, 108.0 105.5", w: 0.23, op: 0.5, dur: 5.66, delay: 0.64 },
-  { d: "M 57.6 -8.0 C 63.6 6.1, 62.0 10.3, 63.3 21.0 C 62.9 27.8, 69.7 34.3, 72.5 50.0 C 63.3 61.7, 61.3 69.9, 52.8 79.0 C 62.2 93.9, 67.6 97.1, 75.0 108.0", w: 0.23, op: 0.5, dur: 4.81, delay: 1.56 },
-  { d: "M -8.0 77.3 C -1.0 77.6, 10.9 79.8, 21.0 83.1 C 35.3 78.0, 43.1 79.1, 50.0 84.7 C 58.1 81.1, 64.3 86.9, 79.0 85.4 C 86.0 84.5, 100.7 84.4, 108.0 75.5", w: 0.24, op: 0.6, dur: 5.83, delay: 2.28 },
-  { d: "M 9.2 -8.0 C 21.7 3.8, 24.8 6.6, 28.8 21.0 C 28.2 34.7, 24.6 40.7, 15.2 50.0 C 22.1 56.6, 18.6 69.7, 19.3 79.0 C 14.1 92.5, 15.4 99.5, 8.6 108.0", w: 0.20, op: 0.62, dur: 6.87, delay: 2.54 },
-  { d: "M -8.0 25.2 C 7.4 21.0, 16.4 31.2, 21.0 28.7 C 28.1 26.4, 37.2 33.6, 50.0 36.1 C 61.3 32.9, 74.2 29.1, 79.0 30.0 C 85.8 24.9, 103.5 29.8, 108.0 26.5", w: 0.28, op: 0.65, dur: 6.02, delay: 3.89 },
-  { d: "M -8.0 78.9 C -3.4 85.3, 5.1 92.7, 21.0 97.1 C 26.6 90.0, 42.8 96.0, 50.0 93.4 C 57.9 81.4, 70.1 77.5, 79.0 73.3 C 88.4 72.9, 92.5 72.7, 108.0 78.9", w: 0.29, op: 0.5, dur: 4.75, delay: 4.02 },
-  { d: "M 30.9 -8.0 C 37.9 -2.4, 39.5 8.2, 39.2 21.0 C 27.7 27.9, 30.1 41.5, 18.2 50.0 C 16.8 58.2, 19.5 64.4, 11.2 79.0 C 11.5 91.0, 13.9 95.4, 17.2 108.0", w: 0.33, op: 0.52, dur: 7.6, delay: 4.93 },
-];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -35,7 +18,6 @@ const fadeUp = {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const particlesRef = useRef<HTMLCanvasElement>(null);
 
   // Load Rajdhani + Inter (same as newlightgen.com)
   useEffect(() => {
