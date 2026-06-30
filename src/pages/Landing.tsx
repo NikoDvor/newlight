@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
@@ -34,6 +34,7 @@ const fadeUp = {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const particlesRef = useRef<HTMLCanvasElement>(null);
 
   // Load Rajdhani + Inter (same as newlightgen.com)
   useEffect(() => {
@@ -45,6 +46,120 @@ export default function Landing() {
     link.href =
       "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap";
     document.head.appendChild(link);
+  }, []);
+
+  // Breathing 3D node/particle network — drifting points with connecting lines,
+  // depth-faked z scale + global breathing pulse. Lightweight canvas 2D.
+  useEffect(() => {
+    const canvas = particlesRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    let w = 0, h = 0;
+    const resize = () => {
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const COUNT = Math.min(90, Math.floor((window.innerWidth * window.innerHeight) / 22000));
+    const nodes = Array.from({ length: COUNT }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      z: 0.35 + Math.random() * 0.65, // depth 0.35..1
+      vx: (Math.random() - 0.5) * 0.00035,
+      vy: (Math.random() - 0.5) * 0.00035,
+      vz: (Math.random() - 0.5) * 0.00015,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
+    const mouse = { x: 0.5, y: 0.5, active: false };
+    const onMove = (e: MouseEvent) => {
+      mouse.x = e.clientX / window.innerWidth;
+      mouse.y = e.clientY / window.innerHeight;
+      mouse.active = true;
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const LINK_DIST = 0.13; // normalized
+    let raf = 0;
+    let t = 0;
+    const draw = () => {
+      raf = requestAnimationFrame(draw);
+      t += 0.008;
+      const breath = 0.85 + Math.sin(t * 0.6) * 0.15; // 0.7..1.0
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Update + draw nodes
+      for (const n of nodes) {
+        n.x += n.vx;
+        n.y += n.vy;
+        n.z += n.vz;
+        if (n.x < 0 || n.x > 1) n.vx *= -1;
+        if (n.y < 0 || n.y > 1) n.vy *= -1;
+        if (n.z < 0.35 || n.z > 1) n.vz *= -1;
+
+        // Soft attraction to cursor
+        if (mouse.active) {
+          n.x += (mouse.x - n.x) * 0.0006 * n.z;
+          n.y += (mouse.y - n.y) * 0.0006 * n.z;
+        }
+
+        const px = n.x * w;
+        const py = n.y * h;
+        const pulse = 0.6 + Math.sin(t * 1.3 + n.phase) * 0.4;
+        const r = (1.1 + n.z * 2.4) * pulse * breath;
+        const alpha = (0.18 + n.z * 0.45) * breath;
+
+        // glow halo
+        ctx.fillStyle = `rgba(0,180,255,${alpha * 0.18})`;
+        ctx.beginPath();
+        ctx.arc(px, py, r * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // core
+        ctx.fillStyle = `rgba(0,180,255,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Connecting lines
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < LINK_DIST) {
+            const k = 1 - d / LINK_DIST;
+            const depth = (a.z + b.z) * 0.5;
+            const op = k * 0.28 * depth * breath;
+            ctx.strokeStyle = `rgba(0,180,255,${op})`;
+            ctx.lineWidth = 0.6 * depth;
+            ctx.beginPath();
+            ctx.moveTo(a.x * w, a.y * h);
+            ctx.lineTo(b.x * w, b.y * h);
+            ctx.stroke();
+          }
+        }
+      }
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMove);
+    };
   }, []);
 
   const display = "'Rajdhani', 'Inter', system-ui, sans-serif";
@@ -69,7 +184,15 @@ export default function Landing() {
         aria-hidden
       />
 
-      {/* Animated curved streak background */}
+      {/* Breathing particle / node network (canvas 2D) */}
+      <canvas
+        ref={particlesRef}
+        className="fixed inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 0, width: "100vw", height: "100vh" }}
+        aria-hidden
+      />
+
+      {/* Animated curved streak background (verbatim from newlightgen.com) */}
       <svg
         className="fixed inset-0 w-full h-full pointer-events-none"
         preserveAspectRatio="none"
