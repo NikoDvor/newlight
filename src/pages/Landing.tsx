@@ -272,7 +272,7 @@ export default function Landing() {
                 boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65), 0 0 14px rgba(0,180,255,0.4)",
               }}
             >
-              DOWNLOAD THE APP
+              GET STARTED
             </button>
 
             <button
@@ -283,11 +283,12 @@ export default function Landing() {
                 color: FG,
                 border: `2px solid ${FG}`,
                 borderRadius: 24,
-                padding: "14px 34px",
-                fontSize: 13,
-                letterSpacing: "0.14em",
+                padding: "12px 24px",
+                fontSize: 12,
+                letterSpacing: "0.12em",
                 fontFamily: display,
-                minWidth: 220,
+                minWidth: 160,
+                opacity: 0.85,
               }}
             >
               LOG IN
