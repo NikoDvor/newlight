@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import * as THREE from "three";
 import newlightLogo from "@/assets/newlight-logo.jpg";
+
+// Palette pulled from newlightgen.com
+const BG = "#EDF6FF";        // icy light blue
+const NAVY = "#001A3D";      // primary text / dark
+const ELECTRIC = "#00B4FF";  // accent
+const TINT = "rgba(0,26,61,0.08)";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -10,7 +17,7 @@ const fadeUp = {
     y: 0,
     transition: {
       delay: 0.1 * i,
-      duration: 0.6,
+      duration: 0.65,
       ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
     },
   }),
@@ -18,35 +25,117 @@ const fadeUp = {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [breath, setBreath] = useState(1);
+  const threeRef = useRef<HTMLDivElement>(null);
+  const arcsRef = useRef<HTMLCanvasElement>(null);
 
-  // Breathing opacity (driven by interval, applied to canvas style)
+  // Load Rajdhani display font (no global CSS edits)
   useEffect(() => {
-    const id = setInterval(() => {
-      const v = 0.925 + Math.sin(Date.now() / 1200) * 0.075; // 0.85 - 1.0
-      setBreath(v);
-    }, 50);
-    return () => clearInterval(id);
+    const id = "nl-rajdhani-font";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap";
+    document.head.appendChild(link);
   }, []);
 
+  // Three.js wireframe cubes (matches newlightgen.com bg geometry)
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const el = threeRef.current;
+    if (!el) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      55,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    );
+    camera.position.z = 9;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    el.appendChild(renderer.domElement);
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const makeCube = (size: number, color: number, opacity: number) => {
+      const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size));
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+      return new THREE.LineSegments(geo, mat);
+    };
+
+    // Subtle navy-blue wireframes against the light bg
+    const c1 = makeCube(5.5, 0x0a3a78, 0.22);
+    const c2 = makeCube(3.6, 0x0d4d99, 0.18);
+    const c3 = makeCube(2.2, 0x1668bd, 0.16);
+    c1.position.set(-1.5, 0.5, 0);
+    c2.position.set(1.2, -0.3, 0);
+    group.add(c1, c2, c3);
+
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onResize);
+
+    let mx = 0, my = 0, cx = 0, cy = 0;
+    const onMove = (e: MouseEvent) => {
+      mx = (e.clientX / window.innerWidth - 0.5) * 2;
+      my = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener("mousemove", onMove);
+
+    let raf = 0;
+    let t = 0;
+    const animate = () => {
+      raf = requestAnimationFrame(animate);
+      t += 0.006;
+      c1.rotation.x = t * 0.35;
+      c1.rotation.y = t * 0.25;
+      c2.rotation.x = -t * 0.3;
+      c2.rotation.y = t * 0.45;
+      c3.rotation.x = t * 0.6;
+      c3.rotation.z = t * 0.3;
+      group.rotation.y += 0.0008;
+
+      cx += (mx * 0.6 - cx) * 0.04;
+      cy += (-my * 0.4 - cy) * 0.04;
+      camera.position.x = cx;
+      camera.position.y = cy;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("mousemove", onMove);
+      renderer.dispose();
+      [c1, c2, c3].forEach((c) => {
+        c.geometry.dispose();
+        (c.material as THREE.Material).dispose();
+      });
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  // Faint concentric arc rings (the circular pattern visible on newlightgen.com)
+  useEffect(() => {
+    const canvas = arcsRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-
-    const N = 55;
-    const nodes = Array.from({ length: N }).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      r: 1.5 + Math.random() * 2,
-    }));
 
     const onResize = () => {
       width = canvas.width = window.innerWidth;
@@ -55,43 +144,24 @@ export default function Landing() {
     window.addEventListener("resize", onResize);
 
     let raf = 0;
+    let t = 0;
     const render = () => {
-      ctx.fillStyle = "hsl(218, 42%, 4%)";
-      ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
+      t += 0.004;
 
-      for (const n of nodes) {
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > width) n.vx *= -1;
-        if (n.y < 0 || n.y > height) n.vy *= -1;
-      }
+      const cx = width / 2;
+      const cy = height / 2;
+      const maxR = Math.hypot(width, height) * 0.6;
 
-      ctx.lineWidth = 0.6;
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            const op = (1 - dist / 120) * 0.18;
-            ctx.strokeStyle = `hsla(197, 88%, 72%, ${op})`;
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = "hsla(211,96%,80%,0.55)";
-      ctx.fillStyle = "hsla(211, 96%, 78%, 0.85)";
-      for (const n of nodes) {
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 14; i++) {
+        const r = ((i / 14) * maxR) + (Math.sin(t + i * 0.3) * 4);
+        const op = 0.05 + (1 - i / 14) * 0.04;
+        ctx.strokeStyle = `rgba(0, 26, 61, ${op})`;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
       }
-      ctx.shadowBlur = 0;
 
       raf = requestAnimationFrame(render);
     };
@@ -103,96 +173,98 @@ export default function Landing() {
     };
   }, []);
 
+  const display = "'Rajdhani', 'Inter', system-ui, sans-serif";
+
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden text-white"
-      style={{ background: "hsl(218, 42%, 4%)" }}
+      className="relative min-h-screen overflow-x-hidden"
+      style={{ background: BG, color: NAVY, fontFamily: display }}
     >
-      {/* Canvas background */}
+      {/* Arc rings — bottom */}
       <canvas
-        ref={canvasRef}
+        ref={arcsRef}
+        className="fixed inset-0 pointer-events-none"
+        style={{ width: "100vw", height: "100vh", zIndex: 0 }}
+      />
+
+      {/* Three.js wireframe layer */}
+      <div
+        ref={threeRef}
+        className="fixed inset-0 pointer-events-none"
+        style={{ zIndex: 1 }}
+      />
+
+      {/* Subtle radial brightening from center */}
+      <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          width: "100vw",
-          height: "100vh",
-          zIndex: 0,
-          opacity: breath,
-          transition: "opacity 80ms linear",
+          zIndex: 2,
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 60%)",
         }}
       />
 
-      {/* Ambient orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
-        <motion.div
-          className="absolute rounded-full"
-          style={{
-            width: 500,
-            height: 500,
-            top: -80,
-            left: -60,
-            background: "radial-gradient(circle, hsla(211,96%,60%,.15), transparent 70%)",
-            filter: "blur(120px)",
-          }}
-          animate={{ scale: [1, 1.2, 1], y: [0, 30, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute rounded-full"
-          style={{
-            width: 400,
-            height: 400,
-            bottom: -60,
-            right: -40,
-            background: "radial-gradient(circle, hsla(197,88%,55%,.12), transparent 70%)",
-            filter: "blur(100px)",
-          }}
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        />
-        <motion.div
-          className="absolute rounded-full"
-          style={{
-            width: 300,
-            height: 300,
-            top: "40%",
-            left: "40%",
-            background: "radial-gradient(circle, hsla(211,96%,65%,.08), transparent 70%)",
-            filter: "blur(80px)",
-          }}
-          animate={{ scale: [1, 1.3, 1] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-      </div>
-
       {/* Nav */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
+      <header
+        className="fixed top-0 left-0 right-0 h-16 backdrop-blur-md"
         style={{
-          background: "hsla(218,42%,4%,.85)",
-          borderBottom: "1px solid hsla(211,96%,60%,.07)",
+          zIndex: 100,
+          background: "color-mix(in srgb, #EDF6FF 70%, transparent)",
+          borderBottom: `1px solid ${TINT}`,
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
-          <img
-            src={newlightLogo}
-            alt="NewLight"
-            className="h-8 w-auto object-contain"
-            style={{ filter: "drop-shadow(0 0 20px hsla(211,96%,56%,.45))" }}
-          />
+        <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between">
+          <a
+            href="/"
+            className="flex items-center"
+            style={{ zIndex: 2 }}
+          >
+            <img
+              src={newlightLogo}
+              alt="NewLight"
+              className="h-9 w-auto object-contain"
+              style={{ background: "transparent" }}
+            />
+          </a>
+
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block"
+            style={{
+              color: NAVY,
+              fontSize: 16,
+              letterSpacing: "0.32em",
+              fontWeight: 700,
+              fontFamily: display,
+            }}
+          >
+            NEWLIGHT
+          </div>
+
           <button
             onClick={() => navigate("/auth")}
-            className="border border-[hsla(211,96%,60%,.3)] text-white/70 text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[hsla(211,96%,60%,.1)] transition"
+            className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
+            style={{
+              background: ELECTRIC,
+              color: "#FFFFFF",
+              borderRadius: 20,
+              padding: "8px 18px",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              fontFamily: display,
+              boxShadow: "0 6px 22px -6px rgba(0,180,255,0.55)",
+              zIndex: 2,
+            }}
           >
-            Log In
+            LOG IN
           </button>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Hero */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 pt-20">
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-20" style={{ zIndex: 10 }}>
         <motion.div
-          className="text-[11px] font-bold tracking-[0.2em] uppercase mb-5"
-          style={{ color: "hsl(197,92%,68%)" }}
+          className="text-[12px] font-bold tracking-[0.25em] uppercase mb-8"
+          style={{ color: ELECTRIC, fontFamily: display }}
           initial="hidden"
           animate="show"
           variants={fadeUp}
@@ -202,40 +274,52 @@ export default function Landing() {
         </motion.div>
 
         <motion.h1
-          className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]"
+          className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto break-words"
+          style={{
+            color: NAVY,
+            fontSize: "clamp(40px, 6.5vw, 84px)",
+            maxWidth: 940,
+            fontFamily: display,
+          }}
           initial="hidden"
           animate="show"
           variants={fadeUp}
           custom={1}
         >
-          <span className="block text-white">WE BRING YOU</span>
-          <span className="block bg-gradient-to-r from-[hsl(211,96%,62%)] to-[hsl(197,92%,70%)] bg-clip-text text-transparent">
-            READY-TO-BUY CUSTOMERS.
-          </span>
+          WE BRING YOU READY-TO-BUY CUSTOMERS.
         </motion.h1>
 
-        <motion.p
-          className="mt-5 text-white/45 text-base max-w-sm mx-auto leading-relaxed"
+        <motion.div
+          className="mt-8"
           initial="hidden"
           animate="show"
           variants={fadeUp}
           custom={2}
         >
-          One system. Every lead, appointment, and revenue stream — automated and tracked.
-        </motion.p>
+          <div
+            className="mx-auto"
+            style={{
+              width: 60,
+              height: 2,
+              background: ELECTRIC,
+              opacity: 0.7,
+            }}
+          />
+        </motion.div>
 
         <motion.p
-          className="mt-3 text-[11px] text-white/30 uppercase tracking-widest"
+          className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
+          style={{ color: "rgba(0,26,61,0.72)" }}
           initial="hidden"
           animate="show"
           variants={fadeUp}
           custom={3}
         >
-          ZERO RISK — 90-DAY MONEY-BACK GUARANTEE
+          One system. Every lead, appointment, and revenue stream — automated and tracked inside your branded Command Center.
         </motion.p>
 
         <motion.div
-          className="mt-10 flex flex-col items-center gap-3 w-full"
+          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
           initial="hidden"
           animate="show"
           variants={fadeUp}
@@ -243,31 +327,56 @@ export default function Landing() {
         >
           <button
             onClick={() => navigate("/get-started")}
-            className="bg-gradient-to-r from-[hsl(211,96%,54%)] to-[hsl(197,92%,58%)] text-white font-bold px-10 py-4 rounded-2xl text-base w-full max-w-xs shadow-[0_0_50px_-10px_hsla(211,96%,56%,.7)] hover:shadow-[0_0_70px_-10px_hsla(211,96%,56%,.9)] transition-all"
+            className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
+            style={{
+              background: ELECTRIC,
+              color: "#FFFFFF",
+              borderRadius: 24,
+              padding: "16px 32px",
+              fontSize: 13,
+              letterSpacing: "0.14em",
+              fontFamily: display,
+              minWidth: 220,
+              boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65)",
+            }}
           >
-            Download the App
+            DOWNLOAD THE APP
           </button>
+
           <button
             onClick={() => navigate("/auth")}
-            className="border border-white/15 text-white/55 font-medium px-10 py-4 rounded-2xl text-base w-full max-w-xs hover:border-white/30 hover:text-white/75 transition-all"
+            className="inline-flex items-center justify-center font-bold transition-colors"
+            style={{
+              background: "transparent",
+              color: NAVY,
+              border: `2px solid ${NAVY}`,
+              borderRadius: 24,
+              padding: "14px 32px",
+              fontSize: 13,
+              letterSpacing: "0.14em",
+              fontFamily: display,
+              minWidth: 220,
+            }}
           >
-            Log In
+            LOG IN
           </button>
         </motion.div>
 
         <motion.div
-          className="mt-8 text-white/25 text-xs"
+          className="mt-10 text-xs"
+          style={{ color: "rgba(0,26,61,0.5)" }}
           initial="hidden"
           animate="show"
           variants={fadeUp}
           custom={5}
         >
-          Want to learn more?{" "}
+          Want to learn about NewLight?{" "}
           <a
             href="https://newlightgen.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[hsl(211,96%,60%)] hover:text-[hsl(211,96%,75%)] transition-colors"
+            className="font-bold hover:underline"
+            style={{ color: ELECTRIC }}
           >
             Visit newlightgen.com →
           </a>
@@ -275,8 +384,11 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 z-10 py-4 text-center">
-        <p className="text-white/15 text-[11px]">
+      <footer
+        className="relative w-full text-center py-5"
+        style={{ zIndex: 10, borderTop: `1px solid ${TINT}` }}
+      >
+        <p className="text-[11px]" style={{ color: "rgba(0,26,61,0.45)" }}>
           © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
         </p>
       </footer>
