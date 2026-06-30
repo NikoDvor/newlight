@@ -1193,6 +1193,14 @@
 
 .nl-phase-root {
   animation: nl-phase 6.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  background: var(--nl-bg);
+  background: transparent;
   color: var(--nl-fg);
+}
+/* Dedicated phase background layer painted behind HomeFX */
+.nl-phase-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--nl-bg);
+  pointer-events: none;
 }
