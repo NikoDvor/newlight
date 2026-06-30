@@ -70,7 +70,7 @@ function NavItem({ href, label, icon, navigate }: NavItemProps) {
     color: FG_SOFT,
     fontSize: 12,
     letterSpacing: "0.04em",
-    fontFamily: body,
+    fontFamily: "'Inter', system-ui, sans-serif",
     padding: "6px 8px",
     whiteSpace: "nowrap",
   };
