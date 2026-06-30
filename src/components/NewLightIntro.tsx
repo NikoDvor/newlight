@@ -9,23 +9,10 @@ interface NewLightIntroProps {
   launchLabel?: string;
 }
 
-type Phase = 0 | 1 | 2 | 3 | 4;
-
-// 12 breathing light orbs
-const ORBS = Array.from({ length: 12 }).map((_, i) => {
-  const size = 80 + ((i * 37) % 121); // 80–200
-  return {
-    size,
-    top: `${(i * 53) % 90}%`,
-    left: `${(i * 71) % 90}%`,
-    delay: (i % 6) * 0.4,
-    duration: 6 + (i % 4),
-  };
-});
+type Phase = 0 | 1 | 2 | 3 | 4 | 5;
 
 export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
   const [phase, setPhase] = useState<Phase>(0);
-  const [visible, setVisible] = useState(true);
   const completedRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -33,173 +20,142 @@ export function NewLightIntro({ onComplete, launchLabel }: NewLightIntroProps) {
     completedRef.current = true;
     sessionStorage.setItem(SESSION_KEY, "1");
     window.dispatchEvent(new Event("nl-intro-complete"));
-    setVisible(false);
-    setTimeout(onComplete, 400);
+    setPhase(5);
+    setTimeout(onComplete, 220);
   }, [onComplete]);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 400);   // light bg + logo
-    const t2 = setTimeout(() => setPhase(2), 1200);  // transition to dark
-    const t3 = setTimeout(() => setPhase(3), 2000);  // scan line
-    const t4 = setTimeout(() => setPhase(4), 2500);  // fade out
-    const t5 = setTimeout(finish, 2900);
-    const failsafe = setTimeout(finish, 5000);
-    return () => {
-      [t1, t2, t3, t4, t5, failsafe].forEach(clearTimeout);
-    };
+    const timers = [
+      setTimeout(() => setPhase(1), 600),   // bg fades to dark + logo in
+      setTimeout(() => setPhase(2), 1400),  // tagline + blue glow
+      setTimeout(() => setPhase(3), 2200),  // scan line
+      setTimeout(() => setPhase(4), 2800),  // fade out
+      setTimeout(finish, 3000),
+      setTimeout(finish, 5000),             // failsafe
+    ];
+    return () => timers.forEach(clearTimeout);
   }, [finish]);
 
+  const isDark = phase >= 1;
   const showLogo = phase >= 1;
-  const isDark = phase >= 2;
-  const isLight = phase >= 1 && phase < 2;
+  const showTag = phase >= 2;
+  const showScan = phase >= 3;
+  const fading = phase >= 4;
 
   return (
     <AnimatePresence>
-      {visible && (
+      <motion.div
+        key="nl-intro"
+        className="fixed inset-0 z-[99999] overflow-hidden flex flex-col items-center justify-center"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: fading ? 0 : 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        {/* Background color */}
         <motion.div
-          key="nl-intro"
-          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center overflow-hidden"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: phase >= 4 ? 0 : 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          {/* Background color layer with smooth transition */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ background: "hsl(0,0%,100%)" }}
-            animate={{
-              background: isDark ? "hsl(218,42%,5%)" : "hsl(0,0%,100%)",
+          className="absolute inset-0"
+          initial={{ backgroundColor: "#ffffff" }}
+          animate={{ backgroundColor: isDark ? "hsl(218,42%,5%)" : "#ffffff" }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+        />
+
+        {/* Light burst */}
+        <motion.div
+          className="absolute left-1/2 top-1/2 rounded-full pointer-events-none"
+          style={{
+            width: 400,
+            height: 400,
+            marginLeft: -200,
+            marginTop: -200,
+            background:
+              "radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.6) 30%, rgba(255,255,255,0) 70%)",
+          }}
+          initial={{ scale: 0, opacity: 1 }}
+          animate={{ scale: 4, opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        />
+
+        {/* Logo + tagline */}
+        <div className="relative z-10 flex flex-col items-center gap-5">
+          <motion.img
+            src={newlightLogo}
+            alt="NewLight"
+            className="h-20 w-auto object-contain"
+            initial={{
+              opacity: 0,
+              scale: 0.94,
+              filter: "drop-shadow(0 0 40px rgba(255,255,255,0.9))",
             }}
-            transition={{ duration: 1.6, ease: "easeInOut" }}
+            animate={{
+              opacity: showLogo ? 1 : 0,
+              scale: 1,
+              filter: showTag
+                ? "drop-shadow(0 0 40px hsla(211,96%,60%,0.8)) drop-shadow(0 0 80px hsla(197,92%,68%,0.5))"
+                : showLogo
+                  ? "drop-shadow(0 0 40px rgba(255,255,255,0.95))"
+                  : "drop-shadow(0 0 40px rgba(255,255,255,0.9))",
+            }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           />
 
-          {/* Light-phase breathing orbs */}
-          <AnimatePresence>
-            {isLight && (
-              <motion.div
-                key="orbs"
-                className="absolute inset-0 nl-animated-bg overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                {ORBS.map((o, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute rounded-full"
-                    style={{
-                      width: o.size,
-                      height: o.size,
-                      top: o.top,
-                      left: o.left,
-                      background:
-                        "radial-gradient(circle, hsla(211,96%,85%,.3), transparent 70%)",
-                      filter: "blur(50px)",
-                    }}
-                    animate={{
-                      opacity: [0.15, 0.4, 0.15],
-                      x: [0, 20, 0],
-                      y: [0, -15, 0],
-                    }}
-                    transition={{
-                      duration: o.duration,
-                      delay: o.delay,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Logo + tagline */}
-          <div className="relative z-10 flex flex-col items-center gap-5">
-            <motion.img
-              src={newlightLogo}
-              alt="NewLight"
-              className="h-20 w-auto object-contain"
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{
-                opacity: showLogo ? 1 : 0,
-                scale: showLogo ? 1 : 0.92,
-                filter: isDark
-                  ? "drop-shadow(0 0 30px hsla(211,96%,60%,.85)) drop-shadow(0 0 60px hsla(197,92%,68%,.5))"
-                  : "drop-shadow(0 0 24px hsla(45,90%,80%,.7)) drop-shadow(0 0 48px hsla(40,80%,85%,.4))",
-              }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
-
-            <AnimatePresence>
-              {isDark && (
-                <motion.p
-                  key="tag"
-                  className="text-xs font-bold tracking-[0.35em] uppercase"
-                  style={{ color: "hsl(197,92%,72%)" }}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  NEW EYES TO ROI
-                </motion.p>
-              )}
-            </AnimatePresence>
-
-            {launchLabel && phase >= 3 && (
-              <motion.p
-                className="text-[10px] tracking-wider uppercase text-white/40"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {launchLabel}
-              </motion.p>
-            )}
-          </div>
-
-          {/* Electric scan line */}
-          <AnimatePresence>
-            {phase >= 3 && (
-              <motion.div
-                key="scan"
-                className="absolute left-0 right-0 z-20 pointer-events-none"
-                style={{
-                  height: 2,
-                  background:
-                    "linear-gradient(90deg, transparent, hsl(211,96%,65%), hsl(197,92%,72%), hsl(211,96%,65%), transparent)",
-                  boxShadow:
-                    "0 0 24px hsla(211,96%,60%,.9), 0 0 48px hsla(197,92%,68%,.6)",
-                }}
-                initial={{ top: -2, opacity: 0 }}
-                animate={{ top: "105%", opacity: [0, 1, 1, 0] }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Skip */}
-          <button
-            onClick={finish}
-            className="absolute bottom-5 right-5 z-30 text-[10px] font-medium tracking-wider uppercase px-3 py-1.5 rounded-lg transition-colors"
-            style={{
-              color: isDark ? "rgba(255,255,255,0.5)" : "rgba(10,30,70,0.5)",
-              background: isDark
-                ? "rgba(255,255,255,0.06)"
-                : "rgba(10,30,70,0.06)",
-              border: `1px solid ${
-                isDark ? "rgba(255,255,255,0.12)" : "rgba(10,30,70,0.12)"
-              }`,
-            }}
+          <motion.p
+            className="text-xs font-bold tracking-[0.25em] uppercase"
+            style={{ color: "hsl(211,96%,68%)" }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: showTag ? 1 : 0, y: showTag ? 0 : 6 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            Skip
-          </button>
-        </motion.div>
-      )}
+            NEW EYES TO ROI
+          </motion.p>
+
+          {launchLabel && showTag && (
+            <motion.p
+              className="text-[10px] tracking-wider uppercase text-white/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {launchLabel}
+            </motion.p>
+          )}
+        </div>
+
+        {/* Scan line */}
+        {showScan && (
+          <motion.div
+            className="absolute left-0 right-0 z-20 pointer-events-none"
+            style={{
+              height: 2,
+              background:
+                "linear-gradient(90deg, transparent, hsla(211,96%,70%,1) 50%, transparent)",
+              boxShadow: "0 0 30px 6px hsla(211,96%,60%,0.8)",
+            }}
+            initial={{ top: "-2px" }}
+            animate={{ top: "105vh" }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          />
+        )}
+
+        {/* Skip */}
+        <motion.button
+          onClick={finish}
+          className="absolute bottom-5 right-5 z-30 text-[10px] font-medium tracking-wider uppercase px-3 py-1.5 rounded-lg"
+          style={{
+            color: "rgba(255,255,255,0.3)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.03)",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showLogo ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Skip
+        </motion.button>
+      </motion.div>
     </AnimatePresence>
   );
 }
+
+export default NewLightIntro;
 
 /** Check if intro should play this session */
 export function shouldPlayIntro(): boolean {
