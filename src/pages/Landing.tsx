@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
+import { HomeFX } from "@/components/HomeFX";
 
 // Palette mirrored from newlightgen.com post-intro state
 const BG = "#EDF6FF";
