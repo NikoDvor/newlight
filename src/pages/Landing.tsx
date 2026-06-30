@@ -1,14 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import * as THREE from "three";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 
-// Palette pulled from newlightgen.com
-const BG = "#EDF6FF";        // icy light blue
-const NAVY = "#001A3D";      // primary text / dark
-const ELECTRIC = "#00B4FF";  // accent
-const TINT = "rgba(0,26,61,0.08)";
+// Palettes
+const DARK_BG = "#03070F";        // near-black
+const DARK_BG_2 = "#0A1A33";      // deep navy
+const LIGHT_BG = "#EDF6FF";       // icy light blue
+const NAVY = "#001A3D";
+const ELECTRIC = "#00B4FF";
+const TINT_LIGHT = "rgba(0,26,61,0.08)";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -25,10 +27,11 @@ const fadeUp = {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const threeRef = useRef<HTMLDivElement>(null);
+  const cubeRef = useRef<HTMLDivElement>(null);
   const arcsRef = useRef<HTMLCanvasElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Load Rajdhani display font (no global CSS edits)
+  // Load Rajdhani font
   useEffect(() => {
     const id = "nl-rajdhani-font";
     if (document.getElementById(id)) return;
@@ -40,22 +43,32 @@ export default function Landing() {
     document.head.appendChild(link);
   }, []);
 
-  // Three.js wireframe cubes (matches newlightgen.com bg geometry)
+  // Scroll handler — flip theme once user passes ~60% of viewport
   useEffect(() => {
-    const el = threeRef.current;
+    const onScroll = () => {
+      setScrolled(window.scrollY > window.innerHeight * 0.55);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Three.js — rotating wireframe cube with inner glow (hero only)
+  useEffect(() => {
+    const el = cubeRef.current;
     if (!el) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       55,
-      window.innerWidth / window.innerHeight,
+      el.clientWidth / el.clientHeight,
       0.1,
       1000,
     );
-    camera.position.z = 9;
+    camera.position.z = 7;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(el.clientWidth, el.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
@@ -69,47 +82,56 @@ export default function Landing() {
       return new THREE.LineSegments(geo, mat);
     };
 
-    // Subtle navy-blue wireframes against the light bg
-    const c1 = makeCube(5.5, 0x0a3a78, 0.22);
-    const c2 = makeCube(3.6, 0x0d4d99, 0.18);
-    const c3 = makeCube(2.2, 0x1668bd, 0.16);
-    c1.position.set(-1.5, 0.5, 0);
-    c2.position.set(1.2, -0.3, 0);
-    group.add(c1, c2, c3);
+    const outer = makeCube(3.2, 0x00b4ff, 0.85);
+    const mid = makeCube(2.1, 0x4fcaff, 0.55);
+    const inner = makeCube(1.1, 0x9fe3ff, 0.7);
+    group.add(outer, mid, inner);
+
+    // Inner glowing core
+    const coreGeo = new THREE.SphereGeometry(0.45, 32, 32);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0x66d4ff,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    group.add(core);
+
+    // Soft glow halo (additive)
+    const haloGeo = new THREE.SphereGeometry(1.0, 32, 32);
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: 0x00b4ff,
+      transparent: true,
+      opacity: 0.18,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const halo = new THREE.Mesh(haloGeo, haloMat);
+    group.add(halo);
 
     const onResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+      if (!el) return;
+      camera.aspect = el.clientWidth / el.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(el.clientWidth, el.clientHeight);
     };
     window.addEventListener("resize", onResize);
-
-    let mx = 0, my = 0, cx = 0, cy = 0;
-    const onMove = (e: MouseEvent) => {
-      mx = (e.clientX / window.innerWidth - 0.5) * 2;
-      my = (e.clientY / window.innerHeight - 0.5) * 2;
-    };
-    window.addEventListener("mousemove", onMove);
 
     let raf = 0;
     let t = 0;
     const animate = () => {
       raf = requestAnimationFrame(animate);
       t += 0.006;
-      c1.rotation.x = t * 0.35;
-      c1.rotation.y = t * 0.25;
-      c2.rotation.x = -t * 0.3;
-      c2.rotation.y = t * 0.45;
-      c3.rotation.x = t * 0.6;
-      c3.rotation.z = t * 0.3;
-      group.rotation.y += 0.0008;
-
-      cx += (mx * 0.6 - cx) * 0.04;
-      cy += (-my * 0.4 - cy) * 0.04;
-      camera.position.x = cx;
-      camera.position.y = cy;
-      camera.lookAt(0, 0, 0);
-
+      outer.rotation.x = t * 0.4;
+      outer.rotation.y = t * 0.55;
+      mid.rotation.x = -t * 0.7;
+      mid.rotation.y = t * 0.4;
+      inner.rotation.x = t * 1.1;
+      inner.rotation.z = t * 0.9;
+      const pulse = 1 + Math.sin(t * 2) * 0.08;
+      core.scale.setScalar(pulse);
+      halo.scale.setScalar(1 + Math.sin(t * 1.4) * 0.12);
+      (haloMat as THREE.MeshBasicMaterial).opacity = 0.14 + Math.sin(t * 1.4) * 0.06;
       renderer.render(scene, camera);
     };
     animate();
@@ -117,17 +139,20 @@ export default function Landing() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("mousemove", onMove);
       renderer.dispose();
-      [c1, c2, c3].forEach((c) => {
+      [outer, mid, inner].forEach((c) => {
         c.geometry.dispose();
         (c.material as THREE.Material).dispose();
       });
+      coreGeo.dispose();
+      coreMat.dispose();
+      haloGeo.dispose();
+      haloMat.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
   }, []);
 
-  // Faint concentric arc rings (the circular pattern visible on newlightgen.com)
+  // Canvas — flowing curved wireframe ribbons (shown after scroll, light section)
   useEffect(() => {
     const canvas = arcsRef.current;
     if (!canvas) return;
@@ -143,25 +168,37 @@ export default function Landing() {
     };
     window.addEventListener("resize", onResize);
 
+    const ribbons = Array.from({ length: 9 }).map((_, i) => ({
+      phase: i * 0.7,
+      speed: 0.0015 + i * 0.00025,
+      amp: 80 + i * 22,
+      yOffset: (i / 9) * 1.1 - 0.05,
+      hueOpacity: 0.07 + (1 - i / 9) * 0.06,
+    }));
+
     let raf = 0;
     let t = 0;
     const render = () => {
       ctx.clearRect(0, 0, width, height);
-      t += 0.004;
+      t += 1;
 
-      const cx = width / 2;
-      const cy = height / 2;
-      const maxR = Math.hypot(width, height) * 0.6;
-
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 14; i++) {
-        const r = ((i / 14) * maxR) + (Math.sin(t + i * 0.3) * 4);
-        const op = 0.05 + (1 - i / 14) * 0.04;
-        ctx.strokeStyle = `rgba(0, 26, 61, ${op})`;
+      ctx.lineWidth = 1.1;
+      ribbons.forEach((r) => {
+        ctx.strokeStyle = `rgba(0, 26, 61, ${r.hueOpacity})`;
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        const baseY = height * r.yOffset;
+        const steps = 80;
+        for (let i = 0; i <= steps; i++) {
+          const x = (i / steps) * width;
+          const y =
+            baseY +
+            Math.sin(i * 0.08 + t * r.speed + r.phase) * r.amp +
+            Math.cos(i * 0.04 - t * r.speed * 0.6) * (r.amp * 0.4);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
         ctx.stroke();
-      }
+      });
 
       raf = requestAnimationFrame(render);
     };
@@ -178,27 +215,44 @@ export default function Landing() {
   return (
     <div
       className="relative min-h-screen overflow-x-hidden"
-      style={{ background: BG, color: NAVY, fontFamily: display }}
+      style={{
+        background: scrolled ? LIGHT_BG : DARK_BG,
+        color: scrolled ? NAVY : "#FFFFFF",
+        fontFamily: display,
+        transition: "background 700ms ease, color 700ms ease",
+      }}
     >
-      {/* Arc rings — bottom */}
+      {/* Fixed dark hero background (fades out on scroll) */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 0,
+          opacity: scrolled ? 0 : 1,
+          transition: "opacity 700ms ease",
+          background: `radial-gradient(ellipse at 50% 40%, ${DARK_BG_2} 0%, ${DARK_BG} 70%)`,
+        }}
+      />
+
+      {/* Fixed light arcs background (fades in on scroll) */}
       <canvas
         ref={arcsRef}
         className="fixed inset-0 pointer-events-none"
-        style={{ width: "100vw", height: "100vh", zIndex: 0 }}
+        style={{
+          width: "100vw",
+          height: "100vh",
+          zIndex: 1,
+          opacity: scrolled ? 1 : 0,
+          transition: "opacity 700ms ease",
+        }}
       />
 
-      {/* Three.js wireframe layer */}
-      <div
-        ref={threeRef}
-        className="fixed inset-0 pointer-events-none"
-        style={{ zIndex: 1 }}
-      />
-
-      {/* Subtle radial brightening from center */}
+      {/* Radial brightening for light mode */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 2,
+          opacity: scrolled ? 1 : 0,
+          transition: "opacity 700ms ease",
           background:
             "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 60%)",
         }}
@@ -209,16 +263,15 @@ export default function Landing() {
         className="fixed top-0 left-0 right-0 h-16 backdrop-blur-md"
         style={{
           zIndex: 100,
-          background: "color-mix(in srgb, #EDF6FF 70%, transparent)",
-          borderBottom: `1px solid ${TINT}`,
+          background: scrolled
+            ? "color-mix(in srgb, #EDF6FF 70%, transparent)"
+            : "color-mix(in srgb, #03070F 60%, transparent)",
+          borderBottom: `1px solid ${scrolled ? TINT_LIGHT : "rgba(0,180,255,0.12)"}`,
+          transition: "background 700ms ease, border-color 700ms ease",
         }}
       >
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between">
-          <a
-            href="/"
-            className="flex items-center"
-            style={{ zIndex: 2 }}
-          >
+          <a href="/" className="flex items-center" style={{ zIndex: 2 }}>
             <img
               src={newlightLogo}
               alt="NewLight"
@@ -230,11 +283,12 @@ export default function Landing() {
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block"
             style={{
-              color: NAVY,
+              color: scrolled ? NAVY : "#FFFFFF",
               fontSize: 16,
               letterSpacing: "0.32em",
               fontWeight: 700,
               fontFamily: display,
+              transition: "color 700ms ease",
             }}
           >
             NEWLIGHT
@@ -260,115 +314,178 @@ export default function Landing() {
         </nav>
       </header>
 
-      {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-20" style={{ zIndex: 10 }}>
-        <motion.div
-          className="text-[12px] font-bold tracking-[0.25em] uppercase mb-8"
-          style={{ color: ELECTRIC, fontFamily: display }}
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={0}
-        >
-          // AI MODERN MARKETING SYSTEMS
-        </motion.div>
+      {/* HERO — dark, with 3D cube behind text */}
+      <section
+        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-20"
+        style={{ zIndex: 10 }}
+      >
+        {/* 3D cube layer — sits behind text */}
+        <div
+          ref={cubeRef}
+          className="absolute inset-0 pointer-events-none flex items-center justify-center"
+          style={{ zIndex: 0 }}
+        />
+        {/* Soft glow behind text for legibility */}
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{
+            zIndex: 1,
+            width: 700,
+            height: 400,
+            background:
+              "radial-gradient(ellipse at center, rgba(0,180,255,0.18) 0%, rgba(3,7,15,0) 65%)",
+          }}
+        />
 
-        <motion.h1
-          className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto break-words"
+        <div className="relative" style={{ zIndex: 2 }}>
+          <motion.div
+            className="text-[12px] font-bold tracking-[0.25em] uppercase mb-8"
+            style={{ color: ELECTRIC, fontFamily: display }}
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={0}
+          >
+            // AI MODERN MARKETING SYSTEMS
+          </motion.div>
+
+          <motion.h1
+            className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto break-words"
+            style={{
+              color: "#FFFFFF",
+              fontSize: "clamp(40px, 6.5vw, 84px)",
+              maxWidth: 940,
+              fontFamily: display,
+              textShadow: "0 4px 30px rgba(0,180,255,0.25)",
+            }}
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={1}
+          >
+            WE BRING YOU READY-TO-BUY CUSTOMERS.
+          </motion.h1>
+
+          <motion.div
+            className="mt-8"
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={2}
+          >
+            <div
+              className="mx-auto"
+              style={{ width: 60, height: 2, background: ELECTRIC, opacity: 0.8 }}
+            />
+          </motion.div>
+
+          <motion.p
+            className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
+            style={{ color: "rgba(255,255,255,0.72)" }}
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={3}
+          >
+            One system. Every lead, appointment, and revenue stream — automated and tracked inside your branded Command Center.
+          </motion.p>
+
+          <motion.div
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={4}
+          >
+            <button
+              onClick={() => navigate("/get-started")}
+              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
+              style={{
+                background: ELECTRIC,
+                color: "#FFFFFF",
+                borderRadius: 24,
+                padding: "16px 32px",
+                fontSize: 13,
+                letterSpacing: "0.14em",
+                fontFamily: display,
+                minWidth: 220,
+                boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65)",
+              }}
+            >
+              DOWNLOAD THE APP
+            </button>
+
+            <button
+              onClick={() => navigate("/auth")}
+              className="inline-flex items-center justify-center font-bold transition-colors"
+              style={{
+                background: "transparent",
+                color: "#FFFFFF",
+                border: "2px solid rgba(255,255,255,0.7)",
+                borderRadius: 24,
+                padding: "14px 32px",
+                fontSize: 13,
+                letterSpacing: "0.14em",
+                fontFamily: display,
+                minWidth: 220,
+              }}
+            >
+              LOG IN
+            </button>
+          </motion.div>
+
+          <motion.div
+            className="mt-12 text-xs"
+            style={{ color: "rgba(255,255,255,0.5)" }}
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            custom={5}
+          >
+            Scroll to explore ↓
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECOND SECTION — light, with flowing curved ribbons */}
+      <section
+        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-24"
+        style={{ zIndex: 10 }}
+      >
+        <motion.h2
+          className="font-bold leading-[1.05] tracking-[-0.02em] mx-auto"
           style={{
             color: NAVY,
-            fontSize: "clamp(40px, 6.5vw, 84px)",
-            maxWidth: 940,
+            fontSize: "clamp(32px, 5vw, 64px)",
+            maxWidth: 880,
             fontFamily: display,
           }}
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={1}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7 }}
         >
-          WE BRING YOU READY-TO-BUY CUSTOMERS.
-        </motion.h1>
-
-        <motion.div
-          className="mt-8"
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={2}
-        >
-          <div
-            className="mx-auto"
-            style={{
-              width: 60,
-              height: 2,
-              background: ELECTRIC,
-              opacity: 0.7,
-            }}
-          />
-        </motion.div>
+          BUILT TO RUN THE ENTIRE FUNNEL.
+        </motion.h2>
 
         <motion.p
-          className="mt-7 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
+          className="mt-6 text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
           style={{ color: "rgba(0,26,61,0.72)" }}
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={3}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
         >
-          One system. Every lead, appointment, and revenue stream — automated and tracked inside your branded Command Center.
+          From the first click to the closed deal — NewLight runs the marketing, the booking, the follow-up, and the reporting in one connected system.
         </motion.p>
-
-        <motion.div
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={4}
-        >
-          <button
-            onClick={() => navigate("/get-started")}
-            className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
-            style={{
-              background: ELECTRIC,
-              color: "#FFFFFF",
-              borderRadius: 24,
-              padding: "16px 32px",
-              fontSize: 13,
-              letterSpacing: "0.14em",
-              fontFamily: display,
-              minWidth: 220,
-              boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65)",
-            }}
-          >
-            DOWNLOAD THE APP
-          </button>
-
-          <button
-            onClick={() => navigate("/auth")}
-            className="inline-flex items-center justify-center font-bold transition-colors"
-            style={{
-              background: "transparent",
-              color: NAVY,
-              border: `2px solid ${NAVY}`,
-              borderRadius: 24,
-              padding: "14px 32px",
-              fontSize: 13,
-              letterSpacing: "0.14em",
-              fontFamily: display,
-              minWidth: 220,
-            }}
-          >
-            LOG IN
-          </button>
-        </motion.div>
 
         <motion.div
           className="mt-10 text-xs"
           style={{ color: "rgba(0,26,61,0.5)" }}
-          initial="hidden"
-          animate="show"
-          variants={fadeUp}
-          custom={5}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.25 }}
         >
           Want to learn about NewLight?{" "}
           <a
@@ -386,9 +503,19 @@ export default function Landing() {
       {/* Footer */}
       <footer
         className="relative w-full text-center py-5"
-        style={{ zIndex: 10, borderTop: `1px solid ${TINT}` }}
+        style={{
+          zIndex: 10,
+          borderTop: `1px solid ${scrolled ? TINT_LIGHT : "rgba(255,255,255,0.08)"}`,
+          transition: "border-color 700ms ease",
+        }}
       >
-        <p className="text-[11px]" style={{ color: "rgba(0,26,61,0.45)" }}>
+        <p
+          className="text-[11px]"
+          style={{
+            color: scrolled ? "rgba(0,26,61,0.45)" : "rgba(255,255,255,0.4)",
+            transition: "color 700ms ease",
+          }}
+        >
           © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
         </p>
       </footer>
