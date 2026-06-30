@@ -398,9 +398,9 @@ export default function Landing() {
       {/* Footer */}
       <footer
         className="relative w-full text-center py-5"
-        style={{ zIndex: 10, borderTop: `1px solid ${BORDER_TINT}` }}
+        style={{ zIndex: 10, borderTop: "1px solid var(--nl-border-tint)" }}
       >
-        <p className="text-[11px]" style={{ color: NAVY_SOFT }}>
+        <p className="text-[11px]" style={{ color: "var(--nl-fg-soft)" }}>
           © NewLight Marketing · (805) 836-3557 · team@newlightgen.com
         </p>
       </footer>
