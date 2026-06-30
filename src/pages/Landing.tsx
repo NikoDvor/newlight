@@ -196,7 +196,6 @@ export default function Landing() {
       <svg
         className="fixed inset-0 w-full h-full pointer-events-none"
         preserveAspectRatio="none"
-        preserveAspectRatio="none"
         viewBox="0 0 100 100"
         style={{ zIndex: 0 }}
         aria-hidden
