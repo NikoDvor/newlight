@@ -249,6 +249,16 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
     const prospect = reminder.prospects;
     if (!prospect) continue;
 
+    // Skip-if-already-passed: if the meeting time has already passed, or this reminder's
+    // scheduled send window has elapsed (meeting has started), don't send a late reminder.
+    const meetingWhen = meetingStatus?.meeting_date || prospect.meeting_date;
+    const nowMs = Date.now();
+    if (meetingWhen && new Date(meetingWhen).getTime() <= nowMs) {
+      await supabase.from("meeting_reminders").update({ status: "skipped" }).eq("id", reminder.id);
+      continue;
+    }
+
+
     // Build message content if not pre-built
     let messageContent = reminder.message_content;
     if (!messageContent && prospect) {
