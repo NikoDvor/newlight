@@ -235,7 +235,7 @@ export default function AdminTeam() {
   };
 
   const resetManualForm = () => {
-    setManualFullName(""); setManualEmail(""); setManualPassword("");
+    setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
     setManualRolePreset("bdr"); setManualDepartment(""); setManualJobTitle("");
     setManualClientId(""); setShowManualPassword(false);
   };
@@ -245,12 +245,21 @@ export default function AdminTeam() {
       toast.error("Full name, email, and temporary password are required"); return;
     }
     if (manualPassword.length < 8) { toast.error("Temporary password must be at least 8 characters"); return; }
+    const phoneTrimmed = manualPhone.trim();
+    const phoneRequired = ["bdr", "sdr"].includes(manualRolePreset);
+    if (phoneRequired && !phoneTrimmed) {
+      toast.error("Phone number is required for BDR/SDR"); return;
+    }
+    if (phoneTrimmed && !/^\+[1-9]\d{7,14}$/.test(phoneTrimmed)) {
+      toast.error("Phone must be in E.164 format (e.g. +18055551234)"); return;
+    }
     setManualLoading(true);
     try {
       const res = await supabase.functions.invoke("create-user-manual", {
         body: {
           full_name: manualFullName.trim(),
           email: manualEmail.trim(),
+          phone: phoneTrimmed || null,
           temporary_password: manualPassword,
           role_preset: manualRolePreset,
           department: manualDepartment.trim() || null,
@@ -271,6 +280,7 @@ export default function AdminTeam() {
     }
     setManualLoading(false);
   };
+
 
   const roleColor = (r: string) => {
     if (r === "admin") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-electric))]";
