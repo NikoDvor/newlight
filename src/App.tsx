@@ -250,6 +250,8 @@ const App = () => {
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
+              <Route path="/install" element={<Install />} />
+
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
