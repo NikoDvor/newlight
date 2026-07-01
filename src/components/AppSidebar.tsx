@@ -84,6 +84,7 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
+    type: "group", label: "Employee Hub",
     items: [
       { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
