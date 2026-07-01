@@ -240,6 +240,42 @@ export default function AdminTeam() {
     else { toast.success("Removed"); fetchData(); }
   };
 
+  const openEditEmail = (row: UserRow) => {
+    setEditEmailFor(row);
+    setEditEmailValue(row.email || "");
+  };
+
+  const handleEditEmailSubmit = async () => {
+    if (!editEmailFor) return;
+    const newEmail = editEmailValue.trim().toLowerCase();
+    if (!newEmail) { toast.error("Email is required"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      toast.error("Invalid email format"); return;
+    }
+    if (newEmail.length > 255) { toast.error("Email must be under 255 characters"); return; }
+    if (newEmail === (editEmailFor.email || "").toLowerCase()) {
+      toast.error("New email is the same as the current email"); return;
+    }
+    setEditEmailLoading(true);
+    try {
+      const res = await supabase.functions.invoke("update-user-email", {
+        body: { user_id: editEmailFor.user_id, new_email: newEmail },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "Failed to update email");
+      } else {
+        toast.success("Email updated");
+        setEditEmailFor(null);
+        setEditEmailValue("");
+        fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update email");
+    }
+    setEditEmailLoading(false);
+  };
+
+
   const resetManualForm = () => {
     setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
     setManualRolePreset("bdr"); setManualDepartment(""); setManualJobTitle("");
