@@ -138,13 +138,41 @@ Deno.serve(async (req) => {
     const shouldEmail = send_email ?? (preferred_contact_method === "email" || preferred_contact_method === "both");
     const shouldSms = send_sms ?? ((preferred_contact_method === "sms" || preferred_contact_method === "both") && sms_consent && owner_phone);
 
+    const emailHtml = buildEmailHtml({ businessName: displayName, ownerName: owner_name, downloadUrl, brandColor, logoUrl });
+
     // ── EMAIL ────────────────────────────────────────────────────────
     if (shouldEmail) {
-      // Email delivery requires a configured email domain (Lovable Cloud Emails).
-      // The invite email from Supabase Auth is the primary delivery channel.
-      // This handoff message is supplementary — mark honestly.
-      result.email_status = "not_configured";
-      result.email_error = "Transactional email not configured — set up an email domain in Cloud to enable branded handoff emails";
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey) {
+        try {
+          const emailResponse = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "NewLight <noreply@newlightgen.com>",
+              to: [owner_email],
+              subject: `Your ${displayName} app is ready`,
+              html: emailHtml,
+            }),
+          });
+          if (emailResponse.ok) {
+            result.email_status = "sent";
+          } else {
+            const errData = await emailResponse.text();
+            result.email_status = "failed";
+            result.email_error = `Email send failed [${emailResponse.status}]: ${errData.substring(0, 200)}`;
+          }
+        } catch (e) {
+          result.email_status = "failed";
+          result.email_error = (e as Error).message;
+        }
+      } else {
+        result.email_status = "not_configured";
+        result.email_error = "Email provider not connected — set RESEND_API_KEY secret to enable";
+      }
     }
 
     // ── SMS ──────────────────────────────────────────────────────────
@@ -217,7 +245,6 @@ Deno.serve(async (req) => {
       }),
     ]);
 
-    const emailHtml = buildEmailHtml({ businessName: displayName, ownerName: owner_name, downloadUrl, brandColor, logoUrl });
 
     return new Response(
       JSON.stringify({

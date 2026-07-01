@@ -486,7 +486,37 @@ async function sendSms(to: string, body: string): Promise<boolean> {
 }
 
 async function sendEmail(to: string, subject: string, body: string): Promise<boolean> {
-  // Email sending - log for now, will integrate with email provider
-  console.log(`[EMAIL QUEUED] To: ${to} | Subject: ${subject} | Body: ${body.substring(0, 100)}...`);
-  return false; // Return false so it stays queued for retry when email is configured
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - no RESEND_API_KEY] To: ${to} | Subject: ${subject}`);
+    return false;
+  }
+
+  try {
+    const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;line-height:1.6;white-space:pre-wrap;">${body.replace(/</g, "&lt;")}</div>`;
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "NewLight <noreply@newlightgen.com>",
+        to: [to],
+        subject,
+        text: body,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Resend error:", response.status, err);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Email send error:", e);
+    return false;
+  }
 }
