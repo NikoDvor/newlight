@@ -17,11 +17,14 @@ const templates = {
   reminder_24h: (p: any) =>
     `Reminder: Your strategy session for ${p.business_name} is tomorrow at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 Demo App: ${p.demo_app_link}\n🌐 Website: ${p.demo_website_link}\n📊 Analysis: ${p.audit_link}\n\n` : "We're finalizing your custom materials. "}Need to reschedule? ${p.cancel_link}`,
 
-  reminder_3h: (p: any) =>
-    `${p.full_name}, your strategy session is in 3 hours at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `Review your materials:\n📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Can't make it? ${p.cancel_link}`,
+  reminder_4h: (p: any) =>
+    `${p.full_name}, your strategy session is in 4 hours at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `Review your materials:\n📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Can't make it? ${p.cancel_link}`,
 
-  reminder_30m: (p: any) =>
-    `Starting in 30 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
+  reminder_1h: (p: any) =>
+    `${p.full_name}, your strategy session for ${p.business_name} starts in 1 hour at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Need to cancel? ${p.cancel_link}`,
+
+  reminder_15m: (p: any) =>
+    `Starting in 15 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
 
   cancellation_confirmation: (p: any) =>
     `Your meeting for ${p.business_name} has been cancelled. Reason: ${p.cancellation_reason || "Not specified"}. To rebook, visit our website or reply to this message.`,
