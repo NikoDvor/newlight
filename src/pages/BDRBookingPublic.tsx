@@ -261,7 +261,22 @@ export default function BDRBookingPublic() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
-  if (!cal) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)] text-white/60">Booking link not found.</div>;
+  if (!cal) return (
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)] p-4">
+      <div className="max-w-md w-full text-center space-y-4 p-8 rounded-xl border border-white/10 bg-white/[0.03]">
+        <h1 className="text-xl font-bold text-white">This booking link is no longer active</h1>
+        <p className="text-sm text-white/60">It may have expired or been replaced with a new one.</p>
+        <div className="space-y-1 text-sm">
+          <a href="tel:+18058363557" className="block text-[hsl(211,96%,68%)] hover:text-[hsl(211,96%,56%)] transition-colors">
+            (805) 836-3557
+          </a>
+          <a href="mailto:team@newlightgen.com" className="block text-[hsl(211,96%,68%)] hover:text-[hsl(211,96%,56%)] transition-colors">
+            team@newlightgen.com
+          </a>
+        </div>
+      </div>
+    </div>
+  );
   if (!cal.booking_active) return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)] p-4">
       <div className="max-w-md w-full text-center space-y-3 p-8 rounded-xl border border-white/10 bg-white/[0.03]">
