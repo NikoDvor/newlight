@@ -926,7 +926,7 @@ export type Database = {
             foreignKeyName: "bdr_calendars_booking_form_id_fkey"
             columns: ["booking_form_id"]
             isOneToOne: false
-            referencedRelation: "forms"
+            referencedRelation: "client_forms"
             referencedColumns: ["id"]
           },
           {
