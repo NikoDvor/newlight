@@ -126,27 +126,24 @@ async function queueBookingConfirmation(supabase: any, body: any, supabaseUrl: s
   const internalMsg = templates.internal_notification(msgData, "Meeting Booked");
   await queueReminder(supabase, prospect_id, "booking_confirmation", "internal", internalMsg, new Date().toISOString());
 
-  // Schedule future reminders
+  // Schedule future reminders (SMS only, at 24h / 4h / 1h / 15min before the meeting)
   const mtgDate = new Date(meeting_date || prospect.meeting_date);
   const now = new Date();
 
-  const hoursUntil = (mtgDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  const reminderOffsets: Array<{ type: string; ms: number }> = [
+    { type: "reminder_24h", ms: 24 * 60 * 60 * 1000 },
+    { type: "reminder_4h", ms: 4 * 60 * 60 * 1000 },
+    { type: "reminder_1h", ms: 1 * 60 * 60 * 1000 },
+    { type: "reminder_15m", ms: 15 * 60 * 1000 },
+  ];
 
-  if (hoursUntil > 24) {
-    const r24 = new Date(mtgDate.getTime() - 24 * 60 * 60 * 1000);
-    await queueReminder(supabase, prospect_id, "reminder_24h", "sms", null, r24.toISOString());
-    await queueReminder(supabase, prospect_id, "reminder_24h", "email", null, r24.toISOString());
+  for (const { type, ms } of reminderOffsets) {
+    const sendAt = new Date(mtgDate.getTime() - ms);
+    // Skip if the scheduled send time is already in the past
+    if (sendAt.getTime() <= now.getTime()) continue;
+    await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
   }
 
-  if (hoursUntil > 3) {
-    const r3 = new Date(mtgDate.getTime() - 3 * 60 * 60 * 1000);
-    await queueReminder(supabase, prospect_id, "reminder_3h", "sms", null, r3.toISOString());
-    await queueReminder(supabase, prospect_id, "reminder_3h", "email", null, r3.toISOString());
-  }
-
-  const r30 = new Date(mtgDate.getTime() - 30 * 60 * 1000);
-  await queueReminder(supabase, prospect_id, "reminder_30m", "sms", null, r30.toISOString());
-  await queueReminder(supabase, prospect_id, "reminder_30m", "email", null, r30.toISOString());
 
   // Update prospect stage
   await supabase.from("prospects").update({ stage: "booking_submitted", meeting_date: meeting_date || prospect.meeting_date }).eq("id", prospect_id);
