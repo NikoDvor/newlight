@@ -26,6 +26,12 @@ const templates = {
   reminder_15m: (p: any) =>
     `Starting in 15 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
 
+  reminder_24h_bdr: (p: any) =>
+    `[NewLight] Reminder: You have a strategy session tomorrow at ${formatTime(p.meeting_date)} with ${p.full_name} (${p.business_name}). Prep your materials.`,
+
+  reminder_1h_bdr: (p: any) =>
+    `[NewLight] Heads up: Your strategy session with ${p.full_name} (${p.business_name}) starts in 1 hour at ${formatTime(p.meeting_date)}.`,
+
   cancellation_confirmation: (p: any) =>
     `Your meeting for ${p.business_name} has been cancelled. Reason: ${p.cancellation_reason || "Not specified"}. To rebook, visit our website or reply to this message.`,
 
