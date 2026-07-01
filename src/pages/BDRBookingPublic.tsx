@@ -276,6 +276,23 @@ export default function BDRBookingPublic() {
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </Field>
+            <Field label="What are you looking to improve? (optional)">
+              <select
+                value={contact.improvement_area}
+                onChange={e => setContact({ ...contact, improvement_area: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                <option value="Lead Generation & More Customers" className="bg-[hsl(215,35%,12%)]">Lead Generation & More Customers</option>
+                <option value="Appointment Booking & Follow-Up" className="bg-[hsl(215,35%,12%)]">Appointment Booking & Follow-Up</option>
+                <option value="CRM & Pipeline Management" className="bg-[hsl(215,35%,12%)]">CRM & Pipeline Management</option>
+                <option value="Social Media & Content" className="bg-[hsl(215,35%,12%)]">Social Media & Content</option>
+                <option value="Website & Online Presence" className="bg-[hsl(215,35%,12%)]">Website & Online Presence</option>
+                <option value="Ads & Paid Marketing" className="bg-[hsl(215,35%,12%)]">Ads & Paid Marketing</option>
+                <option value="SEO & AI Visibility" className="bg-[hsl(215,35%,12%)]">SEO & AI Visibility</option>
+                <option value="Other" className="bg-[hsl(215,35%,12%)]">Other</option>
+              </select>
+            </Field>
             <Field label="Preferred time *">
               <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
