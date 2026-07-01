@@ -77,7 +77,7 @@ export default function BDRBookingPublic() {
   const [savedSubmissionId, setSavedSubmissionId] = useState<string | null>(null);
 
   // Step 2 (time slot + contact) state
-  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
+  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "", improvement_area: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
 
   useEffect(() => {
