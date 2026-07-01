@@ -2,11 +2,12 @@ import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Sparkles, Brain,
   Globe, Search, Megaphone, Share2, Users,
-  Calendar, FileText, CreditCard,
+  Calendar, FileText, CreditCard, Star,
   ChevronLeft, ChevronDown, Wallet, HelpCircle,
   Headphones, BookOpen, ClipboardList, BarChart3,
   Briefcase, LifeBuoy, UserCog, Activity,
-  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle
+  Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
+  Workflow, Shield, Gift
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
