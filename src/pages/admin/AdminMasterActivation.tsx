@@ -188,6 +188,53 @@ export default function AdminMasterActivation() {
             setDraftStatus("in_progress");
           }
         }
+
+        // ── Look up matching BDR lead by owner_email (fallback: phone) and
+        // pre-fill the wizard from its improvement_area answer. Runs after
+        // client + draft load so pre-fill can layer over the initial form.
+        try {
+          const email = (client as any).owner_email || null;
+          const phone = (client as any).owner_phone || (client as any).phone || null;
+          const hasDraft = !!(drafts && drafts.length > 0);
+
+          let leadRow: any = null;
+          if (email) {
+            const { data } = await supabase
+              .from("nl_bdr_leads")
+              .select("improvement_area, owner_email, phone")
+              .eq("owner_email", email)
+              .not("improvement_area", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            leadRow = data;
+          }
+          if (!leadRow && phone) {
+            const { data } = await supabase
+              .from("nl_bdr_leads")
+              .select("improvement_area, owner_email, phone")
+              .eq("phone", phone)
+              .not("improvement_area", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            leadRow = data;
+          }
+
+          const area: string | null = leadRow?.improvement_area || null;
+          if (area && IMPROVEMENT_TO_MODULES[area]) {
+            const modules = IMPROVEMENT_TO_MODULES[area];
+            setBookingImprovement(area);
+            setBookingModules(modules);
+            // Only overwrite flags for a fresh wizard (no saved draft) so we
+            // don't stomp admin edits made in a resumed draft.
+            if (!hasDraft && modules.length > 0) {
+              setForm(prev => applyModulePreselection(prev, modules));
+            }
+          }
+        } catch {
+          // silent — pre-fill is best-effort
+        }
       } catch {
         toast.error("Failed to load client data");
       } finally {
