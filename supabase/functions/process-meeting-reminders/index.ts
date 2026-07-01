@@ -470,7 +470,7 @@ async function sendSms(to: string, body: string): Promise<boolean> {
         "X-Connection-Api-Key": TWILIO_API_KEY,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: to, From: Deno.env.get("TWILIO_FROM_NUMBER") || "+18058363557", Body: body }),
+      body: new URLSearchParams({ To: to, From: Deno.env.get("TWILIO_FROM_NUMBER") || "+18058940908", Body: body }),
     });
 
     if (!response.ok) {
