@@ -1,0 +1,1 @@
+ALTER TABLE public.bdr_calendars ADD COLUMN IF NOT EXISTS booking_form_id uuid REFERENCES public.forms(id) ON DELETE SET NULL;
