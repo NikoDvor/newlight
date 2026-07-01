@@ -184,6 +184,67 @@ Deno.serve(async (req) => {
     }
     console.log(`[BDR contact] user_id=${bdrUserId} name="${bdrName}" phone="${bdrPhone}" email="${bdrEmail}"`);
 
+    // ---- Kick off notification + provisioning chain in the background ------
+    // pg_net (the webhook caller) waits at most 5s for a response. Everything
+    // below — provision-from-booking, SMS to client, SMS to BDR, Resend email,
+    // temp password issuance, follow-up SMS — is decoupled via
+    // EdgeRuntime.waitUntil so the isolate stays alive after we return 202.
+    const contacts = {
+      clientName, clientPhone, clientEmail,
+      bdrUserId, bdrPhone, bdrEmail, bdrName,
+      startsAt, meta, recordId: record.id as string,
+    };
+
+    // deno-lint-ignore no-explicit-any
+    const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
+    const bgTask = runNotifications(supabase, record, contacts).catch((e) => {
+      console.error("[booking-confirmation-sms] runNotifications uncaught:", e);
+    });
+    if (typeof waitUntil === "function") {
+      waitUntil(bgTask);
+    } else {
+      // Fallback: no waitUntil available (e.g. local dev) — do not await, but
+      // also do not lose the promise. Best-effort.
+      console.warn("[booking-confirmation-sms] EdgeRuntime.waitUntil unavailable; running detached");
+      void bgTask;
+    }
+
+    return new Response(
+      JSON.stringify({ accepted: true, booking_id: record.id }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (err) {
+    console.error("booking-confirmation-sms error:", err);
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Background: full notification + provisioning chain. Wrapped in try/catch so
+// no failure inside can crash the isolate — the HTTP response has already been
+// sent by the time this runs.
+// ---------------------------------------------------------------------------
+async function runNotifications(
+  supabase: ReturnType<typeof createClient>,
+  record: any,
+  contacts: {
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    bdrUserId: string | undefined;
+    bdrPhone: string;
+    bdrEmail: string;
+    bdrName: string;
+    startsAt: string;
+    meta: Record<string, any>;
+    recordId: string;
+  },
+): Promise<void> {
+  try {
+    const { clientName, clientPhone, clientEmail, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
     const when = formatDateTime(startsAt);
 
     // --- 1. SMS to client ----------------------------------------------------
@@ -193,7 +254,7 @@ Deno.serve(async (req) => {
       clientSent = await sendSms(clientPhone, clientMsg);
       console.log(`[SMS→client] to=${clientPhone} success=${clientSent}`);
     } else {
-      console.warn("No client phone available for booking", record.id);
+      console.warn("No client phone available for booking", recordId);
     }
 
     // --- 2. SMS to BDR -------------------------------------------------------
@@ -234,7 +295,6 @@ Deno.serve(async (req) => {
       console.warn("No BDR email available for user", bdrUserId);
     }
 
-
     // --- 3. Provision client workspace + temp password -----------------------
     let tempPassword: string | null = null;
     let provisionOk = false;
@@ -254,7 +314,7 @@ Deno.serve(async (req) => {
             contact_email: clientEmail,
             contact_phone: clientPhone || null,
             industry,
-            appointment_id: record.id,
+            appointment_id: recordId,
             main_goal: meta.improvement_area || null,
             interested_service: meta.improvement_area || null,
             preferred_contact_method: clientPhone ? "sms" : "email",
@@ -328,8 +388,9 @@ Deno.serve(async (req) => {
         emailHtml,
         emailText,
       );
+      console.log(`[EMAIL→client] to=${clientEmail} success=${clientEmailSent}`);
     } else {
-      console.warn("No client email available for booking", record.id);
+      console.warn("No client email available for booking", recordId);
     }
 
     // --- 5. Follow-up SMS to client with credentials -------------------------
@@ -339,30 +400,9 @@ Deno.serve(async (req) => {
       console.log(`[SMS→client creds] to=${clientPhone} success=${credsSent}`);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        booking_id: record.id,
-        client_sent: clientSent,
-        client_phone_present: Boolean(clientPhone),
-        client_email_sent: clientEmailSent,
-        client_email_present: Boolean(clientEmail),
-        bdr_sent: bdrSent,
-        bdr_phone_present: Boolean(bdrPhone),
-        bdr_email_sent: bdrEmailSent,
-        bdr_email_present: Boolean(bdrEmail),
-        bdr_name: bdrName || null,
-        provisioned: provisionOk,
-        workspace_url: workspaceUrl,
-        temp_password_issued: Boolean(tempPassword),
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    console.log(`[booking-confirmation-sms] background chain complete for booking=${recordId} client_sms=${clientSent} bdr_sms=${bdrSent} bdr_email=${bdrEmailSent} provisioned=${provisionOk} client_email=${clientEmailSent} temp_password=${Boolean(tempPassword)}`);
   } catch (err) {
-    console.error("booking-confirmation-sms error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("[booking-confirmation-sms] runNotifications fatal:", err);
   }
-});
+}
+
