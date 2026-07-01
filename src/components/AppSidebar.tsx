@@ -37,12 +37,14 @@ const navStructure: NavEntry[] = [
   { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
   { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
-    type: "group", label: "Growth",
+    type: "group", label: "Growth Systems",
     items: [
       { title: "Website", url: "/website", icon: Globe, moduleKey: "website" },
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
+      { title: "AI Visibility", url: "/ai-visibility", icon: Sparkles, moduleKey: "ai_visibility" },
+      { title: "Tracking & Attribution", url: "/tracking-attribution", icon: TrendingUp, moduleKey: "tracking" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Tasks", url: "/tasks", icon: ListChecks },
       { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
