@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       email,
       password: temporaryPassword,
       email_confirm: true,
-      user_metadata: { full_name: fullName, role_preset: rolePreset, created_manually: true },
+      user_metadata: { full_name: fullName, role_preset: rolePreset, created_manually: true, ...(phone ? { phone } : {}) },
     });
 
     let userId: string | undefined = created?.user?.id;
