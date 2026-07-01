@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     const when = formatDateTime(startsAt);
 
     // --- 1. SMS to client ----------------------------------------------------
-    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557`;
+    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
     let clientSent = false;
     if (clientPhone) {
       clientSent = await sendSms(clientPhone, clientMsg);

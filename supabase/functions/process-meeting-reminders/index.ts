@@ -26,6 +26,12 @@ const templates = {
   reminder_15m: (p: any) =>
     `Starting in 15 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
 
+  reminder_24h_bdr: (p: any) =>
+    `[NewLight] Reminder: You have a strategy session tomorrow at ${formatTime(p.meeting_date)} with ${p.full_name} (${p.business_name}). Prep your materials.`,
+
+  reminder_1h_bdr: (p: any) =>
+    `[NewLight] Heads up: Your strategy session with ${p.full_name} (${p.business_name}) starts in 1 hour at ${formatTime(p.meeting_date)}.`,
+
   cancellation_confirmation: (p: any) =>
     `Your meeting for ${p.business_name} has been cancelled. Reason: ${p.cancellation_reason || "Not specified"}. To rebook, visit our website or reply to this message.`,
 
@@ -140,6 +146,17 @@ async function queueBookingConfirmation(supabase: any, body: any, supabaseUrl: s
   for (const { type, ms } of reminderOffsets) {
     const sendAt = new Date(mtgDate.getTime() - ms);
     // Skip if the scheduled send time is already in the past
+    if (sendAt.getTime() <= now.getTime()) continue;
+    await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
+  }
+
+  // BDR (salesman) reminders — only 24h + 1h so they're prepared without spam
+  const bdrOffsets: Array<{ type: string; ms: number }> = [
+    { type: "reminder_24h_bdr", ms: 24 * 60 * 60 * 1000 },
+    { type: "reminder_1h_bdr", ms: 1 * 60 * 60 * 1000 },
+  ];
+  for (const { type, ms } of bdrOffsets) {
+    const sendAt = new Date(mtgDate.getTime() - ms);
     if (sendAt.getTime() <= now.getTime()) continue;
     await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
   }
@@ -260,6 +277,32 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
 
 
     // Build message content if not pre-built
+    const isBdrReminder = reminder.reminder_type.endsWith("_bdr");
+
+    // Resolve BDR phone if this is a BDR-targeted reminder
+    let bdrPhone = "";
+    let bdrName = "";
+    if (isBdrReminder) {
+      const bdrUserId =
+        meetingStatus?.assigned_salesman || prospect.assigned_to || null;
+      if (bdrUserId) {
+        try {
+          const { data: userResp } = await supabase.auth.admin.getUserById(bdrUserId);
+          const u = userResp?.user;
+          if (u) {
+            bdrPhone = u.phone || (u.user_metadata as any)?.phone || "";
+            bdrName =
+              (u.user_metadata as any)?.full_name ||
+              (u.user_metadata as any)?.name ||
+              u.email ||
+              "";
+          }
+        } catch (e) {
+          console.error("BDR lookup failed:", e);
+        }
+      }
+    }
+
     let messageContent = reminder.message_content;
     if (!messageContent && prospect) {
       const cancelLink = meetingStatus?.cancellation_token
@@ -273,6 +316,7 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
         demo_app_link: meetingStatus?.demo_app_link || "",
         demo_website_link: meetingStatus?.demo_website_link || "",
         audit_link: meetingStatus?.audit_link || "",
+        bdr_name: bdrName,
       };
 
       const templateFn = (templates as any)[reminder.reminder_type];
@@ -281,10 +325,11 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
 
     // Attempt to send via configured channels
     let sendSuccess = false;
+    const smsRecipient = isBdrReminder ? bdrPhone : prospect.phone;
     try {
-      if (reminder.channel === "sms" && prospect.phone) {
-        sendSuccess = await sendSms(prospect.phone, messageContent || "");
-      } else if (reminder.channel === "email" && prospect.email) {
+      if (reminder.channel === "sms" && smsRecipient) {
+        sendSuccess = await sendSms(smsRecipient, messageContent || "");
+      } else if (reminder.channel === "email" && prospect.email && !isBdrReminder) {
         sendSuccess = await sendEmail(prospect.email, `NewLight - ${reminder.reminder_type.replace(/_/g, " ")}`, messageContent || "");
       } else if (reminder.channel === "internal") {
         sendSuccess = true; // Internal notifications are logged
@@ -298,10 +343,10 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
       prospect_id: reminder.prospect_id,
       channel: reminder.channel,
       template_name: reminder.reminder_type,
-      recipient: reminder.channel === "sms" ? (prospect.phone || "") : (prospect.email || ""),
+      recipient: reminder.channel === "sms" ? (smsRecipient || "") : (prospect.email || ""),
       status: sendSuccess ? "sent" : "queued",
       message_body: messageContent,
-      metadata: { reminder_id: reminder.id },
+      metadata: { reminder_id: reminder.id, bdr: isBdrReminder || undefined },
     });
 
     // Update reminder status
