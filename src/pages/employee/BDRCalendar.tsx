@@ -580,6 +580,8 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [bookingDesc, setBookingDesc] = useState(calendar.booking_description || "");
   const [bookingActive, setBookingActive] = useState(calendar.booking_active);
   const [roundRobin, setRoundRobin] = useState<boolean>((calendar as any).round_robin_pool ?? false);
+  const [bookingFormId, setBookingFormId] = useState<string>((calendar as any).booking_form_id ?? "");
+  const [availableForms, setAvailableForms] = useState<Array<{ id: string; form_name: string }>>([]);
   const [availability, setAvailability] = useState(calendar.availability);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -592,9 +594,19 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setBookingDesc(calendar.booking_description || "");
       setBookingActive(calendar.booking_active);
       setRoundRobin((calendar as any).round_robin_pool ?? false);
+      setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
+      (async () => {
+        const { data } = await (supabase as any)
+          .from("forms")
+          .select("id, form_name, is_active")
+          .eq("is_active", true)
+          .order("form_name", { ascending: true });
+        setAvailableForms((data || []).map((f: any) => ({ id: f.id, form_name: f.form_name })));
+      })();
     }
   }, [open, calendar]);
+
 
   const updateDay = (key: string, patch: Partial<{ enabled: boolean; start: string; end: string }>) => {
     setAvailability(prev => ({
