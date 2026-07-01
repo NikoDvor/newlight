@@ -10,6 +10,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -25,12 +27,24 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // 1. Find the originating calendar
-    const { data: originCal, error: calErr } = await supabase
+    // 1. Find the originating calendar by booking slug first, then UUID fallback.
+    const lookupValue = String(booking_slug).trim();
+    const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
       .select("id, user_id, client_id, name, booking_active, round_robin_pool")
-      .eq("booking_slug", booking_slug)
+      .eq("booking_slug", lookupValue)
       .maybeSingle();
+    let originCal = slugCal;
+    let calErr = slugErr;
+    if (!originCal && uuidRegex.test(lookupValue)) {
+      const { data: idCal, error: idErr } = await supabase
+        .from("bdr_calendars")
+        .select("id, user_id, client_id, name, booking_active, round_robin_pool")
+        .eq("id", lookupValue)
+        .maybeSingle();
+      originCal = idCal;
+      calErr = idErr || calErr;
+    }
     if (calErr || !originCal) {
       return new Response(JSON.stringify({ error: "Booking link not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
