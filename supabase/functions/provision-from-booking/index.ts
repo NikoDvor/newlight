@@ -132,15 +132,35 @@ const DEFAULT_CONTENT_BLOCKS = [
   { page_key: "home", block_key: "contact", block_type: "contact", block_label: "Contact", display_order: 4, content_json: { title: "Get In Touch", phone: "", email: "", address: "" }, is_active: true },
 ];
 
-const DEFAULT_SETUP_ITEMS: { item_key: string; title: string; category: string; display_order: number }[] = [
-  { item_key: "brand_logo", title: "Upload your logo", category: "branding", display_order: 1 },
-  { item_key: "brand_colors", title: "Set brand colors", category: "branding", display_order: 2 },
-  { item_key: "services_configured", title: "Configure your services", category: "services", display_order: 3 },
-  { item_key: "calendar_availability", title: "Set calendar availability", category: "calendar", display_order: 4 },
-  { item_key: "team_invited", title: "Invite your team", category: "team", display_order: 5 },
-  { item_key: "forms_reviewed", title: "Review intake forms", category: "forms", display_order: 6 },
-  { item_key: "integrations_connected", title: "Connect integrations", category: "integrations", display_order: 7 },
-  { item_key: "first_contact_added", title: "Add your first contact", category: "crm", display_order: 8 },
+// Canonical setup items — mirrors src/lib/setupItemsSeeder.ts (DEFAULT_SETUP_ITEMS).
+// Table columns: category, item_key, item_label, item_status, submitted_by_client (NOT NULL).
+const DEFAULT_SETUP_ITEMS: { category: string; item_key: string; item_label: string; submitted_by_client: boolean }[] = [
+  { category: "branding", item_key: "logo_primary", item_label: "Primary Logo", submitted_by_client: true },
+  { category: "branding", item_key: "logo_secondary", item_label: "Secondary / Icon Logo", submitted_by_client: true },
+  { category: "branding", item_key: "brand_colors", item_label: "Brand Colors", submitted_by_client: true },
+  { category: "branding", item_key: "brand_fonts", item_label: "Brand Fonts / Guidelines", submitted_by_client: true },
+  { category: "website", item_key: "domain_access", item_label: "Domain Registrar Access", submitted_by_client: true },
+  { category: "website", item_key: "website_platform", item_label: "Website Platform Access", submitted_by_client: true },
+  { category: "website", item_key: "hosting_access", item_label: "Hosting / DNS Access", submitted_by_client: true },
+  { category: "services", item_key: "service_list", item_label: "Service / Product List", submitted_by_client: true },
+  { category: "services", item_key: "pricing_info", item_label: "Pricing Information", submitted_by_client: true },
+  { category: "services", item_key: "service_areas", item_label: "Service Areas / Locations", submitted_by_client: true },
+  { category: "team", item_key: "business_hours", item_label: "Business Hours", submitted_by_client: true },
+  { category: "team", item_key: "team_members", item_label: "Team Members & Roles", submitted_by_client: true },
+  { category: "team", item_key: "team_headshots", item_label: "Team Headshots / Bios", submitted_by_client: true },
+  { category: "calendar", item_key: "calendar_access", item_label: "Calendar Platform Access", submitted_by_client: true },
+  { category: "calendar", item_key: "booking_preferences", item_label: "Booking Preferences", submitted_by_client: true },
+  { category: "messaging", item_key: "phone_number", item_label: "Business Phone Number", submitted_by_client: true },
+  { category: "messaging", item_key: "email_accounts", item_label: "Business Email Accounts", submitted_by_client: true },
+  { category: "integrations", item_key: "google_access", item_label: "Google Business / Analytics Access", submitted_by_client: true },
+  { category: "integrations", item_key: "social_access", item_label: "Social Media Account Access", submitted_by_client: true },
+  { category: "integrations", item_key: "ad_accounts", item_label: "Ad Account Access (Google/Meta)", submitted_by_client: true },
+  { category: "billing", item_key: "billing_contact", item_label: "Billing Contact Info", submitted_by_client: true },
+  { category: "billing", item_key: "payment_method", item_label: "Payment Method on File", submitted_by_client: false },
+  { category: "internal", item_key: "crm_setup", item_label: "CRM Pipeline Setup", submitted_by_client: false },
+  { category: "internal", item_key: "automation_config", item_label: "Automation Configuration", submitted_by_client: false },
+  { category: "internal", item_key: "reporting_setup", item_label: "Reporting Dashboard Setup", submitted_by_client: false },
+  { category: "internal", item_key: "launch_review", item_label: "Final Launch Review", submitted_by_client: false },
 ];
 
 async function provisionWorkspaceDefaults(
