@@ -93,11 +93,12 @@ export default function BDRBookingPublic() {
       // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
       if (data?.booking_form_id) {
         const formId = data.booking_form_id as string;
-        const { data: fd } = await (supabase as any)
+        const { data: fd, error: fdErr } = await (supabase as any)
           .from("client_forms")
           .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message")
           .eq("id", formId)
           .maybeSingle();
+        console.log("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
         if (fd) {
           setFormDef({
             id: fd.id,
@@ -109,7 +110,18 @@ export default function BDRBookingPublic() {
           const requiredKeys: string[] = Array.isArray(fd.required_fields)
             ? fd.required_fields.map((r: any) => String(r))
             : [];
-          const questions: any[] = Array.isArray(fd.intake_questions) ? fd.intake_questions : [];
+          let questions: any[] = Array.isArray(fd.intake_questions) ? fd.intake_questions : [];
+          // Fallback: form exists but has no configured questions — render a sensible default intake.
+          if (questions.length === 0) {
+            questions = [
+              { id: "full_name", label: "Your full name", type: "text", required: true },
+              { id: "business_name", label: "Business name", type: "text", required: true },
+              { id: "email", label: "Email", type: "email", required: true },
+              { id: "phone", label: "Phone", type: "phone", required: true },
+              { id: "goals", label: "What are you hoping to improve?", type: "textarea", required: false },
+            ];
+            console.log("[BDRBookingPublic] intake_questions empty — using default intake fields");
+          }
           const mapped: FormField[] = questions.map((q: any, idx: number) => {
             const key = String(q.id ?? q.key ?? q.field_key ?? `q_${idx}`);
             return {
@@ -124,9 +136,11 @@ export default function BDRBookingPublic() {
               options_json: q.options ?? q.options_json ?? null,
             };
           }).sort((a, b) => a.field_order - b.field_order);
+          console.log("[BDRBookingPublic] mapped form fields:", mapped);
           setFormFields(mapped);
           if (mapped.length === 0) setFormStepComplete(true);
         } else {
+          console.warn("[BDRBookingPublic] booking_form_id set but client_forms row not visible (RLS?)");
           setFormStepComplete(true);
         }
       } else {

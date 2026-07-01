@@ -111,7 +111,7 @@ export default function BDRCalendar() {
     return m;
   }, [visibleEvents]);
 
-  const bookingUrl = calendar?.booking_slug ? `${window.location.origin}/bdr/book/${calendar.booking_slug}` : "";
+  const bookingUrl = calendar?.booking_slug ? `https://newlight-app.com/bdr/book/${calendar.booking_slug}` : "";
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
