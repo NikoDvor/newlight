@@ -90,24 +90,45 @@ export default function BDRBookingPublic() {
         .maybeSingle();
       setCal(data);
 
-      // If a form is assigned, load its definition + fields via anon-readable endpoints.
+      // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
       if (data?.booking_form_id) {
         const formId = data.booking_form_id as string;
-        const [{ data: fd }, { data: ff }] = await Promise.all([
-          (supabase as any)
-            .from("forms")
-            .select("id, form_name, intro_text, button_text, client_id")
-            .eq("id", formId)
-            .eq("is_active", true)
-            .maybeSingle(),
-          (supabase as any)
-            .from("form_fields")
-            .select("id, field_label, field_key, field_type, placeholder_text, help_text, is_required, field_order, options_json")
-            .eq("form_id", formId)
-            .order("field_order", { ascending: true }),
-        ]);
-        setFormDef(fd || null);
-        setFormFields((ff || []) as FormField[]);
+        const { data: fd } = await (supabase as any)
+          .from("client_forms")
+          .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message")
+          .eq("id", formId)
+          .maybeSingle();
+        if (fd) {
+          setFormDef({
+            id: fd.id,
+            form_name: fd.form_name,
+            intro_text: fd.confirmation_message || null,
+            button_text: null,
+            client_id: fd.client_id,
+          });
+          const requiredKeys: string[] = Array.isArray(fd.required_fields)
+            ? fd.required_fields.map((r: any) => String(r))
+            : [];
+          const questions: any[] = Array.isArray(fd.intake_questions) ? fd.intake_questions : [];
+          const mapped: FormField[] = questions.map((q: any, idx: number) => {
+            const key = String(q.id ?? q.key ?? q.field_key ?? `q_${idx}`);
+            return {
+              id: key,
+              field_label: String(q.label ?? q.field_label ?? key),
+              field_key: key,
+              field_type: String(q.type ?? q.field_type ?? "text"),
+              placeholder_text: q.placeholder ?? q.placeholder_text ?? null,
+              help_text: q.help ?? q.help_text ?? null,
+              is_required: Boolean(q.required ?? q.is_required ?? requiredKeys.includes(key)),
+              field_order: Number(q.order ?? idx),
+              options_json: q.options ?? q.options_json ?? null,
+            };
+          }).sort((a, b) => a.field_order - b.field_order);
+          setFormFields(mapped);
+          if (mapped.length === 0) setFormStepComplete(true);
+        } else {
+          setFormStepComplete(true);
+        }
       } else {
         // No form => Step 1 is a no-op; go straight to Step 2.
         setFormStepComplete(true);
