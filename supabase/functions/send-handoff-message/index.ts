@@ -245,7 +245,6 @@ Deno.serve(async (req) => {
       }),
     ]);
 
-    const emailHtml = buildEmailHtml({ businessName: displayName, ownerName: owner_name, downloadUrl, brandColor, logoUrl });
 
     return new Response(
       JSON.stringify({
