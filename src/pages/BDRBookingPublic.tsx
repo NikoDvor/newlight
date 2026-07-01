@@ -83,17 +83,40 @@ export default function BDRBookingPublic() {
   useEffect(() => {
     (async () => {
       if (!slug) return;
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      const lookupValue = decodeURIComponent(slug).trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lookupValue);
       const cols = "id, client_id, name, booking_slug, availability, timezone, booking_title, booking_description, booking_active, booking_form_id";
-      // Try slug first, then id (supports both /bdr/book/{slug} and /bdr/book/{uuid}).
-      let { data, error: calErr } = await (supabase as any)
-        .from("bdr_calendars").select(cols).eq("booking_slug", slug).maybeSingle();
+      // Supports both /bdr/book/{booking_slug} and /bdr/book/{calendar_uuid}.
+      const slugLookup = await (supabase as any)
+        .from("bdr_calendars")
+        .select(cols)
+        .eq("booking_slug", lookupValue)
+        .maybeSingle();
+      let data = slugLookup.data;
+      let calErr = slugLookup.error;
+      let lookupMode: "booking_slug" | "id" = "booking_slug";
       if (!data && isUuid) {
-        const alt = await (supabase as any)
-          .from("bdr_calendars").select(cols).eq("id", slug).maybeSingle();
-        data = alt.data; calErr = alt.error;
+        const idLookup = await (supabase as any)
+          .from("bdr_calendars")
+          .select(cols)
+          .eq("id", lookupValue)
+          .maybeSingle();
+        data = idLookup.data;
+        calErr = idLookup.error || calErr;
+        lookupMode = "id";
       }
-      console.error("[BDRBookingPublic] calendar lookup", { slug, isUuid, found: !!data, calErr, booking_form_id: data?.booking_form_id });
+      console.error("[BDRBookingPublic] calendar lookup", {
+        rawSlug: slug,
+        lookupValue,
+        isUuid,
+        lookupMode,
+        found: !!data,
+        calendar_id: data?.id,
+        booking_slug: data?.booking_slug,
+        booking_active: data?.booking_active,
+        booking_form_id: data?.booking_form_id,
+        calErr,
+      });
       setCal(data);
 
       // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
@@ -225,7 +248,7 @@ export default function BDRBookingPublic() {
     setSubmitting(true);
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
-        booking_slug: slug,
+        booking_slug: cal.booking_slug || cal.id,
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,
