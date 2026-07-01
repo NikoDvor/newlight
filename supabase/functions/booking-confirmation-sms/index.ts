@@ -274,6 +274,8 @@ Deno.serve(async (req) => {
         client_email_present: Boolean(clientEmail),
         bdr_sent: bdrSent,
         bdr_phone_present: Boolean(bdrPhone),
+        bdr_email_sent: bdrEmailSent,
+        bdr_email_present: Boolean(bdrEmail),
         bdr_name: bdrName || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
