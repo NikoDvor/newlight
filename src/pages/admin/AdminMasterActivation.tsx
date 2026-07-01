@@ -873,6 +873,28 @@ export default function AdminMasterActivation() {
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.2 }}
                 >
+                  {stage === 1 && bookingImprovement && !bookingBannerDismissed && (
+                    <div
+                      className="mb-4 rounded-lg px-3 py-2 flex items-center gap-2 text-[12px]"
+                      style={{
+                        background: "hsla(211,96%,60%,.08)",
+                        border: "1px solid hsla(211,96%,60%,.28)",
+                        color: "hsl(211,96%,82%)",
+                      }}
+                    >
+                      <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(211,96%,68%)" }} />
+                      <span className="flex-1">
+                        Pre-filled from booking: <span className="font-semibold text-white">{bookingImprovement}</span>
+                      </span>
+                      <button
+                        onClick={() => setBookingBannerDismissed(true)}
+                        className="text-white/50 hover:text-white text-[16px] leading-none px-1"
+                        aria-label="Dismiss"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
                   {renderStage()}
                 </motion.div>
               </AnimatePresence>
