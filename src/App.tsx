@@ -58,6 +58,11 @@ import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
 import Integrations from "./pages/Integrations";
 import GrowthAdvisor from "./pages/GrowthAdvisor";
+import TrackingAttribution from "./pages/TrackingAttribution";
+import LifecycleNurture from "./pages/LifecycleNurture";
+import FinancialCompliance from "./pages/FinancialCompliance";
+import ReferralProgram from "./pages/ReferralProgram";
+import AIVisibility from "./pages/AIVisibility";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 
