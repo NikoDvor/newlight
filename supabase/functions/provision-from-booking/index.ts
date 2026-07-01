@@ -21,7 +21,338 @@ function guessZoomDefault(businessType: string): boolean {
   return ["consultative_sales", "project_service", "custom_hybrid"].includes(profile);
 }
 
+// ─── Industry-aware starter defaults (ported from workspaceProvisioner.ts) ───
+
+interface IndustryDefaults {
+  calendars: { name: string; type: string; apptTypes: string[]; duration: number }[];
+  services: { name: string; description: string; price: string }[];
+  forms: { name: string; type: string; questions: string[] }[];
+}
+
+const INDUSTRY_DEFAULTS: Record<string, IndustryDefaults> = {
+  "med spa": {
+    calendars: [
+      { name: "Consultations", type: "booking", apptTypes: ["Free Consultation", "Follow-Up"], duration: 30 },
+      { name: "Treatments", type: "booking", apptTypes: ["Treatment Session", "Touch-Up"], duration: 60 },
+    ],
+    services: [
+      { name: "Botox", description: "Cosmetic injection treatment", price: "Starting at $12/unit" },
+      { name: "Dermal Fillers", description: "Volume restoration and contouring", price: "Starting at $600" },
+      { name: "Facial", description: "Deep cleansing and rejuvenation", price: "$150" },
+    ],
+    forms: [{ name: "Patient Intake", type: "intake", questions: ["Allergies or sensitivities?", "Current medications?", "Previous treatments?"] }],
+  },
+  salon: {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Haircut", "Color", "Styling", "Consultation"], duration: 45 }],
+    services: [
+      { name: "Haircut", description: "Cut and style", price: "From $45" },
+      { name: "Color", description: "Full color treatment", price: "From $120" },
+      { name: "Blowout", description: "Wash and blowout style", price: "$55" },
+    ],
+    forms: [{ name: "New Client Form", type: "intake", questions: ["Hair type?", "Any sensitivities?", "Style preferences?"] }],
+  },
+  dental: {
+    calendars: [
+      { name: "General", type: "booking", apptTypes: ["Cleaning", "Exam", "Consultation"], duration: 30 },
+      { name: "Procedures", type: "booking", apptTypes: ["Filling", "Crown", "Root Canal"], duration: 60 },
+    ],
+    services: [
+      { name: "Cleaning & Exam", description: "Routine dental cleaning and examination", price: "$200" },
+      { name: "Teeth Whitening", description: "Professional whitening treatment", price: "From $350" },
+    ],
+    forms: [{ name: "Patient Intake", type: "intake", questions: ["Dental insurance provider?", "Current medications?", "Last dental visit?"] }],
+  },
+  agency: {
+    calendars: [
+      { name: "Sales Calls", type: "booking", apptTypes: ["Discovery Call", "Strategy Session"], duration: 30 },
+      { name: "Onboarding", type: "booking", apptTypes: ["Kickoff Meeting", "Training Session"], duration: 60 },
+    ],
+    services: [
+      { name: "SEO Package", description: "Monthly SEO management", price: "From $1,500/mo" },
+      { name: "Social Media Management", description: "Content creation and posting", price: "From $1,000/mo" },
+      { name: "Paid Ads Management", description: "PPC campaign management", price: "From $1,200/mo" },
+    ],
+    forms: [{ name: "Lead Intake", type: "contact", questions: ["Monthly marketing budget?", "Current marketing challenges?", "Goals for the next 6 months?"] }],
+  },
+  "home service": {
+    calendars: [{ name: "Estimates", type: "booking", apptTypes: ["Free Estimate", "Consultation", "Service Call"], duration: 30 }],
+    services: [
+      { name: "Service Call", description: "Standard service visit", price: "From $99" },
+      { name: "Emergency Service", description: "Same-day emergency response", price: "From $199" },
+    ],
+    forms: [{ name: "Service Request", type: "contact", questions: ["Describe the issue", "Preferred date/time?", "Property type?"] }],
+  },
+  "professional service": {
+    calendars: [{ name: "Consultations", type: "booking", apptTypes: ["Initial Consultation", "Follow-Up", "Review Meeting"], duration: 45 }],
+    services: [
+      { name: "Consultation", description: "Professional consultation session", price: "From $150/hr" },
+      { name: "Monthly Retainer", description: "Ongoing advisory services", price: "From $2,000/mo" },
+    ],
+    forms: [{ name: "Client Intake", type: "intake", questions: ["Nature of your inquiry?", "Timeline or urgency?", "Budget range?"] }],
+  },
+  retail: {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["In-Store Appointment", "Personal Shopping"], duration: 30 }],
+    services: [
+      { name: "Personal Shopping", description: "Guided shopping experience", price: "Complimentary" },
+    ],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["What are you looking for?", "Preferred contact method?"] }],
+  },
+  "local business": {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
+    services: [{ name: "Standard Service", description: "Our core service offering", price: "Contact for pricing" }],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?", "Best time to reach you?"] }],
+  },
+  general: {
+    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
+    services: [{ name: "Core Service", description: "Primary service offering", price: "Contact for pricing" }],
+    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
+  },
+};
+
+const FALLBACK_DEFAULTS: IndustryDefaults = {
+  calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
+  services: [],
+  forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
+};
+
+function matchIndustry(industry: string | null | undefined): IndustryDefaults | null {
+  if (!industry) return null;
+  const lower = industry.toLowerCase();
+  for (const [key, val] of Object.entries(INDUSTRY_DEFAULTS)) {
+    if (lower.includes(key)) return val;
+  }
+  return null;
+}
+
+const DEFAULT_CONTENT_BLOCKS = [
+  { page_key: "home", block_key: "hero", block_type: "hero", block_label: "Hero Banner", display_order: 0, content_json: { headline: "", subheadline: "", cta_text: "Get Started", cta_url: "" }, is_active: true },
+  { page_key: "home", block_key: "services", block_type: "services", block_label: "Services Overview", display_order: 1, content_json: { title: "Our Services", items: [] }, is_active: true },
+  { page_key: "home", block_key: "about", block_type: "text", block_label: "About Us", display_order: 2, content_json: { title: "About Us", body: "" }, is_active: true },
+  { page_key: "home", block_key: "testimonials", block_type: "testimonials", block_label: "Testimonials", display_order: 3, content_json: { title: "What Our Clients Say", items: [] }, is_active: true },
+  { page_key: "home", block_key: "contact", block_type: "contact", block_label: "Contact", display_order: 4, content_json: { title: "Get In Touch", phone: "", email: "", address: "" }, is_active: true },
+];
+
+const DEFAULT_SETUP_ITEMS: { item_key: string; title: string; category: string; display_order: number }[] = [
+  { item_key: "brand_logo", title: "Upload your logo", category: "branding", display_order: 1 },
+  { item_key: "brand_colors", title: "Set brand colors", category: "branding", display_order: 2 },
+  { item_key: "services_configured", title: "Configure your services", category: "services", display_order: 3 },
+  { item_key: "calendar_availability", title: "Set calendar availability", category: "calendar", display_order: 4 },
+  { item_key: "team_invited", title: "Invite your team", category: "team", display_order: 5 },
+  { item_key: "forms_reviewed", title: "Review intake forms", category: "forms", display_order: 6 },
+  { item_key: "integrations_connected", title: "Connect integrations", category: "integrations", display_order: 7 },
+  { item_key: "first_contact_added", title: "Add your first contact", category: "crm", display_order: 8 },
+];
+
+async function provisionWorkspaceDefaults(
+  adminClient: ReturnType<typeof createClient>,
+  opts: {
+    clientId: string;
+    industry: string | null;
+    timezone: string;
+    ownerEmail: string;
+    ownerName: string | null;
+    ownerPhone: string | null;
+  }
+) {
+  const { clientId, industry, timezone: tz, ownerEmail, ownerName, ownerPhone } = opts;
+  const defaults = matchIndustry(industry) || FALLBACK_DEFAULTS;
+  const provisionedItems: string[] = [];
+
+  // Existence checks — skip anything already present (idempotent).
+  const [calRes, svcRes, formRes, contentRes, wsUserRes, billingRes, recRes, setupRes] = await Promise.all([
+    adminClient.from("calendars").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("service_catalog").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("client_forms").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("website_content_blocks").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("workspace_users").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("billing_accounts").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("ai_business_insights").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+    adminClient.from("client_setup_items").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+  ]);
+
+  // 1. Calendars + availability + appointment types + booking links + reminder rules
+  if ((calRes.count || 0) === 0) {
+    for (const calDef of defaults.calendars) {
+      const { data: cal } = await adminClient.from("calendars").insert({
+        client_id: clientId,
+        calendar_name: calDef.name,
+        calendar_type: calDef.type,
+        timezone: tz,
+        is_active: true,
+      }).select().single();
+
+      if (!cal) continue;
+
+      await adminClient.from("calendar_availability").insert(
+        [1, 2, 3, 4, 5].map((day) => ({
+          client_id: clientId,
+          calendar_id: cal.id,
+          day_of_week: day,
+          start_time: "09:00",
+          end_time: "17:00",
+          slot_interval_minutes: 30,
+          is_active: true,
+        }))
+      );
+
+      await adminClient.from("calendar_appointment_types").insert(
+        calDef.apptTypes.map((typeName) => ({
+          client_id: clientId,
+          calendar_id: cal.id,
+          name: typeName,
+          duration_minutes: calDef.duration,
+          is_active: true,
+        }))
+      );
+
+      const linkSlug = calDef.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      await adminClient.from("calendar_booking_links").insert({
+        client_id: clientId,
+        calendar_id: cal.id,
+        slug: `${clientId.slice(0, 8)}-${linkSlug}`,
+        is_active: true,
+        is_public: true,
+      });
+
+      await adminClient.from("calendar_reminder_rules").insert([
+        { client_id: clientId, calendar_id: cal.id, reminder_type: "confirmation", channel: "email", offset_minutes: 0, is_active: true },
+        { client_id: clientId, calendar_id: cal.id, reminder_type: "reminder", channel: "email", offset_minutes: 1440, is_active: true },
+      ]);
+
+      provisionedItems.push(`Calendar: ${calDef.name}`);
+    }
+  }
+
+  // 2. Services
+  if ((svcRes.count || 0) === 0 && defaults.services.length > 0) {
+    await adminClient.from("service_catalog").insert(
+      defaults.services.map((svc, i) => ({
+        client_id: clientId,
+        service_name: svc.name,
+        service_description: svc.description,
+        display_price_text: svc.price,
+        service_status: "active",
+        display_order: i,
+      }))
+    );
+    provisionedItems.push(`Services (${defaults.services.length})`);
+  }
+
+  // 3. Forms
+  if ((formRes.count || 0) === 0) {
+    for (const formDef of defaults.forms) {
+      await adminClient.from("client_forms").insert({
+        client_id: clientId,
+        form_name: formDef.name,
+        form_type: formDef.type,
+        form_status: "draft",
+        intake_questions: formDef.questions.map((q, i) => ({
+          id: `q${i + 1}`,
+          label: q,
+          type: "text",
+          required: false,
+        })),
+      });
+      provisionedItems.push(`Form: ${formDef.name}`);
+    }
+  }
+
+  // 4. Website content scaffold
+  if ((contentRes.count || 0) === 0) {
+    await adminClient.from("website_content_blocks").insert(
+      DEFAULT_CONTENT_BLOCKS.map((b) => ({ client_id: clientId, ...b }))
+    );
+    provisionedItems.push("Website content structure");
+  }
+
+  // 5. Workspace owner user (also grants sidebar module access via role_preset=owner)
+  if ((wsUserRes.count || 0) === 0 && ownerEmail) {
+    await adminClient.from("workspace_users").insert({
+      client_id: clientId,
+      email: ownerEmail,
+      full_name: ownerName || ownerEmail.split("@")[0],
+      phone: ownerPhone || null,
+      role_preset: "owner",
+      status: "active",
+      is_bookable_staff: false,
+    });
+    provisionedItems.push("Workspace owner user");
+  }
+
+  // 6. Billing account stub
+  if ((billingRes.count || 0) === 0) {
+    await adminClient.from("billing_accounts").insert({
+      client_id: clientId,
+      billing_status: "pending_setup",
+      billing_email: ownerEmail || null,
+    });
+    provisionedItems.push("Billing account");
+  }
+
+  // 7. Growth recommendations
+  if ((recRes.count || 0) === 0) {
+    const industryLabel = industry || "your business";
+    await adminClient.from("ai_business_insights").insert([
+      {
+        client_id: clientId,
+        title: "Optimize your online visibility",
+        category: "growth",
+        severity: "medium",
+        status: "active",
+        explanation: `Based on ${industryLabel} industry benchmarks, optimizing your Google Business Profile and local SEO can increase new customer inquiries by 20-40%.`,
+        recommended_action: "Complete your Google Business Profile and request a local SEO audit.",
+      },
+      {
+        client_id: clientId,
+        title: "Automate booking confirmations",
+        category: "efficiency",
+        severity: "low",
+        status: "active",
+        explanation: "Automated confirmation and reminder emails reduce no-shows by up to 30% and save staff time.",
+        recommended_action: "Enable automated email reminders in your calendar settings.",
+      },
+    ]);
+    provisionedItems.push("Growth recommendations (2)");
+  }
+
+  // 8. Setup checklist items
+  if ((setupRes.count || 0) === 0) {
+    await adminClient.from("client_setup_items").insert(
+      DEFAULT_SETUP_ITEMS.map((item) => ({
+        client_id: clientId,
+        item_key: item.item_key,
+        title: item.title,
+        category: item.category,
+        display_order: item.display_order,
+        status: "pending",
+      }))
+    );
+    provisionedItems.push(`Setup checklist (${DEFAULT_SETUP_ITEMS.length})`);
+  }
+
+  // 9. Audit trail
+  if (provisionedItems.length > 0) {
+    await Promise.all([
+      adminClient.from("crm_activities").insert({
+        client_id: clientId,
+        activity_type: "auto_provisioned",
+        activity_note: `Full workspace template applied — ${provisionedItems.length} item(s): ${provisionedItems.join(", ")}`,
+      }),
+      adminClient.from("audit_logs").insert({
+        action: "full_workspace_provisioned",
+        client_id: clientId,
+        module: "onboarding",
+        metadata: { industry, items: provisionedItems, auto: true, source: "provision-from-booking" },
+      }),
+    ]);
+  }
+
+  console.log(`[provision-from-booking] provisioned ${provisionedItems.length} items for ${clientId}: ${provisionedItems.join(", ")}`);
+  return provisionedItems;
+}
+
 Deno.serve(async (req) => {
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
