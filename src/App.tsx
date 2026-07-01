@@ -58,6 +58,11 @@ import CompetitorTracking from "./pages/CompetitorTracking";
 import MeetingIntelligence from "./pages/MeetingIntelligence";
 import Integrations from "./pages/Integrations";
 import GrowthAdvisor from "./pages/GrowthAdvisor";
+import TrackingAttribution from "./pages/TrackingAttribution";
+import LifecycleNurture from "./pages/LifecycleNurture";
+import FinancialCompliance from "./pages/FinancialCompliance";
+import ReferralProgram from "./pages/ReferralProgram";
+import AIVisibility from "./pages/AIVisibility";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -447,6 +452,11 @@ const App = () => {
                 <Route path="/agency" element={<AgencyDashboard />} />
                 <Route path="/integrations" element={<PermissionGuard moduleKey="settings"><Integrations /></PermissionGuard>} />
                 <Route path="/growth-advisor" element={<PermissionGuard moduleKey="ai"><GrowthAdvisor /></PermissionGuard>} />
+                <Route path="/tracking-attribution" element={<PermissionGuard moduleKey="reports"><TrackingAttribution /></PermissionGuard>} />
+                <Route path="/lifecycle-nurture" element={<PermissionGuard moduleKey="intelligence"><LifecycleNurture /></PermissionGuard>} />
+                <Route path="/financial-compliance" element={<PermissionGuard moduleKey="finance"><FinancialCompliance /></PermissionGuard>} />
+                <Route path="/referral-program" element={<PermissionGuard moduleKey="intelligence"><ReferralProgram /></PermissionGuard>} />
+                <Route path="/ai-visibility" element={<PermissionGuard moduleKey="ai"><AIVisibility /></PermissionGuard>} />
                 <Route path="/business-health" element={<PermissionGuard moduleKey="reports"><BusinessHealth /></PermissionGuard>} />
                 <Route path="/revenue-opportunities" element={<PermissionGuard moduleKey="reports"><RevenueOpportunities /></PermissionGuard>} />
                 <Route path="/priority-actions" element={<PriorityActions />} />
