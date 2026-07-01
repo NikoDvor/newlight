@@ -53,32 +53,25 @@ type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost
  * keys used by the activation wizard.
  */
 const IMPROVEMENT_TO_MODULES: Record<string, string[]> = {
-  "Lead Generation & More Customers": ["ads", "seo", "social_media"],
-  "Appointment Booking & Follow-Up": ["calendar", "automation", "crm"],
-  "CRM & Pipeline Management": ["crm", "automation"],
-  "Social Media & Content": ["social_media"],
-  "Website & Online Presence": ["web_design", "seo"],
-  "Ads & Paid Marketing": ["ads"],
-  "SEO & AI Visibility": ["seo", "ai_visibility"],
-  "Other": [],
+  "Website Management": ["website_management"],
+  "Lifecycle & Nurture Sequences": ["lifecycle_nurture"],
+  "Financial Compliance": ["financial_compliance"],
+  "Meeting Intelligence": ["meeting_intel"],
 };
 
 /**
  * Apply pre-selected modules to the wizard form flags. Only sets flags where
- * a canonical field exists — unknown modules (automation, ai_visibility) are
- * still tracked in bookingModules for badge display but no field is touched.
+ * a canonical field exists — unknown modules are still tracked in
+ * bookingModules for badge display but no field is touched.
  */
 function applyModulePreselection(base: ActivationFormState, modules: string[]): ActivationFormState {
   const next: any = { ...base };
   for (const m of modules) {
     switch (m) {
-      case "ads": next.use_ads = "yes"; break;
-      case "seo": next.use_seo = "yes"; break;
-      case "social_media": next.use_social = "yes"; break;
-      case "web_design": next.use_website_workspace = "yes"; break;
-      case "crm": next.crm_mode = "native"; break;
-      case "calendar": next.use_native_calendar = "yes"; break;
-      // automation / ai_visibility: no dedicated wizard field yet — badge only
+      case "website_management": next.use_website_workspace = "yes"; break;
+      case "lifecycle_nurture": next.followup_messaging = "yes"; break;
+      case "financial_compliance": next.use_finance = "yes"; break;
+      case "meeting_intel": next.need_meeting_intel_access = "yes"; break;
     }
   }
   return next as ActivationFormState;
