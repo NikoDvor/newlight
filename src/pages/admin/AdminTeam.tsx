@@ -371,6 +371,19 @@ export default function AdminTeam() {
                 <div><label className="text-xs text-white/50 mb-1 block">Full Name</label><Input value={manualFullName} onChange={e => setManualFullName(e.target.value)} className="bg-white/[0.06] border-white/10 text-white" /></div>
                 <div><label className="text-xs text-white/50 mb-1 block">Email</label><Input type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="bg-white/[0.06] border-white/10 text-white" /></div>
                 <div>
+                  <label className="text-xs text-white/50 mb-1 block">
+                    Phone {["bdr", "sdr"].includes(manualRolePreset) ? <span className="text-[hsl(var(--nl-electric))]">*</span> : <span className="text-white/30">(optional)</span>}
+                  </label>
+                  <Input
+                    type="tel"
+                    value={manualPhone}
+                    onChange={e => setManualPhone(e.target.value)}
+                    placeholder="+18055551234"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                  <p className="text-[10px] text-white/30 mt-1">E.164 format. Required for BDR/SDR (used for booking confirmation SMS).</p>
+                </div>
+                <div>
                   <label className="text-xs text-white/50 mb-1 block">Temporary Password</label>
                   <div className="relative">
                     <Input type={showManualPassword ? "text" : "password"} value={manualPassword} onChange={e => setManualPassword(e.target.value)} className="bg-white/[0.06] border-white/10 text-white pr-10" />
