@@ -640,14 +640,16 @@ export default function AdminTeam() {
 }
 
 function WorkspaceGroupCard({
-  group, defaultOpen, roleColor, onStats, onRemove,
+  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail,
 }: {
   group: WorkspaceGroupData;
   defaultOpen?: boolean;
   roleColor: (r: string) => string;
   onStats: (r: UserRow) => void;
   onRemove: (r: UserRow) => void;
+  onEditEmail: (r: UserRow) => void;
 }) {
+
   const [open, setOpen] = useState(!!defaultOpen);
   return (
     <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
