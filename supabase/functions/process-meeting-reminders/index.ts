@@ -150,6 +150,17 @@ async function queueBookingConfirmation(supabase: any, body: any, supabaseUrl: s
     await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
   }
 
+  // BDR (salesman) reminders — only 24h + 1h so they're prepared without spam
+  const bdrOffsets: Array<{ type: string; ms: number }> = [
+    { type: "reminder_24h_bdr", ms: 24 * 60 * 60 * 1000 },
+    { type: "reminder_1h_bdr", ms: 1 * 60 * 60 * 1000 },
+  ];
+  for (const { type, ms } of bdrOffsets) {
+    const sendAt = new Date(mtgDate.getTime() - ms);
+    if (sendAt.getTime() <= now.getTime()) continue;
+    await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
+  }
+
 
   // Update prospect stage
   await supabase.from("prospects").update({ stage: "booking_submitted", meeting_date: meeting_date || prospect.meeting_date }).eq("id", prospect_id);
