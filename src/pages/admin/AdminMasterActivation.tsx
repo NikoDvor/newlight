@@ -192,36 +192,57 @@ export default function AdminMasterActivation() {
         // ── Look up matching BDR lead by owner_email (fallback: phone) and
         // pre-fill the wizard from its improvement_area answer. Runs after
         // client + draft load so pre-fill can layer over the initial form.
+        // Uses select("*") + runtime extraction because improvement_area may
+        // live in a dedicated column or inside notes/customer_notes JSON.
         try {
           const email = (client as any).owner_email || null;
           const phone = (client as any).owner_phone || (client as any).phone || null;
           const hasDraft = !!(drafts && drafts.length > 0);
 
+          const extractImprovement = (row: any): string | null => {
+            if (!row) return null;
+            if (typeof row.improvement_area === "string" && row.improvement_area.trim()) {
+              return row.improvement_area.trim();
+            }
+            // Fallbacks: look for "improvement_area: <value>" or a JSON blob
+            // embedded in notes / customer_notes.
+            const blobs: string[] = [row.customer_notes, row.notes].filter(
+              (x: any) => typeof x === "string" && x.length > 0,
+            );
+            for (const blob of blobs) {
+              const m = blob.match(/improvement[_ ]area["'\s:]+([^\n"']+)/i);
+              if (m && m[1]) return m[1].trim();
+              try {
+                const parsed = JSON.parse(blob);
+                if (parsed && typeof parsed.improvement_area === "string") {
+                  return parsed.improvement_area.trim();
+                }
+              } catch { /* not JSON */ }
+            }
+            return null;
+          };
+
           let leadRow: any = null;
           if (email) {
             const { data } = await supabase
               .from("nl_bdr_leads")
-              .select("improvement_area, owner_email, phone")
-              .eq("owner_email", email)
-              .not("improvement_area", "is", null)
+              .select("*")
+              .eq("email", email)
               .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            leadRow = data;
+              .limit(5);
+            leadRow = (data || []).find(extractImprovement) || null;
           }
           if (!leadRow && phone) {
             const { data } = await supabase
               .from("nl_bdr_leads")
-              .select("improvement_area, owner_email, phone")
+              .select("*")
               .eq("phone", phone)
-              .not("improvement_area", "is", null)
               .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            leadRow = data;
+              .limit(5);
+            leadRow = (data || []).find(extractImprovement) || null;
           }
 
-          const area: string | null = leadRow?.improvement_area || null;
+          const area = extractImprovement(leadRow);
           if (area && IMPROVEMENT_TO_MODULES[area]) {
             const modules = IMPROVEMENT_TO_MODULES[area];
             setBookingImprovement(area);
