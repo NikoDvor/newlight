@@ -196,6 +196,25 @@ Deno.serve(async (req) => {
       ),
     ]);
 
+    // ─── Full workspace provisioning (ported from src/lib/workspaceProvisioner.ts) ───
+    // Ensures every booking-confirmed client automatically gets calendars,
+    // services, forms, billing, workspace user, setup items, and recommendations
+    // without needing anyone to open a UI.
+    try {
+      await provisionWorkspaceDefaults(adminClient, {
+        clientId: client.id,
+        industry: industry || null,
+        timezone: timezone || "America/Los_Angeles",
+        ownerEmail: contact_email,
+        ownerName: contact_name || null,
+        ownerPhone: contact_phone || null,
+      });
+    } catch (provErr) {
+      console.error("[provision-from-booking] workspace defaults failed (non-blocking):", (provErr as Error).message);
+    }
+
+
+
     const nowIso = new Date().toISOString();
     const contactFullName = contact_name || contact_email.split("@")[0];
     const contactEmailLower = contact_email.toLowerCase();
