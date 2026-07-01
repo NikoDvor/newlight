@@ -58,6 +58,7 @@ export default function AdminTeam() {
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualFullName, setManualFullName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
+  const [manualPhone, setManualPhone] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [manualRolePreset, setManualRolePreset] = useState("bdr");
   const [manualDepartment, setManualDepartment] = useState("");
@@ -65,6 +66,7 @@ export default function AdminTeam() {
   const [manualClientId, setManualClientId] = useState("");
   const [showManualPassword, setShowManualPassword] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
+
 
   // App link modal (stays on this page, never navigates)
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
@@ -233,7 +235,7 @@ export default function AdminTeam() {
   };
 
   const resetManualForm = () => {
-    setManualFullName(""); setManualEmail(""); setManualPassword("");
+    setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
     setManualRolePreset("bdr"); setManualDepartment(""); setManualJobTitle("");
     setManualClientId(""); setShowManualPassword(false);
   };
@@ -243,12 +245,21 @@ export default function AdminTeam() {
       toast.error("Full name, email, and temporary password are required"); return;
     }
     if (manualPassword.length < 8) { toast.error("Temporary password must be at least 8 characters"); return; }
+    const phoneTrimmed = manualPhone.trim();
+    const phoneRequired = ["bdr", "sdr"].includes(manualRolePreset);
+    if (phoneRequired && !phoneTrimmed) {
+      toast.error("Phone number is required for BDR/SDR"); return;
+    }
+    if (phoneTrimmed && !/^\+[1-9]\d{7,14}$/.test(phoneTrimmed)) {
+      toast.error("Phone must be in E.164 format (e.g. +18055551234)"); return;
+    }
     setManualLoading(true);
     try {
       const res = await supabase.functions.invoke("create-user-manual", {
         body: {
           full_name: manualFullName.trim(),
           email: manualEmail.trim(),
+          phone: phoneTrimmed || null,
           temporary_password: manualPassword,
           role_preset: manualRolePreset,
           department: manualDepartment.trim() || null,
@@ -269,6 +280,7 @@ export default function AdminTeam() {
     }
     setManualLoading(false);
   };
+
 
   const roleColor = (r: string) => {
     if (r === "admin") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-electric))]";
@@ -358,6 +370,19 @@ export default function AdminTeam() {
               <div className="space-y-3 mt-2">
                 <div><label className="text-xs text-white/50 mb-1 block">Full Name</label><Input value={manualFullName} onChange={e => setManualFullName(e.target.value)} className="bg-white/[0.06] border-white/10 text-white" /></div>
                 <div><label className="text-xs text-white/50 mb-1 block">Email</label><Input type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="bg-white/[0.06] border-white/10 text-white" /></div>
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">
+                    Phone {["bdr", "sdr"].includes(manualRolePreset) ? <span className="text-[hsl(var(--nl-electric))]">*</span> : <span className="text-white/30">(optional)</span>}
+                  </label>
+                  <Input
+                    type="tel"
+                    value={manualPhone}
+                    onChange={e => setManualPhone(e.target.value)}
+                    placeholder="+18055551234"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                  <p className="text-[10px] text-white/30 mt-1">E.164 format. Required for BDR/SDR (used for booking confirmation SMS).</p>
+                </div>
                 <div>
                   <label className="text-xs text-white/50 mb-1 block">Temporary Password</label>
                   <div className="relative">
