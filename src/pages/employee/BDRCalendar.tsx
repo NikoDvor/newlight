@@ -580,6 +580,8 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [bookingDesc, setBookingDesc] = useState(calendar.booking_description || "");
   const [bookingActive, setBookingActive] = useState(calendar.booking_active);
   const [roundRobin, setRoundRobin] = useState<boolean>((calendar as any).round_robin_pool ?? false);
+  const [bookingFormId, setBookingFormId] = useState<string>((calendar as any).booking_form_id ?? "");
+  const [availableForms, setAvailableForms] = useState<Array<{ id: string; form_name: string }>>([]);
   const [availability, setAvailability] = useState(calendar.availability);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -592,9 +594,19 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setBookingDesc(calendar.booking_description || "");
       setBookingActive(calendar.booking_active);
       setRoundRobin((calendar as any).round_robin_pool ?? false);
+      setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
+      (async () => {
+        const { data } = await (supabase as any)
+          .from("forms")
+          .select("id, form_name, is_active")
+          .eq("is_active", true)
+          .order("form_name", { ascending: true });
+        setAvailableForms((data || []).map((f: any) => ({ id: f.id, form_name: f.form_name })));
+      })();
     }
   }, [open, calendar]);
+
 
   const updateDay = (key: string, patch: Partial<{ enabled: boolean; start: string; end: string }>) => {
     setAvailability(prev => ({
@@ -621,6 +633,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_description: bookingDesc.trim() || null,
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
+      booking_form_id: bookingFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
@@ -700,6 +713,20 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
               <textarea value={bookingDesc} onChange={e => setBookingDesc(e.target.value)} rows={3}
                 placeholder="Tell prospects what to expect from this call…"
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Booking form (optional)</Label>
+              <select
+                value={bookingFormId}
+                onChange={e => setBookingFormId(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">— None (skip form step) —</option>
+                {availableForms.map(f => (
+                  <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-white/45">If set, prospects fill this form before picking a time.</p>
             </div>
             <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
               <div>

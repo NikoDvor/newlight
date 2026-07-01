@@ -868,6 +868,7 @@ export type Database = {
           availability: Json
           booking_active: boolean
           booking_description: string | null
+          booking_form_id: string | null
           booking_slug: string | null
           booking_title: string | null
           client_id: string
@@ -886,6 +887,7 @@ export type Database = {
           availability?: Json
           booking_active?: boolean
           booking_description?: string | null
+          booking_form_id?: string | null
           booking_slug?: string | null
           booking_title?: string | null
           client_id: string
@@ -904,6 +906,7 @@ export type Database = {
           availability?: Json
           booking_active?: boolean
           booking_description?: string | null
+          booking_form_id?: string | null
           booking_slug?: string | null
           booking_title?: string | null
           client_id?: string
@@ -919,6 +922,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bdr_calendars_booking_form_id_fkey"
+            columns: ["booking_form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bdr_calendars_client_id_fkey"
             columns: ["client_id"]
