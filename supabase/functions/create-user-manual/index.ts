@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const fullName = String(body.full_name || "").trim();
     const email = String(body.email || "").trim().toLowerCase();
+    const phone = body.phone == null ? "" : String(body.phone).trim();
     const temporaryPassword = String(body.temporary_password || "");
     const rolePreset = String(body.role_preset || "custom");
     const rawClientId = body.client_id == null ? "" : String(body.client_id).trim();
@@ -79,6 +80,13 @@ Deno.serve(async (req) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email address" }, 400);
     if (temporaryPassword.length < 8) return json({ error: "Temporary password must be at least 8 characters" }, 400);
     if (!ROLE_PRESETS.has(rolePreset)) return json({ error: "Invalid role preset" }, 400);
+    if (["bdr", "sdr"].includes(rolePreset) && !phone) {
+      return json({ error: "Phone number is required for BDR/SDR" }, 400);
+    }
+    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      return json({ error: "Phone must be in E.164 format (e.g. +18055551234)" }, 400);
+    }
+
 
     if (clientId) {
       const { data: client, error: clientError } = await adminClient.from("clients").select("id").eq("id", clientId).maybeSingle();
