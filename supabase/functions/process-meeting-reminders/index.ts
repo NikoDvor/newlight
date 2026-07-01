@@ -277,6 +277,32 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
 
 
     // Build message content if not pre-built
+    const isBdrReminder = reminder.reminder_type.endsWith("_bdr");
+
+    // Resolve BDR phone if this is a BDR-targeted reminder
+    let bdrPhone = "";
+    let bdrName = "";
+    if (isBdrReminder) {
+      const bdrUserId =
+        meetingStatus?.assigned_salesman || prospect.assigned_to || null;
+      if (bdrUserId) {
+        try {
+          const { data: userResp } = await supabase.auth.admin.getUserById(bdrUserId);
+          const u = userResp?.user;
+          if (u) {
+            bdrPhone = u.phone || (u.user_metadata as any)?.phone || "";
+            bdrName =
+              (u.user_metadata as any)?.full_name ||
+              (u.user_metadata as any)?.name ||
+              u.email ||
+              "";
+          }
+        } catch (e) {
+          console.error("BDR lookup failed:", e);
+        }
+      }
+    }
+
     let messageContent = reminder.message_content;
     if (!messageContent && prospect) {
       const cancelLink = meetingStatus?.cancellation_token
@@ -290,6 +316,7 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
         demo_app_link: meetingStatus?.demo_app_link || "",
         demo_website_link: meetingStatus?.demo_website_link || "",
         audit_link: meetingStatus?.audit_link || "",
+        bdr_name: bdrName,
       };
 
       const templateFn = (templates as any)[reminder.reminder_type];
@@ -298,10 +325,11 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
 
     // Attempt to send via configured channels
     let sendSuccess = false;
+    const smsRecipient = isBdrReminder ? bdrPhone : prospect.phone;
     try {
-      if (reminder.channel === "sms" && prospect.phone) {
-        sendSuccess = await sendSms(prospect.phone, messageContent || "");
-      } else if (reminder.channel === "email" && prospect.email) {
+      if (reminder.channel === "sms" && smsRecipient) {
+        sendSuccess = await sendSms(smsRecipient, messageContent || "");
+      } else if (reminder.channel === "email" && prospect.email && !isBdrReminder) {
         sendSuccess = await sendEmail(prospect.email, `NewLight - ${reminder.reminder_type.replace(/_/g, " ")}`, messageContent || "");
       } else if (reminder.channel === "internal") {
         sendSuccess = true; // Internal notifications are logged
@@ -315,10 +343,10 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
       prospect_id: reminder.prospect_id,
       channel: reminder.channel,
       template_name: reminder.reminder_type,
-      recipient: reminder.channel === "sms" ? (prospect.phone || "") : (prospect.email || ""),
+      recipient: reminder.channel === "sms" ? (smsRecipient || "") : (prospect.email || ""),
       status: sendSuccess ? "sent" : "queued",
       message_body: messageContent,
-      metadata: { reminder_id: reminder.id },
+      metadata: { reminder_id: reminder.id, bdr: isBdrReminder || undefined },
     });
 
     // Update reminder status
