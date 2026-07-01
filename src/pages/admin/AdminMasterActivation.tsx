@@ -47,6 +47,44 @@ const stageIcons: Record<number, React.ReactNode> = {
 
 type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost" | "submitted" | "activated";
 
+/**
+ * Mapping from the "What are you looking to improve?" answer captured on the
+ * public BDR booking form (nl_bdr_leads.improvement_area) to internal module
+ * keys used by the activation wizard.
+ */
+const IMPROVEMENT_TO_MODULES: Record<string, string[]> = {
+  "Lead Generation & More Customers": ["ads", "seo", "social_media"],
+  "Appointment Booking & Follow-Up": ["calendar", "automation", "crm"],
+  "CRM & Pipeline Management": ["crm", "automation"],
+  "Social Media & Content": ["social_media"],
+  "Website & Online Presence": ["web_design", "seo"],
+  "Ads & Paid Marketing": ["ads"],
+  "SEO & AI Visibility": ["seo", "ai_visibility"],
+  "Other": [],
+};
+
+/**
+ * Apply pre-selected modules to the wizard form flags. Only sets flags where
+ * a canonical field exists — unknown modules (automation, ai_visibility) are
+ * still tracked in bookingModules for badge display but no field is touched.
+ */
+function applyModulePreselection(base: ActivationFormState, modules: string[]): ActivationFormState {
+  const next: any = { ...base };
+  for (const m of modules) {
+    switch (m) {
+      case "ads": next.use_ads = "yes"; break;
+      case "seo": next.use_seo = "yes"; break;
+      case "social_media": next.use_social = "yes"; break;
+      case "web_design": next.use_website_workspace = "yes"; break;
+      case "crm": next.crm_mode = "native"; break;
+      case "calendar": next.use_native_calendar = "yes"; break;
+      // automation / ai_visibility: no dedicated wizard field yet — badge only
+    }
+  }
+  return next as ActivationFormState;
+}
+
+
 /** Clamp legacy 15-step drafts safely into 7-stage range */
 function clampStage(step: number): number {
   if (step <= 0) return 1;
@@ -77,6 +115,11 @@ export default function AdminMasterActivation() {
   const [clientName, setClientName] = useState("");
   const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
   const [syncing, setSyncing] = useState(false);
+
+  // ── Booking lead pre-fill (from nl_bdr_leads.improvement_area) ──
+  const [bookingImprovement, setBookingImprovement] = useState<string | null>(null);
+  const [bookingModules, setBookingModules] = useState<string[]>([]);
+  const [bookingBannerDismissed, setBookingBannerDismissed] = useState(false);
 
   // ── Load existing client + draft ──
   useEffect(() => {
@@ -144,6 +187,74 @@ export default function AdminMasterActivation() {
             if (newDraft) setDraftId(newDraft.id);
             setDraftStatus("in_progress");
           }
+        }
+
+        // ── Look up matching BDR lead by owner_email (fallback: phone) and
+        // pre-fill the wizard from its improvement_area answer. Runs after
+        // client + draft load so pre-fill can layer over the initial form.
+        // Uses select("*") + runtime extraction because improvement_area may
+        // live in a dedicated column or inside notes/customer_notes JSON.
+        try {
+          const email = (client as any).owner_email || null;
+          const phone = (client as any).owner_phone || (client as any).phone || null;
+          const hasDraft = !!(drafts && drafts.length > 0);
+
+          const extractImprovement = (row: any): string | null => {
+            if (!row) return null;
+            if (typeof row.improvement_area === "string" && row.improvement_area.trim()) {
+              return row.improvement_area.trim();
+            }
+            // Fallbacks: look for "improvement_area: <value>" or a JSON blob
+            // embedded in notes / customer_notes.
+            const blobs: string[] = [row.customer_notes, row.notes].filter(
+              (x: any) => typeof x === "string" && x.length > 0,
+            );
+            for (const blob of blobs) {
+              const m = blob.match(/improvement[_ ]area["'\s:]+([^\n"']+)/i);
+              if (m && m[1]) return m[1].trim();
+              try {
+                const parsed = JSON.parse(blob);
+                if (parsed && typeof parsed.improvement_area === "string") {
+                  return parsed.improvement_area.trim();
+                }
+              } catch { /* not JSON */ }
+            }
+            return null;
+          };
+
+          let leadRow: any = null;
+          if (email) {
+            const { data } = await supabase
+              .from("nl_bdr_leads")
+              .select("*")
+              .eq("email", email)
+              .order("created_at", { ascending: false })
+              .limit(5);
+            leadRow = (data || []).find(extractImprovement) || null;
+          }
+          if (!leadRow && phone) {
+            const { data } = await supabase
+              .from("nl_bdr_leads")
+              .select("*")
+              .eq("phone", phone)
+              .order("created_at", { ascending: false })
+              .limit(5);
+            leadRow = (data || []).find(extractImprovement) || null;
+          }
+
+          const area = extractImprovement(leadRow);
+          if (area && IMPROVEMENT_TO_MODULES[area]) {
+            const modules = IMPROVEMENT_TO_MODULES[area];
+            setBookingImprovement(area);
+            setBookingModules(modules);
+            // Only overwrite flags for a fresh wizard (no saved draft) so we
+            // don't stomp admin edits made in a resumed draft.
+            if (!hasDraft && modules.length > 0) {
+              setForm(prev => applyModulePreselection(prev, modules));
+            }
+          }
+        } catch {
+          // silent — pre-fill is best-effort
         }
       } catch {
         toast.error("Failed to load client data");
@@ -565,7 +676,7 @@ export default function AdminMasterActivation() {
   // ── Render current stage content ──
   const renderStage = () => {
     switch (stage) {
-      case 1: return <StepQualification {...stepProps} />;
+      case 1: return <StepQualification {...stepProps} bookingModules={bookingModules} />;
       case 2: return <StepProposalClosePrep {...stepProps} />;
       case 3: return <StepCloseOutcome {...stepProps} />;
       case 4:
@@ -762,6 +873,28 @@ export default function AdminMasterActivation() {
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.2 }}
                 >
+                  {stage === 1 && bookingImprovement && !bookingBannerDismissed && (
+                    <div
+                      className="mb-4 rounded-lg px-3 py-2 flex items-center gap-2 text-[12px]"
+                      style={{
+                        background: "hsla(211,96%,60%,.08)",
+                        border: "1px solid hsla(211,96%,60%,.28)",
+                        color: "hsl(211,96%,82%)",
+                      }}
+                    >
+                      <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(211,96%,68%)" }} />
+                      <span className="flex-1">
+                        Pre-filled from booking: <span className="font-semibold text-white">{bookingImprovement}</span>
+                      </span>
+                      <button
+                        onClick={() => setBookingBannerDismissed(true)}
+                        className="text-white/50 hover:text-white text-[16px] leading-none px-1"
+                        aria-label="Dismiss"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
                   {renderStage()}
                 </motion.div>
               </AnimatePresence>

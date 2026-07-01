@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase } from "lucide-react";
+import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase, Sparkles } from "lucide-react";
 import { ActivationHelp } from "./ActivationHelp";
 import type { StepProps } from "./activationTypes";
 
@@ -9,9 +9,58 @@ const labelCls = "text-xs text-white/50 mb-1 block";
 const sectionCls = "rounded-xl p-4 space-y-3";
 const sectionStyle = { background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" };
 
-export function StepQualification({ form, set, submitting }: StepProps) {
+const MODULE_LABELS: Record<string, string> = {
+  ads: "Ads & Paid Marketing",
+  seo: "SEO",
+  social_media: "Social Media",
+  web_design: "Website & Web Design",
+  crm: "CRM & Pipeline",
+  calendar: "Calendar & Booking",
+  automation: "Automation",
+  ai_visibility: "AI Visibility",
+};
+
+interface StepQualificationProps extends StepProps {
+  bookingModules?: string[];
+}
+
+export function StepQualification({ form, set, submitting, bookingModules }: StepQualificationProps) {
+  const preselected = bookingModules && bookingModules.length > 0 ? bookingModules : [];
   return (
     <div className="space-y-4">
+      {preselected.length > 0 && (
+        <div
+          className="rounded-xl p-3 flex items-start gap-2.5"
+          style={{
+            background: "hsla(211,96%,60%,.06)",
+            border: "1px solid hsla(211,96%,60%,.22)",
+          }}
+        >
+          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "hsl(211,96%,66%)" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "hsl(211,96%,72%)" }}>
+              Suggested modules from booking
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {preselected.map(m => (
+                <span
+                  key={m}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium"
+                  style={{
+                    background: "hsla(211,96%,60%,.14)",
+                    color: "hsl(211,96%,80%)",
+                    border: "1px solid hsla(211,96%,60%,.32)",
+                  }}
+                >
+                  {MODULE_LABELS[m] || m}
+                  <span className="opacity-70">· From booking</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <ActivationHelp title="Qualification" items={[
         "Capture contact information and business overview",
         "Identify lead source and primary goal",
