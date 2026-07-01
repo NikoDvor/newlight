@@ -18,7 +18,7 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     if (user && userRole) {
       const employeeRoute = getEmployeeRoute(userRole, employeeProfile?.job_title);
       if (isAdmin) {
-        navigate("/admin", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       } else if (employeeRoute) {
         navigate(employeeRoute, { replace: true });
       } else {
