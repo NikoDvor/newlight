@@ -17,11 +17,14 @@ const templates = {
   reminder_24h: (p: any) =>
     `Reminder: Your strategy session for ${p.business_name} is tomorrow at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 Demo App: ${p.demo_app_link}\n🌐 Website: ${p.demo_website_link}\n📊 Analysis: ${p.audit_link}\n\n` : "We're finalizing your custom materials. "}Need to reschedule? ${p.cancel_link}`,
 
-  reminder_3h: (p: any) =>
-    `${p.full_name}, your strategy session is in 3 hours at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `Review your materials:\n📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Can't make it? ${p.cancel_link}`,
+  reminder_4h: (p: any) =>
+    `${p.full_name}, your strategy session is in 4 hours at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `Review your materials:\n📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Can't make it? ${p.cancel_link}`,
 
-  reminder_30m: (p: any) =>
-    `Starting in 30 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
+  reminder_1h: (p: any) =>
+    `${p.full_name}, your strategy session for ${p.business_name} starts in 1 hour at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n📊 ${p.audit_link}\n\n` : ""}Need to cancel? ${p.cancel_link}`,
+
+  reminder_15m: (p: any) =>
+    `Starting in 15 minutes! Your strategy session for ${p.business_name} at ${formatTime(p.meeting_date)}.\n\n${p.has_assets ? `📱 ${p.demo_app_link}\n🌐 ${p.demo_website_link}\n` : ""}See you soon! Need to cancel? ${p.cancel_link}`,
 
   cancellation_confirmation: (p: any) =>
     `Your meeting for ${p.business_name} has been cancelled. Reason: ${p.cancellation_reason || "Not specified"}. To rebook, visit our website or reply to this message.`,
@@ -123,27 +126,24 @@ async function queueBookingConfirmation(supabase: any, body: any, supabaseUrl: s
   const internalMsg = templates.internal_notification(msgData, "Meeting Booked");
   await queueReminder(supabase, prospect_id, "booking_confirmation", "internal", internalMsg, new Date().toISOString());
 
-  // Schedule future reminders
+  // Schedule future reminders (SMS only, at 24h / 4h / 1h / 15min before the meeting)
   const mtgDate = new Date(meeting_date || prospect.meeting_date);
   const now = new Date();
 
-  const hoursUntil = (mtgDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  const reminderOffsets: Array<{ type: string; ms: number }> = [
+    { type: "reminder_24h", ms: 24 * 60 * 60 * 1000 },
+    { type: "reminder_4h", ms: 4 * 60 * 60 * 1000 },
+    { type: "reminder_1h", ms: 1 * 60 * 60 * 1000 },
+    { type: "reminder_15m", ms: 15 * 60 * 1000 },
+  ];
 
-  if (hoursUntil > 24) {
-    const r24 = new Date(mtgDate.getTime() - 24 * 60 * 60 * 1000);
-    await queueReminder(supabase, prospect_id, "reminder_24h", "sms", null, r24.toISOString());
-    await queueReminder(supabase, prospect_id, "reminder_24h", "email", null, r24.toISOString());
+  for (const { type, ms } of reminderOffsets) {
+    const sendAt = new Date(mtgDate.getTime() - ms);
+    // Skip if the scheduled send time is already in the past
+    if (sendAt.getTime() <= now.getTime()) continue;
+    await queueReminder(supabase, prospect_id, type, "sms", null, sendAt.toISOString());
   }
 
-  if (hoursUntil > 3) {
-    const r3 = new Date(mtgDate.getTime() - 3 * 60 * 60 * 1000);
-    await queueReminder(supabase, prospect_id, "reminder_3h", "sms", null, r3.toISOString());
-    await queueReminder(supabase, prospect_id, "reminder_3h", "email", null, r3.toISOString());
-  }
-
-  const r30 = new Date(mtgDate.getTime() - 30 * 60 * 1000);
-  await queueReminder(supabase, prospect_id, "reminder_30m", "sms", null, r30.toISOString());
-  await queueReminder(supabase, prospect_id, "reminder_30m", "email", null, r30.toISOString());
 
   // Update prospect stage
   await supabase.from("prospects").update({ stage: "booking_submitted", meeting_date: meeting_date || prospect.meeting_date }).eq("id", prospect_id);
@@ -249,6 +249,16 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
     const prospect = reminder.prospects;
     if (!prospect) continue;
 
+    // Skip-if-already-passed: if the meeting time has already passed, or this reminder's
+    // scheduled send window has elapsed (meeting has started), don't send a late reminder.
+    const meetingWhen = meetingStatus?.meeting_date || prospect.meeting_date;
+    const nowMs = Date.now();
+    if (meetingWhen && new Date(meetingWhen).getTime() <= nowMs) {
+      await supabase.from("meeting_reminders").update({ status: "skipped" }).eq("id", reminder.id);
+      continue;
+    }
+
+
     // Build message content if not pre-built
     let messageContent = reminder.message_content;
     if (!messageContent && prospect) {
@@ -306,8 +316,9 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
       const flagMap: Record<string, string> = {
         booking_confirmation: "confirmation_sent",
         reminder_24h: "reminder_24h_sent",
-        reminder_3h: "reminder_3h_sent",
-        reminder_30m: "reminder_30m_sent",
+        reminder_4h: "reminder_4h_sent",
+        reminder_1h: "reminder_1h_sent",
+        reminder_15m: "reminder_15m_sent",
       };
       const flag = flagMap[reminder.reminder_type];
       if (flag) {
