@@ -235,17 +235,85 @@ Deno.serve(async (req) => {
     }
 
 
-    // --- 3. Email to client --------------------------------------------------
+    // --- 3. Provision client workspace + temp password -----------------------
+    let tempPassword: string | null = null;
+    let provisionOk = false;
+    let workspaceUrl: string | null = null;
+    if (clientEmail) {
+      try {
+        const rand = crypto.getRandomValues(new Uint8Array(9));
+        tempPassword = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
+
+        const industry = meta.improvement_area || meta.industry || null;
+        const businessName = meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
+
+        const { data: provResp, error: provErr } = await supabase.functions.invoke("provision-from-booking", {
+          body: {
+            business_name: businessName,
+            contact_name: clientName || clientEmail.split("@")[0],
+            contact_email: clientEmail,
+            contact_phone: clientPhone || null,
+            industry,
+            appointment_id: record.id,
+            main_goal: meta.improvement_area || null,
+            interested_service: meta.improvement_area || null,
+            preferred_contact_method: clientPhone ? "sms" : "email",
+            sms_consent: Boolean(clientPhone),
+            booking_source: "bdr_booking",
+          },
+        });
+        if (provErr) throw provErr;
+        provisionOk = Boolean(provResp?.success);
+        workspaceUrl = provResp?.workspace_url || null;
+        const linkedUserId: string | null = provResp?.linked_user_id || null;
+        console.log(`[provision-from-booking] success=${provisionOk} user_id=${linkedUserId} workspace=${workspaceUrl}`);
+
+        if (linkedUserId && tempPassword) {
+          const { error: updErr } = await supabase.auth.admin.updateUserById(linkedUserId, {
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: { must_change_password: true },
+          });
+          if (updErr) {
+            console.error("[provision-from-booking] set temp password failed:", updErr);
+            tempPassword = null;
+          }
+        } else {
+          tempPassword = null;
+        }
+      } catch (e) {
+        console.error("[provision-from-booking] error:", e);
+        tempPassword = null;
+      }
+    }
+
+    // --- 4. Email to client (with credentials if available) ------------------
     let clientEmailSent = false;
     if (clientEmail) {
       const greeting = clientName ? `Hi ${clientName},` : "Hi there,";
       const appUrl = "https://newlight-app.com";
-      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const loginUrl = "https://newlight-app.com/auth";
+      const credsBlockText = tempPassword
+        ? `\n\nYour NewLight workspace is ready.\nLogin: ${loginUrl}\nEmail: ${clientEmail}\nTemporary password: ${tempPassword}\n(You'll be asked to change it on first login.)\n`
+        : "";
+      const credsBlockHtml = tempPassword
+        ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
+             <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your NewLight workspace is ready</p>
+             <p style="margin:0 0 4px;font-size:14px;color:#334155;"><strong>Email:</strong> ${clientEmail}</p>
+             <p style="margin:0 0 14px;font-size:14px;color:#334155;"><strong>Temporary password:</strong> <code style="background:#fff;padding:3px 8px;border-radius:6px;border:1px solid #CBD5E1;font-size:13px;">${tempPassword}</code></p>
+             <div style="text-align:center;margin-top:8px;">
+               <a href="${loginUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Login to NewLight</a>
+             </div>
+             <p style="margin:12px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
+           </div>`
+        : "";
+      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${credsBlockText}\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
     <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${greeting}</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
+    ${credsBlockHtml}
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Before we meet, download the NewLight app so your system is ready to go:</p>
     <div style="text-align:center;margin:24px 0;">
       <a href="${appUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;">Download the NewLight App</a>
@@ -264,6 +332,13 @@ Deno.serve(async (req) => {
       console.warn("No client email available for booking", record.id);
     }
 
+    // --- 5. Follow-up SMS to client with credentials -------------------------
+    if (clientPhone && tempPassword) {
+      const credsSms = `Your NewLight workspace is ready. Login at https://newlight-app.com/auth — Email: ${clientEmail} Temporary password: ${tempPassword} — Change your password on first login.`;
+      const credsSent = await sendSms(clientPhone, credsSms);
+      console.log(`[SMS→client creds] to=${clientPhone} success=${credsSent}`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -277,6 +352,9 @@ Deno.serve(async (req) => {
         bdr_email_sent: bdrEmailSent,
         bdr_email_present: Boolean(bdrEmail),
         bdr_name: bdrName || null,
+        provisioned: provisionOk,
+        workspace_url: workspaceUrl,
+        temp_password_issued: Boolean(tempPassword),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
