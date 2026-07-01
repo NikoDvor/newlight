@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus, Pencil } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +74,12 @@ export default function AdminTeam() {
 
   // Stats dialog
   const [statsFor, setStatsFor] = useState<UserRow | null>(null);
+
+  // Edit email dialog
+  const [editEmailFor, setEditEmailFor] = useState<UserRow | null>(null);
+  const [editEmailValue, setEditEmailValue] = useState("");
+  const [editEmailLoading, setEditEmailLoading] = useState(false);
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const initialTab = (location.state as any)?.tab || searchParams.get("tab") || "users";
@@ -233,6 +239,42 @@ export default function AdminTeam() {
     if (error) toast.error(error.message);
     else { toast.success("Removed"); fetchData(); }
   };
+
+  const openEditEmail = (row: UserRow) => {
+    setEditEmailFor(row);
+    setEditEmailValue(row.email || "");
+  };
+
+  const handleEditEmailSubmit = async () => {
+    if (!editEmailFor) return;
+    const newEmail = editEmailValue.trim().toLowerCase();
+    if (!newEmail) { toast.error("Email is required"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      toast.error("Invalid email format"); return;
+    }
+    if (newEmail.length > 255) { toast.error("Email must be under 255 characters"); return; }
+    if (newEmail === (editEmailFor.email || "").toLowerCase()) {
+      toast.error("New email is the same as the current email"); return;
+    }
+    setEditEmailLoading(true);
+    try {
+      const res = await supabase.functions.invoke("update-user-email", {
+        body: { user_id: editEmailFor.user_id, new_email: newEmail },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "Failed to update email");
+      } else {
+        toast.success("Email updated");
+        setEditEmailFor(null);
+        setEditEmailValue("");
+        fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update email");
+    }
+    setEditEmailLoading(false);
+  };
+
 
   const resetManualForm = () => {
     setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
@@ -457,6 +499,8 @@ export default function AdminTeam() {
               roleColor={roleColor}
               onStats={setStatsFor}
               onRemove={handleRemove}
+              onEditEmail={openEditEmail}
+
             />
           ))}
         </div>
@@ -590,20 +634,56 @@ export default function AdminTeam() {
           returnPath="/admin/team"
         />
       )}
+
+      <Dialog open={!!editEmailFor} onOpenChange={(o) => { if (!o) { setEditEmailFor(null); setEditEmailValue(""); } }}>
+        <DialogContent style={{ background: "hsl(218 35% 12%)", border: "1px solid hsla(211,96%,60%,.15)", color: "white" }}>
+          <DialogHeader><DialogTitle className="text-white">Edit Email</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            {editEmailFor && (
+              <div className="text-xs text-white/50">
+                Updating email for <span className="text-white/80">{editEmailFor.full_name || editEmailFor.user_id.slice(0, 8) + "…"}</span>
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-white/50 mb-1 block">Current Email</label>
+              <div className="w-full h-10 rounded-md bg-white/[0.03] border border-white/10 text-white/60 text-sm px-3 flex items-center">
+                {editEmailFor?.email || "—"}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-white/50 mb-1 block">New Email</label>
+              <Input
+                type="email"
+                value={editEmailValue}
+                onChange={e => setEditEmailValue(e.target.value)}
+                placeholder="new@example.com"
+                className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+              />
+            </div>
+            <Button onClick={handleEditEmailSubmit} disabled={editEmailLoading} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+              {editEmailLoading ? "Updating..." : "Update Email"}
+            </Button>
+            <p className="text-[10px] text-white/30 text-center">Bypasses email confirmation (internal admin action).</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </Tabs>
     </div>
   );
 }
 
 function WorkspaceGroupCard({
-  group, defaultOpen, roleColor, onStats, onRemove,
+  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail,
 }: {
   group: WorkspaceGroupData;
   defaultOpen?: boolean;
   roleColor: (r: string) => string;
   onStats: (r: UserRow) => void;
   onRemove: (r: UserRow) => void;
+  onEditEmail: (r: UserRow) => void;
 }) {
+
   const [open, setOpen] = useState(!!defaultOpen);
   return (
     <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
@@ -656,6 +736,13 @@ function WorkspaceGroupCard({
                           title="View stats, controls & Login As"
                         >
                           <Activity className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onEditEmail(u)}
+                          className="text-white/30 hover:text-[hsl(var(--nl-electric))] transition-colors"
+                          title="Edit email"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                         {u.role_id && (
                           <button
