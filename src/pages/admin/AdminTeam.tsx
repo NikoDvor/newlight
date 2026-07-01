@@ -74,6 +74,12 @@ export default function AdminTeam() {
 
   // Stats dialog
   const [statsFor, setStatsFor] = useState<UserRow | null>(null);
+
+  // Edit email dialog
+  const [editEmailFor, setEditEmailFor] = useState<UserRow | null>(null);
+  const [editEmailValue, setEditEmailValue] = useState("");
+  const [editEmailLoading, setEditEmailLoading] = useState(false);
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const initialTab = (location.state as any)?.tab || searchParams.get("tab") || "users";
