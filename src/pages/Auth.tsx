@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getEmployeeRoute } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,13 +18,40 @@ export default function Auth() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
-    navigate("/dashboard");
+
+    const userId = data.user?.id;
+    let dest = searchParams.get("redirect") || "/dashboard";
+
+    if (userId) {
+      const [{ data: roles }, { data: profile }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+        supabase.from("employee_profiles").select("job_title").eq("user_id", userId).maybeSingle(),
+      ]);
+
+      const roleList = (roles ?? []).map((r) => r.role);
+      const adminRoles = ["admin", "operator"];
+      const employeeRoles = ["marketing_staff", "support_staff"];
+
+      if (!searchParams.get("redirect")) {
+        if (roleList.some((r) => adminRoles.includes(r))) {
+          dest = "/admin";
+        } else {
+          const empRole = roleList.find((r) => employeeRoles.includes(r));
+          if (empRole) {
+            dest = getEmployeeRoute(empRole, profile?.job_title) || "/dashboard";
+          }
+        }
+      }
+    }
+
+    setLoading(false);
+    navigate(dest, { replace: true });
   };
 
   const inputStyle: React.CSSProperties = {
