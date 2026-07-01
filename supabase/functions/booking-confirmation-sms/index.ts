@@ -156,14 +156,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- Resolve BDR phone (owner of the calendar) ---------------------------
+    // --- Resolve BDR phone + email (owner of the calendar) -------------------
     let bdrPhone = "";
+    let bdrEmail = "";
     let bdrName = "";
     if (bdrUserId) {
-      const { data: userResp } = await supabase.auth.admin.getUserById(bdrUserId);
+      const { data: userResp, error: userErr } = await supabase.auth.admin.getUserById(bdrUserId);
+      if (userErr) console.error("[BDR lookup] auth.admin.getUserById error:", userErr);
       const u = userResp?.user;
       if (u) {
         bdrPhone = u.phone || (u.user_metadata as any)?.phone || "";
+        bdrEmail = u.email || "";
         bdrName =
           (u.user_metadata as any)?.full_name ||
           (u.user_metadata as any)?.name ||
@@ -179,6 +182,7 @@ Deno.serve(async (req) => {
         if (emp?.full_name) bdrName = emp.full_name;
       }
     }
+    console.log(`[BDR contact] user_id=${bdrUserId} name="${bdrName}" phone="${bdrPhone}" email="${bdrEmail}"`);
 
     const when = formatDateTime(startsAt);
 
@@ -187,6 +191,7 @@ Deno.serve(async (req) => {
     let clientSent = false;
     if (clientPhone) {
       clientSent = await sendSms(clientPhone, clientMsg);
+      console.log(`[SMS→client] to=${clientPhone} success=${clientSent}`);
     } else {
       console.warn("No client phone available for booking", record.id);
     }
@@ -196,9 +201,39 @@ Deno.serve(async (req) => {
     let bdrSent = false;
     if (bdrPhone) {
       bdrSent = await sendSms(bdrPhone, bdrMsg);
+      console.log(`[SMS→BDR] to=${bdrPhone} success=${bdrSent}`);
     } else {
       console.warn("No BDR phone available for user", bdrUserId);
     }
+
+    // --- 2b. Email to BDR ----------------------------------------------------
+    let bdrEmailSent = false;
+    if (bdrEmail) {
+      const label = clientName || "New lead";
+      const subj = `New Booking: ${label} at ${when}`;
+      const text = `Hi ${bdrName || "there"},\n\nYou have a new booking.\n\nClient: ${label}\nWhen: ${when}\nPhone: ${clientPhone || "n/a"}\nEmail: ${clientEmail || "n/a"}\n${meta.notes ? `Notes: ${meta.notes}\n` : ""}${meta.improvement_area ? `Interest: ${meta.improvement_area}\n` : ""}\nCheck your calendar in the NewLight app.`;
+      const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">New booking confirmed</h1>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi ${bdrName || "there"},</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">You have a new appointment on your NewLight calendar.</p>
+    <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;margin:0 0 20px;">
+      <tr><td style="padding:6px 0;color:#6b7280;width:110px;">Client</td><td style="padding:6px 0;"><strong>${label}</strong></td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">When</td><td style="padding:6px 0;"><strong>${when}</strong></td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${clientPhone || "—"}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${clientEmail || "—"}</td></tr>
+      ${meta.improvement_area ? `<tr><td style="padding:6px 0;color:#6b7280;">Interest</td><td style="padding:6px 0;">${meta.improvement_area}</td></tr>` : ""}
+      ${meta.notes ? `<tr><td style="padding:6px 0;color:#6b7280;vertical-align:top;">Notes</td><td style="padding:6px 0;">${meta.notes}</td></tr>` : ""}
+    </table>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Check your calendar in the NewLight app.</p>
+  </div>
+</body></html>`;
+      bdrEmailSent = await sendEmail(bdrEmail, subj, html, text);
+      console.log(`[EMAIL→BDR] to=${bdrEmail} subject="${subj}" success=${bdrEmailSent}`);
+    } else {
+      console.warn("No BDR email available for user", bdrUserId);
+    }
+
 
     // --- 3. Email to client --------------------------------------------------
     let clientEmailSent = false;
@@ -239,6 +274,8 @@ Deno.serve(async (req) => {
         client_email_present: Boolean(clientEmail),
         bdr_sent: bdrSent,
         bdr_phone_present: Boolean(bdrPhone),
+        bdr_email_sent: bdrEmailSent,
+        bdr_email_present: Boolean(bdrEmail),
         bdr_name: bdrName || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
