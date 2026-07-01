@@ -190,10 +190,26 @@ async function provisionWorkspaceDefaults(
     adminClient.from("client_setup_items").select("id", { count: "exact", head: true }).eq("client_id", clientId),
   ]);
 
+  // Helper: run an insert, log any error, and mark the section as failed instead
+  // of silently swallowing it. Never throws — provisioning stays best-effort so
+  // one broken section can't abort the whole run.
+  const runInsert = async (
+    section: string,
+    p: PromiseLike<{ error: any }>,
+  ): Promise<boolean> => {
+    const { error } = await p;
+    if (error) {
+      console.error(`[provision-from-booking] ${section} insert failed:`, error.message || error);
+      provisionedItems.push(`FAILED: ${section} (${error.message || "unknown error"})`);
+      return false;
+    }
+    return true;
+  };
+
   // 1. Calendars + availability + appointment types + booking links + reminder rules
   if ((calRes.count || 0) === 0) {
     for (const calDef of defaults.calendars) {
-      const { data: cal } = await adminClient.from("calendars").insert({
+      const { data: cal, error: calInsErr } = await adminClient.from("calendars").insert({
         client_id: clientId,
         calendar_name: calDef.name,
         calendar_type: calDef.type,
@@ -201,43 +217,59 @@ async function provisionWorkspaceDefaults(
         is_active: true,
       }).select().single();
 
-      if (!cal) continue;
+      if (calInsErr || !cal) {
+        console.error(`[provision-from-booking] calendar "${calDef.name}" insert failed:`, calInsErr?.message || calInsErr);
+        provisionedItems.push(`FAILED: Calendar ${calDef.name} (${calInsErr?.message || "no row"})`);
+        continue;
+      }
 
-      await adminClient.from("calendar_availability").insert(
-        [1, 2, 3, 4, 5].map((day) => ({
-          client_id: clientId,
-          calendar_id: cal.id,
-          day_of_week: day,
-          start_time: "09:00",
-          end_time: "17:00",
-          slot_interval_minutes: 30,
-          is_active: true,
-        }))
+      await runInsert(
+        `calendar_availability(${calDef.name})`,
+        adminClient.from("calendar_availability").insert(
+          [1, 2, 3, 4, 5].map((day) => ({
+            client_id: clientId,
+            calendar_id: cal.id,
+            day_of_week: day,
+            start_time: "09:00",
+            end_time: "17:00",
+            slot_interval_minutes: 30,
+            is_active: true,
+          }))
+        ),
       );
 
-      await adminClient.from("calendar_appointment_types").insert(
-        calDef.apptTypes.map((typeName) => ({
-          client_id: clientId,
-          calendar_id: cal.id,
-          name: typeName,
-          duration_minutes: calDef.duration,
-          is_active: true,
-        }))
+      await runInsert(
+        `calendar_appointment_types(${calDef.name})`,
+        adminClient.from("calendar_appointment_types").insert(
+          calDef.apptTypes.map((typeName) => ({
+            client_id: clientId,
+            calendar_id: cal.id,
+            name: typeName,
+            duration_minutes: calDef.duration,
+            is_active: true,
+          }))
+        ),
       );
 
       const linkSlug = calDef.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      await adminClient.from("calendar_booking_links").insert({
-        client_id: clientId,
-        calendar_id: cal.id,
-        slug: `${clientId.slice(0, 8)}-${linkSlug}`,
-        is_active: true,
-        is_public: true,
-      });
+      await runInsert(
+        `calendar_booking_links(${calDef.name})`,
+        adminClient.from("calendar_booking_links").insert({
+          client_id: clientId,
+          calendar_id: cal.id,
+          slug: `${clientId.slice(0, 8)}-${linkSlug}`,
+          is_active: true,
+          is_public: true,
+        }),
+      );
 
-      await adminClient.from("calendar_reminder_rules").insert([
-        { client_id: clientId, calendar_id: cal.id, reminder_type: "confirmation", channel: "email", offset_minutes: 0, is_active: true },
-        { client_id: clientId, calendar_id: cal.id, reminder_type: "reminder", channel: "email", offset_minutes: 1440, is_active: true },
-      ]);
+      await runInsert(
+        `calendar_reminder_rules(${calDef.name})`,
+        adminClient.from("calendar_reminder_rules").insert([
+          { client_id: clientId, calendar_id: cal.id, reminder_type: "confirmation", channel: "email", offset_minutes: 0, is_active: true },
+          { client_id: clientId, calendar_id: cal.id, reminder_type: "reminder", channel: "email", offset_minutes: 1440, is_active: true },
+        ]),
+      );
 
       provisionedItems.push(`Calendar: ${calDef.name}`);
     }
@@ -245,110 +277,132 @@ async function provisionWorkspaceDefaults(
 
   // 2. Services
   if ((svcRes.count || 0) === 0 && defaults.services.length > 0) {
-    await adminClient.from("service_catalog").insert(
-      defaults.services.map((svc, i) => ({
-        client_id: clientId,
-        service_name: svc.name,
-        service_description: svc.description,
-        display_price_text: svc.price,
-        service_status: "active",
-        display_order: i,
-      }))
+    const ok = await runInsert(
+      "service_catalog",
+      adminClient.from("service_catalog").insert(
+        defaults.services.map((svc, i) => ({
+          client_id: clientId,
+          service_name: svc.name,
+          service_description: svc.description,
+          display_price_text: svc.price,
+          service_status: "active",
+          display_order: i,
+        }))
+      ),
     );
-    provisionedItems.push(`Services (${defaults.services.length})`);
+    if (ok) provisionedItems.push(`Services (${defaults.services.length})`);
   }
 
   // 3. Forms
   if ((formRes.count || 0) === 0) {
     for (const formDef of defaults.forms) {
-      await adminClient.from("client_forms").insert({
-        client_id: clientId,
-        form_name: formDef.name,
-        form_type: formDef.type,
-        form_status: "draft",
-        intake_questions: formDef.questions.map((q, i) => ({
-          id: `q${i + 1}`,
-          label: q,
-          type: "text",
-          required: false,
-        })),
-      });
-      provisionedItems.push(`Form: ${formDef.name}`);
+      const ok = await runInsert(
+        `client_forms(${formDef.name})`,
+        adminClient.from("client_forms").insert({
+          client_id: clientId,
+          form_name: formDef.name,
+          form_type: formDef.type,
+          form_status: "draft",
+          intake_questions: formDef.questions.map((q, i) => ({
+            id: `q${i + 1}`,
+            label: q,
+            type: "text",
+            required: false,
+          })),
+        }),
+      );
+      if (ok) provisionedItems.push(`Form: ${formDef.name}`);
     }
   }
 
   // 4. Website content scaffold
   if ((contentRes.count || 0) === 0) {
-    await adminClient.from("website_content_blocks").insert(
-      DEFAULT_CONTENT_BLOCKS.map((b) => ({ client_id: clientId, ...b }))
+    const ok = await runInsert(
+      "website_content_blocks",
+      adminClient.from("website_content_blocks").insert(
+        DEFAULT_CONTENT_BLOCKS.map((b) => ({ client_id: clientId, ...b }))
+      ),
     );
-    provisionedItems.push("Website content structure");
+    if (ok) provisionedItems.push("Website content structure");
   }
 
   // 5. Workspace owner user (also grants sidebar module access via role_preset=owner)
   if ((wsUserRes.count || 0) === 0 && ownerEmail) {
-    await adminClient.from("workspace_users").insert({
-      client_id: clientId,
-      email: ownerEmail,
-      full_name: ownerName || ownerEmail.split("@")[0],
-      phone: ownerPhone || null,
-      role_preset: "owner",
-      status: "active",
-      is_bookable_staff: false,
-    });
-    provisionedItems.push("Workspace owner user");
+    const ok = await runInsert(
+      "workspace_users",
+      adminClient.from("workspace_users").insert({
+        client_id: clientId,
+        email: ownerEmail,
+        full_name: ownerName || ownerEmail.split("@")[0],
+        phone: ownerPhone || null,
+        role_preset: "owner",
+        status: "active",
+        is_bookable_staff: false,
+      }),
+    );
+    if (ok) provisionedItems.push("Workspace owner user");
   }
 
   // 6. Billing account stub
   if ((billingRes.count || 0) === 0) {
-    await adminClient.from("billing_accounts").insert({
-      client_id: clientId,
-      billing_status: "pending_setup",
-      billing_email: ownerEmail || null,
-    });
-    provisionedItems.push("Billing account");
+    const ok = await runInsert(
+      "billing_accounts",
+      adminClient.from("billing_accounts").insert({
+        client_id: clientId,
+        billing_status: "pending_setup",
+        billing_email: ownerEmail || null,
+      }),
+    );
+    if (ok) provisionedItems.push("Billing account");
   }
 
   // 7. Growth recommendations
   if ((recRes.count || 0) === 0) {
     const industryLabel = industry || "your business";
-    await adminClient.from("ai_business_insights").insert([
-      {
-        client_id: clientId,
-        title: "Optimize your online visibility",
-        category: "growth",
-        severity: "medium",
-        status: "active",
-        explanation: `Based on ${industryLabel} industry benchmarks, optimizing your Google Business Profile and local SEO can increase new customer inquiries by 20-40%.`,
-        recommended_action: "Complete your Google Business Profile and request a local SEO audit.",
-      },
-      {
-        client_id: clientId,
-        title: "Automate booking confirmations",
-        category: "efficiency",
-        severity: "low",
-        status: "active",
-        explanation: "Automated confirmation and reminder emails reduce no-shows by up to 30% and save staff time.",
-        recommended_action: "Enable automated email reminders in your calendar settings.",
-      },
-    ]);
-    provisionedItems.push("Growth recommendations (2)");
+    const ok = await runInsert(
+      "ai_business_insights",
+      adminClient.from("ai_business_insights").insert([
+        {
+          client_id: clientId,
+          title: "Optimize your online visibility",
+          category: "growth",
+          severity: "medium",
+          status: "active",
+          explanation: `Based on ${industryLabel} industry benchmarks, optimizing your Google Business Profile and local SEO can increase new customer inquiries by 20-40%.`,
+          recommended_action: "Complete your Google Business Profile and request a local SEO audit.",
+        },
+        {
+          client_id: clientId,
+          title: "Automate booking confirmations",
+          category: "efficiency",
+          severity: "low",
+          status: "active",
+          explanation: "Automated confirmation and reminder emails reduce no-shows by up to 30% and save staff time.",
+          recommended_action: "Enable automated email reminders in your calendar settings.",
+        },
+      ]),
+    );
+    if (ok) provisionedItems.push("Growth recommendations (2)");
   }
 
-  // 8. Setup checklist items
+  // 8. Setup checklist items — uses canonical column shape (item_label / item_status / submitted_by_client).
   if ((setupRes.count || 0) === 0) {
-    await adminClient.from("client_setup_items").insert(
-      DEFAULT_SETUP_ITEMS.map((item) => ({
-        client_id: clientId,
-        item_key: item.item_key,
-        title: item.title,
-        category: item.category,
-        display_order: item.display_order,
-        status: "pending",
-      }))
+    const ok = await runInsert(
+      "client_setup_items",
+      adminClient.from("client_setup_items").insert(
+        DEFAULT_SETUP_ITEMS.map((item) => ({
+          client_id: clientId,
+          category: item.category,
+          item_key: item.item_key,
+          item_label: item.item_label,
+          submitted_by_client: item.submitted_by_client,
+          item_status: "missing",
+        }))
+      ),
     );
-    provisionedItems.push(`Setup checklist (${DEFAULT_SETUP_ITEMS.length})`);
+    if (ok) provisionedItems.push(`Setup checklist (${DEFAULT_SETUP_ITEMS.length})`);
   }
+
 
   // 9. Audit trail
   if (provisionedItems.length > 0) {
