@@ -58,6 +58,7 @@ export default function AdminTeam() {
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualFullName, setManualFullName] = useState("");
   const [manualEmail, setManualEmail] = useState("");
+  const [manualPhone, setManualPhone] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [manualRolePreset, setManualRolePreset] = useState("bdr");
   const [manualDepartment, setManualDepartment] = useState("");
@@ -65,6 +66,7 @@ export default function AdminTeam() {
   const [manualClientId, setManualClientId] = useState("");
   const [showManualPassword, setShowManualPassword] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
+
 
   // App link modal (stays on this page, never navigates)
   const [appLinkClient, setAppLinkClient] = useState<ClientOption | null>(null);
