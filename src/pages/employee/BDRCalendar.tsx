@@ -598,7 +598,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setAvailability(calendar.availability);
       (async () => {
         const { data } = await (supabase as any)
-          .from("forms")
+          .from("client_forms")
           .select("id, form_name")
           .order("form_name", { ascending: true });
         setAvailableForms((data || []).map((f: any) => ({ id: f.id, form_name: f.form_name })));
