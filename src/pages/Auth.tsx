@@ -40,7 +40,7 @@ export default function Auth() {
 
       if (!searchParams.get("redirect")) {
         if (roleList.some((r) => adminRoles.includes(r))) {
-          dest = "/admin";
+          dest = "/admin/dashboard";
         } else {
           const empRole = roleList.find((r) => employeeRoles.includes(r));
           if (empRole) {
