@@ -83,11 +83,17 @@ export default function BDRBookingPublic() {
   useEffect(() => {
     (async () => {
       if (!slug) return;
-      const { data } = await (supabase as any)
-        .from("bdr_calendars")
-        .select("id, client_id, name, booking_slug, availability, timezone, booking_title, booking_description, booking_active, booking_form_id")
-        .eq("booking_slug", slug)
-        .maybeSingle();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      const cols = "id, client_id, name, booking_slug, availability, timezone, booking_title, booking_description, booking_active, booking_form_id";
+      // Try slug first, then id (supports both /bdr/book/{slug} and /bdr/book/{uuid}).
+      let { data, error: calErr } = await (supabase as any)
+        .from("bdr_calendars").select(cols).eq("booking_slug", slug).maybeSingle();
+      if (!data && isUuid) {
+        const alt = await (supabase as any)
+          .from("bdr_calendars").select(cols).eq("id", slug).maybeSingle();
+        data = alt.data; calErr = alt.error;
+      }
+      console.error("[BDRBookingPublic] calendar lookup", { slug, isUuid, found: !!data, calErr, booking_form_id: data?.booking_form_id });
       setCal(data);
 
       // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
