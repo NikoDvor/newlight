@@ -200,12 +200,43 @@ Deno.serve(async (req) => {
       console.warn("No BDR phone available for user", bdrUserId);
     }
 
+    // --- 3. Email to client --------------------------------------------------
+    let clientEmailSent = false;
+    if (clientEmail) {
+      const greeting = clientName ? `Hi ${clientName},` : "Hi there,";
+      const appUrl = "https://newlight-app.com";
+      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${greeting}</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Before we meet, download the NewLight app so your system is ready to go:</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${appUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;">Download the NewLight App</a>
+    </div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Questions? Call (805) 836-3557.</p>
+    <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">— The NewLight Team</p>
+  </div>
+</body></html>`;
+      clientEmailSent = await sendEmail(
+        clientEmail,
+        "Your NewLight appointment is confirmed",
+        emailHtml,
+        emailText,
+      );
+    } else {
+      console.warn("No client email available for booking", record.id);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         booking_id: record.id,
         client_sent: clientSent,
         client_phone_present: Boolean(clientPhone),
+        client_email_sent: clientEmailSent,
+        client_email_present: Boolean(clientEmail),
         bdr_sent: bdrSent,
         bdr_phone_present: Boolean(bdrPhone),
         bdr_name: bdrName || null,
