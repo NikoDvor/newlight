@@ -153,6 +153,7 @@ import PublicSite from "./pages/PublicSite";
 import ClientIntakeForm from "./pages/ClientIntakeForm";
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
+import Install from "./pages/Install";
 import ActivateAccount from "./pages/ActivateAccount";
 import AppDownload from "./pages/AppDownload";
 import { AccountManagerDashboard, BDRDashboard, EmployeePlaceholder, GenericEmployeeDashboard, SDRDashboard, SupportEmployeeDashboard } from "./pages/employee/EmployeeDashboards";
@@ -249,6 +250,8 @@ const App = () => {
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
+              <Route path="/install" element={<Install />} />
+
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
