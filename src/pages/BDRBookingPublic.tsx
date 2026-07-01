@@ -104,7 +104,7 @@ export default function BDRBookingPublic() {
           .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message")
           .eq("id", formId)
           .maybeSingle();
-        console.log("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
+        console.error("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
         if (fd) {
           setFormDef({
             id: fd.id,
@@ -126,7 +126,7 @@ export default function BDRBookingPublic() {
               { id: "phone", label: "Phone", type: "phone", required: true },
               { id: "goals", label: "What are you hoping to improve?", type: "textarea", required: false },
             ];
-            console.log("[BDRBookingPublic] intake_questions empty — using default intake fields");
+            console.error("[BDRBookingPublic] intake_questions empty — using default intake fields");
           }
           const mapped: FormField[] = questions.map((q: any, idx: number) => {
             const key = String(q.id ?? q.key ?? q.field_key ?? `q_${idx}`);
@@ -142,11 +142,11 @@ export default function BDRBookingPublic() {
               options_json: q.options ?? q.options_json ?? null,
             };
           }).sort((a, b) => a.field_order - b.field_order);
-          console.log("[BDRBookingPublic] mapped form fields:", mapped);
+          console.error("[BDRBookingPublic] mapped form fields:", mapped);
           setFormFields(mapped);
           if (mapped.length === 0) setFormStepComplete(true);
         } else {
-          console.warn("[BDRBookingPublic] booking_form_id set but client_forms row not visible (RLS?)");
+          console.error("[BDRBookingPublic] booking_form_id set but client_forms row not visible (RLS?)");
           setFormStepComplete(true);
         }
       } else {
