@@ -599,8 +599,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       (async () => {
         const { data } = await (supabase as any)
           .from("forms")
-          .select("id, form_name, is_active")
-          .eq("is_active", true)
+          .select("id, form_name")
           .order("form_name", { ascending: true });
         setAvailableForms((data || []).map((f: any) => ({ id: f.id, form_name: f.form_name })));
       })();
@@ -715,18 +714,18 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Booking form (optional)</Label>
+              <Label className="text-xs text-white/60">Booking Form (optional)</Label>
               <select
                 value={bookingFormId}
                 onChange={e => setBookingFormId(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
               >
-                <option value="" className="bg-[hsl(215,35%,12%)]">— None (skip form step) —</option>
+                <option value="" className="bg-[hsl(215,35%,12%)]">No form</option>
                 {availableForms.map(f => (
                   <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
                 ))}
               </select>
-              <p className="text-[11px] text-white/45">If set, prospects fill this form before picking a time.</p>
+              <p className="text-[11px] text-white/45">Prospects will fill this form before selecting a time slot.</p>
             </div>
             <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
               <div>
