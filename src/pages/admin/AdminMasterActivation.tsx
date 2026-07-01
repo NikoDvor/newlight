@@ -78,6 +78,11 @@ export default function AdminMasterActivation() {
   const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
   const [syncing, setSyncing] = useState(false);
 
+  // ── Booking lead pre-fill (from nl_bdr_leads.improvement_area) ──
+  const [bookingImprovement, setBookingImprovement] = useState<string | null>(null);
+  const [bookingModules, setBookingModules] = useState<string[]>([]);
+  const [bookingBannerDismissed, setBookingBannerDismissed] = useState(false);
+
   // ── Load existing client + draft ──
   useEffect(() => {
     if (!clientId) return;
