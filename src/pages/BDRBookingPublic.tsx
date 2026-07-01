@@ -283,14 +283,10 @@ export default function BDRBookingPublic() {
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
               >
                 <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
-                <option value="Lead Generation & More Customers" className="bg-[hsl(215,35%,12%)]">Lead Generation & More Customers</option>
-                <option value="Appointment Booking & Follow-Up" className="bg-[hsl(215,35%,12%)]">Appointment Booking & Follow-Up</option>
-                <option value="CRM & Pipeline Management" className="bg-[hsl(215,35%,12%)]">CRM & Pipeline Management</option>
-                <option value="Social Media & Content" className="bg-[hsl(215,35%,12%)]">Social Media & Content</option>
-                <option value="Website & Online Presence" className="bg-[hsl(215,35%,12%)]">Website & Online Presence</option>
-                <option value="Ads & Paid Marketing" className="bg-[hsl(215,35%,12%)]">Ads & Paid Marketing</option>
-                <option value="SEO & AI Visibility" className="bg-[hsl(215,35%,12%)]">SEO & AI Visibility</option>
-                <option value="Other" className="bg-[hsl(215,35%,12%)]">Other</option>
+                <option value="Website Management" className="bg-[hsl(215,35%,12%)]">Website Management</option>
+                <option value="Lifecycle & Nurture Sequences" className="bg-[hsl(215,35%,12%)]">Lifecycle & Nurture Sequences</option>
+                <option value="Financial Compliance" className="bg-[hsl(215,35%,12%)]">Financial Compliance</option>
+                <option value="Meeting Intelligence" className="bg-[hsl(215,35%,12%)]">Meeting Intelligence</option>
               </select>
             </Field>
             <Field label="Preferred time *">
