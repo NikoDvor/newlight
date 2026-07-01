@@ -47,6 +47,44 @@ const stageIcons: Record<number, React.ReactNode> = {
 
 type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost" | "submitted" | "activated";
 
+/**
+ * Mapping from the "What are you looking to improve?" answer captured on the
+ * public BDR booking form (nl_bdr_leads.improvement_area) to internal module
+ * keys used by the activation wizard.
+ */
+const IMPROVEMENT_TO_MODULES: Record<string, string[]> = {
+  "Lead Generation & More Customers": ["ads", "seo", "social_media"],
+  "Appointment Booking & Follow-Up": ["calendar", "automation", "crm"],
+  "CRM & Pipeline Management": ["crm", "automation"],
+  "Social Media & Content": ["social_media"],
+  "Website & Online Presence": ["web_design", "seo"],
+  "Ads & Paid Marketing": ["ads"],
+  "SEO & AI Visibility": ["seo", "ai_visibility"],
+  "Other": [],
+};
+
+/**
+ * Apply pre-selected modules to the wizard form flags. Only sets flags where
+ * a canonical field exists — unknown modules (automation, ai_visibility) are
+ * still tracked in bookingModules for badge display but no field is touched.
+ */
+function applyModulePreselection(base: ActivationFormState, modules: string[]): ActivationFormState {
+  const next: any = { ...base };
+  for (const m of modules) {
+    switch (m) {
+      case "ads": next.use_ads = "yes"; break;
+      case "seo": next.use_seo = "yes"; break;
+      case "social_media": next.use_social = "yes"; break;
+      case "web_design": next.use_website_workspace = "yes"; break;
+      case "crm": next.crm_mode = "native"; break;
+      case "calendar": next.use_native_calendar = "yes"; break;
+      // automation / ai_visibility: no dedicated wizard field yet — badge only
+    }
+  }
+  return next as ActivationFormState;
+}
+
+
 /** Clamp legacy 15-step drafts safely into 7-stage range */
 function clampStage(step: number): number {
   if (step <= 0) return 1;
