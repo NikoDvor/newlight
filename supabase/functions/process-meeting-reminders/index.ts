@@ -316,8 +316,9 @@ async function processReminderQueue(supabase: any, supabaseUrl: string) {
       const flagMap: Record<string, string> = {
         booking_confirmation: "confirmation_sent",
         reminder_24h: "reminder_24h_sent",
-        reminder_3h: "reminder_3h_sent",
-        reminder_30m: "reminder_30m_sent",
+        reminder_4h: "reminder_4h_sent",
+        reminder_1h: "reminder_1h_sent",
+        reminder_15m: "reminder_15m_sent",
       };
       const flag = flagMap[reminder.reminder_type];
       if (flag) {
