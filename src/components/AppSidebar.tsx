@@ -75,7 +75,15 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Employee Hub",
+    type: "group", label: "Enterprise Services",
+    items: [
+      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
+      { title: "Lifecycle & Nurture", url: "/lifecycle-nurture", icon: Workflow, moduleKey: "lifecycle" },
+      { title: "Financial Compliance", url: "/financial-compliance", icon: Shield, moduleKey: "compliance" },
+      { title: "Referral Program", url: "/referral-program", icon: Gift, moduleKey: "referral" },
+    ],
+  },
+  {
     items: [
       { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
