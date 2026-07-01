@@ -633,6 +633,7 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_description: bookingDesc.trim() || null,
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
+      booking_form_id: bookingFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
