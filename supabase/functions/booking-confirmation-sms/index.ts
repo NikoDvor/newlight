@@ -64,6 +64,39 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
+async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - no RESEND_API_KEY] To: ${to} | Subject: ${subject}`);
+    return false;
+  }
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "NewLight <noreply@newlightgen.com>",
+        to: [to],
+        subject,
+        text,
+        html,
+      }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Resend error:", response.status, err);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Email send error:", e);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -105,19 +138,21 @@ Deno.serve(async (req) => {
 
     if (!startsAt) throw new Error("Missing starts_at on booking record");
 
-    // --- Resolve client (booker) name + phone --------------------------------
+    // --- Resolve client (booker) name + phone + email ------------------------
     let clientName: string = meta.customer_name || "";
     let clientPhone: string = meta.phone || "";
+    let clientEmail: string = meta.email || meta.owner_email || "";
 
-    if ((!clientName || !clientPhone) && leadId) {
+    if ((!clientName || !clientPhone || !clientEmail) && leadId) {
       const { data: lead } = await supabase
         .from("nl_bdr_leads")
-        .select("owner_name, business_name, phone")
+        .select("owner_name, business_name, phone, owner_email")
         .eq("id", leadId)
         .maybeSingle();
       if (lead) {
         if (!clientName) clientName = lead.owner_name || lead.business_name || "";
         if (!clientPhone) clientPhone = lead.phone || "";
+        if (!clientEmail) clientEmail = lead.owner_email || "";
       }
     }
 
