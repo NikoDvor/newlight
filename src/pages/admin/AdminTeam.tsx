@@ -499,6 +499,8 @@ export default function AdminTeam() {
               roleColor={roleColor}
               onStats={setStatsFor}
               onRemove={handleRemove}
+              onEditEmail={openEditEmail}
+
             />
           ))}
         </div>
