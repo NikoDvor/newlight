@@ -209,9 +209,17 @@ export default function BrandingSettings() {
       <BackArrow to="/settings" label="Settings" />
       <PageHeader title="Branding Settings" description="Customize your workspace appearance across all modules" />
 
+      {isAdmin && urlClientId && (
+        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-[11px]">
+          <Building className="h-3 w-3 text-primary" />
+          <span className="text-muted-foreground">Editing branding for workspace:</span>
+          <span className="font-semibold text-foreground">{effectiveClientId.slice(0, 8)}…</span>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-6">
-        <Button onClick={handleSave} className="btn-gradient h-9 px-5 rounded-xl text-xs font-semibold">
-          <Save className="h-3.5 w-3.5 mr-1.5" /> Save All Branding
+        <Button onClick={handleSave} disabled={saving} className="btn-gradient h-9 px-5 rounded-xl text-xs font-semibold">
+          <Save className="h-3.5 w-3.5 mr-1.5" /> {saving ? "Saving…" : "Save All Branding"}
         </Button>
         <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} className="h-9 rounded-xl text-xs">
           <Eye className="h-3.5 w-3.5 mr-1.5" /> {showPreview ? "Hide Preview" : "Live Preview"}
@@ -224,6 +232,7 @@ export default function BrandingSettings() {
           </div>
         )}
       </div>
+
 
       {showPreview && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mb-6">
