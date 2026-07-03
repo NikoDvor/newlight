@@ -204,8 +204,8 @@ export default function ClientSetup() {
         <div className={sectionCls}>
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Payments / Messaging / Meetings</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label className={labelCls}>Stripe Connected?</label><YesNoSelect value={form.stripe_connected} onChange={v => set("stripe_connected", v)} /></div>
-            <div><label className={labelCls}>Stripe Account Email</label><Input value={form.stripe_email} onChange={e => set("stripe_email", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Stripe Connected?</label><YesNoSelect value={form.stripe_connected} onChange={v => set("stripe_connected", v)} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Stripe Account Email</label><Input value={form.stripe_email} onChange={e => set("stripe_email", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Twilio Connected?</label><YesNoSelect value={form.twilio_connected} onChange={v => set("twilio_connected", v)} /></div>
             <div><label className={labelCls}>Preferred Business Number</label><Input value={form.twilio_number} onChange={e => set("twilio_number", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Zoom Connected?</label><YesNoSelect value={form.zoom_connected} onChange={v => set("zoom_connected", v)} /></div>
