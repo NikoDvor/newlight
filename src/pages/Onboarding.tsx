@@ -317,7 +317,7 @@ export default function Onboarding() {
             <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Business Type / Industry</Label><Input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Dental, Legal, HVAC" /></div>
             <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Main Service / Offer</Label><Input value={mainService} onChange={e => setMainService(e.target.value)} placeholder="Your core service" /></div>
             <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Primary Goal</Label><Input value={primaryGoal} onChange={e => setPrimaryGoal(e.target.value)} placeholder="e.g. Get more leads" /></div>
-            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
+            <div className={isAdminOps ? "sm:col-span-2 opacity-40 pointer-events-none" : "sm:col-span-2"}><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
           </div>
         </div>
       );
