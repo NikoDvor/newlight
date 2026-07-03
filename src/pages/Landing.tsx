@@ -258,18 +258,18 @@ export default function Landing() {
           <motion.h1
             className="font-bold leading-[0.95] tracking-[-0.02em] mx-auto"
             style={{
-              color: FG,
-              fontSize: "clamp(40px, 6.8vw, 88px)",
-              maxWidth: 960,
+              color: "#FF0000",
+              fontSize: "clamp(64px, 14vw, 180px)",
+              maxWidth: 1200,
               fontFamily: display,
-              textShadow: "0 1px 0 rgba(255,255,255,0.6)",
+              textShadow: "0 2px 0 rgba(255,255,255,0.6)",
             }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
             custom={1}
           >
-            WE BRING YOU READY-TO-BUY CUSTOMERS.
+            TEST 123 DEPLOY CHECK
           </motion.h1>
 
           <motion.div
