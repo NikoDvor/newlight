@@ -701,7 +701,7 @@ export default function GetStarted() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs text-white/60">{label}</Label>
