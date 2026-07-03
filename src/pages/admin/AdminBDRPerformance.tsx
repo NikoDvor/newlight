@@ -80,6 +80,7 @@ export default function AdminBDRPerformance() {
   const { isAdmin } = useWorkspace();
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
+  const [calls, setCalls] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
@@ -88,15 +89,21 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
       ]);
       setLeads(l || []);
       setObjections(o || []);
+      setCalls(c || []);
 
       // Fetch BDR names
-      const userIds = [...new Set([...(l || []).map((x: any) => x.user_id), ...(o || []).map((x: any) => x.user_id)])];
+      const userIds = [...new Set([
+        ...(l || []).map((x: any) => x.user_id),
+        ...(o || []).map((x: any) => x.user_id),
+        ...(c || []).map((x: any) => x.bdr_user_id),
+      ].filter(Boolean))];
       if (userIds.length) {
         const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", userIds);
         const map: Record<string, string> = {};
