@@ -166,7 +166,7 @@ export default function Landing() {
             }
           }
         `}</style>
-        <HomeFX />
+        <HomeFX disableScrollOpacityBoost />
       </div>
 
 
