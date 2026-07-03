@@ -4,10 +4,13 @@ import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
-const ELECTRIC = "#00B4FF";
-const FG = "#ffffff";
-const FG_SOFT = "rgba(255,255,255,0.72)";
-const BORDER_TINT = "rgba(0,180,255,0.4)";
+const ELECTRIC = "#2196F3"; // primary light-blue accent
+const SKY = "#7CC7FF"; // lighter blue
+const INK = "#0A2540"; // near-black high-contrast text
+const FG = "#0B3B75"; // deep blue for headings
+const FG_SOFT = "rgba(10,37,64,0.68)"; // muted ink for body
+const BORDER_TINT = "rgba(33,150,243,0.35)";
+const PAGE_BG = "#F4FAFF"; // very light blue-white
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -56,7 +59,7 @@ interface NavItemProps {
 function NavItem({ href, label, icon, navigate }: NavItemProps) {
   const isExternal = href.startsWith("mailto:") || href.startsWith("tel:");
   const baseClasses =
-    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors hover:text-white/90 hover:bg-white/5";
+    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors hover:bg-[rgba(33,150,243,0.08)]";
   const style: React.CSSProperties = {
     color: FG_SOFT,
     fontSize: 12,
@@ -108,11 +111,9 @@ export default function Landing() {
   return (
     <div
       className="relative min-h-screen overflow-x-hidden"
-      style={{ fontFamily: body, background: "#000000", color: FG }}
+      style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
-      {/* HomeFX — sole background layer. Wrapped in an isolated stacking context
-          so its internal z-index:-1 renders above the black page fallback but
-          below page content (which sits at z-index 10+). */}
+      {/* HomeFX — recolored via mix-blend overlay only (geometry untouched). */}
       <div
         style={{
           position: "fixed",
@@ -127,11 +128,23 @@ export default function Landing() {
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.85; }
+            0%, 100% { opacity: 0.9; }
             50%      { opacity: 1; }
           }
         `}</style>
         <HomeFX />
+        {/* Blue tint layer: multiplies with white FX pixels so they become blue,
+            leaving transparent areas untouched. Recolor only — no geometry change. */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(135deg, #1976D2 0%, #2196F3 45%, #29B6F6 100%)",
+            mixBlendMode: "multiply",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
 
@@ -141,10 +154,11 @@ export default function Landing() {
         style={{
           zIndex: 100,
           height: 64,
-          background: "rgba(0,0,0,0.4)",
+          background: "rgba(255,255,255,0.72)",
           borderColor: BORDER_TINT,
         }}
       >
+
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           <a href="/" className="flex items-center" style={{ zIndex: 2 }}>
             <img
@@ -175,13 +189,13 @@ export default function Landing() {
               icon={<CalendarIcon />}
               navigate={navigate}
             />
-            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-[rgba(33,150,243,0.25)]" />
             <NavItem
               href="mailto:team@newlightgen.com"
               label="Contact Support"
               icon={<SupportIcon />}
             />
-            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-[rgba(33,150,243,0.25)]" />
             <NavItem
               href="tel:+18058363557"
               label="Call Now"
@@ -252,17 +266,17 @@ export default function Landing() {
           >
             <button
               onClick={() => navigate("/get-started")}
-              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
+              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-105"
               style={{
-                background: ELECTRIC,
-                color: "#FFFFFF",
+                background: `linear-gradient(135deg, ${SKY}, ${ELECTRIC})`,
+                color: INK,
                 borderRadius: 24,
                 padding: "16px 34px",
                 fontSize: 13,
                 letterSpacing: "0.14em",
                 fontFamily: display,
                 minWidth: 220,
-                boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65), 0 0 14px rgba(0,180,255,0.4)",
+                boxShadow: "0 12px 36px -10px rgba(33,150,243,0.55), 0 0 14px rgba(124,199,255,0.45)",
               }}
             >
               GET STARTED
@@ -270,22 +284,22 @@ export default function Landing() {
 
             <button
               onClick={() => navigate("/auth")}
-              className="inline-flex items-center justify-center font-bold transition-colors"
+              className="inline-flex items-center justify-center font-bold transition-colors hover:bg-[rgba(33,150,243,0.08)]"
               style={{
                 background: "transparent",
-                color: FG,
-                border: `2px solid ${FG}`,
+                color: ELECTRIC,
+                border: `2px solid ${ELECTRIC}`,
                 borderRadius: 24,
                 padding: "12px 24px",
                 fontSize: 12,
                 letterSpacing: "0.12em",
                 fontFamily: display,
                 minWidth: 160,
-                opacity: 0.85,
               }}
             >
               LOG IN
             </button>
+
           </motion.div>
 
           <motion.div
