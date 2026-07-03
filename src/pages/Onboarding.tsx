@@ -42,6 +42,8 @@ const INTEGRATION_OPTIONS = [
   { key: "existing_crm", label: "Existing CRM" },
 ];
 
+const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
+
 interface TeamMember {
   name: string;
   email: string;
@@ -52,6 +54,7 @@ type PipelineStageInsert = Database["public"]["Tables"]["pipeline_stages"]["Inse
 
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
+  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
   const { install, isInstalled } = usePWAInstall();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -311,10 +314,10 @@ export default function Onboarding() {
             <div><Label className="text-xs mb-1.5 block">Business Name *</Label><Input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Acme Corp" /></div>
             <div><Label className="text-xs mb-1.5 block">Website URL</Label><Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Primary Location</Label><Input value={primaryLocation} onChange={e => setPrimaryLocation(e.target.value)} placeholder="Los Angeles, CA" /></div>
-            <div><Label className="text-xs mb-1.5 block">Business Type / Industry</Label><Input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Dental, Legal, HVAC" /></div>
-            <div><Label className="text-xs mb-1.5 block">Main Service / Offer</Label><Input value={mainService} onChange={e => setMainService(e.target.value)} placeholder="Your core service" /></div>
-            <div><Label className="text-xs mb-1.5 block">Primary Goal</Label><Input value={primaryGoal} onChange={e => setPrimaryGoal(e.target.value)} placeholder="e.g. Get more leads" /></div>
-            <div className="sm:col-span-2"><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Business Type / Industry</Label><Input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Dental, Legal, HVAC" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Main Service / Offer</Label><Input value={mainService} onChange={e => setMainService(e.target.value)} placeholder="Your core service" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Primary Goal</Label><Input value={primaryGoal} onChange={e => setPrimaryGoal(e.target.value)} placeholder="e.g. Get more leads" /></div>
+            <div className={isAdminOps ? "sm:col-span-2 opacity-40 pointer-events-none" : "sm:col-span-2"}><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
           </div>
         </div>
       );
@@ -415,7 +418,7 @@ export default function Onboarding() {
             <div><Label className="text-xs mb-1.5 block">Google Access Email</Label><Input value={googleEmail} onChange={e => setGoogleEmail(e.target.value)} placeholder="google@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Meta Access Email</Label><Input value={metaEmail} onChange={e => setMetaEmail(e.target.value)} placeholder="meta@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Ads Account Email</Label><Input value={adsEmail} onChange={e => setAdsEmail(e.target.value)} placeholder="ads@acme.com" /></div>
-            <div><Label className="text-xs mb-1.5 block">Stripe Account Email</Label><Input value={stripeEmail} onChange={e => setStripeEmail(e.target.value)} placeholder="billing@acme.com" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Stripe Account Email</Label><Input value={stripeEmail} onChange={e => setStripeEmail(e.target.value)} placeholder="billing@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Zoom Email</Label><Input value={zoomEmail} onChange={e => setZoomEmail(e.target.value)} placeholder="zoom@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Domain Provider</Label><Input value={domainProvider} onChange={e => setDomainProvider(e.target.value)} placeholder="GoDaddy, Namecheap, etc." /></div>
             <div className="sm:col-span-2"><Label className="text-xs mb-1.5 block">Domain Login Email</Label><Input value={domainEmail} onChange={e => setDomainEmail(e.target.value)} placeholder="admin@acme.com" /></div>

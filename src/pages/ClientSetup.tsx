@@ -18,9 +18,12 @@ import { toast } from "sonner";
 
 type YesNo = "yes" | "no" | "";
 
+const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
+
 export default function ClientSetup() {
   const clientHook = useResolvedClientId();
   const { effectiveClientId: activeClientId } = clientHook;
+  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
@@ -162,7 +165,7 @@ export default function ClientSetup() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label className={labelCls}>Business Name</label><Input value={form.business_name} onChange={e => set("business_name", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Website URL</label><Input value={form.website_url} onChange={e => set("website_url", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Booking Link</label><Input value={form.booking_link} onChange={e => set("booking_link", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Booking Link</label><Input value={form.booking_link} onChange={e => set("booking_link", e.target.value)} className={inputCls} /></div>
             <div className="sm:col-span-2">
               <LogoUploader value={form.logo_url} onChange={url => set("logo_url", url)} label="Logo" dark={false} />
             </div>
@@ -201,8 +204,8 @@ export default function ClientSetup() {
         <div className={sectionCls}>
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Payments / Messaging / Meetings</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label className={labelCls}>Stripe Connected?</label><YesNoSelect value={form.stripe_connected} onChange={v => set("stripe_connected", v)} /></div>
-            <div><label className={labelCls}>Stripe Account Email</label><Input value={form.stripe_email} onChange={e => set("stripe_email", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Stripe Connected?</label><YesNoSelect value={form.stripe_connected} onChange={v => set("stripe_connected", v)} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Stripe Account Email</label><Input value={form.stripe_email} onChange={e => set("stripe_email", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Twilio Connected?</label><YesNoSelect value={form.twilio_connected} onChange={v => set("twilio_connected", v)} /></div>
             <div><label className={labelCls}>Preferred Business Number</label><Input value={form.twilio_number} onChange={e => set("twilio_number", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Zoom Connected?</label><YesNoSelect value={form.zoom_connected} onChange={v => set("zoom_connected", v)} /></div>
@@ -234,10 +237,10 @@ export default function ClientSetup() {
         <div className={sectionCls}>
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><Zap className="h-3 w-3" /> Business / Service Setup</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label className={labelCls}>Main Services</label><Input value={form.main_services} onChange={e => set("main_services", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Main Offer</label><Input value={form.main_offer} onChange={e => set("main_offer", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Primary Goal</label><Input value={form.primary_goal} onChange={e => set("primary_goal", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Highest Priority Channel</label><Input value={form.priority_channel} onChange={e => set("priority_channel", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Main Services</label><Input value={form.main_services} onChange={e => set("main_services", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Main Offer</label><Input value={form.main_offer} onChange={e => set("main_offer", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Primary Goal</label><Input value={form.primary_goal} onChange={e => set("primary_goal", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Highest Priority Channel</label><Input value={form.priority_channel} onChange={e => set("priority_channel", e.target.value)} className={inputCls} /></div>
             <div className="sm:col-span-2"><label className={labelCls}>Internal Notes</label><Textarea value={form.internal_notes} onChange={e => set("internal_notes", e.target.value)} className={`${inputCls} min-h-[60px]`} /></div>
           </div>
         </div>
