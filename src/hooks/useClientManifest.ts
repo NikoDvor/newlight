@@ -1,5 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
+
+type AdminBranding = {
+  company_name: string | null;
+  app_display_name: string | null;
+  logo_url: string | null;
+  app_icon_url: string | null;
+  pwa_icon_url: string | null;
+  primary_color: string | null;
+};
 
 /**
  * Dynamically updates the web app manifest, theme-color, and apple-touch-icon
@@ -12,22 +23,49 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
  *
  * - Admin viewing a sub-account → that client's name + logo
  * - Logged in directly to a sub-account → that sub-account's name + logo
- * - Admin with no sub-account selected → NewLight default
+ * - Admin with no sub-account selected → NewLight Ops branding (from the
+ *   ADMIN_OPS_CLIENT_ID client_branding row)
  */
 export function useClientManifest() {
-  const { activeClientId, branding } = useWorkspace();
+  const { activeClientId, branding, isAdmin } = useWorkspace();
+  const [adminBranding, setAdminBranding] = useState<AdminBranding | null>(null);
+
+  // Load NewLight Ops branding when admin has no client selected
+  useEffect(() => {
+    if (!isAdmin || activeClientId) return;
+    let cancelled = false;
+    supabase
+      .from("client_branding")
+      .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color")
+      .eq("client_id", ADMIN_OPS_CLIENT_ID)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setAdminBranding((data as AdminBranding | null) ?? null);
+      });
+    return () => { cancelled = true; };
+  }, [isAdmin, activeClientId]);
 
   useEffect(() => {
     const isClient = !!activeClientId;
+    const useAdminOps = !isClient && isAdmin;
+
     const appName = isClient
       ? (branding.company_name || branding.app_display_name || "NewLight")
-      : "NewLight";
+      : useAdminOps
+        ? (adminBranding?.company_name || adminBranding?.app_display_name || "NewLight")
+        : "NewLight";
     const themeColor = isClient && branding.primary_color
       ? branding.primary_color
-      : "#FFFFFF";
-    const iconUrl = isClient && (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
-      ? (branding.pwa_icon_url || branding.app_icon_url || branding.logo_url)
-      : `${window.location.origin}/pwa-512x512.png`;
+      : useAdminOps && adminBranding?.primary_color
+        ? adminBranding.primary_color
+        : "#FFFFFF";
+    const clientIcon = branding.pwa_icon_url || branding.app_icon_url || branding.logo_url;
+    const adminIcon = adminBranding?.pwa_icon_url || adminBranding?.app_icon_url || adminBranding?.logo_url;
+    const iconUrl = isClient && clientIcon
+      ? clientIcon
+      : useAdminOps && adminIcon
+        ? adminIcon
+        : `${window.location.origin}/pwa-512x512.png`;
 
     // Document title + standard meta
     document.title = appName;
@@ -35,7 +73,7 @@ export function useClientManifest() {
     setMeta("application-name", appName);
     setMetaTheme(themeColor);
     setLink("apple-touch-icon", iconUrl);
-    setLink("icon", isClient ? iconUrl : "/favicon.ico");
+    setLink("icon", (isClient || useAdminOps) ? iconUrl : "/favicon.ico");
 
     // Build manifest fresh for this account context and inject as a
     // same-origin data: URL so start_url/scope resolve to the app origin.
@@ -78,7 +116,7 @@ export function useClientManifest() {
     const link = ensureManifestLink();
     link.setAttribute("crossorigin", "use-credentials");
     link.href = manifestUrl;
-  }, [activeClientId, branding]);
+  }, [activeClientId, branding, isAdmin, adminBranding]);
 
   function ensureManifestLink() {
     let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
