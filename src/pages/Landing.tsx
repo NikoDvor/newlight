@@ -268,21 +268,22 @@ export default function Landing() {
           >
             <button
               onClick={() => navigate("/get-started")}
-              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-105"
+              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
               style={{
-                background: `linear-gradient(135deg, ${SKY}, ${ELECTRIC})`,
-                color: INK,
+                background: ELECTRIC,
+                color: "#FFFFFF",
                 borderRadius: 24,
                 padding: "16px 34px",
                 fontSize: 13,
                 letterSpacing: "0.14em",
                 fontFamily: display,
                 minWidth: 220,
-                boxShadow: "0 12px 36px -10px rgba(33,150,243,0.55), 0 0 14px rgba(124,199,255,0.45)",
+                boxShadow: "0 12px 36px -10px rgba(30,111,217,0.55), 0 0 14px rgba(30,111,217,0.35)",
               }}
             >
               GET STARTED
             </button>
+
 
             <button
               onClick={() => navigate("/auth")}
