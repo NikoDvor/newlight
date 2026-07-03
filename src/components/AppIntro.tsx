@@ -194,17 +194,17 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       // Warp-in scale (0-450ms)
       const inT = easeOutCubic(elapsed / 0.45);
 
-      // Exit collapse (2600-3000ms during phase 4)
+      // Exit collapse (2750-3000ms during phase 4)
       let exit = 1;
       let fade = 1;
       if (ph === 4) {
-        const t = Math.min(1, (now - (startRef.current + 2600)) / 400);
+        const t = Math.min(1, (now - (startRef.current + 2750)) / 250);
         exit = 1 - t * 0.97;
         fade = 1 - t;
       }
 
-      // Color shift (1.8-2.6s)
-      const shiftT = Math.min(1, Math.max(0, (elapsed - 1.8) / 0.8));
+      // Color shift (1.6-2.4s)
+      const shiftT = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8));
       tmp.copy(COL_A).lerp(COL_LIGHT_END, shiftT);
       const cHex = tmp.getHex();
       coreMat.color.setHex(cHex);
