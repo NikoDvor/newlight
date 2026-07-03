@@ -7,7 +7,7 @@ import {
   Headphones, BookOpen, ClipboardList, BarChart3,
   Briefcase, LifeBuoy, UserCog, Activity,
   Video, Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
-  Workflow, Shield, Gift
+  Workflow, Shield, Gift, Phone
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -54,6 +54,7 @@ const navStructure: NavEntry[] = [
     type: "group", label: "CRM",
     items: [
       { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
     ],
   },
   {

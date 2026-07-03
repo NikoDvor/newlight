@@ -2270,6 +2270,54 @@ export type Database = {
           },
         ]
       }
+      client_call_outcomes: {
+        Row: {
+          client_id: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          logged_at: string
+          notes: string | null
+          outcome: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          outcome: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          outcome?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_call_outcomes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_call_outcomes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_forms: {
         Row: {
           client_id: string
