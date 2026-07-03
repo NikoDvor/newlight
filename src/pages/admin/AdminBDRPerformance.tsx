@@ -141,6 +141,19 @@ export default function AdminBDRPerformance() {
     return { uid, name: profiles[uid] || uid.slice(0, 8), total: bl.length, contacted, booked, won, lost, rate: bl.length ? Math.round((booked / bl.length) * 100) : 0, topObj, lastActive };
   }).sort((a, b) => b.total - a.total), [bdrIds, filteredLeads, filteredObjections, profiles]);
 
+  // Team-wide call metrics (independent of date filter — buckets are today/week/month/all)
+  const teamCallMetrics = useMemo(() => computeCallMetrics(calls), [calls]);
+
+  // Per-BDR call metrics
+  const bdrCallRows = useMemo(() => {
+    const uids = [...new Set(calls.map((c: any) => c.bdr_user_id).filter(Boolean))];
+    return uids.map(uid => ({
+      uid,
+      name: profiles[uid] || uid.slice(0, 8),
+      metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
+    })).sort((a, b) => b.metrics.all.total - a.metrics.all.total);
+  }, [calls, profiles]);
+
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
     const now = new Date();
