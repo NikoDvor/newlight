@@ -5,14 +5,14 @@ import newlightLogo from "@/assets/nl-monogram.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
 const NAVY = "#0A2540"; // headline only — kept dark for primary contrast
-const ELECTRIC = "#1E6FD9"; // primary blue for buttons (unchanged)
-const NEON_BLUE = "#00BFFF"; // bright neon-blue glow for highlights
+const ELECTRIC = "#2196F3"; // brighter primary blue for buttons/links
+const NEON_BLUE = "#29B6FF"; // vivid neon-blue glow for highlights
 const SKY = "#7CC7FF"; // light blue for FX linework
-const BODY_BLUE = "#5A9BD8"; // lighter blue for secondary body/nav/footer text
+const BODY_BLUE = "#3BA3F5"; // brighter blue for secondary body/nav/footer text
 const INK = BODY_BLUE; // blue default body color
 const FG = NAVY; // headings (headline only on this page)
 const FG_SOFT = BODY_BLUE; // blue-tinted body/nav/footer text
-const BORDER_TINT = "rgba(30,111,217,0.28)";
+const BORDER_TINT = "rgba(41,182,255,0.38)";
 const PAGE_BG = "#FFFFFF";
 
 const fadeUp = {
