@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { getCategoryById, buildStructuredProfile } from "@/lib/businessCategoryRegistry";
@@ -37,7 +39,9 @@ const statusMeta: Record<SectionStatus, { label: string; color: string; bg: stri
 };
 
 function SetupCenterInner() {
-  const { activeClientId, branding, userRole } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId: activeClientId } = clientHook;
+  const { branding, userRole } = useWorkspace();
   const [sections, setSections] = useState<SetupSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
@@ -215,6 +219,19 @@ function SetupCenterInner() {
   const visibleSections = isStaff ? sections.filter(s => staffKeys.includes(s.key)) : sections;
 
   const showActivationCard = !isLive && !isStaff && activationStatus !== "activated";
+
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Setup Center"
+        description="Complete your workspace setup to unlock your full growth system"
+        emptyTitle="Select a workspace to view setup progress"
+        emptyBodyAdmin="Setup completeness is tracked per client — pick a workspace below to review their sections."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+      />
+    );
+  }
 
   return (
     <div>
