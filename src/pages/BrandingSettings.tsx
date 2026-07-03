@@ -59,55 +59,150 @@ const defaultForm = {
 };
 
 export default function BrandingSettings() {
-  const { activeClientId, setActiveClientId } = useWorkspace();
+  const { activeClientId, setActiveClientId, isAdmin } = useWorkspace();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState(defaultForm);
   const [showPreview, setShowPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [adminClients, setAdminClients] = useState<{ id: string; business_name: string | null }[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+
+  // Resolve effective client id: URL param > context > null
+  const urlClientId = searchParams.get("client_id");
+  const effectiveClientId = urlClientId || activeClientId;
 
   const set = (key: string) => (val: string) => setForm(p => ({ ...p, [key]: val }));
 
+  // If URL has a client_id, mirror it into context so downstream pages stay in sync
   useEffect(() => {
-    if (!activeClientId) return;
-    supabase.from("client_branding").select("*").eq("client_id", activeClientId).maybeSingle()
+    if (urlClientId && urlClientId !== activeClientId) {
+      setActiveClientId(urlClientId);
+    }
+  }, [urlClientId]);
+
+  // Admin fallback: if no client is resolved, load the list so admin can pick one
+  useEffect(() => {
+    if (!isAdmin || effectiveClientId) return;
+    setLoadingClients(true);
+    supabase.from("clients").select("id, business_name").order("business_name", { ascending: true }).limit(200)
       .then(({ data }) => {
+        setAdminClients(data || []);
+        setLoadingClients(false);
+      });
+  }, [isAdmin, effectiveClientId]);
+
+  useEffect(() => {
+    if (!effectiveClientId) { setForm(defaultForm); return; }
+    supabase.from("client_branding").select("*").eq("client_id", effectiveClientId).maybeSingle()
+      .then(({ data }) => {
+        const merged = { ...defaultForm };
         if (data) {
-          const merged = { ...defaultForm };
           Object.keys(merged).forEach(k => {
             if ((data as any)[k] != null) (merged as any)[k] = (data as any)[k];
           });
-          setForm(merged);
         }
+        setForm(merged);
       });
-  }, [activeClientId]);
+  }, [effectiveClientId]);
 
   const handleSave = async () => {
-    if (!activeClientId) return;
-    const { error } = await supabase.from("client_branding").upsert({
-      client_id: activeClientId,
-      ...form,
-    } as any, { onConflict: "client_id" });
-    if (error) { toast.error(error.message); return; }
+    if (!effectiveClientId) {
+      toast.error("Select a workspace before saving branding.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("client_branding").upsert({
+        client_id: effectiveClientId,
+        ...form,
+      } as any, { onConflict: "client_id" });
+      if (error) { toast.error(error.message); return; }
 
-    // Audit log
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("audit_logs").insert({
-      user_id: user?.id, client_id: activeClientId, action: "branding_updated",
-      module: "branding", metadata: { updated_fields: Object.keys(form) },
-    });
+      // Audit log
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("audit_logs").insert({
+        user_id: user?.id, client_id: effectiveClientId, action: "branding_updated",
+        module: "branding", metadata: { updated_fields: Object.keys(form) },
+      });
 
-    // Emit event for automation + setup center sync
-    const hasBrand = !!(form.logo_url && form.primary_color && form.primary_color !== "#3B82F6");
-    await emitEvent({
-      eventKey: hasBrand ? "onboarding_section_completed" : "onboarding_form_saved",
-      clientId: activeClientId,
-      payload: { section: "branding", complete: hasBrand },
-    });
+      // Emit event for automation + setup center sync
+      const hasBrand = !!(form.logo_url && form.primary_color && form.primary_color !== "#3B82F6");
+      await emitEvent({
+        eventKey: hasBrand ? "onboarding_section_completed" : "onboarding_form_saved",
+        clientId: effectiveClientId,
+        payload: { section: "branding", complete: hasBrand },
+      });
 
-    // Force workspace context to re-fetch branding
-    setActiveClientId(null);
-    setTimeout(() => setActiveClientId(activeClientId), 50);
+      // Force workspace context to re-fetch branding for the active id
+      if (effectiveClientId === activeClientId) {
+        setActiveClientId(null);
+        setTimeout(() => setActiveClientId(effectiveClientId), 50);
+      }
 
-    toast.success("Branding settings saved!");
+      toast.success("Branding settings saved!");
+    } catch (err: any) {
+      toast.error(err?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  // Empty state — no workspace resolved
+  if (!effectiveClientId) {
+    return (
+      <div className="max-w-2xl">
+        <BackArrow to="/settings" label="Settings" />
+        <PageHeader title="Branding Settings" description="Customize your workspace appearance across all modules" />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="card-widget flex flex-col items-center text-center gap-4 py-10"
+        >
+          <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-primary/10">
+            <AlertCircle className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <p className="text-base font-semibold text-foreground">Select a workspace to edit branding</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              {isAdmin
+                ? "Choose a client workspace below — branding is saved per workspace."
+                : "No workspace is currently assigned to your account. Contact your admin to gain access."}
+            </p>
+          </div>
+
+          {isAdmin && (
+            <div className="w-full max-w-sm mt-2">
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block text-left">
+                <Building className="h-3 w-3 inline mr-1" /> Client workspace
+              </label>
+              <select
+                className="w-full h-10 rounded-lg border border-border bg-secondary/50 text-xs px-3"
+                defaultValue=""
+                disabled={loadingClients}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  setSearchParams({ client_id: id });
+                  setActiveClientId(id);
+                }}
+              >
+                <option value="" disabled>
+                  {loadingClients ? "Loading workspaces…" : `Select a workspace (${adminClients.length})`}
+                </option>
+                {adminClients.map(c => (
+                  <option key={c.id} value={c.id}>{c.business_name || c.id.slice(0, 8)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <Button disabled className="btn-gradient h-9 px-5 rounded-xl text-xs font-semibold opacity-60 cursor-not-allowed">
+            <Save className="h-3.5 w-3.5 mr-1.5" /> Save All Branding
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="max-w-4xl">
