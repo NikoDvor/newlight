@@ -5,11 +5,13 @@ import newlightLogo from "@/assets/nl-monogram.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
 const NAVY = "#0A2540"; // headline only — kept dark for primary contrast
-const ELECTRIC = "#1E6FD9"; // primary blue accent (buttons, links, labels)
+const ELECTRIC = "#1E6FD9"; // primary blue for buttons (unchanged)
+const NEON_BLUE = "#00BFFF"; // bright neon-blue glow for highlights
 const SKY = "#7CC7FF"; // light blue for FX linework
-const INK = "#2E6FD9"; // blue default body color
+const BODY_BLUE = "#5A9BD8"; // lighter blue for secondary body/nav/footer text
+const INK = BODY_BLUE; // blue default body color
 const FG = NAVY; // headings (headline only on this page)
-const FG_SOFT = "rgba(30, 111, 217, 0.85)"; // blue-tinted body/nav/footer text
+const FG_SOFT = BODY_BLUE; // blue-tinted body/nav/footer text
 const BORDER_TINT = "rgba(30,111,217,0.28)";
 const PAGE_BG = "#FFFFFF";
 
