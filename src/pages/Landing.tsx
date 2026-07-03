@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
-const ELECTRIC = "#2196F3"; // primary light-blue accent
-const SKY = "#7CC7FF"; // lighter blue
-const INK = "#0A2540"; // near-black high-contrast text
-const FG = "#0B3B75"; // deep blue for headings
-const FG_SOFT = "rgba(10,37,64,0.68)"; // muted ink for body
-const BORDER_TINT = "rgba(33,150,243,0.35)";
-const PAGE_BG = "#F4FAFF"; // very light blue-white
+const NAVY = "#0A2540"; // headline / high-contrast text
+const ELECTRIC = "#1E6FD9"; // primary blue accent (buttons, links, labels)
+const SKY = "#7CC7FF"; // light blue for FX linework
+const INK = "#0A2540"; // near-navy body ink
+const FG = NAVY; // headings
+const FG_SOFT = "rgba(10,37,64,0.72)"; // muted navy for body
+const BORDER_TINT = "rgba(30,111,217,0.28)";
+const PAGE_BG = "#FFFFFF";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
