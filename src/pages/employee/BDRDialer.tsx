@@ -344,6 +344,25 @@ export default function BDRDialer() {
         </Button>
       </div>
 
+      {/* Call count summary */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex items-stretch gap-2 min-w-max pb-1">
+          {[
+            { label: "Today", key: "today" as const, tone: "hsl(211,96%,60%)" },
+            { label: "This Week", key: "week" as const, tone: "hsl(152,76%,55%)" },
+            { label: "This Month", key: "month" as const, tone: "hsl(43,96%,65%)" },
+            { label: "Total Calls", key: "all" as const, tone: "hsl(262,80%,72%)" },
+          ].map(p => (
+            <div key={p.key}
+              className="rounded-lg px-3 py-2 flex flex-col justify-between min-w-[100px]"
+              style={{ background: "hsla(215,35%,10%,.8)", border: `1px solid ${p.tone}33` }}>
+              <span className="text-[9px] uppercase tracking-wider leading-tight text-white/55 line-clamp-2">{p.label}</span>
+              <span className="text-lg font-bold mt-1" style={{ color: p.tone }}>{callCounts[p.key]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Stats bar */}
       <div className="overflow-x-auto -mx-1 px-1">
         <div className="flex items-stretch gap-2 min-w-max pb-1">
