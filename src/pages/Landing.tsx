@@ -257,7 +257,13 @@ export default function Landing() {
 
           <motion.div
             className="mt-8 mx-auto"
-            style={{ width: 60, height: 2, background: ELECTRIC, opacity: 0.85 }}
+            style={{
+              width: 60,
+              height: 2,
+              background: NEON_BLUE,
+              opacity: 0.9,
+              boxShadow: "0 0 12px rgba(0,191,255,0.55), 0 0 24px rgba(0,191,255,0.30)",
+            }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
