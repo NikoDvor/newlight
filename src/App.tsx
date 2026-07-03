@@ -132,7 +132,7 @@ import Welcome from "./pages/Welcome";
 import EmailPage from "./pages/Email";
 import HowItWorks from "./pages/HowItWorks";
 import BookingPage from "./pages/BookingPage";
-import GetStarted from "./pages/GetStarted";
+
 import WorkspaceEntry from "./pages/WorkspaceEntry";
 import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
@@ -266,7 +266,6 @@ const App = () => {
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/bdr/book/:slug" element={<BDRBookingPublic />} />
-              <Route path="/get-started" element={<GetStarted />} />
               <Route path="/app/:slug" element={<AppDownload />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
