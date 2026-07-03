@@ -716,7 +716,7 @@ export default function AdminTeam() {
 }
 
 function WorkspaceGroupCard({
-  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail,
+  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail, onEditPhone,
 }: {
   group: WorkspaceGroupData;
   defaultOpen?: boolean;
@@ -724,6 +724,7 @@ function WorkspaceGroupCard({
   onStats: (r: UserRow) => void;
   onRemove: (r: UserRow) => void;
   onEditEmail: (r: UserRow) => void;
+  onEditPhone: (r: UserRow) => void;
 }) {
 
   const [open, setOpen] = useState(!!defaultOpen);
