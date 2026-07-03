@@ -79,6 +79,10 @@ export default function AdminTeam() {
   const [editEmailFor, setEditEmailFor] = useState<UserRow | null>(null);
   const [editEmailValue, setEditEmailValue] = useState("");
   const [editEmailLoading, setEditEmailLoading] = useState(false);
+  // Edit phone dialog
+  const [editPhoneFor, setEditPhoneFor] = useState<UserRow | null>(null);
+  const [editPhoneValue, setEditPhoneValue] = useState("");
+  const [editPhoneLoading, setEditPhoneLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
   const location = useLocation();
