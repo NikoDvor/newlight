@@ -418,7 +418,7 @@ export default function Onboarding() {
             <div><Label className="text-xs mb-1.5 block">Google Access Email</Label><Input value={googleEmail} onChange={e => setGoogleEmail(e.target.value)} placeholder="google@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Meta Access Email</Label><Input value={metaEmail} onChange={e => setMetaEmail(e.target.value)} placeholder="meta@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Ads Account Email</Label><Input value={adsEmail} onChange={e => setAdsEmail(e.target.value)} placeholder="ads@acme.com" /></div>
-            <div><Label className="text-xs mb-1.5 block">Stripe Account Email</Label><Input value={stripeEmail} onChange={e => setStripeEmail(e.target.value)} placeholder="billing@acme.com" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Stripe Account Email</Label><Input value={stripeEmail} onChange={e => setStripeEmail(e.target.value)} placeholder="billing@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Zoom Email</Label><Input value={zoomEmail} onChange={e => setZoomEmail(e.target.value)} placeholder="zoom@acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Domain Provider</Label><Input value={domainProvider} onChange={e => setDomainProvider(e.target.value)} placeholder="GoDaddy, Namecheap, etc." /></div>
             <div className="sm:col-span-2"><Label className="text-xs mb-1.5 block">Domain Login Email</Label><Input value={domainEmail} onChange={e => setDomainEmail(e.target.value)} placeholder="admin@acme.com" /></div>
