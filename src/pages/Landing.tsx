@@ -115,8 +115,7 @@ export default function Landing() {
       style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
       {/* HomeFX — recolored via CSS filter only (geometry/animation untouched).
-          sepia + hue-rotate + saturate shifts white linework to light blue while
-          leaving transparent areas fully transparent so the white page shows through. */}
+          Reduced opacity/contrast so it reads as a soft, low-contrast background texture. */}
       <div
         style={{
           position: "fixed",
@@ -126,15 +125,16 @@ export default function Landing() {
           pointerEvents: "none",
           animation: "nl-home-breath 4.6s ease-in-out infinite",
           willChange: "opacity",
-          filter: "invert(1) sepia(1) saturate(8) hue-rotate(178deg) brightness(1.1) contrast(1.05)",
+          opacity: 0.36,
+          filter: "invert(1) sepia(1) saturate(5) hue-rotate(178deg) brightness(1.2) contrast(0.85)",
           mixBlendMode: "multiply",
         }}
         aria-hidden
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.85; }
-            50%      { opacity: 1; }
+            0%, 100% { opacity: 0.30; }
+            50%      { opacity: 0.42; }
           }
         `}</style>
         <HomeFX />
