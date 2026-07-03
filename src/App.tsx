@@ -11,7 +11,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
-import { NewLightIntro, shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
+import { shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
+import { AppIntro } from "@/components/AppIntro";
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
 // Pages
@@ -211,7 +212,7 @@ function IntroOverlay() {
       ? `Launching ${displayName}…`
       : "Launching workspace…";
 
-  return <NewLightIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
+  return <AppIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
 }
 
 const App = () => {
