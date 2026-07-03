@@ -31,7 +31,7 @@ type CallRow = {
   logged_at: string;
 };
 
-type Contact = { id: string; first_name: string | null; last_name: string | null; phone: string | null };
+type Contact = { id: string; full_name: string | null; phone: string | null };
 
 function inBucket(dateStr: string | null, bucket: "today" | "week" | "month" | "all") {
   if (!dateStr) return false;
