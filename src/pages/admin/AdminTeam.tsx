@@ -710,6 +710,33 @@ export default function AdminTeam() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!editPhoneFor} onOpenChange={(o) => { if (!o) { setEditPhoneFor(null); setEditPhoneValue(""); } }}>
+        <DialogContent style={{ background: "hsl(218 35% 12%)", border: "1px solid hsla(211,96%,60%,.15)", color: "white" }}>
+          <DialogHeader><DialogTitle className="text-white">Edit Phone</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            {editPhoneFor && (
+              <div className="text-xs text-white/50">
+                Updating phone for <span className="text-white/80">{editPhoneFor.full_name || editPhoneFor.user_id.slice(0, 8) + "…"}</span>
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-white/50 mb-1 block">Phone</label>
+              <Input
+                type="tel"
+                value={editPhoneValue}
+                onChange={e => setEditPhoneValue(e.target.value)}
+                placeholder="+18055551234"
+                className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+              />
+            </div>
+            <Button onClick={handleEditPhoneSubmit} disabled={editPhoneLoading} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+              {editPhoneLoading ? "Updating..." : "Update Phone"}
+            </Button>
+            <p className="text-[10px] text-white/30 text-center">Stored on auth user_metadata.phone.</p>
+          </div>
+        </DialogContent>
+
+
       </Tabs>
     </div>
   );
