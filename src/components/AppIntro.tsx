@@ -17,18 +17,18 @@ interface AppIntroProps {
 }
 
 /**
- * AppIntro — 3s cinematic intro echoing HomeFX visual language
- * (wireframe icosahedron core, orbital torus rings, sparse particle
- * field with linking lines, cool #AADDFF blues) but trimmed and
- * mobile-friendly (low subdivision, ~60 particles).
+ * AppIntro — original 3D intro (3s total).
  *
- * Background transitions dark → light over the run.
+ * Concept: a spinning octahedron core sitting at the mouth of a
+ * hexagonal warp tunnel. Concentric hex rings pulse outward, thin
+ * radial beams sweep around the core, and a sparse orbital cube
+ * cluster spins in counter-motion. Dark navy → light blue-white bg.
  *
- * Timeline (total 3000ms):
- *   0–500ms    scale in from center on dark bg
- *   500–1800   full motion: icosa rotates, rings orbit, particles link
- *   1800–2600  bg fades navy → light blue-white, colors invert
- *   2600–3000  collapse + fade out
+ * Timeline (3000ms):
+ *   0-450    warp-in: rings/cube cluster fly in from depth, core scales up
+ *   450-1800 sustain: full motion, rings pulse, beams sweep
+ *   1800-2600 palette inverts (dark → light), colors deepen for readability
+ *   2600-3000 collapse to center + fade out
  */
 export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -49,10 +49,10 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
 
   useEffect(() => {
     startRef.current = performance.now();
-    const t1 = setTimeout(() => setPhase(1), 20);      // scale-in
-    const t2 = setTimeout(() => setPhase(2), 500);     // full motion
-    const t3 = setTimeout(() => setPhase(3), 1800);    // bg dark→light
-    const t4 = setTimeout(finish, 2600);               // collapse
+    const t1 = setTimeout(() => setPhase(1), 20);
+    const t2 = setTimeout(() => setPhase(2), 450);
+    const t3 = setTimeout(() => setPhase(3), 1800);
+    const t4 = setTimeout(finish, 2600);
     const failsafe = setTimeout(finish, 6000);
     return () => [t1, t2, t3, t4, failsafe].forEach(clearTimeout);
   }, [finish]);
@@ -64,8 +64,8 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     const isMobile = window.innerWidth < 768;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, el.clientWidth / el.clientHeight, 0.1, 100);
-    camera.position.z = 6;
+    const camera = new THREE.PerspectiveCamera(55, el.clientWidth / el.clientHeight, 0.1, 100);
+    camera.position.z = 7;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -73,95 +73,103 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
 
-    const COL_PRIMARY = 0xaaddff;
-    const COL_SECOND  = 0xc8eeff;
+    const COL_A = new THREE.Color(0xaaddff); // primary
+    const COL_B = new THREE.Color(0x66b8ff); // deep accent
+    const COL_LIGHT_END = new THREE.Color(0x1a3a6b); // final dark-navy for light bg
 
-    const group = new THREE.Group();
-    scene.add(group);
+    // Central octahedron core (wireframe)
+    const coreGeo = new THREE.OctahedronGeometry(0.95, 0);
+    const coreEdges = new THREE.EdgesGeometry(coreGeo);
+    const coreMat = new THREE.LineBasicMaterial({ color: COL_A.getHex(), transparent: true, opacity: 0.95 });
+    const core = new THREE.LineSegments(coreEdges, coreMat);
+    scene.add(core);
 
-    // --- Wireframe icosahedron core (HomeFX signature) ---
-    const icoGeo = new THREE.IcosahedronGeometry(1.1, 1);
-    const icoEdges = new THREE.EdgesGeometry(icoGeo);
-    const icoMat = new THREE.LineBasicMaterial({ color: COL_PRIMARY, transparent: true, opacity: 0.9 });
-    const ico = new THREE.LineSegments(icoEdges, icoMat);
-    group.add(ico);
-
-    // Inner smaller icosa for depth
-    const ico2Geo = new THREE.IcosahedronGeometry(0.55, 0);
-    const ico2Edges = new THREE.EdgesGeometry(ico2Geo);
-    const ico2Mat = new THREE.LineBasicMaterial({ color: COL_SECOND, transparent: true, opacity: 0.6 });
-    const ico2 = new THREE.LineSegments(ico2Edges, ico2Mat);
-    group.add(ico2);
-
-    // --- Orbital torus rings ---
-    const ringSegs = isMobile ? 48 : 80;
-    const torusMats: THREE.LineBasicMaterial[] = [];
-    const tori: THREE.LineSegments[] = [];
-    const ringDefs: Array<[number, number, number, number, number]> = [
-      // radius, opacity, rx, ry, rz
-      [1.7, 0.35, 0, 0, 0],
-      [1.95, 0.25, Math.PI / 2.2, 0, 0],
-      [2.2, 0.18, Math.PI / 3, Math.PI / 3, 0],
-    ];
-    ringDefs.forEach(([r, op, rx, ry, rz]) => {
-      const g = new THREE.TorusGeometry(r, 0.02, 6, ringSegs);
-      const e = new THREE.EdgesGeometry(g);
-      const m = new THREE.LineBasicMaterial({ color: COL_PRIMARY, transparent: true, opacity: op });
-      const t = new THREE.LineSegments(e, m);
-      t.rotation.set(rx, ry, rz);
-      group.add(t);
-      tori.push(t);
-      torusMats.push(m);
+    // Inner solid faceted glow octahedron
+    const innerGeo = new THREE.OctahedronGeometry(0.42, 0);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: COL_B.getHex(),
+      transparent: true,
+      opacity: 0.35,
+      wireframe: false,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
+    const inner = new THREE.Mesh(innerGeo, innerMat);
+    scene.add(inner);
 
-    // --- Particle field with linking lines (HomeFX motif, trimmed) ---
-    const N = isMobile ? 40 : 70;
-    const pPos = new Float32Array(N * 3);
-    const pVel = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-      pPos[i * 3]     = (Math.random() - 0.5) * 5;
-      pPos[i * 3 + 1] = (Math.random() - 0.5) * 3.5;
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
-      pVel[i * 3]     = (Math.random() - 0.5) * 0.008;
-      pVel[i * 3 + 1] = (Math.random() - 0.5) * 0.008;
-      pVel[i * 3 + 2] = (Math.random() - 0.5) * 0.004;
+    // Hex tunnel rings (concentric, receding in Z)
+    const RING_COUNT = isMobile ? 6 : 9;
+    const rings: THREE.LineLoop[] = [];
+    const ringMats: THREE.LineBasicMaterial[] = [];
+    for (let i = 0; i < RING_COUNT; i++) {
+      const pts: THREE.Vector3[] = [];
+      const r = 1.6 + i * 0.05;
+      const sides = 6;
+      for (let s = 0; s <= sides; s++) {
+        const a = (s / sides) * Math.PI * 2 + Math.PI / 6;
+        pts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0));
+      }
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      const m = new THREE.LineBasicMaterial({
+        color: COL_A.getHex(),
+        transparent: true,
+        opacity: 0.55 - i * 0.045,
+      });
+      const ring = new THREE.LineLoop(g, m);
+      ring.position.z = -i * 0.9;
+      ring.rotation.z = i * 0.15;
+      scene.add(ring);
+      rings.push(ring);
+      ringMats.push(m);
     }
-    const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    const pMat = new THREE.PointsMaterial({
-      color: COL_SECOND,
-      size: 0.04,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const points = new THREE.Points(pGeo, pMat);
-    scene.add(points);
 
-    const maxPairs = (N * (N - 1)) / 2;
-    const lnBuf = new Float32Array(maxPairs * 6);
-    const lnGeo = new THREE.BufferGeometry();
-    const lnAttr = new THREE.BufferAttribute(lnBuf, 3);
-    lnGeo.setAttribute("position", lnAttr);
-    lnGeo.setDrawRange(0, 0);
-    const lnMat = new THREE.LineBasicMaterial({
-      color: COL_PRIMARY,
-      transparent: true,
-      opacity: 0.18,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const lnMesh = new THREE.LineSegments(lnGeo, lnMat);
-    scene.add(lnMesh);
-    const CONN_SQ = 0.75 * 0.75;
+    // Radial beams sweeping around the core
+    const BEAM_COUNT = isMobile ? 5 : 8;
+    const beams: THREE.Line[] = [];
+    const beamMats: THREE.LineBasicMaterial[] = [];
+    for (let i = 0; i < BEAM_COUNT; i++) {
+      const g = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(2.4, 0, 0),
+      ]);
+      const m = new THREE.LineBasicMaterial({
+        color: COL_A.getHex(),
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const line = new THREE.Line(g, m);
+      line.rotation.z = (i / BEAM_COUNT) * Math.PI * 2;
+      scene.add(line);
+      beams.push(line);
+      beamMats.push(m);
+    }
 
-    // Color transition helpers
-    const colorBlue = new THREE.Color(COL_PRIMARY);
-    const colorDeep = new THREE.Color(0x1a3a6b); // darker for light-bg readability
+    // Orbital cube cluster (small cubes on angled orbit)
+    const CUBE_COUNT = isMobile ? 6 : 10;
+    const cubes: THREE.LineSegments[] = [];
+    const cubeMats: THREE.LineBasicMaterial[] = [];
+    const cubeOrbit = new THREE.Group();
+    cubeOrbit.rotation.x = Math.PI / 3.2;
+    scene.add(cubeOrbit);
+    for (let i = 0; i < CUBE_COUNT; i++) {
+      const bg = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+      const be = new THREE.EdgesGeometry(bg);
+      const bm = new THREE.LineBasicMaterial({ color: COL_B.getHex(), transparent: true, opacity: 0.75 });
+      const cube = new THREE.LineSegments(be, bm);
+      const a = (i / CUBE_COUNT) * Math.PI * 2;
+      const r = 2.15;
+      cube.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
+      cube.userData.angle = a;
+      cubeOrbit.add(cube);
+      cubes.push(cube);
+      cubeMats.push(bm);
+    }
+
     const tmp = new THREE.Color();
-
     let raf = 0;
+
     const onResize = () => {
       if (!el) return;
       camera.aspect = el.clientWidth / el.clientHeight;
@@ -170,11 +178,9 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     };
     window.addEventListener("resize", onResize);
 
-    const easeOutBack = (t: number) => {
-      if (t <= 0) return 0;
-      if (t >= 1) return 1;
-      const c1 = 1.70158, c3 = c1 + 1;
-      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    const easeOutCubic = (t: number) => {
+      const c = Math.max(0, Math.min(1, t));
+      return 1 - Math.pow(1 - c, 3);
     };
 
     const animate = () => {
@@ -183,90 +189,72 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       const elapsed = (now - startRef.current) / 1000;
       const ph = phaseRef.current;
 
-      // Entrance (0-500ms)
-      const entranceT = Math.min(1, elapsed / 0.5);
-      const entrance = easeOutBack(entranceT);
+      // Warp-in scale (0-450ms)
+      const inT = easeOutCubic(elapsed / 0.45);
 
-      // Exit collapse (phase 4, 2600-3000ms)
+      // Exit collapse (2600-3000ms during phase 4)
       let exit = 1;
       let fade = 1;
       if (ph === 4) {
         const t = Math.min(1, (now - (startRef.current + 2600)) / 400);
-        exit = 1 - t * 0.98;
+        exit = 1 - t * 0.97;
         fade = 1 - t;
       }
 
-      // Color shift during phase 3 window (1.8-2.6s)
+      // Color shift (1.8-2.6s)
       const shiftT = Math.min(1, Math.max(0, (elapsed - 1.8) / 0.8));
-      tmp.copy(colorBlue).lerp(colorDeep, shiftT);
-      icoMat.color.copy(tmp);
-      ico2Mat.color.copy(tmp);
-      torusMats.forEach((m) => m.color.copy(tmp));
-      lnMat.color.copy(tmp);
-      pMat.color.copy(tmp);
+      tmp.copy(COL_A).lerp(COL_LIGHT_END, shiftT);
+      const cHex = tmp.getHex();
+      coreMat.color.setHex(cHex);
+      ringMats.forEach((m) => m.color.setHex(cHex));
+      beamMats.forEach((m) => m.color.setHex(cHex));
+      tmp.copy(COL_B).lerp(COL_LIGHT_END, shiftT);
+      innerMat.color.setHex(tmp.getHex());
+      cubeMats.forEach((m) => m.color.setHex(tmp.getHex()));
 
-      // Opacity fade for exit
-      icoMat.opacity = 0.9 * fade;
-      ico2Mat.opacity = 0.6 * fade;
-      torusMats.forEach((m, i) => (m.opacity = ringDefs[i][1] * fade));
-      lnMat.opacity = 0.18 * fade;
-      pMat.opacity = 0.85 * fade;
+      // Exit-driven opacity
+      coreMat.opacity = 0.95 * fade;
+      innerMat.opacity = (0.35 + Math.sin(elapsed * 6) * 0.08) * fade;
+      ringMats.forEach((m, i) => (m.opacity = (0.55 - i * 0.045) * fade));
+      cubeMats.forEach((m) => (m.opacity = 0.75 * fade));
 
-      // Icosa rotation
-      ico.rotation.x += 0.006;
-      ico.rotation.y += 0.010;
-      ico2.rotation.x -= 0.014;
-      ico2.rotation.y -= 0.009;
+      // Core rotation
+      core.rotation.x += 0.012;
+      core.rotation.y += 0.018;
+      inner.rotation.x -= 0.02;
+      inner.rotation.y -= 0.014;
 
-      // Ring orbits
-      tori.forEach((t, i) => {
-        t.rotation.z += 0.004 * (i + 1);
-        t.rotation.x += 0.002 * ((i % 2) ? -1 : 1);
+      // Rings: pulse outward Z, subtle rotation
+      rings.forEach((r, i) => {
+        const baseZ = -i * 0.9;
+        r.position.z = baseZ + Math.sin(elapsed * 1.8 + i * 0.5) * 0.12;
+        r.rotation.z += 0.003 * (i % 2 === 0 ? 1 : -1);
+        const s = inT * (1 + Math.sin(elapsed * 2 + i) * 0.03);
+        r.scale.setScalar(s * exit);
       });
 
-      // Update particles
-      for (let i = 0; i < N; i++) {
-        pPos[i * 3]     += pVel[i * 3];
-        pPos[i * 3 + 1] += pVel[i * 3 + 1];
-        pPos[i * 3 + 2] += pVel[i * 3 + 2];
-        if (Math.abs(pPos[i * 3])     > 2.6) pVel[i * 3]     *= -1;
-        if (Math.abs(pPos[i * 3 + 1]) > 1.8) pVel[i * 3 + 1] *= -1;
-        if (Math.abs(pPos[i * 3 + 2]) > 1.3) pVel[i * 3 + 2] *= -1;
-      }
-      pGeo.attributes.position.needsUpdate = true;
+      // Beam sweep
+      beams.forEach((b, i) => {
+        b.rotation.z = (i / BEAM_COUNT) * Math.PI * 2 + elapsed * 0.9;
+        const pulse = 0.18 + Math.abs(Math.sin(elapsed * 3 + i)) * 0.28;
+        beamMats[i].opacity = pulse * fade;
+      });
 
-      // Linking lines (skip most work on mobile — every 2nd frame)
-      const doLinks = !isMobile || (Math.floor(elapsed * 30) % 2 === 0);
-      if (doLinks) {
-        let cnt = 0;
-        for (let i = 0; i < N; i++) {
-          for (let j = i + 1; j < N; j++) {
-            const dx = pPos[i * 3]     - pPos[j * 3];
-            const dy = pPos[i * 3 + 1] - pPos[j * 3 + 1];
-            const dz = pPos[i * 3 + 2] - pPos[j * 3 + 2];
-            if (dx * dx + dy * dy + dz * dz < CONN_SQ) {
-              lnBuf[cnt * 6]     = pPos[i * 3];
-              lnBuf[cnt * 6 + 1] = pPos[i * 3 + 1];
-              lnBuf[cnt * 6 + 2] = pPos[i * 3 + 2];
-              lnBuf[cnt * 6 + 3] = pPos[j * 3];
-              lnBuf[cnt * 6 + 4] = pPos[j * 3 + 1];
-              lnBuf[cnt * 6 + 5] = pPos[j * 3 + 2];
-              cnt++;
-            }
-          }
-        }
-        lnGeo.setDrawRange(0, cnt * 2);
-        lnAttr.needsUpdate = true;
-      }
+      // Cube orbit
+      cubeOrbit.rotation.z += 0.006;
+      cubes.forEach((c, i) => {
+        const a = c.userData.angle + elapsed * 0.6;
+        const r = 2.15 + Math.sin(elapsed * 2 + i) * 0.08;
+        c.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
+        c.rotation.x += 0.03;
+        c.rotation.y += 0.04;
+      });
+      cubeOrbit.scale.setScalar(inT * exit);
 
-      // Global scale (entrance + exit)
-      const s = entrance * exit;
-      group.scale.setScalar(s);
-      points.scale.setScalar(s);
-      lnMesh.scale.setScalar(s);
-
-      // Slow group drift
-      group.rotation.y += 0.0015;
+      // Core scale (warp-in + exit)
+      const coreScale = inT * exit;
+      core.scale.setScalar(coreScale);
+      inner.scale.setScalar(coreScale);
 
       renderer.render(scene, camera);
     };
@@ -275,18 +263,19 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
-      icoGeo.dispose(); icoEdges.dispose(); icoMat.dispose();
-      ico2Geo.dispose(); ico2Edges.dispose(); ico2Mat.dispose();
-      tori.forEach((t) => (t.geometry as THREE.BufferGeometry).dispose());
-      torusMats.forEach((m) => m.dispose());
-      pGeo.dispose(); pMat.dispose();
-      lnGeo.dispose(); lnMat.dispose();
+      coreGeo.dispose(); coreEdges.dispose(); coreMat.dispose();
+      innerGeo.dispose(); innerMat.dispose();
+      rings.forEach((r) => (r.geometry as THREE.BufferGeometry).dispose());
+      ringMats.forEach((m) => m.dispose());
+      beams.forEach((b) => (b.geometry as THREE.BufferGeometry).dispose());
+      beamMats.forEach((m) => m.dispose());
+      cubes.forEach((c) => (c.geometry as THREE.BufferGeometry).dispose());
+      cubeMats.forEach((m) => m.dispose());
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
   }, []);
 
-  // Dark → light background
   const bg =
     phase >= 3
       ? "radial-gradient(ellipse at center, #ffffff 0%, #dcebff 80%)"
