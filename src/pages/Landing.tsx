@@ -306,8 +306,7 @@ export default function Landing() {
             variants={fadeUp}
             custom={3}
           >
-            One system. Every lead, appointment, and revenue stream — automated and
-            tracked inside your branded Command Center.
+            Download your company app for free with the button below.
           </motion.p>
 
           <motion.div
