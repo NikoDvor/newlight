@@ -134,18 +134,19 @@ export default function Landing() {
           }
         `}</style>
         <HomeFX />
-        {/* Blue tint layer: multiplies with white FX pixels so they become blue,
-            leaving transparent areas untouched. Recolor only — no geometry change. */}
+        {/* Blue tint layer: multiplies with white FX pixels so they become
+            thin light-blue linework, leaving transparent areas untouched.
+            Recolor only — no geometry change. */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "linear-gradient(135deg, #1976D2 0%, #2196F3 45%, #29B6F6 100%)",
+            background: SKY,
             mixBlendMode: "multiply",
             pointerEvents: "none",
           }}
         />
+
       </div>
 
 
