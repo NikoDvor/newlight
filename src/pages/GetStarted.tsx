@@ -5,12 +5,14 @@ import { provisionWorkspaceDefaults } from "@/lib/workspaceProvisioner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { CalendarSlotPicker } from "@/components/CalendarSlotPicker";
 import {
-  Building2, User, Globe, MapPin, Phone, Mail,
-  ChevronRight, ChevronLeft, CheckCircle2, Loader2,
-  Sparkles, Calendar, AlertCircle
+  Calendar,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Mail,
+  AlertCircle,
 } from "lucide-react";
 import { WorkspaceHandoff } from "@/components/WorkspaceHandoff";
 import { CategoryNichePicker } from "@/components/CategoryNichePicker";
