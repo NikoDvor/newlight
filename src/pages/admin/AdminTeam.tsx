@@ -279,6 +279,42 @@ export default function AdminTeam() {
     setEditEmailLoading(false);
   };
 
+  const openEditPhone = async (row: UserRow) => {
+    setEditPhoneFor(row);
+    setEditPhoneValue("");
+    try {
+      const { data } = await (supabase.auth as any).admin.getUserById(row.user_id);
+      const existing = data?.user?.user_metadata?.phone;
+      if (typeof existing === "string") setEditPhoneValue(existing);
+    } catch {
+      // best-effort prefill
+    }
+  };
+
+  const handleEditPhoneSubmit = async () => {
+    if (!editPhoneFor) return;
+    const newPhone = editPhoneValue.trim();
+    setEditPhoneLoading(true);
+    try {
+      const { data: existingResp } = await (supabase.auth as any).admin.getUserById(editPhoneFor.user_id);
+      const existingMetadata = existingResp?.user?.user_metadata || {};
+      const { error } = await (supabase.auth as any).admin.updateUserById(editPhoneFor.user_id, {
+        user_metadata: { ...existingMetadata, phone: newPhone },
+      });
+      if (error) {
+        toast.error(error.message || "Failed to update phone");
+      } else {
+        toast.success("Phone updated");
+        setEditPhoneFor(null);
+        setEditPhoneValue("");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update phone");
+    }
+    setEditPhoneLoading(false);
+  };
+
+
 
   const resetManualForm = () => {
     setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
