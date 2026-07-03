@@ -17,18 +17,12 @@ interface AppIntroProps {
 }
 
 /**
- * AppIntro — original 3D intro (3s total).
+ * AppIntro — minimal 3s intro.
  *
- * Concept: a spinning octahedron core sitting at the mouth of a
- * hexagonal warp tunnel. Concentric hex rings pulse outward, thin
- * radial beams sweep around the core, and a sparse orbital cube
- * cluster spins in counter-motion. Dark navy → light blue-white bg.
- *
- * Timeline (3000ms):
- *   0-450    warp-in: rings/cube cluster fly in from depth, core scales up
- *   450-1800 sustain: full motion, rings pulse, beams sweep
- *   1800-2600 palette inverts (dark → light), colors deepen for readability
- *   2600-3000 collapse to center + fade out
+ * A single organic form: a slowly-rotating twisted torus knot rendered as
+ * fine wireframe. Nothing else in the scene — no tunnel, no cluster.
+ * Background transitions dark → light over the full 3s. Hard-capped at
+ * 3000ms from mount to onComplete.
  */
 export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -44,17 +38,15 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
     window.dispatchEvent(new Event("nl-intro-complete"));
     setPhase(4);
-    // 250ms collapse/fade, so onComplete fires at 2750ms + 250ms = 3000ms max.
     setTimeout(onComplete, 250);
   }, [onComplete]);
 
   useEffect(() => {
     startRef.current = performance.now();
-    // Hard 3000ms budget: phases + collapse must fit within it.
     const t1 = setTimeout(() => setPhase(1), 20);    // scale-in
     const t2 = setTimeout(() => setPhase(2), 400);   // sustain
     const t3 = setTimeout(() => setPhase(3), 1600);  // bg dark→light
-    const t4 = setTimeout(finish, 2750);             // start collapse
+    const t4 = setTimeout(finish, 2750);             // collapse
     const failsafe = setTimeout(onComplete, 3000);   // hard cap
     return () => [t1, t2, t3, t4, failsafe].forEach(clearTimeout);
   }, [finish, onComplete]);
@@ -66,8 +58,8 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     const isMobile = window.innerWidth < 768;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, el.clientWidth / el.clientHeight, 0.1, 100);
-    camera.position.z = 7;
+    const camera = new THREE.PerspectiveCamera(50, el.clientWidth / el.clientHeight, 0.1, 100);
+    camera.position.z = 5;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -75,99 +67,22 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
 
-    const COL_A = new THREE.Color(0xaaddff); // primary
-    const COL_B = new THREE.Color(0x66b8ff); // deep accent
-    const COL_LIGHT_END = new THREE.Color(0x1a3a6b); // final dark-navy for light bg
+    const COL_START = new THREE.Color(0xaaddff);
+    const COL_END = new THREE.Color(0x1a3a6b); // for light-bg readability
 
-    // Central octahedron core (wireframe)
-    const coreGeo = new THREE.OctahedronGeometry(0.95, 0);
-    const coreEdges = new THREE.EdgesGeometry(coreGeo);
-    const coreMat = new THREE.LineBasicMaterial({ color: COL_A.getHex(), transparent: true, opacity: 0.95 });
-    const core = new THREE.LineSegments(coreEdges, coreMat);
-    scene.add(core);
-
-    // Inner solid faceted glow octahedron
-    const innerGeo = new THREE.OctahedronGeometry(0.42, 0);
-    const innerMat = new THREE.MeshBasicMaterial({
-      color: COL_B.getHex(),
+    // Single organic form: a twisted torus knot as fine wireframe.
+    // Low tubular/radial segments keep it cheap on mobile.
+    const tubularSegs = isMobile ? 120 : 200;
+    const radialSegs  = isMobile ? 10 : 16;
+    const knotGeo = new THREE.TorusKnotGeometry(1.05, 0.32, tubularSegs, radialSegs, 2, 3);
+    const knotMat = new THREE.MeshBasicMaterial({
+      color: COL_START.getHex(),
+      wireframe: true,
       transparent: true,
-      opacity: 0.35,
-      wireframe: false,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      opacity: 0.85,
     });
-    const inner = new THREE.Mesh(innerGeo, innerMat);
-    scene.add(inner);
-
-    // Hex tunnel rings (concentric, receding in Z)
-    const RING_COUNT = isMobile ? 6 : 9;
-    const rings: THREE.LineLoop[] = [];
-    const ringMats: THREE.LineBasicMaterial[] = [];
-    for (let i = 0; i < RING_COUNT; i++) {
-      const pts: THREE.Vector3[] = [];
-      const r = 1.6 + i * 0.05;
-      const sides = 6;
-      for (let s = 0; s <= sides; s++) {
-        const a = (s / sides) * Math.PI * 2 + Math.PI / 6;
-        pts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0));
-      }
-      const g = new THREE.BufferGeometry().setFromPoints(pts);
-      const m = new THREE.LineBasicMaterial({
-        color: COL_A.getHex(),
-        transparent: true,
-        opacity: 0.55 - i * 0.045,
-      });
-      const ring = new THREE.LineLoop(g, m);
-      ring.position.z = -i * 0.9;
-      ring.rotation.z = i * 0.15;
-      scene.add(ring);
-      rings.push(ring);
-      ringMats.push(m);
-    }
-
-    // Radial beams sweeping around the core
-    const BEAM_COUNT = isMobile ? 5 : 8;
-    const beams: THREE.Line[] = [];
-    const beamMats: THREE.LineBasicMaterial[] = [];
-    for (let i = 0; i < BEAM_COUNT; i++) {
-      const g = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(2.4, 0, 0),
-      ]);
-      const m = new THREE.LineBasicMaterial({
-        color: COL_A.getHex(),
-        transparent: true,
-        opacity: 0.28,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      const line = new THREE.Line(g, m);
-      line.rotation.z = (i / BEAM_COUNT) * Math.PI * 2;
-      scene.add(line);
-      beams.push(line);
-      beamMats.push(m);
-    }
-
-    // Orbital cube cluster (small cubes on angled orbit)
-    const CUBE_COUNT = isMobile ? 6 : 10;
-    const cubes: THREE.LineSegments[] = [];
-    const cubeMats: THREE.LineBasicMaterial[] = [];
-    const cubeOrbit = new THREE.Group();
-    cubeOrbit.rotation.x = Math.PI / 3.2;
-    scene.add(cubeOrbit);
-    for (let i = 0; i < CUBE_COUNT; i++) {
-      const bg = new THREE.BoxGeometry(0.16, 0.16, 0.16);
-      const be = new THREE.EdgesGeometry(bg);
-      const bm = new THREE.LineBasicMaterial({ color: COL_B.getHex(), transparent: true, opacity: 0.75 });
-      const cube = new THREE.LineSegments(be, bm);
-      const a = (i / CUBE_COUNT) * Math.PI * 2;
-      const r = 2.15;
-      cube.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-      cube.userData.angle = a;
-      cubeOrbit.add(cube);
-      cubes.push(cube);
-      cubeMats.push(bm);
-    }
+    const knot = new THREE.Mesh(knotGeo, knotMat);
+    scene.add(knot);
 
     const tmp = new THREE.Color();
     let raf = 0;
@@ -191,8 +106,8 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       const elapsed = (now - startRef.current) / 1000;
       const ph = phaseRef.current;
 
-      // Warp-in scale (0-450ms)
-      const inT = easeOutCubic(elapsed / 0.45);
+      // Warp-in (0-400ms)
+      const inT = easeOutCubic(elapsed / 0.4);
 
       // Exit collapse (2750-3000ms during phase 4)
       let exit = 1;
@@ -205,58 +120,16 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
 
       // Color shift (1.6-2.4s)
       const shiftT = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8));
-      tmp.copy(COL_A).lerp(COL_LIGHT_END, shiftT);
-      const cHex = tmp.getHex();
-      coreMat.color.setHex(cHex);
-      ringMats.forEach((m) => m.color.setHex(cHex));
-      beamMats.forEach((m) => m.color.setHex(cHex));
-      tmp.copy(COL_B).lerp(COL_LIGHT_END, shiftT);
-      innerMat.color.setHex(tmp.getHex());
-      cubeMats.forEach((m) => m.color.setHex(tmp.getHex()));
+      tmp.copy(COL_START).lerp(COL_END, shiftT);
+      knotMat.color.copy(tmp);
+      knotMat.opacity = 0.85 * fade;
 
-      // Exit-driven opacity
-      coreMat.opacity = 0.95 * fade;
-      innerMat.opacity = (0.35 + Math.sin(elapsed * 6) * 0.08) * fade;
-      ringMats.forEach((m, i) => (m.opacity = (0.55 - i * 0.045) * fade));
-      cubeMats.forEach((m) => (m.opacity = 0.75 * fade));
+      // Slow rotation — deliberate, minimal
+      knot.rotation.x += 0.004;
+      knot.rotation.y += 0.007;
 
-      // Core rotation
-      core.rotation.x += 0.012;
-      core.rotation.y += 0.018;
-      inner.rotation.x -= 0.02;
-      inner.rotation.y -= 0.014;
-
-      // Rings: pulse outward Z, subtle rotation
-      rings.forEach((r, i) => {
-        const baseZ = -i * 0.9;
-        r.position.z = baseZ + Math.sin(elapsed * 1.8 + i * 0.5) * 0.12;
-        r.rotation.z += 0.003 * (i % 2 === 0 ? 1 : -1);
-        const s = inT * (1 + Math.sin(elapsed * 2 + i) * 0.03);
-        r.scale.setScalar(s * exit);
-      });
-
-      // Beam sweep
-      beams.forEach((b, i) => {
-        b.rotation.z = (i / BEAM_COUNT) * Math.PI * 2 + elapsed * 0.9;
-        const pulse = 0.18 + Math.abs(Math.sin(elapsed * 3 + i)) * 0.28;
-        beamMats[i].opacity = pulse * fade;
-      });
-
-      // Cube orbit
-      cubeOrbit.rotation.z += 0.006;
-      cubes.forEach((c, i) => {
-        const a = c.userData.angle + elapsed * 0.6;
-        const r = 2.15 + Math.sin(elapsed * 2 + i) * 0.08;
-        c.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-        c.rotation.x += 0.03;
-        c.rotation.y += 0.04;
-      });
-      cubeOrbit.scale.setScalar(inT * exit);
-
-      // Core scale (warp-in + exit)
-      const coreScale = inT * exit;
-      core.scale.setScalar(coreScale);
-      inner.scale.setScalar(coreScale);
+      // Scale (warp-in + exit)
+      knot.scale.setScalar(inT * exit);
 
       renderer.render(scene, camera);
     };
@@ -265,14 +138,8 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
-      coreGeo.dispose(); coreEdges.dispose(); coreMat.dispose();
-      innerGeo.dispose(); innerMat.dispose();
-      rings.forEach((r) => (r.geometry as THREE.BufferGeometry).dispose());
-      ringMats.forEach((m) => m.dispose());
-      beams.forEach((b) => (b.geometry as THREE.BufferGeometry).dispose());
-      beamMats.forEach((m) => m.dispose());
-      cubes.forEach((c) => (c.geometry as THREE.BufferGeometry).dispose());
-      cubeMats.forEach((m) => m.dispose());
+      knotGeo.dispose();
+      knotMat.dispose();
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
