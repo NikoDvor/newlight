@@ -194,7 +194,7 @@ export default function BDRDialer() {
     }
     setSavingId(lead.id);
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
-    const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection };
+    const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection, logged_at: new Date().toISOString() };
     setOutcomes(prev => [optimistic, ...prev]);
     if (!lead.called) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
