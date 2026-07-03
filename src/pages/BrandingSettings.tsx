@@ -63,7 +63,12 @@ const defaultForm = {
 export default function BrandingSettings() {
   const { activeClientId, setActiveClientId } = useWorkspace();
   const clientHook = useResolvedClientId();
-  const { effectiveClientId, urlClientId, isAdmin } = clientHook;
+  const { urlClientId, isAdmin } = clientHook;
+  // Admin viewing the bare portal (no client selected) edits the shared
+  // NewLight Ops branding record so the admin app has its own logo/PWA icon.
+  const effectiveClientId =
+    clientHook.effectiveClientId || (isAdmin ? ADMIN_OPS_CLIENT_ID : null);
+  const isAdminOps = effectiveClientId === ADMIN_OPS_CLIENT_ID;
   const [form, setForm] = useState(defaultForm);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
