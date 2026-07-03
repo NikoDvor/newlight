@@ -314,10 +314,10 @@ export default function Onboarding() {
             <div><Label className="text-xs mb-1.5 block">Business Name *</Label><Input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Acme Corp" /></div>
             <div><Label className="text-xs mb-1.5 block">Website URL</Label><Input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://acme.com" /></div>
             <div><Label className="text-xs mb-1.5 block">Primary Location</Label><Input value={primaryLocation} onChange={e => setPrimaryLocation(e.target.value)} placeholder="Los Angeles, CA" /></div>
-            <div><Label className="text-xs mb-1.5 block">Business Type / Industry</Label><Input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Dental, Legal, HVAC" /></div>
-            <div><Label className="text-xs mb-1.5 block">Main Service / Offer</Label><Input value={mainService} onChange={e => setMainService(e.target.value)} placeholder="Your core service" /></div>
-            <div><Label className="text-xs mb-1.5 block">Primary Goal</Label><Input value={primaryGoal} onChange={e => setPrimaryGoal(e.target.value)} placeholder="e.g. Get more leads" /></div>
-            <div className="sm:col-span-2"><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Business Type / Industry</Label><Input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="e.g. Dental, Legal, HVAC" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Main Service / Offer</Label><Input value={mainService} onChange={e => setMainService(e.target.value)} placeholder="Your core service" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Primary Goal</Label><Input value={primaryGoal} onChange={e => setPrimaryGoal(e.target.value)} placeholder="e.g. Get more leads" /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><Label className="text-xs mb-1.5 block">Booking Link</Label><Input value={bookingLink} onChange={e => setBookingLink(e.target.value)} placeholder="https://calendly.com/..." /></div>
           </div>
         </div>
       );
