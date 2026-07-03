@@ -11,7 +11,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
-import { NewLightIntro, shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
+import { shouldPlayIntro, resetIntroState } from "@/components/NewLightIntro";
+import { AppIntro } from "@/components/AppIntro";
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
 // Pages
