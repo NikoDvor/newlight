@@ -41,6 +41,40 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+/* Date bucket helpers for call metrics */
+function inBucket(dateStr: string, bucket: "today" | "week" | "month" | "all") {
+  if (!dateStr) return false;
+  if (bucket === "all") return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (bucket === "today") return d.toDateString() === now.toDateString();
+  if (bucket === "week") {
+    const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0, 0, 0, 0);
+    return d >= s;
+  }
+  if (bucket === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  return false;
+}
+
+const SCHED_OUTCOME = "Schedule Callback";
+
+function computeCallMetrics(rows: any[]) {
+  const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+  const out: Record<string, { total: number; sched: number; schedPct: number; breakdown: Array<{ outcome: string; count: number; pct: number }> }> = {} as any;
+  for (const b of buckets) {
+    const filtered = rows.filter(r => inBucket(r.logged_at, b));
+    const total = filtered.length;
+    const sched = filtered.filter(r => r.outcome === SCHED_OUTCOME).length;
+    const counts: Record<string, number> = {};
+    filtered.forEach(r => { const k = r.outcome || "—"; counts[k] = (counts[k] || 0) + 1; });
+    const breakdown = Object.entries(counts)
+      .map(([outcome, count]) => ({ outcome, count, pct: total ? Math.round((count / total) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
+    out[b] = { total, sched, schedPct: total ? Math.round((sched / total) * 100) : 0, breakdown };
+  }
+  return out;
+}
+
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
   const { isAdmin } = useWorkspace();
