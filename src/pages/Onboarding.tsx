@@ -42,6 +42,8 @@ const INTEGRATION_OPTIONS = [
   { key: "existing_crm", label: "Existing CRM" },
 ];
 
+const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
+
 interface TeamMember {
   name: string;
   email: string;
