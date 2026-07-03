@@ -81,9 +81,9 @@ export default function CallTracking() {
         .limit(500),
       supabase
         .from("crm_contacts")
-        .select("id, first_name, last_name, phone")
+        .select("id, full_name, phone")
         .eq("client_id", activeClientId)
-        .order("first_name", { ascending: true })
+        .order("full_name", { ascending: true })
         .limit(500),
     ]);
     setCalls((callsRes.data as CallRow[]) || []);
