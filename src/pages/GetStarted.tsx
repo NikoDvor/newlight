@@ -404,17 +404,17 @@ export default function GetStarted() {
   // ─── Submitting ──────────────────────────────────────────
   if (pageState === "submitting") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[hsl(215,35%,8%)] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
+          className="max-w-md w-full text-center space-y-3 p-8 rounded-xl border border-white/10 bg-white/[0.03]"
         >
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(211,96%,56%)]/20 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 text-[hsl(211,96%,68%)] animate-spin" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Booking your meeting…</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-bold text-white">Booking your meeting…</h2>
+          <p className="text-sm text-white/60">
             Setting up your personalized workspace and confirming your intro call.
           </p>
           <div className="mt-6 space-y-2">
@@ -424,7 +424,7 @@ export default function GetStarted() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.8 }}
-                className="flex items-center gap-2 text-xs text-muted-foreground justify-center"
+                className="flex items-center gap-2 text-xs text-white/50 justify-center"
               >
                 <Loader2 className="h-3 w-3 animate-spin" />
                 {s}
