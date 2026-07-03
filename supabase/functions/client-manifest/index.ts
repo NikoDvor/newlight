@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const clientId = url.searchParams.get("client_id")?.trim() ?? "";
 
-  if (!UUID_RE.test(clientId)) {
+  const isAdminOps = clientId === ADMIN_OPS_CLIENT_ID;
+  if (!isAdminOps && !UUID_RE.test(clientId)) {
     return json({ error: "Valid client_id is required" }, 400);
   }
 
@@ -83,7 +84,13 @@ Deno.serve(async (req) => {
     return json({ error: "Could not load workspace manifest" }, 500);
   }
 
-  if (!client) return json({ error: "Workspace not found" }, 404);
+  // Admin Ops has no clients row — fall back to a synthetic "NewLight" record
+  // so the admin portal still gets its own brandable manifest.
+  const resolvedClient = client ?? (isAdminOps
+    ? { business_name: "NewLight", workspace_slug: null as string | null }
+    : null);
+
+  if (!resolvedClient) return json({ error: "Workspace not found" }, 404);
 
   const { data: branding, error: brandingError } = await adminClient
     .from("client_branding")
@@ -98,11 +105,11 @@ Deno.serve(async (req) => {
 
   const appName = cleanName(
     branding?.company_name,
-    cleanName(branding?.app_display_name, cleanName(client.business_name, "NewLight")),
+    cleanName(branding?.app_display_name, cleanName(resolvedClient.business_name, "NewLight")),
   );
   const iconUrl = cleanIcon(branding?.pwa_icon_url || branding?.app_icon_url || branding?.logo_url);
   const themeColor = cleanColor(branding?.primary_color);
-  const startUrl = client.workspace_slug ? `/w/${client.workspace_slug}` : "/";
+  const startUrl = resolvedClient.workspace_slug ? `/w/${resolvedClient.workspace_slug}` : "/";
 
   const mime = iconMime(iconUrl);
   const isSvg = mime === "image/svg+xml";
