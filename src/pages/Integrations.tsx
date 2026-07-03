@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { Plug, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock, Eye, Mail } from "lucide-react";
 import { motion } from "framer-motion";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -46,7 +47,8 @@ const statusConfig: Record<string, { icon: any; label: string; color: string; bg
 };
 
 export default function Integrations() {
-  const { activeClientId, isAdmin } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId: activeClientId, isAdmin } = clientHook;
   const [integrations, setIntegrations] = useState<Integration[]>([]);
 
   const fetchIntegrations = () => {
@@ -67,6 +69,20 @@ export default function Integrations() {
     const found = integrations.find(i => i.integration_name === name);
     return found || { id: name, integration_name: name, status: "disconnected", config: null };
   };
+
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Integrations"
+        description="Connect your business tools and services to power your growth system"
+        emptyTitle="Select a workspace to view integrations"
+        emptyBodyAdmin="Integration status is tracked per workspace — pick a client below to review or manage connections."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+      />
+    );
+  }
+
 
   return (
     <div>

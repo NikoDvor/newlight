@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plug, Calendar, RefreshCw, CheckCircle2, AlertCircle, Clock, Info, Loader2, ExternalLink } from "lucide-react";
@@ -28,7 +29,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 };
 
 export default function CalendarIntegrations() {
-  const { activeClientId } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId: activeClientId } = clientHook;
   const [integrations, setIntegrations] = useState<any[]>([]);
   const [syncSettings, setSyncSettings] = useState<any[]>([]);
   const [calendars, setCalendars] = useState<any[]>([]);
