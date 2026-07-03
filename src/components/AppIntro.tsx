@@ -44,18 +44,20 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
     window.dispatchEvent(new Event("nl-intro-complete"));
     setPhase(4);
-    setTimeout(onComplete, 400);
+    // 250ms collapse/fade, so onComplete fires at 2750ms + 250ms = 3000ms max.
+    setTimeout(onComplete, 250);
   }, [onComplete]);
 
   useEffect(() => {
     startRef.current = performance.now();
-    const t1 = setTimeout(() => setPhase(1), 20);
-    const t2 = setTimeout(() => setPhase(2), 450);
-    const t3 = setTimeout(() => setPhase(3), 1800);
-    const t4 = setTimeout(finish, 2600);
-    const failsafe = setTimeout(finish, 6000);
+    // Hard 3000ms budget: phases + collapse must fit within it.
+    const t1 = setTimeout(() => setPhase(1), 20);    // scale-in
+    const t2 = setTimeout(() => setPhase(2), 400);   // sustain
+    const t3 = setTimeout(() => setPhase(3), 1600);  // bg dark→light
+    const t4 = setTimeout(finish, 2750);             // start collapse
+    const failsafe = setTimeout(onComplete, 3000);   // hard cap
     return () => [t1, t2, t3, t4, failsafe].forEach(clearTimeout);
-  }, [finish]);
+  }, [finish, onComplete]);
 
   useEffect(() => {
     const el = mountRef.current;
@@ -192,17 +194,17 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       // Warp-in scale (0-450ms)
       const inT = easeOutCubic(elapsed / 0.45);
 
-      // Exit collapse (2600-3000ms during phase 4)
+      // Exit collapse (2750-3000ms during phase 4)
       let exit = 1;
       let fade = 1;
       if (ph === 4) {
-        const t = Math.min(1, (now - (startRef.current + 2600)) / 400);
+        const t = Math.min(1, (now - (startRef.current + 2750)) / 250);
         exit = 1 - t * 0.97;
         fade = 1 - t;
       }
 
-      // Color shift (1.8-2.6s)
-      const shiftT = Math.min(1, Math.max(0, (elapsed - 1.8) / 0.8));
+      // Color shift (1.6-2.4s)
+      const shiftT = Math.min(1, Math.max(0, (elapsed - 1.6) / 0.8));
       tmp.copy(COL_A).lerp(COL_LIGHT_END, shiftT);
       const cHex = tmp.getHex();
       coreMat.color.setHex(cHex);
