@@ -114,7 +114,9 @@ export default function Landing() {
       className="relative min-h-screen overflow-x-hidden"
       style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
-      {/* HomeFX — recolored via mix-blend overlay only (geometry untouched). */}
+      {/* HomeFX — recolored via CSS filter only (geometry/animation untouched).
+          sepia + hue-rotate + saturate shifts white linework to light blue while
+          leaving transparent areas fully transparent so the white page shows through. */}
       <div
         style={{
           position: "fixed",
@@ -124,30 +126,19 @@ export default function Landing() {
           pointerEvents: "none",
           animation: "nl-home-breath 4.6s ease-in-out infinite",
           willChange: "opacity",
+          filter: "sepia(1) hue-rotate(175deg) saturate(4.5) brightness(1.05)",
         }}
         aria-hidden
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.9; }
+            0%, 100% { opacity: 0.85; }
             50%      { opacity: 1; }
           }
         `}</style>
         <HomeFX />
-        {/* Blue tint layer: multiplies with white FX pixels so they become
-            thin light-blue linework, leaving transparent areas untouched.
-            Recolor only — no geometry change. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: SKY,
-            mixBlendMode: "multiply",
-            pointerEvents: "none",
-          }}
-        />
-
       </div>
+
 
       {/* Single corner blue highlight streak — top-right only */}
       <div
