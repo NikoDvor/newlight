@@ -5,11 +5,13 @@ import newlightLogo from "@/assets/nl-monogram.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
 const NAVY = "#0A2540"; // headline only — kept dark for primary contrast
-const ELECTRIC = "#1E6FD9"; // primary blue accent (buttons, links, labels)
+const ELECTRIC = "#1E6FD9"; // primary blue for buttons (unchanged)
+const NEON_BLUE = "#00BFFF"; // bright neon-blue glow for highlights
 const SKY = "#7CC7FF"; // light blue for FX linework
-const INK = "#2E6FD9"; // blue default body color
+const BODY_BLUE = "#5A9BD8"; // lighter blue for secondary body/nav/footer text
+const INK = BODY_BLUE; // blue default body color
 const FG = NAVY; // headings (headline only on this page)
-const FG_SOFT = "rgba(30, 111, 217, 0.85)"; // blue-tinted body/nav/footer text
+const FG_SOFT = BODY_BLUE; // blue-tinted body/nav/footer text
 const BORDER_TINT = "rgba(30,111,217,0.28)";
 const PAGE_BG = "#FFFFFF";
 
@@ -223,7 +225,11 @@ export default function Landing() {
         <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-32">
           <motion.div
             className="text-[12px] font-bold tracking-[0.28em] uppercase mb-8"
-            style={{ color: ELECTRIC, fontFamily: display }}
+            style={{
+              color: NEON_BLUE,
+              fontFamily: display,
+              textShadow: "0 0 10px rgba(0,191,255,0.55), 0 0 22px rgba(0,191,255,0.30)",
+            }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -251,7 +257,13 @@ export default function Landing() {
 
           <motion.div
             className="mt-8 mx-auto"
-            style={{ width: 60, height: 2, background: ELECTRIC, opacity: 0.85 }}
+            style={{
+              width: 60,
+              height: 2,
+              background: NEON_BLUE,
+              opacity: 0.9,
+              boxShadow: "0 0 12px rgba(0,191,255,0.55), 0 0 24px rgba(0,191,255,0.30)",
+            }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
@@ -328,7 +340,12 @@ export default function Landing() {
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold hover:underline"
-              style={{ color: ELECTRIC, letterSpacing: "0.12em", fontFamily: display }}
+              style={{
+                color: NEON_BLUE,
+                letterSpacing: "0.12em",
+                fontFamily: display,
+                textShadow: "0 0 10px rgba(0,191,255,0.45), 0 0 20px rgba(0,191,255,0.22)",
+              }}
             >
               VISIT NEWLIGHTGEN.COM →
             </a>
