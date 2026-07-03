@@ -15,6 +15,7 @@ interface CalendarSlotPickerProps {
   selectedTime: string;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  variant?: "default" | "dark";
 }
 
 function generateSlots(startTime: string, endTime: string, durationMin: number, interval: number, bufferBefore: number, bufferAfter: number): string[] {
@@ -42,7 +43,7 @@ function formatTime12(time: string) {
 
 export function CalendarSlotPicker({
   calendarId, clientId, duration, bufferBefore = 0, bufferAfter = 0,
-  selectedDate, selectedTime, onDateChange, onTimeChange,
+  selectedDate, selectedTime, onDateChange, onTimeChange, variant = "default",
 }: CalendarSlotPickerProps) {
   const [availability, setAvailability] = useState<any[]>([]);
   const [blackouts, setBlackouts] = useState<any[]>([]);
@@ -129,9 +130,11 @@ export function CalendarSlotPicker({
     return !!availability.find(a => a.day_of_week === d.dayOfWeek);
   });
 
+  const isDark = variant === "dark";
+
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4 text-muted-foreground">
+      <div className={cn("flex items-center gap-2 py-4", isDark ? "text-white/60" : "text-muted-foreground")}>
         <Loader2 className="h-4 w-4 animate-spin" /> Loading availability...
       </div>
     );
@@ -140,7 +143,7 @@ export function CalendarSlotPicker({
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-xs flex items-center gap-1.5 mb-2">
+        <Label className={cn("text-xs flex items-center gap-1.5 mb-2", isDark && "text-white/60")}>
           <Clock className="h-3.5 w-3.5" /> Select Date
         </Label>
         <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -149,25 +152,29 @@ export function CalendarSlotPicker({
               className={cn(
                 "shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors border",
                 selectedDate === d.value
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/50 text-foreground border-border hover:bg-secondary"
+                  ? isDark
+                    ? "bg-[hsl(211,96%,56%)] text-white border-[hsl(211,96%,56%)]"
+                    : "bg-primary text-primary-foreground border-primary"
+                  : isDark
+                    ? "bg-white/5 text-white/75 border-white/10 hover:bg-white/10"
+                    : "bg-secondary/50 text-foreground border-border hover:bg-secondary"
               )}>
               {d.label}
             </button>
           ))}
           {availableDates.length === 0 && (
-            <p className="text-xs text-muted-foreground py-2">No availability configured for this calendar.</p>
+            <p className={cn("text-xs py-2", isDark ? "text-white/45" : "text-muted-foreground")}>No availability configured for this calendar.</p>
           )}
         </div>
       </div>
 
       {selectedDate && (
         <div>
-          <Label className="text-xs mb-2 block">Available Times</Label>
+          <Label className={cn("text-xs mb-2 block", isDark && "text-white/60")}>Available Times</Label>
           {!dayAvail ? (
-            <p className="text-xs text-muted-foreground py-2">Not available on this day</p>
+            <p className={cn("text-xs py-2", isDark ? "text-white/45" : "text-muted-foreground")}>Not available on this day</p>
           ) : availableSlots.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-2">No available times — please contact us to schedule</p>
+            <p className={cn("text-xs py-2", isDark ? "text-white/45" : "text-muted-foreground")}>No available times — please contact us to schedule</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-[220px] overflow-y-auto">
               {availableSlots.map(slot => (
@@ -175,8 +182,12 @@ export function CalendarSlotPicker({
                   className={cn(
                     "px-2 py-2 rounded-lg text-xs font-medium transition-colors border text-center",
                     selectedTime === slot
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary/50 text-foreground border-border hover:bg-secondary"
+                      ? isDark
+                        ? "bg-[hsl(211,96%,56%)] text-white border-[hsl(211,96%,56%)]"
+                        : "bg-primary text-primary-foreground border-primary"
+                      : isDark
+                        ? "bg-white/5 text-white/75 border-white/10 hover:bg-white/10"
+                        : "bg-secondary/50 text-foreground border-border hover:bg-secondary"
                   )}>
                   {formatTime12(slot)}
                 </button>

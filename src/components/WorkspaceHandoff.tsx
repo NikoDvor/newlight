@@ -107,7 +107,7 @@ export function WorkspaceHandoff({
   const canResendSms = !!(ownerPhone && clientId && smsConsent && (preferredContactMethod === "sms" || preferredContactMethod === "both"));
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[hsl(215,35%,8%)] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -115,19 +115,19 @@ export function WorkspaceHandoff({
       >
         {/* Success header */}
         <div className="text-center mb-6">
-          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
-            hasInviteIssue ? "bg-destructive/10" : "bg-primary/10"
+          <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+            hasInviteIssue ? "bg-[hsl(0,62%,55%)]/20" : "bg-[hsl(142,72%,42%)]/20"
           }`}>
             {hasInviteIssue ? (
-              <AlertTriangle className="h-8 w-8 text-destructive" />
+              <AlertTriangle className="h-8 w-8 text-[hsl(0,62%,55%)]" />
             ) : (
-              <CheckCircle2 className="h-8 w-8 text-primary" />
+              <CheckCircle2 className="h-8 w-8 text-[hsl(142,72%,42%)]" />
             )}
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">
+          <h1 className="text-2xl font-bold text-white mb-1">
             {alreadyExists ? "Your Workspace is Ready!" : `${businessName} is Live!`}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/60">
             {hasInviteIssue
               ? "Your workspace was created successfully. The invite email could not be sent automatically — use the links below to access your workspace."
               : inviteSent
@@ -139,7 +139,7 @@ export function WorkspaceHandoff({
           {/* Delivery status badges */}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
             {inviteStatus && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/[0.05] text-white/55 border border-white/10">
                 {inviteStatus === "invite_sent" && <Mail className="h-3 w-3" />}
                 {inviteStatus === "invite_failed" && <AlertTriangle className="h-3 w-3" />}
                 {inviteStatus === "access_link_generated" && <CheckCircle2 className="h-3 w-3" />}
@@ -148,9 +148,9 @@ export function WorkspaceHandoff({
             )}
             {emailDeliveryStatus && emailDeliveryStatus !== "not_attempted" && (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                emailDeliveryStatus === "sent" ? "bg-primary/10 text-primary" :
-                emailDeliveryStatus === "failed" ? "bg-destructive/10 text-destructive" :
-                "bg-muted text-muted-foreground"
+                emailDeliveryStatus === "sent" ? "bg-[hsl(142,72%,42%)]/20 text-[hsl(142,72%,42%)] border border-[hsl(142,72%,42%)]/20" :
+                emailDeliveryStatus === "failed" ? "bg-[hsl(0,62%,55%)]/20 text-[hsl(0,62%,55%)] border border-[hsl(0,62%,55%)]/20" :
+                "bg-white/[0.05] text-white/55 border border-white/10"
               }`}>
                 <Mail className="h-3 w-3" />
                 Email: {emailDeliveryStatus === "not_configured" ? "not configured" : emailDeliveryStatus}
@@ -158,9 +158,9 @@ export function WorkspaceHandoff({
             )}
             {smsDeliveryStatus && smsDeliveryStatus !== "not_attempted" && (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                smsDeliveryStatus === "sent" ? "bg-primary/10 text-primary" :
-                smsDeliveryStatus === "failed" ? "bg-destructive/10 text-destructive" :
-                "bg-muted text-muted-foreground"
+                smsDeliveryStatus === "sent" ? "bg-[hsl(142,72%,42%)]/20 text-[hsl(142,72%,42%)] border border-[hsl(142,72%,42%)]/20" :
+                smsDeliveryStatus === "failed" ? "bg-[hsl(0,62%,55%)]/20 text-[hsl(0,62%,55%)] border border-[hsl(0,62%,55%)]/20" :
+                "bg-white/[0.05] text-white/55 border border-white/10"
               }`}>
                 <MessageSquare className="h-3 w-3" />
                 SMS: {smsDeliveryStatus === "not_configured" ? "not configured" : smsDeliveryStatus}
@@ -171,12 +171,12 @@ export function WorkspaceHandoff({
 
         {/* Invite issue banner */}
         {hasInviteIssue && (
-          <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 mb-4">
+          <div className="rounded-xl border border-[hsl(0,62%,55%)]/20 bg-[hsl(0,62%,55%)]/10 p-4 mb-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-[hsl(0,62%,55%)] mt-0.5 shrink-0" />
               <div className="flex-1">
-                <p className="text-xs font-medium text-foreground mb-1">Invite email was not sent</p>
-                <p className="text-[11px] text-muted-foreground mb-3">
+                <p className="text-xs font-medium text-white mb-1">Invite email was not sent</p>
+                <p className="text-[11px] text-white/55 mb-3">
                   You can still access your workspace using the links below, or we can try sending the invite again.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -186,7 +186,7 @@ export function WorkspaceHandoff({
                       variant="outline"
                       onClick={handleResendInvite}
                       disabled={resending}
-                      className="gap-1.5 text-xs h-8"
+                      className="gap-1.5 text-xs h-8 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white hover:border-white/20"
                     >
                       {resending ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                       {resending ? "Sending…" : "Resend Invite"}
@@ -198,7 +198,7 @@ export function WorkspaceHandoff({
                       variant="outline"
                       onClick={handleResendSms}
                       disabled={resendingSms}
-                      className="gap-1.5 text-xs h-8"
+                      className="gap-1.5 text-xs h-8 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white hover:border-white/20"
                     >
                       {resendingSms ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3" />}
                       {resendingSms ? "Sending…" : "Resend SMS"}
@@ -212,15 +212,15 @@ export function WorkspaceHandoff({
 
         {/* Resend actions when no invite issue but SMS available */}
         {!hasInviteIssue && canResendSms && smsDeliveryStatus !== "sent" && (
-          <div className="rounded-2xl border bg-card p-3 mb-4">
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 mb-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">SMS not delivered?</span>
+              <span className="text-xs text-white/55">SMS not delivered?</span>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={handleResendSms}
                 disabled={resendingSms}
-                className="gap-1.5 text-xs h-7"
+                className="gap-1.5 text-xs h-7 text-white/75 hover:bg-white/10 hover:text-white"
               >
                 {resendingSms ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3" />}
                 {resendingSms ? "Sending…" : "Resend SMS"}
@@ -230,16 +230,16 @@ export function WorkspaceHandoff({
         )}
 
         {/* Action buttons */}
-        <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-3 mb-4">
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-3 mb-4">
           <a href={fullUrl}>
-            <Button className="w-full gap-2 h-12 text-sm" size="lg">
+            <Button className="w-full gap-2 h-12 text-sm bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]" size="lg">
               <ExternalLink className="h-4 w-4" />
               Open Workspace
             </Button>
           </a>
 
           <a href={continueSetupUrl}>
-            <Button variant="outline" className="w-full gap-2 h-12 text-sm mt-2" size="lg">
+            <Button variant="outline" className="w-full gap-2 h-12 text-sm mt-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white hover:border-white/20" size="lg">
               <ArrowRight className="h-4 w-4" />
               Continue Setup
             </Button>
@@ -247,26 +247,26 @@ export function WorkspaceHandoff({
         </div>
 
         {/* Workspace link */}
-        <div className="rounded-2xl border bg-card p-4 shadow-sm mb-4">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">Your workspace link</p>
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 mb-4">
+          <p className="text-xs text-white/55 mb-2 font-medium">Your workspace link</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm font-mono text-foreground bg-muted/50 rounded-lg px-3 py-2 truncate">
+            <code className="flex-1 text-sm font-mono text-white bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 truncate">
               {fullUrl}
             </code>
-            <Button size="sm" variant="ghost" onClick={() => copyLink(fullUrl, setCopied)} className="shrink-0 gap-1.5">
-              {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+            <Button size="sm" variant="ghost" onClick={() => copyLink(fullUrl, setCopied)} className="shrink-0 gap-1.5 text-white/75 hover:bg-white/10 hover:text-white">
+              {copied ? <Check className="h-3.5 w-3.5 text-[hsl(142,72%,42%)]" /> : <Copy className="h-3.5 w-3.5" />}
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>
           {/* Continue Setup link */}
-          <div className="mt-3 pt-3 border-t">
-            <p className="text-xs text-muted-foreground mb-2 font-medium">Continue Setup link</p>
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <p className="text-xs text-white/55 mb-2 font-medium">Continue Setup link</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-[11px] font-mono text-foreground bg-muted/50 rounded-lg px-3 py-2 truncate">
+              <code className="flex-1 text-[11px] font-mono text-white bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 truncate">
                 {continueSetupUrl}
               </code>
-              <Button size="sm" variant="ghost" onClick={() => copyLink(continueSetupUrl, setCopiedSetup)} className="shrink-0 gap-1.5">
-                {copiedSetup ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              <Button size="sm" variant="ghost" onClick={() => copyLink(continueSetupUrl, setCopiedSetup)} className="shrink-0 gap-1.5 text-white/75 hover:bg-white/10 hover:text-white">
+                {copiedSetup ? <Check className="h-3.5 w-3.5 text-[hsl(142,72%,42%)]" /> : <Copy className="h-3.5 w-3.5" />}
                 {copiedSetup ? "Copied" : "Copy"}
               </Button>
             </div>
@@ -274,32 +274,32 @@ export function WorkspaceHandoff({
         </div>
 
         {/* Install app prompt */}
-        <div className="rounded-2xl border bg-card p-4 shadow-sm">
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <button
             onClick={() => setShowInstall(!showInstall)}
             className="w-full flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Smartphone className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-xl bg-[hsl(211,96%,56%)]/20 flex items-center justify-center">
+                <Smartphone className="h-5 w-5 text-[hsl(211,96%,68%)]" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">Install as App</p>
-                <p className="text-[11px] text-muted-foreground">Add to your home screen for the full experience</p>
+                <p className="text-sm font-semibold text-white">Install as App</p>
+                <p className="text-[11px] text-white/55">Add to your home screen for the full experience</p>
               </div>
             </div>
-            <ArrowRight className={`h-4 w-4 text-muted-foreground transition-transform ${showInstall ? "rotate-90" : ""}`} />
+            <ArrowRight className={`h-4 w-4 text-white/45 transition-transform ${showInstall ? "rotate-90" : ""}`} />
           </button>
 
           {showInstall && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
-              className="mt-4 pt-4 border-t space-y-3"
+              className="mt-4 pt-4 border-t border-white/10 space-y-3"
             >
               {isIOS ? (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-foreground">On iPhone / iPad:</p>
+                  <p className="text-xs font-medium text-white">On iPhone / iPad:</p>
                   {[
                     "Open this link in Safari",
                     "Tap the Share button (square with arrow)",
@@ -307,16 +307,16 @@ export function WorkspaceHandoff({
                     'Tap "Add" to install',
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-0.5">
+                      <div className="h-5 w-5 rounded-full bg-[hsl(211,96%,56%)]/20 flex items-center justify-center text-[10px] font-bold text-[hsl(211,96%,68%)] shrink-0 mt-0.5">
                         {i + 1}
                       </div>
-                      <span className="text-xs text-muted-foreground">{step}</span>
+                      <span className="text-xs text-white/55">{step}</span>
                     </div>
                   ))}
                 </div>
               ) : isAndroid ? (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-foreground">On Android:</p>
+                  <p className="text-xs font-medium text-white">On Android:</p>
                   {[
                     "Open this link in Chrome",
                     'Tap the menu (⋮) in the top right',
@@ -324,20 +324,20 @@ export function WorkspaceHandoff({
                     "Confirm to install",
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-0.5">
+                      <div className="h-5 w-5 rounded-full bg-[hsl(211,96%,56%)]/20 flex items-center justify-center text-[10px] font-bold text-[hsl(211,96%,68%)] shrink-0 mt-0.5">
                         {i + 1}
                       </div>
-                      <span className="text-xs text-muted-foreground">{step}</span>
+                      <span className="text-xs text-white/55">{step}</span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-foreground">Install on any device:</p>
-                  <p className="text-xs text-muted-foreground">
-                    Open <span className="font-mono text-foreground">{fullUrl}</span> on your phone and use your browser's "Add to Home Screen" or "Install App" option.
+                  <p className="text-xs font-medium text-white">Install on any device:</p>
+                  <p className="text-xs text-white/55">
+                    Open <span className="font-mono text-white">{fullUrl}</span> on your phone and use your browser's "Add to Home Screen" or "Install App" option.
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <div className="flex items-center gap-2 text-xs text-white/55 mt-1">
                     <Download className="h-3.5 w-3.5" />
                     <span>On desktop Chrome, look for the install icon in the address bar.</span>
                   </div>
@@ -349,9 +349,9 @@ export function WorkspaceHandoff({
 
         {/* Setup link for manual invite flow */}
         {setupLink && (
-          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
-            <p className="text-xs text-muted-foreground mb-1">Setup link (share with the client):</p>
-            <code className="text-[11px] text-foreground break-all">{setupLink}</code>
+          <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p className="text-xs text-white/55 mb-1">Setup link (share with the client):</p>
+            <code className="text-[11px] text-white break-all">{setupLink}</code>
           </div>
         )}
 
