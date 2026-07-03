@@ -59,7 +59,7 @@ interface NavItemProps {
 function NavItem({ href, label, icon, navigate }: NavItemProps) {
   const isExternal = href.startsWith("mailto:") || href.startsWith("tel:");
   const baseClasses =
-    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors hover:text-white/90 hover:bg-white/5";
+    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors hover:bg-[rgba(33,150,243,0.08)]";
   const style: React.CSSProperties = {
     color: FG_SOFT,
     fontSize: 12,
