@@ -128,6 +128,21 @@ export default function ClientSetup() {
     </select>
   );
 
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Complete Your Setup"
+        description="Fill in the remaining details to fully activate your workspace"
+        emptyTitle="Select a workspace to complete setup"
+        emptyBodyAdmin="Setup answers are stored per client — pick a workspace below to continue on their behalf."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+        backTo="/dashboard"
+        backLabel="Back to Dashboard"
+      />
+    );
+  }
+
   return (
     <div>
       <BackArrow to="/dashboard" label="Back to Dashboard" dark={false} />
