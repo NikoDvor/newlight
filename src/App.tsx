@@ -175,6 +175,7 @@ import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
 import AdminWebsites from "./pages/admin/AdminWebsites";
 import Approvals from "./pages/Approvals";
+import CallTracking from "./pages/CallTracking";
 
 
 const queryClient = new QueryClient();
