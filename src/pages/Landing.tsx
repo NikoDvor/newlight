@@ -228,7 +228,7 @@ export default function Landing() {
               fontSize: "clamp(40px, 6.8vw, 88px)",
               maxWidth: 960,
               fontFamily: display,
-              textShadow: "0 0 30px rgba(0,180,255,0.25)",
+              textShadow: "0 1px 0 rgba(255,255,255,0.6)",
             }}
             initial="hidden"
             animate="show"
