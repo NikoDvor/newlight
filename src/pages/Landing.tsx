@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
-const ELECTRIC = "#2196F3"; // primary light-blue accent
-const SKY = "#7CC7FF"; // lighter blue
-const INK = "#0A2540"; // near-black high-contrast text
-const FG = "#0B3B75"; // deep blue for headings
-const FG_SOFT = "rgba(10,37,64,0.68)"; // muted ink for body
-const BORDER_TINT = "rgba(33,150,243,0.35)";
-const PAGE_BG = "#F4FAFF"; // very light blue-white
+const NAVY = "#0A2540"; // headline / high-contrast text
+const ELECTRIC = "#1E6FD9"; // primary blue accent (buttons, links, labels)
+const SKY = "#7CC7FF"; // light blue for FX linework
+const INK = "#0A2540"; // near-navy body ink
+const FG = NAVY; // headings
+const FG_SOFT = "rgba(10,37,64,0.72)"; // muted navy for body
+const BORDER_TINT = "rgba(30,111,217,0.28)";
+const PAGE_BG = "#FFFFFF";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -133,18 +134,19 @@ export default function Landing() {
           }
         `}</style>
         <HomeFX />
-        {/* Blue tint layer: multiplies with white FX pixels so they become blue,
-            leaving transparent areas untouched. Recolor only — no geometry change. */}
+        {/* Blue tint layer: multiplies with white FX pixels so they become
+            thin light-blue linework, leaving transparent areas untouched.
+            Recolor only — no geometry change. */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "linear-gradient(135deg, #1976D2 0%, #2196F3 45%, #29B6F6 100%)",
+            background: SKY,
             mixBlendMode: "multiply",
             pointerEvents: "none",
           }}
         />
+
       </div>
 
 
@@ -226,7 +228,7 @@ export default function Landing() {
               fontSize: "clamp(40px, 6.8vw, 88px)",
               maxWidth: 960,
               fontFamily: display,
-              textShadow: "0 0 30px rgba(0,180,255,0.25)",
+              textShadow: "0 1px 0 rgba(255,255,255,0.6)",
             }}
             initial="hidden"
             animate="show"
@@ -266,21 +268,22 @@ export default function Landing() {
           >
             <button
               onClick={() => navigate("/get-started")}
-              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-105"
+              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
               style={{
-                background: `linear-gradient(135deg, ${SKY}, ${ELECTRIC})`,
-                color: INK,
+                background: ELECTRIC,
+                color: "#FFFFFF",
                 borderRadius: 24,
                 padding: "16px 34px",
                 fontSize: 13,
                 letterSpacing: "0.14em",
                 fontFamily: display,
                 minWidth: 220,
-                boxShadow: "0 12px 36px -10px rgba(33,150,243,0.55), 0 0 14px rgba(124,199,255,0.45)",
+                boxShadow: "0 12px 36px -10px rgba(30,111,217,0.55), 0 0 14px rgba(30,111,217,0.35)",
               }}
             >
               GET STARTED
             </button>
+
 
             <button
               onClick={() => navigate("/auth")}
