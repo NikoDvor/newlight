@@ -133,7 +133,7 @@ export default function Landing() {
       className="relative min-h-screen overflow-x-hidden"
       style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
-      {/* HomeFX — high baseline opacity/saturation so the blue linework is clearly visible at all times, plus the 5s glow pulse. */}
+      {/* HomeFX — very high baseline opacity/saturation so the blue linework is clearly visible at rest; the 5s pulse adds the glow burst on top. */}
       <div
         style={{
           position: "fixed",
@@ -143,26 +143,26 @@ export default function Landing() {
           pointerEvents: "none",
           animation: "nl-home-breath 4.6s ease-in-out infinite, nl-home-pulse 5s ease-in-out infinite",
           willChange: "opacity, filter",
-          opacity: 0.78,
+          opacity: 0.9,
           filter:
-            "invert(1) sepia(1) saturate(14) hue-rotate(188deg) brightness(1.32) contrast(1.18) drop-shadow(0 0 14px rgba(33,150,243,0.75)) drop-shadow(0 0 32px rgba(0,150,255,0.55))",
+            "invert(1) sepia(1) saturate(17) hue-rotate(188deg) brightness(1.38) contrast(1.22) drop-shadow(0 0 16px rgba(33,150,243,0.85)) drop-shadow(0 0 36px rgba(0,150,255,0.65))",
           mixBlendMode: "multiply",
         }}
         aria-hidden
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.72; }
-            50%      { opacity: 0.86; }
+            0%, 100% { opacity: 0.86; }
+            50%      { opacity: 0.94; }
           }
           @keyframes nl-home-pulse {
             0%, 100% {
-              filter: invert(1) sepia(1) saturate(14) hue-rotate(188deg) brightness(1.30) contrast(1.16)
-                      drop-shadow(0 0 14px rgba(33,150,243,0.72)) drop-shadow(0 0 32px rgba(0,150,255,0.52));
+              filter: invert(1) sepia(1) saturate(17) hue-rotate(188deg) brightness(1.36) contrast(1.20)
+                      drop-shadow(0 0 16px rgba(33,150,243,0.82)) drop-shadow(0 0 36px rgba(0,150,255,0.62));
             }
             50% {
-              filter: invert(1) sepia(1) saturate(17) hue-rotate(188deg) brightness(1.58) contrast(1.30)
-                      drop-shadow(0 0 28px rgba(33,150,243,1.0)) drop-shadow(0 0 54px rgba(0,180,255,0.80)) drop-shadow(0 0 90px rgba(0,150,255,0.55));
+              filter: invert(1) sepia(1) saturate(20) hue-rotate(188deg) brightness(1.62) contrast(1.34)
+                      drop-shadow(0 0 30px rgba(33,150,243,1.0)) drop-shadow(0 0 58px rgba(0,180,255,0.85)) drop-shadow(0 0 96px rgba(0,150,255,0.60));
             }
           }
         `}</style>
