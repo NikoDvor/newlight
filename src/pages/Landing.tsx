@@ -225,7 +225,11 @@ export default function Landing() {
         <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-32">
           <motion.div
             className="text-[12px] font-bold tracking-[0.28em] uppercase mb-8"
-            style={{ color: ELECTRIC, fontFamily: display }}
+            style={{
+              color: NEON_BLUE,
+              fontFamily: display,
+              textShadow: "0 0 10px rgba(0,191,255,0.55), 0 0 22px rgba(0,191,255,0.30)",
+            }}
             initial="hidden"
             animate="show"
             variants={fadeUp}
