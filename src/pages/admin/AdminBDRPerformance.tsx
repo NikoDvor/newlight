@@ -241,6 +241,49 @@ export default function AdminBDRPerformance() {
         ))}
       </div>
 
+      {/* Team call stats */}
+      <div>
+        <h2 className="text-sm font-bold text-foreground mb-3">Team Call Activity</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { label: "Total Calls", value: teamCallMetrics.all.total },
+            { label: "Calls Today", value: teamCallMetrics.today.total },
+            { label: "Calls This Week", value: teamCallMetrics.week.total },
+            { label: "Calls This Month", value: teamCallMetrics.month.total },
+          ].map(s => (
+            <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
+              <p className="text-lg font-bold text-foreground">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+          {(["today", "week", "month", "all"] as const).map(b => (
+            <div key={b} className="rounded-2xl p-3 text-center" style={cardStyle}>
+              <p className="text-lg font-bold text-foreground">{teamCallMetrics[b].schedPct}%</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sched Appt % ({b === "all" ? "Total" : b})</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{teamCallMetrics[b].sched}/{teamCallMetrics[b].total}</p>
+            </div>
+          ))}
+        </div>
+        {/* Outcome breakdown per bucket */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+          {(["today", "week", "month", "all"] as const).map(b => (
+            <div key={b} className="rounded-2xl p-3" style={cardStyle}>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Outcome Mix ({b === "all" ? "Total" : b})</p>
+              {teamCallMetrics[b].breakdown.length === 0 ? (
+                <p className="text-xs text-muted-foreground">—</p>
+              ) : teamCallMetrics[b].breakdown.map(o => (
+                <div key={o.outcome} className="flex justify-between text-xs py-0.5">
+                  <span className="text-foreground truncate mr-2">{o.outcome}</span>
+                  <span className="text-muted-foreground shrink-0">{o.pct}% ({o.count})</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Per-BDR table */}
       <div>
         <h2 className="text-sm font-bold text-foreground mb-3">Per-BDR Breakdown</h2>
