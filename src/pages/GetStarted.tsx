@@ -130,7 +130,6 @@ export default function GetStarted() {
 
   const canProceed = businessName.trim() && contactName.trim() && email.trim() && phone.trim();
   const canBook = selectedDate && selectedTime;
-  const progress = step === "info" ? 50 : 100;
 
   // Load admin calendar when moving to booking step
   useEffect(() => {
