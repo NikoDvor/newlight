@@ -735,6 +735,8 @@ export default function AdminTeam() {
             <p className="text-[10px] text-white/30 text-center">Stored on auth user_metadata.phone.</p>
           </div>
         </DialogContent>
+      </Dialog>
+
 
 
       </Tabs>
