@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Palette, Save, Eye, Building2, Type, Image, Calendar, DollarSign, FileText, Smartphone } from "lucide-react";
+import { Palette, Save, Eye, Building2, Type, Image, Calendar, DollarSign, FileText, Smartphone, Building, AlertCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
