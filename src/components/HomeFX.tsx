@@ -27,7 +27,7 @@ import * as THREE from "three";
  *  Camera: 35s Lissajous (3:2), Z-roll ±3°/25s, mouse parallax ±35px.
  *  Scroll: opacity ×2.8, speed ×2, tesseract ×2.5, lerp 0.02, 800ms debounce.
  */
-export function HomeFX() {
+export function HomeFX({ disableScrollOpacityBoost = false }: { disableScrollOpacityBoost?: boolean } = {}) {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
