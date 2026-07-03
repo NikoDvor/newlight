@@ -17,16 +17,16 @@ interface AppIntroProps {
 }
 
 /**
- * AppIntro — 3s intro.
+ * AppIntro — ~3s particle convergence + burst intro.
  *
- * Timeline (total 3000ms hard cap):
- *   0    – 120ms : dark → white flash (near-instant)
- *   120  – 2600ms: 3D warp/tunnel travel on white background
- *   2600 – 3000ms: tunnel resolves/fades out into the app
+ * Timeline:
+ *   0    – 2000ms: thousands of light particles drift and swirl inward on a dark background
+ *   2000 – 2600ms: particles burst into a bright flash; background transitions from dark to light
+ *   2600 – 3000ms: the overlay fades out to reveal the app
  */
 export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0); // 0=dark, 1=flash-white, 2=warp, 3=resolve
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0); // 0=converge, 1=burst, 2=fade, 3=done
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const startRef = useRef<number>(performance.now());
@@ -43,11 +43,10 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
 
   useEffect(() => {
     startRef.current = performance.now();
-    const t1 = setTimeout(() => setPhase(1), 30);      // trigger flash to white
-    const t2 = setTimeout(() => setPhase(2), 250);     // warp begins
-    const t3 = setTimeout(finish, 2800);               // start resolve
-    const failsafe = setTimeout(onComplete, 3000);     // hard cap
-    return () => [t1, t2, t3, failsafe].forEach(clearTimeout);
+    const t1 = setTimeout(() => setPhase(1), 2000); // bright flash / background light
+    const t2 = setTimeout(() => setPhase(2), 2600); // begin overlay fade
+    const t3 = setTimeout(finish, 3000);            // hard cap
+    return () => [t1, t2, t3].forEach(clearTimeout);
   }, [finish, onComplete]);
 
   useEffect(() => {
@@ -57,8 +56,8 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     const isMobile = window.innerWidth < 768;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(70, el.clientWidth / el.clientHeight, 0.1, 200);
-    camera.position.z = 0;
+    const camera = new THREE.PerspectiveCamera(60, el.clientWidth / el.clientHeight, 0.1, 200);
+    camera.position.z = 40;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
@@ -66,53 +65,74 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
 
-    // Warp streaks — points travelling toward the camera along z.
-    const COUNT = isMobile ? 500 : 1200;
+    // Particle count: thousands on desktop, capped on mobile.
+    const COUNT = isMobile ? 1200 : 4000;
     const positions = new Float32Array(COUNT * 3);
-    const speeds = new Float32Array(COUNT);
-    const RADIUS = 22;
-    const DEPTH = 120;
+    const angle = new Float32Array(COUNT);
+    const radius = new Float32Array(COUNT);
+    const height = new Float32Array(COUNT);
+    const radialVel = new Float32Array(COUNT);
+    const angularVel = new Float32Array(COUNT);
+    const heightVel = new Float32Array(COUNT);
+    const burstSpeed = new Float32Array(COUNT);
+    const burstDir = new Float32Array(COUNT);
+    const burstHeightDir = new Float32Array(COUNT);
+
+    const SCATTER = 60;
     for (let i = 0; i < COUNT; i++) {
-      const r = Math.pow(Math.random(), 0.5) * RADIUS;
-      const a = Math.random() * Math.PI * 2;
-      positions[i * 3]     = Math.cos(a) * r;
-      positions[i * 3 + 1] = Math.sin(a) * r;
-      positions[i * 3 + 2] = -Math.random() * DEPTH;
-      speeds[i] = 0.6 + Math.random() * 1.4;
+      angle[i] = Math.random() * Math.PI * 2;
+      radius[i] = 8 + Math.pow(Math.random(), 0.55) * SCATTER;
+      height[i] = (Math.random() - 0.5) * 30;
+      radialVel[i] = -(0.04 + Math.random() * 0.05);
+      angularVel[i] = (Math.random() < 0.5 ? 1 : -1) * (0.018 + Math.random() * 0.025);
+      heightVel[i] = (Math.random() - 0.5) * 0.02;
+      burstSpeed[i] = 0.8 + Math.random() * 1.2;
+      burstDir[i] = Math.random() * Math.PI * 2;
+      burstHeightDir[i] = Math.random() - 0.5;
+
+      const ix = i * 3;
+      positions[ix] = Math.cos(angle[i]) * radius[i];
+      positions[ix + 1] = Math.sin(angle[i]) * radius[i];
+      positions[ix + 2] = height[i];
     }
+
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
+    // Soft glowing sprite so each particle reads as a small light.
+    const spriteCanvas = document.createElement("canvas");
+    spriteCanvas.width = 32;
+    spriteCanvas.height = 32;
+    const ctx = spriteCanvas.getContext("2d")!;
+    const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(0.35, "rgba(255,255,255,0.45)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 32, 32);
+    const sprite = new THREE.CanvasTexture(spriteCanvas);
+    sprite.needsUpdate = true;
+
     const mat = new THREE.PointsMaterial({
-      color: 0x1a3a6b,
-      size: isMobile ? 0.18 : 0.14,
-      sizeAttenuation: true,
+      color: 0x5aa8ff,
+      size: isMobile ? 0.4 : 0.32,
+      map: sprite,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.55,
       depthWrite: false,
-      blending: THREE.NormalBlending,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
     });
     const points = new THREE.Points(geo, mat);
     scene.add(points);
 
-    // A subtle central ring/tunnel wireframe to anchor the warp.
-    const ringGeo = new THREE.TorusGeometry(6, 0.05, 8, 96);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x3366aa,
-      transparent: true,
-      opacity: 0.35,
-      wireframe: true,
-    });
-    const rings: THREE.Mesh[] = [];
-    const RING_COUNT = isMobile ? 6 : 10;
-    for (let i = 0; i < RING_COUNT; i++) {
-      const m = new THREE.Mesh(ringGeo, ringMat);
-      m.position.z = -i * 8;
-      scene.add(m);
-      rings.push(m);
-    }
+    const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+
+    const DARK_COLOR = new THREE.Color(0x5aa8ff);
+    const BRIGHT_COLOR = new THREE.Color(0xffffff);
 
     let raf = 0;
+    let burstInitialized = false;
     const onResize = () => {
       if (!el) return;
       camera.aspect = el.clientWidth / el.clientHeight;
@@ -121,50 +141,68 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     };
     window.addEventListener("resize", onResize);
 
-    const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+    const BURST_START = 2.0;
+    const FADE_START = 2.6;
 
     const animate = () => {
       raf = requestAnimationFrame(animate);
       const now = performance.now();
       const elapsed = (now - startRef.current) / 1000;
       const ph = phaseRef.current;
+      const inBurst = elapsed >= BURST_START;
+      const burstT = Math.min(1, Math.max(0, (elapsed - BURST_START) / 0.5));
+      const convergeT = Math.min(1, elapsed / BURST_START);
 
-      // Warp intensity ramps up after the flash, resolves at the end.
-      let warp = 0;
-      if (elapsed > 0.25) warp = Math.min(1, (elapsed - 0.25) / 0.5);
-      if (ph === 3) {
-        const t = Math.min(1, (now - (startRef.current + 2800)) / 200);
-        warp *= 1 + t * 4; // final acceleration
+      // Initialize outward burst velocities once at the moment of the flash.
+      if (inBurst && !burstInitialized) {
+        burstInitialized = true;
+        for (let i = 0; i < COUNT; i++) {
+          radialVel[i] = burstSpeed[i] * (0.35 + Math.random() * 0.15);
+          heightVel[i] = burstHeightDir[i] * burstSpeed[i] * 0.25;
+          angularVel[i] *= 1.3;
+        }
       }
 
-      const baseSpeed = 0.35 * warp;
-      const arr = posAttr.array as Float32Array;
       for (let i = 0; i < COUNT; i++) {
-        const iz = i * 3 + 2;
-        arr[iz] += speeds[i] * baseSpeed;
-        if (arr[iz] > camera.position.z + 1) {
-          const r = Math.pow(Math.random(), 0.5) * RADIUS;
-          const a = Math.random() * Math.PI * 2;
-          arr[i * 3]     = Math.cos(a) * r;
-          arr[i * 3 + 1] = Math.sin(a) * r;
-          arr[iz] = -DEPTH;
+        if (!inBurst) {
+          // Gentle inward spiral with damping.
+          radialVel[i] += (0.6 - radius[i]) * 0.010 - radialVel[i] * 0.020;
+          angularVel[i] *= 1.0028;
+          heightVel[i] += (-height[i]) * 0.010 - heightVel[i] * 0.020;
+        } else {
+          // Accelerating outward burst.
+          const decel = 1 - burstT * 0.45;
+          radialVel[i] += burstSpeed[i] * 0.025 * decel;
+          angularVel[i] += Math.sin(burstDir[i]) * 0.003 * decel;
+          heightVel[i] += burstHeightDir[i] * burstSpeed[i] * 0.02 * decel;
         }
+
+        radius[i] += radialVel[i];
+        angle[i] += angularVel[i];
+        height[i] += heightVel[i];
+
+        const ix = i * 3;
+        positions[ix] = Math.cos(angle[i]) * radius[i];
+        positions[ix + 1] = Math.sin(angle[i]) * radius[i];
+        positions[ix + 2] = height[i];
       }
       posAttr.needsUpdate = true;
 
-      // Rings drift forward for tunnel effect.
-      for (const r of rings) {
-        r.position.z += 0.35 * warp;
-        if (r.position.z > 2) r.position.z -= RING_COUNT * 8;
-      }
-      points.rotation.z += 0.002;
+      // Color warms from cool blue to bright white as particles converge.
+      mat.color.copy(DARK_COLOR).lerp(BRIGHT_COLOR, convergeT);
 
-      // Fade streaks out during resolve.
-      if (ph === 3) {
-        const t = Math.min(1, (now - (startRef.current + 2800)) / 200);
-        mat.opacity = 0.9 * (1 - t);
-        ringMat.opacity = 0.35 * (1 - t);
+      // Opacity rises during convergence, peaks at the flash, then fades.
+      if (ph >= 2) {
+        const fadeT = Math.min(1, (elapsed - FADE_START) / 0.25);
+        mat.opacity = Math.max(0, 1.0 - fadeT);
+      } else if (inBurst) {
+        mat.opacity = 0.9 + 0.1 * burstT;
+      } else {
+        mat.opacity = 0.55 + 0.35 * convergeT;
       }
+
+      // Slow camera drift inward during the convergence.
+      camera.position.z = 40 - 18 * Math.min(1, elapsed / BURST_START);
 
       renderer.render(scene, camera);
     };
@@ -175,26 +213,25 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       window.removeEventListener("resize", onResize);
       geo.dispose();
       mat.dispose();
-      ringGeo.dispose();
-      ringMat.dispose();
+      sprite.dispose();
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
     };
   }, []);
 
-  // Background: dark at phase 0, snap to white from phase 1 onward.
+  // Background: dark during convergence, snapping to bright white at the burst, then fading out.
   const bg =
     phase === 0
-      ? "radial-gradient(ellipse at center, hsl(218,45%,10%) 0%, hsl(218,55%,4%) 80%)"
-      : "radial-gradient(ellipse at center, #ffffff 0%, #e8f1ff 90%)";
+      ? "radial-gradient(circle at center, hsl(218,40%,15%) 0%, hsl(220,50%,6%) 100%)"
+      : "radial-gradient(circle at center, #ffffff 0%, #eef6ff 100%)";
 
   return (
     <div
       className="fixed inset-0 z-[99999] overflow-hidden flex flex-col items-center justify-center"
       style={{
         background: bg,
-        transition: "background 120ms ease-out, opacity 300ms ease-out",
-        opacity: phase >= 3 ? 0 : 1,
+        transition: "background 450ms ease-out, opacity 300ms ease-out",
+        opacity: phase >= 2 ? 0 : 1,
       }}
     >
       <div ref={mountRef} className="absolute inset-0" />
@@ -202,7 +239,7 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       <div
         className="relative z-10 flex flex-col items-center gap-3 px-6 text-center pointer-events-none"
         style={{
-          opacity: phase >= 2 && phase < 3 ? 1 : 0,
+          opacity: phase >= 1 && phase < 3 ? 1 : 0,
           transform: phase >= 3 ? "scale(1.15)" : "scale(1)",
           transition: "opacity 400ms ease-out, transform 300ms cubic-bezier(.6,0,.4,1)",
         }}
