@@ -745,10 +745,11 @@ export function HomeFX({ disableScrollOpacityBoost = false }: { disableScrollOpa
     let scrolling = false;
     let scrollTimer: ReturnType<typeof setTimeout> | null = null;
     let nextScrollRift = 0;
-    // Container opacity: 0.35 rest, 0.7 scroll (mobile) / 0.4 rest, 0.75 scroll (desktop ≥768px)
+    // Container opacity: 0.35 rest, 0.7 scroll (mobile) / 0.4 rest, 0.75 scroll (desktop ≥768px).
+    // When disableScrollOpacityBoost is set, the resting opacity is locked to the active level.
     const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-    const REST_OPA = isDesktop ? 0.4 : 0.35;
     const ACTIVE_OPA = isDesktop ? 0.75 : 0.7;
+    const REST_OPA = disableScrollOpacityBoost ? ACTIVE_OPA : (isDesktop ? 0.4 : 0.35);
     let containerOpaTarget = REST_OPA;
     let containerOpa = REST_OPA;
     mount.style.opacity = String(REST_OPA);
