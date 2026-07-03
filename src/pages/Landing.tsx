@@ -133,8 +133,8 @@ export default function Landing() {
       className="relative min-h-screen overflow-x-hidden"
       style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
-      {/* HomeFX — recolored via CSS filter only (geometry/animation untouched).
-          Reduced opacity/contrast so it reads as a soft, low-contrast background texture. */}
+      {/* HomeFX — recolored to glowing animated blue via CSS filter + animated drop-shadow.
+          Geometry/animation structure untouched; color + glow treatment only. */}
       <div
         style={{
           position: "fixed",
@@ -142,22 +142,34 @@ export default function Landing() {
           zIndex: 0,
           isolation: "isolate",
           pointerEvents: "none",
-          animation: "nl-home-breath 4.6s ease-in-out infinite",
-          willChange: "opacity",
-          opacity: 0.36,
-          filter: "invert(1) sepia(1) saturate(5) hue-rotate(178deg) brightness(1.2) contrast(0.85)",
+          animation: "nl-home-breath 4.6s ease-in-out infinite, nl-home-glow 3.8s ease-in-out infinite",
+          willChange: "opacity, filter",
+          opacity: 0.55,
+          filter:
+            "invert(1) sepia(1) saturate(8) hue-rotate(178deg) brightness(1.35) contrast(1.05) drop-shadow(0 0 10px rgba(41,182,255,0.55)) drop-shadow(0 0 22px rgba(0,180,255,0.35))",
           mixBlendMode: "multiply",
         }}
         aria-hidden
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.30; }
-            50%      { opacity: 0.42; }
+            0%, 100% { opacity: 0.48; }
+            50%      { opacity: 0.62; }
+          }
+          @keyframes nl-home-glow {
+            0%, 100% {
+              filter: invert(1) sepia(1) saturate(8) hue-rotate(178deg) brightness(1.30) contrast(1.05)
+                      drop-shadow(0 0 8px rgba(41,182,255,0.45)) drop-shadow(0 0 18px rgba(0,180,255,0.28));
+            }
+            50% {
+              filter: invert(1) sepia(1) saturate(9) hue-rotate(178deg) brightness(1.45) contrast(1.10)
+                      drop-shadow(0 0 16px rgba(41,182,255,0.75)) drop-shadow(0 0 32px rgba(0,180,255,0.50));
+            }
           }
         `}</style>
         <HomeFX />
       </div>
+
 
 
       {/* Single corner blue highlight streak — top-right only */}
