@@ -149,7 +149,7 @@ export default function CallTracking() {
   }, [calls, buckets]);
 
   const contactLabel = (c: Contact) =>
-    `${c.first_name || ""} ${c.last_name || ""}`.trim() || c.phone || "(no name)";
+    (c.full_name || "").trim() || c.phone || "(no name)";
 
   if (loading) {
     return (
