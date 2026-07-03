@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useResolvedClientId } from "@/hooks/useResolvedClientId";
 import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
+import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
 import { toast } from "sonner";
 import { emitEvent } from "@/lib/automationEngine";
 
