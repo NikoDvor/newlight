@@ -165,7 +165,7 @@ export default function ClientSetup() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label className={labelCls}>Business Name</label><Input value={form.business_name} onChange={e => set("business_name", e.target.value)} className={inputCls} /></div>
             <div><label className={labelCls}>Website URL</label><Input value={form.website_url} onChange={e => set("website_url", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Booking Link</label><Input value={form.booking_link} onChange={e => set("booking_link", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Booking Link</label><Input value={form.booking_link} onChange={e => set("booking_link", e.target.value)} className={inputCls} /></div>
             <div className="sm:col-span-2">
               <LogoUploader value={form.logo_url} onChange={url => set("logo_url", url)} label="Logo" dark={false} />
             </div>
