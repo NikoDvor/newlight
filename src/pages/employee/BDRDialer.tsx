@@ -161,6 +161,15 @@ export default function BDRDialer() {
     return { total, counts };
   }, [outcomes, visibleLeads, activeList]);
 
+  const callCounts = useMemo(() => {
+    const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+    const result: Record<"today" | "week" | "month" | "all", number> = {} as any;
+    for (const b of buckets) {
+      result[b] = outcomes.filter(o => inBucket(o.logged_at, b)).length;
+    }
+    return result;
+  }, [outcomes]);
+
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
     const next = !lead.called;
