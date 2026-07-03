@@ -41,11 +41,46 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+/* Date bucket helpers for call metrics */
+function inBucket(dateStr: string, bucket: "today" | "week" | "month" | "all") {
+  if (!dateStr) return false;
+  if (bucket === "all") return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (bucket === "today") return d.toDateString() === now.toDateString();
+  if (bucket === "week") {
+    const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0, 0, 0, 0);
+    return d >= s;
+  }
+  if (bucket === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  return false;
+}
+
+const SCHED_OUTCOME = "Schedule Callback";
+
+function computeCallMetrics(rows: any[]) {
+  const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+  const out: Record<string, { total: number; sched: number; schedPct: number; breakdown: Array<{ outcome: string; count: number; pct: number }> }> = {} as any;
+  for (const b of buckets) {
+    const filtered = rows.filter(r => inBucket(r.logged_at, b));
+    const total = filtered.length;
+    const sched = filtered.filter(r => r.outcome === SCHED_OUTCOME).length;
+    const counts: Record<string, number> = {};
+    filtered.forEach(r => { const k = r.outcome || "—"; counts[k] = (counts[k] || 0) + 1; });
+    const breakdown = Object.entries(counts)
+      .map(([outcome, count]) => ({ outcome, count, pct: total ? Math.round((count / total) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count);
+    out[b] = { total, sched, schedPct: total ? Math.round((sched / total) * 100) : 0, breakdown };
+  }
+  return out;
+}
+
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
   const { isAdmin } = useWorkspace();
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
+  const [calls, setCalls] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
@@ -54,15 +89,21 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
       ]);
       setLeads(l || []);
       setObjections(o || []);
+      setCalls(c || []);
 
       // Fetch BDR names
-      const userIds = [...new Set([...(l || []).map((x: any) => x.user_id), ...(o || []).map((x: any) => x.user_id)])];
+      const userIds = [...new Set([
+        ...(l || []).map((x: any) => x.user_id),
+        ...(o || []).map((x: any) => x.user_id),
+        ...(c || []).map((x: any) => x.bdr_user_id),
+      ].filter(Boolean))];
       if (userIds.length) {
         const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", userIds);
         const map: Record<string, string> = {};
@@ -99,6 +140,19 @@ export default function AdminBDRPerformance() {
     const lastActive = allHistory.length ? allHistory.sort().reverse()[0] : bl[0]?.created_at;
     return { uid, name: profiles[uid] || uid.slice(0, 8), total: bl.length, contacted, booked, won, lost, rate: bl.length ? Math.round((booked / bl.length) * 100) : 0, topObj, lastActive };
   }).sort((a, b) => b.total - a.total), [bdrIds, filteredLeads, filteredObjections, profiles]);
+
+  // Team-wide call metrics (independent of date filter — buckets are today/week/month/all)
+  const teamCallMetrics = useMemo(() => computeCallMetrics(calls), [calls]);
+
+  // Per-BDR call metrics
+  const bdrCallRows = useMemo(() => {
+    const uids = [...new Set(calls.map((c: any) => c.bdr_user_id).filter(Boolean))];
+    return uids.map(uid => ({
+      uid,
+      name: profiles[uid] || uid.slice(0, 8),
+      metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
+    })).sort((a, b) => b.metrics.all.total - a.metrics.all.total);
+  }, [calls, profiles]);
 
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
@@ -187,6 +241,49 @@ export default function AdminBDRPerformance() {
         ))}
       </div>
 
+      {/* Team call stats */}
+      <div>
+        <h2 className="text-sm font-bold text-foreground mb-3">Team Call Activity</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { label: "Total Calls", value: teamCallMetrics.all.total },
+            { label: "Calls Today", value: teamCallMetrics.today.total },
+            { label: "Calls This Week", value: teamCallMetrics.week.total },
+            { label: "Calls This Month", value: teamCallMetrics.month.total },
+          ].map(s => (
+            <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
+              <p className="text-lg font-bold text-foreground">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+          {(["today", "week", "month", "all"] as const).map(b => (
+            <div key={b} className="rounded-2xl p-3 text-center" style={cardStyle}>
+              <p className="text-lg font-bold text-foreground">{teamCallMetrics[b].schedPct}%</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sched Appt % ({b === "all" ? "Total" : b})</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{teamCallMetrics[b].sched}/{teamCallMetrics[b].total}</p>
+            </div>
+          ))}
+        </div>
+        {/* Outcome breakdown per bucket */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+          {(["today", "week", "month", "all"] as const).map(b => (
+            <div key={b} className="rounded-2xl p-3" style={cardStyle}>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Outcome Mix ({b === "all" ? "Total" : b})</p>
+              {teamCallMetrics[b].breakdown.length === 0 ? (
+                <p className="text-xs text-muted-foreground">—</p>
+              ) : teamCallMetrics[b].breakdown.map(o => (
+                <div key={o.outcome} className="flex justify-between text-xs py-0.5">
+                  <span className="text-foreground truncate mr-2">{o.outcome}</span>
+                  <span className="text-muted-foreground shrink-0">{o.pct}% ({o.count})</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Per-BDR table */}
       <div>
         <h2 className="text-sm font-bold text-foreground mb-3">Per-BDR Breakdown</h2>
@@ -212,6 +309,56 @@ export default function AdminBDRPerformance() {
                 <span className="text-xs text-muted-foreground truncate">{row.topObj.replace("_", " ")}</span>
               </button>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Per-BDR call breakdown */}
+      <div>
+        <h2 className="text-sm font-bold text-foreground mb-3">Per-BDR Call Activity</h2>
+        {bdrCallRows.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No calls logged yet.</p>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="hidden sm:grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+              <span className="col-span-2">BDR</span>
+              <span>Today</span><span>Week</span><span>Month</span><span>Total</span>
+              <span>Sched % (Total)</span><span>Top Outcome (Total)</span>
+            </div>
+            {bdrCallRows.map(row => {
+              const top = row.metrics.all.breakdown[0];
+              return (
+                <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
+                  <div className="sm:grid sm:grid-cols-8 sm:gap-2 sm:items-center flex flex-col gap-1">
+                    <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
+                    <span className="text-sm text-foreground">{row.metrics.today.total}</span>
+                    <span className="text-sm text-foreground">{row.metrics.week.total}</span>
+                    <span className="text-sm text-foreground">{row.metrics.month.total}</span>
+                    <span className="text-sm text-foreground">{row.metrics.all.total}</span>
+                    <span className="text-sm text-foreground">{row.metrics.all.schedPct}%</span>
+                    <span className="text-xs text-muted-foreground truncate">{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
+                  </div>
+                  {/* Sched Appt % per bucket + outcome breakdown */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-primary/10">
+                    {(["today", "week", "month", "all"] as const).map(b => (
+                      <div key={b} className="text-xs">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
+                          {b === "all" ? "Total" : b} · {row.metrics[b].total} calls · Sched {row.metrics[b].schedPct}%
+                        </p>
+                        {row.metrics[b].breakdown.length === 0 ? (
+                          <p className="text-muted-foreground">—</p>
+                        ) : row.metrics[b].breakdown.map(o => (
+                          <div key={o.outcome} className="flex justify-between py-0.5">
+                            <span className="text-foreground truncate mr-1">{o.outcome}</span>
+                            <span className="text-muted-foreground shrink-0">{o.pct}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
