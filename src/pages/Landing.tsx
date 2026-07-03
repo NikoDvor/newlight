@@ -108,6 +108,23 @@ export default function Landing() {
     document.head.appendChild(link);
   }, []);
 
+  // Landing page only: bright neon-blue browser chrome/status bar.
+  useEffect(() => {
+    let themeMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    const originalTheme = themeMeta?.content;
+    if (!themeMeta) {
+      themeMeta = document.createElement("meta");
+      themeMeta.name = "theme-color";
+      document.head.appendChild(themeMeta);
+    }
+    themeMeta.content = NEON_BLUE;
+    return () => {
+      if (themeMeta) {
+        themeMeta.content = originalTheme || "";
+      }
+    };
+  }, []);
+
   const display = "'Rajdhani', 'Inter', system-ui, sans-serif";
   const body = "'Inter', system-ui, sans-serif";
 
