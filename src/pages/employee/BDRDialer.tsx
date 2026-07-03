@@ -28,6 +28,7 @@ interface OutcomeRow {
   lead_id: string | null;
   outcome: string;
   objection_type: string | null;
+  logged_at: string | null;
 }
 
 // Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
