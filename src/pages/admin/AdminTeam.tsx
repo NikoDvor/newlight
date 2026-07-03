@@ -540,6 +540,8 @@ export default function AdminTeam() {
               onStats={setStatsFor}
               onRemove={handleRemove}
               onEditEmail={openEditEmail}
+              onEditPhone={openEditPhone}
+
 
             />
           ))}
