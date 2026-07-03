@@ -212,7 +212,7 @@ function IntroOverlay() {
       ? `Launching ${displayName}…`
       : "Launching workspace…";
 
-  return <NewLightIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
+  return <AppIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
 }
 
 const App = () => {
