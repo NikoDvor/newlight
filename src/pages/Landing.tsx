@@ -340,7 +340,12 @@ export default function Landing() {
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold hover:underline"
-              style={{ color: ELECTRIC, letterSpacing: "0.12em", fontFamily: display }}
+              style={{
+                color: NEON_BLUE,
+                letterSpacing: "0.12em",
+                fontFamily: display,
+                textShadow: "0 0 10px rgba(0,191,255,0.45), 0 0 20px rgba(0,191,255,0.22)",
+              }}
             >
               VISIT NEWLIGHTGEN.COM →
             </a>
