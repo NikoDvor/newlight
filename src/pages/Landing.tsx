@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import newlightLogo from "@/assets/newlight-logo.jpg";
+import newlightLogo from "@/assets/nl-monogram.jpg";
 import { HomeFX } from "@/components/HomeFX";
 
 const NAVY = "#0A2540"; // headline / high-contrast text
@@ -148,6 +148,25 @@ export default function Landing() {
         />
 
       </div>
+
+      {/* Single corner blue highlight streak — top-right only */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          top: -80,
+          right: -80,
+          width: 360,
+          height: 360,
+          zIndex: 1,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 70% 30%, rgba(30,111,217,0.35) 0%, rgba(124,199,255,0.18) 35%, rgba(255,255,255,0) 65%)",
+          filter: "blur(20px)",
+        }}
+      />
+
+
 
 
       {/* Nav */}
