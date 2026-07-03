@@ -237,10 +237,10 @@ export default function ClientSetup() {
         <div className={sectionCls}>
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><Zap className="h-3 w-3" /> Business / Service Setup</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label className={labelCls}>Main Services</label><Input value={form.main_services} onChange={e => set("main_services", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Main Offer</label><Input value={form.main_offer} onChange={e => set("main_offer", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Primary Goal</label><Input value={form.primary_goal} onChange={e => set("primary_goal", e.target.value)} className={inputCls} /></div>
-            <div><label className={labelCls}>Highest Priority Channel</label><Input value={form.priority_channel} onChange={e => set("priority_channel", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Main Services</label><Input value={form.main_services} onChange={e => set("main_services", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Main Offer</label><Input value={form.main_offer} onChange={e => set("main_offer", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Primary Goal</label><Input value={form.primary_goal} onChange={e => set("primary_goal", e.target.value)} className={inputCls} /></div>
+            <div className={isAdminOps ? "opacity-40 pointer-events-none" : undefined}><label className={labelCls}>Highest Priority Channel</label><Input value={form.priority_channel} onChange={e => set("priority_channel", e.target.value)} className={inputCls} /></div>
             <div className="sm:col-span-2"><label className={labelCls}>Internal Notes</label><Textarea value={form.internal_notes} onChange={e => set("internal_notes", e.target.value)} className={`${inputCls} min-h-[60px]`} /></div>
           </div>
         </div>
