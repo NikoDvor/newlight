@@ -111,11 +111,9 @@ export default function Landing() {
   return (
     <div
       className="relative min-h-screen overflow-x-hidden"
-      style={{ fontFamily: body, background: "#000000", color: FG }}
+      style={{ fontFamily: body, background: PAGE_BG, color: INK }}
     >
-      {/* HomeFX — sole background layer. Wrapped in an isolated stacking context
-          so its internal z-index:-1 renders above the black page fallback but
-          below page content (which sits at z-index 10+). */}
+      {/* HomeFX — recolored via mix-blend overlay only (geometry untouched). */}
       <div
         style={{
           position: "fixed",
@@ -130,11 +128,23 @@ export default function Landing() {
       >
         <style>{`
           @keyframes nl-home-breath {
-            0%, 100% { opacity: 0.85; }
+            0%, 100% { opacity: 0.9; }
             50%      { opacity: 1; }
           }
         `}</style>
         <HomeFX />
+        {/* Blue tint layer: multiplies with white FX pixels so they become blue,
+            leaving transparent areas untouched. Recolor only — no geometry change. */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(135deg, #1976D2 0%, #2196F3 45%, #29B6F6 100%)",
+            mixBlendMode: "multiply",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
 
@@ -144,10 +154,11 @@ export default function Landing() {
         style={{
           zIndex: 100,
           height: 64,
-          background: "rgba(0,0,0,0.4)",
+          background: "rgba(255,255,255,0.72)",
           borderColor: BORDER_TINT,
         }}
       >
+
         <nav className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           <a href="/" className="flex items-center" style={{ zIndex: 2 }}>
             <img
