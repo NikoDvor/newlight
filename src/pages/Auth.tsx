@@ -145,7 +145,7 @@ export default function Auth() {
           <p className="text-xs text-white/40 text-center mt-6">
             Don't have access?{" "}
             <Link
-              to="/get-started"
+              to="/bdr/book/team"
               className="font-semibold"
               style={{ color: "hsl(211,96%,60%)" }}
             >
