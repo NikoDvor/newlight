@@ -485,108 +485,90 @@ export default function GetStarted() {
 
   // ─── Form ────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-xl">
+    <div className="min-h-screen bg-[hsl(215,35%,8%)] py-8 px-4">
+      <div className="max-w-xl mx-auto space-y-5">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="h-7 w-7 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">
+        <div className="text-center">
+          <Calendar className="h-8 w-8 text-[hsl(211,96%,68%)] mx-auto mb-2" />
+          <h1 className="text-2xl font-bold text-white">
             {step === "info" ? "Book Your Intro Call" : "Choose a Time"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-white/55 whitespace-pre-wrap">
             {step === "info"
               ? "Tell us about your business and we'll get you set up."
               : "Pick a time for your first meeting with our team."}
           </p>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-            <span className={step === "info" ? "font-semibold text-foreground" : ""}>Your Info</span>
-            <span className={step === "booking" ? "font-semibold text-foreground" : ""}>Book Meeting</span>
+          <div className="mt-3 inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/45">
+            <span className={step === "info" ? "text-[hsl(211,96%,68%)]" : ""}>Step 1 · Info</span>
+            <ChevronRight className="h-3 w-3 opacity-40" />
+            <span className={step === "booking" ? "text-[hsl(211,96%,68%)]" : ""}>Step 2 · Time</span>
           </div>
-          <Progress value={progress} className="h-1.5" />
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
           <AnimatePresence mode="wait">
             {step === "info" ? (
               <motion.div
                 key="info"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-3"
               >
-                <div>
-                  <Label className="text-xs mb-1.5 block">
-                    Business Name <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="e.g. Acme Dental"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1.5 block">
-                      Contact Name <span className="text-destructive">*</span>
-                    </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Business name *">
+                    <Input
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      placeholder="e.g. Acme Dental"
+                      autoFocus
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    />
+                  </Field>
+                  <Field label="Contact name *">
                     <Input
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="John Smith"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     />
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1.5 block">
-                      Email <span className="text-destructive">*</span>
-                    </Label>
+                  </Field>
+                  <Field label="Email *">
                     <Input
+                      type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="john@acme.com"
-                      type="email"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1.5 block">
-                      Phone <span className="text-destructive">*</span>
-                    </Label>
+                  </Field>
+                  <Field label="Phone *">
                     <Input
+                      type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="(555) 123-4567"
-                      type="tel"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     />
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Website</Label>
+                  </Field>
+                  <Field label="Website">
                     <Input
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
                       placeholder="https://acme.com"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs mb-1.5 block">Primary Location</Label>
-                  <Input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Los Angeles, CA"
-                  />
+                  </Field>
+                  <Field label="Primary location">
+                    <Input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Los Angeles, CA"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    />
+                  </Field>
                 </div>
 
                 <CategoryNichePicker
@@ -598,59 +580,59 @@ export default function GetStarted() {
                     setBusinessType(profile.legacy.industry);
                     setWorkspaceProfile(profile.legacy.provisional_profile);
                   }}
-                  variant="light"
+                  variant="dark"
                 />
 
-                <div className="pt-2">
-                  <Button
-                    onClick={() => setStep("booking")}
-                    disabled={!canProceed}
-                    className="w-full gap-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Continue to Booking
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setStep("booking")}
+                  disabled={!canProceed}
+                  className="w-full gap-2 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Continue to Booking
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </motion.div>
             ) : (
               <motion.div
                 key="booking"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="space-y-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-3"
               >
                 {calendarLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span className="ml-2 text-sm text-muted-foreground">Loading available times…</span>
+                    <Loader2 className="h-6 w-6 animate-spin text-[hsl(211,96%,68%)]" />
+                    <span className="ml-2 text-sm text-white/60">Loading available times…</span>
                   </div>
                 ) : !adminCalendar ? (
                   <div className="text-center py-8 space-y-4">
-                    <div className="h-14 w-14 rounded-full mx-auto flex items-center justify-center bg-secondary">
-                      <Calendar className="h-7 w-7 text-muted-foreground" />
+                    <div className="h-14 w-14 rounded-full mx-auto flex items-center justify-center bg-white/10">
+                      <Calendar className="h-7 w-7 text-white/60" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-1">No Available Times Right Now</h3>
-                      <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                      <h3 className="text-sm font-semibold text-white mb-1">No Available Times Right Now</h3>
+                      <p className="text-sm text-white/60 max-w-xs mx-auto">
                         Our booking calendar is being set up. Please contact us directly to schedule your intro call.
                       </p>
                     </div>
-                    <a href="mailto:hello@newlightmarketing.com" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                    <a
+                      href="mailto:hello@newlightmarketing.com"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[hsl(211,96%,68%)] hover:text-[hsl(211,96%,56%)] transition-colors"
+                    >
                       <Mail className="h-3.5 w-3.5" />
                       hello@newlightmarketing.com
                     </a>
                   </div>
                 ) : (
                   <>
-                    <div className="p-3 rounded-xl bg-secondary/50 border border-border">
-                      <p className="text-xs text-muted-foreground">Booking for</p>
-                      <p className="text-sm font-semibold text-foreground">{businessName}</p>
-                      <p className="text-xs text-muted-foreground">{contactName} · {email}</p>
+                    <div className="p-3 rounded-xl border border-white/10 bg-white/[0.05]">
+                      <p className="text-xs text-white/50">Booking for</p>
+                      <p className="text-sm font-semibold text-white">{businessName}</p>
+                      <p className="text-xs text-white/50">{contactName} · {email}</p>
                     </div>
-
-
 
                     <CalendarSlotPicker
                       calendarId={adminCalendar.id}
@@ -668,10 +650,10 @@ export default function GetStarted() {
                       <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-primary/5 border border-primary/10"
+                        className="p-3 rounded-xl border border-white/10 bg-white/[0.05]"
                       >
-                        <p className="text-xs text-muted-foreground">Selected time</p>
-                        <p className="text-sm font-semibold text-foreground">
+                        <p className="text-xs text-white/50">Selected time</p>
+                        <p className="text-sm font-semibold text-white">
                           {new Date(`${selectedDate}T${selectedTime}`).toLocaleDateString("en-US", {
                             weekday: "long",
                             month: "long",
@@ -683,20 +665,24 @@ export default function GetStarted() {
                             minute: "2-digit",
                           })}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">30 minute intro call</p>
+                        <p className="text-xs text-white/50 mt-0.5">30 minute intro call</p>
                       </motion.div>
                     )}
                   </>
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <Button variant="outline" onClick={() => setStep("info")} className="gap-1">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("info")}
+                    className="gap-1 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white hover:border-white/20"
+                  >
                     <ChevronLeft className="h-4 w-4" /> Back
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={!canBook || !adminCalendar}
-                    className="flex-1 gap-2"
+                    className="flex-1 gap-2 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
                   >
                     <Calendar className="h-4 w-4" />
                     Book My Intro Call
@@ -707,10 +693,19 @@ export default function GetStarted() {
           </AnimatePresence>
         </div>
 
-        <p className="text-center text-[11px] text-muted-foreground mt-4">
+        <p className="text-center text-[11px] text-white/40">
           By booking you agree to our terms of service.
         </p>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-white/60">{label}</Label>
+      {children}
     </div>
   );
 }
