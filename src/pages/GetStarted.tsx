@@ -460,15 +460,22 @@ export default function GetStarted() {
   // ─── Error ───────────────────────────────────────────────
   if (pageState === "error") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md w-full text-center">
-          <div className="h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="h-8 w-8 text-destructive" />
+      <div className="min-h-screen bg-[hsl(215,35%,8%)] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="max-w-md w-full text-center space-y-3 p-8 rounded-xl border border-white/10 bg-white/[0.03]"
+        >
+          <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(0,62%,55%)]/20 flex items-center justify-center">
+            <AlertCircle className="h-6 w-6 text-[hsl(0,62%,55%)]" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Booking Failed</h2>
-          <p className="text-sm text-muted-foreground mb-2">We couldn't complete your booking. Please try again.</p>
-          <p className="text-xs text-destructive mb-6 font-mono">{error}</p>
-          <Button onClick={() => { setPageState("form"); setError(""); }} variant="outline">
+          <h2 className="text-xl font-bold text-white">Booking Failed</h2>
+          <p className="text-sm text-white/60">We couldn't complete your booking. Please try again.</p>
+          <p className="text-xs text-white/40 mb-4 font-mono">{error}</p>
+          <Button
+            onClick={() => { setPageState("form"); setError(""); }}
+            className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+          >
             Try Again
           </Button>
         </motion.div>
