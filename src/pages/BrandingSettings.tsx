@@ -392,8 +392,8 @@ export default function BrandingSettings() {
       </Tabs>
 
       <div className="mt-6 flex items-center gap-3">
-        <Button onClick={handleSave} className="btn-gradient h-10 px-6 rounded-xl text-sm font-semibold">
-          <Save className="h-4 w-4 mr-2" /> Save All Branding
+        <Button onClick={handleSave} disabled={saving} className="btn-gradient h-10 px-6 rounded-xl text-sm font-semibold">
+          <Save className="h-4 w-4 mr-2" /> {saving ? "Saving…" : "Save All Branding"}
         </Button>
       </div>
     </div>
