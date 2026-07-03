@@ -294,15 +294,17 @@ export default function AdminTeam() {
   const handleEditPhoneSubmit = async () => {
     if (!editPhoneFor) return;
     const newPhone = editPhoneValue.trim();
+    if (newPhone && !/^\+[1-9]\d{7,14}$/.test(newPhone)) {
+      toast.error("Phone must be E.164 format (e.g. +15551234567)");
+      return;
+    }
     setEditPhoneLoading(true);
     try {
-      const { data: existingResp } = await (supabase.auth as any).admin.getUserById(editPhoneFor.user_id);
-      const existingMetadata = existingResp?.user?.user_metadata || {};
-      const { error } = await (supabase.auth as any).admin.updateUserById(editPhoneFor.user_id, {
-        user_metadata: { ...existingMetadata, phone: newPhone },
+      const res = await supabase.functions.invoke("update-user-phone", {
+        body: { user_id: editPhoneFor.user_id, new_phone: newPhone },
       });
-      if (error) {
-        toast.error(error.message || "Failed to update phone");
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "Failed to update phone");
       } else {
         toast.success("Phone updated");
         setEditPhoneFor(null);
