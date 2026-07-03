@@ -189,13 +189,13 @@ export default function Landing() {
               icon={<CalendarIcon />}
               navigate={navigate}
             />
-            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-[rgba(33,150,243,0.25)]" />
             <NavItem
               href="mailto:team@newlightgen.com"
               label="Contact Support"
               icon={<SupportIcon />}
             />
-            <span className="hidden sm:block w-px h-4 bg-white/10" />
+            <span className="hidden sm:block w-px h-4 bg-[rgba(33,150,243,0.25)]" />
             <NavItem
               href="tel:+18058363557"
               label="Call Now"
