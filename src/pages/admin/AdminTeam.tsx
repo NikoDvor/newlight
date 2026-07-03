@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus, Pencil } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,6 +79,10 @@ export default function AdminTeam() {
   const [editEmailFor, setEditEmailFor] = useState<UserRow | null>(null);
   const [editEmailValue, setEditEmailValue] = useState("");
   const [editEmailLoading, setEditEmailLoading] = useState(false);
+  // Edit phone dialog
+  const [editPhoneFor, setEditPhoneFor] = useState<UserRow | null>(null);
+  const [editPhoneValue, setEditPhoneValue] = useState("");
+  const [editPhoneLoading, setEditPhoneLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -274,6 +278,42 @@ export default function AdminTeam() {
     }
     setEditEmailLoading(false);
   };
+
+  const openEditPhone = async (row: UserRow) => {
+    setEditPhoneFor(row);
+    setEditPhoneValue("");
+    try {
+      const { data } = await (supabase.auth as any).admin.getUserById(row.user_id);
+      const existing = data?.user?.user_metadata?.phone;
+      if (typeof existing === "string") setEditPhoneValue(existing);
+    } catch {
+      // best-effort prefill
+    }
+  };
+
+  const handleEditPhoneSubmit = async () => {
+    if (!editPhoneFor) return;
+    const newPhone = editPhoneValue.trim();
+    setEditPhoneLoading(true);
+    try {
+      const { data: existingResp } = await (supabase.auth as any).admin.getUserById(editPhoneFor.user_id);
+      const existingMetadata = existingResp?.user?.user_metadata || {};
+      const { error } = await (supabase.auth as any).admin.updateUserById(editPhoneFor.user_id, {
+        user_metadata: { ...existingMetadata, phone: newPhone },
+      });
+      if (error) {
+        toast.error(error.message || "Failed to update phone");
+      } else {
+        toast.success("Phone updated");
+        setEditPhoneFor(null);
+        setEditPhoneValue("");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update phone");
+    }
+    setEditPhoneLoading(false);
+  };
+
 
 
   const resetManualForm = () => {
@@ -500,6 +540,8 @@ export default function AdminTeam() {
               onStats={setStatsFor}
               onRemove={handleRemove}
               onEditEmail={openEditEmail}
+              onEditPhone={openEditPhone}
+
 
             />
           ))}
@@ -668,13 +710,42 @@ export default function AdminTeam() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!editPhoneFor} onOpenChange={(o) => { if (!o) { setEditPhoneFor(null); setEditPhoneValue(""); } }}>
+        <DialogContent style={{ background: "hsl(218 35% 12%)", border: "1px solid hsla(211,96%,60%,.15)", color: "white" }}>
+          <DialogHeader><DialogTitle className="text-white">Edit Phone</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            {editPhoneFor && (
+              <div className="text-xs text-white/50">
+                Updating phone for <span className="text-white/80">{editPhoneFor.full_name || editPhoneFor.user_id.slice(0, 8) + "…"}</span>
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-white/50 mb-1 block">Phone</label>
+              <Input
+                type="tel"
+                value={editPhoneValue}
+                onChange={e => setEditPhoneValue(e.target.value)}
+                placeholder="+18055551234"
+                className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+              />
+            </div>
+            <Button onClick={handleEditPhoneSubmit} disabled={editPhoneLoading} className="w-full bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white">
+              {editPhoneLoading ? "Updating..." : "Update Phone"}
+            </Button>
+            <p className="text-[10px] text-white/30 text-center">Stored on auth user_metadata.phone.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
+
       </Tabs>
     </div>
   );
 }
 
 function WorkspaceGroupCard({
-  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail,
+  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail, onEditPhone,
 }: {
   group: WorkspaceGroupData;
   defaultOpen?: boolean;
@@ -682,6 +753,7 @@ function WorkspaceGroupCard({
   onStats: (r: UserRow) => void;
   onRemove: (r: UserRow) => void;
   onEditEmail: (r: UserRow) => void;
+  onEditPhone: (r: UserRow) => void;
 }) {
 
   const [open, setOpen] = useState(!!defaultOpen);
@@ -743,6 +815,13 @@ function WorkspaceGroupCard({
                           title="Edit email"
                         >
                           <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onEditPhone(u)}
+                          className="text-white/30 hover:text-[hsl(var(--nl-electric))] transition-colors"
+                          title="Edit phone"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
                         </button>
                         {u.role_id && (
                           <button
