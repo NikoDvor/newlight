@@ -53,6 +53,20 @@ const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
 
+function inBucket(dateStr: string | null, bucket: "today" | "week" | "month" | "all") {
+  if (!dateStr) return false;
+  if (bucket === "all") return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (bucket === "today") return d.toDateString() === now.toDateString();
+  if (bucket === "week") {
+    const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0, 0, 0, 0);
+    return d >= s;
+  }
+  if (bucket === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  return false;
+}
+
 function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
   const [value, setValue] = useState(initial);
   const [baseline, setBaseline] = useState(initial);
