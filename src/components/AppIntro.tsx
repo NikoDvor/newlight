@@ -44,18 +44,20 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
     window.dispatchEvent(new Event("nl-intro-complete"));
     setPhase(4);
-    setTimeout(onComplete, 400);
+    // 250ms collapse/fade, so onComplete fires at 2750ms + 250ms = 3000ms max.
+    setTimeout(onComplete, 250);
   }, [onComplete]);
 
   useEffect(() => {
     startRef.current = performance.now();
-    const t1 = setTimeout(() => setPhase(1), 20);
-    const t2 = setTimeout(() => setPhase(2), 450);
-    const t3 = setTimeout(() => setPhase(3), 1800);
-    const t4 = setTimeout(finish, 2600);
-    const failsafe = setTimeout(finish, 6000);
+    // Hard 3000ms budget: phases + collapse must fit within it.
+    const t1 = setTimeout(() => setPhase(1), 20);    // scale-in
+    const t2 = setTimeout(() => setPhase(2), 400);   // sustain
+    const t3 = setTimeout(() => setPhase(3), 1600);  // bg dark→light
+    const t4 = setTimeout(finish, 2750);             // start collapse
+    const failsafe = setTimeout(onComplete, 3000);   // hard cap
     return () => [t1, t2, t3, t4, failsafe].forEach(clearTimeout);
-  }, [finish]);
+  }, [finish, onComplete]);
 
   useEffect(() => {
     const el = mountRef.current;
