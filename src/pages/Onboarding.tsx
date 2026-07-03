@@ -54,6 +54,7 @@ type PipelineStageInsert = Database["public"]["Tables"]["pipeline_stages"]["Inse
 
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
+  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
   const { install, isInstalled } = usePWAInstall();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
