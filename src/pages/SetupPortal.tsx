@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
@@ -80,7 +81,8 @@ function needsAction(item: SetupItem): boolean {
 }
 
 export default function SetupPortal() {
-  const { activeClientId } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId: activeClientId } = clientHook;
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [items, setItems] = useState<SetupItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -220,6 +220,19 @@ function SetupCenterInner() {
 
   const showActivationCard = !isLive && !isStaff && activationStatus !== "activated";
 
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Setup Center"
+        description="Complete your workspace setup to unlock your full growth system"
+        emptyTitle="Select a workspace to view setup progress"
+        emptyBodyAdmin="Setup completeness is tracked per client — pick a workspace below to review their sections."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+      />
+    );
+  }
+
   return (
     <div>
       <PageHeader
