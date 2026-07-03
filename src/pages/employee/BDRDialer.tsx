@@ -28,6 +28,7 @@ interface OutcomeRow {
   lead_id: string | null;
   outcome: string;
   objection_type: string | null;
+  logged_at: string | null;
 }
 
 // Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
@@ -51,6 +52,20 @@ const OUTCOMES: { label: string; objection: string | null }[] = [
 const STAT_KEYS = OUTCOMES.map(o => o.label);
 
 const ALL_LIST = "__all__";
+
+function inBucket(dateStr: string | null, bucket: "today" | "week" | "month" | "all") {
+  if (!dateStr) return false;
+  if (bucket === "all") return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (bucket === "today") return d.toDateString() === now.toDateString();
+  if (bucket === "week") {
+    const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0, 0, 0, 0);
+    return d >= s;
+  }
+  if (bucket === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  return false;
+}
 
 function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
   const [value, setValue] = useState(initial);
@@ -100,13 +115,15 @@ export default function BDRDialer() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
-          .select("lead_id, outcome, objection_type, created_at")
+          .select("lead_id, outcome, objection_type, logged_at, created_at")
           .eq("bdr_user_id", user.id)
+          .order("logged_at", { ascending: false })
           .order("created_at", { ascending: false }),
       ]);
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
         lead_id: r.lead_id, outcome: r.outcome, objection_type: r.objection_type,
+        logged_at: r.logged_at || r.created_at || null,
       }));
       setOutcomes(all);
       const latest: Record<string, string> = {};
@@ -143,6 +160,15 @@ export default function BDRDialer() {
     }
     return { total, counts };
   }, [outcomes, visibleLeads, activeList]);
+
+  const callCounts = useMemo(() => {
+    const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+    const result: Record<"today" | "week" | "month" | "all", number> = {} as any;
+    for (const b of buckets) {
+      result[b] = outcomes.filter(o => inBucket(o.logged_at, b)).length;
+    }
+    return result;
+  }, [outcomes]);
 
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
@@ -193,7 +219,7 @@ export default function BDRDialer() {
     }
     setSavingId(lead.id);
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
-    const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection };
+    const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection, logged_at: new Date().toISOString() };
     setOutcomes(prev => [optimistic, ...prev]);
     if (!lead.called) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
@@ -316,6 +342,25 @@ export default function BDRDialer() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/employee/training")} className="text-white/60">
           <BookOpen className="h-4 w-4 mr-1" /> Training
         </Button>
+      </div>
+
+      {/* Call count summary */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex items-stretch gap-2 min-w-max pb-1">
+          {[
+            { label: "Today", key: "today" as const, tone: "hsl(211,96%,60%)" },
+            { label: "This Week", key: "week" as const, tone: "hsl(152,76%,55%)" },
+            { label: "This Month", key: "month" as const, tone: "hsl(43,96%,65%)" },
+            { label: "Total Calls", key: "all" as const, tone: "hsl(262,80%,72%)" },
+          ].map(p => (
+            <div key={p.key}
+              className="rounded-lg px-3 py-2 flex flex-col justify-between min-w-[100px]"
+              style={{ background: "hsla(215,35%,10%,.8)", border: `1px solid ${p.tone}33` }}>
+              <span className="text-[9px] uppercase tracking-wider leading-tight text-white/55 line-clamp-2">{p.label}</span>
+              <span className="text-lg font-bold mt-1" style={{ color: p.tone }}>{callCounts[p.key]}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Stats bar */}
