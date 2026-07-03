@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Palette, Save, Eye, Building2, Type, Image, Calendar, DollarSign, FileText, Smartphone, Building, AlertCircle } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Palette, Save, Eye, Building2, Type, Image, Calendar, DollarSign, FileText, Smartphone, Building } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +10,8 @@ import { BackArrow } from "@/components/BackArrow";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { toast } from "sonner";
 import { emitEvent } from "@/lib/automationEngine";
 
@@ -59,37 +60,14 @@ const defaultForm = {
 };
 
 export default function BrandingSettings() {
-  const { activeClientId, setActiveClientId, isAdmin } = useWorkspace();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { activeClientId, setActiveClientId } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId, urlClientId, isAdmin } = clientHook;
   const [form, setForm] = useState(defaultForm);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [adminClients, setAdminClients] = useState<{ id: string; business_name: string | null }[]>([]);
-  const [loadingClients, setLoadingClients] = useState(false);
-
-  // Resolve effective client id: URL param > context > null
-  const urlClientId = searchParams.get("client_id");
-  const effectiveClientId = urlClientId || activeClientId;
 
   const set = (key: string) => (val: string) => setForm(p => ({ ...p, [key]: val }));
-
-  // If URL has a client_id, mirror it into context so downstream pages stay in sync
-  useEffect(() => {
-    if (urlClientId && urlClientId !== activeClientId) {
-      setActiveClientId(urlClientId);
-    }
-  }, [urlClientId]);
-
-  // Admin fallback: if no client is resolved, load the list so admin can pick one
-  useEffect(() => {
-    if (!isAdmin || effectiveClientId) return;
-    setLoadingClients(true);
-    supabase.from("clients").select("id, business_name").order("business_name", { ascending: true }).limit(200)
-      .then(({ data }) => {
-        setAdminClients(data || []);
-        setLoadingClients(false);
-      });
-  }, [isAdmin, effectiveClientId]);
 
   useEffect(() => {
     if (!effectiveClientId) { setForm(defaultForm); return; }
