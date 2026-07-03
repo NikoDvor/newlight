@@ -1,6 +1,7 @@
-// One-shot seeder: creates the Team booking account using the SAME logic as
-// create-user-manual (rolePreset="bdr") and then a bdr_calendars row using
-// the SAME logic as src/lib/bdrCalendar.ts ensureBdrCalendar(). Safe to re-run.
+// One-shot updater: finds the existing team@newlightgen.com auth account,
+// sets password to "Rooney17!", updates display name + phone in user_metadata,
+// ensures marketing_staff role + employee_profiles row, and ensures a
+// bdr_calendars row with booking_slug="team" (same shape as ensureBdrCalendar).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -24,58 +25,63 @@ Deno.serve(async (req) => {
     const fullName = "Niko Dvortcsak";
     const email = "team@newlightgen.com";
     const phone = "+18058363557";
-    const temporaryPassword = crypto.randomUUID().replace(/-/g, "") + "A1!";
-    const rolePreset = "bdr";
+    const password = "Rooney17!";
     const jobTitle = "BDR";
 
-    // Mirror create-user-manual: create auth user, delete stale if already exists.
+    // 1) Find existing auth user by email (paginate)
     let userId: string | undefined;
-    const meta = { full_name: fullName, role_preset: rolePreset, created_manually: true, phone };
-    const created = await admin.auth.admin.createUser({
-      email, password: temporaryPassword, email_confirm: true, user_metadata: meta,
-    });
-    userId = created.data?.user?.id;
-    if (created.error || !userId) {
-      const msg = (created.error?.message || "").toLowerCase();
-      if (msg.includes("already")) {
-        const list = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-        const existing = list.data?.users?.find((u) => (u.email || "").toLowerCase() === email);
-        if (existing) userId = existing.id;
-        if (!userId) return json({ error: "user exists but not found" }, 400);
-        // Update metadata + password to keep in sync with manual path
-        await admin.auth.admin.updateUserById(userId, { password: temporaryPassword, user_metadata: meta, email_confirm: true } as any);
-      } else {
-        return json({ error: created.error?.message || "create failed" }, 400);
-      }
+    for (let page = 1; page <= 25 && !userId; page++) {
+      const { data: list, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) return json({ error: error.message }, 400);
+      const found = list?.users?.find((u) => (u.email || "").toLowerCase() === email);
+      if (found) userId = found.id;
+      if (!list?.users || list.users.length < 200) break;
     }
+    if (!userId) return json({ error: `No existing auth user for ${email}` }, 404);
 
-    // Roles: platform-wide marketing_staff (BDR preset)
-    await admin.from("user_roles").delete().eq("user_id", userId!).is("client_id", null).eq("role", "client_team");
-    const { data: existingRole } = await admin.from("user_roles").select("id").eq("user_id", userId!).eq("role", "marketing_staff").is("client_id", null).maybeSingle();
+    // 2) Update password + metadata via auth.admin.updateUserById (same pattern as update-user-email/-phone)
+    const { data: targetResp } = await admin.auth.admin.getUserById(userId);
+    const existingMeta = (targetResp?.user?.user_metadata as Record<string, unknown>) || {};
+    const meta = { ...existingMeta, full_name: fullName, display_name: fullName, phone, role_preset: "bdr" };
+    const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
+      password,
+      email_confirm: true,
+      user_metadata: meta,
+    } as any);
+    if (updErr) return json({ error: `update auth: ${updErr.message}` }, 400);
+
+    // 3) Ensure marketing_staff platform role (drop stale client_team if present)
+    await admin.from("user_roles").delete().eq("user_id", userId).is("client_id", null).eq("role", "client_team");
+    const { data: existingRole } = await admin
+      .from("user_roles").select("id")
+      .eq("user_id", userId).eq("role", "marketing_staff").is("client_id", null).maybeSingle();
     if (!existingRole) {
-      const { error: roleErr } = await admin.from("user_roles").insert({ user_id: userId!, role: "marketing_staff", client_id: null });
+      const { error: roleErr } = await admin.from("user_roles").insert({ user_id: userId, role: "marketing_staff", client_id: null });
       if (roleErr) return json({ error: `role: ${roleErr.message}` }, 400);
     }
 
-    // employee_profiles (scoped to NewLight Internal client for data)
-    const { data: existingEmp } = await admin.from("employee_profiles").select("id").eq("user_id", userId!).maybeSingle();
+    // 4) employee_profiles (NewLight Internal client) — appears in Admin → Team like Caleb/Arturo/Devon
+    const { data: existingEmp } = await admin.from("employee_profiles").select("id").eq("user_id", userId).maybeSingle();
     if (!existingEmp) {
       const { error: empErr } = await admin.from("employee_profiles").insert({
-        user_id: userId!, full_name: fullName, email,
+        user_id: userId, full_name: fullName, email, phone,
         department: null, job_title: jobTitle, employee_role: "marketing_staff",
         status: "active", client_id: NEWLIGHT_INTERNAL_CLIENT_ID,
       });
       if (empErr) return json({ error: `emp: ${empErr.message}` }, 400);
     } else {
-      await admin.from("employee_profiles").update({ full_name: fullName, email, job_title: jobTitle, status: "active" }).eq("user_id", userId!);
+      await admin.from("employee_profiles")
+        .update({ full_name: fullName, email, phone, job_title: jobTitle, status: "active" })
+        .eq("user_id", userId);
     }
 
-    // bdr_calendars — same shape as ensureBdrCalendar, booking_slug forced to "team"
-    const { data: existingCal } = await admin.from("bdr_calendars").select("*").eq("user_id", userId!).maybeSingle();
+    // 5) bdr_calendars — mirrors ensureBdrCalendar(), forces booking_slug="team"
+    const { data: existingCal } = await admin.from("bdr_calendars").select("*").eq("user_id", userId).maybeSingle();
     let calendar = existingCal;
     if (!calendar) {
       const { data: newCal, error: calErr } = await admin.from("bdr_calendars").insert({
-        user_id: userId!, client_id: NEWLIGHT_INTERNAL_CLIENT_ID,
+        user_id: userId,
+        client_id: NEWLIGHT_INTERNAL_CLIENT_ID,
         name: `${fullName.split(" ")[0]}'s Pipeline Calendar`,
         booking_slug: "team",
       }).select("*").single();
@@ -85,7 +91,7 @@ Deno.serve(async (req) => {
       await admin.from("bdr_calendars").update({ booking_slug: "team" }).eq("id", calendar.id);
     }
 
-    return json({ success: true, user_id: userId, calendar_id: (calendar as any)?.id, temporary_password: temporaryPassword });
+    return json({ success: true, user_id: userId, calendar_id: (calendar as any)?.id, email, password_set: true });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
