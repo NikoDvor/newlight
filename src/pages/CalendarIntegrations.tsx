@@ -133,6 +133,19 @@ export default function CalendarIntegrations() {
     fetchData();
   };
 
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Calendar Integrations"
+        description="Connect external calendars to prevent double booking and sync events"
+        emptyTitle="Select a workspace to manage calendar sync"
+        emptyBodyAdmin="Calendar integrations are scoped to a workspace — pick a client below to review connections and sync rules."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+      />
+    );
+  }
+
   return (
     <div>
       <PageHeader title="Calendar Integrations" description="Connect external calendars to prevent double booking and sync events" />

@@ -12,13 +12,15 @@ import {
   Search, Share2, CreditCard, Phone, Video, Users, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useResolvedClientId } from "@/hooks/useResolvedClientId";
+import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { toast } from "sonner";
 
 type YesNo = "yes" | "no" | "";
 
 export default function ClientSetup() {
-  const { activeClientId } = useWorkspace();
+  const clientHook = useResolvedClientId();
+  const { effectiveClientId: activeClientId } = clientHook;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
