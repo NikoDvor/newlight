@@ -643,6 +643,7 @@ export default function GetStarted() {
                       selectedTime={selectedTime}
                       onDateChange={setSelectedDate}
                       onTimeChange={setSelectedTime}
+                      variant="dark"
                     />
 
                     {selectedDate && selectedTime && (
