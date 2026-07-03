@@ -23,6 +23,7 @@ const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 export default function ClientSetup() {
   const clientHook = useResolvedClientId();
   const { effectiveClientId: activeClientId } = clientHook;
+  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
