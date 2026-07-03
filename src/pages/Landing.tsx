@@ -126,7 +126,8 @@ export default function Landing() {
           pointerEvents: "none",
           animation: "nl-home-breath 4.6s ease-in-out infinite",
           willChange: "opacity",
-          filter: "sepia(1) hue-rotate(175deg) saturate(4.5) brightness(1.05)",
+          filter: "invert(1) sepia(1) saturate(8) hue-rotate(178deg) brightness(1.1) contrast(1.05)",
+          mixBlendMode: "multiply",
         }}
         aria-hidden
       >
