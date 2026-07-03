@@ -266,17 +266,17 @@ export default function Landing() {
           >
             <button
               onClick={() => navigate("/get-started")}
-              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-110"
+              className="inline-flex items-center justify-center font-bold transition-all hover:brightness-105"
               style={{
-                background: ELECTRIC,
-                color: "#FFFFFF",
+                background: `linear-gradient(135deg, ${SKY}, ${ELECTRIC})`,
+                color: INK,
                 borderRadius: 24,
                 padding: "16px 34px",
                 fontSize: 13,
                 letterSpacing: "0.14em",
                 fontFamily: display,
                 minWidth: 220,
-                boxShadow: "0 12px 36px -10px rgba(0,180,255,0.65), 0 0 14px rgba(0,180,255,0.4)",
+                boxShadow: "0 12px 36px -10px rgba(33,150,243,0.55), 0 0 14px rgba(124,199,255,0.45)",
               }}
             >
               GET STARTED
@@ -284,22 +284,22 @@ export default function Landing() {
 
             <button
               onClick={() => navigate("/auth")}
-              className="inline-flex items-center justify-center font-bold transition-colors"
+              className="inline-flex items-center justify-center font-bold transition-colors hover:bg-[rgba(33,150,243,0.08)]"
               style={{
                 background: "transparent",
-                color: FG,
-                border: `2px solid ${FG}`,
+                color: ELECTRIC,
+                border: `2px solid ${ELECTRIC}`,
                 borderRadius: 24,
                 padding: "12px 24px",
                 fontSize: 12,
                 letterSpacing: "0.12em",
                 fontFamily: display,
                 minWidth: 160,
-                opacity: 0.85,
               }}
             >
               LOG IN
             </button>
+
           </motion.div>
 
           <motion.div
