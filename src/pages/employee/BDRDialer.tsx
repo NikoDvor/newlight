@@ -101,13 +101,15 @@ export default function BDRDialer() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
-          .select("lead_id, outcome, objection_type, created_at")
+          .select("lead_id, outcome, objection_type, logged_at, created_at")
           .eq("bdr_user_id", user.id)
+          .order("logged_at", { ascending: false })
           .order("created_at", { ascending: false }),
       ]);
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
         lead_id: r.lead_id, outcome: r.outcome, objection_type: r.objection_type,
+        logged_at: r.logged_at || r.created_at || null,
       }));
       setOutcomes(all);
       const latest: Record<string, string> = {};
