@@ -418,6 +418,19 @@ export default function SetupPortal() {
     );
   };
 
+  if (!activeClientId) {
+    return (
+      <ResolvedClientEmpty
+        hook={clientHook}
+        title="Client Intake & Setup"
+        description="Submit business details, calendar preferences, and assets so our team can configure the workspace."
+        emptyTitle="Select a workspace to open the setup portal"
+        emptyBodyAdmin="The intake portal is scoped to a client — pick a workspace below to view or submit setup items on their behalf."
+        emptyBodyClient="No workspace is currently assigned to your account. Contact your admin to gain access."
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-12">
       <div>
