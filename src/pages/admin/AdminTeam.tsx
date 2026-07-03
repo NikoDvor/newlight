@@ -787,6 +787,13 @@ function WorkspaceGroupCard({
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
+                        <button
+                          onClick={() => onEditPhone(u)}
+                          className="text-white/30 hover:text-[hsl(var(--nl-electric))] transition-colors"
+                          title="Edit phone"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                        </button>
                         {u.role_id && (
                           <button
                             onClick={() => onRemove(u)}
