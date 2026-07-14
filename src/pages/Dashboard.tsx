@@ -1274,15 +1274,15 @@ export default function Dashboard() {
           >
             <style>{`
               @keyframes referralGlowCycle {
-                0%, 50% {
+                0%, 62.5% {
                   background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
                   border-color: hsla(200, 90%, 85%, 0.22);
                   box-shadow: 0 0 0px 0 hsla(200, 90%, 85%, 0);
                 }
-                75% {
-                  background: linear-gradient(160deg, hsla(120, 100%, 60%, 0.22), hsla(120, 100%, 60%, 0.06));
-                  border-color: hsla(120, 100%, 60%, 0.55);
-                  box-shadow: 0 0 40px 8px hsla(120, 100%, 60%, 0.5);
+                81.25% {
+                  background: linear-gradient(160deg, hsla(120, 100%, 60%, 0.32), hsla(120, 100%, 60%, 0.10));
+                  border-color: hsla(120, 100%, 60%, 0.85);
+                  box-shadow: 0 0 70px 18px hsla(120, 100%, 60%, 0.7);
                 }
                 100% {
                   background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
@@ -1291,7 +1291,9 @@ export default function Dashboard() {
                 }
               }
               .referral-glow-cycle {
-                animation: referralGlowCycle 20s ease-in-out infinite;
+                --referral-badge-bg: hsla(120, 100%, 60%, 0.18);
+                --referral-badge-text: hsl(120, 100%, 65%);
+                animation: referralGlowCycle 16s ease-in-out infinite;
               }
             `}</style>
             <ReferralCard compact className="referral-glow-cycle" />
