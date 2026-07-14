@@ -183,7 +183,7 @@ export function ReferralCard({ compact = false, className = "" }: { compact?: bo
         background: "linear-gradient(160deg, hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.08), hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.04))",
         border: "1px solid hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.22)",
         backdropFilter: "blur(14px)",
-        boxShadow: "0 0 70px 18px hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), var(--ref-glow-opacity, 0))",
+        boxShadow: "0 0 var(--ref-glow-blur, 70px) var(--ref-glow-spread, 18px) hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), var(--ref-glow-opacity, 0))",
       }}
     >
       <div className="absolute -top-16 -left-10 w-56 h-56 rounded-full pointer-events-none"
