@@ -108,7 +108,7 @@ export const systemModules: SystemModule[] = [
     status: "Operational",
     dependency: "Native",
     description: "Subscriptions, invoices, payment tracking, MRR visibility.",
-    routes: ["/billing", "/admin/billing", "/finance"],
+    routes: ["/billing", "/admin/billing"],
     dataModels: ["billing_accounts", "subscriptions", "invoices", "payments", "billing_events"],
     feedsInto: ["health_scoring", "activation", "renewals"],
     receivesFrom: ["proposals", "packages", "stripe"],
