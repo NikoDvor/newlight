@@ -1265,7 +1265,7 @@ export default function Dashboard() {
             />
           )}
 
-          {/* ══════ REFERRAL — ABOVE THE FOLD (10s light blue → 5s neon green → back) ══════ */}
+          {/* ══════ REFERRAL — ABOVE THE FOLD (3s light blue → 3s neon green → 3s back) ══════ */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
