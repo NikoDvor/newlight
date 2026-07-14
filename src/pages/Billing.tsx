@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { SaveAndEarn } from "@/components/SaveAndEarn";
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-50 text-emerald-600",
@@ -183,6 +184,8 @@ export default function Billing() {
           )}
         </DataCard>
       </div>
+
+      <SaveAndEarn />
     </div>
   );
 }

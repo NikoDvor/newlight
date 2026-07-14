@@ -1,4 +1,5 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
+import { SaveAndEarn } from "@/components/SaveAndEarn";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
@@ -1754,6 +1755,9 @@ export default function Dashboard() {
             } />
             <SystemStatusBar />
           </motion.div>
+
+          {/* ══════ SAVE & EARN ══════ */}
+          <SaveAndEarn />
 
         </div>
       </div>
