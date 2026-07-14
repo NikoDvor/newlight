@@ -1273,26 +1273,47 @@ export default function Dashboard() {
             className="rounded-2xl"
           >
             <style>{`
+              @property --ref-h {
+                syntax: '<angle>';
+                inherits: true;
+                initial-value: 200deg;
+              }
+              @property --ref-s {
+                syntax: '<percentage>';
+                inherits: true;
+                initial-value: 90%;
+              }
+              @property --ref-l {
+                syntax: '<percentage>';
+                inherits: true;
+                initial-value: 85%;
+              }
+              @property --ref-glow-opacity {
+                syntax: '<number>';
+                inherits: true;
+                initial-value: 0;
+              }
               @keyframes referralGlowCycle {
                 0%, 62.5% {
-                  background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
-                  border-color: hsla(200, 90%, 85%, 0.22);
-                  box-shadow: 0 0 0px 0 hsla(200, 90%, 85%, 0);
+                  --ref-h: 200deg;
+                  --ref-s: 90%;
+                  --ref-l: 85%;
+                  --ref-glow-opacity: 0;
                 }
                 81.25% {
-                  background: linear-gradient(160deg, hsla(120, 100%, 60%, 0.32), hsla(120, 100%, 60%, 0.10));
-                  border-color: hsla(120, 100%, 60%, 0.85);
-                  box-shadow: 0 0 70px 18px hsla(120, 100%, 60%, 0.7);
+                  --ref-h: 120deg;
+                  --ref-s: 100%;
+                  --ref-l: 60%;
+                  --ref-glow-opacity: 0.7;
                 }
                 100% {
-                  background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
-                  border-color: hsla(200, 90%, 85%, 0.22);
-                  box-shadow: 0 0 0px 0 hsla(200, 90%, 85%, 0);
+                  --ref-h: 200deg;
+                  --ref-s: 90%;
+                  --ref-l: 85%;
+                  --ref-glow-opacity: 0;
                 }
               }
               .referral-glow-cycle {
-                --referral-badge-bg: hsla(120, 100%, 60%, 0.18);
-                --referral-badge-text: hsl(120, 100%, 65%);
                 animation: referralGlowCycle 16s ease-in-out infinite;
               }
             `}</style>
