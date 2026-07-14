@@ -13,6 +13,28 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+
+  const handleForgotPassword = async () => {
+    setResetMsg(null);
+    setError(null);
+    if (!email) {
+      setError("Enter your email above first, then click Forgot password.");
+      return;
+    }
+    setResetSending(true);
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetSending(false);
+    if (resetErr) {
+      setError(resetErr.message);
+    } else {
+      setResetMsg("Password reset email sent. Check your inbox.");
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +162,22 @@ export default function Auth() {
             {error && (
               <p className="text-xs text-red-400/80 text-center mt-2">{error}</p>
             )}
+            {resetMsg && (
+              <p className="text-xs text-emerald-400/80 text-center mt-2">{resetMsg}</p>
+            )}
+
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetSending}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors disabled:opacity-60"
+              >
+                {resetSending ? "Sending reset link…" : "Forgot password?"}
+              </button>
+            </div>
           </form>
+
 
           <p className="text-xs text-white/40 text-center mt-6">
             Don't have access?{" "}
