@@ -1755,6 +1755,9 @@ export default function Dashboard() {
             <SystemStatusBar />
           </motion.div>
 
+          {/* ══════ SAVE & EARN ══════ */}
+          <SaveAndEarn />
+
         </div>
       </div>
   );
