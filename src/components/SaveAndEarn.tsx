@@ -180,23 +180,24 @@ export function ReferralCard({ compact = false, className = "" }: { compact?: bo
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
       className={`relative rounded-2xl overflow-hidden ${compact ? 'p-4' : 'p-6'} ${className}`}
       style={{
-        background: "linear-gradient(160deg, hsla(250,80%,68%,0.08), hsla(197,92%,68%,0.04))",
-        border: "1px solid hsla(250,80%,68%,0.22)",
+        background: "linear-gradient(160deg, hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.08), hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.04))",
+        border: "1px solid hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.22)",
         backdropFilter: "blur(14px)",
+        boxShadow: "0 0 70px 18px hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), var(--ref-glow-opacity, 0))",
       }}
     >
       <div className="absolute -top-16 -left-10 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, hsla(250,80%,68%,0.18), transparent 70%)", filter: "blur(24px)" }} />
+        style={{ background: "radial-gradient(circle, hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.18), transparent 70%)", filter: "blur(24px)" }} />
 
       <div className={`relative flex items-start justify-between ${compact ? 'mb-2' : 'mb-3'}`}>
         <div className="flex items-center gap-2">
-          <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-xl`} style={{ background: "hsla(250,80%,68%,0.15)" }}>
-            <Gift className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} style={{ color: "hsl(250,80%,72%)" }} />
+          <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-xl`} style={{ background: "hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.15)" }}>
+            <Gift className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} style={{ color: "hsl(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%))" }} />
           </div>
           <h3 className={`${compact ? 'text-sm' : 'text-base'} font-bold tracking-tight`}>Refer & Earn</h3>
         </div>
         <span className="referral-badge text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
-          style={{ background: "var(--referral-badge-bg, hsla(250,80%,68%,0.14))", color: "var(--referral-badge-text, hsl(250,80%,72%))" }}>
+          style={{ background: "hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.14)", color: "hsl(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%))" }}>
           2 Months Free
         </span>
       </div>
