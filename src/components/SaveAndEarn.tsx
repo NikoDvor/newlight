@@ -191,13 +191,13 @@ export function ReferralCard({ compact = false, className = "" }: { compact?: bo
 
       <div className={`relative flex items-start justify-between ${compact ? 'mb-2' : 'mb-3'}`}>
         <div className="flex items-center gap-2">
-          <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-xl`} style={{ background: "hsla(250,80%,68%,0.15)" }}>
-            <Gift className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} style={{ color: "hsl(250,80%,72%)" }} />
+          <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-xl`} style={{ background: "hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.15)" }}>
+            <Gift className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} style={{ color: "hsl(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%))" }} />
           </div>
           <h3 className={`${compact ? 'text-sm' : 'text-base'} font-bold tracking-tight`}>Refer & Earn</h3>
         </div>
         <span className="referral-badge text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
-          style={{ background: "var(--referral-badge-bg, hsla(250,80%,68%,0.14))", color: "var(--referral-badge-text, hsl(250,80%,72%))" }}>
+          style={{ background: "hsla(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%), 0.14)", color: "hsl(var(--ref-h, 250deg), var(--ref-s, 80%), var(--ref-l, 68%))" }}>
           2 Months Free
         </span>
       </div>
