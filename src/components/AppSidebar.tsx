@@ -100,7 +100,7 @@ const navStructure: NavEntry[] = [
       { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
       { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
       { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
-      { title: "AI Accountant", url: "/ai-accountant", icon: Brain, moduleKey: "finance" },
+      
     ],
   },
 ];
