@@ -195,8 +195,8 @@ export function ReferralCard({ compact = false, className = "" }: { compact?: bo
           </div>
           <h3 className={`${compact ? 'text-sm' : 'text-base'} font-bold tracking-tight`}>Refer & Earn</h3>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
-          style={{ background: "hsla(250,80%,68%,0.14)", color: "hsl(250,80%,72%)" }}>
+        <span className="referral-badge text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
+          style={{ background: "var(--referral-badge-bg, hsla(250,80%,68%,0.14))", color: "var(--referral-badge-text, hsl(250,80%,72%))" }}>
           2 Months Free
         </span>
       </div>
