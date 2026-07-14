@@ -184,6 +184,8 @@ export default function Billing() {
           )}
         </DataCard>
       </div>
+
+      <SaveAndEarn />
     </div>
   );
 }
