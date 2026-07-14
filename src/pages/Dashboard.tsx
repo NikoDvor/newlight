@@ -1265,34 +1265,36 @@ export default function Dashboard() {
             />
           )}
 
-          {/* ══════ REFERRAL — ABOVE THE FOLD (18s periodic glow/shift) ══════ */}
+          {/* ══════ REFERRAL — ABOVE THE FOLD (10s light blue → 5s neon green → back) ══════ */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
-            animate={{
-              opacity: 1,
-              y: [0, -6, 0, 0, 0, 0, 0, 0, 0],
-              x: [0, 4, -3, 0, 0, 0, 0, 0, 0],
-              boxShadow: [
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 40px 6px hsla(250,80%,68%,0.35)",
-                "0 0 20px 2px hsla(250,80%,68%,0.15)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-                "0 0 0px 0 hsla(250,80%,68%,0)",
-              ],
-            }}
-            transition={{
-              opacity: { duration: 0.5 },
-              y: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
-              x: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
-              boxShadow: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
-            }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-2xl"
           >
-            <ReferralCard />
+            <style>{`
+              @keyframes referralGlowCycle {
+                0%, 50% {
+                  background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
+                  border-color: hsla(200, 90%, 85%, 0.22);
+                  box-shadow: 0 0 0px 0 hsla(200, 90%, 85%, 0);
+                }
+                75% {
+                  background: linear-gradient(160deg, hsla(120, 100%, 60%, 0.22), hsla(120, 100%, 60%, 0.06));
+                  border-color: hsla(120, 100%, 60%, 0.55);
+                  box-shadow: 0 0 40px 8px hsla(120, 100%, 60%, 0.5);
+                }
+                100% {
+                  background: linear-gradient(160deg, hsla(200, 90%, 85%, 0.14), hsla(200, 90%, 85%, 0.04));
+                  border-color: hsla(200, 90%, 85%, 0.22);
+                  box-shadow: 0 0 0px 0 hsla(200, 90%, 85%, 0);
+                }
+              }
+              .referral-glow-cycle {
+                animation: referralGlowCycle 20s ease-in-out infinite;
+              }
+            `}</style>
+            <ReferralCard compact className="referral-glow-cycle" />
           </motion.div>
 
 

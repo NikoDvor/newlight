@@ -148,7 +148,7 @@ export function AnnualSwitchCard() {
   );
 }
 
-export function ReferralCard() {
+export function ReferralCard({ compact = false, className = "" }: { compact?: boolean; className?: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [form, setForm] = useState({
@@ -178,7 +178,7 @@ export function ReferralCard() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-      className="relative rounded-2xl p-6 overflow-hidden"
+      className={`relative rounded-2xl overflow-hidden ${compact ? 'p-4' : 'p-6'} ${className}`}
       style={{
         background: "linear-gradient(160deg, hsla(250,80%,68%,0.08), hsla(197,92%,68%,0.04))",
         border: "1px solid hsla(250,80%,68%,0.22)",
@@ -188,12 +188,12 @@ export function ReferralCard() {
       <div className="absolute -top-16 -left-10 w-56 h-56 rounded-full pointer-events-none"
         style={{ background: "radial-gradient(circle, hsla(250,80%,68%,0.18), transparent 70%)", filter: "blur(24px)" }} />
 
-      <div className="relative flex items-start justify-between mb-3">
+      <div className={`relative flex items-start justify-between ${compact ? 'mb-2' : 'mb-3'}`}>
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: "hsla(250,80%,68%,0.15)" }}>
-            <Gift className="h-4 w-4" style={{ color: "hsl(250,80%,72%)" }} />
+          <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-xl`} style={{ background: "hsla(250,80%,68%,0.15)" }}>
+            <Gift className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} style={{ color: "hsl(250,80%,72%)" }} />
           </div>
-          <h3 className="text-base font-bold tracking-tight">Refer & Earn</h3>
+          <h3 className={`${compact ? 'text-sm' : 'text-base'} font-bold tracking-tight`}>Refer & Earn</h3>
         </div>
         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
           style={{ background: "hsla(250,80%,68%,0.14)", color: "hsl(250,80%,72%)" }}>
@@ -201,15 +201,15 @@ export function ReferralCard() {
         </span>
       </div>
 
-      <p className="relative text-xs text-muted-foreground leading-relaxed mb-5">
+      <p className={`relative text-xs text-muted-foreground leading-relaxed ${compact ? 'mb-3' : 'mb-5'}`}>
         Refer a business and get your next 2 months free once they sign up.
       </p>
 
       {submitted ? (
-        <div className="relative py-6 flex flex-col items-center text-center gap-2">
-          <CheckCircle2 className="h-10 w-10" style={{ color: "hsl(152,60%,54%)" }} />
-          <p className="text-sm font-semibold">Referral received</p>
-          <p className="text-xs text-muted-foreground max-w-xs">
+        <div className={`relative ${compact ? 'py-4' : 'py-6'} flex flex-col items-center text-center gap-2`}>
+          <CheckCircle2 className={`${compact ? 'h-8 w-8' : 'h-10 w-10'}`} style={{ color: "hsl(152,60%,54%)" }} />
+          <p className={`${compact ? 'text-xs' : 'text-sm'} font-semibold`}>Referral received</p>
+          <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground max-w-xs`}>
             Our team will follow up with {form.businessName || "your referral"} shortly. You'll get 2 months free once they sign up.
           </p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => {
@@ -220,31 +220,31 @@ export function ReferralCard() {
           </Button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="relative space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+        <form onSubmit={handleSubmit} className={`relative ${compact ? 'space-y-2' : 'space-y-3'}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${compact ? 'gap-2' : 'gap-3'}`}>
+            <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               <Label htmlFor="ref-biz" className="text-xs">Business name</Label>
-              <Input id="ref-biz" value={form.businessName} onChange={update("businessName")} placeholder="Acme Co." />
+              <Input id="ref-biz" value={form.businessName} onChange={update("businessName")} placeholder="Acme Co." className={compact ? 'h-8 text-xs' : ''} />
             </div>
-            <div className="space-y-1.5">
+            <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               <Label htmlFor="ref-name" className="text-xs">Contact name</Label>
-              <Input id="ref-name" value={form.contactName} onChange={update("contactName")} placeholder="Jane Doe" />
+              <Input id="ref-name" value={form.contactName} onChange={update("contactName")} placeholder="Jane Doe" className={compact ? 'h-8 text-xs' : ''} />
             </div>
-            <div className="space-y-1.5">
+            <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               <Label htmlFor="ref-phone" className="text-xs">Phone</Label>
-              <Input id="ref-phone" type="tel" value={form.phone} onChange={update("phone")} placeholder="(555) 555-5555" />
+              <Input id="ref-phone" type="tel" value={form.phone} onChange={update("phone")} placeholder="(555) 555-5555" className={compact ? 'h-8 text-xs' : ''} />
             </div>
-            <div className="space-y-1.5">
+            <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
               <Label htmlFor="ref-email" className="text-xs">Email</Label>
-              <Input id="ref-email" type="email" value={form.email} onChange={update("email")} placeholder="jane@acme.com" />
+              <Input id="ref-email" type="email" value={form.email} onChange={update("email")} placeholder="jane@acme.com" className={compact ? 'h-8 text-xs' : ''} />
             </div>
           </div>
-          <div className="space-y-1.5">
+          <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
             <Label htmlFor="ref-notes" className="text-xs">Notes (optional)</Label>
             <Textarea id="ref-notes" value={form.notes} onChange={update("notes")}
-              placeholder="Or let us know you'll be introducing us…" rows={3} />
+              placeholder="Or let us know you'll be introducing us…" rows={compact ? 2 : 3} className={compact ? 'text-xs min-h-[60px]' : ''} />
           </div>
-          <Button type="submit" className="w-full btn-gradient" disabled={sending}>
+          <Button type="submit" className={`w-full btn-gradient ${compact ? 'h-9 text-xs' : ''}`} disabled={sending}>
             {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</> : <>Submit Referral <ArrowRight className="h-4 w-4 ml-2" /></>}
           </Button>
         </form>
