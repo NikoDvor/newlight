@@ -16,7 +16,7 @@ const ANNUAL_DISCOUNT = 0.30;
 
 const fmt = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
-function AnnualSwitchCard() {
+export function AnnualSwitchCard() {
   const [step, setStep] = useState<"idle" | "confirm" | "processing" | "coming-soon">("idle");
   const [pwd, setPwd] = useState("");
 
@@ -148,7 +148,7 @@ function AnnualSwitchCard() {
   );
 }
 
-function ReferralCard() {
+export function ReferralCard() {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [form, setForm] = useState({

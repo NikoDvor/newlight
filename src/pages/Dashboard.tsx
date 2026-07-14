@@ -1,5 +1,5 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
-import { SaveAndEarn } from "@/components/SaveAndEarn";
+import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
@@ -1265,6 +1265,37 @@ export default function Dashboard() {
             />
           )}
 
+          {/* ══════ REFERRAL — ABOVE THE FOLD (18s periodic glow/shift) ══════ */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{
+              opacity: 1,
+              y: [0, -6, 0, 0, 0, 0, 0, 0, 0],
+              x: [0, 4, -3, 0, 0, 0, 0, 0, 0],
+              boxShadow: [
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 40px 6px hsla(250,80%,68%,0.35)",
+                "0 0 20px 2px hsla(250,80%,68%,0.15)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+                "0 0 0px 0 hsla(250,80%,68%,0)",
+              ],
+            }}
+            transition={{
+              opacity: { duration: 0.5 },
+              y: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
+              x: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
+              boxShadow: { duration: 18, repeat: Infinity, ease: "easeInOut", times: [0, 0.04, 0.09, 0.14, 0.3, 0.5, 0.7, 0.85, 1] },
+            }}
+            className="rounded-2xl"
+          >
+            <ReferralCard />
+          </motion.div>
+
+
           {/* ══════ SETUP BANNER ══════ */}
           {isNewClient && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-6">
@@ -1756,8 +1787,18 @@ export default function Dashboard() {
             <SystemStatusBar />
           </motion.div>
 
-          {/* ══════ SAVE & EARN ══════ */}
-          <SaveAndEarn />
+          {/* ══════ ANNUAL SAVINGS OFFER ══════ */}
+          <section className="mt-8">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, hsla(211,96%,62%,0.3), transparent)" }} />
+              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground">Save & Earn</h2>
+              <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, hsla(211,96%,62%,0.3), transparent)" }} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <AnnualSwitchCard />
+            </div>
+          </section>
+
 
         </div>
       </div>

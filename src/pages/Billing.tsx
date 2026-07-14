@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { SaveAndEarn } from "@/components/SaveAndEarn";
+import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-50 text-emerald-600",
@@ -185,7 +185,21 @@ export default function Billing() {
         </DataCard>
       </div>
 
-      <SaveAndEarn />
+      <section className="mt-10">
+        <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Billing</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <AnnualSwitchCard />
+          <div className="hidden lg:block" />
+        </div>
+
+        <div className="mt-10">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground mb-1">Referrals</h3>
+          <p className="text-xs text-muted-foreground mb-4">Introduce us to another business and get 2 months free once they sign up.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <ReferralCard />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

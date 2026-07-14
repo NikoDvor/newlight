@@ -123,7 +123,7 @@ import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
 import ClientSetup from "./pages/ClientSetup";
 import BrandAssets from "./pages/BrandAssets";
-import Finance from "./pages/Finance";
+
 import PlaceholderPage from "./pages/PlaceholderPage";
 import InternalSystem from "./pages/InternalSystem";
 import CalendarPage from "./pages/CalendarPage";
@@ -282,7 +282,7 @@ const App = () => {
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="training-center" element={<AdminTrainingCenter />} />
                 <Route path="sops" element={<PlaceholderPage title="Standard Operating Procedures" description="Standard operating procedures for your team." />} />
-                <Route path="ai-accountant" element={<PlaceholderPage title="AI Accountant" description="Automated bookkeeping, categorization, and reconciliation." />} />
+                
                 <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
                 <Route path="training-center/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training-center/question-reassignment" element={<AdminQuestionReassignment />} />
@@ -368,7 +368,7 @@ const App = () => {
                 <Route path="ops/market-research" element={<AdminOpsProvider><MarketResearch /></AdminOpsProvider>} />
                 <Route path="ops/content" element={<AdminOpsProvider><ContentPlanner /></AdminOpsProvider>} />
                 <Route path="ops/workforce" element={<AdminOpsProvider><Workforce /></AdminOpsProvider>} />
-                <Route path="ops/finance" element={<AdminOpsProvider><Finance /></AdminOpsProvider>} />
+                
                 <Route path="ops/integrations" element={<AdminOpsProvider><Integrations /></AdminOpsProvider>} />
                 <Route path="ops/settings" element={<AdminOpsProvider><SettingsPage /></AdminOpsProvider>} />
                 <Route path="ops/tasks" element={<AdminOpsProvider><Tasks /></AdminOpsProvider>} />
@@ -471,9 +471,6 @@ const App = () => {
                 <Route path="/client-setup" element={<ClientSetup />} />
                 <Route path="/setup-portal" element={<SetupPortal />} />
                 <Route path="/brand-assets" element={<BrandAssets />} />
-                <Route path="/finance" element={<PermissionGuard moduleKey="finance"><Finance /></PermissionGuard>} />
-                <Route path="/revenue-charts" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="Revenue Charts" description="Visualize income trends, MRR, and revenue breakdowns." /></PermissionGuard>} />
-                <Route path="/ai-accountant" element={<PermissionGuard moduleKey="finance"><PlaceholderPage title="AI Accountant" description="Automated bookkeeping, categorization, and reconciliation." /></PermissionGuard>} />
                 <Route path="/internal-system" element={<InternalSystem />} />
                 <Route path="/sops" element={<PlaceholderPage title="SOPs" description="Standard operating procedures for your team." />} />
                 <Route path="/workflows" element={<PlaceholderPage title="Workflows" description="Internal process workflows and step-by-step playbooks." />} />
