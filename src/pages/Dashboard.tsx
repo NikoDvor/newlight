@@ -1276,45 +1276,61 @@ export default function Dashboard() {
               @property --ref-h {
                 syntax: '<angle>';
                 inherits: true;
-                initial-value: 200deg;
+                initial-value: 210deg;
               }
               @property --ref-s {
                 syntax: '<percentage>';
                 inherits: true;
-                initial-value: 90%;
+                initial-value: 80%;
               }
               @property --ref-l {
                 syntax: '<percentage>';
                 inherits: true;
-                initial-value: 85%;
+                initial-value: 68%;
               }
               @property --ref-glow-opacity {
                 syntax: '<number>';
                 inherits: true;
                 initial-value: 0;
               }
+              @property --ref-glow-blur {
+                syntax: '<length>';
+                inherits: true;
+                initial-value: 70px;
+              }
+              @property --ref-glow-spread {
+                syntax: '<length>';
+                inherits: true;
+                initial-value: 18px;
+              }
               @keyframes referralGlowCycle {
-                0%, 62.5% {
-                  --ref-h: 200deg;
-                  --ref-s: 90%;
-                  --ref-l: 85%;
+                0%, 33.33% {
+                  --ref-h: 210deg;
+                  --ref-s: 80%;
+                  --ref-l: 68%;
                   --ref-glow-opacity: 0;
+                  --ref-glow-blur: 70px;
+                  --ref-glow-spread: 18px;
                 }
-                81.25% {
+                66.67% {
                   --ref-h: 120deg;
                   --ref-s: 100%;
                   --ref-l: 60%;
-                  --ref-glow-opacity: 0.7;
+                  --ref-glow-opacity: 0.85;
+                  --ref-glow-blur: 100px;
+                  --ref-glow-spread: 28px;
                 }
                 100% {
-                  --ref-h: 200deg;
-                  --ref-s: 90%;
-                  --ref-l: 85%;
+                  --ref-h: 210deg;
+                  --ref-s: 80%;
+                  --ref-l: 68%;
                   --ref-glow-opacity: 0;
+                  --ref-glow-blur: 70px;
+                  --ref-glow-spread: 18px;
                 }
               }
               .referral-glow-cycle {
-                animation: referralGlowCycle 16s ease-in-out infinite;
+                animation: referralGlowCycle 9s ease-in-out infinite;
               }
             `}</style>
             <ReferralCard compact className="referral-glow-cycle" />
