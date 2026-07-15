@@ -318,60 +318,106 @@ export default function AdminPromoters() {
         ))}
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search promoters…" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
+      <Tabs defaultValue="all" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="all">All Promoters</TabsTrigger>
+          <TabsTrigger value="roi">Referral ROI</TabsTrigger>
+        </TabsList>
 
-      <Card className="border-border bg-card">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Active Agreement</TableHead>
-                <TableHead>12-Mo Comp</TableHead>
-                <TableHead>Flags</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Loading…</TableCell></TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No promoters yet.</TableCell></TableRow>
-              ) : filtered.map((p) => {
-                const agr = activeAgreementByPromoter[p.id];
-                const total = totals[p.id] ?? 0;
-                return (
-                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openPromoter(p)}>
-                    <TableCell className="font-medium">{p.full_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{TYPE_LABELS[p.promoter_type]}</TableCell>
-                    <TableCell>
-                      {agr ? (
-                        <Badge variant="outline" className={STATUS_COLOR.active}>Active</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-slate-500/15 text-slate-300 border-slate-500/30">None</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className={total >= 1000 ? "text-amber-300 font-semibold" : ""}>${total.toLocaleString()}</TableCell>
-                    <TableCell className="space-x-1">
-                      {p.requires_written_agreement && (
-                        <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/30">
-                          Agreement Required
-                        </Badge>
-                      )}
-                      {p.is_ineligible_person && (
-                        <Badge variant="outline" className="bg-red-500/15 text-red-300 border-red-500/30">Ineligible</Badge>
-                      )}
-                    </TableCell>
+        <TabsContent value="all" className="space-y-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Search promoters…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+
+          <Card className="border-border bg-card">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Active Agreement</TableHead>
+                    <TableHead>12-Mo Comp</TableHead>
+                    <TableHead>Flags</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Loading…</TableCell></TableRow>
+                  ) : filtered.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No promoters yet.</TableCell></TableRow>
+                  ) : filtered.map((p) => {
+                    const agr = activeAgreementByPromoter[p.id];
+                    const total = totals[p.id] ?? 0;
+                    return (
+                      <TableRow key={p.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openPromoter(p)}>
+                        <TableCell className="font-medium">{p.full_name}</TableCell>
+                        <TableCell className="text-muted-foreground">{TYPE_LABELS[p.promoter_type]}</TableCell>
+                        <TableCell>
+                          {agr ? (
+                            <Badge variant="outline" className={STATUS_COLOR.active}>Active</Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-slate-500/15 text-slate-300 border-slate-500/30">None</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className={total >= 1000 ? "text-amber-300 font-semibold" : ""}>${total.toLocaleString()}</TableCell>
+                        <TableCell className="space-x-1">
+                          {p.requires_written_agreement && (
+                            <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/30">
+                              Agreement Required
+                            </Badge>
+                          )}
+                          {p.is_ineligible_person && (
+                            <Badge variant="outline" className="bg-red-500/15 text-red-300 border-red-500/30">Ineligible</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="roi" className="space-y-4">
+          <Card className="border-border bg-card">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Referral Source</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Referred Deals</TableHead>
+                    <TableHead className="text-right">Lifetime Attributed Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {referralRoi.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                        No referral-source promoters yet. Toggle "is_referral_source" on a promoter to track ROI.
+                      </TableCell>
+                    </TableRow>
+                  ) : referralRoi.map((r) => (
+                    <TableRow key={r.promoter_id}>
+                      <TableCell className="font-medium">{r.full_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.referral_category ?? "—"}</TableCell>
+                      <TableCell className="text-right">{r.deal_count}</TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-300">
+                        ${r.lifetime_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+
 
       {/* Detail Sheet */}
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
