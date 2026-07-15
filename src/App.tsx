@@ -174,6 +174,13 @@ import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
 import AdminWebsites from "./pages/admin/AdminWebsites";
+import AdminClientHealth from "./pages/admin/AdminClientHealth";
+import AdminRevenueGrowth from "./pages/admin/AdminRevenueGrowth";
+import AdminPriorityAlerts from "./pages/admin/AdminPriorityAlerts";
+import AdminBrokenSetupFlags from "./pages/admin/AdminBrokenSetupFlags";
+import AdminOnboardingProgressPage from "./pages/admin/AdminOnboardingProgressPage";
+import AdminWinTracking from "./pages/admin/AdminWinTracking";
+import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
 import CallTracking from "./pages/CallTracking";
 
@@ -340,13 +347,13 @@ const App = () => {
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
                 <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
-                <Route path="client-intelligence/health" element={<PlaceholderPage title="Client Health Scores" description="Composite score per client based on activity, engagement, and results." />} />
-                <Route path="client-intelligence/revenue" element={<PlaceholderPage title="Revenue Growth Tracker" description="Revenue growth or decrease per client over time." />} />
-                <Route path="client-intelligence/alerts" element={<PlaceholderPage title="Priority Alerts" description="At-risk, inactive, or underperforming clients flagged." />} />
-                <Route path="client-intelligence/setup-flags" element={<PlaceholderPage title="Broken Setup Flags" description="Missing SOPs, incomplete integrations, no active campaigns." />} />
-                <Route path="client-intelligence/onboarding-progress" element={<PlaceholderPage title="Onboarding Progress" description="Where each client is in the setup flow." />} />
-                <Route path="client-intelligence/wins" element={<PlaceholderPage title="Win Tracking" description="Appointments booked and deals closed across all clients." />} />
-                <Route path="client-intelligence/optimization" element={<PlaceholderPage title="Optimization Flags" description="Suggested actions per client." />} />
+                <Route path="client-intelligence/health" element={<AdminClientHealth />} />
+                <Route path="client-intelligence/revenue" element={<AdminRevenueGrowth />} />
+                <Route path="client-intelligence/alerts" element={<AdminPriorityAlerts />} />
+                <Route path="client-intelligence/setup-flags" element={<AdminBrokenSetupFlags />} />
+                <Route path="client-intelligence/onboarding-progress" element={<AdminOnboardingProgressPage />} />
+                <Route path="client-intelligence/wins" element={<AdminWinTracking />} />
+                <Route path="client-intelligence/optimization" element={<AdminOptimizationFlags />} />
 
                 {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
                 <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />
