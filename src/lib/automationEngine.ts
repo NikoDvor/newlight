@@ -66,6 +66,10 @@ export const EVENT_REGISTRY = {
   material_approved: { category: "Marketing", name: "Marketing Material Approved" },
   material_changes_requested: { category: "Marketing", name: "Marketing Material Changes Requested" },
   disclosure_missing_flagged: { category: "Marketing", name: "Disclosure Missing Flagged" },
+  // Compliance
+  promoter_agreement_expiring: { category: "Compliance", name: "Promoter Agreement Expiring" },
+  compensation_threshold_crossed: { category: "Compliance", name: "Promoter 12-Month Compensation Threshold Crossed" },
+  testimonial_disclosure_incomplete: { category: "Compliance", name: "Testimonial Disclosure Incomplete" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
