@@ -154,6 +154,11 @@ export default function AdminProposalDetail() {
         onOpenChange={setSignatureOpen}
         defaultDocTitle={proposal.proposal_title}
         defaultRecipientEmail={proposal.crm_contacts?.email}
+        defaultRecipientName={proposal.crm_contacts?.full_name}
+        clientId={proposal.client_id}
+        envelopeType="proposal"
+        relatedType="proposal"
+        relatedId={proposal.id}
       />
       <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back
