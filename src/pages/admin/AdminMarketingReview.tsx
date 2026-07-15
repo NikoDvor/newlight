@@ -115,6 +115,10 @@ export default function AdminMarketingReview() {
     title: "", material_type: "other" as MaterialType, content_text: "", content_url: "",
     has_testimonial: false,
   });
+  const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
+  const [savingLinks, setSavingLinks] = useState(false);
+
+  const currentVersion = versions[0] ?? null;
 
   const load = async () => {
     setLoading(true);
@@ -136,14 +140,34 @@ export default function AdminMarketingReview() {
       supabase.from("marketing_disclosures").select("*").eq("client_id", m.client_id),
       supabase.from("marketing_substantiation_files").select("*").eq("material_id", m.id),
     ]);
-    setVersions((v as any[]) ?? []);
+    const versionRows = (v as any[]) ?? [];
+    setVersions(versionRows);
     setDisclosures((d as any[]) ?? []);
     setSubFiles((f as any[]) ?? []);
+    setLinkedDisclosureIds(
+      (versionRows[0]?.disclosure_ids as string[] | null) ?? []
+    );
 
     // Auto-flip submitted -> in_review when reviewer opens
     if (canReview && m.status === "submitted") {
       await updateStatus(m, "in_review");
     }
+  };
+
+  const saveLinkedDisclosures = async () => {
+    if (!currentVersion) {
+      toast.error("Submit the material first — no version exists to attach disclosures to.");
+      return;
+    }
+    setSavingLinks(true);
+    const { error } = await supabase
+      .from("marketing_material_versions")
+      .update({ disclosure_ids: linkedDisclosureIds } as any)
+      .eq("id", currentVersion.id);
+    setSavingLinks(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Disclosures linked to this version");
+    if (selected) openMaterial(selected);
   };
 
   const writeAudit = async (m: Material, oldStatus: Status, newStatus: Status) => {
@@ -160,16 +184,18 @@ export default function AdminMarketingReview() {
 
   const updateStatus = async (m: Material, next: Status, notes?: string) => {
     const old = m.status;
-    const { error } = await supabase
-      .from("marketing_materials")
-      .update({ status: next } as any)
-      .eq("id", m.id);
-    if (error) { toast.error(error.message); return; }
 
-    // Insert new immutable version row on submit/approve/changes_requested
+    // 1. Insert new immutable version FIRST + point current_version_id at it,
+    //    so the DB-level approval trigger sees the correctly-linked disclosures.
+    let newVersionId: string | null = null;
     if (["submitted", "approved", "changes_requested"].includes(next)) {
       const nextVersion = (versions[0]?.version_number ?? 0) + 1;
-      const { data: vRow } = await supabase
+      // Carry forward the disclosures the reviewer just linked (or existing ones).
+      const carriedDisclosureIds =
+        linkedDisclosureIds.length > 0
+          ? linkedDisclosureIds
+          : (versions[0]?.disclosure_ids as string[] | null) ?? [];
+      const { data: vRow, error: vErr } = await supabase
         .from("marketing_material_versions")
         .insert({
           material_id: m.id,
@@ -180,7 +206,7 @@ export default function AdminMarketingReview() {
             content_text: m.content_text, content_url: m.content_url,
             has_testimonial: m.has_testimonial,
           },
-          disclosure_ids: [],
+          disclosure_ids: carriedDisclosureIds,
           submitted_by: user?.id ?? null,
           reviewed_by: canReview ? user?.id ?? null : null,
           reviewed_at: canReview ? new Date().toISOString() : null,
@@ -189,11 +215,19 @@ export default function AdminMarketingReview() {
         } as any)
         .select("*")
         .single();
-      if (vRow) {
-        await supabase.from("marketing_materials")
-          .update({ current_version_id: (vRow as any).id } as any).eq("id", m.id);
-      }
+      if (vErr) { toast.error(vErr.message); return; }
+      newVersionId = (vRow as any).id;
+      const { error: cvErr } = await supabase.from("marketing_materials")
+        .update({ current_version_id: newVersionId } as any).eq("id", m.id);
+      if (cvErr) { toast.error(cvErr.message); return; }
     }
+
+    // 2. Now flip the status. The BEFORE UPDATE trigger will re-check disclosures.
+    const { error } = await supabase
+      .from("marketing_materials")
+      .update({ status: next } as any)
+      .eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
 
     await writeAudit(m, old, next);
 
@@ -223,8 +257,12 @@ export default function AdminMarketingReview() {
 
   const requiredDisclosureMissing = useMemo(() => {
     if (!selected?.has_testimonial) return false;
-    return !disclosures.some((d) => d.disclosure_type === "testimonial");
-  }, [selected, disclosures]);
+    const linkedIds = currentVersion?.disclosure_ids ?? [];
+    if (!linkedIds || linkedIds.length === 0) return true;
+    return !disclosures.some(
+      (d) => d.disclosure_type === "testimonial" && linkedIds.includes(d.id)
+    );
+  }, [selected, disclosures, currentVersion]);
 
   const filtered = useMemo(() => {
     return materials.filter((m) => {
@@ -446,22 +484,65 @@ export default function AdminMarketingReview() {
                   </div>
                 </section>
 
-                {/* Disclosures */}
+                {/* Disclosures — attach to the CURRENT version */}
                 <section>
-                  <h3 className="text-sm font-semibold text-foreground mb-2">Linked Disclosures ({disclosures.length})</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Link Disclosures to This Version
+                      {currentVersion && (
+                        <span className="ml-2 text-xs text-muted-foreground font-normal">
+                          (v{currentVersion.version_number} · {linkedDisclosureIds.length} linked)
+                        </span>
+                      )}
+                    </h3>
+                    {currentVersion && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={savingLinks}
+                        onClick={saveLinkedDisclosures}
+                      >
+                        {savingLinks ? "Saving…" : "Save Links"}
+                      </Button>
+                    )}
+                  </div>
+                  {!currentVersion && (
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Submit this material for review to create a version you can attach disclosures to.
+                    </div>
+                  )}
                   {disclosures.length === 0 ? (
-                    <div className="text-xs text-muted-foreground">No disclosures on file for this client.</div>
+                    <div className="text-xs text-muted-foreground">No disclosures on file for this client — add one under Compliance Disclosures first.</div>
                   ) : (
                     <div className="space-y-1">
-                      {disclosures.map((d) => (
-                        <div key={d.id} className="text-xs rounded-md border border-border bg-muted/20 p-2">
-                          <Badge variant="outline" className="text-[10px] mr-2">{d.disclosure_type}</Badge>
-                          {d.disclosure_text}
-                        </div>
-                      ))}
+                      {disclosures.map((d) => {
+                        const checked = linkedDisclosureIds.includes(d.id);
+                        return (
+                          <label
+                            key={d.id}
+                            className="flex items-start gap-2 text-xs rounded-md border border-border bg-muted/20 p-2 cursor-pointer hover:bg-muted/40"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              disabled={!currentVersion}
+                              onCheckedChange={(c) => {
+                                setLinkedDisclosureIds((prev) =>
+                                  c ? [...prev, d.id] : prev.filter((x) => x !== d.id)
+                                );
+                              }}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1">
+                              <Badge variant="outline" className="text-[10px] mr-2">{d.disclosure_type}</Badge>
+                              {d.disclosure_text}
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                   )}
                 </section>
+
 
                 {/* Substantiation */}
                 <section>
