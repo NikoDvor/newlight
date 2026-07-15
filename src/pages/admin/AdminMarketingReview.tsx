@@ -184,16 +184,18 @@ export default function AdminMarketingReview() {
 
   const updateStatus = async (m: Material, next: Status, notes?: string) => {
     const old = m.status;
-    const { error } = await supabase
-      .from("marketing_materials")
-      .update({ status: next } as any)
-      .eq("id", m.id);
-    if (error) { toast.error(error.message); return; }
 
-    // Insert new immutable version row on submit/approve/changes_requested
+    // 1. Insert new immutable version FIRST + point current_version_id at it,
+    //    so the DB-level approval trigger sees the correctly-linked disclosures.
+    let newVersionId: string | null = null;
     if (["submitted", "approved", "changes_requested"].includes(next)) {
       const nextVersion = (versions[0]?.version_number ?? 0) + 1;
-      const { data: vRow } = await supabase
+      // Carry forward the disclosures the reviewer just linked (or existing ones).
+      const carriedDisclosureIds =
+        linkedDisclosureIds.length > 0
+          ? linkedDisclosureIds
+          : (versions[0]?.disclosure_ids as string[] | null) ?? [];
+      const { data: vRow, error: vErr } = await supabase
         .from("marketing_material_versions")
         .insert({
           material_id: m.id,
@@ -204,7 +206,7 @@ export default function AdminMarketingReview() {
             content_text: m.content_text, content_url: m.content_url,
             has_testimonial: m.has_testimonial,
           },
-          disclosure_ids: [],
+          disclosure_ids: carriedDisclosureIds,
           submitted_by: user?.id ?? null,
           reviewed_by: canReview ? user?.id ?? null : null,
           reviewed_at: canReview ? new Date().toISOString() : null,
@@ -213,11 +215,19 @@ export default function AdminMarketingReview() {
         } as any)
         .select("*")
         .single();
-      if (vRow) {
-        await supabase.from("marketing_materials")
-          .update({ current_version_id: (vRow as any).id } as any).eq("id", m.id);
-      }
+      if (vErr) { toast.error(vErr.message); return; }
+      newVersionId = (vRow as any).id;
+      const { error: cvErr } = await supabase.from("marketing_materials")
+        .update({ current_version_id: newVersionId } as any).eq("id", m.id);
+      if (cvErr) { toast.error(cvErr.message); return; }
     }
+
+    // 2. Now flip the status. The BEFORE UPDATE trigger will re-check disclosures.
+    const { error } = await supabase
+      .from("marketing_materials")
+      .update({ status: next } as any)
+      .eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
 
     await writeAudit(m, old, next);
 
@@ -247,7 +257,11 @@ export default function AdminMarketingReview() {
 
   const requiredDisclosureMissing = useMemo(() => {
     if (!selected?.has_testimonial) return false;
-    return !disclosures.some((d) => d.disclosure_type === "testimonial");
+    const linkedIds = currentVersion?.disclosure_ids ?? [];
+    if (!linkedIds || linkedIds.length === 0) return true;
+    return !disclosures.some(
+      (d) => d.disclosure_type === "testimonial" && linkedIds.includes(d.id)
+    );
   }, [selected, disclosures]);
 
   const filtered = useMemo(() => {
