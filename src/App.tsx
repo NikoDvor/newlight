@@ -174,6 +174,13 @@ import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
 import AdminWebsites from "./pages/admin/AdminWebsites";
+import AdminClientHealth from "./pages/admin/AdminClientHealth";
+import AdminRevenueGrowth from "./pages/admin/AdminRevenueGrowth";
+import AdminPriorityAlerts from "./pages/admin/AdminPriorityAlerts";
+import AdminBrokenSetupFlags from "./pages/admin/AdminBrokenSetupFlags";
+import AdminOnboardingProgressPage from "./pages/admin/AdminOnboardingProgressPage";
+import AdminWinTracking from "./pages/admin/AdminWinTracking";
+import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
 import CallTracking from "./pages/CallTracking";
 
