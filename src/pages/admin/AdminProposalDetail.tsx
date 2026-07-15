@@ -43,6 +43,7 @@ export default function AdminProposalDetail() {
   const [newItem, setNewItem] = useState({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
   useEffect(() => {
     if (!proposalId) return;
