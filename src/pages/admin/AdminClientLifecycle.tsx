@@ -17,6 +17,7 @@ import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
 import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
+import { OnboardingBundleWidget } from "@/components/admin/OnboardingBundleWidget";
 
 interface ClientData {
   id: string;
