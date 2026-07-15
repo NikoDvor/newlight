@@ -104,8 +104,10 @@ serve(async (req) => {
         action: "envelope_signed",
         module: "document_envelopes",
         status: "success",
-        metadata: { envelope_id: envelope.id, signer: signer_name, ip },
+        metadata: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, signer: signer_name, ip },
       });
+
+      await emitOnboardingEvent("onboarding_bundle_signed", "Onboarding Bundle Signed", { signer: signer_name, signer_email, ip });
 
       return json({ success: true, status: "signed", signature: sig });
     }
