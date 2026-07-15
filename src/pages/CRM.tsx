@@ -88,7 +88,7 @@ export default function CRM() {
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
     lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "",
-    referred_by_promoter_id: "",
+    referred_by_promoter_id: "", date_of_birth: "",
   });
   const [referralPromoters, setReferralPromoters] = useState<Array<{ id: string; full_name: string }>>([]);
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
@@ -166,11 +166,12 @@ export default function CRM() {
       company_id: newContact.company_id || null,
       contact_owner: newContact.contact_owner || null,
       referred_by_promoter_id: newContact.referred_by_promoter_id || null,
+      date_of_birth: newContact.date_of_birth || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
-    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "", referred_by_promoter_id: "" });
+    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "", referred_by_promoter_id: "", date_of_birth: "" });
     setContactOpen(false);
     fetchData();
   };
@@ -995,6 +996,12 @@ export default function CRM() {
                 </Select>
               </div>
             )}
+            <div className="space-y-2">
+              <Label>Date of Birth</Label>
+              <Input type="date" value={newContact.date_of_birth}
+                onChange={e => setNewContact(p => ({ ...p, date_of_birth: e.target.value }))} />
+              <p className="text-[10px] text-muted-foreground">Used for advisor milestone triggers (age 59½, 62 SS window, 65 Medicare, 73 RMD).</p>
+            </div>
             <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>

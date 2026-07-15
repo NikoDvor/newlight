@@ -3764,6 +3764,7 @@ export type Database = {
           contact_status: string
           created_at: string
           customer_value: number | null
+          date_of_birth: string | null
           email: string | null
           external_crm_contact_id: string | null
           first_contact_date: string | null
@@ -3774,6 +3775,7 @@ export type Database = {
           lead_score: number | null
           lead_source: string | null
           lifetime_revenue: number | null
+          milestone_alerts_fired: Json
           number_of_appointments: number | null
           number_of_purchases: number | null
           phone: string | null
@@ -3794,6 +3796,7 @@ export type Database = {
           contact_status?: string
           created_at?: string
           customer_value?: number | null
+          date_of_birth?: string | null
           email?: string | null
           external_crm_contact_id?: string | null
           first_contact_date?: string | null
@@ -3804,6 +3807,7 @@ export type Database = {
           lead_score?: number | null
           lead_source?: string | null
           lifetime_revenue?: number | null
+          milestone_alerts_fired?: Json
           number_of_appointments?: number | null
           number_of_purchases?: number | null
           phone?: string | null
@@ -3824,6 +3828,7 @@ export type Database = {
           contact_status?: string
           created_at?: string
           customer_value?: number | null
+          date_of_birth?: string | null
           email?: string | null
           external_crm_contact_id?: string | null
           first_contact_date?: string | null
@@ -3834,6 +3839,7 @@ export type Database = {
           lead_score?: number | null
           lead_source?: string | null
           lifetime_revenue?: number | null
+          milestone_alerts_fired?: Json
           number_of_appointments?: number | null
           number_of_purchases?: number | null
           phone?: string | null
@@ -12853,6 +12859,21 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      run_household_review_scan: {
+        Args: { _lead_days?: number }
+        Returns: {
+          action: string
+          household_id: string
+        }[]
+      }
+      run_life_event_milestone_scan: {
+        Args: { _lookahead_days?: number }
+        Returns: {
+          action: string
+          contact_id: string
+          milestone: string
         }[]
       }
       user_can_access_client: {

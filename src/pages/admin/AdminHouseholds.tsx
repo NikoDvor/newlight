@@ -37,7 +37,18 @@ interface Member {
   id: string; household_id: string; contact_id: string;
   relationship_role: Role;
 }
-interface Contact { id: string; full_name: string; household_id: string | null; }
+interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; }
+
+type UpcomingRow =
+  | { kind: "review"; id: string; label: string; when: Date; sub: string }
+  | { kind: "milestone"; id: string; label: string; when: Date; sub: string };
+
+const MILESTONE_DEFS: Array<{ code: string; years: number; months: number; label: string }> = [
+  { code: "59_5",         years: 59, months: 6, label: "Age 59½ — penalty-free withdrawals" },
+  { code: "62_ss_window", years: 62, months: 0, label: "Social Security window opens (62)" },
+  { code: "65_medicare",  years: 65, months: 0, label: "Medicare enrollment (65)" },
+  { code: "73_rmd",       years: 73, months: 0, label: "RMD age (73)" },
+];
 
 const CADENCE_LABEL: Record<Cadence, string> = {
   quarterly: "Quarterly", semi_annual: "Semi-Annual", annual: "Annual",
@@ -76,7 +87,7 @@ export default function AdminHouseholds() {
     setLoading(true);
     const [{ data: h }, { data: c }] = await Promise.all([
       supabase.from("households").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("crm_contacts").select("id, full_name, household_id").eq("client_id", activeClientId).order("full_name"),
+      supabase.from("crm_contacts").select("id, full_name, household_id, date_of_birth").eq("client_id", activeClientId).order("full_name"),
     ]);
     const list = (h as any[]) ?? [];
     setHouseholds(list);
@@ -107,6 +118,43 @@ export default function AdminHouseholds() {
     () => households.filter((h) => !search || h.household_name.toLowerCase().includes(search.toLowerCase())),
     [households, search],
   );
+
+  const upcoming = useMemo<UpcomingRow[]>(() => {
+    const now = new Date();
+    const horizon = new Date(now.getTime() + 90 * 86400000);
+    const rows: UpcomingRow[] = [];
+
+    for (const h of households) {
+      if (!h.next_review_due_at) continue;
+      const when = new Date(h.next_review_due_at);
+      if (when <= horizon) {
+        const days = Math.round((when.getTime() - now.getTime()) / 86400000);
+        rows.push({
+          kind: "review", id: `r-${h.id}`, when,
+          label: h.household_name,
+          sub: days < 0 ? `Overdue ${-days}d` : `Review in ${days}d`,
+        });
+      }
+    }
+    for (const c of contacts) {
+      if (!c.date_of_birth) continue;
+      const dob = new Date(c.date_of_birth);
+      for (const m of MILESTONE_DEFS) {
+        const when = new Date(dob);
+        when.setFullYear(when.getFullYear() + m.years);
+        when.setMonth(when.getMonth() + m.months);
+        if (when >= now && when <= horizon) {
+          const days = Math.round((when.getTime() - now.getTime()) / 86400000);
+          rows.push({
+            kind: "milestone", id: `m-${c.id}-${m.code}`, when,
+            label: `${c.full_name} — ${m.label}`,
+            sub: `In ${days}d`,
+          });
+        }
+      }
+    }
+    return rows.sort((a, b) => a.when.getTime() - b.when.getTime()).slice(0, 20);
+  }, [households, contacts]);
 
   const createHousehold = async () => {
     if (!activeClientId || !newForm.household_name.trim()) { toast.error("Name required"); return; }
@@ -217,6 +265,35 @@ export default function AdminHouseholds() {
           </Card>
         ))}
       </div>
+
+      <Card className="border-border bg-card">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Upcoming Milestones & Reviews (next 90d)</h3>
+            <Badge variant="outline">{upcoming.length}</Badge>
+          </div>
+          {upcoming.length === 0 ? (
+            <div className="text-xs text-muted-foreground">Nothing due in the next 90 days.</div>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {upcoming.map((u) => (
+                <div key={u.id} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={u.kind === "review"
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                      : "bg-blue-500/15 text-blue-300 border-blue-500/30"}>
+                      {u.kind === "review" ? "Review" : "Milestone"}
+                    </Badge>
+                    <span className="text-foreground">{u.label}</span>
+                  </div>
+                  <div className="text-muted-foreground">{u.sub} · {u.when.toLocaleDateString()}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
