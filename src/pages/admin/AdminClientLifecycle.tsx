@@ -18,6 +18,7 @@ import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from 
 import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { OnboardingBundleWidget } from "@/components/admin/OnboardingBundleWidget";
+import { MeetingNotetakerWebhookWidget } from "@/components/admin/MeetingNotetakerWebhookWidget";
 
 interface ClientData {
   id: string;
@@ -280,6 +281,9 @@ export default function AdminClientLifecycle() {
         ownerName={client.owner_name}
         ownerEmail={client.owner_email}
       />
+
+      {/* Meeting Notetaker Webhook */}
+      <MeetingNotetakerWebhookWidget clientId={client.id} />
 
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
