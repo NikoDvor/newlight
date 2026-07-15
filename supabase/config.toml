@@ -22,3 +22,6 @@ verify_jwt = false
 
 [functions.document-envelope-action]
 verify_jwt = false
+
+[functions.meeting-notetaker-webhook]
+verify_jwt = false
