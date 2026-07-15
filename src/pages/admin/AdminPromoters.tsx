@@ -79,6 +79,10 @@ export default function AdminPromoters() {
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [comp, setComp] = useState<CompRow[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [referralRoi, setReferralRoi] = useState<Array<{
+    promoter_id: string; full_name: string; referral_category: string | null;
+    lifetime_value: number; deal_count: number;
+  }>>([]);
   const [showNewPromoter, setShowNewPromoter] = useState(false);
   const [showNewTestimonial, setShowNewTestimonial] = useState(false);
   const [showNewAgreement, setShowNewAgreement] = useState(false);
