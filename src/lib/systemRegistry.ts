@@ -533,6 +533,18 @@ export const systemModules: SystemModule[] = [
     feedsInto: ["automation", "audit_logs"],
     receivesFrom: ["crm"],
   },
+  {
+    key: "promoter_registry",
+    name: "Promoter & Testimonial Registry",
+    category: "Enterprise Services",
+    status: "In Progress",
+    dependency: "Native",
+    description: "Registry of promoters, agreements, testimonials, and 12-month compensation rollups for testimonial/endorsement compliance.",
+    routes: ["/admin/promoters"],
+    dataModels: ["promoters", "promoter_agreements", "testimonials", "promoter_compensation_log"],
+    feedsInto: ["marketing_review", "automation"],
+    receivesFrom: ["crm"],
+  },
 ];
 
 /* ── helpers ── */

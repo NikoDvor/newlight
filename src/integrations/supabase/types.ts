@@ -8443,6 +8443,136 @@ export type Database = {
           },
         ]
       }
+      promoter_agreements: {
+        Row: {
+          agreement_url: string | null
+          compensation_amount: number | null
+          compensation_period:
+            | Database["public"]["Enums"]["promoter_compensation_period"]
+            | null
+          compensation_type: Database["public"]["Enums"]["promoter_compensation_type"]
+          created_at: string
+          effective_date: string | null
+          expiration_date: string | null
+          id: string
+          promoter_id: string
+          status: Database["public"]["Enums"]["promoter_agreement_status"]
+          updated_at: string
+        }
+        Insert: {
+          agreement_url?: string | null
+          compensation_amount?: number | null
+          compensation_period?:
+            | Database["public"]["Enums"]["promoter_compensation_period"]
+            | null
+          compensation_type?: Database["public"]["Enums"]["promoter_compensation_type"]
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          id?: string
+          promoter_id: string
+          status?: Database["public"]["Enums"]["promoter_agreement_status"]
+          updated_at?: string
+        }
+        Update: {
+          agreement_url?: string | null
+          compensation_amount?: number | null
+          compensation_period?:
+            | Database["public"]["Enums"]["promoter_compensation_period"]
+            | null
+          compensation_type?: Database["public"]["Enums"]["promoter_compensation_type"]
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          id?: string
+          promoter_id?: string
+          status?: Database["public"]["Enums"]["promoter_agreement_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_agreements_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_compensation_log: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          paid_at: string
+          promoter_id: string
+          twelve_month_running_total: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          promoter_id: string
+          twelve_month_running_total?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          promoter_id?: string
+          twelve_month_running_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_compensation_log_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoters: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          disciplinary_lookback_notes: string | null
+          full_name: string
+          id: string
+          is_ineligible_person: boolean
+          promoter_type: Database["public"]["Enums"]["promoter_type"]
+          requires_written_agreement: boolean
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          disciplinary_lookback_notes?: string | null
+          full_name: string
+          id?: string
+          is_ineligible_person?: boolean
+          promoter_type?: Database["public"]["Enums"]["promoter_type"]
+          requires_written_agreement?: boolean
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          disciplinary_lookback_notes?: string | null
+          full_name?: string
+          id?: string
+          is_ineligible_person?: boolean
+          promoter_type?: Database["public"]["Enums"]["promoter_type"]
+          requires_written_agreement?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       proposal_line_items: {
         Row: {
           created_at: string
@@ -11093,6 +11223,75 @@ export type Database = {
           },
         ]
       }
+      testimonials: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          disclosed_client_status: boolean
+          disclosed_compensation: boolean
+          disclosed_conflicts: boolean
+          disclosure_delivered_at: string | null
+          disclosure_method:
+            | Database["public"]["Enums"]["testimonial_disclosure_method"]
+            | null
+          id: string
+          material_id: string | null
+          promoter_id: string
+          testimonial_text: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          disclosed_client_status?: boolean
+          disclosed_compensation?: boolean
+          disclosed_conflicts?: boolean
+          disclosure_delivered_at?: string | null
+          disclosure_method?:
+            | Database["public"]["Enums"]["testimonial_disclosure_method"]
+            | null
+          id?: string
+          material_id?: string | null
+          promoter_id: string
+          testimonial_text: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          disclosed_client_status?: boolean
+          disclosed_compensation?: boolean
+          disclosed_conflicts?: boolean
+          disclosure_delivered_at?: string | null
+          disclosure_method?:
+            | Database["public"]["Enums"]["testimonial_disclosure_method"]
+            | null
+          id?: string
+          material_id?: string | null
+          promoter_id?: string
+          testimonial_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           approved_at: string | null
@@ -12525,6 +12724,11 @@ export type Database = {
         | "video"
         | "print"
         | "other"
+      promoter_agreement_status: "draft" | "active" | "expired" | "terminated"
+      promoter_compensation_period: "one_time" | "monthly" | "annual"
+      promoter_compensation_type: "cash" | "non_cash" | "none"
+      promoter_type: "client" | "non_client" | "employee" | "coi"
+      testimonial_disclosure_method: "embedded" | "linked" | "verbal_disclosed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -12686,6 +12890,11 @@ export const Constants = {
         "print",
         "other",
       ],
+      promoter_agreement_status: ["draft", "active", "expired", "terminated"],
+      promoter_compensation_period: ["one_time", "monthly", "annual"],
+      promoter_compensation_type: ["cash", "non_cash", "none"],
+      promoter_type: ["client", "non_client", "employee", "coi"],
+      testimonial_disclosure_method: ["embedded", "linked", "verbal_disclosed"],
     },
   },
 } as const

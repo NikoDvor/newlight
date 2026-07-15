@@ -66,6 +66,10 @@ export const EVENT_REGISTRY = {
   material_approved: { category: "Marketing", name: "Marketing Material Approved" },
   material_changes_requested: { category: "Marketing", name: "Marketing Material Changes Requested" },
   disclosure_missing_flagged: { category: "Marketing", name: "Disclosure Missing Flagged" },
+  // Compliance
+  promoter_agreement_expiring: { category: "Compliance", name: "Promoter Agreement Expiring" },
+  compensation_threshold_crossed: { category: "Compliance", name: "Promoter 12-Month Compensation Threshold Crossed" },
+  testimonial_disclosure_incomplete: { category: "Compliance", name: "Testimonial Disclosure Incomplete" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
@@ -84,6 +88,7 @@ export const ACTION_TYPES = [
   "create_activity_feed_entry", "create_audit_log", "create_handoff_task",
   "create_recovery_task", "create_integration_task",
   "flag_disclosure_missing", "notify_compliance_reviewer",
+  "create_compliance_task", "flag_promoter_review",
 ] as const;
 
 // ─── Emit Event ──────────────────────────────────────────────────────

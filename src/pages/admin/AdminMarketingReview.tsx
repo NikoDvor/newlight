@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { TestimonialFormDialog } from "@/components/TestimonialFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PageHeader } from "@/components/PageHeader";
@@ -117,6 +118,7 @@ export default function AdminMarketingReview() {
   });
   const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
   const [savingLinks, setSavingLinks] = useState(false);
+  const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
 
   const currentVersion = versions[0] ?? null;
 
@@ -455,14 +457,27 @@ export default function AdminMarketingReview() {
                 {/* Disclosure gate */}
                 {selected.has_testimonial && (
                   <section className={`rounded-md border p-3 ${requiredDisclosureMissing ? "border-red-500/40 bg-red-500/10" : "border-emerald-500/30 bg-emerald-500/10"}`}>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <ShieldAlert className={`h-4 w-4 ${requiredDisclosureMissing ? "text-red-400" : "text-emerald-400"}`} />
-                      {requiredDisclosureMissing
-                        ? "Testimonial detected — testimonial disclosure required before approval."
-                        : "Testimonial disclosure on file."}
+                    <div className="flex items-center justify-between gap-2 text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className={`h-4 w-4 ${requiredDisclosureMissing ? "text-red-400" : "text-emerald-400"}`} />
+                        {requiredDisclosureMissing
+                          ? "Testimonial detected — testimonial disclosure required before approval."
+                          : "Testimonial disclosure on file."}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => setShowTestimonialDialog(true)}>
+                        Add Testimonial Record
+                      </Button>
                     </div>
                   </section>
                 )}
+
+                <TestimonialFormDialog
+                  open={showTestimonialDialog}
+                  onOpenChange={setShowTestimonialDialog}
+                  materialId={selected.id}
+                  onSaved={() => openMaterial(selected)}
+                />
+
 
                 {/* Version history */}
                 <section>
