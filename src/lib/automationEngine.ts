@@ -77,6 +77,12 @@ export const EVENT_REGISTRY = {
   contact_milestone_65_medicare: { category: "Households", name: "Contact Milestone — Medicare (65)" },
   contact_milestone_73_rmd: { category: "Households", name: "Contact Milestone — RMD (73)" },
   contact_milestone_ss_window: { category: "Households", name: "Contact Milestone — Social Security Window" },
+  // Onboarding Documents
+  onboarding_bundle_created: { category: "Onboarding Documents", name: "Onboarding Bundle Created" },
+  onboarding_bundle_sent: { category: "Onboarding Documents", name: "Onboarding Bundle Sent" },
+  onboarding_bundle_viewed: { category: "Onboarding Documents", name: "Onboarding Bundle Viewed" },
+  onboarding_bundle_signed: { category: "Onboarding Documents", name: "Onboarding Bundle Signed" },
+  onboarding_bundle_declined: { category: "Onboarding Documents", name: "Onboarding Bundle Declined" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
