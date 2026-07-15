@@ -14,8 +14,9 @@ import { onProposalSent } from "@/lib/salesAutomation";
 import {
   ArrowLeft, FileText, DollarSign, Send, Copy, Archive,
   CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus,
-  Link2, PenTool, Trash2, ExternalLink
+  Link2, PenTool, Trash2, ExternalLink, FileSignature
 } from "lucide-react";
+import { SignatureDialog } from "@/components/SignatureDialog";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-amber-500/20 text-amber-400",
