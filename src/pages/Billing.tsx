@@ -42,6 +42,7 @@ export default function Billing() {
   const [contract, setContract] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     if (!activeClientId) { setLoading(false); return; }
