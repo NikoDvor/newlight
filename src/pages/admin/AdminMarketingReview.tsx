@@ -118,6 +118,7 @@ export default function AdminMarketingReview() {
   });
   const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
   const [savingLinks, setSavingLinks] = useState(false);
+  const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
 
   const currentVersion = versions[0] ?? null;
 
