@@ -83,6 +83,7 @@ export const ACTION_TYPES = [
   "create_workspace_user", "send_invite", "assign_permissions",
   "create_activity_feed_entry", "create_audit_log", "create_handoff_task",
   "create_recovery_task", "create_integration_task",
+  "flag_disclosure_missing", "notify_compliance_reviewer",
 ] as const;
 
 // ─── Emit Event ──────────────────────────────────────────────────────
