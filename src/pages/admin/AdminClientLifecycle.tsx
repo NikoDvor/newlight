@@ -282,6 +282,9 @@ export default function AdminClientLifecycle() {
         ownerEmail={client.owner_email}
       />
 
+      {/* Meeting Notetaker Webhook */}
+      <MeetingNotetakerWebhookWidget clientId={client.id} />
+
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">
