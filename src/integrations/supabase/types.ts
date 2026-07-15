@@ -6388,11 +6388,13 @@ export type Database = {
           client_id: string
           created_at: string
           duration_minutes: number | null
+          external_meeting_id: string | null
           follow_up_date: string | null
           id: string
           interests: Json | null
           meeting_date: string | null
           next_steps: Json | null
+          notetaker_vendor: string | null
           objections: Json | null
           score: number | null
           sentiment: string | null
@@ -6406,11 +6408,13 @@ export type Database = {
           client_id: string
           created_at?: string
           duration_minutes?: number | null
+          external_meeting_id?: string | null
           follow_up_date?: string | null
           id?: string
           interests?: Json | null
           meeting_date?: string | null
           next_steps?: Json | null
+          notetaker_vendor?: string | null
           objections?: Json | null
           score?: number | null
           sentiment?: string | null
@@ -6424,11 +6428,13 @@ export type Database = {
           client_id?: string
           created_at?: string
           duration_minutes?: number | null
+          external_meeting_id?: string | null
           follow_up_date?: string | null
           id?: string
           interests?: Json | null
           meeting_date?: string | null
           next_steps?: Json | null
+          notetaker_vendor?: string | null
           objections?: Json | null
           score?: number | null
           sentiment?: string | null
@@ -6497,6 +6503,44 @@ export type Database = {
             columns: ["workspace_user_id"]
             isOneToOne: true
             referencedRelation: "workspace_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_notetaker_configs: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          vendor_name: string
+          webhook_secret: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          vendor_name?: string
+          webhook_secret: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          vendor_name?: string
+          webhook_secret?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_notetaker_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
