@@ -274,6 +274,13 @@ export default function AdminClientLifecycle() {
           </CardContent>
         </Card>
       )}
+      {/* Onboarding Document Bundle */}
+      <OnboardingBundleWidget
+        clientId={client.id}
+        ownerName={client.owner_name}
+        ownerEmail={client.owner_email}
+      />
+
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">
