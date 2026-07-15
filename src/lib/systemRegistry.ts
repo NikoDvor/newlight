@@ -521,6 +521,18 @@ export const systemModules: SystemModule[] = [
     feedsInto: ["conversations"],
     receivesFrom: [],
   },
+  {
+    key: "marketing_review",
+    name: "Marketing Review & Approval",
+    category: "Enterprise Services",
+    status: "In Progress",
+    dependency: "Native",
+    description: "Compliance review workflow for marketing materials with disclosure gating and immutable version history.",
+    routes: ["/admin/marketing-review"],
+    dataModels: ["marketing_materials", "marketing_material_versions", "marketing_disclosures", "marketing_substantiation_files"],
+    feedsInto: ["automation", "audit_logs"],
+    receivesFrom: ["crm"],
+  },
 ];
 
 /* ── helpers ── */

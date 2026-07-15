@@ -61,6 +61,11 @@ export const EVENT_REGISTRY = {
   timesheet_submitted: { category: "Workforce", name: "Timesheet Submitted" },
   timesheet_rejected: { category: "Workforce", name: "Timesheet Rejected" },
   payroll_approved: { category: "Workforce", name: "Payroll Approved" },
+  // Marketing
+  material_submitted: { category: "Marketing", name: "Marketing Material Submitted" },
+  material_approved: { category: "Marketing", name: "Marketing Material Approved" },
+  material_changes_requested: { category: "Marketing", name: "Marketing Material Changes Requested" },
+  disclosure_missing_flagged: { category: "Marketing", name: "Disclosure Missing Flagged" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
@@ -78,6 +83,7 @@ export const ACTION_TYPES = [
   "create_workspace_user", "send_invite", "assign_permissions",
   "create_activity_feed_entry", "create_audit_log", "create_handoff_task",
   "create_recovery_task", "create_integration_task",
+  "flag_disclosure_missing", "notify_compliance_reviewer",
 ] as const;
 
 // ─── Emit Event ──────────────────────────────────────────────────────

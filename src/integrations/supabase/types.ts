@@ -5971,6 +5971,175 @@ export type Database = {
           },
         ]
       }
+      marketing_disclosures: {
+        Row: {
+          client_id: string
+          created_at: string
+          disclosure_text: string
+          disclosure_type: Database["public"]["Enums"]["marketing_disclosure_type"]
+          id: string
+          is_required: boolean
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          disclosure_text: string
+          disclosure_type?: Database["public"]["Enums"]["marketing_disclosure_type"]
+          id?: string
+          is_required?: boolean
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          disclosure_text?: string
+          disclosure_type?: Database["public"]["Enums"]["marketing_disclosure_type"]
+          id?: string
+          is_required?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_material_versions: {
+        Row: {
+          client_id: string
+          content_snapshot: Json
+          created_at: string
+          disclosure_ids: string[]
+          id: string
+          material_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["marketing_material_status"]
+          submitted_at: string
+          submitted_by: string | null
+          version_number: number
+        }
+        Insert: {
+          client_id: string
+          content_snapshot?: Json
+          created_at?: string
+          disclosure_ids?: string[]
+          id?: string
+          material_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["marketing_material_status"]
+          submitted_at?: string
+          submitted_by?: string | null
+          version_number: number
+        }
+        Update: {
+          client_id?: string
+          content_snapshot?: Json
+          created_at?: string
+          disclosure_ids?: string[]
+          id?: string
+          material_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["marketing_material_status"]
+          submitted_at?: string
+          submitted_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_material_versions_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_materials: {
+        Row: {
+          client_id: string
+          content_text: string | null
+          content_url: string | null
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          has_testimonial: boolean
+          id: string
+          material_type: Database["public"]["Enums"]["marketing_material_type"]
+          status: Database["public"]["Enums"]["marketing_material_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content_text?: string | null
+          content_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          has_testimonial?: boolean
+          id?: string
+          material_type?: Database["public"]["Enums"]["marketing_material_type"]
+          status?: Database["public"]["Enums"]["marketing_material_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content_text?: string | null
+          content_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          has_testimonial?: boolean
+          id?: string
+          material_type?: Database["public"]["Enums"]["marketing_material_type"]
+          status?: Database["public"]["Enums"]["marketing_material_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_substantiation_files: {
+        Row: {
+          claim_text: string
+          client_id: string
+          file_url: string | null
+          id: string
+          material_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          claim_text: string
+          client_id: string
+          file_url?: string | null
+          id?: string
+          material_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          claim_text?: string
+          client_id?: string
+          file_url?: string | null
+          id?: string
+          material_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_substantiation_files_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_intelligence: {
         Row: {
           action_items: Json | null
@@ -12335,6 +12504,27 @@ export type Database = {
         | "marketing_staff"
         | "support_staff"
         | "project_manager"
+      marketing_disclosure_type:
+        | "testimonial"
+        | "compensation"
+        | "conflict_of_interest"
+        | "general"
+      marketing_material_status:
+        | "draft"
+        | "submitted"
+        | "in_review"
+        | "changes_requested"
+        | "approved"
+        | "published"
+        | "archived"
+      marketing_material_type:
+        | "email"
+        | "social_post"
+        | "ad"
+        | "landing_page"
+        | "video"
+        | "print"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -12471,6 +12661,30 @@ export const Constants = {
         "marketing_staff",
         "support_staff",
         "project_manager",
+      ],
+      marketing_disclosure_type: [
+        "testimonial",
+        "compensation",
+        "conflict_of_interest",
+        "general",
+      ],
+      marketing_material_status: [
+        "draft",
+        "submitted",
+        "in_review",
+        "changes_requested",
+        "approved",
+        "published",
+        "archived",
+      ],
+      marketing_material_type: [
+        "email",
+        "social_post",
+        "ad",
+        "landing_page",
+        "video",
+        "print",
+        "other",
       ],
     },
   },
