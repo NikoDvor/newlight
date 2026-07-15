@@ -120,6 +120,7 @@ import AdminOnboardingCommandCenter from "./pages/admin/AdminOnboardingCommandCe
 import AdminSalesControlCenter from "./pages/admin/AdminSalesControlCenter";
 import AdminRetention from "./pages/admin/AdminRetention";
 import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
+import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
