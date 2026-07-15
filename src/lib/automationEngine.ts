@@ -89,6 +89,7 @@ export const ACTION_TYPES = [
   "create_recovery_task", "create_integration_task",
   "flag_disclosure_missing", "notify_compliance_reviewer",
   "create_compliance_task", "flag_promoter_review",
+  "create_referral_attribution",
 ] as const;
 
 // ─── Emit Event ──────────────────────────────────────────────────────
