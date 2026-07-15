@@ -118,6 +118,8 @@ import AdminImplementationQueue from "./pages/admin/AdminImplementationQueue";
 import AdminImplementationDetail from "./pages/admin/AdminImplementationDetail";
 import AdminOnboardingCommandCenter from "./pages/admin/AdminOnboardingCommandCenter";
 import AdminSalesControlCenter from "./pages/admin/AdminSalesControlCenter";
+import AdminRetention from "./pages/admin/AdminRetention";
+import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -354,6 +356,8 @@ const App = () => {
                 <Route path="client-intelligence/onboarding-progress" element={<AdminOnboardingProgressPage />} />
                 <Route path="client-intelligence/wins" element={<AdminWinTracking />} />
                 <Route path="client-intelligence/optimization" element={<AdminOptimizationFlags />} />
+                <Route path="client-intelligence/retention" element={<AdminRetention />} />
+                <Route path="client-intelligence/signed-documents" element={<AdminSignedDocuments />} />
 
                 {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
                 <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />

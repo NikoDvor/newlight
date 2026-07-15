@@ -4,10 +4,12 @@ import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
+import { ManageSubscriptionDialog } from "@/components/ManageSubscriptionDialog";
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-50 text-emerald-600",
@@ -40,6 +42,7 @@ export default function Billing() {
   const [contract, setContract] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     if (!activeClientId) { setLoading(false); return; }
@@ -82,7 +85,13 @@ export default function Billing() {
 
   return (
     <div>
-      <PageHeader title="Billing" description="Your plan, invoices, and payment status" />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader title="Billing" description="Your plan, invoices, and payment status" />
+        <Button variant="outline" className="mt-1 shrink-0" onClick={() => setManageOpen(true)}>
+          <Settings2 className="h-4 w-4 mr-1.5" /> Manage Subscription
+        </Button>
+      </div>
+      <ManageSubscriptionDialog open={manageOpen} onOpenChange={setManageOpen} />
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard

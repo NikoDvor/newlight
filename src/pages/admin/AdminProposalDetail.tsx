@@ -14,8 +14,9 @@ import { onProposalSent } from "@/lib/salesAutomation";
 import {
   ArrowLeft, FileText, DollarSign, Send, Copy, Archive,
   CheckCircle2, Eye, Clock, User, Building2, Briefcase, Plus,
-  Link2, PenTool, Trash2, ExternalLink
+  Link2, PenTool, Trash2, ExternalLink, FileSignature
 } from "lucide-react";
+import { SignatureDialog } from "@/components/SignatureDialog";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-amber-500/20 text-amber-400",
@@ -42,6 +43,7 @@ export default function AdminProposalDetail() {
   const [newItem, setNewItem] = useState({ item_name: "", item_description: "", quantity: 1, unit_price: 0 });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
   useEffect(() => {
     if (!proposalId) return;
@@ -147,6 +149,12 @@ export default function AdminProposalDetail() {
 
   return (
     <div className="space-y-6">
+      <SignatureDialog
+        open={signatureOpen}
+        onOpenChange={setSignatureOpen}
+        defaultDocTitle={proposal.proposal_title}
+        defaultRecipientEmail={proposal.crm_contacts?.email}
+      />
       <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
@@ -171,6 +179,9 @@ export default function AdminProposalDetail() {
           </Button>
           <Button size="sm" className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))]" onClick={handleSend}>
             <Send className="h-3.5 w-3.5 mr-1" /> Send Proposal
+          </Button>
+          <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={() => setSignatureOpen(true)}>
+            <FileSignature className="h-3.5 w-3.5 mr-1" /> Send for Signature
           </Button>
           <Button size="sm" variant="outline" className="border-white/10 text-white/50 hover:bg-white/10" onClick={() => updateStatus("archived")}>
             <Archive className="h-3.5 w-3.5 mr-1" /> Archive
