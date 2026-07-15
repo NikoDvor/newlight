@@ -37,7 +37,18 @@ interface Member {
   id: string; household_id: string; contact_id: string;
   relationship_role: Role;
 }
-interface Contact { id: string; full_name: string; household_id: string | null; }
+interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; }
+
+type UpcomingRow =
+  | { kind: "review"; id: string; label: string; when: Date; sub: string }
+  | { kind: "milestone"; id: string; label: string; when: Date; sub: string };
+
+const MILESTONE_DEFS: Array<{ code: string; years: number; months: number; label: string }> = [
+  { code: "59_5",         years: 59, months: 6, label: "Age 59½ — penalty-free withdrawals" },
+  { code: "62_ss_window", years: 62, months: 0, label: "Social Security window opens (62)" },
+  { code: "65_medicare",  years: 65, months: 0, label: "Medicare enrollment (65)" },
+  { code: "73_rmd",       years: 73, months: 0, label: "RMD age (73)" },
+];
 
 const CADENCE_LABEL: Record<Cadence, string> = {
   quarterly: "Quarterly", semi_annual: "Semi-Annual", annual: "Annual",
