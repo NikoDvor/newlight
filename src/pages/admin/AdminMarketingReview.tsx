@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { TestimonialFormDialog } from "@/components/TestimonialFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PageHeader } from "@/components/PageHeader";
