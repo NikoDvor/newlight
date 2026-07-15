@@ -169,6 +169,10 @@ export default function AdminPromoters() {
     setLoading(false);
   };
 
+  useEffect(() => { load(); }, [activeClientId]);
+
+
+
 
   const openPromoter = async (p: Promoter) => {
     setSelected(p);
