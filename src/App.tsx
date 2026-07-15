@@ -123,6 +123,8 @@ import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
 import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
+import AdminWebinars from "./pages/admin/AdminWebinars";
+import WebinarRegistration from "./pages/WebinarRegistration";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
