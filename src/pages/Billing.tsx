@@ -4,10 +4,12 @@ import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
+import { ManageSubscriptionDialog } from "@/components/ManageSubscriptionDialog";
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-50 text-emerald-600",
