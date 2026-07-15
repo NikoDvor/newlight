@@ -54,13 +54,15 @@ serve(async (req) => {
     };
 
     if (action === "view") {
-      if (!envelope.viewed_at) {
+      const wasFirstView = !envelope.viewed_at;
+      if (wasFirstView) {
         await supabase.from("document_envelopes").update({
           viewed_at: new Date().toISOString(),
           status: envelope.status === "sent" ? "viewed" : envelope.status,
         }).eq("id", envelope.id);
         envelope.viewed_at = new Date().toISOString();
         if (envelope.status === "sent") envelope.status = "viewed";
+        await emitOnboardingEvent("onboarding_bundle_viewed", "Onboarding Bundle Viewed", { ip });
       }
       const { data: items } = await supabase
         .from("document_envelope_items")
