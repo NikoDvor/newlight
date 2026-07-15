@@ -92,6 +92,10 @@ export const EVENT_REGISTRY = {
   webinar_registration_created: { category: "Webinars", name: "Webinar Registration Created" },
   webinar_reminder_sent: { category: "Webinars", name: "Webinar Reminder Sent" },
   webinar_followup_sent: { category: "Webinars", name: "Webinar Follow-up Sent" },
+
+  // Meeting Intelligence
+  meeting_transcript_received: { category: "Meeting Intelligence", name: "Meeting Transcript Received" },
+  meeting_action_items_created: { category: "Meeting Intelligence", name: "Meeting Action Items Created" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
