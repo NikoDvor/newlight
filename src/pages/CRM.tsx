@@ -996,6 +996,12 @@ export default function CRM() {
                 </Select>
               </div>
             )}
+            <div className="space-y-2">
+              <Label>Date of Birth</Label>
+              <Input type="date" value={newContact.date_of_birth}
+                onChange={e => setNewContact(p => ({ ...p, date_of_birth: e.target.value }))} />
+              <p className="text-[10px] text-muted-foreground">Used for advisor milestone triggers (age 59½, 62 SS window, 65 Medicare, 73 RMD).</p>
+            </div>
             <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
