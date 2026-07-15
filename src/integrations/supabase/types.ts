@@ -3777,6 +3777,7 @@ export type Database = {
           number_of_purchases: number | null
           phone: string | null
           pipeline_stage: string | null
+          referred_by_promoter_id: string | null
           secondary_phone: string | null
           state: string | null
           tags: string[] | null
@@ -3805,6 +3806,7 @@ export type Database = {
           number_of_purchases?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          referred_by_promoter_id?: string | null
           secondary_phone?: string | null
           state?: string | null
           tags?: string[] | null
@@ -3833,6 +3835,7 @@ export type Database = {
           number_of_purchases?: number | null
           phone?: string | null
           pipeline_stage?: string | null
+          referred_by_promoter_id?: string | null
           secondary_phone?: string | null
           state?: string | null
           tags?: string[] | null
@@ -3845,6 +3848,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_referred_by_promoter_id_fkey"
+            columns: ["referred_by_promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
             referencedColumns: ["id"]
           },
         ]

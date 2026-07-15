@@ -88,7 +88,9 @@ export default function CRM() {
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
     lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "",
+    referred_by_promoter_id: "",
   });
+  const [referralPromoters, setReferralPromoters] = useState<Array<{ id: string; full_name: string }>>([]);
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
   const [newTask, setNewTask] = useState({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
@@ -126,6 +128,9 @@ export default function CRM() {
     setFollowUps(fuRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
+    const { data: refs } = await supabase.from("promoters")
+      .select("id, full_name").eq("client_id", activeClientId).eq("is_referral_source", true).order("full_name");
+    setReferralPromoters((refs as any[]) ?? []);
     setLoading(false);
   };
 
@@ -160,11 +165,12 @@ export default function CRM() {
       pipeline_stage: newContact.pipeline_stage,
       company_id: newContact.company_id || null,
       contact_owner: newContact.contact_owner || null,
+      referred_by_promoter_id: newContact.referred_by_promoter_id || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
-    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "" });
+    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "", referred_by_promoter_id: "" });
     setContactOpen(false);
     fetchData();
   };
@@ -971,6 +977,21 @@ export default function CRM() {
                 <Select value={newContact.contact_owner} onValueChange={v => setNewContact(p => ({ ...p, contact_owner: v }))}>
                   <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   <SelectContent>{teamMembers.map(t => <SelectItem key={t.user_id} value={t.user_id}>{t.full_name}{t.role_title ? ` — ${t.role_title}` : ""}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            {referralPromoters.length > 0 && (
+              <div className="space-y-2">
+                <Label>Referred By</Label>
+                <Select
+                  value={newContact.referred_by_promoter_id || "none"}
+                  onValueChange={v => setNewContact(p => ({ ...p, referred_by_promoter_id: v === "none" ? "" : v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Optional — referral source" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— None —</SelectItem>
+                    {referralPromoters.map(r => <SelectItem key={r.id} value={r.id}>{r.full_name}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
             )}
