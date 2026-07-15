@@ -17,6 +17,7 @@ import { TeamAccessReview } from "@/components/admin/TeamAccessReview";
 import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from "@/components/admin/SetupItemActions";
 import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
+import { OnboardingBundleWidget } from "@/components/admin/OnboardingBundleWidget";
 
 interface ClientData {
   id: string;
@@ -273,6 +274,13 @@ export default function AdminClientLifecycle() {
           </CardContent>
         </Card>
       )}
+      {/* Onboarding Document Bundle */}
+      <OnboardingBundleWidget
+        clientId={client.id}
+        ownerName={client.owner_name}
+        ownerEmail={client.owner_email}
+      />
+
       {/* Portal Invite & Access Card */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.12)" }}>
         <CardHeader className="pb-2">

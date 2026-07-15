@@ -40,14 +40,29 @@ serve(async (req) => {
     const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
     const userAgent = req.headers.get("user-agent");
 
+    const emitOnboardingEvent = async (eventKey: string, eventName: string, extra: Record<string, unknown> = {}) => {
+      if (envelope.envelope_type !== "onboarding_bundle" || !envelope.client_id) return;
+      await supabase.from("automation_events").insert({
+        client_id: envelope.client_id,
+        event_type: eventKey,
+        event_key: eventKey,
+        event_name: eventName,
+        related_type: "document_envelope",
+        related_id: envelope.id,
+        event_data: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, ...extra },
+      });
+    };
+
     if (action === "view") {
-      if (!envelope.viewed_at) {
+      const wasFirstView = !envelope.viewed_at;
+      if (wasFirstView) {
         await supabase.from("document_envelopes").update({
           viewed_at: new Date().toISOString(),
           status: envelope.status === "sent" ? "viewed" : envelope.status,
         }).eq("id", envelope.id);
         envelope.viewed_at = new Date().toISOString();
         if (envelope.status === "sent") envelope.status = "viewed";
+        await emitOnboardingEvent("onboarding_bundle_viewed", "Onboarding Bundle Viewed", { ip });
       }
       const { data: items } = await supabase
         .from("document_envelope_items")
@@ -89,8 +104,10 @@ serve(async (req) => {
         action: "envelope_signed",
         module: "document_envelopes",
         status: "success",
-        metadata: { envelope_id: envelope.id, signer: signer_name, ip },
+        metadata: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, signer: signer_name, ip },
       });
+
+      await emitOnboardingEvent("onboarding_bundle_signed", "Onboarding Bundle Signed", { signer: signer_name, signer_email, ip });
 
       return json({ success: true, status: "signed", signature: sig });
     }
@@ -106,8 +123,10 @@ serve(async (req) => {
         action: "envelope_declined",
         module: "document_envelopes",
         status: "success",
-        metadata: { envelope_id: envelope.id, reason: rejection_reason },
+        metadata: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, reason: rejection_reason },
       });
+
+      await emitOnboardingEvent("onboarding_bundle_declined", "Onboarding Bundle Declined", { reason: rejection_reason });
 
       return json({ success: true, status: "declined" });
     }
