@@ -13009,6 +13009,13 @@ export type Database = {
           milestone: string
         }[]
       }
+      run_setup_item_auto_reminder_scan: {
+        Args: { _max_reminders?: number; _stale_days?: number }
+        Returns: {
+          action: string
+          item_id: string
+        }[]
+      }
       user_can_access_client: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean

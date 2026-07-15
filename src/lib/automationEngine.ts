@@ -83,6 +83,10 @@ export const EVENT_REGISTRY = {
   onboarding_bundle_viewed: { category: "Onboarding Documents", name: "Onboarding Bundle Viewed" },
   onboarding_bundle_signed: { category: "Onboarding Documents", name: "Onboarding Bundle Signed" },
   onboarding_bundle_declined: { category: "Onboarding Documents", name: "Onboarding Bundle Declined" },
+
+  // Setup Item Auto-Reminders
+  setup_item_auto_reminded: { category: "Onboarding", name: "Setup Item Auto-Reminded" },
+  setup_item_reminder_escalated: { category: "Onboarding", name: "Setup Item Reminder Escalated" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
