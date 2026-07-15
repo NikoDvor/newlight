@@ -8543,7 +8543,11 @@ export type Database = {
           full_name: string
           id: string
           is_ineligible_person: boolean
+          is_referral_source: boolean
           promoter_type: Database["public"]["Enums"]["promoter_type"]
+          referral_category:
+            | Database["public"]["Enums"]["referral_category"]
+            | null
           requires_written_agreement: boolean
           updated_at: string
         }
@@ -8555,7 +8559,11 @@ export type Database = {
           full_name: string
           id?: string
           is_ineligible_person?: boolean
+          is_referral_source?: boolean
           promoter_type?: Database["public"]["Enums"]["promoter_type"]
+          referral_category?:
+            | Database["public"]["Enums"]["referral_category"]
+            | null
           requires_written_agreement?: boolean
           updated_at?: string
         }
@@ -8567,7 +8575,11 @@ export type Database = {
           full_name?: string
           id?: string
           is_ineligible_person?: boolean
+          is_referral_source?: boolean
           promoter_type?: Database["public"]["Enums"]["promoter_type"]
+          referral_category?:
+            | Database["public"]["Enums"]["referral_category"]
+            | null
           requires_written_agreement?: boolean
           updated_at?: string
         }
@@ -9207,6 +9219,58 @@ export type Database = {
             columns: ["recommended_package_id"]
             isOneToOne: false
             referencedRelation: "offer_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_attributions: {
+        Row: {
+          attributed_value: number | null
+          created_at: string
+          crm_deal_id: string | null
+          id: string
+          promoter_id: string
+          referred_contact_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attributed_value?: number | null
+          created_at?: string
+          crm_deal_id?: string | null
+          id?: string
+          promoter_id: string
+          referred_contact_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attributed_value?: number | null
+          created_at?: string
+          crm_deal_id?: string | null
+          id?: string
+          promoter_id?: string
+          referred_contact_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_attributions_crm_deal_id_fkey"
+            columns: ["crm_deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_attributions_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_attributions_referred_contact_id_fkey"
+            columns: ["referred_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -12728,6 +12792,12 @@ export type Database = {
       promoter_compensation_period: "one_time" | "monthly" | "annual"
       promoter_compensation_type: "cash" | "non_cash" | "none"
       promoter_type: "client" | "non_client" | "employee" | "coi"
+      referral_category:
+        | "coi_cpa"
+        | "coi_attorney"
+        | "coi_other"
+        | "existing_client"
+        | "other"
       testimonial_disclosure_method: "embedded" | "linked" | "verbal_disclosed"
     }
     CompositeTypes: {
@@ -12894,6 +12964,13 @@ export const Constants = {
       promoter_compensation_period: ["one_time", "monthly", "annual"],
       promoter_compensation_type: ["cash", "non_cash", "none"],
       promoter_type: ["client", "non_client", "employee", "coi"],
+      referral_category: [
+        "coi_cpa",
+        "coi_attorney",
+        "coi_other",
+        "existing_client",
+        "other",
+      ],
       testimonial_disclosure_method: ["embedded", "linked", "verbal_disclosed"],
     },
   },
