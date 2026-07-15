@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { BackArrow } from "@/components/BackArrow";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard } from "@/components/DataCard";
@@ -53,6 +53,7 @@ export default function ContactDetail() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
+  const [household, setHousehold] = useState<{ id: string; household_name: string } | null>(null);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -81,6 +82,13 @@ export default function ContactDetail() {
       setReviews(rv.data || []);
       setFollowUps(fu.data || []);
       setConversations(conv.data || []);
+      const hhId = (c.data as any)?.household_id;
+      if (hhId) {
+        supabase.from("households").select("id, household_name").eq("id", hhId).maybeSingle()
+          .then(({ data }) => setHousehold(data as any));
+      } else {
+        setHousehold(null);
+      }
       setLoading(false);
     });
   }, [contactId, activeClientId]);
@@ -146,6 +154,16 @@ export default function ContactDetail() {
                 {contact.tags.map((t: string) => (
                   <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">{t}</span>
                 ))}
+              </div>
+            )}
+            {household && (
+              <div className="mt-2">
+                <Link
+                  to="/admin/households"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
+                >
+                  Household: {household.household_name}
+                </Link>
               </div>
             )}
           </div>

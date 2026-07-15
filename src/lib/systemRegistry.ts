@@ -545,6 +545,18 @@ export const systemModules: SystemModule[] = [
     feedsInto: ["marketing_review", "automation"],
     receivesFrom: ["crm"],
   },
+  {
+    key: "households",
+    name: "Households & Relationships",
+    category: "Core Engine",
+    status: "In Progress",
+    dependency: "Native",
+    description: "Group CRM contacts into family units (spouse, dependents, beneficiaries) with review cadence tracking.",
+    routes: ["/admin/households"],
+    dataModels: ["households", "household_members"],
+    feedsInto: ["crm", "automation"],
+    receivesFrom: ["crm"],
+  },
 ];
 
 /* ── helpers ── */
