@@ -363,6 +363,7 @@ const App = () => {
                 <Route path="client-intelligence/signed-documents" element={<AdminSignedDocuments />} />
                 <Route path="marketing-review" element={<AdminMarketingReview />} />
                 <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="households" element={<AdminHouseholds />} />
 
                 {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
                 <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />
