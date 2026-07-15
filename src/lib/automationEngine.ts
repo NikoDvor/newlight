@@ -87,6 +87,11 @@ export const EVENT_REGISTRY = {
   // Setup Item Auto-Reminders
   setup_item_auto_reminded: { category: "Onboarding", name: "Setup Item Auto-Reminded" },
   setup_item_reminder_escalated: { category: "Onboarding", name: "Setup Item Reminder Escalated" },
+
+  // Webinars
+  webinar_registration_created: { category: "Webinars", name: "Webinar Registration Created" },
+  webinar_reminder_sent: { category: "Webinars", name: "Webinar Reminder Sent" },
+  webinar_followup_sent: { category: "Webinars", name: "Webinar Follow-up Sent" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
