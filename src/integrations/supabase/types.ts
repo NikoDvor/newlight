@@ -4419,6 +4419,139 @@ export type Database = {
           },
         ]
       }
+      document_envelope_items: {
+        Row: {
+          created_at: string
+          display_order: number
+          document_name: string
+          document_url: string | null
+          envelope_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          document_name: string
+          document_url?: string | null
+          envelope_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          document_name?: string
+          document_url?: string | null
+          envelope_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_envelope_items_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: false
+            referencedRelation: "document_envelopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_envelope_signatures: {
+        Row: {
+          envelope_id: string
+          id: string
+          ip_address: string | null
+          signature_data: string | null
+          signed_at: string
+          signer_email: string
+          signer_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          envelope_id: string
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          signed_at?: string
+          signer_email: string
+          signer_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          envelope_id?: string
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          signed_at?: string
+          signer_email?: string
+          signer_name?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_envelope_signatures_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: false
+            referencedRelation: "document_envelopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_envelopes: {
+        Row: {
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          envelope_type: Database["public"]["Enums"]["envelope_type"]
+          id: string
+          recipient_email: string | null
+          recipient_name: string | null
+          related_id: string | null
+          related_type: string | null
+          sent_at: string | null
+          share_token: string
+          status: Database["public"]["Enums"]["envelope_status"]
+          title: string
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          envelope_type?: Database["public"]["Enums"]["envelope_type"]
+          id?: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sent_at?: string | null
+          share_token?: string
+          status?: Database["public"]["Enums"]["envelope_status"]
+          title: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          envelope_type?: Database["public"]["Enums"]["envelope_type"]
+          id?: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          sent_at?: string | null
+          share_token?: string
+          status?: Database["public"]["Enums"]["envelope_status"]
+          title?: string
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
       email_connections: {
         Row: {
           client_id: string
@@ -12891,6 +13024,14 @@ export type Database = {
         | "marketing_staff"
         | "support_staff"
         | "project_manager"
+      envelope_status:
+        | "draft"
+        | "sent"
+        | "viewed"
+        | "signed"
+        | "declined"
+        | "expired"
+      envelope_type: "proposal" | "onboarding_bundle" | "other"
       household_relationship_role:
         | "head_of_household"
         | "spouse"
@@ -13067,6 +13208,15 @@ export const Constants = {
         "support_staff",
         "project_manager",
       ],
+      envelope_status: [
+        "draft",
+        "sent",
+        "viewed",
+        "signed",
+        "declined",
+        "expired",
+      ],
+      envelope_type: ["proposal", "onboarding_bundle", "other"],
       household_relationship_role: [
         "head_of_household",
         "spouse",

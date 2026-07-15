@@ -19,3 +19,6 @@ verify_jwt = false
 
 [functions.create-daily-room]
 verify_jwt = false
+
+[functions.document-envelope-action]
+verify_jwt = false
