@@ -43,7 +43,8 @@ const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
 export default function AdminWebinars() {
-  const { clientId } = useAdminClient();
+  const { activeClientId } = useWorkspace();
+  const clientId = activeClientId || ADMIN_OPS_CLIENT_ID;
   const [events, setEvents] = useState<WebEvent[]>([]);
   const [counts, setCounts] = useState<Record<string, { registered: number; attended: number }>>({});
   const [loading, setLoading] = useState(true);
