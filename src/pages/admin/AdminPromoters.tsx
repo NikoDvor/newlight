@@ -21,6 +21,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AlertTriangle, DollarSign, FileSignature, Plus, Search, ShieldCheck, Users } from "lucide-react";
 import { TestimonialFormDialog } from "@/components/TestimonialFormDialog";
