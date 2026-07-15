@@ -281,6 +281,7 @@ const App = () => {
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/bdr/book/:slug" element={<BDRBookingPublic />} />
               <Route path="/app/:slug" element={<AppDownload />} />
+              <Route path="/webinar/:slug" element={<WebinarRegistration />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
