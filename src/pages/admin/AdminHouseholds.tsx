@@ -119,6 +119,43 @@ export default function AdminHouseholds() {
     [households, search],
   );
 
+  const upcoming = useMemo<UpcomingRow[]>(() => {
+    const now = new Date();
+    const horizon = new Date(now.getTime() + 90 * 86400000);
+    const rows: UpcomingRow[] = [];
+
+    for (const h of households) {
+      if (!h.next_review_due_at) continue;
+      const when = new Date(h.next_review_due_at);
+      if (when <= horizon) {
+        const days = Math.round((when.getTime() - now.getTime()) / 86400000);
+        rows.push({
+          kind: "review", id: `r-${h.id}`, when,
+          label: h.household_name,
+          sub: days < 0 ? `Overdue ${-days}d` : `Review in ${days}d`,
+        });
+      }
+    }
+    for (const c of contacts) {
+      if (!c.date_of_birth) continue;
+      const dob = new Date(c.date_of_birth);
+      for (const m of MILESTONE_DEFS) {
+        const when = new Date(dob);
+        when.setFullYear(when.getFullYear() + m.years);
+        when.setMonth(when.getMonth() + m.months);
+        if (when >= now && when <= horizon) {
+          const days = Math.round((when.getTime() - now.getTime()) / 86400000);
+          rows.push({
+            kind: "milestone", id: `m-${c.id}-${m.code}`, when,
+            label: `${c.full_name} — ${m.label}`,
+            sub: `In ${days}d`,
+          });
+        }
+      }
+    }
+    return rows.sort((a, b) => a.when.getTime() - b.when.getTime()).slice(0, 20);
+  }, [households, contacts]);
+
   const createHousehold = async () => {
     if (!activeClientId || !newForm.household_name.trim()) { toast.error("Name required"); return; }
     const { error } = await supabase.from("households").insert({
