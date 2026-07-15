@@ -61,6 +61,11 @@ export const EVENT_REGISTRY = {
   timesheet_submitted: { category: "Workforce", name: "Timesheet Submitted" },
   timesheet_rejected: { category: "Workforce", name: "Timesheet Rejected" },
   payroll_approved: { category: "Workforce", name: "Payroll Approved" },
+  // Marketing
+  material_submitted: { category: "Marketing", name: "Marketing Material Submitted" },
+  material_approved: { category: "Marketing", name: "Marketing Material Approved" },
+  material_changes_requested: { category: "Marketing", name: "Marketing Material Changes Requested" },
+  disclosure_missing_flagged: { category: "Marketing", name: "Disclosure Missing Flagged" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
