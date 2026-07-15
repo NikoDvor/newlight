@@ -85,7 +85,13 @@ export default function Billing() {
 
   return (
     <div>
-      <PageHeader title="Billing" description="Your plan, invoices, and payment status" />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader title="Billing" description="Your plan, invoices, and payment status" />
+        <Button variant="outline" className="mt-1 shrink-0" onClick={() => setManageOpen(true)}>
+          <Settings2 className="h-4 w-4 mr-1.5" /> Manage Subscription
+        </Button>
+      </div>
+      <ManageSubscriptionDialog open={manageOpen} onOpenChange={setManageOpen} />
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard
