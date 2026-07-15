@@ -115,6 +115,10 @@ export default function AdminMarketingReview() {
     title: "", material_type: "other" as MaterialType, content_text: "", content_url: "",
     has_testimonial: false,
   });
+  const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
+  const [savingLinks, setSavingLinks] = useState(false);
+
+  const currentVersion = versions[0] ?? null;
 
   const load = async () => {
     setLoading(true);
