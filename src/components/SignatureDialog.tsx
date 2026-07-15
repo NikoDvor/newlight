@@ -4,64 +4,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileSignature, Upload, PenLine, Type, Calendar, Send, CheckCircle2, Copy } from "lucide-react";
+import { FileSignature, Plus, Send, CheckCircle2, Copy, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-type Step = "select" | "place" | "send" | "sign" | "done";
-type FieldType = "signature" | "initial" | "date";
+type Step = "compose" | "send" | "sign" | "done";
 
-interface PlacedField {
+interface DocItem {
   id: string;
-  type: FieldType;
-  x: number;
-  y: number;
+  document_name: string;
+  document_url: string;
 }
 
-const FIELD_LABEL: Record<FieldType, string> = {
-  signature: "Signature",
-  initial: "Initial",
-  date: "Date",
-};
-
-const FIELD_ICON: Record<FieldType, any> = {
-  signature: PenLine,
-  initial: Type,
-  date: Calendar,
-};
+interface Props {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  defaultDocTitle?: string;
+  defaultRecipientEmail?: string;
+  defaultRecipientName?: string;
+  clientId?: string | null;
+  envelopeType?: "proposal" | "onboarding_bundle" | "other";
+  relatedType?: string | null;
+  relatedId?: string | null;
+}
 
 export function SignatureDialog({
   open,
   onOpenChange,
   defaultDocTitle,
   defaultRecipientEmail,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  defaultDocTitle?: string;
-  defaultRecipientEmail?: string;
-}) {
-  const [step, setStep] = useState<Step>("select");
-  const [docTitle, setDocTitle] = useState(defaultDocTitle || "");
-  const [recipientName, setRecipientName] = useState("");
+  defaultRecipientName,
+  clientId,
+  envelopeType = "other",
+  relatedType,
+  relatedId,
+}: Props) {
+  const [step, setStep] = useState<Step>("compose");
+  const [title, setTitle] = useState(defaultDocTitle || "");
+  const [items, setItems] = useState<DocItem[]>([
+    { id: crypto.randomUUID(), document_name: defaultDocTitle || "", document_url: "" },
+  ]);
+  const [recipientName, setRecipientName] = useState(defaultRecipientName || "");
   const [recipientEmail, setRecipientEmail] = useState(defaultRecipientEmail || "");
-  const [fields, setFields] = useState<PlacedField[]>([]);
-  const [activeTool, setActiveTool] = useState<FieldType>("signature");
   const [sigMode, setSigMode] = useState<"type" | "draw">("type");
   const [typedSig, setTypedSig] = useState("");
-  const [shareLink, setShareLink] = useState("");
   const [drawn, setDrawn] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [shareToken, setShareToken] = useState("");
+  const [sendingBusy, setSendingBusy] = useState(false);
+  const [signBusy, setSignBusy] = useState(false);
+  const [result, setResult] = useState<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
   const reset = () => {
-    setStep("select");
-    setDocTitle(defaultDocTitle || "");
-    setRecipientName("");
+    setStep("compose");
+    setTitle(defaultDocTitle || "");
+    setItems([{ id: crypto.randomUUID(), document_name: defaultDocTitle || "", document_url: "" }]);
+    setRecipientName(defaultRecipientName || "");
     setRecipientEmail(defaultRecipientEmail || "");
-    setFields([]);
     setTypedSig("");
-    setShareLink("");
     setDrawn(false);
+    setShareLink("");
+    setShareToken("");
+    setResult(null);
   };
 
   const close = (v: boolean) => {
@@ -69,24 +75,10 @@ export function SignatureDialog({
     onOpenChange(v);
   };
 
-  const handleDropField = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setFields([...fields, { id: `f${Date.now()}`, type: activeTool, x, y }]);
-  };
-
-  const send = () => {
-    if (!recipientName || !recipientEmail) {
-      toast.error("Recipient name and email required");
-      return;
-    }
-    const token = Math.random().toString(36).slice(2, 10);
-    const link = `${window.location.origin}/sign/${token}`;
-    setShareLink(link);
-    setStep("sign");
-    toast.success(`Envelope sent to ${recipientEmail}`);
-  };
+  const addItem = () => setItems([...items, { id: crypto.randomUUID(), document_name: "", document_url: "" }]);
+  const removeItem = (id: string) => setItems(items.filter((i) => i.id !== id));
+  const updateItem = (id: string, k: keyof DocItem, v: string) =>
+    setItems(items.map((i) => (i.id === id ? { ...i, [k]: v } : i)));
 
   const startDraw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     drawing.current = true;
@@ -115,104 +107,127 @@ export function SignatureDialog({
     setDrawn(false);
   };
 
-  const complete = () => {
-    if (sigMode === "type" && !typedSig.trim()) { toast.error("Type your signature"); return; }
-    if (sigMode === "draw" && !drawn) { toast.error("Draw your signature"); return; }
-    setStep("done");
+  const send = async () => {
+    if (!title.trim()) return toast.error("Envelope title required");
+    if (!recipientName || !recipientEmail) return toast.error("Recipient name and email required");
+    const validItems = items.filter((i) => i.document_name.trim());
+    if (validItems.length === 0) return toast.error("Add at least one document");
+
+    setSendingBusy(true);
+    try {
+      const { data: env, error } = await supabase
+        .from("document_envelopes")
+        .insert({
+          client_id: clientId || null,
+          envelope_type: envelopeType,
+          title,
+          status: "sent",
+          related_type: relatedType || null,
+          related_id: relatedId || null,
+          recipient_name: recipientName,
+          recipient_email: recipientEmail,
+          sent_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (error || !env) throw error || new Error("Failed to create envelope");
+
+      const itemRows = validItems.map((i, idx) => ({
+        envelope_id: env.id,
+        document_name: i.document_name,
+        document_url: i.document_url || null,
+        display_order: idx,
+      }));
+      const { error: itemErr } = await supabase.from("document_envelope_items").insert(itemRows);
+      if (itemErr) throw itemErr;
+
+      setShareToken(env.share_token);
+      setShareLink(`${window.location.origin}/sign/${env.share_token}`);
+      setStep("sign");
+      toast.success(`Envelope sent to ${recipientEmail}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send envelope");
+    } finally {
+      setSendingBusy(false);
+    }
+  };
+
+  const complete = async () => {
+    if (sigMode === "type" && !typedSig.trim()) return toast.error("Type your signature");
+    if (sigMode === "draw" && !drawn) return toast.error("Draw your signature");
+
+    const signatureData = sigMode === "type" ? typedSig : canvasRef.current?.toDataURL() || null;
+
+    setSignBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("document-envelope-action", {
+        body: {
+          share_token: shareToken,
+          action: "sign",
+          signer_name: recipientName,
+          signer_email: recipientEmail,
+          signature_data: signatureData,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setResult(data);
+      setStep("done");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to sign envelope");
+    } finally {
+      setSignBusy(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        {step === "select" && (
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        {step === "compose" && (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileSignature className="h-5 w-5" /> Send for Signature
               </DialogTitle>
-              <DialogDescription>Upload or link a document to prepare for signature.</DialogDescription>
+              <DialogDescription>Bundle one or more documents into a single signature envelope.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid gap-2">
-                <Label>Document title</Label>
-                <Input value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="e.g. Growth Package Proposal" />
+                <Label>Envelope title</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Advisory Agreement Bundle" />
               </div>
-              <label className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/30 transition-colors">
-                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">Upload document</p>
-                <p className="text-xs text-muted-foreground mt-1">PDF, DOCX (mock — no upload performed)</p>
-                <input type="file" className="hidden" onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    setDocTitle(docTitle || e.target.files[0].name);
-                    toast.success("Document loaded");
-                  }
-                }} />
-              </label>
-              <p className="text-xs text-muted-foreground text-center">Or continue with the existing proposal document.</p>
+              <div className="grid gap-2">
+                <Label>Documents</Label>
+                {items.map((item, idx) => (
+                  <div key={item.id} className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      <Input
+                        className="col-span-2"
+                        placeholder={`Document ${idx + 1} name (e.g. Form ADV Part 2A)`}
+                        value={item.document_name}
+                        onChange={(e) => updateItem(item.id, "document_name", e.target.value)}
+                      />
+                      <Input
+                        placeholder="URL (optional)"
+                        value={item.document_url}
+                        onChange={(e) => updateItem(item.id, "document_url", e.target.value)}
+                      />
+                    </div>
+                    {items.length > 1 && (
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button size="sm" variant="outline" onClick={addItem} className="w-fit">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add document
+                </Button>
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => close(false)}>Cancel</Button>
-              <Button disabled={!docTitle} onClick={() => setStep("place")}>Continue</Button>
-            </div>
-          </>
-        )}
-
-        {step === "place" && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Place signature fields</DialogTitle>
-              <DialogDescription>Choose a tool, then click on the document preview to place a field.</DialogDescription>
-            </DialogHeader>
-            <div className="flex gap-2 flex-wrap py-2">
-              {(["signature", "initial", "date"] as FieldType[]).map((t) => {
-                const Icon = FIELD_ICON[t];
-                return (
-                  <Button
-                    key={t}
-                    size="sm"
-                    variant={activeTool === t ? "default" : "outline"}
-                    onClick={() => setActiveTool(t)}
-                  >
-                    <Icon className="h-3.5 w-3.5 mr-1.5" /> {FIELD_LABEL[t]}
-                  </Button>
-                );
-              })}
-              <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setFields([])}>Clear</Button>
-            </div>
-            <div
-              className="relative w-full aspect-[8.5/11] max-h-[400px] bg-white/[0.02] border border-border rounded-lg cursor-crosshair overflow-hidden"
-              onClick={handleDropField}
-            >
-              <div className="absolute inset-0 p-6 pointer-events-none">
-                <div className="h-4 w-2/3 bg-white/10 rounded mb-2" />
-                <div className="h-2 w-full bg-white/5 rounded mb-1" />
-                <div className="h-2 w-5/6 bg-white/5 rounded mb-1" />
-                <div className="h-2 w-4/6 bg-white/5 rounded mb-4" />
-                <div className="h-2 w-full bg-white/5 rounded mb-1" />
-                <div className="h-2 w-3/4 bg-white/5 rounded mb-1" />
-                <div className="h-2 w-5/6 bg-white/5 rounded mb-4" />
-                <div className="h-2 w-full bg-white/5 rounded mb-1" />
-                <div className="h-2 w-2/3 bg-white/5 rounded" />
-              </div>
-              {fields.map((f) => {
-                const Icon = FIELD_ICON[f.type];
-                return (
-                  <div
-                    key={f.id}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 bg-primary/20 border border-primary rounded px-2 py-1 text-[10px] text-primary flex items-center gap-1 pointer-events-none"
-                    style={{ left: `${f.x}%`, top: `${f.y}%` }}
-                  >
-                    <Icon className="h-3 w-3" />
-                    {FIELD_LABEL[f.type]}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep("select")}>Back</Button>
-              <Button disabled={fields.length === 0} onClick={() => setStep("send")}>
-                Continue ({fields.length} field{fields.length !== 1 ? "s" : ""})
-              </Button>
+              <Button onClick={() => setStep("send")}>Continue</Button>
             </div>
           </>
         )}
@@ -221,7 +236,7 @@ export function SignatureDialog({
           <>
             <DialogHeader>
               <DialogTitle>Send to recipient</DialogTitle>
-              <DialogDescription>They'll receive an email link to view and sign in-browser.</DialogDescription>
+              <DialogDescription>They'll receive a share link to view and sign in-browser.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid gap-2">
@@ -234,8 +249,11 @@ export function SignatureDialog({
               </div>
             </div>
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep("place")}>Back</Button>
-              <Button onClick={send}><Send className="h-4 w-4 mr-1.5" /> Send Envelope</Button>
+              <Button variant="ghost" onClick={() => setStep("compose")} disabled={sendingBusy}>Back</Button>
+              <Button onClick={send} disabled={sendingBusy}>
+                {sendingBusy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
+                Send Envelope
+              </Button>
             </div>
           </>
         )}
@@ -243,10 +261,8 @@ export function SignatureDialog({
         {step === "sign" && (
           <>
             <DialogHeader>
-              <DialogTitle>Recipient view — preview signing</DialogTitle>
-              <DialogDescription>
-                Envelope sent. Preview what the recipient sees below.
-              </DialogDescription>
+              <DialogTitle>Recipient signing preview</DialogTitle>
+              <DialogDescription>Envelope created. Preview the recipient's signing experience below.</DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2 py-2 text-xs">
               <span className="text-muted-foreground">Share link:</span>
@@ -266,7 +282,7 @@ export function SignatureDialog({
                   value={typedSig}
                   onChange={(e) => setTypedSig(e.target.value)}
                   placeholder="Type your full name"
-                  className="text-2xl font-signature h-16"
+                  className="text-2xl h-16"
                   style={{ fontFamily: "cursive" }}
                 />
               </TabsContent>
@@ -288,8 +304,11 @@ export function SignatureDialog({
             </Tabs>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => close(false)}>Close</Button>
-              <Button onClick={complete}><CheckCircle2 className="h-4 w-4 mr-1.5" /> Adopt & Sign</Button>
+              <Button variant="ghost" onClick={() => close(false)} disabled={signBusy}>Close</Button>
+              <Button onClick={complete} disabled={signBusy}>
+                {signBusy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />}
+                Adopt & Sign
+              </Button>
             </div>
           </>
         )}
@@ -298,17 +317,17 @@ export function SignatureDialog({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" /> Document signed
+                <CheckCircle2 className="h-5 w-5 text-primary" /> Envelope signed
               </DialogTitle>
-              <DialogDescription>An audit trail has been recorded.</DialogDescription>
+              <DialogDescription>Signature recorded with a verified audit trail.</DialogDescription>
             </DialogHeader>
             <div className="rounded-lg border border-border p-4 space-y-2 text-sm my-2">
-              <div className="flex justify-between"><span className="text-muted-foreground">Document</span><span className="font-medium">{docTitle}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Signer</span><span className="font-medium">{recipientName}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{recipientEmail}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Signed at</span><span className="font-medium">{new Date().toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Fields</span><span className="font-medium">{fields.length}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">IP</span><span className="font-mono text-xs">73.19.44.12</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Envelope</span><span className="font-medium">{title}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Signer</span><span className="font-medium">{result?.signature?.signer_name || recipientName}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{result?.signature?.signer_email || recipientEmail}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Signed at</span><span className="font-medium">{result?.signature?.signed_at ? new Date(result.signature.signed_at).toLocaleString() : new Date().toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Documents</span><span className="font-medium">{items.filter(i => i.document_name.trim()).length}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">IP address</span><span className="font-mono text-xs">{result?.signature?.ip_address || "recorded server-side"}</span></div>
             </div>
             <div className="flex justify-end pt-2">
               <Button onClick={() => close(false)}>Done</Button>
