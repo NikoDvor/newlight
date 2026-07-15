@@ -140,14 +140,34 @@ export default function AdminMarketingReview() {
       supabase.from("marketing_disclosures").select("*").eq("client_id", m.client_id),
       supabase.from("marketing_substantiation_files").select("*").eq("material_id", m.id),
     ]);
-    setVersions((v as any[]) ?? []);
+    const versionRows = (v as any[]) ?? [];
+    setVersions(versionRows);
     setDisclosures((d as any[]) ?? []);
     setSubFiles((f as any[]) ?? []);
+    setLinkedDisclosureIds(
+      (versionRows[0]?.disclosure_ids as string[] | null) ?? []
+    );
 
     // Auto-flip submitted -> in_review when reviewer opens
     if (canReview && m.status === "submitted") {
       await updateStatus(m, "in_review");
     }
+  };
+
+  const saveLinkedDisclosures = async () => {
+    if (!currentVersion) {
+      toast.error("Submit the material first — no version exists to attach disclosures to.");
+      return;
+    }
+    setSavingLinks(true);
+    const { error } = await supabase
+      .from("marketing_material_versions")
+      .update({ disclosure_ids: linkedDisclosureIds } as any)
+      .eq("id", currentVersion.id);
+    setSavingLinks(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Disclosures linked to this version");
+    if (selected) openMaterial(selected);
   };
 
   const writeAudit = async (m: Material, oldStatus: Status, newStatus: Status) => {
