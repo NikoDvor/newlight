@@ -266,6 +266,35 @@ export default function AdminHouseholds() {
         ))}
       </div>
 
+      <Card className="border-border bg-card">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Upcoming Milestones & Reviews (next 90d)</h3>
+            <Badge variant="outline">{upcoming.length}</Badge>
+          </div>
+          {upcoming.length === 0 ? (
+            <div className="text-xs text-muted-foreground">Nothing due in the next 90 days.</div>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {upcoming.map((u) => (
+                <div key={u.id} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={u.kind === "review"
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                      : "bg-blue-500/15 text-blue-300 border-blue-500/30"}>
+                      {u.kind === "review" ? "Review" : "Milestone"}
+                    </Badge>
+                    <span className="text-foreground">{u.label}</span>
+                  </div>
+                  <div className="text-muted-foreground">{u.sub} · {u.when.toLocaleDateString()}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search households…" value={search} onChange={(e) => setSearch(e.target.value)} />
