@@ -166,11 +166,12 @@ export default function CRM() {
       company_id: newContact.company_id || null,
       contact_owner: newContact.contact_owner || null,
       referred_by_promoter_id: newContact.referred_by_promoter_id || null,
+      date_of_birth: newContact.date_of_birth || null,
     } as any);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await onContactCreated(activeClientId, { full_name: newContact.full_name });
     toast({ title: "Contact Added" });
-    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "", referred_by_promoter_id: "" });
+    setNewContact({ full_name: "", email: "", phone: "", address: "", tags: "", lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "", referred_by_promoter_id: "", date_of_birth: "" });
     setContactOpen(false);
     fetchData();
   };
