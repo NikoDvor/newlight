@@ -136,10 +136,39 @@ export default function AdminPromoters() {
       setActiveAgreementByPromoter({});
     }
 
+    // Referral ROI aggregation for is_referral_source promoters
+    const referralPromoters = list.filter((x: any) => x.is_referral_source);
+    if (referralPromoters.length > 0) {
+      const rids = referralPromoters.map((x: any) => x.id);
+      const { data: attrs } = await supabase
+        .from("referral_attributions")
+        .select("promoter_id, attributed_value, crm_deal_id")
+        .in("promoter_id", rids);
+      const agg: Record<string, { value: number; count: number }> = {};
+      for (const r of (attrs as any[]) ?? []) {
+        const bucket = agg[r.promoter_id] ?? { value: 0, count: 0 };
+        bucket.value += Number(r.attributed_value ?? 0);
+        if (r.crm_deal_id) bucket.count += 1;
+        agg[r.promoter_id] = bucket;
+      }
+      setReferralRoi(
+        referralPromoters
+          .map((p: any) => ({
+            promoter_id: p.id,
+            full_name: p.full_name,
+            referral_category: p.referral_category ?? null,
+            lifetime_value: agg[p.id]?.value ?? 0,
+            deal_count: agg[p.id]?.count ?? 0,
+          }))
+          .sort((a, b) => b.lifetime_value - a.lifetime_value)
+      );
+    } else {
+      setReferralRoi([]);
+    }
+
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [activeClientId]);
 
   const openPromoter = async (p: Promoter) => {
     setSelected(p);
