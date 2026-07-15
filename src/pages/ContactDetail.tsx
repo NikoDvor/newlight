@@ -82,6 +82,13 @@ export default function ContactDetail() {
       setReviews(rv.data || []);
       setFollowUps(fu.data || []);
       setConversations(conv.data || []);
+      const hhId = (c.data as any)?.household_id;
+      if (hhId) {
+        supabase.from("households").select("id, household_name").eq("id", hhId).maybeSingle()
+          .then(({ data }) => setHousehold(data as any));
+      } else {
+        setHousehold(null);
+      }
       setLoading(false);
     });
   }, [contactId, activeClientId]);
