@@ -9,7 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Switch } from "@/components/ui/switch";
 import { Plus, Users, Copy, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAdminClient } from "@/hooks/useAdminClient";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
 
 type WebEvent = {
   id: string;
