@@ -1,5 +1,6 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
 import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
+import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
