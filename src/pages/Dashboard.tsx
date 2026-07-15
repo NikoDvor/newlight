@@ -1829,6 +1829,8 @@ export default function Dashboard() {
             <SystemStatusBar />
           </motion.div>
 
+          <BusinessHealthSection />
+
           {/* ══════ ANNUAL SAVINGS OFFER ══════ */}
           <section className="mt-8">
             <div className="mb-4 flex items-center gap-2">
