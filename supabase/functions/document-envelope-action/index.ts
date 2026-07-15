@@ -40,6 +40,19 @@ serve(async (req) => {
     const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
     const userAgent = req.headers.get("user-agent");
 
+    const emitOnboardingEvent = async (eventKey: string, eventName: string, extra: Record<string, unknown> = {}) => {
+      if (envelope.envelope_type !== "onboarding_bundle" || !envelope.client_id) return;
+      await supabase.from("automation_events").insert({
+        client_id: envelope.client_id,
+        event_type: eventKey,
+        event_key: eventKey,
+        event_name: eventName,
+        related_type: "document_envelope",
+        related_id: envelope.id,
+        event_data: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, ...extra },
+      });
+    };
+
     if (action === "view") {
       if (!envelope.viewed_at) {
         await supabase.from("document_envelopes").update({
