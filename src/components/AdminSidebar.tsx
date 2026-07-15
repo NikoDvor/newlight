@@ -104,6 +104,7 @@ const opsGroups: NavGroup[] = [
       { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
       { title: "Marketing Review", url: "/admin/marketing-review", icon: Megaphone },
       { title: "Promoters", url: "/admin/promoters", icon: Users },
+      { title: "Households", url: "/admin/households", icon: Home },
       
       { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
       { title: "Team & Users", url: "/admin/team", icon: Users },
