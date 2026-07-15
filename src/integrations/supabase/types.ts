@@ -12150,6 +12150,115 @@ export type Database = {
         }
         Relationships: []
       }
+      webinar_events: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          host_name: string | null
+          id: string
+          join_url: string | null
+          recurrence_rrule: string | null
+          registration_slug: string
+          scheduled_at: string
+          status: Database["public"]["Enums"]["webinar_event_status"]
+          title: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          host_name?: string | null
+          id?: string
+          join_url?: string | null
+          recurrence_rrule?: string | null
+          registration_slug: string
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["webinar_event_status"]
+          title: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          host_name?: string | null
+          id?: string
+          join_url?: string | null
+          recurrence_rrule?: string | null
+          registration_slug?: string
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["webinar_event_status"]
+          title?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinar_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webinar_registrations: {
+        Row: {
+          attended: boolean
+          created_at: string
+          email: string
+          followup_sent_at: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          registered_at: string
+          reminder_1h_sent_at: string | null
+          reminder_24h_sent_at: string | null
+          webinar_event_id: string
+        }
+        Insert: {
+          attended?: boolean
+          created_at?: string
+          email: string
+          followup_sent_at?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          registered_at?: string
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          webinar_event_id: string
+        }
+        Update: {
+          attended?: boolean
+          created_at?: string
+          email?: string
+          followup_sent_at?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          registered_at?: string
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          webinar_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinar_registrations_webinar_event_id_fkey"
+            columns: ["webinar_event_id"]
+            isOneToOne: false
+            referencedRelation: "webinar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_content_blocks: {
         Row: {
           block_key: string
@@ -13016,6 +13125,22 @@ export type Database = {
           item_id: string
         }[]
       }
+      run_webinar_followup_scan: {
+        Args: never
+        Returns: {
+          action: string
+          attended: boolean
+          registration_id: string
+        }[]
+      }
+      run_webinar_reminder_scan: {
+        Args: never
+        Returns: {
+          action: string
+          kind: string
+          registration_id: string
+        }[]
+      }
       user_can_access_client: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -13078,6 +13203,7 @@ export type Database = {
         | "existing_client"
         | "other"
       testimonial_disclosure_method: "embedded" | "linked" | "verbal_disclosed"
+      webinar_event_status: "draft" | "scheduled" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -13268,6 +13394,7 @@ export const Constants = {
         "other",
       ],
       testimonial_disclosure_method: ["embedded", "linked", "verbal_disclosed"],
+      webinar_event_status: ["draft", "scheduled", "completed", "cancelled"],
     },
   },
 } as const
