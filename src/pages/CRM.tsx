@@ -128,6 +128,9 @@ export default function CRM() {
     setFollowUps(fuRes.data || []);
     if (clientRes.data?.crm_mode) setCrmMode(clientRes.data.crm_mode);
     if (connRes.data && connRes.data.length > 0) setCrmConnection(connRes.data[0]);
+    const { data: refs } = await supabase.from("promoters")
+      .select("id, full_name").eq("client_id", activeClientId).eq("is_referral_source", true).order("full_name");
+    setReferralPromoters((refs as any[]) ?? []);
     setLoading(false);
   };
 
