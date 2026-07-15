@@ -88,7 +88,9 @@ export default function CRM() {
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
     lead_source: "", pipeline_stage: "new_lead", company_id: "", contact_owner: "",
+    referred_by_promoter_id: "",
   });
+  const [referralPromoters, setReferralPromoters] = useState<Array<{ id: string; full_name: string }>>([]);
   const [newDeal, setNewDeal] = useState({ deal_name: "", deal_value: "", pipeline_stage: "new_lead", contact_id: "", close_probability: "50", assigned_user: "" });
   const [newCompany, setNewCompany] = useState({ company_name: "", website: "", industry: "", phone: "", email: "" });
   const [newTask, setNewTask] = useState({ title: "", priority: "medium", due_date: "", contact_id: "", description: "" });
