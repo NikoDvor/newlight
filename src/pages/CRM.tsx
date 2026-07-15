@@ -980,6 +980,21 @@ export default function CRM() {
                 </Select>
               </div>
             )}
+            {referralPromoters.length > 0 && (
+              <div className="space-y-2">
+                <Label>Referred By</Label>
+                <Select
+                  value={newContact.referred_by_promoter_id || "none"}
+                  onValueChange={v => setNewContact(p => ({ ...p, referred_by_promoter_id: v === "none" ? "" : v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Optional — referral source" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— None —</SelectItem>
+                    {referralPromoters.map(r => <SelectItem key={r.id} value={r.id}>{r.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input placeholder="Enterprise, Q2" value={newContact.tags} onChange={e => setNewContact(p => ({ ...p, tags: e.target.value }))} /></div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setContactOpen(false)}>Cancel</Button>
