@@ -262,7 +262,7 @@ export default function AdminMarketingReview() {
     return !disclosures.some(
       (d) => d.disclosure_type === "testimonial" && linkedIds.includes(d.id)
     );
-  }, [selected, disclosures]);
+  }, [selected, disclosures, currentVersion]);
 
   const filtered = useMemo(() => {
     return materials.filter((m) => {
