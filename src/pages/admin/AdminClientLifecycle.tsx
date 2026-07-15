@@ -18,6 +18,7 @@ import { SetupItemActions, BulkRequestActions, type SetupItemWithRequest } from 
 import { ProposalRevealControls } from "@/components/admin/ProposalRevealControls";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { OnboardingBundleWidget } from "@/components/admin/OnboardingBundleWidget";
+import { MeetingNotetakerWebhookWidget } from "@/components/admin/MeetingNotetakerWebhookWidget";
 
 interface ClientData {
   id: string;
