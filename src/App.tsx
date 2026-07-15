@@ -123,6 +123,8 @@ import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
 import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
+import AdminWebinars from "./pages/admin/AdminWebinars";
+import WebinarRegistration from "./pages/WebinarRegistration";
 import MeetingCancel from "./pages/MeetingCancel";
 import Onboarding from "./pages/Onboarding";
 import Enterprise from "./pages/Enterprise";
@@ -279,6 +281,7 @@ const App = () => {
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/bdr/book/:slug" element={<BDRBookingPublic />} />
               <Route path="/app/:slug" element={<AppDownload />} />
+              <Route path="/webinar/:slug" element={<WebinarRegistration />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
@@ -364,6 +367,7 @@ const App = () => {
                 <Route path="marketing-review" element={<AdminMarketingReview />} />
                 <Route path="promoters" element={<AdminPromoters />} />
                 <Route path="households" element={<AdminHouseholds />} />
+                <Route path="webinars" element={<AdminWebinars />} />
 
                 {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
                 <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />
