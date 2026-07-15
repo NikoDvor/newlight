@@ -123,8 +123,10 @@ serve(async (req) => {
         action: "envelope_declined",
         module: "document_envelopes",
         status: "success",
-        metadata: { envelope_id: envelope.id, reason: rejection_reason },
+        metadata: { envelope_id: envelope.id, envelope_type: envelope.envelope_type, reason: rejection_reason },
       });
+
+      await emitOnboardingEvent("onboarding_bundle_declined", "Onboarding Bundle Declined", { reason: rejection_reason });
 
       return json({ success: true, status: "declined" });
     }
