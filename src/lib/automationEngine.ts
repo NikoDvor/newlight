@@ -70,6 +70,13 @@ export const EVENT_REGISTRY = {
   promoter_agreement_expiring: { category: "Compliance", name: "Promoter Agreement Expiring" },
   compensation_threshold_crossed: { category: "Compliance", name: "Promoter 12-Month Compensation Threshold Crossed" },
   testimonial_disclosure_incomplete: { category: "Compliance", name: "Testimonial Disclosure Incomplete" },
+  // Households & Life Events
+  household_review_due_soon: { category: "Households", name: "Household Review Due Soon" },
+  household_review_overdue: { category: "Households", name: "Household Review Overdue" },
+  contact_milestone_59_5: { category: "Households", name: "Contact Milestone — Age 59½" },
+  contact_milestone_65_medicare: { category: "Households", name: "Contact Milestone — Medicare (65)" },
+  contact_milestone_73_rmd: { category: "Households", name: "Contact Milestone — RMD (73)" },
+  contact_milestone_ss_window: { category: "Households", name: "Contact Milestone — Social Security Window" },
 } as const;
 
 export type EventKey = keyof typeof EVENT_REGISTRY;
