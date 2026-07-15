@@ -87,7 +87,7 @@ export default function AdminHouseholds() {
     setLoading(true);
     const [{ data: h }, { data: c }] = await Promise.all([
       supabase.from("households").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("crm_contacts").select("id, full_name, household_id").eq("client_id", activeClientId).order("full_name"),
+      supabase.from("crm_contacts").select("id, full_name, household_id, date_of_birth").eq("client_id", activeClientId).order("full_name"),
     ]);
     const list = (h as any[]) ?? [];
     setHouseholds(list);
