@@ -3768,6 +3768,7 @@ export type Database = {
           external_crm_contact_id: string | null
           first_contact_date: string | null
           full_name: string
+          household_id: string | null
           id: string
           last_interaction_date: string | null
           lead_score: number | null
@@ -3797,6 +3798,7 @@ export type Database = {
           external_crm_contact_id?: string | null
           first_contact_date?: string | null
           full_name: string
+          household_id?: string | null
           id?: string
           last_interaction_date?: string | null
           lead_score?: number | null
@@ -3826,6 +3828,7 @@ export type Database = {
           external_crm_contact_id?: string | null
           first_contact_date?: string | null
           full_name?: string
+          household_id?: string | null
           id?: string
           last_interaction_date?: string | null
           lead_score?: number | null
@@ -3848,6 +3851,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
           {
@@ -5376,6 +5386,89 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "growth_projections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          contact_id: string
+          created_at: string
+          household_id: string
+          id: string
+          relationship_role: Database["public"]["Enums"]["household_relationship_role"]
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          relationship_role?: Database["public"]["Enums"]["household_relationship_role"]
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          relationship_role?: Database["public"]["Enums"]["household_relationship_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          client_id: string
+          created_at: string
+          household_name: string
+          id: string
+          last_review_completed_at: string | null
+          next_review_due_at: string | null
+          primary_advisor_user_id: string | null
+          review_cadence: Database["public"]["Enums"]["household_review_cadence"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          household_name: string
+          id?: string
+          last_review_completed_at?: string | null
+          next_review_due_at?: string | null
+          primary_advisor_user_id?: string | null
+          review_cadence?: Database["public"]["Enums"]["household_review_cadence"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          household_name?: string
+          id?: string
+          last_review_completed_at?: string | null
+          next_review_due_at?: string | null
+          primary_advisor_user_id?: string | null
+          review_cadence?: Database["public"]["Enums"]["household_review_cadence"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "households_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -12777,6 +12870,13 @@ export type Database = {
         | "marketing_staff"
         | "support_staff"
         | "project_manager"
+      household_relationship_role:
+        | "head_of_household"
+        | "spouse"
+        | "dependent"
+        | "beneficiary"
+        | "other"
+      household_review_cadence: "quarterly" | "semi_annual" | "annual"
       marketing_disclosure_type:
         | "testimonial"
         | "compensation"
@@ -12946,6 +13046,14 @@ export const Constants = {
         "support_staff",
         "project_manager",
       ],
+      household_relationship_role: [
+        "head_of_household",
+        "spouse",
+        "dependent",
+        "beneficiary",
+        "other",
+      ],
+      household_review_cadence: ["quarterly", "semi_annual", "annual"],
       marketing_disclosure_type: [
         "testimonial",
         "compensation",
