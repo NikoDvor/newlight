@@ -117,6 +117,9 @@ export default function AdminMarketingReview() {
     title: "", material_type: "other" as MaterialType, content_text: "", content_url: "",
     has_testimonial: false,
   });
+  const [templates, setTemplates] = useState<Array<{ id: string; title: string; category: string; material_type: string; template_text: string }>>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>("all");
   const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
   const [savingLinks, setSavingLinks] = useState(false);
   const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
