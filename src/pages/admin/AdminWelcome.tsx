@@ -46,7 +46,7 @@ export default function AdminWelcome() {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden" style={{ background: "#030712" }}>
       {/* Background orbs */}
       <div className="absolute inset-0 pointer-events-none">
-        <motion.div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] rounded-full blur-[160px] opacity-20"
+        <motion.div className="absolute top-1/4 left-1/3 w-full max-w-[500px] h-[500px] rounded-full blur-[160px] opacity-20"
           style={{ background: "hsl(211 96% 56%)" }}
           animate={{ scale: [1, 1.3, 1], x: [0, 50, 0] }} transition={{ duration: 10, repeat: Infinity }} />
         <motion.div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-[140px] opacity-15"
