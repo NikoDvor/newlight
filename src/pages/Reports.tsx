@@ -234,7 +234,7 @@ export default function Reports() {
 
               <DataCard title="Channel Attribution">
                 <div className="space-y-0">
-                  <div className="grid grid-cols-5 gap-2 pb-2 border-b border-border">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pb-2 border-b border-border">
                     {["Channel", "Revenue", "Leads", "Bookings", "Deals"].map((h) => (
                       <span key={h} className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{h}</span>
                     ))}
