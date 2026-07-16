@@ -158,6 +158,7 @@ import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
 import BDRTeamPipeline from "./pages/BDRTeamPipeline";
 import BDRLeadSourcing from "./pages/BDRLeadSourcing";
+import SalesTeamPipeline from "./pages/SalesTeamPipeline";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import SetupCenter from "./pages/SetupCenter";
@@ -457,6 +458,7 @@ const App = () => {
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
                 <Route path="/call-tracking" element={<PermissionGuard moduleKey="crm"><CallTracking /></PermissionGuard>} />
+                <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><SalesTeamPipeline /></PermissionGuard>} />
                 <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
                 <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
                 <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
