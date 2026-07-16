@@ -504,9 +504,7 @@ export default function GrowthAdvisor() {
             )}
 
             {competitors.length === 0 && !showAdd ? (
-              <div className="px-6 py-10 text-center text-muted-foreground text-sm">
-                No competitors tracked yet. Add your top 3-5 to unlock gap analysis.
-              </div>
+              <ExampleCompetitorRows />
             ) : (
               competitors.map((c) => (
                 <CompetitorRow
