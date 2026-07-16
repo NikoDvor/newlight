@@ -31,6 +31,9 @@ interface BdrLead {
   has_booking_system: boolean | null;
   list_name: string | null;
   pipeline_stage: string | null;
+  phone_type: string | null;
+  booking_link: string | null;
+  booking_link_is_owner: boolean | null;
   created_at: string;
 }
 
