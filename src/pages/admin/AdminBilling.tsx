@@ -115,21 +115,23 @@ export default function AdminBilling() {
               {accounts.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No billing accounts yet. They are created automatically when proposals are accepted.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Email</th><th className={headCls}>Created</th>
-                  </tr></thead>
-                  <tbody>
-                    {accounts.map((a: any) => (
-                      <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(a.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={a.billing_status} /></td>
-                        <td className={cellCls}>{a.billing_email || "—"}</td>
-                        <td className={cellCls}>{new Date(a.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Email</th><th className={headCls}>Created</th>
+                    </tr></thead>
+                    <tbody>
+                      {accounts.map((a: any) => (
+                        <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(a.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={a.billing_status} /></td>
+                          <td className={cellCls}>{a.billing_email || "—"}</td>
+                          <td className={cellCls}>{new Date(a.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
