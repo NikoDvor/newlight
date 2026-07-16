@@ -537,8 +537,8 @@ const App = () => {
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
                 <Route path="/team-management" element={<TeamManagement />} />
-                <Route path="/bdr-team-pipeline" element={<BDRTeamPipeline />} />
-                <Route path="/bdr-lead-sourcing" element={<BDRLeadSourcing />} />
+                <Route path="/bdr-team-pipeline" element={<ClientFlagGate flag="has_sales_team"><BDRTeamPipeline /></ClientFlagGate>} />
+                <Route path="/bdr-lead-sourcing" element={<ClientFlagGate flag="has_sales_team"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />
