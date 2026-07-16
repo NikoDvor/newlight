@@ -442,12 +442,12 @@ const App = () => {
                 <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
                 <Route path="certification/bdr" element={<BDRCertificationExam />} />
-                <Route path="leads" element={<BDRMyLeads />} />
-                <Route path="lead-sourcing" element={<BDRLeadSourcing />} />
-                <Route path="team-pipeline" element={<BDRTeamPipeline />} />
-                <Route path="dialer" element={<BDRDialer />} />
+                <Route path="leads" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyLeads /></ClientFlagGate>} />
+                <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
+                <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
+                <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
-                <Route path="calendar" element={<BDRCalendar />} />
+                <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
