@@ -388,7 +388,8 @@ async function generateForClient(
   const openContentCount = existingOpenContentCount || 0;
   const skipAi = kwCount >= KW_CEILING && openContentCount >= CONTENT_CEILING;
 
-  const isFinancial = client.business_type === "financial_firm";
+
+
   if (lovableKey && !skipAi) {
 
     const locations = [serviceAreas, client.primary_location].filter(Boolean).join("; ");
