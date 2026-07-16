@@ -42,6 +42,7 @@ interface Material {
   content_url: string | null;
   content_text: string | null;
   current_version_id: string | null;
+  compliance_flags: Array<{ phrase: string; category: string }> | null;
   created_at: string;
   updated_at: string;
 }
@@ -467,6 +468,26 @@ export default function AdminMarketingReview() {
                       <Button size="sm" variant="outline" onClick={() => setShowTestimonialDialog(true)}>
                         Add Testimonial Record
                       </Button>
+                    </div>
+                  </section>
+                )}
+
+                {/* Compliance flags (risky claim keyword scan) */}
+                {Array.isArray(selected.compliance_flags) && selected.compliance_flags.length > 0 && (
+                  <section className="rounded-md border p-3 border-amber-500/40 bg-amber-500/10">
+                    <div className="flex items-center gap-2 text-sm font-medium text-amber-200 mb-2">
+                      <ShieldAlert className="h-4 w-4 text-amber-400" />
+                      Compliance Flags — {selected.compliance_flags.length} risky phrase{selected.compliance_flags.length === 1 ? "" : "s"} detected
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.compliance_flags.map((f, i) => (
+                        <Badge key={i} variant="outline" className="bg-amber-500/15 text-amber-200 border-amber-500/40 text-[11px]">
+                          "{f.phrase}"
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="text-xs text-amber-200/80 mt-2">
+                      Auto-flagged for reviewer attention. Not a hard block — verify substantiation before approving.
                     </div>
                   </section>
                 )}
