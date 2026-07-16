@@ -24,6 +24,32 @@ export function StepProposalClosePrep({ form, set, submitting, clientId }: Props
   } | null>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [overrideEdit, setOverrideEdit] = useState(false);
+  const [meeting2Copied, setMeeting2Copied] = useState(false);
+
+  // Ensure the current logged-in user has a personal BDR calendar and
+  // persist its booking_slug into the wizard draft.
+  useEffect(() => {
+    if (form.meeting_2_booking_slug) return;
+    let cancelled = false;
+    (async () => {
+      const cal = await ensureBdrCalendar();
+      if (cancelled || !cal?.booking_slug) return;
+      set("meeting_2_booking_slug", cal.booking_slug);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.meeting_2_booking_slug]);
+
+  const meeting2Url = form.meeting_2_booking_slug
+    ? `${window.location.origin}/bdr/book/${form.meeting_2_booking_slug}`
+    : null;
+  const copyMeeting2 = () => {
+    if (!meeting2Url) return;
+    navigator.clipboard.writeText(meeting2Url);
+    setMeeting2Copied(true);
+    toast.success("Booking link copied");
+    setTimeout(() => setMeeting2Copied(false), 1500);
+  };
 
   // Look up the linked deal for this client where the sales rep already completed close prep.
   useEffect(() => {
