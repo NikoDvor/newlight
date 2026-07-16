@@ -836,7 +836,7 @@ export default function AdminMasterActivation() {
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {stage === 1 && bookingImprovement && !bookingBannerDismissed && (
+                  {stage === 1 && bookingModules.length > 0 && !bookingBannerDismissed && (
                     <div
                       className="mb-4 rounded-lg px-3 py-2 flex items-center gap-2 text-[12px]"
                       style={{
@@ -847,7 +847,19 @@ export default function AdminMasterActivation() {
                     >
                       <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(211,96%,68%)" }} />
                       <span className="flex-1">
-                        Pre-filled from booking: <span className="font-semibold text-white">{bookingImprovement}</span>
+                        Pre-filled from booking
+                        {bookingHasSalesTeam === true && (
+                          <span
+                            className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                            style={{
+                              background: "hsla(142,72%,42%,.15)",
+                              border: "1px solid hsla(142,72%,42%,.35)",
+                              color: "hsl(142,72%,55%)",
+                            }}
+                          >
+                            Has a sales team
+                          </span>
+                        )}
                       </span>
                       <button
                         onClick={() => setBookingBannerDismissed(true)}
