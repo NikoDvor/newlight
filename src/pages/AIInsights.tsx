@@ -386,6 +386,9 @@ export default function AIInsights() {
       {/* ── Category Performance ─────────────────────────────────── */}
       <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
+      {/* ── Weaknesses ───────────────────────────────────────────── */}
+      <WeaknessesPanel signals={signals} />
+
       {/* ── Category filter tabs ─────────────────────────────────── */}
       <div className="mt-8 flex flex-wrap gap-2">
         {FILTERS.map((f) => {
