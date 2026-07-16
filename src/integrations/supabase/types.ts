@@ -1064,6 +1064,9 @@ export type Database = {
           billing_email: string | null
           billing_owner_user_id: string | null
           billing_status: string
+          card_brand: string | null
+          card_last4: string | null
+          card_saved_at: string | null
           client_id: string
           company_id: string | null
           contact_id: string | null
@@ -1079,6 +1082,8 @@ export type Database = {
           proposal_id: string | null
           service_package: string | null
           setup_fee: number | null
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           updated_at: string
           wire_reference: string | null
         }
@@ -1086,6 +1091,9 @@ export type Database = {
           billing_email?: string | null
           billing_owner_user_id?: string | null
           billing_status?: string
+          card_brand?: string | null
+          card_last4?: string | null
+          card_saved_at?: string | null
           client_id: string
           company_id?: string | null
           contact_id?: string | null
@@ -1101,6 +1109,8 @@ export type Database = {
           proposal_id?: string | null
           service_package?: string | null
           setup_fee?: number | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           updated_at?: string
           wire_reference?: string | null
         }
@@ -1108,6 +1118,9 @@ export type Database = {
           billing_email?: string | null
           billing_owner_user_id?: string | null
           billing_status?: string
+          card_brand?: string | null
+          card_last4?: string | null
+          card_saved_at?: string | null
           client_id?: string
           company_id?: string | null
           contact_id?: string | null
@@ -1123,6 +1136,8 @@ export type Database = {
           proposal_id?: string | null
           service_package?: string | null
           setup_fee?: number | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           updated_at?: string
           wire_reference?: string | null
         }
@@ -3465,6 +3480,69 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_billing_runs: {
+        Row: {
+          amount_charged: number
+          client_id: string | null
+          created_at: string
+          deal_id: string | null
+          failure_reason: string | null
+          id: string
+          period_end: string
+          period_start: string
+          pricing_model: string
+          rate_applied: number | null
+          revenue_base: number | null
+          status: string
+          stripe_payment_intent_id: string | null
+        }
+        Insert: {
+          amount_charged?: number
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          pricing_model: string
+          rate_applied?: number | null
+          revenue_base?: number | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+        }
+        Update: {
+          amount_charged?: number
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          pricing_model?: string
+          rate_applied?: number | null
+          revenue_base?: number | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_billing_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_billing_runs_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
             referencedColumns: ["id"]
           },
         ]
