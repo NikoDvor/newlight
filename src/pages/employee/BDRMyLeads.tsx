@@ -151,6 +151,7 @@ const FILTER_TABS: { key: string; label: string }[] = [
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
   const { clientId } = useEmployeeClientId();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<BdrLead[]>([]);
   const [calledLeadIds, setCalledLeadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -748,6 +749,15 @@ export default function BDRMyLeads() {
                         )}
                         {!selectMode && (lead.status === "new_lead" || lead.status === "contacted") && (
                           <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setOutcomeLead(lead); }}>Log Outcome</Button>
+                        )}
+                        {!selectMode && (derivePipelineStage(lead) === "hot" || derivePipelineStage(lead) === "won") && (
+                          <Button
+                            size="sm"
+                            className="text-xs h-7 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/employee/close-prep/${lead.id}`); }}
+                          >
+                            Close Prep
+                          </Button>
                         )}
                         {!selectMode && (
                           <button

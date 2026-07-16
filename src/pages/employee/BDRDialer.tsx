@@ -25,6 +25,7 @@ interface Lead {
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
+  pipeline_stage: string | null;
 }
 
 interface OutcomeRow {
@@ -114,7 +115,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, phone_type, booking_link, booking_link_is_owner")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, phone_type, booking_link, booking_link_is_owner, pipeline_stage")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -529,6 +530,15 @@ export default function BDRDialer() {
                           <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
                         ))}
                       </select>
+                      {(lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
+                        <Button
+                          size="sm"
+                          className="mt-2 w-full h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+                          onClick={() => navigate(`/employee/close-prep/${lead.id}`)}
+                        >
+                          Close Prep
+                        </Button>
+                      )}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5">
                       <NotesCell

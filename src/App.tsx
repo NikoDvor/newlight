@@ -183,6 +183,7 @@ import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import BDRCalendar from "./pages/employee/BDRCalendar";
+import ClosePrep from "./pages/employee/ClosePrep";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
@@ -449,6 +450,7 @@ const App = () => {
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
+                <Route path="close-prep/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><ClosePrep /></ClientFlagGate>} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
