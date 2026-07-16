@@ -110,6 +110,8 @@ Deno.serve(async (req) => {
         list_name: "Booking Form",
         modules_of_interest: modulesClean,
         logo_url: logoClean,
+        has_sales_team: hasSalesTeamClean,
+        sales_team_size: salesTeamSizeClean,
       })
       .select("id")
       .single();
