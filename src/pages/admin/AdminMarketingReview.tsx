@@ -360,6 +360,37 @@ export default function AdminMarketingReview() {
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>New Marketing Material</DialogTitle></DialogHeader>
             <div className="space-y-4">
+              {templates.length > 0 && (
+                <div className="rounded-md border border-white/10 bg-white/[0.03] p-3 space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-white/60">
+                    Start from a compliance-safe template (optional)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={templateCategoryFilter} onValueChange={setTemplateCategoryFilter}>
+                      <SelectTrigger><SelectValue placeholder="All categories" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {templateCategories.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedTemplateId} onValueChange={applyTemplate}>
+                      <SelectTrigger><SelectValue placeholder="Pick a template…" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-[11px] text-white/40">
+                    Picking a template pre-fills title, type, and copy — you can still edit before creating the draft.
+                  </p>
+                </div>
+              )}
               <div>
                 <Label>Title</Label>
                 <Input value={newForm.title} onChange={(e) => setNewForm({ ...newForm, title: e.target.value })} />
