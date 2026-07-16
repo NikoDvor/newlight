@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Users, Heart, Eye, Send, Plus, CheckCircle, XCircle, AlertCircle, Wifi,
-  MessageSquare, Share, Calendar, ThumbsUp
+  MessageSquare, Share, Calendar, ThumbsUp, ShieldCheck
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
