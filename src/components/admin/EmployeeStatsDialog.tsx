@@ -265,7 +265,7 @@ export function EmployeeStatsDialog(props: Props) {
 
             {/* Pipeline / sales */}
             <Section title="Pipeline">
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {STAGES.map((s) => (
                   <Stat key={s} label={s} value={pipelineCounts[s] ?? 0} />
                 ))}
