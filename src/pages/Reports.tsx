@@ -240,7 +240,7 @@ export default function Reports() {
                     ))}
                   </div>
                   {channelAttribution.map((c) => (
-                    <div key={c.channel} className="grid grid-cols-5 gap-2 py-2.5 border-b border-border/50 last:border-0">
+                    <div key={c.channel} className="grid grid-cols-2 sm:grid-cols-5 gap-2 py-2.5 border-b border-border/50 last:border-0">
                       <span className="text-sm font-medium text-foreground">{c.channel}</span>
                       <span className="text-sm tabular-nums font-semibold text-foreground">{c.revenue}</span>
                       <span className="text-sm tabular-nums text-muted-foreground">{c.leads}</span>
