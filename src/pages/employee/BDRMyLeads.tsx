@@ -506,7 +506,7 @@ export default function BDRMyLeads() {
                       return <div key={s.key} title={`${s.label}: ${stageCounts[s.key]}`} style={{ width: `${pct}%`, background: s.bar }} />;
                     })}
                   </div>
-                  <div className="grid grid-cols-4 gap-2 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                     {PIPELINE_STAGES.map(s => {
                       const active = filter === `stage:${s.key}`;
                       return (
