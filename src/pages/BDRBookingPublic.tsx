@@ -260,12 +260,35 @@ export default function BDRBookingPublic() {
         starts_at: selectedSlot,
         duration_minutes: 30,
         form_submission_id: savedSubmissionId,
+        niche: selectedNiche || null,
+        modules_of_interest: selectedModules.length ? selectedModules : null,
       },
     });
     setSubmitting(false);
     if (error) { alert("Couldn't book: " + error.message); return; }
     setDone(true);
   };
+
+  const nichesByIndustry = useMemo(() => {
+    const groups: Record<string, typeof NICHE_REGISTRY> = {};
+    for (const n of NICHE_REGISTRY) {
+      (groups[n.industry] ||= []).push(n);
+    }
+    return groups;
+  }, []);
+  const activeNiche = useMemo(() => (selectedNiche ? getNicheById(selectedNiche) : undefined), [selectedNiche]);
+  const recommendedKeys = useMemo(() => getRecommendedModulesForNiche(activeNiche), [activeNiche]);
+  const recommendedModules = useMemo(
+    () => CORE_MODULES.filter(m => recommendedKeys.includes(m.key)),
+    [recommendedKeys],
+  );
+  const otherModules = useMemo(
+    () => CORE_MODULES.filter(m => !recommendedKeys.includes(m.key)),
+    [recommendedKeys],
+  );
+  const toggleModule = (k: string) =>
+    setSelectedModules(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   if (!cal) return (
