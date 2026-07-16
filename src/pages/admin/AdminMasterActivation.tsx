@@ -667,7 +667,7 @@ export default function AdminMasterActivation() {
   // ── Render current stage content ──
   const renderStage = () => {
     switch (stage) {
-      case 1: return <StepQualification {...stepProps} bookingModules={bookingModules} />;
+      case 1: return <StepQualification {...stepProps} bookingModules={bookingModules} meeting1BookingLink={meeting1BookingLink} />;
       case 2: return <StepProposalClosePrep {...stepProps} clientId={clientId} />;
       case 3: return <StepCloseOutcome {...stepProps} />;
       case 4:
