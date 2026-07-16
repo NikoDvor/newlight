@@ -1,0 +1,1 @@
+ALTER TABLE public.nl_bdr_leads ADD COLUMN IF NOT EXISTS has_sales_team boolean, ADD COLUMN IF NOT EXISTS sales_team_size text;

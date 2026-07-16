@@ -7062,6 +7062,7 @@ export type Database = {
           customer_notes: string | null
           email: string | null
           has_booking_system: boolean | null
+          has_sales_team: boolean | null
           id: string
           lead_source: string
           list_name: string | null
@@ -7075,6 +7076,7 @@ export type Database = {
           phone: string | null
           phone_type: string | null
           pipeline_stage: string | null
+          sales_team_size: string | null
           status: string
           updated_at: string
           user_id: string
@@ -7095,6 +7097,7 @@ export type Database = {
           customer_notes?: string | null
           email?: string | null
           has_booking_system?: boolean | null
+          has_sales_team?: boolean | null
           id?: string
           lead_source?: string
           list_name?: string | null
@@ -7108,6 +7111,7 @@ export type Database = {
           phone?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          sales_team_size?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -7128,6 +7132,7 @@ export type Database = {
           customer_notes?: string | null
           email?: string | null
           has_booking_system?: boolean | null
+          has_sales_team?: boolean | null
           id?: string
           lead_source?: string
           list_name?: string | null
@@ -7141,6 +7146,7 @@ export type Database = {
           phone?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          sales_team_size?: string | null
           status?: string
           updated_at?: string
           user_id?: string
