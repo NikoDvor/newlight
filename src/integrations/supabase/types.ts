@@ -6385,6 +6385,7 @@ export type Database = {
       marketing_materials: {
         Row: {
           client_id: string
+          compliance_flags: Json
           content_text: string | null
           content_url: string | null
           created_at: string
@@ -6399,6 +6400,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          compliance_flags?: Json
           content_text?: string | null
           content_url?: string | null
           created_at?: string
@@ -6413,6 +6415,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          compliance_flags?: Json
           content_text?: string | null
           content_url?: string | null
           created_at?: string
