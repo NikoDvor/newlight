@@ -434,6 +434,7 @@ export default function AIInsights() {
                   rec={rec}
                   index={i}
                   expanded={!!expanded[rec.id]}
+                  businessName={activeClientName || "your business"}
                   onToggle={() => setExpanded((e) => ({ ...e, [rec.id]: !e[rec.id] }))}
                   onAction={(s) => updateStatus(rec.id, s)}
                 />
