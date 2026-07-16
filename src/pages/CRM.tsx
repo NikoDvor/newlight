@@ -697,6 +697,35 @@ export default function CRM() {
                                   {d.contact_id ? getContactName(d.contact_id) : "Unlinked"}
                                 </p>
                                 <p className="text-xs font-medium tabular-nums mt-1" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</p>
+                                {d.pricing_model && (
+                                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[9px] px-1.5 py-0 ${d.pricing_model === "retainer"
+                                        ? "border-[hsl(211,96%,56%)]/40 text-[hsl(211,96%,72%)]"
+                                        : "border-[hsl(280,80%,65%)]/40 text-[hsl(280,80%,80%)]"}`}
+                                    >
+                                      {d.pricing_model === "retainer" ? "Retainer" : "Commission"}
+                                    </Badge>
+                                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                                      {d.pricing_model === "retainer" && d.recurring_fee != null && Number(d.recurring_fee) > 0
+                                        ? `$${Number(d.recurring_fee).toLocaleString()}/mo`
+                                        : d.pricing_model === "commission" && d.commission_rate != null
+                                          ? `${Number(d.commission_rate)}%`
+                                          : ""}
+                                    </span>
+                                    {d.pricing_model === "commission" && (
+                                      <TooltipProvider><Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Sparkles className="h-2.5 w-2.5 text-muted-foreground" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                          Auto-calculated each cycle from tracked revenue × commission rate.
+                                        </TooltipContent>
+                                      </Tooltip></TooltipProvider>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             ))}
                             {stageDeals.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-6">No deals</p>}
