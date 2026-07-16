@@ -135,7 +135,7 @@ export default function ProposalBooking() {
       background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
     }}>
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-[600px] h-[600px] rounded-full" style={{
+        <div className="absolute w-full max-w-[600px] h-[600px] rounded-full" style={{
           top: "-150px", right: "-100px",
           background: "radial-gradient(circle, hsla(211,96%,62%,.12), transparent 70%)", filter: "blur(80px)",
         }} />
