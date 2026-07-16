@@ -437,7 +437,15 @@ export default function AdminPromoters() {
 
 
       {/* Detail Sheet */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Sheet open={!!selected} onOpenChange={(o) => {
+        if (!o) {
+          setSelected(null);
+          if (searchParams.get("promoterId")) {
+            searchParams.delete("promoterId");
+            setSearchParams(searchParams, { replace: true });
+          }
+        }
+      }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {selected && (
             <>
