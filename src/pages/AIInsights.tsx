@@ -172,7 +172,7 @@ export default function AIInsights() {
   const fetchAll = useCallback(async () => {
     if (!activeClientId) return;
     setLoading(true);
-    const [{ data: recsData }, { data: winsData }, { data: healthData }] = await Promise.all([
+    const [{ data: recsData }, { data: winsData }, { data: healthData }, { data: snapshotData }] = await Promise.all([
       supabase
         .from("ai_recommendations")
         .select("*")
@@ -189,6 +189,11 @@ export default function AIInsights() {
       supabase
         .from("client_health_scores")
         .select("overall_score")
+        .eq("client_id", activeClientId)
+        .maybeSingle(),
+      supabase
+        .from("client_signal_snapshots")
+        .select("signals")
         .eq("client_id", activeClientId)
         .maybeSingle(),
     ]);
