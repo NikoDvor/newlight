@@ -271,10 +271,7 @@ export default function GrowthAdvisor() {
           </div>
 
           {activeOpps.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/50 bg-card/30 p-12 text-center">
-              <Rocket className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-muted-foreground">No active opportunities yet. Generate your first growth plan above.</p>
-            </div>
+            <ExampleOpportunityPreview />
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {activeOpps
