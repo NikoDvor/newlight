@@ -95,23 +95,25 @@ export default function AdminAutomations() {
         <p className="text-xs text-white/30">{emptyMsg}</p>
       </div>
     ) : (
-      <table className="w-full">
-        <thead><tr className="border-b border-white/[0.06]">
-          <th className={hCls}>Automation</th><th className={hCls}>Related</th><th className={hCls}>Status</th><th className={hCls}>Started</th><th className={hCls}>Finished</th><th className={hCls}>Error</th>
-        </tr></thead>
-        <tbody>
-          {data.map((r: any) => (
-            <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-              <td className={cCls + " font-medium text-white"}>{autoNameMap[r.automation_id] || r.automation_id?.slice(0, 8) + "…"}</td>
-              <td className={cCls}>{(r as any).related_type || "—"}</td>
-              <td className={cCls}><SBadge status={r.status} /></td>
-              <td className={cCls}>{r.started_at ? new Date(r.started_at).toLocaleString() : "—"}</td>
-              <td className={cCls}>{r.completed_at ? new Date(r.completed_at).toLocaleString() : "—"}</td>
-              <td className={cCls + " text-red-400 text-xs max-w-48 truncate"}>{r.error || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead><tr className="border-b border-white/[0.06]">
+            <th className={hCls}>Automation</th><th className={hCls}>Related</th><th className={hCls}>Status</th><th className={hCls}>Started</th><th className={hCls}>Finished</th><th className={hCls}>Error</th>
+          </tr></thead>
+          <tbody>
+            {data.map((r: any) => (
+              <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                <td className={cCls + " font-medium text-white"}>{autoNameMap[r.automation_id] || r.automation_id?.slice(0, 8) + "…"}</td>
+                <td className={cCls}>{(r as any).related_type || "—"}</td>
+                <td className={cCls}><SBadge status={r.status} /></td>
+                <td className={cCls}>{r.started_at ? new Date(r.started_at).toLocaleString() : "—"}</td>
+                <td className={cCls}>{r.completed_at ? new Date(r.completed_at).toLocaleString() : "—"}</td>
+                <td className={cCls + " text-red-400 text-xs max-w-48 truncate"}>{r.error || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   );
 
@@ -175,39 +177,41 @@ export default function AdminAutomations() {
                   <p className="text-xs text-white/25">Use the Trigger Profiles tab to seed default automation workflows.</p>
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Name</th><th className={hCls}>Category</th><th className={hCls}>Scope</th><th className={hCls}>Trigger</th><th className={hCls}>Last Run</th><th className={hCls}>Success Rate</th><th className={hCls}>Status</th><th className={hCls}>Actions</th>
-                  </tr></thead>
-                  <tbody>
-                    {automations.map((a: any) => {
-                      const { lastRun, rate, totalRuns } = autoStats(a.id);
-                      return (
-                        <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                          <td className={cCls + " font-medium text-white"}>{a.name}</td>
-                          <td className={cCls}>{(a as any).automation_category || "—"}</td>
-                          <td className={cCls}><Badge variant="outline" className="border-0 text-[9px] bg-white/[0.06] text-white/50">{(a as any).workspace_scope_type || "—"}</Badge></td>
-                          <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{a.trigger_event}</code></td>
-                          <td className={cCls + " text-xs"}>{lastRun ? new Date(lastRun.started_at).toLocaleDateString() : "Never"}</td>
-                          <td className={cCls + " text-xs"}>{rate !== null ? `${rate}% (${totalRuns})` : "—"}</td>
-                          <td className={cCls}>
-                            <div className="flex items-center gap-2">
-                              <Switch checked={a.enabled} onCheckedChange={() => toggleEnabled(a.id, a.enabled)} className="scale-75" />
-                              <SBadge status={a.enabled ? "Active" : "Disabled"} />
-                            </div>
-                          </td>
-                          <td className={cCls}>
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10" onClick={() => duplicateAutomation(a)} title="Duplicate">
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Name</th><th className={hCls}>Category</th><th className={hCls}>Scope</th><th className={hCls}>Trigger</th><th className={hCls}>Last Run</th><th className={hCls}>Success Rate</th><th className={hCls}>Status</th><th className={hCls}>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                      {automations.map((a: any) => {
+                        const { lastRun, rate, totalRuns } = autoStats(a.id);
+                        return (
+                          <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                            <td className={cCls + " font-medium text-white"}>{a.name}</td>
+                            <td className={cCls}>{(a as any).automation_category || "—"}</td>
+                            <td className={cCls}><Badge variant="outline" className="border-0 text-[9px] bg-white/[0.06] text-white/50">{(a as any).workspace_scope_type || "—"}</Badge></td>
+                            <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{a.trigger_event}</code></td>
+                            <td className={cCls + " text-xs"}>{lastRun ? new Date(lastRun.started_at).toLocaleDateString() : "Never"}</td>
+                            <td className={cCls + " text-xs"}>{rate !== null ? `${rate}% (${totalRuns})` : "—"}</td>
+                            <td className={cCls}>
+                              <div className="flex items-center gap-2">
+                                <Switch checked={a.enabled} onCheckedChange={() => toggleEnabled(a.id, a.enabled)} className="scale-75" />
+                                <SBadge status={a.enabled ? "Active" : "Disabled"} />
+                              </div>
+                            </td>
+                            <td className={cCls}>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10" onClick={() => duplicateAutomation(a)} title="Duplicate">
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -303,21 +307,23 @@ export default function AdminAutomations() {
               {events.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No events emitted yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Event</th><th className={hCls}>Name</th><th className={hCls}>Related</th><th className={hCls}>Created</th>
-                  </tr></thead>
-                  <tbody>
-                    {events.map((e: any) => (
-                      <tr key={e.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{e.event_type}</code></td>
-                        <td className={cCls}>{(e as any).event_name || "—"}</td>
-                        <td className={cCls}>{(e as any).related_type || "—"}</td>
-                        <td className={cCls}>{new Date(e.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Event</th><th className={hCls}>Name</th><th className={hCls}>Related</th><th className={hCls}>Created</th>
+                    </tr></thead>
+                    <tbody>
+                      {events.map((e: any) => (
+                        <tr key={e.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{e.event_type}</code></td>
+                          <td className={cCls}>{(e as any).event_name || "—"}</td>
+                          <td className={cCls}>{(e as any).related_type || "—"}</td>
+                          <td className={cCls}>{new Date(e.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -331,23 +337,25 @@ export default function AdminAutomations() {
               {actionLogs.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No action logs yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Action</th><th className={hCls}>Type</th><th className={hCls}>Status</th><th className={hCls}>Result</th><th className={hCls}>Error</th><th className={hCls}>Time</th>
-                  </tr></thead>
-                  <tbody>
-                    {actionLogs.map((l: any) => (
-                      <tr key={l.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cCls + " font-medium text-white"}>{l.action_key}</td>
-                        <td className={cCls}>{l.action_type}</td>
-                        <td className={cCls}><SBadge status={l.action_status} /></td>
-                        <td className={cCls + " text-xs max-w-48 truncate"}>{l.result_summary || "—"}</td>
-                        <td className={cCls + " text-red-400 text-xs max-w-32 truncate"}>{l.error_message || "—"}</td>
-                        <td className={cCls}>{new Date(l.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Action</th><th className={hCls}>Type</th><th className={hCls}>Status</th><th className={hCls}>Result</th><th className={hCls}>Error</th><th className={hCls}>Time</th>
+                    </tr></thead>
+                    <tbody>
+                      {actionLogs.map((l: any) => (
+                        <tr key={l.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cCls + " font-medium text-white"}>{l.action_key}</td>
+                          <td className={cCls}>{l.action_type}</td>
+                          <td className={cCls}><SBadge status={l.action_status} /></td>
+                          <td className={cCls + " text-xs max-w-48 truncate"}>{l.result_summary || "—"}</td>
+                          <td className={cCls + " text-red-400 text-xs max-w-32 truncate"}>{l.error_message || "—"}</td>
+                          <td className={cCls}>{new Date(l.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>

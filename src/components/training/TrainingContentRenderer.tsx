@@ -134,7 +134,9 @@ export function TrainingContentRenderer({ content }: TrainingContentRendererProp
           ),
           table: ({ children }) => (
             <div className="my-6 w-full overflow-hidden rounded-xl border border-[hsla(211,96%,60%,.1)]">
-              <table className="w-full border-collapse text-left">{children}</table>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">{children}</table>
+              </div>
             </div>
           ),
           thead: ({ children }) => <thead className="bg-[hsla(211,96%,60%,.1)] text-[10px] font-semibold uppercase tracking-widest text-white/60">{children}</thead>,

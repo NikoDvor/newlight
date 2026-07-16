@@ -115,21 +115,23 @@ export default function AdminBilling() {
               {accounts.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No billing accounts yet. They are created automatically when proposals are accepted.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Email</th><th className={headCls}>Created</th>
-                  </tr></thead>
-                  <tbody>
-                    {accounts.map((a: any) => (
-                      <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(a.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={a.billing_status} /></td>
-                        <td className={cellCls}>{a.billing_email || "—"}</td>
-                        <td className={cellCls}>{new Date(a.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Email</th><th className={headCls}>Created</th>
+                    </tr></thead>
+                    <tbody>
+                      {accounts.map((a: any) => (
+                        <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(a.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={a.billing_status} /></td>
+                          <td className={cellCls}>{a.billing_email || "—"}</td>
+                          <td className={cellCls}>{new Date(a.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -143,24 +145,26 @@ export default function AdminBilling() {
               {subs.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No subscriptions yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Name</th><th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Monthly</th><th className={headCls}>Setup Fee</th><th className={headCls}>Term</th><th className={headCls}>Next Invoice</th>
-                  </tr></thead>
-                  <tbody>
-                    {subs.map((s: any) => (
-                      <tr key={s.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{s.subscription_name}</td>
-                        <td className={cellCls}>{(s.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={s.subscription_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(s.monthly_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls + " tabular-nums"}>${Number(s.setup_fee_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{s.contract_length_months}mo</td>
-                        <td className={cellCls}>{s.next_invoice_date || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Name</th><th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Monthly</th><th className={headCls}>Setup Fee</th><th className={headCls}>Term</th><th className={headCls}>Next Invoice</th>
+                    </tr></thead>
+                    <tbody>
+                      {subs.map((s: any) => (
+                        <tr key={s.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{s.subscription_name}</td>
+                          <td className={cellCls}>{(s.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={s.subscription_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(s.monthly_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls + " tabular-nums"}>${Number(s.setup_fee_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{s.contract_length_months}mo</td>
+                          <td className={cellCls}>{s.next_invoice_date || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -174,24 +178,26 @@ export default function AdminBilling() {
               {invoices.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No invoices yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Invoice #</th><th className={headCls}>Company</th><th className={headCls}>Type</th><th className={headCls}>Status</th><th className={headCls}>Total</th><th className={headCls}>Due Date</th><th className={headCls}>Paid At</th>
-                  </tr></thead>
-                  <tbody>
-                    {invoices.map((inv: any) => (
-                      <tr key={inv.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{inv.invoice_number}</td>
-                        <td className={cellCls}>{(inv.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}>{inv.invoice_type}</td>
-                        <td className={cellCls}><SBadge status={inv.invoice_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(inv.total_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{inv.due_date || "—"}</td>
-                        <td className={cellCls}>{inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Invoice #</th><th className={headCls}>Company</th><th className={headCls}>Type</th><th className={headCls}>Status</th><th className={headCls}>Total</th><th className={headCls}>Due Date</th><th className={headCls}>Paid At</th>
+                    </tr></thead>
+                    <tbody>
+                      {invoices.map((inv: any) => (
+                        <tr key={inv.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{inv.invoice_number}</td>
+                          <td className={cellCls}>{(inv.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}>{inv.invoice_type}</td>
+                          <td className={cellCls}><SBadge status={inv.invoice_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(inv.total_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{inv.due_date || "—"}</td>
+                          <td className={cellCls}>{inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -205,23 +211,25 @@ export default function AdminBilling() {
               {payments.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No payment records yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Provider</th><th className={headCls}>Method</th><th className={headCls}>Status</th><th className={headCls}>Amount</th><th className={headCls}>Date</th>
-                  </tr></thead>
-                  <tbody>
-                    {payments.map((p: any) => (
-                      <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(p.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}>{p.payment_provider}</td>
-                        <td className={cellCls}>{p.payment_method_type}</td>
-                        <td className={cellCls}><SBadge status={p.payment_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(p.amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Provider</th><th className={headCls}>Method</th><th className={headCls}>Status</th><th className={headCls}>Amount</th><th className={headCls}>Date</th>
+                    </tr></thead>
+                    <tbody>
+                      {payments.map((p: any) => (
+                        <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(p.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}>{p.payment_provider}</td>
+                          <td className={cellCls}>{p.payment_method_type}</td>
+                          <td className={cellCls}><SBadge status={p.payment_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(p.amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -235,24 +243,26 @@ export default function AdminBilling() {
               {contracts.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No contracts yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Term</th><th className={headCls}>Start</th><th className={headCls}>End</th><th className={headCls}>Auto-Renew</th><th className={headCls}>Enforcement</th>
-                  </tr></thead>
-                  <tbody>
-                    {contracts.map((c: any) => (
-                      <tr key={c.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(c.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={c.contract_status} /></td>
-                        <td className={cellCls}>{c.contract_length_months}mo</td>
-                        <td className={cellCls}>{c.start_date || "—"}</td>
-                        <td className={cellCls}>{c.end_date || "—"}</td>
-                        <td className={cellCls}>{c.auto_renew ? "Yes" : "No"}</td>
-                        <td className={cellCls}>{c.enforcement_mode}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Term</th><th className={headCls}>Start</th><th className={headCls}>End</th><th className={headCls}>Auto-Renew</th><th className={headCls}>Enforcement</th>
+                    </tr></thead>
+                    <tbody>
+                      {contracts.map((c: any) => (
+                        <tr key={c.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(c.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={c.contract_status} /></td>
+                          <td className={cellCls}>{c.contract_length_months}mo</td>
+                          <td className={cellCls}>{c.start_date || "—"}</td>
+                          <td className={cellCls}>{c.end_date || "—"}</td>
+                          <td className={cellCls}>{c.auto_renew ? "Yes" : "No"}</td>
+                          <td className={cellCls}>{c.enforcement_mode}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>

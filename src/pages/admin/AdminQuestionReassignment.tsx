@@ -280,73 +280,75 @@ export default function AdminQuestionReassignment() {
         </div>
 
         <div className="overflow-auto border rounded-lg">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-left">
-                <th className="p-2 w-10">
-                  <Checkbox
-                    checked={filtered.length > 0 && filtered.every((r) => selected.has(r.q.id))}
-                    onCheckedChange={(v) => toggleAll(!!v)}
-                  />
-                </th>
-                <th className="p-2">Question</th>
-                <th className="p-2">Current Module</th>
-                <th className="p-2">Current Chapter</th>
-                <th className="p-2">Issues</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Loading…</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">
-                  <CheckCircle2 className="inline h-4 w-4 mr-1" /> No matching questions
-                </td></tr>
-              ) : (
-                filtered.map(({ q, ch, issues }) => {
-                  const mod = moduleMap.get(q.module_id);
-                  const chMod = ch ? moduleMap.get(ch.module_id) : null;
-                  return (
-                    <tr key={q.id} className="border-t hover:bg-muted/30">
-                      <td className="p-2">
-                        <Checkbox
-                          checked={selected.has(q.id)}
-                          onCheckedChange={(v) => toggleOne(q.id, !!v)}
-                        />
-                      </td>
-                      <td className="p-2 max-w-md">
-                        <div className="line-clamp-2">{q.question_text}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">L{q.quiz_level} · {q.id.slice(0, 8)}</div>
-                      </td>
-                      <td className="p-2 whitespace-nowrap">
-                        {mod ? `M${mod.module_number} — ${mod.module_title}` : <span className="text-destructive">missing</span>}
-                      </td>
-                      <td className="p-2 whitespace-nowrap">
-                        {ch ? (
-                          <>
-                            Ch{ch.chapter_number} — {ch.chapter_title}
-                            {chMod && chMod.id !== q.module_id && (
-                              <div className="text-xs text-amber-600">belongs to M{chMod.module_number}</div>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-destructive">no chapter</span>
-                        )}
-                      </td>
-                      <td className="p-2">
-                        <div className="flex flex-wrap gap-1">
-                          {issues.length === 0 && <Badge variant="secondary">OK</Badge>}
-                          {issues.includes("mismatch") && <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30">mismatch</Badge>}
-                          {issues.includes("orphan") && <Badge className="bg-red-500/15 text-red-700 border-red-500/30">orphan</Badge>}
-                          {issues.includes("duplicate") && <Badge variant="outline">duplicate</Badge>}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr className="text-left">
+                  <th className="p-2 w-10">
+                    <Checkbox
+                      checked={filtered.length > 0 && filtered.every((r) => selected.has(r.q.id))}
+                      onCheckedChange={(v) => toggleAll(!!v)}
+                    />
+                  </th>
+                  <th className="p-2">Question</th>
+                  <th className="p-2">Current Module</th>
+                  <th className="p-2">Current Chapter</th>
+                  <th className="p-2">Issues</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Loading…</td></tr>
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    <CheckCircle2 className="inline h-4 w-4 mr-1" /> No matching questions
+                  </td></tr>
+                ) : (
+                  filtered.map(({ q, ch, issues }) => {
+                    const mod = moduleMap.get(q.module_id);
+                    const chMod = ch ? moduleMap.get(ch.module_id) : null;
+                    return (
+                      <tr key={q.id} className="border-t hover:bg-muted/30">
+                        <td className="p-2">
+                          <Checkbox
+                            checked={selected.has(q.id)}
+                            onCheckedChange={(v) => toggleOne(q.id, !!v)}
+                          />
+                        </td>
+                        <td className="p-2 max-w-md">
+                          <div className="line-clamp-2">{q.question_text}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">L{q.quiz_level} · {q.id.slice(0, 8)}</div>
+                        </td>
+                        <td className="p-2 whitespace-nowrap">
+                          {mod ? `M${mod.module_number} — ${mod.module_title}` : <span className="text-destructive">missing</span>}
+                        </td>
+                        <td className="p-2 whitespace-nowrap">
+                          {ch ? (
+                            <>
+                              Ch{ch.chapter_number} — {ch.chapter_title}
+                              {chMod && chMod.id !== q.module_id && (
+                                <div className="text-xs text-amber-600">belongs to M{chMod.module_number}</div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-destructive">no chapter</span>
+                          )}
+                        </td>
+                        <td className="p-2">
+                          <div className="flex flex-wrap gap-1">
+                            {issues.length === 0 && <Badge variant="secondary">OK</Badge>}
+                            {issues.includes("mismatch") && <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30">mismatch</Badge>}
+                            {issues.includes("orphan") && <Badge className="bg-red-500/15 text-red-700 border-red-500/30">orphan</Badge>}
+                            {issues.includes("duplicate") && <Badge variant="outline">duplicate</Badge>}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </Card>
 

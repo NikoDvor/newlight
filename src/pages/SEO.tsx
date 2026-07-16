@@ -518,75 +518,79 @@ export default function SEO() {
                     <DemoDataLabel />
                     <span className="text-[10px] text-muted-foreground">Example rankings — add your keywords to see real data</span>
                   </div>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
-                      </tr>
-                    </thead>
-                    <tbody className="opacity-60">
-                      {DEMO_KEYWORDS.map((k, i) => (
-                        <tr key={i} className="border-b border-border last:border-0">
-                          <td className="text-sm py-3">{k.keyword}</td>
-                          <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
-                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
-                          <td className="text-right py-3">
-                            <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
-                              {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                              {Math.abs(k.change)}
-                            </span>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="opacity-60">
+                        {DEMO_KEYWORDS.map((k, i) => (
+                          <tr key={i} className="border-b border-border last:border-0">
+                            <td className="text-sm py-3">{k.keyword}</td>
+                            <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
+                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
+                            <td className="text-right py-3">
+                              <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
+                                {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                {Math.abs(k.change)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <div className="text-center mt-4">
                     <Button size="sm" onClick={() => setKwOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Your Keywords</Button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">
-                          {gscConnection?.status === "active" ? "Impressions" : "Volume"}
-                        </th>
-                        {gscConnection?.status === "active" && (
-                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
-                        )}
-                        {isAdmin && <th className="w-8"></th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {keywords.map((k) => (
-                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors group">
-                          <td className="text-sm py-3">{k.keyword}</td>
-                          <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
-                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">
+                            {gscConnection?.status === "active" ? "Impressions" : "Volume"}
+                          </th>
                           {gscConnection?.status === "active" && (
-                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                            <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
                           )}
-                          {isAdmin && (
-                            <td className="text-right py-3">
-                              <button
-                                onClick={() => deleteKeyword(k.id)}
-                                disabled={deletingKwId === k.id}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
-                              >
-                                {deletingKwId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
-                              </button>
-                            </td>
-                          )}
+                          {isAdmin && <th className="w-8"></th>}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {keywords.map((k) => (
+                          <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors group">
+                            <td className="text-sm py-3">{k.keyword}</td>
+                            <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
+                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                            {gscConnection?.status === "active" && (
+                              <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                            )}
+                            {isAdmin && (
+                              <td className="text-right py-3">
+                                <button
+                                  onClick={() => deleteKeyword(k.id)}
+                                  disabled={deletingKwId === k.id}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                                >
+                                  {deletingKwId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   {gscConnection?.status !== "active" && (
                     <p className="text-xs text-muted-foreground mt-2 px-1">
                       Volumes are AI estimates until Search Console is connected.
@@ -659,26 +663,28 @@ export default function SEO() {
                 </div>
               ) : (
                 <>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {competitors.map((c) => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                          <td className="text-sm font-medium py-3">{c.domain}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {competitors.map((c) => (
+                          <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                            <td className="text-sm font-medium py-3">{c.domain}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   {gapAnalysis && (
                     <p className="text-xs text-muted-foreground mt-2 px-1">
                       Gap analysis generated {new Date(gapAnalysis.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {(gapAnalysis.keyword_gaps || []).length} keyword gaps · {(gapAnalysis.content_gaps || []).length} content gaps
