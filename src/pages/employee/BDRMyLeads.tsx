@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -31,6 +31,9 @@ interface BdrLead {
   has_booking_system: boolean | null;
   list_name: string | null;
   pipeline_stage: string | null;
+  phone_type: string | null;
+  booking_link: string | null;
+  booking_link_is_owner: boolean | null;
   created_at: string;
 }
 
@@ -274,7 +277,7 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null }[], listName: string) => {
+  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null; phone_type?: string | null; booking_link?: string | null; booking_link_is_owner?: boolean | null }[], listName: string) => {
     if (!user?.id) return;
     const cleanList = listName.trim() || null;
     const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
@@ -289,6 +292,9 @@ export default function BDRMyLeads() {
         user_id: user.id, client_id: clientId, business_name: row.business_name, owner_name: row.owner_name || null,
         phone: row.phone || null, website: row.website || null,
         has_booking_system: row.has_booking_system,
+        phone_type: row.phone_type || "front_desk",
+        booking_link: row.booking_link || null,
+        booking_link_is_owner: row.booking_link_is_owner ?? null,
         list_name: cleanList,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
@@ -655,7 +661,32 @@ export default function BDRMyLeads() {
                         </div>
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {lead.phone && <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>}
+                          {lead.phone && (
+                            <span className="inline-flex items-center gap-1">
+                              <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>
+                              {lead.phone_type === "owner" ? (
+                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner</span>
+                              ) : (
+                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
+                              )}
+                            </span>
+                          )}
+                          {lead.booking_link && (
+                            <a
+                              href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline"
+                              style={lead.booking_link_is_owner
+                                ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }
+                                : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,56%)" }}
+                              title={lead.booking_link}
+                            >
+                              <Calendar className="h-3 w-3" />
+                              {lead.booking_link_is_owner ? "Owner's Calendar" : "Booking Link"}
+                            </a>
+                          )}
                           {lead.website ? (
                             <a
                               href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
@@ -1045,10 +1076,14 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
     const headerLike = rows[0].some(c => /business|name|phone|website|booking/i.test(c));
     const dataRows = headerLike ? rows.slice(1) : rows;
     let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3, bkIdx = 4;
+    let ptIdx = -1, blIdx = -1, bloIdx = -1;
     if (headerLike) {
       const h = rows[0].map(c => c.toLowerCase());
       h.forEach((c, i) => {
-        if (/business/.test(c)) biIdx = i;
+        if (/phone.?type|number.?type/.test(c)) ptIdx = i;
+        else if (/booking.?link.?(is.?)?owner|owner.?calendar/.test(c)) bloIdx = i;
+        else if (/booking.?(link|url)/.test(c)) blIdx = i;
+        else if (/business/.test(c)) biIdx = i;
         else if (/owner|contact/.test(c)) owIdx = i;
         else if (/phone/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
@@ -1062,10 +1097,18 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
       if (/^(n|no|false|0)$/.test(s)) return false;
       return null;
     };
+    const parsePhoneType = (v: string): string => {
+      const s = (v || "").trim().toLowerCase();
+      if (/owner|personal|cell|mobile|direct/.test(s)) return "owner";
+      return "front_desk";
+    };
     const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
       business_name: r[biIdx]?.trim() || "", owner_name: r[owIdx]?.trim() || "",
       phone: r[phIdx]?.trim() || "", website: r[webIdx]?.trim() || "",
       has_booking_system: parseBooking(r[bkIdx] || ""),
+      phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : "front_desk",
+      booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
+      booking_link_is_owner: bloIdx >= 0 ? parseBooking(r[bloIdx] || "") : null,
     }));
     setParsed(result); setChecked(result.map(() => true));
   };
