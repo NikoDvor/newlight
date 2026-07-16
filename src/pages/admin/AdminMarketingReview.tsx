@@ -117,6 +117,9 @@ export default function AdminMarketingReview() {
     title: "", material_type: "other" as MaterialType, content_text: "", content_url: "",
     has_testimonial: false,
   });
+  const [templates, setTemplates] = useState<Array<{ id: string; title: string; category: string; material_type: string; template_text: string }>>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>("all");
   const [linkedDisclosureIds, setLinkedDisclosureIds] = useState<string[]>([]);
   const [savingLinks, setSavingLinks] = useState(false);
   const [showTestimonialDialog, setShowTestimonialDialog] = useState(false);
@@ -134,6 +137,41 @@ export default function AdminMarketingReview() {
   };
 
   useEffect(() => { load(); }, [activeClientId]);
+
+  // Load active global templates once
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("marketing_content_templates" as any)
+        .select("id,title,category,material_type,template_text")
+        .eq("is_active", true)
+        .order("category")
+        .order("title");
+      setTemplates(((data as any[]) ?? []) as any);
+    })();
+  }, []);
+
+  const templateCategories = useMemo(() => {
+    const s = new Set(templates.map((t) => t.category));
+    return Array.from(s).sort();
+  }, [templates]);
+
+  const filteredTemplates = useMemo(() => {
+    if (templateCategoryFilter === "all") return templates;
+    return templates.filter((t) => t.category === templateCategoryFilter);
+  }, [templates, templateCategoryFilter]);
+
+  const applyTemplate = (id: string) => {
+    setSelectedTemplateId(id);
+    const t = templates.find((x) => x.id === id);
+    if (!t) return;
+    setNewForm((f) => ({
+      ...f,
+      title: t.title,
+      material_type: (t.material_type as MaterialType),
+      content_text: t.template_text,
+    }));
+  };
 
   const openMaterial = async (m: Material) => {
     setSelected(m);
@@ -303,6 +341,8 @@ export default function AdminMarketingReview() {
     toast.success("Draft created");
     setShowNew(false);
     setNewForm({ title: "", material_type: "other", content_text: "", content_url: "", has_testimonial: false });
+    setSelectedTemplateId("");
+    setTemplateCategoryFilter("all");
     await load();
     if (data) openMaterial(data as any);
   };
@@ -320,6 +360,37 @@ export default function AdminMarketingReview() {
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>New Marketing Material</DialogTitle></DialogHeader>
             <div className="space-y-4">
+              {templates.length > 0 && (
+                <div className="rounded-md border border-white/10 bg-white/[0.03] p-3 space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-white/60">
+                    Start from a compliance-safe template (optional)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={templateCategoryFilter} onValueChange={setTemplateCategoryFilter}>
+                      <SelectTrigger><SelectValue placeholder="All categories" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {templateCategories.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedTemplateId} onValueChange={applyTemplate}>
+                      <SelectTrigger><SelectValue placeholder="Pick a template…" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-[11px] text-white/40">
+                    Picking a template pre-fills title, type, and copy — you can still edit before creating the draft.
+                  </p>
+                </div>
+              )}
               <div>
                 <Label>Title</Label>
                 <Input value={newForm.title} onChange={(e) => setNewForm({ ...newForm, title: e.target.value })} />
