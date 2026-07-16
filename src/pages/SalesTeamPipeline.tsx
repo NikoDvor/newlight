@@ -329,7 +329,7 @@ function StageBar({ counts, total, compact }: { counts: Record<Stage, number>; t
         })}
       </div>
       {!compact && (
-        <div className="grid grid-cols-4 gap-2 mt-2 text-[11px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px]">
           {(["cold", "warm", "hot", "won"] as Stage[]).map((k) => (
             <div key={k} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full shrink-0" style={{ background: STAGE_META[k].bar }} />

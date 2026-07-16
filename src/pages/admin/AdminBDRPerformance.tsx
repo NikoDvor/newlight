@@ -226,7 +226,7 @@ export default function AdminBDRPerformance() {
       </div>
 
       {/* Team stats */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {[
           { label: "Total Leads", value: teamStats.total },
           { label: "Booked", value: teamStats.booked },

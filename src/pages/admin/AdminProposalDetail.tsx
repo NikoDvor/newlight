@@ -320,7 +320,7 @@ export default function AdminProposalDetail() {
               ))}
               <div className="p-3 rounded-lg bg-white/[0.02] border border-dashed border-white/10 space-y-2">
                 <p className="text-[10px] text-white/40 uppercase">Add Line Item</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <Input value={newItem.item_name} onChange={e => setNewItem({ ...newItem, item_name: e.target.value })} placeholder="Name" className="bg-white/5 border-white/10 text-white text-xs col-span-2" />
                   <Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) })} placeholder="Qty" className="bg-white/5 border-white/10 text-white text-xs" />
                   <Input type="number" value={newItem.unit_price} onChange={e => setNewItem({ ...newItem, unit_price: Number(e.target.value) })} placeholder="Price" className="bg-white/5 border-white/10 text-white text-xs" />

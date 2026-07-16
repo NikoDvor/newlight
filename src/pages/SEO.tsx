@@ -701,7 +701,7 @@ export default function SEO() {
                 <p className="text-xs text-muted-foreground -mt-2 mb-4">
                   Powered by Google PageSpeed Insights · Last run {new Date(perfScore.fetched_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at {new Date(perfScore.fetched_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase()}
                 </p>
-                <div className="grid grid-cols-5 gap-2 mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
                   {[
                     {
                       label: "Performance",
