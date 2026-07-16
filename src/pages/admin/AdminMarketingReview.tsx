@@ -139,6 +139,30 @@ export default function AdminMarketingReview() {
 
   useEffect(() => { load(); }, [activeClientId]);
 
+  // Deep-link: auto-open a material when URL includes ?materialId= or ?socialPostId=
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const materialId = searchParams.get("materialId");
+    const socialPostId = searchParams.get("socialPostId");
+    if (!materialId && !socialPostId) return;
+    (async () => {
+      let query = supabase.from("marketing_materials").select("*").limit(1);
+      if (materialId) query = query.eq("id", materialId);
+      else if (socialPostId) query = query.eq("related_social_post_id", socialPostId);
+      const { data } = await query;
+      const row = (data as any[])?.[0];
+      if (row) {
+        openMaterial(row as any);
+      }
+      // Clear the param so re-navigating doesn't loop
+      const next = new URLSearchParams(searchParams);
+      next.delete("materialId");
+      next.delete("socialPostId");
+      setSearchParams(next, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("materialId"), searchParams.get("socialPostId")]);
+
   // Load active global templates once
   useEffect(() => {
     (async () => {
