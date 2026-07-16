@@ -176,6 +176,60 @@ export default function AdminCloseCenter() {
 
   useEffect(() => { load(); }, [load]);
 
+  // ── Booking links (Meeting 1 = assigned rep's BDR calendar via nl_bdr_leads;
+  //    Meeting 2 = current activation draft's saved slug). Best-effort; silent on miss.
+  useEffect(() => {
+    if (!clientId || !client) return;
+    let cancelled = false;
+    (async () => {
+      let meeting1: string | null = null;
+      let meeting2: string | null = null;
+
+      // Meeting 1: match lead by email → phone, then look up rep's bdr_calendar
+      try {
+        let leadRow: any = null;
+        if (client.owner_email) {
+          const { data } = await supabase.from("nl_bdr_leads")
+            .select("user_id").eq("email", client.owner_email)
+            .not("user_id", "is", null)
+            .order("created_at", { ascending: false }).limit(1);
+          leadRow = data?.[0] || null;
+        }
+        if (!leadRow) {
+          const phone = (client as any).owner_phone || null;
+          if (phone) {
+            const { data } = await supabase.from("nl_bdr_leads")
+              .select("user_id").eq("phone", phone)
+              .not("user_id", "is", null)
+              .order("created_at", { ascending: false }).limit(1);
+            leadRow = data?.[0] || null;
+          }
+        }
+        if (leadRow?.user_id) {
+          const { data: cal } = await supabase.from("bdr_calendars")
+            .select("booking_slug").eq("user_id", leadRow.user_id).maybeSingle();
+          if (cal?.booking_slug) meeting1 = cal.booking_slug;
+        }
+      } catch { /* silent */ }
+
+      // Meeting 2: pull meeting_2_booking_slug from most-recent activation_draft form_data
+      try {
+        const { data: drafts } = await supabase.from("activation_drafts")
+          .select("form_data").eq("client_id", clientId)
+          .order("updated_at", { ascending: false }).limit(1);
+        const fd = drafts?.[0]?.form_data as any;
+        if (fd && typeof fd === "object" && typeof fd.meeting_2_booking_slug === "string" && fd.meeting_2_booking_slug) {
+          meeting2 = fd.meeting_2_booking_slug;
+        }
+      } catch { /* silent */ }
+
+      if (!cancelled) setBookingLinks({ meeting1, meeting2 });
+    })();
+    return () => { cancelled = true; };
+  }, [clientId, client]);
+
+
+
   // ─── Actions ─────────────────────────────────────────────────
   const logAction = async (artifactType: string, artifactId: string | null, action: string, method = "manual", notes?: string) => {
     await supabase.from("lifecycle_send_logs").insert({
