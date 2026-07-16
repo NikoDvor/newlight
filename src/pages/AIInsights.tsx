@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
   ThumbsDown, CheckCircle2, Megaphone, Search, Share2, Star, Globe,
-  Users, Zap, Loader2,
+  Users, Zap, Loader2, ArrowRight, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
@@ -11,7 +11,75 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+// ── Executable action mapping ────────────────────────────────────
+// Keyword-based detection: if a recommendation's action_label matches an
+// automatable capability we already ship, it becomes a one-click "Execute".
+// Everything else falls back to a guided step-by-step modal.
+const EXECUTABLE_KEYWORDS = [
+  "review request", "request review", "ask for review",
+  "instant response", "auto-respond", "auto reply", "instant reply",
+  "reminder", "appointment reminder", "no-show",
+  "follow-up", "follow up", "nurture",
+  "send sms", "send text", "send email",
+  "re-engage", "reactivation",
+];
+
+function isExecutable(rec: { action_label: string | null; title: string | null; category: string | null }): boolean {
+  const hay = `${rec.action_label ?? ""} ${rec.title ?? ""}`.toLowerCase();
+  return EXECUTABLE_KEYWORDS.some((k) => hay.includes(k));
+}
+
+function buildGuidedSteps(rec: { category: string | null; action_label: string | null; why_reasoning: string | null }): string[] {
+  const cat = (rec.category || "").toLowerCase();
+  const label = rec.action_label || "this action";
+  const base: Record<string, string[]> = {
+    ads:     [
+      "Open your Paid Ads dashboard and pull the last 30 days of performance by campaign.",
+      "Identify the 1–2 campaigns driving the majority of qualified leads and pause the underperformers.",
+      `Reallocate budget toward the winners — this directly supports: ${label}.`,
+      "Set a 7-day check-in to compare cost-per-lead before and after the change.",
+    ],
+    seo:     [
+      "Open the SEO module and review the pages flagged with the biggest ranking gap.",
+      "Update titles, meta descriptions, and the first paragraph to match target intent.",
+      `Publish the changes and submit the URL for re-indexing (${label}).`,
+      "Re-check rankings in 10–14 days and note movement in the tracker.",
+    ],
+    social:  [
+      "Review your last 30 days of posts and identify your top 3 by engagement.",
+      "Draft 4–6 new posts modeled on those winners.",
+      `Schedule them across your peak posting windows (${label}).`,
+      "Track engagement lift weekly and iterate on what works.",
+    ],
+    reviews: [
+      "Pull the list of clients from the last 30 days who had a positive outcome.",
+      "Send each one a personalized review request with a direct link to Google.",
+      `Follow up once after 3 days if there's no response (${label}).`,
+      "Reply publicly to every new review within 24 hours.",
+    ],
+    website: [
+      "Open the Website module and locate the page called out in the recommendation.",
+      "Apply the suggested change (headline, CTA, layout, or copy).",
+      `Publish and confirm the change is live (${label}).`,
+      "Monitor conversion rate on that page for the next 14 days.",
+    ],
+    crm:     [
+      "Open the CRM and filter contacts matching the recommendation's segment.",
+      "Draft an outreach message tailored to that segment.",
+      `Send from the CRM and log the touchpoint (${label}).`,
+      "Set a task to review outcomes in 7 days.",
+    ],
+  };
+  return base[cat] ?? [
+    "Review the recommendation context and confirm it applies to your business right now.",
+    `Take the primary action: ${label}.`,
+    "Log the change in the relevant module so it's tracked.",
+    "Re-check the outcome in 7–14 days.",
+  ];
+}
 
 type Category = "ads" | "seo" | "social" | "reviews" | "website" | "crm";
 type Status = "new" | "accepted" | "acted" | "dismissed" | "snoozed";
