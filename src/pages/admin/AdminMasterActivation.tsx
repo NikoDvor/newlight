@@ -34,6 +34,10 @@ import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepComplianceTools } from "@/components/activation/StepComplianceTools";
 import { StepSalesTeamTools } from "@/components/activation/StepSalesTeamTools";
+import { StepWorkforce } from "@/components/activation/StepWorkforce";
+import { StepFinance } from "@/components/activation/StepFinance";
+import { StepMarketing } from "@/components/activation/StepMarketing";
+import { StepSupport } from "@/components/activation/StepSupport";
 import { StepReview } from "@/components/activation/StepReview";
 import { StepProfileSelection } from "@/components/activation/StepProfileSelection";
 
@@ -664,30 +668,35 @@ export default function AdminMasterActivation() {
       case 5:
         return (
           <Tabs defaultValue="branding" className="w-full">
-            <TabsList className="w-full grid grid-cols-5 bg-white/[0.04] border border-white/10 mb-4">
+            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
               <TabsTrigger value="branding" className="text-[11px] data-[state=active]:bg-white/10">Branding</TabsTrigger>
               <TabsTrigger value="crm" className="text-[11px] data-[state=active]:bg-white/10">CRM</TabsTrigger>
               <TabsTrigger value="calendar" className="text-[11px] data-[state=active]:bg-white/10">Calendar</TabsTrigger>
               <TabsTrigger value="services" className="text-[11px] data-[state=active]:bg-white/10">Services</TabsTrigger>
               <TabsTrigger value="forms" className="text-[11px] data-[state=active]:bg-white/10">Forms</TabsTrigger>
+              <TabsTrigger value="marketing" className="text-[11px] data-[state=active]:bg-white/10">Marketing</TabsTrigger>
             </TabsList>
             <TabsContent value="branding"><StepBranding {...stepProps} /></TabsContent>
             <TabsContent value="crm"><StepCRM {...stepProps} /></TabsContent>
             <TabsContent value="calendar"><StepCalendar {...stepProps} /></TabsContent>
             <TabsContent value="services"><StepServices {...stepProps} /></TabsContent>
             <TabsContent value="forms"><StepBookingForms {...stepProps} /></TabsContent>
+            <TabsContent value="marketing"><StepMarketing {...stepProps} /></TabsContent>
           </Tabs>
         );
       case 6:
         return (
           <Tabs defaultValue="messaging" className="w-full">
-            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
+            <TabsList className="w-full grid grid-cols-9 bg-white/[0.04] border border-white/10 mb-4">
               <TabsTrigger value="messaging" className="text-[11px] data-[state=active]:bg-white/10">Messaging</TabsTrigger>
               <TabsTrigger value="reviews" className="text-[11px] data-[state=active]:bg-white/10">Reviews</TabsTrigger>
               <TabsTrigger value="team" className="text-[11px] data-[state=active]:bg-white/10">Team</TabsTrigger>
               <TabsTrigger value="integrations" className="text-[11px] data-[state=active]:bg-white/10">Integrations</TabsTrigger>
               <TabsTrigger value="compliance" className="text-[11px] data-[state=active]:bg-white/10">Compliance</TabsTrigger>
               <TabsTrigger value="salesteam" className="text-[11px] data-[state=active]:bg-white/10">Sales Team</TabsTrigger>
+              <TabsTrigger value="workforce" className="text-[11px] data-[state=active]:bg-white/10">Workforce</TabsTrigger>
+              <TabsTrigger value="finance" className="text-[11px] data-[state=active]:bg-white/10">Finance</TabsTrigger>
+              <TabsTrigger value="support" className="text-[11px] data-[state=active]:bg-white/10">Support</TabsTrigger>
             </TabsList>
             <TabsContent value="messaging"><StepEmail {...stepProps} /></TabsContent>
             <TabsContent value="reviews"><StepReviews {...stepProps} /></TabsContent>
@@ -695,6 +704,9 @@ export default function AdminMasterActivation() {
             <TabsContent value="integrations"><StepIntegrations {...stepProps} /></TabsContent>
             <TabsContent value="compliance"><StepComplianceTools {...stepProps} /></TabsContent>
             <TabsContent value="salesteam"><StepSalesTeamTools {...stepProps} /></TabsContent>
+            <TabsContent value="workforce"><StepWorkforce {...stepProps} /></TabsContent>
+            <TabsContent value="finance"><StepFinance {...stepProps} /></TabsContent>
+            <TabsContent value="support"><StepSupport {...stepProps} /></TabsContent>
           </Tabs>
         );
       case 7: return <StepReview {...stepProps} />;

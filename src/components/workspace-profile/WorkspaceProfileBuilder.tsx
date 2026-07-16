@@ -91,13 +91,12 @@ export function WorkspaceProfileBuilder({
         <div>
           <h3 className="text-sm font-semibold text-white">Workspace Profile</h3>
           <p className="text-[11px] text-white/40">
-            Define the business model to tailor modules, metrics, and automations.
+            Define the business model to tailor provisioning — calendars, forms, and reminders. Pricing was already set during the Proposal step.
           </p>
         </div>
       </div>
 
       <IndustryCategorySelect value={industry} onChange={handleIndustry} />
-      <NicheSelect industry={industry} value={nicheId} onChange={handleNiche} />
       <ArchetypeSelector value={archetype} onChange={handleArchetype} />
       <ZoomTierSelector value={zoomTier} onChange={handleZoom} />
     </div>
