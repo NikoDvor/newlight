@@ -6296,6 +6296,39 @@ export type Database = {
           },
         ]
       }
+      marketing_content_templates: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          material_type: string
+          template_text: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          material_type: string
+          template_text: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          material_type?: string
+          template_text?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_disclosures: {
         Row: {
           client_id: string
