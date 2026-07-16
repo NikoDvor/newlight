@@ -199,6 +199,8 @@ export default function AIInsights() {
     ]);
     setRecs((recsData ?? []) as Recommendation[]);
     setWins((winsData ?? []) as Recommendation[]);
+    const rawSignals = (snapshotData?.signals ?? []) as unknown;
+    setSignals(Array.isArray(rawSignals) ? (rawSignals as WeaknessSignal[]) : []);
     if (healthData?.overall_score != null) {
       setHealthScore(Number(healthData.overall_score));
     } else if ((recsData ?? []).length > 0) {
