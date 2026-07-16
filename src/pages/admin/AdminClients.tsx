@@ -653,14 +653,29 @@ export default function AdminClients() {
         </Dialog>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-        <Input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search clients..."
-          className="pl-9 bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search clients..."
+            className="pl-9 bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setComplianceOnly(v => !v)}
+          className={`h-10 border-white/10 gap-1.5 ${complianceOnly ? "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] border-[hsla(40,96%,60%,.35)]" : "bg-white/[0.04] text-white/60"}`}
+        >
+          <Shield className="h-3.5 w-3.5" />
+          {complianceOnly ? "Compliance clients only" : "Compliance filter"}
+          <span className="ml-1 text-[10px] opacity-70">
+            ({clients.filter(c => c.has_compliance_requirements).length})
+          </span>
+        </Button>
       </div>
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
