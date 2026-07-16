@@ -7048,6 +7048,8 @@ export type Database = {
       }
       nl_bdr_leads: {
         Row: {
+          booking_link: string | null
+          booking_link_is_owner: boolean | null
           business_name: string
           callback_at: string | null
           callback_set_at: string | null
@@ -7069,6 +7071,7 @@ export type Database = {
           outcome_history: Json
           owner_name: string | null
           phone: string | null
+          phone_type: string | null
           pipeline_stage: string | null
           status: string
           updated_at: string
@@ -7076,6 +7079,8 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          booking_link?: string | null
+          booking_link_is_owner?: boolean | null
           business_name: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7097,6 +7102,7 @@ export type Database = {
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
+          phone_type?: string | null
           pipeline_stage?: string | null
           status?: string
           updated_at?: string
@@ -7104,6 +7110,8 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          booking_link?: string | null
+          booking_link_is_owner?: boolean | null
           business_name?: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7125,6 +7133,7 @@ export type Database = {
           outcome_history?: Json
           owner_name?: string | null
           phone?: string | null
+          phone_type?: string | null
           pipeline_stage?: string | null
           status?: string
           updated_at?: string
