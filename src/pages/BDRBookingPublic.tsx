@@ -81,11 +81,11 @@ export default function BDRBookingPublic() {
   const [savedSubmissionId, setSavedSubmissionId] = useState<string | null>(null);
 
   // Step 2 (time slot + contact) state
-  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "", improvement_area: "" });
+  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
-  const [selectedNiche, setSelectedNiche] = useState<string>("");
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
-  const [showAllModules, setShowAllModules] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+
 
 
   useEffect(() => {
