@@ -28,6 +28,23 @@ const SALES_TOOLS = [
 ];
 
 const moduleByKey = CORE_MODULES.reduce((acc, m) => { acc[m.key] = m; return acc; }, {} as Record<string, CoreModuleDef>);
+function SimpleModuleCheckbox({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <label
+      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
+      style={{
+        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
+        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
+      }}
+    >
+      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
+      <div className="min-w-0">
+        <div className="text-sm text-white font-medium">{label}</div>
+      </div>
+    </label>
+  );
+}
+
 
 function ModuleCheckbox({ m, checked, onToggle }: { m: CoreModuleDef; checked: boolean; onToggle: () => void }) {
   return (
