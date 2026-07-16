@@ -124,6 +124,16 @@ export default function AdminDealDetail() {
           <p className="text-sm text-white/40 mt-1">
             {company?.company_name || "No company"} · {contact?.full_name || "No contact"}
           </p>
+          {referral && (
+            <button
+              onClick={() => navigate(`/admin/promoters?promoterId=${referral.promoter_id}`)}
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
+              title="View referring promoter"
+            >
+              <User className="h-3 w-3" />
+              Referred by {referral.full_name}
+            </button>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={handleCreateProposal}>
