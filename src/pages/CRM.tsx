@@ -612,6 +612,45 @@ export default function CRM() {
                                  </Badge>
                                </td>
                                <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
+                               <td className="py-3 pr-3 whitespace-nowrap">
+                                 {d.pricing_model ? (
+                                   <div className="flex flex-col gap-0.5">
+                                     <div className="flex items-center gap-1.5">
+                                       <Badge
+                                         variant="outline"
+                                         className={`text-[10px] ${d.pricing_model === "retainer"
+                                           ? "border-[hsl(211,96%,56%)]/40 text-[hsl(211,96%,72%)]"
+                                           : "border-[hsl(280,80%,65%)]/40 text-[hsl(280,80%,80%)]"}`}
+                                       >
+                                         {d.pricing_model === "retainer" ? "Retainer" : "Commission"}
+                                       </Badge>
+                                       {d.pricing_model === "commission" && (
+                                         <TooltipProvider><Tooltip>
+                                           <TooltipTrigger asChild>
+                                             <Sparkles className="h-3 w-3 text-muted-foreground" />
+                                           </TooltipTrigger>
+                                           <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                             Auto-calculated each cycle from tracked revenue × commission rate.
+                                           </TooltipContent>
+                                         </Tooltip></TooltipProvider>
+                                       )}
+                                     </div>
+                                     <span className="text-[10px] text-muted-foreground tabular-nums">
+                                       {d.initial_fee != null && Number(d.initial_fee) > 0 && (
+                                         <>Init ${Number(d.initial_fee).toLocaleString()}</>
+                                       )}
+                                       {d.pricing_model === "retainer" && d.recurring_fee != null && Number(d.recurring_fee) > 0 && (
+                                         <> · ${Number(d.recurring_fee).toLocaleString()}/mo</>
+                                       )}
+                                       {d.pricing_model === "commission" && d.commission_rate != null && (
+                                         <> · {Number(d.commission_rate)}%</>
+                                       )}
+                                     </span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-[10px] text-muted-foreground">—</span>
+                                 )}
+                               </td>
                                <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
                                 <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
                                 <td className="text-[10px] text-muted-foreground py-3 pr-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}</td>
