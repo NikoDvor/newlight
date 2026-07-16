@@ -137,6 +137,7 @@ const opsGroups: NavGroup[] = [
       { title: "Services & Products", url: "/admin/ops/services", icon: Package },
       { title: "Brand Assets", url: "/admin/ops/brand-assets", icon: ImageIcon },
       { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Notetaker Webhooks", url: "/admin/notetaker-integrations", icon: Mic },
       { title: "Onboarding", url: "/admin/ops/onboarding", icon: Rocket },
     ],
   },
