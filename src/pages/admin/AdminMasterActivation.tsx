@@ -687,13 +687,16 @@ export default function AdminMasterActivation() {
       case 6:
         return (
           <Tabs defaultValue="messaging" className="w-full">
-            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
+            <TabsList className="w-full grid grid-cols-9 bg-white/[0.04] border border-white/10 mb-4">
               <TabsTrigger value="messaging" className="text-[11px] data-[state=active]:bg-white/10">Messaging</TabsTrigger>
               <TabsTrigger value="reviews" className="text-[11px] data-[state=active]:bg-white/10">Reviews</TabsTrigger>
               <TabsTrigger value="team" className="text-[11px] data-[state=active]:bg-white/10">Team</TabsTrigger>
               <TabsTrigger value="integrations" className="text-[11px] data-[state=active]:bg-white/10">Integrations</TabsTrigger>
               <TabsTrigger value="compliance" className="text-[11px] data-[state=active]:bg-white/10">Compliance</TabsTrigger>
               <TabsTrigger value="salesteam" className="text-[11px] data-[state=active]:bg-white/10">Sales Team</TabsTrigger>
+              <TabsTrigger value="workforce" className="text-[11px] data-[state=active]:bg-white/10">Workforce</TabsTrigger>
+              <TabsTrigger value="finance" className="text-[11px] data-[state=active]:bg-white/10">Finance</TabsTrigger>
+              <TabsTrigger value="support" className="text-[11px] data-[state=active]:bg-white/10">Support</TabsTrigger>
             </TabsList>
             <TabsContent value="messaging"><StepEmail {...stepProps} /></TabsContent>
             <TabsContent value="reviews"><StepReviews {...stepProps} /></TabsContent>
@@ -701,6 +704,9 @@ export default function AdminMasterActivation() {
             <TabsContent value="integrations"><StepIntegrations {...stepProps} /></TabsContent>
             <TabsContent value="compliance"><StepComplianceTools {...stepProps} /></TabsContent>
             <TabsContent value="salesteam"><StepSalesTeamTools {...stepProps} /></TabsContent>
+            <TabsContent value="workforce"><StepWorkforce {...stepProps} /></TabsContent>
+            <TabsContent value="finance"><StepFinance {...stepProps} /></TabsContent>
+            <TabsContent value="support"><StepSupport {...stepProps} /></TabsContent>
           </Tabs>
         );
       case 7: return <StepReview {...stepProps} />;
