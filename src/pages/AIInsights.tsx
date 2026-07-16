@@ -374,6 +374,9 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Category Performance ─────────────────────────────────── */}
+      <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
+
       {/* ── Category filter tabs ─────────────────────────────────── */}
       <div className="mt-8 flex flex-wrap gap-2">
         {FILTERS.map((f) => {
