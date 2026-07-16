@@ -7065,6 +7065,7 @@ export type Database = {
           id: string
           lead_source: string
           list_name: string | null
+          modules_of_interest: string[] | null
           niche: string | null
           notes: string | null
           objection_category: string | null
@@ -7096,6 +7097,7 @@ export type Database = {
           id?: string
           lead_source?: string
           list_name?: string | null
+          modules_of_interest?: string[] | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
@@ -7127,6 +7129,7 @@ export type Database = {
           id?: string
           lead_source?: string
           list_name?: string | null
+          modules_of_interest?: string[] | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
