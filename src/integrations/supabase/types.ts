@@ -6479,6 +6479,7 @@ export type Database = {
           next_steps: Json | null
           notetaker_vendor: string | null
           objections: Json | null
+          scanned_for_opportunities: boolean
           score: number | null
           sentiment: string | null
           summary: string | null
@@ -6499,6 +6500,7 @@ export type Database = {
           next_steps?: Json | null
           notetaker_vendor?: string | null
           objections?: Json | null
+          scanned_for_opportunities?: boolean
           score?: number | null
           sentiment?: string | null
           summary?: string | null
@@ -6519,6 +6521,7 @@ export type Database = {
           next_steps?: Json | null
           notetaker_vendor?: string | null
           objections?: Json | null
+          scanned_for_opportunities?: boolean
           score?: number | null
           sentiment?: string | null
           summary?: string | null
@@ -13266,6 +13269,14 @@ export type Database = {
           action: string
           kind: string
           registration_id: string
+        }[]
+      }
+      scan_meeting_intelligence_for_opportunities: {
+        Args: { _client_id: string }
+        Returns: {
+          matched_keyword: string
+          meeting_id: string
+          opportunity_id: string
         }[]
       }
       user_can_access_client: {
