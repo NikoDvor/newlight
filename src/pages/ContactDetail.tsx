@@ -179,6 +179,16 @@ export default function ContactDetail() {
                 </Link>
               </div>
             )}
+            {referral && (
+              <div className="mt-2">
+                <Link
+                  to={`/admin/promoters?promoterId=${referral.promoter_id}`}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
+                >
+                  Referred by {referral.full_name}
+                </Link>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3 shrink-0 text-center">
             <div className="p-3 rounded-xl bg-secondary/50">
