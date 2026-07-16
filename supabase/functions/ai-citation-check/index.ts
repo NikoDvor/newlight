@@ -64,8 +64,15 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+  const token = authHeader.slice(7);
 
-  const isService = authHeader === `Bearer ${serviceKey}`;
+  let isService = token === serviceKey;
+  if (!isService) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload?.role === "service_role") isService = true;
+    } catch (_) { /* not a JWT */ }
+  }
   if (!isService) {
     const authClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -73,6 +80,7 @@ Deno.serve(async (req) => {
     const { data: userData, error: userErr } = await authClient.auth.getUser();
     if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
   }
+
 
 
   if (!lovableKey) return json({ error: "AI gateway not configured" }, 500);
