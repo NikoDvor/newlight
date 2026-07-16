@@ -33,6 +33,7 @@ export default function AdminDealDetail() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
+  const [referral, setReferral] = useState<{ promoter_id: string; full_name: string } | null>(null);
   const [notesSummary, setNotesSummary] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -45,13 +46,22 @@ export default function AdminDealDetail() {
       supabase.from("proposals").select("*").eq("deal_id", dealId).order("created_at", { ascending: false }),
       supabase.from("crm_tasks").select("*").eq("deal_id", dealId).order("created_at", { ascending: false }),
       supabase.from("audit_logs").select("*").eq("module", "sales").order("created_at", { ascending: false }).limit(20),
-    ]).then(([dRes, mRes, pRes, tRes, aRes]) => {
+    ]).then(async ([dRes, mRes, pRes, tRes, aRes]) => {
       setDeal(dRes.data);
       setNotesSummary(dRes.data?.notes_summary || "");
       setMeetings(mRes.data || []);
       setProposals(pRes.data || []);
       setTasks(tRes.data || []);
       setActivities(aRes.data || []);
+      // Referral attribution surface
+      const { data: attr } = await supabase
+        .from("referral_attributions")
+        .select("promoter_id, promoters(full_name)")
+        .eq("crm_deal_id", dealId)
+        .maybeSingle();
+      if (attr?.promoter_id) {
+        setReferral({ promoter_id: attr.promoter_id, full_name: (attr as any).promoters?.full_name || "Promoter" });
+      }
       setLoading(false);
     });
   }, [dealId]);
@@ -114,6 +124,16 @@ export default function AdminDealDetail() {
           <p className="text-sm text-white/40 mt-1">
             {company?.company_name || "No company"} · {contact?.full_name || "No contact"}
           </p>
+          {referral && (
+            <button
+              onClick={() => navigate(`/admin/promoters?promoterId=${referral.promoter_id}`)}
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
+              title="View referring promoter"
+            >
+              <User className="h-3 w-3" />
+              Referred by {referral.full_name}
+            </button>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={handleCreateProposal}>

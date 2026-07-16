@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PageHeader } from "@/components/PageHeader";
@@ -171,6 +172,21 @@ export default function AdminPromoters() {
   };
 
   useEffect(() => { load(); }, [activeClientId]);
+
+  // Deep-link: ?promoterId=xxx auto-opens the promoter Sheet.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const pid = searchParams.get("promoterId");
+    if (!pid) return;
+    const existing = promoters.find((p) => p.id === pid);
+    if (existing) {
+      openPromoter(existing);
+    } else {
+      supabase.from("promoters").select("*").eq("id", pid).maybeSingle().then(({ data }) => {
+        if (data) openPromoter(data as any);
+      });
+    }
+  }, [searchParams, promoters]);
 
 
 
@@ -421,7 +437,15 @@ export default function AdminPromoters() {
 
 
       {/* Detail Sheet */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Sheet open={!!selected} onOpenChange={(o) => {
+        if (!o) {
+          setSelected(null);
+          if (searchParams.get("promoterId")) {
+            searchParams.delete("promoterId");
+            setSearchParams(searchParams, { replace: true });
+          }
+        }
+      }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {selected && (
             <>

@@ -124,6 +124,7 @@ import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import AdminMarketingTemplates from "./pages/admin/AdminMarketingTemplates";
 import AdminRiskProfiles from "./pages/admin/AdminRiskProfiles";
 import AdminPromoters from "./pages/admin/AdminPromoters";
+import AdminNotetakerIntegrations from "./pages/admin/AdminNotetakerIntegrations";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
 import AdminWebinars from "./pages/admin/AdminWebinars";
 import WebinarRegistration from "./pages/WebinarRegistration";
@@ -371,6 +372,7 @@ const App = () => {
                 <Route path="marketing-templates" element={<AdminMarketingTemplates />} />
                 <Route path="risk-profiles" element={<AdminRiskProfiles />} />
                 <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="notetaker-integrations" element={<AdminNotetakerIntegrations />} />
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="webinars" element={<AdminWebinars />} />
 

@@ -54,6 +54,7 @@ export default function ContactDetail() {
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [household, setHousehold] = useState<{ id: string; household_name: string } | null>(null);
+  const [referral, setReferral] = useState<{ promoter_id: string; full_name: string } | null>(null);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -89,6 +90,18 @@ export default function ContactDetail() {
       } else {
         setHousehold(null);
       }
+      // Referral attribution surface
+      supabase.from("referral_attributions")
+        .select("promoter_id, promoters(full_name)")
+        .eq("referred_contact_id", contactId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.promoter_id) {
+            setReferral({ promoter_id: data.promoter_id, full_name: (data as any).promoters?.full_name || "Promoter" });
+          } else {
+            setReferral(null);
+          }
+        });
       setLoading(false);
     });
   }, [contactId, activeClientId]);
@@ -163,6 +176,16 @@ export default function ContactDetail() {
                   className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
                 >
                   Household: {household.household_name}
+                </Link>
+              </div>
+            )}
+            {referral && (
+              <div className="mt-2">
+                <Link
+                  to={`/admin/promoters?promoterId=${referral.promoter_id}`}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
+                >
+                  Referred by {referral.full_name}
                 </Link>
               </div>
             )}

@@ -7,7 +7,7 @@ import {
   FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
-  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck,
+  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -137,6 +137,7 @@ const opsGroups: NavGroup[] = [
       { title: "Services & Products", url: "/admin/ops/services", icon: Package },
       { title: "Brand Assets", url: "/admin/ops/brand-assets", icon: ImageIcon },
       { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
+      { title: "Notetaker Webhooks", url: "/admin/notetaker-integrations", icon: Mic },
       { title: "Onboarding", url: "/admin/ops/onboarding", icon: Rocket },
     ],
   },
