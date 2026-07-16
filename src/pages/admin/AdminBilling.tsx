@@ -243,24 +243,26 @@ export default function AdminBilling() {
               {contracts.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No contracts yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Term</th><th className={headCls}>Start</th><th className={headCls}>End</th><th className={headCls}>Auto-Renew</th><th className={headCls}>Enforcement</th>
-                  </tr></thead>
-                  <tbody>
-                    {contracts.map((c: any) => (
-                      <tr key={c.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(c.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={c.contract_status} /></td>
-                        <td className={cellCls}>{c.contract_length_months}mo</td>
-                        <td className={cellCls}>{c.start_date || "—"}</td>
-                        <td className={cellCls}>{c.end_date || "—"}</td>
-                        <td className={cellCls}>{c.auto_renew ? "Yes" : "No"}</td>
-                        <td className={cellCls}>{c.enforcement_mode}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Term</th><th className={headCls}>Start</th><th className={headCls}>End</th><th className={headCls}>Auto-Renew</th><th className={headCls}>Enforcement</th>
+                    </tr></thead>
+                    <tbody>
+                      {contracts.map((c: any) => (
+                        <tr key={c.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(c.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={c.contract_status} /></td>
+                          <td className={cellCls}>{c.contract_length_months}mo</td>
+                          <td className={cellCls}>{c.start_date || "—"}</td>
+                          <td className={cellCls}>{c.end_date || "—"}</td>
+                          <td className={cellCls}>{c.auto_renew ? "Yes" : "No"}</td>
+                          <td className={cellCls}>{c.enforcement_mode}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
