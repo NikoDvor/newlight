@@ -90,6 +90,18 @@ export default function ContactDetail() {
       } else {
         setHousehold(null);
       }
+      // Referral attribution surface
+      supabase.from("referral_attributions")
+        .select("promoter_id, promoters(full_name)")
+        .eq("referred_contact_id", contactId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.promoter_id) {
+            setReferral({ promoter_id: data.promoter_id, full_name: (data as any).promoters?.full_name || "Promoter" });
+          } else {
+            setReferral(null);
+          }
+        });
       setLoading(false);
     });
   }, [contactId, activeClientId]);
