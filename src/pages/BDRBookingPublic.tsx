@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/components/LogoUploader";
-import { CORE_MODULES } from "@/lib/coreModules";
+
 
 // Included by default in every plan — always submitted, never shown as selectable.
 const INCLUDED_MODULE_KEYS = [
@@ -18,7 +18,7 @@ const INCLUDED_MODULE_KEYS = [
   "lifecycle_nurture",
   "reputation_reviews",
 ];
-const SALES_TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
+
 
 // Sales tools bundle — all keys included when the user answers "Yes" to having a sales team.
 const SALES_TOOLS = [
@@ -34,15 +34,6 @@ const SALES_TOOLS = [
   { key: "sales_approvals", label: "Approvals" },
 ];
 const SALES_TOOL_KEYS = SALES_TOOLS.map(t => t.key);
-
-// Kept as a lookup for the "Included with every plan" static display.
-const includedModules = INCLUDED_MODULE_KEYS
-  .map(k => CORE_MODULES.find(m => m.key === k))
-  .filter((m): m is (typeof CORE_MODULES)[number] => !!m);
-
-
-
-
 
 interface Cal {
   id: string;
@@ -424,28 +415,6 @@ export default function BDRBookingPublic() {
 
             <Field label="Modules of interest">
               <div className="space-y-4">
-                {/* Mandatory / included in every plan — static, non-interactive display. */}
-                <div className="space-y-2 p-3 rounded-md border border-white/10 bg-white/[0.02]">
-                  <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
-                    Included with every plan
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {includedModules.map(m => (
-                      <span
-                        key={m.key}
-                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-white/80 border"
-                        style={{
-                          borderColor: "hsla(211,96%,60%,.35)",
-                          background: "hsla(211,96%,60%,.1)",
-                        }}
-                      >
-                        <Check className="h-3 w-3 text-[hsl(211,96%,68%)]" />
-                        {m.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
                 <Field label="Do you have a sales team?">
                   <select
                     value={hasSalesTeam}
