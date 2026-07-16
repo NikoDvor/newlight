@@ -777,7 +777,7 @@ export default function SEO() {
               </div>
             )}
             <DataCard title="Technical issues">
-              {issues.filter(i => i.category !== "performance").length === 0 ? (
+              {issues.filter(i => i.category !== "performance" && i.category !== "eeat").length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
                     <AlertTriangle className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
@@ -788,7 +788,7 @@ export default function SEO() {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {issues.filter(i => i.category !== "performance").map((i) => (
+                  {issues.filter(i => i.category !== "performance" && i.category !== "eeat").map((i) => (
                     <div key={i.id} className="flex items-start justify-between py-2.5 border-b border-border last:border-0 gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-medium">{i.issue_title}</p>
