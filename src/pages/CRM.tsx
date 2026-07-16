@@ -592,9 +592,9 @@ export default function CRM() {
                       <table className="w-full">
                         <thead>
                          <tr className="border-b border-border">
-                             {["Deal", "Contact", "Owner", "Stage", "Value", "Probability", "Status", "Updated", "Action"].map(h => (
-                               <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                             ))}
+                             {["Deal", "Contact", "Owner", "Stage", "Value", "Pricing", "Probability", "Status", "Updated", "Action"].map(h => (
+                                <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                              ))}
                            </tr>
                          </thead>
                          <tbody>
