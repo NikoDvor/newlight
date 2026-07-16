@@ -337,23 +337,25 @@ export default function AdminAutomations() {
               {actionLogs.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No action logs yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Action</th><th className={hCls}>Type</th><th className={hCls}>Status</th><th className={hCls}>Result</th><th className={hCls}>Error</th><th className={hCls}>Time</th>
-                  </tr></thead>
-                  <tbody>
-                    {actionLogs.map((l: any) => (
-                      <tr key={l.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cCls + " font-medium text-white"}>{l.action_key}</td>
-                        <td className={cCls}>{l.action_type}</td>
-                        <td className={cCls}><SBadge status={l.action_status} /></td>
-                        <td className={cCls + " text-xs max-w-48 truncate"}>{l.result_summary || "—"}</td>
-                        <td className={cCls + " text-red-400 text-xs max-w-32 truncate"}>{l.error_message || "—"}</td>
-                        <td className={cCls}>{new Date(l.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Action</th><th className={hCls}>Type</th><th className={hCls}>Status</th><th className={hCls}>Result</th><th className={hCls}>Error</th><th className={hCls}>Time</th>
+                    </tr></thead>
+                    <tbody>
+                      {actionLogs.map((l: any) => (
+                        <tr key={l.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cCls + " font-medium text-white"}>{l.action_key}</td>
+                          <td className={cCls}>{l.action_type}</td>
+                          <td className={cCls}><SBadge status={l.action_status} /></td>
+                          <td className={cCls + " text-xs max-w-48 truncate"}>{l.result_summary || "—"}</td>
+                          <td className={cCls + " text-red-400 text-xs max-w-32 truncate"}>{l.error_message || "—"}</td>
+                          <td className={cCls}>{new Date(l.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
