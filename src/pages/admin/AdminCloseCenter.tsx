@@ -527,7 +527,48 @@ export default function AdminCloseCenter() {
         </Button>
       </div>
 
+      {/* ─── Booking Links (Meeting 1 / Meeting 2) ─────────────── */}
+      {(bookingLinks.meeting1 || bookingLinks.meeting2) && (
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-1.5">
+          {([
+            { label: "Meeting 1 Link", slug: bookingLinks.meeting1 },
+            { label: "Meeting 2 Link", slug: bookingLinks.meeting2 },
+          ] as const).filter(r => !!r.slug).map(row => {
+            const url = `${window.location.origin}/bdr/book/${row.slug}`;
+            return (
+              <div key={row.label} className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider w-[92px] shrink-0">
+                  {row.label}
+                </span>
+                <Input
+                  readOnly
+                  value={url}
+                  className="h-7 text-[11px] bg-white/[0.04] border-white/10 text-white/80 font-mono flex-1"
+                  onFocus={e => e.currentTarget.select()}
+                />
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => { navigator.clipboard.writeText(url); toast.success(`${row.label} copied`); }}
+                  className="h-7 w-7 p-0 border-white/10 text-white hover:bg-white/10"
+                  title="Copy"
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <a
+                  href={url} target="_blank" rel="noopener noreferrer"
+                  className="h-7 w-7 grid place-items-center rounded-md border border-white/10 text-[hsl(var(--nl-sky))] hover:bg-white/10"
+                  title="Open"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ─── Status Pipeline ──────────────────────────────────── */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {([
           { key: "proposal_status", label: "Proposal", icon: FileSignature, steps: PROPOSAL_STEPS },
