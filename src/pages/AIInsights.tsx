@@ -162,6 +162,7 @@ export default function AIInsights() {
 
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [wins, setWins] = useState<Recommendation[]>([]);
+  const [signals, setSignals] = useState<WeaknessSignal[]>([]);
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
