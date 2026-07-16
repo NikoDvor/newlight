@@ -174,6 +174,7 @@ async function generateForClient(
   let locationsCreated = 0;
 
   // 3. Website audit
+  const isFinancial = client.business_type === "financial_firm";
   if (client.website_url && client.website_url.trim()) {
     const auditTitles = [
       "Missing or poor <title> tag",
@@ -190,6 +191,14 @@ async function generateForClient(
       .eq("client_id", clientId)
       .eq("category", "technical")
       .in("issue_title", auditTitles);
+    if (isFinancial) {
+      await supabase
+        .from("seo_issues")
+        .delete()
+        .eq("client_id", clientId)
+        .eq("category", "eeat");
+    }
+
 
     const siteUrl = normalizeUrl(client.website_url);
     const issuesToInsert: Array<Record<string, unknown>> = [];
