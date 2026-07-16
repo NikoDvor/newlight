@@ -52,7 +52,7 @@ export default function AdminWelcome() {
         <motion.div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-[140px] opacity-15"
           style={{ background: "hsl(197 92% 68%)" }}
           animate={{ scale: [1.2, 1, 1.2], x: [0, -40, 0] }} transition={{ duration: 12, repeat: Infinity }} />
-        <motion.div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px] opacity-10"
+        <motion.div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[600px] rounded-full blur-[180px] opacity-10"
           style={{ background: "hsl(217 90% 62%)" }}
           animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity }} />
       </div>
