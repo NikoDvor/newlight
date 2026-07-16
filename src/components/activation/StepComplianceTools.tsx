@@ -17,7 +17,7 @@ const YN = ({ value, onChange, disabled }: { value: string; onChange: (v: string
 );
 
 export function StepComplianceTools({ form, set, submitting }: StepProps) {
-  const f = form as Record<string, string>;
+  const f = form as unknown as Record<string, string>;
   return (
     <div className="space-y-4">
       <ActivationHelp title="Advisor & Compliance Tools" items={[
