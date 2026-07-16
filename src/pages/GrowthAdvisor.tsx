@@ -614,7 +614,7 @@ function CompetitorRow({
 
   if (editing) {
     return (
-      <div className="grid grid-cols-12 px-6 py-3 border-b border-border/30 gap-2 items-center bg-primary/[0.03]">
+      <div className="grid grid-cols-12 min-w-[720px] px-6 py-3 border-b border-border/30 gap-2 items-center bg-primary/[0.03]">
         <Input className="col-span-4" value={name} onChange={(e) => setName(e.target.value)} />
         <Input className="col-span-2 text-right" type="number" value={reviews} onChange={(e) => setReviews(e.target.value)} />
         <Input className="col-span-2 text-right" type="number" step="0.1" value={rating} onChange={(e) => setRating(e.target.value)} />
@@ -633,7 +633,7 @@ function CompetitorRow({
   }
 
   return (
-    <div className="grid grid-cols-12 px-6 py-4 border-b border-border/30 last:border-b-0 items-center hover:bg-muted/10 transition-colors">
+    <div className="grid grid-cols-12 min-w-[720px] px-6 py-4 border-b border-border/30 last:border-b-0 items-center hover:bg-muted/10 transition-colors">
       <div className="col-span-4 font-medium">{competitor.competitor_name || "—"}</div>
       <div className="col-span-2 text-right tabular-nums">{competitor.review_count?.toLocaleString() ?? "—"}</div>
       <div className="col-span-2 text-right tabular-nums">{competitor.avg_rating != null ? `${Number(competitor.avg_rating).toFixed(1)}★` : "—"}</div>
