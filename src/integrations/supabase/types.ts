@@ -6452,6 +6452,7 @@ export type Database = {
           payment_notes: string | null
           proposal_id: string | null
           sent_at: string | null
+          stripe_checkout_session_id: string | null
           subscription_id: string | null
           subtotal_amount: number | null
           tax_amount: number | null
@@ -6476,6 +6477,7 @@ export type Database = {
           payment_notes?: string | null
           proposal_id?: string | null
           sent_at?: string | null
+          stripe_checkout_session_id?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -6500,6 +6502,7 @@ export type Database = {
           payment_notes?: string | null
           proposal_id?: string | null
           sent_at?: string | null
+          stripe_checkout_session_id?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
