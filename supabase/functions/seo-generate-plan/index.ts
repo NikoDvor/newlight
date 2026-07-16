@@ -174,6 +174,7 @@ async function generateForClient(
   let locationsCreated = 0;
 
   // 3. Website audit
+  const isFinancial = client.business_type === "financial_firm";
   if (client.website_url && client.website_url.trim()) {
     const auditTitles = [
       "Missing or poor <title> tag",
@@ -190,6 +191,14 @@ async function generateForClient(
       .eq("client_id", clientId)
       .eq("category", "technical")
       .in("issue_title", auditTitles);
+    if (isFinancial) {
+      await supabase
+        .from("seo_issues")
+        .delete()
+        .eq("client_id", clientId)
+        .eq("category", "eeat");
+    }
+
 
     const siteUrl = normalizeUrl(client.website_url);
     const issuesToInsert: Array<Record<string, unknown>> = [];
@@ -263,7 +272,75 @@ async function generateForClient(
           recommendation: "Configure an SSL certificate and redirect all HTTP traffic to HTTPS.",
         });
       }
+
+      if (isFinancial) {
+        // Isolate footer-ish region (last 25% of body) to reduce false matches
+        const bodyMatch = html.match(/<body[\s\S]*?<\/body>/i);
+        const bodyHtml = bodyMatch ? bodyMatch[0] : html;
+        const footerMatch = bodyHtml.match(/<footer[\s\S]*?<\/footer>/i);
+        const footerHtml = footerMatch ? footerMatch[0] : bodyHtml.slice(Math.floor(bodyHtml.length * 0.75));
+
+        // ADV Part 2 link check: an <a> whose href OR text contains ADV / Part 2 / ADV-marked pdf
+        const anchorRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        let advFound = false;
+        let m: RegExpExecArray | null;
+        while ((m = anchorRegex.exec(footerHtml)) !== null) {
+          const href = m[1].toLowerCase();
+          const txt = m[2].replace(/<[^>]+>/g, "").toLowerCase();
+          if (/adv[-_ ]?part[-_ ]?2|part[-_ ]?2|form[-_ ]?adv/.test(href)) { advFound = true; break; }
+          if (/adv/.test(href) && /\.pdf/.test(href)) { advFound = true; break; }
+          if (/(adv part 2|form adv|adv brochure|part 2 brochure)/.test(txt)) { advFound = true; break; }
+        }
+        issuesToInsert.push({
+          client_id: clientId,
+          issue_title: advFound ? "ADV Part 2 link present in footer" : "Missing ADV Part 2 link in footer",
+          category: "eeat",
+          severity: advFound ? "low" : "high",
+          status: advFound ? "resolved" : "open",
+          recommendation: advFound
+            ? "Detected an ADV Part 2 disclosure link in the site footer."
+            : "Add a footer link to your ADV Part 2 brochure — a required SEC disclosure for registered investment advisors.",
+        });
+
+        // Disclaimer check: regulatory disclaimer phrases in footer text, OR a footer link to a disclaimer/disclosures page.
+        const footerText = footerHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").toLowerCase();
+        const disclaimerPatterns = [
+          /investment advisory services/,
+          /registered investment adviser/,
+          /investment adviser/,
+          /past performance is not/,
+          /not a guarantee of future results/,
+          /for informational purposes only/,
+          /securities offered through/,
+          /member finra/,
+          /sipc/,
+        ];
+        let disclaimerFound = disclaimerPatterns.some((r) => r.test(footerText));
+        if (!disclaimerFound) {
+          const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+          let lm: RegExpExecArray | null;
+          while ((lm = linkRegex.exec(footerHtml)) !== null) {
+            const href = lm[1].toLowerCase();
+            const txt = lm[2].replace(/<[^>]+>/g, "").trim().toLowerCase();
+            if (/(^|\/)(disclaimer|disclosures?|legal)(\.|\/|$)/.test(href) || /^(disclaimer|disclosures?|important disclosures?)$/.test(txt)) {
+              disclaimerFound = true; break;
+            }
+          }
+        }
+
+        issuesToInsert.push({
+          client_id: clientId,
+          issue_title: disclaimerFound ? "Regulatory disclaimer present in footer" : "Missing regulatory disclaimer in footer",
+          category: "eeat",
+          severity: disclaimerFound ? "low" : "high",
+          status: disclaimerFound ? "resolved" : "open",
+          recommendation: disclaimerFound
+            ? "Detected regulatory disclaimer language in the site footer."
+            : "Add a site-wide regulatory disclaimer to the footer (e.g. adviser registration status, informational-purposes language, past-performance disclosure).",
+        });
+      }
     }
+
 
     const base = siteUrl.replace(/\/+$/, "");
     const sitemapRes = await fetchWithTimeout(`${base}/sitemap.xml`, 10000);
@@ -323,7 +400,8 @@ async function generateForClient(
   const openContentCount = existingOpenContentCount || 0;
   const skipAi = kwCount >= KW_CEILING && openContentCount >= CONTENT_CEILING;
 
-  const isFinancial = client.business_type === "financial_firm";
+
+
   if (lovableKey && !skipAi) {
 
     const locations = [serviceAreas, client.primary_location].filter(Boolean).join("; ");

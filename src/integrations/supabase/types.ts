@@ -287,6 +287,89 @@ export type Database = {
           },
         ]
       }
+      ai_citation_checks: {
+        Row: {
+          ai_model: string
+          checked_at: string
+          cited: boolean
+          client_id: string
+          created_at: string
+          id: string
+          query_id: string | null
+          query_text: string
+          response_snippet: string | null
+        }
+        Insert: {
+          ai_model: string
+          checked_at?: string
+          cited?: boolean
+          client_id: string
+          created_at?: string
+          id?: string
+          query_id?: string | null
+          query_text: string
+          response_snippet?: string | null
+        }
+        Update: {
+          ai_model?: string
+          checked_at?: string
+          cited?: boolean
+          client_id?: string
+          created_at?: string
+          id?: string
+          query_id?: string | null
+          query_text?: string
+          response_snippet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_citation_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_citation_checks_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "ai_citation_queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_citation_queries: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          query_text: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          query_text: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          query_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_citation_queries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_type_id: string | null
