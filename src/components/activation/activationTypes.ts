@@ -117,6 +117,10 @@ export interface ActivationFormState {
   kickoff_email: string;
   kickoff_phone: string;
   closing_notes: string;
+  initial_fee: string;
+  pricing_model: string; // "retainer" | "commission" | ""
+  recurring_fee: string;
+  commission_rate: string;
   sales_notes: string;
   assigned_account_manager: string;
   assigned_sales_rep: string;
