@@ -286,7 +286,7 @@ export function EmployeeStatsDialog(props: Props) {
                 ))}
               </div>
               <div className="mt-3 text-[11px] text-white/40 uppercase tracking-wider">Quiz attempts</div>
-              <div className="grid grid-cols-5 gap-1 mt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 mt-1">
                 {quizAttempts.map((q) => (
                   <div key={`${q.module}-${q.level}`} className="rounded bg-white/[0.03] px-2 py-1 text-[11px]">
                     <span className="text-white/40">{q.module} {q.level}</span>
