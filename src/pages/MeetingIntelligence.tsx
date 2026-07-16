@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ManualMeetingNotesDialog } from "@/components/ManualMeetingNotesDialog";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const OUTCOME_COLORS: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
