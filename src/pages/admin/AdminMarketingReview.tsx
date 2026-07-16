@@ -138,6 +138,41 @@ export default function AdminMarketingReview() {
 
   useEffect(() => { load(); }, [activeClientId]);
 
+  // Load active global templates once
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("marketing_content_templates" as any)
+        .select("id,title,category,material_type,template_text")
+        .eq("is_active", true)
+        .order("category")
+        .order("title");
+      setTemplates(((data as any[]) ?? []) as any);
+    })();
+  }, []);
+
+  const templateCategories = useMemo(() => {
+    const s = new Set(templates.map((t) => t.category));
+    return Array.from(s).sort();
+  }, [templates]);
+
+  const filteredTemplates = useMemo(() => {
+    if (templateCategoryFilter === "all") return templates;
+    return templates.filter((t) => t.category === templateCategoryFilter);
+  }, [templates, templateCategoryFilter]);
+
+  const applyTemplate = (id: string) => {
+    setSelectedTemplateId(id);
+    const t = templates.find((x) => x.id === id);
+    if (!t) return;
+    setNewForm((f) => ({
+      ...f,
+      title: t.title,
+      material_type: (t.material_type as MaterialType),
+      content_text: t.template_text,
+    }));
+  };
+
   const openMaterial = async (m: Material) => {
     setSelected(m);
     setReviewNotes("");
