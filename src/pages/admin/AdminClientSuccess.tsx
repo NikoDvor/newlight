@@ -102,7 +102,7 @@ export default function AdminClientSuccess() {
         ))}
       </div>
 
-      <Tabs defaultValue="risks" className="space-y-4">
+      <Tabs value={initialTab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="risks">Churn Risks</TabsTrigger>
           <TabsTrigger value="tickets">Support</TabsTrigger>
