@@ -145,6 +145,7 @@ import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
 import ContentPlanner from "./pages/ContentPlanner";
 import Proposals from "./pages/Proposals";
+import ClientDocuments from "./pages/ClientDocuments";
 import HelpDesk from "./pages/HelpDesk";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import CalendarManagement from "./pages/CalendarManagement";
