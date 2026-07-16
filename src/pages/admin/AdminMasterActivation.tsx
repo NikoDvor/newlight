@@ -690,13 +690,13 @@ export default function AdminMasterActivation() {
       case 5:
         return (
           <Tabs defaultValue="branding" className="w-full">
-            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
-              <TabsTrigger value="branding" className="text-[11px] data-[state=active]:bg-white/10">Branding</TabsTrigger>
-              <TabsTrigger value="crm" className="text-[11px] data-[state=active]:bg-white/10">CRM</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-[11px] data-[state=active]:bg-white/10">Calendar</TabsTrigger>
-              <TabsTrigger value="services" className="text-[11px] data-[state=active]:bg-white/10">Services</TabsTrigger>
-              <TabsTrigger value="forms" className="text-[11px] data-[state=active]:bg-white/10">Forms</TabsTrigger>
-              <TabsTrigger value="marketing" className="text-[11px] data-[state=active]:bg-white/10">Marketing</TabsTrigger>
+            <TabsList className="w-full flex overflow-x-auto sm:grid sm:grid-cols-6 bg-white/[0.04] border border-white/10 mb-4 relative after:content-[''] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-white/[0.07] after:to-transparent after:pointer-events-none">
+              <TabsTrigger value="branding" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">Branding</TabsTrigger>
+              <TabsTrigger value="crm" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">CRM</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">Calendar</TabsTrigger>
+              <TabsTrigger value="services" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">Services</TabsTrigger>
+              <TabsTrigger value="forms" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">Forms</TabsTrigger>
+              <TabsTrigger value="marketing" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap sm:min-w-0 data-[state=active]:bg-white/10">Marketing</TabsTrigger>
             </TabsList>
             <TabsContent value="branding"><StepBranding {...stepProps} /></TabsContent>
             <TabsContent value="crm"><StepCRM {...stepProps} /></TabsContent>
@@ -709,16 +709,16 @@ export default function AdminMasterActivation() {
       case 6:
         return (
           <Tabs defaultValue="messaging" className="w-full">
-            <TabsList className="w-full grid grid-cols-9 bg-white/[0.04] border border-white/10 mb-4">
-              <TabsTrigger value="messaging" className="text-[11px] data-[state=active]:bg-white/10">Messaging</TabsTrigger>
-              <TabsTrigger value="reviews" className="text-[11px] data-[state=active]:bg-white/10">Reviews</TabsTrigger>
-              <TabsTrigger value="team" className="text-[11px] data-[state=active]:bg-white/10">Team</TabsTrigger>
-              <TabsTrigger value="integrations" className="text-[11px] data-[state=active]:bg-white/10">Integrations</TabsTrigger>
-              <TabsTrigger value="compliance" className="text-[11px] data-[state=active]:bg-white/10">Compliance</TabsTrigger>
-              <TabsTrigger value="salesteam" className="text-[11px] data-[state=active]:bg-white/10">Sales Team</TabsTrigger>
-              <TabsTrigger value="workforce" className="text-[11px] data-[state=active]:bg-white/10">Workforce</TabsTrigger>
-              <TabsTrigger value="finance" className="text-[11px] data-[state=active]:bg-white/10">Finance</TabsTrigger>
-              <TabsTrigger value="support" className="text-[11px] data-[state=active]:bg-white/10">Support</TabsTrigger>
+            <TabsList className="w-full flex overflow-x-auto lg:grid lg:grid-cols-9 bg-white/[0.04] border border-white/10 mb-4 relative after:content-[''] after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-white/[0.07] after:to-transparent after:pointer-events-none">
+              <TabsTrigger value="messaging" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Messaging</TabsTrigger>
+              <TabsTrigger value="reviews" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Reviews</TabsTrigger>
+              <TabsTrigger value="team" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Team</TabsTrigger>
+              <TabsTrigger value="integrations" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Integrations</TabsTrigger>
+              <TabsTrigger value="compliance" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Compliance</TabsTrigger>
+              <TabsTrigger value="salesteam" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Sales Team</TabsTrigger>
+              <TabsTrigger value="workforce" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Workforce</TabsTrigger>
+              <TabsTrigger value="finance" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Finance</TabsTrigger>
+              <TabsTrigger value="support" className="text-[11px] shrink-0 min-w-[90px] whitespace-nowrap lg:min-w-0 data-[state=active]:bg-white/10">Support</TabsTrigger>
             </TabsList>
             <TabsContent value="messaging"><StepEmail {...stepProps} /></TabsContent>
             <TabsContent value="reviews"><StepReviews {...stepProps} /></TabsContent>
