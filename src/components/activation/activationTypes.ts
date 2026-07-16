@@ -501,6 +501,7 @@ export const defaultFormState = (): ActivationFormState => ({
   form_calendar_link: "primary", form_creates_contact: "yes",
   form_triggers_reminders: "yes", form_notification_owner: "",
   form_tone: "professional", need_custom_fields: "no", form_notes: "",
+  has_sales_team: "no", has_compliance_requirements: "no",
 
   use_native_email: "yes", email_provider: "", main_inbox: "", shared_inbox: "no",
   shared_inbox_users: "", sender_name: "", reply_to_email: "", template_categories: "",
