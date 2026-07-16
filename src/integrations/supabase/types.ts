@@ -5897,6 +5897,103 @@ export type Database = {
           },
         ]
       }
+      growth_competitors: {
+        Row: {
+          avg_rating: number | null
+          client_id: string | null
+          competitor_name: string | null
+          created_at: string
+          estimated_share_of_voice: number | null
+          id: string
+          notes: string | null
+          review_count: number | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          client_id?: string | null
+          competitor_name?: string | null
+          created_at?: string
+          estimated_share_of_voice?: number | null
+          id?: string
+          notes?: string | null
+          review_count?: number | null
+        }
+        Update: {
+          avg_rating?: number | null
+          client_id?: string | null
+          competitor_name?: string | null
+          created_at?: string
+          estimated_share_of_voice?: number | null
+          id?: string
+          notes?: string | null
+          review_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_opportunities: {
+        Row: {
+          assumptions: string | null
+          client_id: string | null
+          confidence_pct: number | null
+          effort_level: string | null
+          generated_at: string
+          id: string
+          narrative: string | null
+          opportunity_type: string | null
+          sized_revenue_expected: number | null
+          sized_revenue_high: number | null
+          sized_revenue_low: number | null
+          status: string
+          title: string | null
+        }
+        Insert: {
+          assumptions?: string | null
+          client_id?: string | null
+          confidence_pct?: number | null
+          effort_level?: string | null
+          generated_at?: string
+          id?: string
+          narrative?: string | null
+          opportunity_type?: string | null
+          sized_revenue_expected?: number | null
+          sized_revenue_high?: number | null
+          sized_revenue_low?: number | null
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          assumptions?: string | null
+          client_id?: string | null
+          confidence_pct?: number | null
+          effort_level?: string | null
+          generated_at?: string
+          id?: string
+          narrative?: string | null
+          opportunity_type?: string | null
+          sized_revenue_expected?: number | null
+          sized_revenue_high?: number | null
+          sized_revenue_low?: number | null
+          status?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_projections: {
         Row: {
           client_id: string
