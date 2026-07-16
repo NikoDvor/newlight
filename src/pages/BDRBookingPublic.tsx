@@ -289,10 +289,13 @@ export default function BDRBookingPublic() {
   const submitBooking = async () => {
     if (!contact.customer_name || !selectedSlot) return;
     setSubmitting(true);
-    // Always include the mandatory modules; add any optional/sales-tool selections on top.
-    const mergedModules = Array.from(new Set([...INCLUDED_MODULE_KEYS, ...selectedModules]));
+    // Always include mandatory modules; conditionally add sales tools and compliance.
+    const mergedModules = Array.from(new Set([
+      ...INCLUDED_MODULE_KEYS,
+      ...(hasSalesTeam === "yes" ? SALES_TOOL_KEYS : []),
+      ...(hasCompliance === "yes" ? ["financial_compliance"] : []),
+    ]));
     const has_sales_team = hasSalesTeam === "" ? null : hasSalesTeam === "yes";
-    const sales_team_size = hasSalesTeam === "yes" && salesTeamSize ? salesTeamSize : null;
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
         booking_slug: cal.booking_slug || cal.id,
@@ -302,7 +305,7 @@ export default function BDRBookingPublic() {
         form_submission_id: savedSubmissionId,
         modules_of_interest: mergedModules,
         has_sales_team,
-        sales_team_size,
+        sales_team_size: null,
         logo_url: logoUrl || null,
       },
     });
@@ -312,8 +315,7 @@ export default function BDRBookingPublic() {
   };
 
 
-  const toggleModule = (k: string) =>
-    setSelectedModules(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
+
 
 
 
