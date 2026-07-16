@@ -396,7 +396,10 @@ export default function AdminClients() {
     }
   };
 
-  const filtered = clients.filter(c => c.business_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = clients.filter(c =>
+    c.business_name.toLowerCase().includes(search.toLowerCase()) &&
+    (!complianceOnly || c.has_compliance_requirements === true)
+  );
 
   const onboardingStageColor = (stage: string) => {
     switch (stage) {
