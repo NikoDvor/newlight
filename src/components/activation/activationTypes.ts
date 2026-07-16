@@ -224,6 +224,9 @@ export interface ActivationFormState {
   form_tone: string;
   need_custom_fields: string;
   form_notes: string;
+  // Business operations flags (drive module visibility + admin filters)
+  has_sales_team: string;
+  has_compliance_requirements: string;
 
   // Step 6: Email
   use_native_email: string;
