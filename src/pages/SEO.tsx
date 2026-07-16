@@ -663,26 +663,28 @@ export default function SEO() {
                 </div>
               ) : (
                 <>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {competitors.map((c) => (
-                        <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                          <td className="text-sm font-medium py-3">{c.domain}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
-                          <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Domain</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Authority</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Keywords</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Traffic</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {competitors.map((c) => (
+                          <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                            <td className="text-sm font-medium py-3">{c.domain}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{c.authority_score}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{(c.keywords_count || 0).toLocaleString()}</td>
+                            <td className="text-sm text-right py-3 tabular-nums">{c.estimated_traffic || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   {gapAnalysis && (
                     <p className="text-xs text-muted-foreground mt-2 px-1">
                       Gap analysis generated {new Date(gapAnalysis.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {(gapAnalysis.keyword_gaps || []).length} keyword gaps · {(gapAnalysis.content_gaps || []).length} content gaps
