@@ -123,68 +123,70 @@ export default function AdminBDRCalendars() {
 
       {/* Calendar list */}
       <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-white/[0.04] text-white/60 text-xs uppercase tracking-wider">
-            <tr>
-              <th className="text-left px-4 py-3">Owner / Calendar</th>
-              <th className="text-left px-4 py-3">Booking link</th>
-              <th className="text-center px-4 py-3">Active</th>
-              <th className="text-center px-4 py-3">Round-Robin</th>
-              <th className="text-right px-4 py-3">Appointments</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cals.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-white/40">No BDR calendars yet.</td></tr>
-            )}
-            {cals.map((c) => {
-              const ct = counts[c.id] || { total: 0, upcoming: 0 };
-              const slug = c.booking_slug;
-              return (
-                <tr key={c.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{names[c.user_id] || "Unknown BDR"}</div>
-                    <div className="text-xs text-white/50">{c.name}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {slug ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-white/[0.04] text-white/60 text-xs uppercase tracking-wider">
+              <tr>
+                <th className="text-left px-4 py-3">Owner / Calendar</th>
+                <th className="text-left px-4 py-3">Booking link</th>
+                <th className="text-center px-4 py-3">Active</th>
+                <th className="text-center px-4 py-3">Round-Robin</th>
+                <th className="text-right px-4 py-3">Appointments</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cals.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-white/40">No BDR calendars yet.</td></tr>
+              )}
+              {cals.map((c) => {
+                const ct = counts[c.id] || { total: 0, upcoming: 0 };
+                const slug = c.booking_slug;
+                return (
+                  <tr key={c.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{names[c.user_id] || "Unknown BDR"}</div>
+                      <div className="text-xs text-white/50">{c.name}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {slug ? (
+                        <button
+                          onClick={() => copyLink(slug)}
+                          className="inline-flex items-center gap-1.5 text-xs font-mono text-white/70 hover:text-white"
+                        >
+                          <Link2 className="h-3 w-3" />
+                          /bdr/book/{slug}
+                          {copied === slug ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3 opacity-60" />}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-white/30">No link</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${c.booking_active ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-white/40"}`}>
+                        {c.booking_active ? "Live" : "Paused"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => copyLink(slug)}
-                        className="inline-flex items-center gap-1.5 text-xs font-mono text-white/70 hover:text-white"
+                        onClick={() => togglePool(c)}
+                        className={`h-5 w-9 rounded-full transition-colors relative ${c.round_robin_pool ? "bg-[hsl(211,96%,56%)]" : "bg-white/15"}`}
+                        aria-label="Toggle round-robin"
                       >
-                        <Link2 className="h-3 w-3" />
-                        /bdr/book/{slug}
-                        {copied === slug ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3 opacity-60" />}
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${c.round_robin_pool ? "translate-x-4" : "translate-x-0.5"}`} />
                       </button>
-                    ) : (
-                      <span className="text-xs text-white/30">No link</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.booking_active ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-white/40"}`}>
-                      {c.booking_active ? "Live" : "Paused"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => togglePool(c)}
-                      className={`h-5 w-9 rounded-full transition-colors relative ${c.round_robin_pool ? "bg-[hsl(211,96%,56%)]" : "bg-white/15"}`}
-                      aria-label="Toggle round-robin"
-                    >
-                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${c.round_robin_pool ? "translate-x-4" : "translate-x-0.5"}`} />
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-3 text-xs">
-                      <span className="text-white/70"><CalendarIcon className="h-3 w-3 inline mr-1" />{ct.total} total</span>
-                      <span className="text-[hsl(211,96%,70%)]">{ct.upcoming} upcoming</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-3 text-xs">
+                        <span className="text-white/70"><CalendarIcon className="h-3 w-3 inline mr-1" />{ct.total} total</span>
+                        <span className="text-[hsl(211,96%,70%)]">{ct.upcoming} upcoming</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
