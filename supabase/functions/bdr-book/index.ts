@@ -107,6 +107,8 @@ Deno.serve(async (req) => {
         list_name: "Booking Form",
         niche: nicheClean,
         modules_of_interest: modulesClean,
+        logo_url: logoClean,
+
       })
       .select("id")
       .single();
