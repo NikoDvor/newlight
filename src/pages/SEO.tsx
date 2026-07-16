@@ -551,44 +551,46 @@ export default function SEO() {
                 </div>
               ) : (
                 <>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">
-                          {gscConnection?.status === "active" ? "Impressions" : "Volume"}
-                        </th>
-                        {gscConnection?.status === "active" && (
-                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
-                        )}
-                        {isAdmin && <th className="w-8"></th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {keywords.map((k) => (
-                        <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors group">
-                          <td className="text-sm py-3">{k.keyword}</td>
-                          <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
-                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">
+                            {gscConnection?.status === "active" ? "Impressions" : "Volume"}
+                          </th>
                           {gscConnection?.status === "active" && (
-                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                            <th className="text-right text-xs font-medium text-muted-foreground py-3">Clicks</th>
                           )}
-                          {isAdmin && (
-                            <td className="text-right py-3">
-                              <button
-                                onClick={() => deleteKeyword(k.id)}
-                                disabled={deletingKwId === k.id}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
-                              >
-                                {deletingKwId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
-                              </button>
-                            </td>
-                          )}
+                          {isAdmin && <th className="w-8"></th>}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {keywords.map((k) => (
+                          <tr key={k.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors group">
+                            <td className="text-sm py-3">{k.keyword}</td>
+                            <td className="text-sm font-medium text-right py-3 tabular-nums">{k.position ? `#${k.position}` : "—"}</td>
+                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.search_volume || 0).toLocaleString()}</td>
+                            {gscConnection?.status === "active" && (
+                              <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{(k.clicks || 0).toLocaleString()}</td>
+                            )}
+                            {isAdmin && (
+                              <td className="text-right py-3">
+                                <button
+                                  onClick={() => deleteKeyword(k.id)}
+                                  disabled={deletingKwId === k.id}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                                >
+                                  {deletingKwId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash className="h-3.5 w-3.5" />}
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   {gscConnection?.status !== "active" && (
                     <p className="text-xs text-muted-foreground mt-2 px-1">
                       Volumes are AI estimates until Search Console is connected.
