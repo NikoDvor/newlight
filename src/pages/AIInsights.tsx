@@ -732,19 +732,118 @@ function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAc
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark done
               </Button>
             )}
-            {!isAccepted && (
+            {!isAccepted && executable && (
               <Button
-                onClick={() => onAction("accepted")}
+                onClick={() => setConfirmOpen(true)}
                 size="sm"
-                className="rounded-lg text-xs font-semibold border-0 shadow-md"
+                className="rounded-lg text-xs font-semibold border-0 shadow-md flex items-center"
                 style={{
                   background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
                   color: "hsl(210 40% 98%)",
                 }}
               >
-                {rec.action_label || "Take action"}
+                <Zap className="mr-1.5 h-3.5 w-3.5" />
+                Execute: {actionLabel}
               </Button>
             )}
+            {!isAccepted && !executable && (
+              <Button
+                onClick={() => setStepsOpen(true)}
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-xs font-semibold flex items-center"
+                style={{
+                  borderColor: `hsla(${meta.hue},.4)`,
+                  color: `hsl(${meta.hue})`,
+                  background: `hsla(${meta.hue},.04)`,
+                }}
+              >
+                <ListChecks className="mr-1.5 h-3.5 w-3.5" />
+                View Steps
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Execute confirmation modal */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-4 w-4" style={{ color: `hsl(${meta.hue})` }} />
+              Confirm action
+            </DialogTitle>
+            <DialogDescription>
+              This will <span className="font-semibold text-foreground">{actionLabel.toLowerCase()}</span> for{" "}
+              <span className="font-semibold text-foreground">{businessName}</span>. Confirm?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setConfirmOpen(false);
+                toast({
+                  title: "Coming soon",
+                  description: "This will connect to your live settings.",
+                });
+              }}
+              className="border-0"
+              style={{
+                background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
+                color: "hsl(210 40% 98%)",
+              }}
+            >
+              <Zap className="mr-1.5 h-3.5 w-3.5" /> Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Guided steps modal */}
+      <Dialog open={stepsOpen} onOpenChange={setStepsOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" style={{ color: `hsl(${meta.hue})` }} />
+              {rec.title || "How to do this"}
+            </DialogTitle>
+            <DialogDescription>
+              A guided walkthrough for {businessName}. Follow the steps below.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="space-y-3 mt-2">
+            {steps.map((s, idx) => (
+              <li key={idx} className="flex gap-3">
+                <div
+                  className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold"
+                  style={{ background: `hsla(${meta.hue},.15)`, color: `hsl(${meta.hue})` }}
+                >
+                  {idx + 1}
+                </div>
+                <p className="text-sm leading-relaxed text-foreground pt-0.5">{s}</p>
+              </li>
+            ))}
+          </ol>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setStepsOpen(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                setStepsOpen(false);
+                onAction("accepted");
+              }}
+              className="border-0"
+              style={{
+                background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
+                color: "hsl(210 40% 98%)",
+              }}
+            >
+              <ArrowRight className="mr-1.5 h-3.5 w-3.5" /> Accept &amp; track
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
           </div>
         </div>
       </div>
