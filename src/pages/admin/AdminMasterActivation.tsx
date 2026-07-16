@@ -32,6 +32,8 @@ import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
 import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
+import { StepComplianceTools } from "@/components/activation/StepComplianceTools";
+import { StepSalesTeamTools } from "@/components/activation/StepSalesTeamTools";
 import { StepReview } from "@/components/activation/StepReview";
 import { StepProfileSelection } from "@/components/activation/StepProfileSelection";
 
