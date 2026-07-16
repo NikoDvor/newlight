@@ -124,6 +124,7 @@ import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import AdminMarketingTemplates from "./pages/admin/AdminMarketingTemplates";
 import AdminRiskProfiles from "./pages/admin/AdminRiskProfiles";
 import AdminPromoters from "./pages/admin/AdminPromoters";
+import AdminNotetakerIntegrations from "./pages/admin/AdminNotetakerIntegrations";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
 import AdminWebinars from "./pages/admin/AdminWebinars";
 import WebinarRegistration from "./pages/WebinarRegistration";
