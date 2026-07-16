@@ -156,6 +156,8 @@ import CalendarManagement from "./pages/CalendarManagement";
 import CalendarDetail from "./pages/CalendarDetail";
 import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
+import BDRTeamPipeline from "./pages/BDRTeamPipeline";
+import BDRLeadSourcing from "./pages/BDRLeadSourcing";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import SetupCenter from "./pages/SetupCenter";
@@ -440,6 +442,8 @@ const App = () => {
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
                 <Route path="certification/bdr" element={<BDRCertificationExam />} />
                 <Route path="leads" element={<BDRMyLeads />} />
+                <Route path="lead-sourcing" element={<BDRLeadSourcing />} />
+                <Route path="team-pipeline" element={<BDRTeamPipeline />} />
                 <Route path="dialer" element={<BDRDialer />} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<BDRCalendar />} />
@@ -530,6 +534,8 @@ const App = () => {
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
                 <Route path="/team-management" element={<TeamManagement />} />
+                <Route path="/bdr-team-pipeline" element={<BDRTeamPipeline />} />
+                <Route path="/bdr-lead-sourcing" element={<BDRLeadSourcing />} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />
