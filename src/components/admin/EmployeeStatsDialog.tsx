@@ -280,7 +280,7 @@ export function EmployeeStatsDialog(props: Props) {
             {/* Training */}
             <Section title="Training & Certification">
               <Row label="BDR certification" value={certStatus.replace(/_/g, " ")} />
-              <div className="grid grid-cols-5 gap-2 mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
                 {moduleProgress.map((m) => (
                   <Stat key={m.module} label={m.module} value={`${m.pct}%`} />
                 ))}
