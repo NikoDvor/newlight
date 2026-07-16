@@ -36,6 +36,10 @@ export async function hydrateWorkspaceFromActivation(
     if (form.default_timezone) clientUpdate.timezone = form.default_timezone;
     if (form.service_package) clientUpdate.service_package = form.service_package;
     if (form.crm_mode) clientUpdate.crm_mode = form.crm_mode === "external" ? "external" : "native";
+    // Business operations flags — drive module visibility + admin filters.
+    if (form.has_sales_team) clientUpdate.has_sales_team = form.has_sales_team === "yes";
+    if (form.has_compliance_requirements) clientUpdate.has_compliance_requirements = form.has_compliance_requirements === "yes";
+
 
     if (Object.keys(clientUpdate).length > 0) {
       const { error } = await supabase.from("clients").update(clientUpdate as any).eq("id", clientId);
