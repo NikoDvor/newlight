@@ -6394,6 +6394,7 @@ export type Database = {
           has_testimonial: boolean
           id: string
           material_type: Database["public"]["Enums"]["marketing_material_type"]
+          related_social_post_id: string | null
           status: Database["public"]["Enums"]["marketing_material_status"]
           title: string
           updated_at: string
@@ -6409,6 +6410,7 @@ export type Database = {
           has_testimonial?: boolean
           id?: string
           material_type?: Database["public"]["Enums"]["marketing_material_type"]
+          related_social_post_id?: string | null
           status?: Database["public"]["Enums"]["marketing_material_status"]
           title: string
           updated_at?: string
@@ -6424,11 +6426,20 @@ export type Database = {
           has_testimonial?: boolean
           id?: string
           material_type?: Database["public"]["Enums"]["marketing_material_type"]
+          related_social_post_id?: string | null
           status?: Database["public"]["Enums"]["marketing_material_status"]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketing_materials_related_social_post_id_fkey"
+            columns: ["related_social_post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_substantiation_files: {
         Row: {
