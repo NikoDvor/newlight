@@ -145,24 +145,26 @@ export default function AdminBilling() {
               {subs.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No subscriptions yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Name</th><th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Monthly</th><th className={headCls}>Setup Fee</th><th className={headCls}>Term</th><th className={headCls}>Next Invoice</th>
-                  </tr></thead>
-                  <tbody>
-                    {subs.map((s: any) => (
-                      <tr key={s.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{s.subscription_name}</td>
-                        <td className={cellCls}>{(s.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}><SBadge status={s.subscription_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(s.monthly_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls + " tabular-nums"}>${Number(s.setup_fee_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{s.contract_length_months}mo</td>
-                        <td className={cellCls}>{s.next_invoice_date || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Name</th><th className={headCls}>Company</th><th className={headCls}>Status</th><th className={headCls}>Monthly</th><th className={headCls}>Setup Fee</th><th className={headCls}>Term</th><th className={headCls}>Next Invoice</th>
+                    </tr></thead>
+                    <tbody>
+                      {subs.map((s: any) => (
+                        <tr key={s.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{s.subscription_name}</td>
+                          <td className={cellCls}>{(s.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}><SBadge status={s.subscription_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(s.monthly_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls + " tabular-nums"}>${Number(s.setup_fee_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{s.contract_length_months}mo</td>
+                          <td className={cellCls}>{s.next_invoice_date || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
