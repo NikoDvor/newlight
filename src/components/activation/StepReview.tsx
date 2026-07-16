@@ -63,6 +63,7 @@ interface IntakeTokenInfo {
 }
 
 export function StepReview({ form }: StepProps & { clientId?: string }) {
+  const f = form as unknown as Record<string, string>;
   const enabledIntegrations = INTEGRATION_KEYS.filter(k => form.integrations[k]?.used === "yes");
   const missingAccess = enabledIntegrations.filter(k => form.integrations[k]?.access_ready !== "yes");
 
