@@ -155,6 +155,7 @@ export default function AdminCloseCenter() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [bookingLinks, setBookingLinks] = useState<{ meeting1: string | null; meeting2: string | null }>({ meeting1: null, meeting2: null });
 
   const load = useCallback(async () => {
     if (!clientId) return;
