@@ -152,7 +152,7 @@ function effortStyle(level: string | null): { bg: string; text: string; label: s
 }
 
 export default function AIInsights() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, activeClientName } = useWorkspace();
   const { toast } = useToast();
 
   const [recs, setRecs] = useState<Recommendation[]>([]);
