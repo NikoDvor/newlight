@@ -15,8 +15,9 @@ import {
   Mail, Phone, MapPin, Building2, Tag, Activity,
   Calendar, Briefcase, Star, StickyNote, DollarSign,
   Clock, User, ArrowUpRight, MessageSquare, CheckCircle2,
-  AlarmClock, SkipForward
+  AlarmClock, SkipForward, MessageCircle
 } from "lucide-react";
+import { ContactTextMessages } from "@/components/ContactTextMessages";
 
 const STAGE_LABELS: Record<string, string> = {
   new_lead: "New Lead", contacted: "Contacted", qualified: "Qualified",
@@ -213,6 +214,7 @@ export default function ContactDetail() {
           <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
           <TabsTrigger value="follow_ups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
           <TabsTrigger value="conversations" className="rounded-md text-sm">Conversations</TabsTrigger>
+          <TabsTrigger value="texts" className="rounded-md text-sm">Texts</TabsTrigger>
           <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
         </TabsList>
 
@@ -518,6 +520,16 @@ export default function ContactDetail() {
               </div>
             )}
           </DataCard>
+        </TabsContent>
+
+        <TabsContent value="texts" className="mt-4">
+          {activeClientId && contactId && (
+            <ContactTextMessages
+              clientId={activeClientId}
+              contactId={contactId}
+              defaultPhone={contact.phone}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4">
