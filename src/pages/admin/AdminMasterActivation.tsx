@@ -48,21 +48,10 @@ const stageIcons: Record<number, React.ReactNode> = {
 type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost" | "submitted" | "activated";
 
 /**
- * Mapping from the "What are you looking to improve?" answer captured on the
- * public BDR booking form (nl_bdr_leads.improvement_area) to internal module
- * keys used by the activation wizard.
- */
-const IMPROVEMENT_TO_MODULES: Record<string, string[]> = {
-  "Website Management": ["website_management"],
-  "Lifecycle & Nurture Sequences": ["lifecycle_nurture"],
-  "Financial Compliance": ["financial_compliance"],
-  "Meeting Intelligence": ["meeting_intel"],
-};
-
-/**
- * Apply pre-selected modules to the wizard form flags. Only sets flags where
- * a canonical field exists — unknown modules are still tracked in
- * bookingModules for badge display but no field is touched.
+ * Apply pre-selected modules from the public BDR booking form
+ * (nl_bdr_leads.modules_of_interest text array) to the wizard form flags.
+ * Only sets flags where a canonical field exists — unknown modules are still
+ * tracked in bookingModules for badge display but no field is touched.
  */
 function applyModulePreselection(base: ActivationFormState, modules: string[]): ActivationFormState {
   const next: any = { ...base };
@@ -71,7 +60,7 @@ function applyModulePreselection(base: ActivationFormState, modules: string[]): 
       case "website_management": next.use_website_workspace = "yes"; break;
       case "lifecycle_nurture": next.followup_messaging = "yes"; break;
       case "financial_compliance": next.use_finance = "yes"; break;
-      case "meeting_intel": next.need_meeting_intel_access = "yes"; break;
+      case "sales_meeting_intelligence": next.need_meeting_intel_access = "yes"; break;
     }
   }
   return next as ActivationFormState;
@@ -109,9 +98,9 @@ export default function AdminMasterActivation() {
   const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  // ── Booking lead pre-fill (from nl_bdr_leads.improvement_area) ──
-  const [bookingImprovement, setBookingImprovement] = useState<string | null>(null);
+  // ── Booking lead pre-fill (from nl_bdr_leads.modules_of_interest) ──
   const [bookingModules, setBookingModules] = useState<string[]>([]);
+  const [bookingHasSalesTeam, setBookingHasSalesTeam] = useState<boolean | null>(null);
   const [bookingBannerDismissed, setBookingBannerDismissed] = useState(false);
 
   // ── Load existing client + draft ──
@@ -183,35 +172,17 @@ export default function AdminMasterActivation() {
         }
 
         // ── Look up matching BDR lead by owner_email (fallback: phone) and
-        // pre-fill the wizard from its improvement_area answer. Runs after
+        // pre-fill the wizard from its modules_of_interest array. Runs after
         // client + draft load so pre-fill can layer over the initial form.
-        // Uses select("*") + runtime extraction because improvement_area may
-        // live in a dedicated column or inside notes/customer_notes JSON.
         try {
           const email = (client as any).owner_email || null;
           const phone = (client as any).owner_phone || (client as any).phone || null;
           const hasDraft = !!(drafts && drafts.length > 0);
 
-          const extractImprovement = (row: any): string | null => {
+          const extractModules = (row: any): string[] | null => {
             if (!row) return null;
-            if (typeof row.improvement_area === "string" && row.improvement_area.trim()) {
-              return row.improvement_area.trim();
-            }
-            // Fallbacks: look for "improvement_area: <value>" or a JSON blob
-            // embedded in notes / customer_notes.
-            const blobs: string[] = [row.customer_notes, row.notes].filter(
-              (x: any) => typeof x === "string" && x.length > 0,
-            );
-            for (const blob of blobs) {
-              const m = blob.match(/improvement[_ ]area["'\s:]+([^\n"']+)/i);
-              if (m && m[1]) return m[1].trim();
-              try {
-                const parsed = JSON.parse(blob);
-                if (parsed && typeof parsed.improvement_area === "string") {
-                  return parsed.improvement_area.trim();
-                }
-              } catch { /* not JSON */ }
-            }
+            const raw = row.modules_of_interest;
+            if (Array.isArray(raw) && raw.length > 0) return raw;
             return null;
           };
 
@@ -223,7 +194,7 @@ export default function AdminMasterActivation() {
               .eq("email", email)
               .order("created_at", { ascending: false })
               .limit(5);
-            leadRow = (data || []).find(extractImprovement) || null;
+            leadRow = (data || []).find((r: any) => extractModules(r) !== null) || null;
           }
           if (!leadRow && phone) {
             const { data } = await supabase
@@ -232,14 +203,13 @@ export default function AdminMasterActivation() {
               .eq("phone", phone)
               .order("created_at", { ascending: false })
               .limit(5);
-            leadRow = (data || []).find(extractImprovement) || null;
+            leadRow = (data || []).find((r: any) => extractModules(r) !== null) || null;
           }
 
-          const area = extractImprovement(leadRow);
-          if (area && IMPROVEMENT_TO_MODULES[area]) {
-            const modules = IMPROVEMENT_TO_MODULES[area];
-            setBookingImprovement(area);
+          const modules = extractModules(leadRow);
+          if (modules) {
             setBookingModules(modules);
+            setBookingHasSalesTeam(leadRow?.has_sales_team ?? null);
             // Only overwrite flags for a fresh wizard (no saved draft) so we
             // don't stomp admin edits made in a resumed draft.
             if (!hasDraft && modules.length > 0) {
@@ -866,7 +836,7 @@ export default function AdminMasterActivation() {
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {stage === 1 && bookingImprovement && !bookingBannerDismissed && (
+                  {stage === 1 && bookingModules.length > 0 && !bookingBannerDismissed && (
                     <div
                       className="mb-4 rounded-lg px-3 py-2 flex items-center gap-2 text-[12px]"
                       style={{
@@ -877,7 +847,19 @@ export default function AdminMasterActivation() {
                     >
                       <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(211,96%,68%)" }} />
                       <span className="flex-1">
-                        Pre-filled from booking: <span className="font-semibold text-white">{bookingImprovement}</span>
+                        Pre-filled from booking
+                        {bookingHasSalesTeam === true && (
+                          <span
+                            className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                            style={{
+                              background: "hsla(142,72%,42%,.15)",
+                              border: "1px solid hsla(142,72%,42%,.35)",
+                              color: "hsl(142,72%,55%)",
+                            }}
+                          >
+                            Has a sales team
+                          </span>
+                        )}
                       </span>
                       <button
                         onClick={() => setBookingBannerDismissed(true)}
