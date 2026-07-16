@@ -117,9 +117,8 @@ export default function BDRBookingPublic() {
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
-  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [hasSalesTeam, setHasSalesTeam] = useState<"" | "yes" | "no">("");
-  const [salesTeamSize, setSalesTeamSize] = useState<string>("");
+  const [hasCompliance, setHasCompliance] = useState<"" | "yes" | "no">("");
   const [logoUrl, setLogoUrl] = useState<string>("");
 
 
