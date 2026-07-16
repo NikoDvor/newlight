@@ -1,6 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { runCommissionBillingForClient } from '../run-commission-billing/index.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -16,13 +15,15 @@ function defaultPeriod() {
   };
 }
 
+// Thin dispatcher: authenticates the cron/admin caller then hands off to run-commission-billing
+// (which does its own auth check and the full per-client billing logic).
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const authHeader = req.headers.get('Authorization') ?? '';
     const cronHeader = req.headers.get('x-cron-secret') ?? '';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     let allowed = false;
     if (CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) {
@@ -49,33 +50,21 @@ Deno.serve(async (req) => {
       ? { period_start: body.period_start, period_end: body.period_end }
       : defaultPeriod();
 
-    // All active clients with at least one completed close-prep deal
-    const { data: deals } = await supabase
-      .from('crm_deals')
-      .select('client_id')
-      .not('close_prep_completed_at', 'is', null);
-    const clientIds = Array.from(new Set((deals ?? []).map((d: any) => d.client_id).filter(Boolean))) as string[];
+    // Delegate the full loop to run-commission-billing (called without client_id → loops all clients).
+    const invokeRes = await fetch(`${SUPABASE_URL}/functions/v1/run-commission-billing`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-cron-secret': CRON_SECRET ?? '',
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify(period),
+    });
+    const invokeJson = await invokeRes.json();
 
-    const results: any[] = [];
-    for (const client_id of clientIds) {
-      try {
-        const r = await runCommissionBillingForClient(supabase, client_id, period.period_start, period.period_end);
-        results.push(r);
-      } catch (err) {
-        results.push({ client_id, error: (err as Error).message });
-      }
-    }
-
-    const summary = {
-      period,
-      total_clients: clientIds.length,
-      succeeded: results.filter((r) => r.ok).length,
-      failed: results.filter((r) => r.failed).length,
-      skipped: results.filter((r) => r.skipped).length,
-    };
-    console.log('monthly billing cycle summary:', summary);
-
-    return new Response(JSON.stringify({ summary, results }), {
+    console.log('monthly billing cycle summary:', invokeJson?.summary);
+    return new Response(JSON.stringify(invokeJson), {
+      status: invokeRes.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
