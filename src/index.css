@@ -217,8 +217,6 @@
   @media (max-width: 768px) {
     html { font-size: 16px; }
     button, a, [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
       touch-action: manipulation;
     }
     input, select, textarea { font-size: 16px; }
