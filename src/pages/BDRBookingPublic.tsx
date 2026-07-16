@@ -14,7 +14,37 @@ const MODULE_GROUPS = [
   { label: "Compliance", keys: ["financial_compliance"] },
 ];
 
+const SALES_TOOLS = [
+  { key: "sales_meeting_intelligence", label: "Meeting Intelligence" },
+  { key: "sales_call_tracking", label: "Call Tracking" },
+  { key: "sales_followups", label: "Follow-Ups" },
+  { key: "sales_tasks", label: "Tasks" },
+  { key: "sales_contacts", label: "Contacts" },
+  { key: "sales_companies", label: "Companies" },
+  { key: "sales_deals", label: "Deals" },
+  { key: "sales_pipeline", label: "Pipeline" },
+  { key: "sales_appointments", label: "Appointments" },
+  { key: "sales_approvals", label: "Approvals" },
+];
+
 const moduleByKey = CORE_MODULES.reduce((acc, m) => { acc[m.key] = m; return acc; }, {} as Record<string, CoreModuleDef>);
+function SimpleModuleCheckbox({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <label
+      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
+      style={{
+        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
+        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
+      }}
+    >
+      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
+      <div className="min-w-0">
+        <div className="text-sm text-white font-medium">{label}</div>
+      </div>
+    </label>
+  );
+}
+
 
 function ModuleCheckbox({ m, checked, onToggle }: { m: CoreModuleDef; checked: boolean; onToggle: () => void }) {
   return (
@@ -429,6 +459,21 @@ export default function BDRBookingPublic() {
                     </div>
                   );
                 })}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Sales Team Tools (optional)</span>
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
+                  {SALES_TOOLS.map(st => (
+                    <SimpleModuleCheckbox
+                      key={st.key}
+                      label={st.label}
+                      checked={selectedModules.includes(st.key)}
+                      onToggle={() => toggleModule(st.key)}
+                    />
+                  ))}
+                </div>
               </div>
             </Field>
 
