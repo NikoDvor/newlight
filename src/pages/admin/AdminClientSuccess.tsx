@@ -9,7 +9,7 @@ import {
   Users, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const SEVERITY_COLOR: Record<string, string> = {
   Critical: "bg-destructive/10 text-destructive",
