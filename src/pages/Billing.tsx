@@ -168,28 +168,30 @@ export default function Billing() {
           {invoices.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">No invoices yet.</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left text-xs font-medium text-muted-foreground py-3">Invoice</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground py-3">Type</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground py-3">Amount</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
-                    <td className="text-sm font-medium py-3">{inv.invoice_number}</td>
-                    <td className="text-sm text-muted-foreground py-3">{inv.invoice_type}</td>
-                    <td className="text-sm font-medium text-right py-3 tabular-nums">${Number(inv.total_amount || 0).toLocaleString()}</td>
-                    <td className="text-right py-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-md ${statusColor[inv.invoice_status] || "bg-muted text-muted-foreground"}`}>{inv.invoice_status}</span>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Invoice</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Type</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground py-3">Amount</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground py-3">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoices.map((inv) => (
+                    <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-secondary transition-colors">
+                      <td className="text-sm font-medium py-3">{inv.invoice_number}</td>
+                      <td className="text-sm text-muted-foreground py-3">{inv.invoice_type}</td>
+                      <td className="text-sm font-medium text-right py-3 tabular-nums">${Number(inv.total_amount || 0).toLocaleString()}</td>
+                      <td className="text-right py-3">
+                        <span className={`text-xs font-medium px-2 py-1 rounded-md ${statusColor[inv.invoice_status] || "bg-muted text-muted-foreground"}`}>{inv.invoice_status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </DataCard>
       </div>
