@@ -52,6 +52,7 @@ const adminGroups: NavGroup[] = [
     label: "Clients & Success",
     items: [
       { title: "Client Accounts", url: "/admin/clients", icon: Users },
+      { title: "Acquisition Analytics", url: "/admin/clients/acquisition-analytics", icon: TrendingUp },
       { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Client Activation", url: "/admin/activation", icon: Zap },
       { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
