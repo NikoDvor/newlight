@@ -45,6 +45,7 @@ export default function MeetingIntelligence() {
   const navigate = useNavigate();
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     fetchMeetings();
