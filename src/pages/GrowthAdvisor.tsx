@@ -773,7 +773,7 @@ function ExampleCompetitorRows() {
       {EXAMPLE_COMPETITORS.map((c, i) => (
         <div
           key={i}
-          className="grid grid-cols-12 px-6 py-4 border-b border-dashed border-border/40 last:border-b-0 items-center opacity-70"
+          className="grid grid-cols-12 min-w-[720px] px-6 py-4 border-b border-dashed border-border/40 last:border-b-0 items-center opacity-70"
         >
           <div className="col-span-4 font-medium flex items-center gap-2">
             {c.name}
