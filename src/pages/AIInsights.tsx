@@ -990,10 +990,9 @@ function CategoryPerformanceGrid({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               whileHover={{ y: -3 }}
-              className="text-left rounded-2xl p-5 transition-all"
+              className="text-left rounded-2xl p-5 transition-all bg-card border"
               style={{
-                background: "hsla(210,50%,99%,.95)",
-                border: `1px solid ${active ? `hsla(${meta.hue},.45)` : "hsla(211,96%,56%,.1)"}`,
+                borderColor: active ? `hsla(${meta.hue},.45)` : "hsl(var(--border))",
                 boxShadow: active
                   ? `0 12px 32px -14px hsla(${meta.hue},.35)`
                   : "0 2px 8px -4px hsla(215,25%,20%,.06)",
