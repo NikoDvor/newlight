@@ -220,7 +220,7 @@ export function AppSidebar() {
       <SidebarContent className="px-2 relative z-10">
         {navStructure.map((entry, idx) => {
           if (entry.type === "item") {
-            if (!canSee(entry.moduleKey)) return null;
+            if (!canSee(entry.moduleKey, entry.url)) return null;
             return (
               <SidebarGroup key={idx} className="py-0.5">
                 <SidebarGroupContent>
