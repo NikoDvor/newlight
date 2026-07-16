@@ -668,18 +668,20 @@ export default function AdminMasterActivation() {
       case 5:
         return (
           <Tabs defaultValue="branding" className="w-full">
-            <TabsList className="w-full grid grid-cols-5 bg-white/[0.04] border border-white/10 mb-4">
+            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
               <TabsTrigger value="branding" className="text-[11px] data-[state=active]:bg-white/10">Branding</TabsTrigger>
               <TabsTrigger value="crm" className="text-[11px] data-[state=active]:bg-white/10">CRM</TabsTrigger>
               <TabsTrigger value="calendar" className="text-[11px] data-[state=active]:bg-white/10">Calendar</TabsTrigger>
               <TabsTrigger value="services" className="text-[11px] data-[state=active]:bg-white/10">Services</TabsTrigger>
               <TabsTrigger value="forms" className="text-[11px] data-[state=active]:bg-white/10">Forms</TabsTrigger>
+              <TabsTrigger value="marketing" className="text-[11px] data-[state=active]:bg-white/10">Marketing</TabsTrigger>
             </TabsList>
             <TabsContent value="branding"><StepBranding {...stepProps} /></TabsContent>
             <TabsContent value="crm"><StepCRM {...stepProps} /></TabsContent>
             <TabsContent value="calendar"><StepCalendar {...stepProps} /></TabsContent>
             <TabsContent value="services"><StepServices {...stepProps} /></TabsContent>
             <TabsContent value="forms"><StepBookingForms {...stepProps} /></TabsContent>
+            <TabsContent value="marketing"><StepMarketing {...stepProps} /></TabsContent>
           </Tabs>
         );
       case 6:
