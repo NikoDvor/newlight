@@ -54,6 +54,7 @@ export default function ContactDetail() {
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [household, setHousehold] = useState<{ id: string; household_name: string } | null>(null);
+  const [referral, setReferral] = useState<{ promoter_id: string; full_name: string } | null>(null);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
 
