@@ -530,6 +530,15 @@ export default function BDRDialer() {
                           <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
                         ))}
                       </select>
+                      {(lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
+                        <Button
+                          size="sm"
+                          className="mt-2 w-full h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+                          onClick={() => navigate(`/employee/close-prep/${lead.id}`)}
+                        >
+                          Close Prep
+                        </Button>
+                      )}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5">
                       <NotesCell
