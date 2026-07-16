@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, FileSignature, CreditCard, Wrench, CheckCircle2, Clock,
   AlertTriangle, Package, RefreshCw, Send, Copy, Link2, Eye, Plus,
-  FileText, DollarSign, Upload, ExternalLink, History, ChevronRight
+  FileText, DollarSign, Upload, ExternalLink, History, ChevronRight, Zap
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────
