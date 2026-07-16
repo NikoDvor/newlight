@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BookingSlotPicker } from "@/components/BookingSlotPicker";
 import { useParams } from "react-router-dom";
 import { Loader2, Check, Calendar as CalIcon, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -469,13 +470,7 @@ export default function BDRBookingPublic() {
 
 
 
-            <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
-              <option value="" className="bg-[hsl(215,35%,12%)]">— Select a time —</option>
-              {slots.map(s => (
-                <option key={s.date.toISOString()} value={s.date.toISOString()} className="bg-[hsl(215,35%,12%)]">{s.label}</option>
-              ))}
-            </select>
+            <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
 
             <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
