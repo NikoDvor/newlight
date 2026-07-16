@@ -101,6 +101,45 @@ export function StepProposalClosePrep({ form, set, submitting, clientId }: Props
         "Capture anything the closer needs to know",
       ]} />
 
+      {meeting2Url && (
+        <div
+          className="rounded-xl p-3 flex items-start gap-2.5"
+          style={{
+            background: "hsla(211,96%,60%,.06)",
+            border: "1px solid hsla(211,96%,60%,.22)",
+          }}
+        >
+          <Calendar className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "hsl(211,96%,66%)" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "hsl(211,96%,72%)" }}>
+              Meeting 2 Booking Link
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <code className="text-[11px] text-white/80 bg-white/[0.06] border border-white/10 rounded px-2 py-1 truncate max-w-full">
+                {meeting2Url}
+              </code>
+              <button
+                type="button"
+                onClick={copyMeeting2}
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                {meeting2Copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {meeting2Copied ? "Copied" : "Copy"}
+              </button>
+              <a
+                href={meeting2Url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                <ExternalLink className="h-3 w-3" /> Open
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {prefilledFromRep && (
         <div
           className="rounded-xl p-3 flex items-start gap-3 text-xs"
