@@ -231,11 +231,11 @@ export function GlobalModuleSearch({ variant = "employee" }: GlobalModuleSearchP
           {grouped.map(({ label, items }) => (
             <CommandGroup
               key={label}
-              heading={
+              heading={(
                 <span className="text-[10px] uppercase tracking-widest">
                   <Highlighted text={label} query={query} />
                 </span>
-              as any}
+              ) as unknown as string}
             >
               {items.map((item) => {
                 const Icon = item.icon;
