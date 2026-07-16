@@ -3430,6 +3430,45 @@ export type Database = {
         }
         Relationships: []
       }
+      close_prep_links: {
+        Row: {
+          created_at: string
+          deal_id: string | null
+          id: string
+          lead_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "close_prep_links_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "close_prep_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission_records: {
         Row: {
           client_id: string
@@ -4092,7 +4131,11 @@ export type Database = {
           assigned_user: string | null
           client_id: string
           close_date: string | null
+          close_prep_completed_at: string | null
+          close_prep_meeting_id: string | null
           close_probability: number | null
+          closing_notes: string | null
+          commission_rate: number | null
           company_id: string | null
           contact_id: string | null
           created_at: string
@@ -4101,14 +4144,17 @@ export type Database = {
           expected_close_date: string | null
           external_crm_deal_id: string | null
           id: string
+          initial_fee: number | null
           interest_type: string | null
           lead_source: string | null
           meeting_id_latest: string | null
           notes_summary: string | null
           pipeline_stage: string
           pipeline_stage_id: string | null
+          pricing_model: string | null
           proposal_id_current: string | null
           qualification_status: string | null
+          recurring_fee: number | null
           status: string
           updated_at: string
           urgency_level: string | null
@@ -4118,7 +4164,11 @@ export type Database = {
           assigned_user?: string | null
           client_id: string
           close_date?: string | null
+          close_prep_completed_at?: string | null
+          close_prep_meeting_id?: string | null
           close_probability?: number | null
+          closing_notes?: string | null
+          commission_rate?: number | null
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
@@ -4127,14 +4177,17 @@ export type Database = {
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
           id?: string
+          initial_fee?: number | null
           interest_type?: string | null
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
+          pricing_model?: string | null
           proposal_id_current?: string | null
           qualification_status?: string | null
+          recurring_fee?: number | null
           status?: string
           updated_at?: string
           urgency_level?: string | null
@@ -4144,7 +4197,11 @@ export type Database = {
           assigned_user?: string | null
           client_id?: string
           close_date?: string | null
+          close_prep_completed_at?: string | null
+          close_prep_meeting_id?: string | null
           close_probability?: number | null
+          closing_notes?: string | null
+          commission_rate?: number | null
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
@@ -4153,14 +4210,17 @@ export type Database = {
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
           id?: string
+          initial_fee?: number | null
           interest_type?: string | null
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
+          pricing_model?: string | null
           proposal_id_current?: string | null
           qualification_status?: string | null
+          recurring_fee?: number | null
           status?: string
           updated_at?: string
           urgency_level?: string | null
@@ -4171,6 +4231,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_close_prep_meeting_id_fkey"
+            columns: ["close_prep_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
             referencedColumns: ["id"]
           },
           {
