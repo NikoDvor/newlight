@@ -287,6 +287,11 @@ export default function AdminHouseholds() {
                       {u.kind === "review" ? "Review" : "Milestone"}
                     </Badge>
                     <span className="text-foreground">{u.label}</span>
+                    {u.kind === "milestone" && u.notified && (
+                      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                        ✓ notified
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-muted-foreground">{u.sub} · {u.when.toLocaleDateString()}</div>
                 </div>
