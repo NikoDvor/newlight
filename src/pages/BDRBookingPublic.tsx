@@ -396,12 +396,12 @@ export default function BDRBookingPublic() {
         {!showFormStep && (
           <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
             <div className="grid grid-cols-2 gap-2">
-              <Field label="Your name *"><Input value={contact.customer_name} onChange={e => setContact({ ...contact, customer_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-              <Field label="Business"><Input value={contact.business_name} onChange={e => setContact({ ...contact, business_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-              <Field label="Phone"><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
-              <Field label="Email"><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+              <Field label="Your name" required><Input value={contact.customer_name} onChange={e => setContact({ ...contact, customer_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+              <Field label="Business" required><Input value={contact.business_name} onChange={e => setContact({ ...contact, business_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+              <Field label="Phone" required><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+              <Field label="Email" required><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
             </div>
-            <Field label="Notes (optional)">
+            <Field label="Notes" required>
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </Field>
@@ -415,7 +415,7 @@ export default function BDRBookingPublic() {
 
             <Field label="Modules of interest">
               <div className="space-y-4">
-                <Field label="Do you have a sales team?">
+                <Field label="Do you have a sales team?" required>
                   <select
                     value={hasSalesTeam}
                     onChange={e => setHasSalesTeam(e.target.value as "" | "yes" | "no")}
@@ -427,7 +427,7 @@ export default function BDRBookingPublic() {
                   </select>
                 </Field>
 
-                <Field label="Do you have compliance restrictions?">
+                <Field label="Do you have compliance restrictions?" required>
                   <select
                     value={hasCompliance}
                     onChange={e => setHasCompliance(e.target.value as "" | "yes" | "no")}
@@ -451,10 +451,13 @@ export default function BDRBookingPublic() {
               ))}
             </select>
 
-            <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !selectedSlot}
+            <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book appointment"}
             </Button>
+            {!contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot ? (
+              <p className="text-sm text-red-400 text-center">Please fill in all required fields and select a time slot.</p>
+            ) : null}
           </div>
         )}
       </div>
@@ -462,8 +465,16 @@ export default function BDRBookingPublic() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs text-white/60">{label}</Label>{children}</div>;
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-white/60">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
 }
 
 function FormFieldRenderer({ field, value, onChange }: { field: FormField; value: any; onChange: (v: any) => void }) {
