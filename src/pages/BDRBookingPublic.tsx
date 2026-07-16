@@ -379,25 +379,28 @@ export default function BDRBookingPublic() {
             />
 
             <Field label="Modules of interest (optional)">
-              <div className="space-y-1.5">
-                {CORE_MODULES.map(m => {
-                  const checked = selectedModules.includes(m.key);
+              <div className="space-y-4">
+                {MODULE_GROUPS.map((group, groupIdx) => {
+                  const groupModules = group.keys
+                    .map(k => moduleByKey[k])
+                    .filter((m): m is CoreModuleDef => !!m);
+                  if (groupModules.length === 0) return null;
                   return (
-                    <label key={m.key}
-                      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-                      style={{
-                        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
-                        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
-                      }}
-                    >
-                      <input type="checkbox" checked={checked}
-                        onChange={() => toggleModule(m.key)}
-                        className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-                      <div className="min-w-0">
-                        <div className="text-sm text-white font-medium">{m.label}</div>
-                        <div className="text-[11px] text-white/50">{m.desc}</div>
+                    <div key={group.label} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-px flex-1 bg-white/10" />
+                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">{group.label}</span>
+                        <div className="h-px flex-1 bg-white/10" />
                       </div>
-                    </label>
+                      {groupModules.map(m => (
+                        <ModuleCheckbox
+                          key={m.key}
+                          m={m}
+                          checked={selectedModules.includes(m.key)}
+                          onToggle={() => toggleModule(m.key)}
+                        />
+                      ))}
+                    </div>
                   );
                 })}
               </div>
