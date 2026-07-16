@@ -98,9 +98,9 @@ export default function AdminMasterActivation() {
   const [syncStatus, setSyncStatus] = useState<{ complete: boolean; missing: string[] } | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  // ── Booking lead pre-fill (from nl_bdr_leads.improvement_area) ──
-  const [bookingImprovement, setBookingImprovement] = useState<string | null>(null);
+  // ── Booking lead pre-fill (from nl_bdr_leads.modules_of_interest) ──
   const [bookingModules, setBookingModules] = useState<string[]>([]);
+  const [bookingHasSalesTeam, setBookingHasSalesTeam] = useState<boolean | null>(null);
   const [bookingBannerDismissed, setBookingBannerDismissed] = useState(false);
 
   // ── Load existing client + draft ──
@@ -172,35 +172,17 @@ export default function AdminMasterActivation() {
         }
 
         // ── Look up matching BDR lead by owner_email (fallback: phone) and
-        // pre-fill the wizard from its improvement_area answer. Runs after
+        // pre-fill the wizard from its modules_of_interest array. Runs after
         // client + draft load so pre-fill can layer over the initial form.
-        // Uses select("*") + runtime extraction because improvement_area may
-        // live in a dedicated column or inside notes/customer_notes JSON.
         try {
           const email = (client as any).owner_email || null;
           const phone = (client as any).owner_phone || (client as any).phone || null;
           const hasDraft = !!(drafts && drafts.length > 0);
 
-          const extractImprovement = (row: any): string | null => {
+          const extractModules = (row: any): string[] | null => {
             if (!row) return null;
-            if (typeof row.improvement_area === "string" && row.improvement_area.trim()) {
-              return row.improvement_area.trim();
-            }
-            // Fallbacks: look for "improvement_area: <value>" or a JSON blob
-            // embedded in notes / customer_notes.
-            const blobs: string[] = [row.customer_notes, row.notes].filter(
-              (x: any) => typeof x === "string" && x.length > 0,
-            );
-            for (const blob of blobs) {
-              const m = blob.match(/improvement[_ ]area["'\s:]+([^\n"']+)/i);
-              if (m && m[1]) return m[1].trim();
-              try {
-                const parsed = JSON.parse(blob);
-                if (parsed && typeof parsed.improvement_area === "string") {
-                  return parsed.improvement_area.trim();
-                }
-              } catch { /* not JSON */ }
-            }
+            const raw = row.modules_of_interest;
+            if (Array.isArray(raw) && raw.length > 0) return raw;
             return null;
           };
 
@@ -212,7 +194,7 @@ export default function AdminMasterActivation() {
               .eq("email", email)
               .order("created_at", { ascending: false })
               .limit(5);
-            leadRow = (data || []).find(extractImprovement) || null;
+            leadRow = (data || []).find((r: any) => extractModules(r) !== null) || null;
           }
           if (!leadRow && phone) {
             const { data } = await supabase
@@ -221,14 +203,13 @@ export default function AdminMasterActivation() {
               .eq("phone", phone)
               .order("created_at", { ascending: false })
               .limit(5);
-            leadRow = (data || []).find(extractImprovement) || null;
+            leadRow = (data || []).find((r: any) => extractModules(r) !== null) || null;
           }
 
-          const area = extractImprovement(leadRow);
-          if (area && IMPROVEMENT_TO_MODULES[area]) {
-            const modules = IMPROVEMENT_TO_MODULES[area];
-            setBookingImprovement(area);
+          const modules = extractModules(leadRow);
+          if (modules) {
             setBookingModules(modules);
+            setBookingHasSalesTeam(leadRow?.has_sales_team ?? null);
             // Only overwrite flags for a fresh wizard (no saved draft) so we
             // don't stomp admin edits made in a resumed draft.
             if (!hasDraft && modules.length > 0) {
