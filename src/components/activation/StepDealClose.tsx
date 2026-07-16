@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, UserPlus, Zap, Upload, AlertTriangle, CreditCard, Building2, CheckCircle2 } from "lucide-react";
+import { Mail, Phone, UserPlus, Upload, AlertTriangle, CreditCard, Building2, CheckCircle2 } from "lucide-react";
 import { ActivationHelp } from "./ActivationHelp";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,26 +50,9 @@ export function StepDealClose({ form, set, submitting }: StepProps) {
     <div className="space-y-4">
       <ActivationHelp title="Deal Close + Activation" items={[
         "Confirms payment and deal terms",
-        "Creates the client record and workspace",
+        "Confirms billing and internal assignment for an already-created client",
         "Triggers provisioning and owner invitation",
       ]} />
-
-      <div className={sectionCls} style={sectionStyle}>
-        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><Zap className="h-3 w-3" /> Deal Confirmation</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div><label className={labelCls}>Business Name Confirmed *</label><Input value={form.business_name_confirmed} onChange={e => set("business_name_confirmed", e.target.value)} className={inputCls} disabled={submitting} /></div>
-          <div><label className={labelCls}>Legal Business Name</label><Input value={form.legal_business_name} onChange={e => set("legal_business_name", e.target.value)} className={inputCls} disabled={submitting} /></div>
-          <div><label className={labelCls}>Primary Brand / Display Name</label><Input value={form.display_name} onChange={e => set("display_name", e.target.value)} className={inputCls} disabled={submitting} /></div>
-          <div><label className={labelCls}>Service Package</label>
-            <select value={form.service_package} onChange={e => set("service_package", e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3" disabled={submitting}>
-              <option value="enterprise">Enterprise</option>
-              <option value="growth">Growth</option>
-              <option value="starter">Starter</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       <div className={sectionCls} style={sectionStyle}>
         <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><UserPlus className="h-3 w-3" /> Owner + Contacts</p>
@@ -95,7 +78,7 @@ export function StepDealClose({ form, set, submitting }: StepProps) {
               <option value="wire_transfer">Wire Transfer</option>
               <option value="ach">ACH</option>
               <option value="check">Check</option>
-              <option value="credit_card" disabled>Credit Card (Stripe — Coming Soon)</option>
+              <option value="credit_card">Credit Card (Stripe)</option>
             </select>
           </div>
           <div><label className={labelCls}>Payment Status</label>
