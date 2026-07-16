@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -26,6 +26,10 @@ Deno.serve(async (req) => {
       ? modules_of_interest.filter((m: unknown) => typeof m === "string" && m.length > 0).slice(0, 20)
       : null;
     const logoClean = typeof logo_url === "string" && logo_url.trim() ? logo_url.trim().slice(0, 2000) : null;
+    const hasSalesTeamClean: boolean | null = typeof has_sales_team === "boolean" ? has_sales_team : null;
+    const ALLOWED_TEAM_SIZES = new Set(["1-2", "3-5", "6-10", "10+"]);
+    const salesTeamSizeClean: string | null =
+      typeof sales_team_size === "string" && ALLOWED_TEAM_SIZES.has(sales_team_size) ? sales_team_size : null;
 
 
     const supabase = createClient(
@@ -106,6 +110,8 @@ Deno.serve(async (req) => {
         list_name: "Booking Form",
         modules_of_interest: modulesClean,
         logo_url: logoClean,
+        has_sales_team: hasSalesTeamClean,
+        sales_team_size: salesTeamSizeClean,
       })
       .select("id")
       .single();
