@@ -255,7 +255,7 @@ function StageBar({ counts, total, compact }: { counts: Record<Stage, number>; t
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Th({ children }: { children?: React.ReactNode }) {
   return <th className="px-3 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{children}</th>;
 }
 function Td({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
