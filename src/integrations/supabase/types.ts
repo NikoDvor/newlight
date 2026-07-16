@@ -370,6 +370,62 @@ export type Database = {
           },
         ]
       }
+      ai_recommendations: {
+        Row: {
+          action_label: string | null
+          category: string | null
+          client_id: string | null
+          confidence_pct: number | null
+          effort_level: string | null
+          expected_impact_value: number | null
+          generated_at: string
+          id: string
+          impact_unit: string | null
+          rice_score: number | null
+          status: string
+          title: string | null
+          why_reasoning: string | null
+        }
+        Insert: {
+          action_label?: string | null
+          category?: string | null
+          client_id?: string | null
+          confidence_pct?: number | null
+          effort_level?: string | null
+          expected_impact_value?: number | null
+          generated_at?: string
+          id?: string
+          impact_unit?: string | null
+          rice_score?: number | null
+          status?: string
+          title?: string | null
+          why_reasoning?: string | null
+        }
+        Update: {
+          action_label?: string | null
+          category?: string | null
+          client_id?: string | null
+          confidence_pct?: number | null
+          effort_level?: string | null
+          expected_impact_value?: number | null
+          generated_at?: string
+          id?: string
+          impact_unit?: string | null
+          rice_score?: number | null
+          status?: string
+          title?: string | null
+          why_reasoning?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_type_id: string | null
@@ -12628,6 +12684,36 @@ export type Database = {
           logout_at?: string | null
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      vertical_benchmarks: {
+        Row: {
+          benchmark_value: number
+          created_at: string
+          id: string
+          industry: string
+          metric_key: string
+          top_quartile_value: number | null
+          unit: string | null
+        }
+        Insert: {
+          benchmark_value: number
+          created_at?: string
+          id?: string
+          industry: string
+          metric_key: string
+          top_quartile_value?: number | null
+          unit?: string | null
+        }
+        Update: {
+          benchmark_value?: number
+          created_at?: string
+          id?: string
+          industry?: string
+          metric_key?: string
+          top_quartile_value?: number | null
+          unit?: string | null
         }
         Relationships: []
       }
