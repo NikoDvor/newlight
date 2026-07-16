@@ -157,7 +157,7 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
 
   // Calculate setup progress
   let completed = 0;
-  let total = 14;
+  let total = 16;
   if (form.business_name_confirmed) completed++;
   if (form.owner_email) completed++;
   if (form.payment_confirmed === "confirmed") completed++;
@@ -172,6 +172,8 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
   if (form.use_proposals !== "") completed++;
   if (form.use_helpdesk !== "") completed++;
   if (enabledIntegrations.length > 0 || liveIntegrations.length > 0) completed++;
+  if ((form as any).needs_compliance_review) completed++;
+  if ((form as any).client_has_sales_team) completed++;
   const pct = Math.round((completed / total) * 100);
 
   return (
