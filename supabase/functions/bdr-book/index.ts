@@ -103,9 +103,12 @@ Deno.serve(async (req) => {
         pipeline_stage: "hot",
         notes: noteParts.join("\n") || null,
         list_name: "Booking Form",
+        niche: nicheClean,
+        modules_of_interest: modulesClean,
       })
       .select("id")
       .single();
+
     if (leadErr) throw leadErr;
 
     // 4. Create event on assigned BDR's calendar
