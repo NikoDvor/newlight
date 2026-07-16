@@ -55,7 +55,10 @@ const adminGroups: NavGroup[] = [
       { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
       { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
       { title: "Client Success", url: "/admin/client-success", icon: Shield },
+      { title: "Retention", url: "/admin/client-intelligence/retention", icon: HeartPulse },
+      { title: "Signed Documents", url: "/admin/client-intelligence/signed-documents", icon: FileSignature },
       { title: "Website Portfolio", url: "/admin/websites", icon: Globe },
+
     ],
   },
   {
@@ -126,8 +129,7 @@ const opsGroups: NavGroup[] = [
       { title: "Competitor Tracking", url: "/admin/ops/competitor-tracking", icon: TrendingUp },
       { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare },
       { title: "Automation Workflows", url: "/admin/automations", icon: Zap },
-      { title: "Retention", url: "/admin/client-intelligence/retention", icon: HeartPulse },
-      { title: "Signed Documents", url: "/admin/client-intelligence/signed-documents", icon: FileSignature },
+
     ],
   },
   {
