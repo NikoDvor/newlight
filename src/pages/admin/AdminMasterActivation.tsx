@@ -48,21 +48,10 @@ const stageIcons: Record<number, React.ReactNode> = {
 type DraftStatus = "not_started" | "in_progress" | "close_pending" | "close_lost" | "submitted" | "activated";
 
 /**
- * Mapping from the "What are you looking to improve?" answer captured on the
- * public BDR booking form (nl_bdr_leads.improvement_area) to internal module
- * keys used by the activation wizard.
- */
-const IMPROVEMENT_TO_MODULES: Record<string, string[]> = {
-  "Website Management": ["website_management"],
-  "Lifecycle & Nurture Sequences": ["lifecycle_nurture"],
-  "Financial Compliance": ["financial_compliance"],
-  "Meeting Intelligence": ["meeting_intel"],
-};
-
-/**
- * Apply pre-selected modules to the wizard form flags. Only sets flags where
- * a canonical field exists — unknown modules are still tracked in
- * bookingModules for badge display but no field is touched.
+ * Apply pre-selected modules from the public BDR booking form
+ * (nl_bdr_leads.modules_of_interest text array) to the wizard form flags.
+ * Only sets flags where a canonical field exists — unknown modules are still
+ * tracked in bookingModules for badge display but no field is touched.
  */
 function applyModulePreselection(base: ActivationFormState, modules: string[]): ActivationFormState {
   const next: any = { ...base };
@@ -71,7 +60,7 @@ function applyModulePreselection(base: ActivationFormState, modules: string[]): 
       case "website_management": next.use_website_workspace = "yes"; break;
       case "lifecycle_nurture": next.followup_messaging = "yes"; break;
       case "financial_compliance": next.use_finance = "yes"; break;
-      case "meeting_intel": next.need_meeting_intel_access = "yes"; break;
+      case "sales_meeting_intelligence": next.need_meeting_intel_access = "yes"; break;
     }
   }
   return next as ActivationFormState;
