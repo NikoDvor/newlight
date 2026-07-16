@@ -223,7 +223,6 @@ export default function GrowthAdvisor() {
         <PageHeader
           title="AI Growth Advisor"
           description="Executive-level strategic moves, sized in real dollars, grounded in your live data."
-          icon={Rocket}
         />
 
         {/* GROWTH THESIS HERO */}
