@@ -341,6 +341,8 @@ export default function AdminMarketingReview() {
     toast.success("Draft created");
     setShowNew(false);
     setNewForm({ title: "", material_type: "other", content_text: "", content_url: "", has_testimonial: false });
+    setSelectedTemplateId("");
+    setTemplateCategoryFilter("all");
     await load();
     if (data) openMaterial(data as any);
   };
