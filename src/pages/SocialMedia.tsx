@@ -254,6 +254,16 @@ export default function SocialDashboard() {
                       <Badge className={POST_STATUS_STYLE[post.status] || "bg-secondary text-muted-foreground"}>{post.status}</Badge>
                     </div>
                     <p className="text-sm">{post.caption}</p>
+                    {post.status === "pending_approval" && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/marketing-review?socialPostId=${post.id}`)}
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                        View compliance review
+                      </button>
+                    )}
                     {(post.likes > 0 || post.comments > 0 || post.shares > 0) && (
                       <div className="flex gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Heart className="h-3 w-3" /> {post.likes}</span>
