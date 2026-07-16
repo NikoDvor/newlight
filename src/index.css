@@ -1202,3 +1202,21 @@
   background: var(--nl-bg);
   pointer-events: none;
 }
+
+/* Mobile touch-target accessibility: expand tap area of small buttons without changing visual size */
+@media (pointer: coarse) {
+  :where(button, a, [role="button"]):where(.h-6, .h-7, .h-8) {
+    position: relative;
+  }
+
+  :where(button, a, [role="button"]):where(.h-6, .h-7, .h-8)::after {
+    content: "";
+    position: absolute;
+    pointer-events: auto;
+    background: transparent;
+    inset: -10px;
+    min-width: 44px;
+    min-height: 44px;
+    z-index: 0;
+  }
+}
