@@ -367,6 +367,7 @@ const App = () => {
                 <Route path="client-intelligence/retention" element={<AdminRetention />} />
                 <Route path="client-intelligence/signed-documents" element={<AdminSignedDocuments />} />
                 <Route path="marketing-review" element={<AdminMarketingReview />} />
+                <Route path="marketing-templates" element={<AdminMarketingTemplates />} />
                 <Route path="promoters" element={<AdminPromoters />} />
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="webinars" element={<AdminWebinars />} />
