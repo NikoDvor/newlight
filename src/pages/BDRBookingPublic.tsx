@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Check, Calendar as CalIcon, ChevronRight, Sparkles, ChevronDown } from "lucide-react";
+import { Loader2, Check, Calendar as CalIcon, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NICHE_REGISTRY, getNicheById } from "@/lib/workspaceNiches";
-import { CORE_MODULES, getRecommendedModulesForNiche } from "@/lib/coreModules";
+import { LogoUploader } from "@/components/LogoUploader";
+import { CORE_MODULES } from "@/lib/coreModules";
+
 
 
 interface Cal {
@@ -80,11 +81,11 @@ export default function BDRBookingPublic() {
   const [savedSubmissionId, setSavedSubmissionId] = useState<string | null>(null);
 
   // Step 2 (time slot + contact) state
-  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "", improvement_area: "" });
+  const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
-  const [selectedNiche, setSelectedNiche] = useState<string>("");
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
-  const [showAllModules, setShowAllModules] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+
 
 
   useEffect(() => {
@@ -209,8 +210,8 @@ export default function BDRBookingPublic() {
       phone: prev.phone || grab(["phone", "mobile", "cell"]),
       email: prev.email || grab(["email"]),
       notes: prev.notes,
-      improvement_area: prev.improvement_area,
     }));
+
   }, [formStepComplete, formFields, formValues]);
 
   const validateFormStep = (): string | null => {
@@ -260,8 +261,8 @@ export default function BDRBookingPublic() {
         starts_at: selectedSlot,
         duration_minutes: 30,
         form_submission_id: savedSubmissionId,
-        niche: selectedNiche || null,
         modules_of_interest: selectedModules.length ? selectedModules : null,
+        logo_url: logoUrl || null,
       },
     });
     setSubmitting(false);
@@ -269,25 +270,9 @@ export default function BDRBookingPublic() {
     setDone(true);
   };
 
-  const nichesByIndustry = useMemo(() => {
-    const groups: Record<string, typeof NICHE_REGISTRY> = {};
-    for (const n of NICHE_REGISTRY) {
-      (groups[n.industry] ||= []).push(n);
-    }
-    return groups;
-  }, []);
-  const activeNiche = useMemo(() => (selectedNiche ? getNicheById(selectedNiche) : undefined), [selectedNiche]);
-  const recommendedKeys = useMemo(() => getRecommendedModulesForNiche(activeNiche), [activeNiche]);
-  const recommendedModules = useMemo(
-    () => CORE_MODULES.filter(m => recommendedKeys.includes(m.key)),
-    [recommendedKeys],
-  );
-  const otherModules = useMemo(
-    () => CORE_MODULES.filter(m => !recommendedKeys.includes(m.key)),
-    [recommendedKeys],
-  );
   const toggleModule = (k: string) =>
     setSelectedModules(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
+
 
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[hsl(215,35%,8%)]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
@@ -385,111 +370,47 @@ export default function BDRBookingPublic() {
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </Field>
-            <Field label="What are you looking to improve? (optional)">
-              <select
-                value={contact.improvement_area}
-                onChange={e => setContact({ ...contact, improvement_area: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-              >
-                <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
-                <option value="Website Management" className="bg-[hsl(215,35%,12%)]">Website Management</option>
-                <option value="Lifecycle & Nurture Sequences" className="bg-[hsl(215,35%,12%)]">Lifecycle & Nurture Sequences</option>
-                <option value="Financial Compliance" className="bg-[hsl(215,35%,12%)]">Financial Compliance</option>
-                <option value="Meeting Intelligence" className="bg-[hsl(215,35%,12%)]">Meeting Intelligence</option>
-              </select>
-            </Field>
+            <LogoUploader
+              value={logoUrl}
+              onChange={setLogoUrl}
+              label="Business logo (optional)"
+              dark
+              clientId="public-booking"
+            />
 
-            <Field label="Business niche (optional)">
-              <select
-                value={selectedNiche}
-                onChange={e => { setSelectedNiche(e.target.value); setSelectedModules([]); setShowAllModules(false); }}
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-              >
-                <option value="" className="bg-[hsl(215,35%,12%)]">— Select your industry / niche —</option>
-                {Object.entries(nichesByIndustry).map(([industry, list]) => (
-                  <optgroup key={industry} label={industry.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}>
-                    {list.map(n => (
-                      <option key={n.id} value={n.id} className="bg-[hsl(215,35%,12%)]">{n.label}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </Field>
-
-            {selectedNiche && (
-              <Field label="Modules of interest (optional)">
-                <div className="space-y-2">
-                  {recommendedModules.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-[hsl(211,96%,68%)]">
-                        <Sparkles className="h-3 w-3" />
-                        Recommended for {activeNiche?.label}
+            <Field label="Modules of interest (optional)">
+              <div className="space-y-1.5">
+                {CORE_MODULES.map(m => {
+                  const checked = selectedModules.includes(m.key);
+                  return (
+                    <label key={m.key}
+                      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
+                      style={{
+                        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
+                        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
+                      }}
+                    >
+                      <input type="checkbox" checked={checked}
+                        onChange={() => toggleModule(m.key)}
+                        className="mt-0.5 accent-[hsl(211,96%,56%)]" />
+                      <div className="min-w-0">
+                        <div className="text-sm text-white font-medium">{m.label}</div>
+                        <div className="text-[11px] text-white/50">{m.desc}</div>
                       </div>
-                      {recommendedModules.map(m => {
-                        const checked = selectedModules.includes(m.key);
-                        return (
-                          <label key={m.key}
-                            className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-                            style={{
-                              borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(211,96%,60%,.2)",
-                              background: checked ? "hsla(211,96%,60%,.1)" : "hsla(211,96%,60%,.03)",
-                            }}
-                          >
-                            <input type="checkbox" checked={checked}
-                              onChange={() => toggleModule(m.key)}
-                              className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-                            <div className="min-w-0">
-                              <div className="text-sm text-white font-medium">{m.label}</div>
-                              <div className="text-[11px] text-white/50">{m.desc}</div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {otherModules.length > 0 && (
-                    <div className="space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setShowAllModules(v => !v)}
-                        className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
-                      >
-                        <ChevronDown className={`h-3 w-3 transition-transform ${showAllModules ? "rotate-0" : "-rotate-90"}`} />
-                        {showAllModules ? "Hide" : "Show"} other modules ({otherModules.length})
-                      </button>
-                      {showAllModules && otherModules.map(m => {
-                        const checked = selectedModules.includes(m.key);
-                        return (
-                          <label key={m.key}
-                            className="flex items-start gap-2 p-2 rounded-md border border-white/10 bg-white/[0.02] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                          >
-                            <input type="checkbox" checked={checked}
-                              onChange={() => toggleModule(m.key)}
-                              className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-                            <div className="min-w-0">
-                              <div className="text-sm text-white/85">{m.label}</div>
-                              <div className="text-[11px] text-white/40">{m.desc}</div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Field>
-            )}
-
-
-            <Field label="Preferred time *">
-              <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
-                <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
-                {slots.map(s => (
-                  <option key={s.date.toISOString()} value={s.date.toISOString()} className="bg-[hsl(215,35%,12%)]">{s.label}</option>
-                ))}
-              </select>
+                    </label>
+                  );
+                })}
+              </div>
             </Field>
+
+            <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
+              <option value="" className="bg-[hsl(215,35%,12%)]">— Select a time —</option>
+              {slots.map(s => (
+                <option key={s.date.toISOString()} value={s.date.toISOString()} className="bg-[hsl(215,35%,12%)]">{s.label}</option>
+              ))}
+            </select>
+
             <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book appointment"}
