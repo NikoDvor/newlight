@@ -34,6 +34,10 @@ import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
 import { StepComplianceTools } from "@/components/activation/StepComplianceTools";
 import { StepSalesTeamTools } from "@/components/activation/StepSalesTeamTools";
+import { StepWorkforce } from "@/components/activation/StepWorkforce";
+import { StepFinance } from "@/components/activation/StepFinance";
+import { StepMarketing } from "@/components/activation/StepMarketing";
+import { StepSupport } from "@/components/activation/StepSupport";
 import { StepReview } from "@/components/activation/StepReview";
 import { StepProfileSelection } from "@/components/activation/StepProfileSelection";
 
