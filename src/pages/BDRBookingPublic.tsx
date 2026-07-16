@@ -302,6 +302,32 @@ export default function BDRBookingPublic() {
     });
     setSubmitting(false);
     if (error) { alert("Couldn't book: " + error.message); return; }
+
+    // Provision the client workspace in the background; don't block the booking success UI.
+    supabase.functions.invoke("provision-from-booking", {
+      body: {
+        business_name: contact.business_name,
+        contact_name: contact.customer_name,
+        contact_email: contact.email,
+        contact_phone: contact.phone,
+        logo_url: logoUrl || null,
+        appointment_start: selectedSlot,
+        appointment_title: `Intro Call — ${contact.customer_name}`,
+        customer_notes: contact.notes,
+        booking_source: "public_booking_form",
+      },
+    })
+      .then(({ data: provisionData, error: provisionError }) => {
+        if (provisionError) {
+          console.error("[BDRBookingPublic] provision-from-booking error:", provisionError);
+        } else {
+          console.log("[BDRBookingPublic] provisioned workspace:", provisionData?.workspace_url);
+        }
+      })
+      .catch((provisionErr) => {
+        console.error("[BDRBookingPublic] provision-from-booking failed:", provisionErr);
+      });
+
     setDone(true);
   };
 
