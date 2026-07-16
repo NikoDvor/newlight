@@ -82,6 +82,10 @@ export default function BDRBookingPublic() {
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "", improvement_area: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [selectedNiche, setSelectedNiche] = useState<string>("");
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
+  const [showAllModules, setShowAllModules] = useState(false);
+
 
   useEffect(() => {
     (async () => {
