@@ -8,7 +8,9 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
+  Eye,
 } from "lucide-react";
+
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -98,6 +100,8 @@ const opsGroups: NavGroup[] = [
       { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
       { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
       { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+      { title: "AI Visibility", url: "/ai-visibility", icon: Eye },
+
     ],
   },
   {
