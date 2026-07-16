@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Check, Calendar as CalIcon, ChevronRight, Sparkles, ChevronDown } from "lucide-react";
+import { Loader2, Check, Calendar as CalIcon, ChevronRight, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NICHE_REGISTRY, getNicheById } from "@/lib/workspaceNiches";
-import { CORE_MODULES, getRecommendedModulesForNiche } from "@/lib/coreModules";
+import { LogoUploader } from "@/components/LogoUploader";
+import { CORE_MODULES } from "@/lib/coreModules";
+
 
 
 interface Cal {
