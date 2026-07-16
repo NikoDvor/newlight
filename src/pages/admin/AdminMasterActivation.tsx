@@ -108,6 +108,7 @@ export default function AdminMasterActivation() {
   const [bookingModules, setBookingModules] = useState<string[]>([]);
   const [bookingHasSalesTeam, setBookingHasSalesTeam] = useState<boolean | null>(null);
   const [bookingBannerDismissed, setBookingBannerDismissed] = useState(false);
+  const [meeting1BookingLink, setMeeting1BookingLink] = useState<{ slug: string; ownerName: string } | null>(null);
 
   // ── Load existing client + draft ──
   useEffect(() => {
@@ -220,6 +221,27 @@ export default function AdminMasterActivation() {
             // don't stomp admin edits made in a resumed draft.
             if (!hasDraft && modules.length > 0) {
               setForm(prev => applyModulePreselection(prev, modules));
+            }
+          }
+
+          // Look up the BDR calendar for the assigned rep on this lead so
+          // Stage 1 can surface the Meeting 1 booking link.
+          if (leadRow?.user_id) {
+            const { data: cal } = await supabase
+              .from("bdr_calendars")
+              .select("booking_slug, name, user_id")
+              .eq("user_id", leadRow.user_id)
+              .maybeSingle();
+            if (cal?.booking_slug) {
+              let ownerName = cal.name || "Sales Rep";
+              const { data: emp } = await supabase
+                .from("employee_profiles")
+                .select("full_name, email")
+                .eq("user_id", leadRow.user_id)
+                .maybeSingle();
+              if (emp?.full_name) ownerName = emp.full_name;
+              else if (emp?.email) ownerName = emp.email;
+              setMeeting1BookingLink({ slug: cal.booking_slug, ownerName });
             }
           }
         } catch {
