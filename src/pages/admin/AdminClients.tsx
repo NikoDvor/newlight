@@ -41,6 +41,8 @@ interface Client {
   agreement_status: string;
   payment_status: string;
   implementation_status: string;
+  has_compliance_requirements: boolean | null;
+  has_sales_team: boolean | null;
 }
 
 interface ActivationInfo {
