@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
   ThumbsDown, CheckCircle2, Megaphone, Search, Share2, Star, Globe,
-  Users, Zap, Loader2,
+  Users, Zap, Loader2, ArrowRight, ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
@@ -11,7 +11,75 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+// ── Executable action mapping ────────────────────────────────────
+// Keyword-based detection: if a recommendation's action_label matches an
+// automatable capability we already ship, it becomes a one-click "Execute".
+// Everything else falls back to a guided step-by-step modal.
+const EXECUTABLE_KEYWORDS = [
+  "review request", "request review", "ask for review",
+  "instant response", "auto-respond", "auto reply", "instant reply",
+  "reminder", "appointment reminder", "no-show",
+  "follow-up", "follow up", "nurture",
+  "send sms", "send text", "send email",
+  "re-engage", "reactivation",
+];
+
+function isExecutable(rec: { action_label: string | null; title: string | null; category: string | null }): boolean {
+  const hay = `${rec.action_label ?? ""} ${rec.title ?? ""}`.toLowerCase();
+  return EXECUTABLE_KEYWORDS.some((k) => hay.includes(k));
+}
+
+function buildGuidedSteps(rec: { category: string | null; action_label: string | null; why_reasoning: string | null }): string[] {
+  const cat = (rec.category || "").toLowerCase();
+  const label = rec.action_label || "this action";
+  const base: Record<string, string[]> = {
+    ads:     [
+      "Open your Paid Ads dashboard and pull the last 30 days of performance by campaign.",
+      "Identify the 1–2 campaigns driving the majority of qualified leads and pause the underperformers.",
+      `Reallocate budget toward the winners — this directly supports: ${label}.`,
+      "Set a 7-day check-in to compare cost-per-lead before and after the change.",
+    ],
+    seo:     [
+      "Open the SEO module and review the pages flagged with the biggest ranking gap.",
+      "Update titles, meta descriptions, and the first paragraph to match target intent.",
+      `Publish the changes and submit the URL for re-indexing (${label}).`,
+      "Re-check rankings in 10–14 days and note movement in the tracker.",
+    ],
+    social:  [
+      "Review your last 30 days of posts and identify your top 3 by engagement.",
+      "Draft 4–6 new posts modeled on those winners.",
+      `Schedule them across your peak posting windows (${label}).`,
+      "Track engagement lift weekly and iterate on what works.",
+    ],
+    reviews: [
+      "Pull the list of clients from the last 30 days who had a positive outcome.",
+      "Send each one a personalized review request with a direct link to Google.",
+      `Follow up once after 3 days if there's no response (${label}).`,
+      "Reply publicly to every new review within 24 hours.",
+    ],
+    website: [
+      "Open the Website module and locate the page called out in the recommendation.",
+      "Apply the suggested change (headline, CTA, layout, or copy).",
+      `Publish and confirm the change is live (${label}).`,
+      "Monitor conversion rate on that page for the next 14 days.",
+    ],
+    crm:     [
+      "Open the CRM and filter contacts matching the recommendation's segment.",
+      "Draft an outreach message tailored to that segment.",
+      `Send from the CRM and log the touchpoint (${label}).`,
+      "Set a task to review outcomes in 7 days.",
+    ],
+  };
+  return base[cat] ?? [
+    "Review the recommendation context and confirm it applies to your business right now.",
+    `Take the primary action: ${label}.`,
+    "Log the change in the relevant module so it's tracked.",
+    "Re-check the outcome in 7–14 days.",
+  ];
+}
 
 type Category = "ads" | "seo" | "social" | "reviews" | "website" | "crm";
 type Status = "new" | "accepted" | "acted" | "dismissed" | "snoozed";
@@ -84,7 +152,7 @@ function effortStyle(level: string | null): { bg: string; text: string; label: s
 }
 
 export default function AIInsights() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, activeClientName } = useWorkspace();
   const { toast } = useToast();
 
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -366,6 +434,7 @@ export default function AIInsights() {
                   rec={rec}
                   index={i}
                   expanded={!!expanded[rec.id]}
+                  businessName={activeClientName || "your business"}
                   onToggle={() => setExpanded((e) => ({ ...e, [rec.id]: !e[rec.id] }))}
                   onAction={(s) => updateStatus(rec.id, s)}
                 />
@@ -481,11 +550,13 @@ interface CardProps {
   rec: Recommendation;
   index: number;
   expanded: boolean;
+  businessName: string;
   onToggle: () => void;
   onAction: (status: Status) => void;
 }
 
-function RecommendationCard({ rec, index, expanded, onToggle, onAction }: CardProps) {
+function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAction }: CardProps) {
+  const { toast } = useToast();
   const cat = normalizeCategory(rec.category);
   const meta = CATEGORY_META[cat];
   const CatIcon = meta.icon;
@@ -493,6 +564,11 @@ function RecommendationCard({ rec, index, expanded, onToggle, onAction }: CardPr
   const eff = effortStyle(rec.effort_level);
   const isAccepted = rec.status === "accepted";
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const executable = useMemo(() => isExecutable(rec), [rec]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const steps = useMemo(() => buildGuidedSteps(rec), [rec]);
+  const actionLabel = rec.action_label || "Take action";
 
   return (
     <motion.div
@@ -656,22 +732,118 @@ function RecommendationCard({ rec, index, expanded, onToggle, onAction }: CardPr
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark done
               </Button>
             )}
-            {!isAccepted && (
+            {!isAccepted && executable && (
               <Button
-                onClick={() => onAction("accepted")}
+                onClick={() => setConfirmOpen(true)}
                 size="sm"
-                className="rounded-lg text-xs font-semibold border-0 shadow-md"
+                className="rounded-lg text-xs font-semibold border-0 shadow-md flex items-center"
                 style={{
                   background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
                   color: "hsl(210 40% 98%)",
                 }}
               >
-                {rec.action_label || "Take action"}
+                <Zap className="mr-1.5 h-3.5 w-3.5" />
+                Execute: {actionLabel}
+              </Button>
+            )}
+            {!isAccepted && !executable && (
+              <Button
+                onClick={() => setStepsOpen(true)}
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-xs font-semibold flex items-center"
+                style={{
+                  borderColor: `hsla(${meta.hue},.4)`,
+                  color: `hsl(${meta.hue})`,
+                  background: `hsla(${meta.hue},.04)`,
+                }}
+              >
+                <ListChecks className="mr-1.5 h-3.5 w-3.5" />
+                View Steps
               </Button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Execute confirmation modal */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-4 w-4" style={{ color: `hsl(${meta.hue})` }} />
+              Confirm action
+            </DialogTitle>
+            <DialogDescription>
+              This will <span className="font-semibold text-foreground">{actionLabel.toLowerCase()}</span> for{" "}
+              <span className="font-semibold text-foreground">{businessName}</span>. Confirm?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setConfirmOpen(false);
+                toast({
+                  title: "Coming soon",
+                  description: "This will connect to your live settings.",
+                });
+              }}
+              className="border-0"
+              style={{
+                background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
+                color: "hsl(210 40% 98%)",
+              }}
+            >
+              <Zap className="mr-1.5 h-3.5 w-3.5" /> Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Guided steps modal */}
+      <Dialog open={stepsOpen} onOpenChange={setStepsOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" style={{ color: `hsl(${meta.hue})` }} />
+              {rec.title || "How to do this"}
+            </DialogTitle>
+            <DialogDescription>
+              A guided walkthrough for {businessName}. Follow the steps below.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="space-y-3 mt-2">
+            {steps.map((s, idx) => (
+              <li key={idx} className="flex gap-3">
+                <div
+                  className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold"
+                  style={{ background: `hsla(${meta.hue},.15)`, color: `hsl(${meta.hue})` }}
+                >
+                  {idx + 1}
+                </div>
+                <p className="text-sm leading-relaxed text-foreground pt-0.5">{s}</p>
+              </li>
+            ))}
+          </ol>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setStepsOpen(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                setStepsOpen(false);
+                onAction("accepted");
+              }}
+              className="border-0"
+              style={{
+                background: `linear-gradient(135deg, hsl(${meta.hue}), hsla(${meta.hue},.75))`,
+                color: "hsl(210 40% 98%)",
+              }}
+            >
+              <ArrowRight className="mr-1.5 h-3.5 w-3.5" /> Accept &amp; track
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
