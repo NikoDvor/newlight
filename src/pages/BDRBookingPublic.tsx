@@ -35,11 +35,6 @@ const SALES_TOOLS = [
 ];
 const SALES_TOOL_KEYS = SALES_TOOLS.map(t => t.key);
 
-
-
-
-
-
 interface Cal {
   id: string;
   client_id: string;
