@@ -518,31 +518,33 @@ export default function SEO() {
                     <DemoDataLabel />
                     <span className="text-[10px] text-muted-foreground">Example rankings — add your keywords to see real data</span>
                   </div>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
-                        <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
-                      </tr>
-                    </thead>
-                    <tbody className="opacity-60">
-                      {DEMO_KEYWORDS.map((k, i) => (
-                        <tr key={i} className="border-b border-border last:border-0">
-                          <td className="text-sm py-3">{k.keyword}</td>
-                          <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
-                          <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
-                          <td className="text-right py-3">
-                            <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
-                              {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                              {Math.abs(k.change)}
-                            </span>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
+                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="opacity-60">
+                        {DEMO_KEYWORDS.map((k, i) => (
+                          <tr key={i} className="border-b border-border last:border-0">
+                            <td className="text-sm py-3">{k.keyword}</td>
+                            <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
+                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
+                            <td className="text-right py-3">
+                              <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
+                                {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                {Math.abs(k.change)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <div className="text-center mt-4">
                     <Button size="sm" onClick={() => setKwOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Your Keywords</Button>
                   </div>
