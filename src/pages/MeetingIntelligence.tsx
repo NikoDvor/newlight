@@ -78,9 +78,39 @@ export default function MeetingIntelligence() {
     .filter(m => m.crm_deals?.deal_value)
     .reduce((s, m) => s + (Number(m.crm_deals.deal_value) || 0), 0);
 
+  const scanOpportunities = async () => {
+    if (!activeClientId) {
+      toast({ title: "No active client", variant: "destructive" });
+      return;
+    }
+    setScanning(true);
+    try {
+      const { data, error } = await supabase.rpc(
+        "scan_meeting_intelligence_for_opportunities",
+        { _client_id: activeClientId }
+      );
+      if (error) throw error;
+      const count = Array.isArray(data) ? data.length : 0;
+      toast({
+        title: "Opportunity scan complete",
+        description: count > 0
+          ? `Found ${count} money-in-motion signal${count === 1 ? "" : "s"} — view in Revenue Expansion.`
+          : "No new money-in-motion signals detected.",
+      });
+    } catch (e: any) {
+      toast({ title: "Scan failed", description: e?.message || "Unable to run scan", variant: "destructive" });
+    } finally {
+      setScanning(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader title="Meeting Intelligence" description="AI-powered meeting analysis and coaching insights">
+        <Button size="sm" variant="outline" onClick={scanOpportunities} disabled={scanning || !activeClientId}>
+          {scanning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+          Scan for Opportunities
+        </Button>
         <Button size="sm" onClick={() => navigate("/meeting-outcome")}>
           <Plus className="h-4 w-4 mr-1" />
           Log Outcome
