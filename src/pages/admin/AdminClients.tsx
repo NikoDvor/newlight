@@ -698,9 +698,14 @@ export default function AdminClients() {
                   className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
                       <span className="text-white font-medium">{c.business_name}</span>
+                      {c.has_compliance_requirements && (
+                        <Badge className="bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] border-[hsla(40,96%,60%,.35)] text-[9px] font-medium gap-1 h-5 px-1.5">
+                          <Shield className="h-2.5 w-2.5" /> Compliance
+                        </Badge>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-white/60">{c.industry || "—"}</td>
