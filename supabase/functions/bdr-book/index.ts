@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, niche, modules_of_interest } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, niche, modules_of_interest, logo_url } = body || {};
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -26,6 +26,8 @@ Deno.serve(async (req) => {
     const modulesClean = Array.isArray(modules_of_interest)
       ? modules_of_interest.filter((m: unknown) => typeof m === "string" && m.length > 0).slice(0, 20)
       : null;
+    const logoClean = typeof logo_url === "string" && logo_url.trim() ? logo_url.trim().slice(0, 2000) : null;
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
