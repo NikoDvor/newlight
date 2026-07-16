@@ -31,7 +31,7 @@ export default function Enterprise() {
       background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
     }}>
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-[800px] h-[800px] rounded-full" style={{
+        <div className="absolute w-full max-w-[800px] h-[800px] rounded-full" style={{
           top: "-200px", right: "-200px",
           background: "radial-gradient(circle, hsla(211,96%,62%,.1), transparent 70%)", filter: "blur(100px)",
         }} />
