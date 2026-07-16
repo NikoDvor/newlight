@@ -8,11 +8,91 @@ import {
 } from "recharts";
 import {
   TrendingUp, Users, CalendarCheck, Target, AlertTriangle, ChevronDown, Eye,
+  Sparkles, Trophy, Zap, Lightbulb,
 } from "lucide-react";
 import {
   MOCK_ACQUISITION_CLIENTS, AcquisitionClient,
   closeRate, bookingRate, severityColor,
 } from "@/lib/clientAcquisitionMock";
+
+interface ChannelAggregate {
+  channel: string;
+  color: string;
+  views: number;
+  attributedAppts: number;
+  attributedClosed: number;
+  closeRate: number; // %
+  viewShare: number; // % of total roster views
+  score: number; // combined ranking score
+  label: string;
+}
+
+function useMarketInsights() {
+  return useMemo(() => {
+    const map = new Map<string, ChannelAggregate>();
+    let totalViews = 0;
+
+    for (const client of MOCK_ACQUISITION_CLIENTS) {
+      totalViews += client.totalViews;
+      for (const src of client.trafficSources) {
+        const share = client.totalViews > 0 ? src.views / client.totalViews : 0;
+        const prev = map.get(src.channel) ?? {
+          channel: src.channel, color: src.color, views: 0,
+          attributedAppts: 0, attributedClosed: 0, closeRate: 0, viewShare: 0, score: 0, label: "",
+        };
+        prev.views += src.views;
+        prev.attributedAppts += share * client.appointments;
+        prev.attributedClosed += share * client.closedWon;
+        map.set(src.channel, prev);
+      }
+    }
+
+    const channels = Array.from(map.values()).map((c) => ({
+      ...c,
+      closeRate: c.attributedAppts > 0 ? (c.attributedClosed / c.attributedAppts) * 100 : 0,
+      viewShare: totalViews > 0 ? (c.views / totalViews) * 100 : 0,
+    }));
+
+    const maxViews = Math.max(...channels.map((c) => c.views), 1);
+    const maxClose = Math.max(...channels.map((c) => c.closeRate), 1);
+
+    for (const c of channels) {
+      const volNorm = c.views / maxViews;
+      const convNorm = c.closeRate / maxClose;
+      c.score = Math.round((volNorm * 0.5 + convNorm * 0.5) * 100);
+      const highVol = volNorm >= 0.66;
+      const midVol = volNorm >= 0.33;
+      const highConv = convNorm >= 0.66;
+      const midConv = convNorm >= 0.33;
+      if (highVol && highConv) c.label = "Balanced performer";
+      else if (highVol && !midConv) c.label = "High volume, low conversion";
+      else if (!midVol && highConv) c.label = "Low volume, high conversion";
+      else if (midVol && midConv) c.label = "Steady contributor";
+      else if (highVol) c.label = "Volume-driven";
+      else if (highConv) c.label = "Conversion-driven";
+      else c.label = "Underperforming";
+    }
+
+    const topByViews = [...channels].sort((a, b) => b.views - a.views)[0];
+    const topByClose = [...channels].sort((a, b) => b.closeRate - a.closeRate)[0];
+    const ranked = [...channels].sort((a, b) => b.score - a.score);
+
+    return { channels, ranked, topByViews, topByClose, totalViews };
+  }, []);
+}
+
+function buildRecommendation(i: ReturnType<typeof useMarketInsights>): string {
+  const { topByClose, topByViews } = i;
+  const variants = [
+    `${topByClose.channel} traffic is converting at ${topByClose.closeRate.toFixed(1)}% — roughly ${(topByClose.closeRate / Math.max(topByViews.closeRate, 0.1)).toFixed(1)}x ${topByViews.channel} — yet only accounts for ${topByClose.viewShare.toFixed(0)}% of total views. Shifting acquisition investment toward ${topByClose.channel} should meaningfully lift roster-wide close rates.`,
+    `${topByViews.channel} drives the majority of top-of-funnel volume (${topByViews.viewShare.toFixed(0)}% of views) but converts at only ${topByViews.closeRate.toFixed(1)}%. Prioritize funnel + landing optimizations on ${topByViews.channel} clients while doubling down on ${topByClose.channel} as the highest-quality source.`,
+    `Roster analysis shows a clear volume-vs-conversion gap: ${topByViews.channel} leads in reach, ${topByClose.channel} leads in close rate. Recommended play is a 60/40 split — protect ${topByViews.channel} spend, aggressively grow ${topByClose.channel} presence across new client onboardings.`,
+  ];
+  // Deterministic pick so mock stays stable per render session.
+  return variants[0];
+}
+
+
 
 export default function AdminClientAcquisitionAnalytics() {
   const [expandedId, setExpandedId] = useState<string | null>(MOCK_ACQUISITION_CLIENTS[0]?.id ?? null);
@@ -34,7 +114,10 @@ export default function AdminClientAcquisitionAnalytics() {
         </p>
       </div>
 
+      <MarketInsights />
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
         {[
           { label: "Total Views", value: totals.views.toLocaleString(), icon: Eye, color: "hsl(211 96% 62%)" },
           { label: "Appointments", value: totals.appts.toLocaleString(), icon: CalendarCheck, color: "hsl(280 70% 65%)" },
@@ -283,3 +366,103 @@ function StatBox({ label, value, color }: { label: string; value: string; color:
     </div>
   );
 }
+
+function MarketInsights() {
+  const insights = useMarketInsights();
+  const { topByViews, topByClose, ranked } = insights;
+  const recommendation = buildRecommendation(insights);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-[hsl(211_96%_62%)]" />
+        <h2 className="text-xs font-bold uppercase tracking-widest text-white/70">Market Insights</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InsightCallout
+          icon={Eye}
+          eyebrow="Top Performing — Volume"
+          channel={topByViews.channel}
+          color={topByViews.color}
+          primary={`${topByViews.views.toLocaleString()} views`}
+          secondary={`${topByViews.viewShare.toFixed(1)}% of total roster traffic · ${topByViews.closeRate.toFixed(1)}% close rate`}
+        />
+        <InsightCallout
+          icon={Trophy}
+          eyebrow="Top Performing — Conversion"
+          channel={topByClose.channel}
+          color={topByClose.color}
+          primary={`${topByClose.closeRate.toFixed(1)}% close rate`}
+          secondary={`${topByClose.viewShare.toFixed(1)}% of views · ${topByClose.views.toLocaleString()} total`}
+        />
+      </div>
+
+      <Card className="border-0 bg-gradient-to-br from-[hsla(211,96%,60%,0.10)] to-[hsla(280,70%,65%,0.06)]" style={{ boxShadow: "inset 0 0 0 1px hsla(211,96%,60%,.15)" }}>
+        <CardContent className="p-4 flex gap-3">
+          <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,60%,.18)", boxShadow: "inset 0 0 0 1px hsla(211,96%,60%,.25)" }}>
+            <Lightbulb className="h-4 w-4 text-[hsl(211_96%_72%)]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(211_96%_72%)]">Recommendation</p>
+            <p className="text-sm text-white/85 mt-1 leading-relaxed">{recommendation}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 bg-white/[0.04]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center gap-1.5">
+            <Zap className="h-3 w-3" /> Channel Performance Ranking
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-1.5">
+          {ranked.map((c, i) => (
+            <div key={c.channel} className="flex items-center gap-3 py-1.5">
+              <span className="text-[10px] font-bold text-white/40 w-4 tabular-nums">#{i + 1}</span>
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ background: c.color }} />
+              <span className="text-sm text-white/90 font-medium w-40 shrink-0 truncate">{c.channel}</span>
+              <div className="flex-1 min-w-0">
+                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${c.score}%`, background: c.color }} />
+                </div>
+              </div>
+              <span className="text-[11px] text-white/50 w-48 text-right shrink-0 hidden sm:block">{c.label}</span>
+              <span className="text-xs font-semibold text-white tabular-nums w-10 text-right">{c.score}</span>
+            </div>
+          ))}
+          <p className="text-[10px] text-white/35 pt-2 mt-1 border-t border-white/[0.04]">
+            Score combines view volume (50%) and attributed close rate (50%), normalized across the roster.
+          </p>
+        </CardContent>
+      </Card>
+    </motion.section>
+  );
+}
+
+function InsightCallout({
+  icon: Icon, eyebrow, channel, color, primary, secondary,
+}: {
+  icon: typeof Eye; eyebrow: string; channel: string; color: string; primary: string; secondary: string;
+}) {
+  return (
+    <Card className="border-0 bg-white/[0.04] overflow-hidden relative">
+      <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ background: `radial-gradient(circle at 100% 0%, ${color}22, transparent 60%)` }} />
+      <CardContent className="p-4 relative">
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5" style={{ color }} />
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>{eyebrow}</p>
+        </div>
+        <p className="text-lg font-bold text-white mt-2">{channel}</p>
+        <p className="text-2xl font-bold mt-1" style={{ color }}>{primary}</p>
+        <p className="text-xs text-white/50 mt-1.5">{secondary}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
