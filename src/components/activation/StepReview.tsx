@@ -386,18 +386,18 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
       </SummarySection>
 
       <SummarySection title="Compliance & Advisor Tools">
-        <SummaryRow label="Needs Compliance Review" value={(form as Record<string, string>).needs_compliance_review} />
-        <SummaryRow label="SEC / FINRA Regulated" value={(form as Record<string, string>).is_sec_finra_regulated} />
-        <SummaryRow label="Household CRM" value={(form as Record<string, string>).needs_household_crm} />
-        <SummaryRow label="KYC Tool Enabled" value={(form as Record<string, string>).kyc_tool_enabled} />
-        <SummaryRow label="Compliant Texting Log" value={(form as Record<string, string>).compliant_texting_log_enabled} />
+        <SummaryRow label="Needs Compliance Review" value={f.needs_compliance_review} />
+        <SummaryRow label="SEC / FINRA Regulated" value={f.is_sec_finra_regulated} />
+        <SummaryRow label="Household CRM" value={f.needs_household_crm} />
+        <SummaryRow label="KYC Tool Enabled" value={f.kyc_tool_enabled} />
+        <SummaryRow label="Compliant Texting Log" value={f.compliant_texting_log_enabled} />
       </SummarySection>
 
       <SummarySection title="Sales Team">
-        <SummaryRow label="Sales Team" value={(form as Record<string, string>).client_has_sales_team} />
-        <SummaryRow label="Rep Count" value={(form as Record<string, string>).sales_team_rep_count} />
-        <SummaryRow label="Pipeline View" value={(form as Record<string, string>).enable_sales_pipeline_view} />
-        <SummaryRow label="BDR Dialer/Calendar" value={(form as Record<string, string>).enable_bdr_dialer_calendar} />
+        <SummaryRow label="Sales Team" value={f.client_has_sales_team} />
+        <SummaryRow label="Rep Count" value={f.sales_team_rep_count} />
+        <SummaryRow label="Pipeline View" value={f.enable_sales_pipeline_view} />
+        <SummaryRow label="BDR Dialer/Calendar" value={f.enable_bdr_dialer_calendar} />
       </SummarySection>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
