@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BookingSlotPicker } from "@/components/BookingSlotPicker";
 import { useParams } from "react-router-dom";
 import { Loader2, Check, Calendar as CalIcon, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
