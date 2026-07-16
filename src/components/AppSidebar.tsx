@@ -143,7 +143,9 @@ export function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const canSee = (moduleKey?: string) => {
+  const canSee = (moduleKey?: string, url?: string) => {
+    // Sales Team pipeline requires the workspace to have declared a sales team.
+    if (url === "/sales-team" && !isAdmin && !hasSalesTeam) return false;
     if (!moduleKey || isAdmin) return true;
     // Hide Zoom/meeting-intelligence for field-service business types
     if (moduleKey === "meeting_intel" && isFieldService) return false;
