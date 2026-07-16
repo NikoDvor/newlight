@@ -372,6 +372,7 @@ const App = () => {
                 <Route path="marketing-templates" element={<AdminMarketingTemplates />} />
                 <Route path="risk-profiles" element={<AdminRiskProfiles />} />
                 <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="notetaker-integrations" element={<AdminNotetakerIntegrations />} />
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="webinars" element={<AdminWebinars />} />
 
