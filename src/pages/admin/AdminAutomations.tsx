@@ -95,23 +95,25 @@ export default function AdminAutomations() {
         <p className="text-xs text-white/30">{emptyMsg}</p>
       </div>
     ) : (
-      <table className="w-full">
-        <thead><tr className="border-b border-white/[0.06]">
-          <th className={hCls}>Automation</th><th className={hCls}>Related</th><th className={hCls}>Status</th><th className={hCls}>Started</th><th className={hCls}>Finished</th><th className={hCls}>Error</th>
-        </tr></thead>
-        <tbody>
-          {data.map((r: any) => (
-            <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-              <td className={cCls + " font-medium text-white"}>{autoNameMap[r.automation_id] || r.automation_id?.slice(0, 8) + "…"}</td>
-              <td className={cCls}>{(r as any).related_type || "—"}</td>
-              <td className={cCls}><SBadge status={r.status} /></td>
-              <td className={cCls}>{r.started_at ? new Date(r.started_at).toLocaleString() : "—"}</td>
-              <td className={cCls}>{r.completed_at ? new Date(r.completed_at).toLocaleString() : "—"}</td>
-              <td className={cCls + " text-red-400 text-xs max-w-48 truncate"}>{r.error || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead><tr className="border-b border-white/[0.06]">
+            <th className={hCls}>Automation</th><th className={hCls}>Related</th><th className={hCls}>Status</th><th className={hCls}>Started</th><th className={hCls}>Finished</th><th className={hCls}>Error</th>
+          </tr></thead>
+          <tbody>
+            {data.map((r: any) => (
+              <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                <td className={cCls + " font-medium text-white"}>{autoNameMap[r.automation_id] || r.automation_id?.slice(0, 8) + "…"}</td>
+                <td className={cCls}>{(r as any).related_type || "—"}</td>
+                <td className={cCls}><SBadge status={r.status} /></td>
+                <td className={cCls}>{r.started_at ? new Date(r.started_at).toLocaleString() : "—"}</td>
+                <td className={cCls}>{r.completed_at ? new Date(r.completed_at).toLocaleString() : "—"}</td>
+                <td className={cCls + " text-red-400 text-xs max-w-48 truncate"}>{r.error || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   );
 
