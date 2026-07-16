@@ -453,9 +453,36 @@ export default function BDRBookingPublic() {
               clientId="public-booking"
             />
 
-            <Field label="Modules of interest (optional)">
+            <Field label="Modules of interest">
               <div className="space-y-4">
-                {MODULE_GROUPS.map((group, groupIdx) => {
+                {/* Mandatory / included in every plan — static, non-interactive display. */}
+                <div className="space-y-2 p-3 rounded-md border border-white/10 bg-white/[0.02]">
+                  <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                    Included with every plan
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INCLUDED_MODULE_KEYS.map(k => {
+                      const m = moduleByKey[k];
+                      if (!m) return null;
+                      return (
+                        <span
+                          key={k}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-white/80 border"
+                          style={{
+                            borderColor: "hsla(211,96%,60%,.35)",
+                            background: "hsla(211,96%,60%,.1)",
+                          }}
+                        >
+                          <Check className="h-3 w-3 text-[hsl(211,96%,68%)]" />
+                          {m.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional groups (currently just Compliance) — still user-toggled. */}
+                {OPTIONAL_MODULE_GROUPS.map(group => {
                   const groupModules = group.keys
                     .map(k => moduleByKey[k])
                     .filter((m): m is CoreModuleDef => !!m);
@@ -464,7 +491,7 @@ export default function BDRBookingPublic() {
                     <div key={group.label} className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <div className="h-px flex-1 bg-white/10" />
-                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">{group.label}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">{group.label} (optional)</span>
                         <div className="h-px flex-1 bg-white/10" />
                       </div>
                       {groupModules.map(m => (
@@ -478,23 +505,65 @@ export default function BDRBookingPublic() {
                     </div>
                   );
                 })}
-                <div className="space-y-1.5">
+
+                {/* Sales team question — replaces the old Sales Team Tools checkbox group. */}
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Sales Team Tools (optional)</span>
+                    <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Sales Team</span>
                     <div className="h-px flex-1 bg-white/10" />
                   </div>
-                  {SALES_TOOLS.map(st => (
-                    <SimpleModuleCheckbox
-                      key={st.key}
-                      label={st.label}
-                      checked={selectedModules.includes(st.key)}
-                      onToggle={() => toggleModule(st.key)}
-                    />
-                  ))}
+                  <Field label="Do you have a sales team?">
+                    <select
+                      value={hasSalesTeam}
+                      onChange={e => {
+                        const v = e.target.value as "" | "yes" | "no";
+                        setHasSalesTeam(v);
+                        if (v !== "yes") {
+                          setSalesTeamSize("");
+                          setSelectedModules(prev => prev.filter(k => !k.startsWith("sales_")));
+                        }
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+                    >
+                      <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                      <option value="yes" className="bg-[hsl(215,35%,12%)]">Yes</option>
+                      <option value="no" className="bg-[hsl(215,35%,12%)]">No</option>
+                    </select>
+                  </Field>
+                  {hasSalesTeam === "yes" && (
+                    <>
+                      <Field label="How many salespeople?">
+                        <select
+                          value={salesTeamSize}
+                          onChange={e => setSalesTeamSize(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+                        >
+                          <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                          {SALES_TEAM_SIZES.map(size => (
+                            <option key={size} value={size} className="bg-[hsl(215,35%,12%)]">{size}</option>
+                          ))}
+                        </select>
+                      </Field>
+                      <div className="space-y-1.5 pt-1">
+                        <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                          Sales Team Tools (optional)
+                        </div>
+                        {SALES_TOOLS.map(st => (
+                          <SimpleModuleCheckbox
+                            key={st.key}
+                            label={st.label}
+                            checked={selectedModules.includes(st.key)}
+                            onToggle={() => toggleModule(st.key)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </Field>
+
 
             <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
