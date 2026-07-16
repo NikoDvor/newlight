@@ -1184,3 +1184,237 @@ function StatTile({ label, value, hue }: { label: string; value: string; hue: st
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Priority Actions strip — top 3 must-do items (urgent accent)
+// ─────────────────────────────────────────────────────────────────
+
+const EXAMPLE_PRIORITY = [
+  { title: "Reply to 3 pending Google reviews", impact: "Protects reputation + local ranking" },
+  { title: "Follow up with last week's stalled leads", impact: "~$2.4K in at-risk pipeline" },
+  { title: "Enable no-show reminders", impact: "Recover ~15% of lost appointments" },
+];
+
+function PriorityActionsStrip({ recs }: { recs: Recommendation[] }) {
+  const top = [...recs]
+    .sort((a, b) => (b.rice_score ?? 0) - (a.rice_score ?? 0))
+    .slice(0, 3);
+  const isExample = top.length === 0;
+  const items = isExample
+    ? EXAMPLE_PRIORITY.map((e, i) => ({ id: `ex-${i}`, title: e.title, impact: e.impact, hue: "0 72% 51%" }))
+    : top.map((r) => ({
+        id: r.id,
+        title: r.title || "Untitled priority",
+        impact: r.expected_impact_value != null
+          ? formatImpact(r.expected_impact_value, r.impact_unit)
+          : (r.action_label || "High-impact move"),
+        hue: CATEGORY_META[normalizeCategory(r.category)].hue,
+      }));
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(0 72% 51%), hsl(24 95% 54%))" }}
+        >
+          <Flame className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Priority Actions</h3>
+        <span className="text-xs text-muted-foreground">Top 3 must-do moves right now</span>
+        {isExample && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+          >
+            Example data
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {items.map((it, i) => (
+          <motion.div
+            key={it.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-2xl p-4 bg-card border relative overflow-hidden"
+            style={{
+              borderColor: "hsla(0,72%,51%,.28)",
+              boxShadow: "0 8px 24px -14px hsla(0,72%,51%,.35)",
+            }}
+          >
+            <div
+              className="absolute left-0 top-0 h-full w-1"
+              style={{ background: `linear-gradient(180deg, hsl(0 72% 51%), hsl(24 95% 54%))` }}
+            />
+            <div className="flex items-start gap-3">
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "hsla(0,72%,51%,.14)" }}
+              >
+                <AlertTriangle className="h-4 w-4" style={{ color: "hsl(0 72% 45%)" }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(0 72% 45%)" }}>
+                  Urgent · #{i + 1}
+                </p>
+                <p className="text-sm font-semibold text-foreground leading-snug mt-1 line-clamp-2">{it.title}</p>
+                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">{it.impact}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Next Steps roadmap — sequential 30-day plan
+// ─────────────────────────────────────────────────────────────────
+
+const EXAMPLE_ROADMAP = [
+  { title: "Week 1 · Foundation", detail: "Connect integrations and confirm CRM data is flowing cleanly." },
+  { title: "Week 2 · Activate", detail: "Turn on review requests and appointment reminders." },
+  { title: "Week 3 · Amplify", detail: "Launch a re-engagement push to stalled leads." },
+  { title: "Week 4 · Measure", detail: "Review scoreboard and double down on what's converting." },
+];
+
+function NextStepsRoadmap({ recs, wins }: { recs: Recommendation[]; wins: Recommendation[] }) {
+  const active = [...recs.filter((r) => r.status === "accepted"), ...wins]
+    .sort((a, b) => (b.rice_score ?? 0) - (a.rice_score ?? 0))
+    .slice(0, 4);
+  const isExample = active.length === 0;
+  const steps = isExample
+    ? EXAMPLE_ROADMAP
+    : active.map((r, i) => ({
+        title: `Step ${i + 1} · ${CATEGORY_META[normalizeCategory(r.category)].label}`,
+        detail: r.action_label || r.title || "Continue execution.",
+      }));
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(211 96% 56%), hsl(280 75% 60%))" }}
+        >
+          <ArrowRight className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Next Steps</h3>
+        <span className="text-xs text-muted-foreground">Suggested order of operations · next 30 days</span>
+        {isExample && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+          >
+            Example data
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-card border border-border p-6">
+        <div className="relative">
+          <div
+            className="absolute left-4 top-2 bottom-2 w-px"
+            style={{ background: "linear-gradient(180deg, hsl(211 96% 56%), hsl(280 75% 60%))" }}
+          />
+          <div className="space-y-5">
+            {steps.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="flex items-start gap-4 pl-0"
+              >
+                <div
+                  className="h-9 w-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold z-10"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(211 96% 56%), hsl(280 75% 60%))",
+                    color: "hsl(210 40% 98%)",
+                    boxShadow: "0 4px 12px -4px hsla(211,96%,56%,.4)",
+                  }}
+                >
+                  {i + 1}
+                </div>
+                <div className="min-w-0 flex-1 pt-1">
+                  <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{s.detail}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Homework — tasks the business owner must do themselves
+// ─────────────────────────────────────────────────────────────────
+
+const OWNER_CATEGORIES = new Set<Category>(["reviews", "website"]);
+const EXAMPLE_HOMEWORK = [
+  { title: "Upload 10 before/after photos", detail: "Fresh visuals drive higher social + web conversion." },
+  { title: "Respond to your 3 pending reviews", detail: "A personal reply from the owner earns trust fast." },
+  { title: "Confirm business hours on Google", detail: "Wrong hours = missed calls and lost bookings." },
+];
+
+function HomeworkPanel({ recs }: { recs: Recommendation[] }) {
+  const owner = recs.filter((r) => OWNER_CATEGORIES.has(normalizeCategory(r.category))).slice(0, 3);
+  const isExample = owner.length === 0;
+  const items = isExample
+    ? EXAMPLE_HOMEWORK
+    : owner.map((r) => ({
+        title: r.title || "Owner task",
+        detail: r.action_label || r.why_reasoning || "Requires owner attention.",
+      }));
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(45 93% 50%), hsl(24 95% 54%))" }}
+        >
+          <BookOpen className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Homework</h3>
+        <span className="text-xs text-muted-foreground">Tasks only you can do</span>
+        {isExample && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+          >
+            Example data
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {items.map((it, i) => (
+          <motion.label
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-2xl p-4 bg-card border border-border cursor-pointer flex items-start gap-3 hover:border-[hsl(45,93%,50%)]/40 transition-colors"
+          >
+            <div
+              className="h-5 w-5 rounded-md border-2 shrink-0 mt-0.5"
+              style={{ borderColor: "hsl(45 93% 50%)" }}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground leading-snug">{it.title}</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{it.detail}</p>
+            </div>
+          </motion.label>
+        ))}
+      </div>
+    </div>
+  );
+}
