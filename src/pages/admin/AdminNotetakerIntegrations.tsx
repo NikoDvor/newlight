@@ -68,7 +68,6 @@ export default function AdminNotetakerIntegrations() {
       <PageHeader
         title="Meeting Notetaker Integrations"
         description="Webhook status for every client's AI-notetaker (Jump / Zocks / Zeplyn / other). Open a client's lifecycle page to rotate secrets or add a new vendor."
-        icon={Mic}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
