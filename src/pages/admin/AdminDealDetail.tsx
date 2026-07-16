@@ -46,13 +46,22 @@ export default function AdminDealDetail() {
       supabase.from("proposals").select("*").eq("deal_id", dealId).order("created_at", { ascending: false }),
       supabase.from("crm_tasks").select("*").eq("deal_id", dealId).order("created_at", { ascending: false }),
       supabase.from("audit_logs").select("*").eq("module", "sales").order("created_at", { ascending: false }).limit(20),
-    ]).then(([dRes, mRes, pRes, tRes, aRes]) => {
+    ]).then(async ([dRes, mRes, pRes, tRes, aRes]) => {
       setDeal(dRes.data);
       setNotesSummary(dRes.data?.notes_summary || "");
       setMeetings(mRes.data || []);
       setProposals(pRes.data || []);
       setTasks(tRes.data || []);
       setActivities(aRes.data || []);
+      // Referral attribution surface
+      const { data: attr } = await supabase
+        .from("referral_attributions")
+        .select("promoter_id, promoters(full_name)")
+        .eq("crm_deal_id", dealId)
+        .maybeSingle();
+      if (attr?.promoter_id) {
+        setReferral({ promoter_id: attr.promoter_id, full_name: (attr as any).promoters?.full_name || "Promoter" });
+      }
       setLoading(false);
     });
   }, [dealId]);
