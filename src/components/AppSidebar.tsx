@@ -5,7 +5,7 @@ import {
   Calendar, FileText, CreditCard, Star,
   ChevronLeft, ChevronDown, BookOpen, LifeBuoy,
   Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
-  Workflow, Shield, Gift, Phone
+  Workflow, Shield, Gift, Phone, Video
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
