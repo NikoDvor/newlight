@@ -63,6 +63,7 @@ interface IntakeTokenInfo {
 }
 
 export function StepReview({ form }: StepProps & { clientId?: string }) {
+  const f = form as unknown as Record<string, string>;
   const enabledIntegrations = INTEGRATION_KEYS.filter(k => form.integrations[k]?.used === "yes");
   const missingAccess = enabledIntegrations.filter(k => form.integrations[k]?.access_ready !== "yes");
 
@@ -157,7 +158,7 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
 
   // Calculate setup progress
   let completed = 0;
-  let total = 14;
+  let total = 16;
   if (form.business_name_confirmed) completed++;
   if (form.owner_email) completed++;
   if (form.payment_confirmed === "confirmed") completed++;
@@ -172,6 +173,8 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
   if (form.use_proposals !== "") completed++;
   if (form.use_helpdesk !== "") completed++;
   if (enabledIntegrations.length > 0 || liveIntegrations.length > 0) completed++;
+  if ((form as any).needs_compliance_review) completed++;
+  if ((form as any).client_has_sales_team) completed++;
   const pct = Math.round((completed / total) * 100);
 
   return (
@@ -380,6 +383,21 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
         <SummaryRow label="Native Reviews" value={form.use_native_reviews} />
         <SummaryRow label="Auto-Send" value={form.auto_send_after_appointment} />
         <SummaryRow label="Recovery" value={form.service_recovery_enabled} />
+      </SummarySection>
+
+      <SummarySection title="Compliance & Advisor Tools">
+        <SummaryRow label="Needs Compliance Review" value={f.needs_compliance_review} />
+        <SummaryRow label="SEC / FINRA Regulated" value={f.is_sec_finra_regulated} />
+        <SummaryRow label="Household CRM" value={f.needs_household_crm} />
+        <SummaryRow label="KYC Tool Enabled" value={f.kyc_tool_enabled} />
+        <SummaryRow label="Compliant Texting Log" value={f.compliant_texting_log_enabled} />
+      </SummarySection>
+
+      <SummarySection title="Sales Team">
+        <SummaryRow label="Sales Team" value={f.client_has_sales_team} />
+        <SummaryRow label="Rep Count" value={f.sales_team_rep_count} />
+        <SummaryRow label="Pipeline View" value={f.enable_sales_pipeline_view} />
+        <SummaryRow label="BDR Dialer/Calendar" value={f.enable_bdr_dialer_calendar} />
       </SummarySection>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
