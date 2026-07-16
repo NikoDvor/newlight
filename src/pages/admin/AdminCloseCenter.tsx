@@ -155,6 +155,7 @@ export default function AdminCloseCenter() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [bookingLinks, setBookingLinks] = useState<{ meeting1: string | null; meeting2: string | null }>({ meeting1: null, meeting2: null });
 
   const load = useCallback(async () => {
     if (!clientId) return;
@@ -174,6 +175,60 @@ export default function AdminCloseCenter() {
   }, [clientId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // ── Booking links (Meeting 1 = assigned rep's BDR calendar via nl_bdr_leads;
+  //    Meeting 2 = current activation draft's saved slug). Best-effort; silent on miss.
+  useEffect(() => {
+    if (!clientId || !client) return;
+    let cancelled = false;
+    (async () => {
+      let meeting1: string | null = null;
+      let meeting2: string | null = null;
+
+      // Meeting 1: match lead by email → phone, then look up rep's bdr_calendar
+      try {
+        let leadRow: any = null;
+        if (client.owner_email) {
+          const { data } = await supabase.from("nl_bdr_leads")
+            .select("user_id").eq("email", client.owner_email)
+            .not("user_id", "is", null)
+            .order("created_at", { ascending: false }).limit(1);
+          leadRow = data?.[0] || null;
+        }
+        if (!leadRow) {
+          const phone = (client as any).owner_phone || null;
+          if (phone) {
+            const { data } = await supabase.from("nl_bdr_leads")
+              .select("user_id").eq("phone", phone)
+              .not("user_id", "is", null)
+              .order("created_at", { ascending: false }).limit(1);
+            leadRow = data?.[0] || null;
+          }
+        }
+        if (leadRow?.user_id) {
+          const { data: cal } = await supabase.from("bdr_calendars")
+            .select("booking_slug").eq("user_id", leadRow.user_id).maybeSingle();
+          if (cal?.booking_slug) meeting1 = cal.booking_slug;
+        }
+      } catch { /* silent */ }
+
+      // Meeting 2: pull meeting_2_booking_slug from most-recent activation_draft form_data
+      try {
+        const { data: drafts } = await supabase.from("activation_drafts")
+          .select("form_data").eq("client_id", clientId)
+          .order("updated_at", { ascending: false }).limit(1);
+        const fd = drafts?.[0]?.form_data as any;
+        if (fd && typeof fd === "object" && typeof fd.meeting_2_booking_slug === "string" && fd.meeting_2_booking_slug) {
+          meeting2 = fd.meeting_2_booking_slug;
+        }
+      } catch { /* silent */ }
+
+      if (!cancelled) setBookingLinks({ meeting1, meeting2 });
+    })();
+    return () => { cancelled = true; };
+  }, [clientId, client]);
+
+
 
   // ─── Actions ─────────────────────────────────────────────────
   const logAction = async (artifactType: string, artifactId: string | null, action: string, method = "manual", notes?: string) => {
@@ -472,7 +527,48 @@ export default function AdminCloseCenter() {
         </Button>
       </div>
 
+      {/* ─── Booking Links (Meeting 1 / Meeting 2) ─────────────── */}
+      {(bookingLinks.meeting1 || bookingLinks.meeting2) && (
+        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-1.5">
+          {([
+            { label: "Meeting 1 Link", slug: bookingLinks.meeting1 },
+            { label: "Meeting 2 Link", slug: bookingLinks.meeting2 },
+          ] as const).filter(r => !!r.slug).map(row => {
+            const url = `${window.location.origin}/bdr/book/${row.slug}`;
+            return (
+              <div key={row.label} className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider w-[92px] shrink-0">
+                  {row.label}
+                </span>
+                <Input
+                  readOnly
+                  value={url}
+                  className="h-7 text-[11px] bg-white/[0.04] border-white/10 text-white/80 font-mono flex-1"
+                  onFocus={e => e.currentTarget.select()}
+                />
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => { navigator.clipboard.writeText(url); toast.success(`${row.label} copied`); }}
+                  className="h-7 w-7 p-0 border-white/10 text-white hover:bg-white/10"
+                  title="Copy"
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <a
+                  href={url} target="_blank" rel="noopener noreferrer"
+                  className="h-7 w-7 grid place-items-center rounded-md border border-white/10 text-[hsl(var(--nl-sky))] hover:bg-white/10"
+                  title="Open"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ─── Status Pipeline ──────────────────────────────────── */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {([
           { key: "proposal_status", label: "Proposal", icon: FileSignature, steps: PROPOSAL_STEPS },
