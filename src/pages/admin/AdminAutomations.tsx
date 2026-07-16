@@ -307,21 +307,23 @@ export default function AdminAutomations() {
               {events.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No events emitted yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Event</th><th className={hCls}>Name</th><th className={hCls}>Related</th><th className={hCls}>Created</th>
-                  </tr></thead>
-                  <tbody>
-                    {events.map((e: any) => (
-                      <tr key={e.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{e.event_type}</code></td>
-                        <td className={cCls}>{(e as any).event_name || "—"}</td>
-                        <td className={cCls}>{(e as any).related_type || "—"}</td>
-                        <td className={cCls}>{new Date(e.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Event</th><th className={hCls}>Name</th><th className={hCls}>Related</th><th className={hCls}>Created</th>
+                    </tr></thead>
+                    <tbody>
+                      {events.map((e: any) => (
+                        <tr key={e.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{e.event_type}</code></td>
+                          <td className={cCls}>{(e as any).event_name || "—"}</td>
+                          <td className={cCls}>{(e as any).related_type || "—"}</td>
+                          <td className={cCls}>{new Date(e.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
