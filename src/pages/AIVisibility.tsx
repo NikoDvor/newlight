@@ -157,7 +157,7 @@ export default function AIVisibility() {
         </div>
       ) : null}
 
-      <DataCard title="Monitored Queries" description="Prompts sent to the AI model on each check. Seeded from your business profile — edit as needed.">
+      <DataCard title="Monitored Queries">
         <div className="flex gap-2 mb-3">
           <Input
             placeholder="Add a query, e.g. best fiduciary advisor in Austin"
@@ -188,7 +188,7 @@ export default function AIVisibility() {
         )}
       </DataCard>
 
-      <DataCard title="Recent Citation Checks" description="Individual query results from the AI model, most recent first.">
+      <DataCard title="Recent Citation Checks">
         {checks.length === 0 ? (
           <p className="text-xs text-muted-foreground py-3">Run a check to see results here.</p>
         ) : (
