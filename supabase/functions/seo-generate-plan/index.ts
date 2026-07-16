@@ -302,7 +302,7 @@ async function generateForClient(
             : "Add a footer link to your ADV Part 2 brochure — a required SEC disclosure for registered investment advisors.",
         });
 
-        // Disclaimer check: common regulatory disclaimer phrases anywhere in footer or last 25%
+        // Disclaimer check: regulatory disclaimer phrases in footer text, OR a footer link to a disclaimer/disclosures page.
         const footerText = footerHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").toLowerCase();
         const disclaimerPatterns = [
           /investment advisory services/,
@@ -315,7 +315,19 @@ async function generateForClient(
           /member finra/,
           /sipc/,
         ];
-        const disclaimerFound = disclaimerPatterns.some((r) => r.test(footerText));
+        let disclaimerFound = disclaimerPatterns.some((r) => r.test(footerText));
+        if (!disclaimerFound) {
+          const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+          let lm: RegExpExecArray | null;
+          while ((lm = linkRegex.exec(footerHtml)) !== null) {
+            const href = lm[1].toLowerCase();
+            const txt = lm[2].replace(/<[^>]+>/g, "").trim().toLowerCase();
+            if (/(^|\/)(disclaimer|disclosures?|legal)(\.|\/|$)/.test(href) || /^(disclaimer|disclosures?|important disclosures?)$/.test(txt)) {
+              disclaimerFound = true; break;
+            }
+          }
+        }
+
         issuesToInsert.push({
           client_id: clientId,
           issue_title: disclaimerFound ? "Regulatory disclaimer present in footer" : "Missing regulatory disclaimer in footer",
