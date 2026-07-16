@@ -7,7 +7,7 @@ import {
   FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
-  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home,
+  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -103,6 +103,8 @@ const opsGroups: NavGroup[] = [
       { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
       { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
       { title: "Marketing Review", url: "/admin/marketing-review", icon: Megaphone },
+      { title: "Content Templates", url: "/admin/marketing-templates", icon: FileText },
+      { title: "Risk Profiles", url: "/admin/risk-profiles", icon: ShieldCheck },
       { title: "Promoters", url: "/admin/promoters", icon: Users },
       { title: "Households", url: "/admin/households", icon: Home },
       { title: "Webinars", url: "/admin/webinars", icon: Calendar },

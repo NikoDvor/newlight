@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ManualMeetingNotesDialog } from "@/components/ManualMeetingNotesDialog";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const OUTCOME_COLORS: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
@@ -96,8 +97,13 @@ export default function MeetingIntelligence() {
       toast({
         title: "Opportunity scan complete",
         description: count > 0
-          ? `Found ${count} money-in-motion signal${count === 1 ? "" : "s"} — view in Revenue Expansion.`
+          ? `Found ${count} money-in-motion signal${count === 1 ? "" : "s"}.`
           : "No new money-in-motion signals detected.",
+        action: count > 0 ? (
+          <ToastAction altText="View opportunities" onClick={() => navigate("/admin/client-success?tab=upsells")}>
+            View
+          </ToastAction>
+        ) : undefined,
       });
     } catch (e: any) {
       toast({ title: "Scan failed", description: e?.message || "Unable to run scan", variant: "destructive" });

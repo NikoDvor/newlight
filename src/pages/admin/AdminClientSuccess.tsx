@@ -9,7 +9,7 @@ import {
   Users, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const SEVERITY_COLOR: Record<string, string> = {
   Critical: "bg-destructive/10 text-destructive",
@@ -35,6 +35,10 @@ const RENEWAL_COLOR: Record<string, string> = {
 
 export default function AdminClientSuccess() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab = ["risks", "tickets", "renewals", "upsells", "adoption"].includes(tabFromUrl ?? "")
+    ? (tabFromUrl as string) : "risks";
   const [clients, setClients] = useState<any[]>([]);
   const [risks, setRisks] = useState<any[]>([]);
   const [renewals, setRenewals] = useState<any[]>([]);
@@ -98,7 +102,7 @@ export default function AdminClientSuccess() {
         ))}
       </div>
 
-      <Tabs defaultValue="risks" className="space-y-4">
+      <Tabs value={initialTab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="risks">Churn Risks</TabsTrigger>
           <TabsTrigger value="tickets">Support</TabsTrigger>

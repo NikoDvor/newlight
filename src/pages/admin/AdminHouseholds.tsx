@@ -37,11 +37,11 @@ interface Member {
   id: string; household_id: string; contact_id: string;
   relationship_role: Role;
 }
-interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; }
+interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; milestone_alerts_fired?: string[] | null; }
 
 type UpcomingRow =
-  | { kind: "review"; id: string; label: string; when: Date; sub: string }
-  | { kind: "milestone"; id: string; label: string; when: Date; sub: string };
+  | { kind: "review"; id: string; label: string; when: Date; sub: string; notified?: boolean }
+  | { kind: "milestone"; id: string; label: string; when: Date; sub: string; notified?: boolean };
 
 const MILESTONE_DEFS: Array<{ code: string; years: number; months: number; label: string }> = [
   { code: "59_5",         years: 59, months: 6, label: "Age 59½ — penalty-free withdrawals" },
@@ -87,7 +87,7 @@ export default function AdminHouseholds() {
     setLoading(true);
     const [{ data: h }, { data: c }] = await Promise.all([
       supabase.from("households").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
-      supabase.from("crm_contacts").select("id, full_name, household_id, date_of_birth").eq("client_id", activeClientId).order("full_name"),
+      supabase.from("crm_contacts").select("id, full_name, household_id, date_of_birth, milestone_alerts_fired").eq("client_id", activeClientId).order("full_name"),
     ]);
     const list = (h as any[]) ?? [];
     setHouseholds(list);
@@ -139,6 +139,7 @@ export default function AdminHouseholds() {
     for (const c of contacts) {
       if (!c.date_of_birth) continue;
       const dob = new Date(c.date_of_birth);
+      const fired = Array.isArray(c.milestone_alerts_fired) ? c.milestone_alerts_fired : [];
       for (const m of MILESTONE_DEFS) {
         const when = new Date(dob);
         when.setFullYear(when.getFullYear() + m.years);
@@ -149,6 +150,7 @@ export default function AdminHouseholds() {
             kind: "milestone", id: `m-${c.id}-${m.code}`, when,
             label: `${c.full_name} — ${m.label}`,
             sub: `In ${days}d`,
+            notified: fired.includes(m.code),
           });
         }
       }
@@ -285,6 +287,11 @@ export default function AdminHouseholds() {
                       {u.kind === "review" ? "Review" : "Milestone"}
                     </Badge>
                     <span className="text-foreground">{u.label}</span>
+                    {u.kind === "milestone" && u.notified && (
+                      <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                        ✓ notified
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-muted-foreground">{u.sub} · {u.when.toLocaleDateString()}</div>
                 </div>
