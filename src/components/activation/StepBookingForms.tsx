@@ -96,6 +96,25 @@ export function StepBookingForms({ form, set, submitting }: StepProps) {
         </div>
       </div>
 
+      <div className={sectionCls} style={sectionStyle}>
+        <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+          <ClipboardList className="h-3 w-3" /> Business Operations
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Do you have a sales team?</label>
+            <YN value={form.has_sales_team} onChange={v => set("has_sales_team", v)} disabled={submitting} />
+            <p className="text-[10px] text-white/30 mt-1">Unlocks Sales Team Pipeline, My Leads, Lead Sourcing, BDR Dialer &amp; Calendar for this workspace.</p>
+          </div>
+          <div>
+            <label className={labelCls}>Do you have compliance requirements?</label>
+            <YN value={form.has_compliance_requirements} onChange={v => set("has_compliance_requirements", v)} disabled={submitting} />
+            <p className="text-[10px] text-white/30 mt-1">Flags this client for NewLight compliance review (marketing, disclosures, risk profiles).</p>
+          </div>
+        </div>
+      </div>
+
+
       {form.use_native_forms !== "no" && (
         <>
           <div className={sectionCls} style={sectionStyle}>

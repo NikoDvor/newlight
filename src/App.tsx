@@ -11,6 +11,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
+import { ClientFlagGate } from "@/components/ClientFlagGate";
 import { AppIntro, shouldPlayIntro, resetIntroState } from "@/components/AppIntro";
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
@@ -442,12 +443,12 @@ const App = () => {
                 <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
                 <Route path="certification/bdr" element={<BDRCertificationExam />} />
-                <Route path="leads" element={<BDRMyLeads />} />
-                <Route path="lead-sourcing" element={<BDRLeadSourcing />} />
-                <Route path="team-pipeline" element={<BDRTeamPipeline />} />
-                <Route path="dialer" element={<BDRDialer />} />
+                <Route path="leads" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyLeads /></ClientFlagGate>} />
+                <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
+                <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
+                <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
-                <Route path="calendar" element={<BDRCalendar />} />
+                <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
@@ -458,7 +459,7 @@ const App = () => {
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
                 <Route path="/call-tracking" element={<PermissionGuard moduleKey="crm"><CallTracking /></PermissionGuard>} />
-                <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><SalesTeamPipeline /></PermissionGuard>} />
+                <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><SalesTeamPipeline /></ClientFlagGate></PermissionGuard>} />
                 <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
                 <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
                 <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
@@ -536,8 +537,8 @@ const App = () => {
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
                 <Route path="/audit-logs" element={<PermissionGuard moduleKey="intelligence"><AdminAuditLogs /></PermissionGuard>} />
                 <Route path="/team-management" element={<TeamManagement />} />
-                <Route path="/bdr-team-pipeline" element={<BDRTeamPipeline />} />
-                <Route path="/bdr-lead-sourcing" element={<BDRLeadSourcing />} />
+                <Route path="/bdr-team-pipeline" element={<ClientFlagGate flag="has_sales_team"><BDRTeamPipeline /></ClientFlagGate>} />
+                <Route path="/bdr-lead-sourcing" element={<ClientFlagGate flag="has_sales_team"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />

@@ -120,17 +120,19 @@ export function AppSidebar() {
   const { hasAccess } = useWorkspacePermissions();
   const { isAdmin, activeClientId } = useWorkspace();
   const [clientIndustry, setClientIndustry] = useState<string | null>(null);
+  const [hasSalesTeam, setHasSalesTeam] = useState<boolean>(false);
 
-  // Load business type for meeting-intelligence visibility
+  // Load business type + operations flags for module visibility
   useEffect(() => {
     if (!activeClientId) return;
     (async () => {
       const { data } = await supabase
         .from("clients")
-        .select("industry")
+        .select("industry, has_sales_team")
         .eq("id", activeClientId)
         .maybeSingle();
       setClientIndustry(data?.industry?.toLowerCase() || null);
+      setHasSalesTeam(Boolean((data as any)?.has_sales_team));
     })();
   }, [activeClientId]);
 
@@ -141,7 +143,9 @@ export function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const canSee = (moduleKey?: string) => {
+  const canSee = (moduleKey?: string, url?: string) => {
+    // Sales Team pipeline requires the workspace to have declared a sales team.
+    if (url === "/sales-team" && !isAdmin && !hasSalesTeam) return false;
     if (!moduleKey || isAdmin) return true;
     // Hide Zoom/meeting-intelligence for field-service business types
     if (moduleKey === "meeting_intel" && isFieldService) return false;
@@ -216,7 +220,7 @@ export function AppSidebar() {
       <SidebarContent className="px-2 relative z-10">
         {navStructure.map((entry, idx) => {
           if (entry.type === "item") {
-            if (!canSee(entry.moduleKey)) return null;
+            if (!canSee(entry.moduleKey, entry.url)) return null;
             return (
               <SidebarGroup key={idx} className="py-0.5">
                 <SidebarGroupContent>
@@ -229,7 +233,7 @@ export function AppSidebar() {
           }
 
           const group = entry as NavEntry & { items: any[] };
-          const visibleItems = group.items!.filter(i => canSee(i.moduleKey));
+          const visibleItems = group.items!.filter(i => canSee(i.moduleKey, i.url));
           if (visibleItems.length === 0) return null;
 
           const isOpen = openGroups[group.label!] ?? false;

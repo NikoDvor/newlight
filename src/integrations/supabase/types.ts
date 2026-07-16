@@ -3289,6 +3289,8 @@ export type Database = {
           created_at: string
           crm_mode: string
           email_delivery_status: string | null
+          has_compliance_requirements: boolean
+          has_sales_team: boolean
           id: string
           implementation_status: string
           industry: string | null
@@ -3336,6 +3338,8 @@ export type Database = {
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
+          has_compliance_requirements?: boolean
+          has_sales_team?: boolean
           id?: string
           implementation_status?: string
           industry?: string | null
@@ -3383,6 +3387,8 @@ export type Database = {
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
+          has_compliance_requirements?: boolean
+          has_sales_team?: boolean
           id?: string
           implementation_status?: string
           industry?: string | null
