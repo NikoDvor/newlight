@@ -210,8 +210,8 @@ export default function BDRBookingPublic() {
       phone: prev.phone || grab(["phone", "mobile", "cell"]),
       email: prev.email || grab(["email"]),
       notes: prev.notes,
-      improvement_area: prev.improvement_area,
     }));
+
   }, [formStepComplete, formFields, formValues]);
 
   const validateFormStep = (): string | null => {
