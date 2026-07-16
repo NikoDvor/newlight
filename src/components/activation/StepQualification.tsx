@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase, Sparkles } from "lucide-react";
+import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase, Sparkles, Calendar, Copy, Check, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { ActivationHelp } from "./ActivationHelp";
 import type { StepProps } from "./activationTypes";
 
@@ -22,10 +24,22 @@ const MODULE_LABELS: Record<string, string> = {
 
 interface StepQualificationProps extends StepProps {
   bookingModules?: string[];
+  meeting1BookingLink?: { slug: string; ownerName: string } | null;
 }
 
-export function StepQualification({ form, set, submitting, bookingModules }: StepQualificationProps) {
+export function StepQualification({ form, set, submitting, bookingModules, meeting1BookingLink }: StepQualificationProps) {
   const preselected = bookingModules && bookingModules.length > 0 ? bookingModules : [];
+  const [copied, setCopied] = useState(false);
+  const meeting1Url = meeting1BookingLink
+    ? `${window.location.origin}/bdr/book/${meeting1BookingLink.slug}`
+    : null;
+  const copyMeeting1 = () => {
+    if (!meeting1Url) return;
+    navigator.clipboard.writeText(meeting1Url);
+    setCopied(true);
+    toast.success("Booking link copied");
+    setTimeout(() => setCopied(false), 1500);
+  };
   return (
     <div className="space-y-4">
       {preselected.length > 0 && (
