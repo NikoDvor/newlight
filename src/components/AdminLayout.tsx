@@ -10,6 +10,7 @@ import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 
 export function AdminLayout() {
   const location = useLocation();
@@ -54,6 +55,7 @@ export function AdminLayout() {
             <div className="flex items-center gap-3">
               <WorkspaceSwitcher />
               <PWAInstallButton />
+              <GlobalModuleSearch variant="admin" />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
