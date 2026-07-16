@@ -178,24 +178,26 @@ export default function AdminBilling() {
               {invoices.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No invoices yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Invoice #</th><th className={headCls}>Company</th><th className={headCls}>Type</th><th className={headCls}>Status</th><th className={headCls}>Total</th><th className={headCls}>Due Date</th><th className={headCls}>Paid At</th>
-                  </tr></thead>
-                  <tbody>
-                    {invoices.map((inv: any) => (
-                      <tr key={inv.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{inv.invoice_number}</td>
-                        <td className={cellCls}>{(inv.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}>{inv.invoice_type}</td>
-                        <td className={cellCls}><SBadge status={inv.invoice_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(inv.total_amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{inv.due_date || "—"}</td>
-                        <td className={cellCls}>{inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Invoice #</th><th className={headCls}>Company</th><th className={headCls}>Type</th><th className={headCls}>Status</th><th className={headCls}>Total</th><th className={headCls}>Due Date</th><th className={headCls}>Paid At</th>
+                    </tr></thead>
+                    <tbody>
+                      {invoices.map((inv: any) => (
+                        <tr key={inv.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{inv.invoice_number}</td>
+                          <td className={cellCls}>{(inv.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}>{inv.invoice_type}</td>
+                          <td className={cellCls}><SBadge status={inv.invoice_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(inv.total_amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{inv.due_date || "—"}</td>
+                          <td className={cellCls}>{inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
