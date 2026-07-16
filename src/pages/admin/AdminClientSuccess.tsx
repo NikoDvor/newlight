@@ -35,6 +35,10 @@ const RENEWAL_COLOR: Record<string, string> = {
 
 export default function AdminClientSuccess() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab = ["risks", "tickets", "renewals", "upsells", "adoption"].includes(tabFromUrl ?? "")
+    ? (tabFromUrl as string) : "risks";
   const [clients, setClients] = useState<any[]>([]);
   const [risks, setRisks] = useState<any[]>([]);
   const [renewals, setRenewals] = useState<any[]>([]);
