@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ interface BookingSlotPickerProps {
 }
 
 interface DayGroup {
-  key: string; // YYYY-MM-DD
+  key: string;
   date: Date;
   weekday: string;
   dayNum: number;
@@ -23,11 +23,15 @@ interface DayGroup {
   slots: BookingSlot[];
 }
 
+function dayKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function groupByDay(slots: BookingSlot[]): DayGroup[] {
   const map = new Map<string, DayGroup>();
   for (const s of slots) {
     const d = s.date;
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const key = dayKey(d);
     let g = map.get(key);
     if (!g) {
       g = {
@@ -52,12 +56,11 @@ function formatTime(d: Date) {
 export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: BookingSlotPickerProps) {
   const days = useMemo(() => groupByDay(slots), [slots]);
 
-  const selectedDate = selectedSlot ? new Date(selectedSlot) : null;
-  const selectedDayKey = selectedDate
-    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
-    : days[0]?.key ?? "";
+  const selectedDayFromProp = selectedSlot ? dayKey(new Date(selectedSlot)) : null;
+  const [browseDay, setBrowseDay] = useState<string | null>(null);
 
-  const activeDay = days.find(d => d.key === selectedDayKey) ?? days[0];
+  const activeKey = selectedDayFromProp ?? browseDay ?? days[0]?.key ?? "";
+  const activeDay = days.find(d => d.key === activeKey) ?? days[0];
 
   const stripRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -79,12 +82,11 @@ export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: Booking
       className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-3 sm:p-4"
       style={{ boxShadow: "0 0 0 1px hsl(211 96% 56% / 0.08), 0 10px 40px -20px hsl(211 96% 56% / 0.25)" }}
     >
-      {/* Date strip */}
       <div className="mb-4">
         <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2 px-1">Select a date</div>
         <div
           ref={stripRef}
-          className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scroll-smooth"
+          className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x scroll-smooth"
           style={{ scrollbarWidth: "thin" }}
         >
           {days.map(d => {
@@ -93,13 +95,10 @@ export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: Booking
               <motion.button
                 key={d.key}
                 data-day-key={d.key}
+                type="button"
                 onClick={() => {
-                  // Selecting a new day clears the slot selection until user picks a time
-                  if (d.key !== selectedDayKey) onSelectSlot("");
-                  // Force strip highlight even without a selected slot by picking first slot? No — keep unselected.
-                  // We rely on activeDay fallback via first day; to switch active day when no slot selected,
-                  // temporarily set selectedSlot to empty and use local override:
-                  setLocalDay(d.key);
+                  setBrowseDay(d.key);
+                  if (selectedSlot && dayKey(new Date(selectedSlot)) !== d.key) onSelectSlot("");
                 }}
                 whileTap={{ scale: 0.96 }}
                 className={cn(
@@ -118,7 +117,6 @@ export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: Booking
         </div>
       </div>
 
-      {/* Slot grid */}
       <div>
         <div className="text-[11px] uppercase tracking-wider text-white/50 mb-2 px-1">
           {activeDay ? activeDay.date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" }) : "Times"}
@@ -138,6 +136,7 @@ export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: Booking
               return (
                 <motion.button
                   key={iso}
+                  type="button"
                   onClick={() => onSelectSlot(iso)}
                   whileTap={{ scale: 0.97 }}
                   whileHover={{ y: -1 }}
@@ -158,11 +157,4 @@ export function BookingSlotPicker({ slots, selectedSlot, onSelectSlot }: Booking
       </div>
     </div>
   );
-}
-
-// Local day override so users can browse days without a slot selected.
-// Implemented via a module-scoped state via React hook fallback:
-let _setLocalDayImpl: ((k: string) => void) | null = null;
-function setLocalDay(k: string) {
-  _setLocalDayImpl?.(k);
 }
