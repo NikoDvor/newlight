@@ -42,6 +42,7 @@ interface Material {
   content_url: string | null;
   content_text: string | null;
   current_version_id: string | null;
+  compliance_flags: Array<{ phrase: string; category: string }> | null;
   created_at: string;
   updated_at: string;
 }
