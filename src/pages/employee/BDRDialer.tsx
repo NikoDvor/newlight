@@ -446,21 +446,44 @@ export default function BDRDialer() {
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">{lead.owner_name || "—"}</td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
-                      {lead.phone ? (
-                        <a href={`tel:${lead.phone}`}
-                          onClick={() => {
-                            if (lead.called) return;
-                            setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
-                            (supabase as any).from("nl_bdr_leads")
-                              .update({ called: true })
-                              .eq("id", lead.id)
-                              .eq("user_id", userId)
-                              .then(() => {});
-                          }}
-                          className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
-                          <Phone className="h-3 w-3" /> {lead.phone}
-                        </a>
-                       ) : <span className="text-white/30">—</span>}
+                      <div className="flex flex-col gap-1">
+                        {lead.phone ? (
+                          <span className="inline-flex items-center gap-1 flex-wrap">
+                            <a href={`tel:${lead.phone}`}
+                              onClick={() => {
+                                if (lead.called) return;
+                                setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+                                (supabase as any).from("nl_bdr_leads")
+                                  .update({ called: true })
+                                  .eq("id", lead.id)
+                                  .eq("user_id", userId)
+                                  .then(() => {});
+                              }}
+                              className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
+                              <Phone className="h-3 w-3" /> {lead.phone}
+                            </a>
+                            {lead.phone_type === "owner" ? (
+                              <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner</span>
+                            ) : (
+                              <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
+                            )}
+                          </span>
+                        ) : <span className="text-white/30">—</span>}
+                        {lead.booking_link && lead.booking_link_is_owner && (
+                          <a
+                            href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline w-fit"
+                            style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}
+                            title={lead.booking_link}
+                          >
+                            <Calendar className="h-3 w-3" />
+                            Owner's Calendar
+                          </a>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       {lead.website ? (
