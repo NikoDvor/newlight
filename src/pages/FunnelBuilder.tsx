@@ -1,188 +1,157 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import {
-  GitBranch, Plus, ArrowRight, MousePointerClick, Users, TrendingUp,
-  Eye, Pencil, GripVertical, Trash2
-} from "lucide-react";
+import { GitBranch, ArrowRight, Users, TrendingUp, Eye, Plus, ClipboardList } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { WorkspaceContext } from "@/contexts/WorkspaceContext";
 
-interface FunnelStep {
+interface FunnelRow {
   id: string;
   name: string;
-  type: "landing" | "form" | "thank_you" | "upsell";
-  visitors: number;
-  conversions: number;
+  isActive: boolean;
+  submissions: number;
+  contactsFromSubs: number;
+  dealsFromContacts: number;
 }
-
-interface Funnel {
-  id: string;
-  name: string;
-  client: string;
-  status: "Draft" | "Published" | "Archived";
-  conversionRate: string;
-  totalLeads: number;
-  steps: FunnelStep[];
-}
-
-const mockFunnels: Funnel[] = [
-  {
-    id: "f1", name: "Free Consultation Funnel", client: "TechCorp Inc.", status: "Published", conversionRate: "12.3%", totalLeads: 263,
-    steps: [
-      { id: "fs1", name: "Landing Page", type: "landing", visitors: 2140, conversions: 680 },
-      { id: "fs2", name: "Consultation Form", type: "form", visitors: 680, conversions: 320 },
-      { id: "fs3", name: "Thank You Page", type: "thank_you", visitors: 320, conversions: 263 },
-    ],
-  },
-  {
-    id: "f2", name: "SEO Audit Funnel", client: "Bloom Agency", status: "Published", conversionRate: "8.7%", totalLeads: 145,
-    steps: [
-      { id: "fs4", name: "SEO Landing Page", type: "landing", visitors: 1670, conversions: 410 },
-      { id: "fs5", name: "Audit Request Form", type: "form", visitors: 410, conversions: 145 },
-      { id: "fs6", name: "Confirmation Page", type: "thank_you", visitors: 145, conversions: 145 },
-    ],
-  },
-  {
-    id: "f3", name: "Starter Package Funnel", client: "GrowthLab", status: "Draft", conversionRate: "—", totalLeads: 0,
-    steps: [
-      { id: "fs7", name: "Offer Page", type: "landing", visitors: 0, conversions: 0 },
-      { id: "fs8", name: "Lead Form", type: "form", visitors: 0, conversions: 0 },
-      { id: "fs9", name: "Upsell Page", type: "upsell", visitors: 0, conversions: 0 },
-      { id: "fs10", name: "Thank You", type: "thank_you", visitors: 0, conversions: 0 },
-    ],
-  },
-];
-
-const STEP_COLORS: Record<string, string> = {
-  landing: "bg-blue-50 border-blue-200 text-blue-700",
-  form: "bg-violet-50 border-violet-200 text-violet-700",
-  thank_you: "bg-emerald-50 border-emerald-200 text-emerald-700",
-  upsell: "bg-amber-50 border-amber-200 text-amber-700",
-};
-
-const STATUS_STYLE: Record<string, string> = {
-  Draft: "bg-amber-50 text-amber-700 border-amber-200",
-  Published: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Archived: "bg-secondary text-muted-foreground",
-};
 
 export default function FunnelBuilder() {
-  const [selectedFunnel, setSelectedFunnel] = useState<Funnel | null>(null);
+  const { activeClientId } = useContext(WorkspaceContext);
+  const [rows, setRows] = useState<FunnelRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!activeClientId) { setLoading(false); return; }
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      const { data: forms } = await supabase
+        .from("forms")
+        .select("id, form_name, is_active")
+        .eq("client_id", activeClientId)
+        .order("created_at", { ascending: false });
+
+      const formIds = (forms ?? []).map((f) => f.id);
+      const { data: subs } = formIds.length
+        ? await supabase
+            .from("form_submissions")
+            .select("form_id, contact_id")
+            .in("form_id", formIds)
+        : { data: [] as any[] };
+
+      const contactIds = Array.from(
+        new Set((subs ?? []).map((s: any) => s.contact_id).filter(Boolean))
+      );
+      const { data: deals } = contactIds.length
+        ? await supabase
+            .from("crm_deals")
+            .select("contact_id")
+            .eq("client_id", activeClientId)
+            .in("contact_id", contactIds)
+        : { data: [] as any[] };
+      const dealContactSet = new Set((deals ?? []).map((d: any) => d.contact_id));
+
+      const result: FunnelRow[] = (forms ?? []).map((f) => {
+        const formSubs = (subs ?? []).filter((s: any) => s.form_id === f.id);
+        const uniqueContacts = new Set(formSubs.map((s: any) => s.contact_id).filter(Boolean));
+        let converted = 0;
+        uniqueContacts.forEach((cid) => { if (dealContactSet.has(cid)) converted++; });
+        return {
+          id: f.id,
+          name: f.form_name,
+          isActive: f.is_active,
+          submissions: formSubs.length,
+          contactsFromSubs: uniqueContacts.size,
+          dealsFromContacts: converted,
+        };
+      });
+
+      if (!mounted) return;
+      setRows(result);
+      setLoading(false);
+    })();
+    return () => { mounted = false; };
+  }, [activeClientId]);
+
+  const totalSubs = rows.reduce((a, r) => a + r.submissions, 0);
+  const totalDeals = rows.reduce((a, r) => a + r.dealsFromContacts, 0);
+  const activeCount = rows.filter((r) => r.isActive).length;
+  const avgCvr = totalSubs > 0 ? ((totalDeals / totalSubs) * 100).toFixed(1) + "%" : "—";
+
+  const cvr = (r: FunnelRow) => r.submissions > 0 ? ((r.dealsFromContacts / r.submissions) * 100).toFixed(1) + "%" : "—";
 
   return (
     <div>
-      <PageHeader title="Funnel Builder" description="Create and manage conversion funnels">
-        <Button className="gap-1.5"><Plus className="h-4 w-4" /> New Funnel</Button>
+      <PageHeader title="Funnel Analytics" description="Real conversion data from your forms into pipeline deals">
+        <Link to="/forms"><Button className="gap-1.5"><Plus className="h-4 w-4" /> Manage Forms</Button></Link>
       </PageHeader>
 
       <WidgetGrid columns="repeat(auto-fit, minmax(200px, 1fr))">
-        <MetricCard label="Total Funnels" value="3" change="2 published" changeType="positive" icon={GitBranch} />
-        <MetricCard label="Total Leads" value="408" change="+24% this month" changeType="positive" icon={Users} />
-        <MetricCard label="Avg. Conversion" value="10.5%" change="+2.1% vs last month" changeType="positive" icon={TrendingUp} />
-        <MetricCard label="Funnel Views" value="3,810" change="+18% this month" changeType="positive" icon={Eye} />
+        <MetricCard label="Active Forms" value={String(activeCount)} change={`${rows.length} total`} changeType="neutral" icon={GitBranch} />
+        <MetricCard label="Total Submissions" value={String(totalSubs)} change="Across all forms" changeType="neutral" icon={Users} />
+        <MetricCard label="Deals Created" value={String(totalDeals)} change="From submitted contacts" changeType="neutral" icon={TrendingUp} />
+        <MetricCard label="Avg. Conversion" value={avgCvr} change="Submissions → deals" changeType="neutral" icon={Eye} />
       </WidgetGrid>
 
-      {/* Funnels grid */}
       <div className="grid gap-6 mt-8">
-        {mockFunnels.map((funnel) => (
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>
+        ) : rows.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
+            <ClipboardList className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-sm font-semibold mb-1">No Forms Yet</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Create a form to start capturing leads and tracking conversions into your pipeline.
+            </p>
+            <Link to="/forms"><Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" /> Create a Form</Button></Link>
+          </div>
+        ) : rows.map((funnel) => (
           <motion.div
             key={funnel.id}
-            className="card-widget p-6 rounded-2xl cursor-pointer card-widget-clickable"
+            className="card-widget p-6 rounded-2xl"
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            onClick={() => setSelectedFunnel(funnel)}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-base font-semibold">{funnel.name}</h3>
-                <p className="text-xs text-muted-foreground">{funnel.client}</p>
+                <p className="text-xs text-muted-foreground">Form → Contact → Deal</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge className={STATUS_STYLE[funnel.status]}>{funnel.status}</Badge>
-              </div>
+              <Badge className={funnel.isActive
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-secondary text-muted-foreground"}>
+                {funnel.isActive ? "Active" : "Inactive"}
+              </Badge>
             </div>
 
-            {/* Funnel flow visualization */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {funnel.steps.map((step, i) => (
-                <div key={step.id} className="flex items-center gap-2 shrink-0">
-                  <div className={`rounded-xl border px-4 py-3 min-w-[140px] ${STEP_COLORS[step.type]}`}>
-                    <p className="text-xs font-semibold">{step.name}</p>
-                    <div className="flex gap-3 mt-1.5">
-                      <span className="text-[10px] tabular-nums">{step.visitors.toLocaleString()} visits</span>
-                      <span className="text-[10px] tabular-nums">{step.conversions.toLocaleString()} conv.</span>
-                    </div>
-                  </div>
-                  {i < funnel.steps.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-                </div>
-              ))}
+              <div className="rounded-xl border px-4 py-3 min-w-[160px] bg-blue-50 border-blue-200 text-blue-700">
+                <p className="text-xs font-semibold">Submissions</p>
+                <p className="text-lg font-bold tabular-nums mt-1">{funnel.submissions}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="rounded-xl border px-4 py-3 min-w-[160px] bg-violet-50 border-violet-200 text-violet-700">
+                <p className="text-xs font-semibold">Contacts Captured</p>
+                <p className="text-lg font-bold tabular-nums mt-1">{funnel.contactsFromSubs}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="rounded-xl border px-4 py-3 min-w-[160px] bg-emerald-50 border-emerald-200 text-emerald-700">
+                <p className="text-xs font-semibold">Deals Created</p>
+                <p className="text-lg font-bold tabular-nums mt-1">{funnel.dealsFromContacts}</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-              <span>Conversion Rate: <span className="font-semibold text-foreground tabular-nums">{funnel.conversionRate}</span></span>
-              <span>Total Leads: <span className="font-semibold text-foreground tabular-nums">{funnel.totalLeads}</span></span>
+              <span>Submission → Deal Conversion: <span className="font-semibold text-foreground tabular-nums">{cvr(funnel)}</span></span>
             </div>
           </motion.div>
         ))}
       </div>
-
-      {/* Funnel Detail Sheet */}
-      <Sheet open={!!selectedFunnel} onOpenChange={(open) => !open && setSelectedFunnel(null)}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-          {selectedFunnel && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{selectedFunnel.name}</SheetTitle>
-                <SheetDescription>{selectedFunnel.client} · {selectedFunnel.status}</SheetDescription>
-              </SheetHeader>
-
-              <div className="mt-6 space-y-3">
-                <p className="metric-label">Funnel Steps</p>
-                {selectedFunnel.steps.map((step, i) => (
-                  <div key={step.id} className="flex items-center gap-3 group">
-                    <div className="flex flex-col items-center">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${STEP_COLORS[step.type]}`}>
-                        {i + 1}
-                      </div>
-                      {i < selectedFunnel.steps.length - 1 && <div className="w-px h-6 bg-border" />}
-                    </div>
-                    <div className="flex-1 bg-secondary rounded-xl p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">{step.name}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{step.type.replace("_", " ")}</p>
-                        </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button size="icon" variant="ghost" className="h-7 w-7"><Pencil className="h-3 w-3" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7"><GripVertical className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                        <span className="tabular-nums">{step.visitors.toLocaleString()} visitors</span>
-                        <span className="tabular-nums">{step.conversions.toLocaleString()} conversions</span>
-                        <span className="tabular-nums">
-                          {step.visitors > 0 ? ((step.conversions / step.visitors) * 100).toFixed(1) : "0"}% CVR
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6">
-                <Button variant="outline" className="w-full gap-1.5">
-                  <Plus className="h-4 w-4" /> Add Step
-                </Button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
