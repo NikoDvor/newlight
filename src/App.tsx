@@ -459,7 +459,7 @@ const App = () => {
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
                 <Route path="/call-tracking" element={<PermissionGuard moduleKey="crm"><CallTracking /></PermissionGuard>} />
-                <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><SalesTeamPipeline /></PermissionGuard>} />
+                <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><SalesTeamPipeline /></ClientFlagGate></PermissionGuard>} />
                 <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
                 <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
                 <Route path="/seo" element={<PermissionGuard moduleKey="seo"><SEO /></PermissionGuard>} />
