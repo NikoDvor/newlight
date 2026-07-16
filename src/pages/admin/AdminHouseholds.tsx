@@ -37,11 +37,11 @@ interface Member {
   id: string; household_id: string; contact_id: string;
   relationship_role: Role;
 }
-interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; }
+interface Contact { id: string; full_name: string; household_id: string | null; date_of_birth?: string | null; milestone_alerts_fired?: string[] | null; }
 
 type UpcomingRow =
-  | { kind: "review"; id: string; label: string; when: Date; sub: string }
-  | { kind: "milestone"; id: string; label: string; when: Date; sub: string };
+  | { kind: "review"; id: string; label: string; when: Date; sub: string; notified?: boolean }
+  | { kind: "milestone"; id: string; label: string; when: Date; sub: string; notified?: boolean };
 
 const MILESTONE_DEFS: Array<{ code: string; years: number; months: number; label: string }> = [
   { code: "59_5",         years: 59, months: 6, label: "Age 59½ — penalty-free withdrawals" },
