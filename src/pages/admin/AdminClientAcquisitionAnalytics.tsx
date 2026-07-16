@@ -8,11 +8,91 @@ import {
 } from "recharts";
 import {
   TrendingUp, Users, CalendarCheck, Target, AlertTriangle, ChevronDown, Eye,
+  Sparkles, Trophy, Zap, Lightbulb,
 } from "lucide-react";
 import {
   MOCK_ACQUISITION_CLIENTS, AcquisitionClient,
   closeRate, bookingRate, severityColor,
 } from "@/lib/clientAcquisitionMock";
+
+interface ChannelAggregate {
+  channel: string;
+  color: string;
+  views: number;
+  attributedAppts: number;
+  attributedClosed: number;
+  closeRate: number; // %
+  viewShare: number; // % of total roster views
+  score: number; // combined ranking score
+  label: string;
+}
+
+function useMarketInsights() {
+  return useMemo(() => {
+    const map = new Map<string, ChannelAggregate>();
+    let totalViews = 0;
+
+    for (const client of MOCK_ACQUISITION_CLIENTS) {
+      totalViews += client.totalViews;
+      for (const src of client.trafficSources) {
+        const share = client.totalViews > 0 ? src.views / client.totalViews : 0;
+        const prev = map.get(src.channel) ?? {
+          channel: src.channel, color: src.color, views: 0,
+          attributedAppts: 0, attributedClosed: 0, closeRate: 0, viewShare: 0, score: 0, label: "",
+        };
+        prev.views += src.views;
+        prev.attributedAppts += share * client.appointments;
+        prev.attributedClosed += share * client.closedWon;
+        map.set(src.channel, prev);
+      }
+    }
+
+    const channels = Array.from(map.values()).map((c) => ({
+      ...c,
+      closeRate: c.attributedAppts > 0 ? (c.attributedClosed / c.attributedAppts) * 100 : 0,
+      viewShare: totalViews > 0 ? (c.views / totalViews) * 100 : 0,
+    }));
+
+    const maxViews = Math.max(...channels.map((c) => c.views), 1);
+    const maxClose = Math.max(...channels.map((c) => c.closeRate), 1);
+
+    for (const c of channels) {
+      const volNorm = c.views / maxViews;
+      const convNorm = c.closeRate / maxClose;
+      c.score = Math.round((volNorm * 0.5 + convNorm * 0.5) * 100);
+      const highVol = volNorm >= 0.66;
+      const midVol = volNorm >= 0.33;
+      const highConv = convNorm >= 0.66;
+      const midConv = convNorm >= 0.33;
+      if (highVol && highConv) c.label = "Balanced performer";
+      else if (highVol && !midConv) c.label = "High volume, low conversion";
+      else if (!midVol && highConv) c.label = "Low volume, high conversion";
+      else if (midVol && midConv) c.label = "Steady contributor";
+      else if (highVol) c.label = "Volume-driven";
+      else if (highConv) c.label = "Conversion-driven";
+      else c.label = "Underperforming";
+    }
+
+    const topByViews = [...channels].sort((a, b) => b.views - a.views)[0];
+    const topByClose = [...channels].sort((a, b) => b.closeRate - a.closeRate)[0];
+    const ranked = [...channels].sort((a, b) => b.score - a.score);
+
+    return { channels, ranked, topByViews, topByClose, totalViews };
+  }, []);
+}
+
+function buildRecommendation(i: ReturnType<typeof useMarketInsights>): string {
+  const { topByClose, topByViews } = i;
+  const variants = [
+    `${topByClose.channel} traffic is converting at ${topByClose.closeRate.toFixed(1)}% — roughly ${(topByClose.closeRate / Math.max(topByViews.closeRate, 0.1)).toFixed(1)}x ${topByViews.channel} — yet only accounts for ${topByClose.viewShare.toFixed(0)}% of total views. Shifting acquisition investment toward ${topByClose.channel} should meaningfully lift roster-wide close rates.`,
+    `${topByViews.channel} drives the majority of top-of-funnel volume (${topByViews.viewShare.toFixed(0)}% of views) but converts at only ${topByViews.closeRate.toFixed(1)}%. Prioritize funnel + landing optimizations on ${topByViews.channel} clients while doubling down on ${topByClose.channel} as the highest-quality source.`,
+    `Roster analysis shows a clear volume-vs-conversion gap: ${topByViews.channel} leads in reach, ${topByClose.channel} leads in close rate. Recommended play is a 60/40 split — protect ${topByViews.channel} spend, aggressively grow ${topByClose.channel} presence across new client onboardings.`,
+  ];
+  // Deterministic pick so mock stays stable per render session.
+  return variants[0];
+}
+
+
 
 export default function AdminClientAcquisitionAnalytics() {
   const [expandedId, setExpandedId] = useState<string | null>(MOCK_ACQUISITION_CLIENTS[0]?.id ?? null);
@@ -34,7 +114,10 @@ export default function AdminClientAcquisitionAnalytics() {
         </p>
       </div>
 
+      <MarketInsights />
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
         {[
           { label: "Total Views", value: totals.views.toLocaleString(), icon: Eye, color: "hsl(211 96% 62%)" },
           { label: "Appointments", value: totals.appts.toLocaleString(), icon: CalendarCheck, color: "hsl(280 70% 65%)" },
