@@ -121,6 +121,7 @@ import AdminSalesControlCenter from "./pages/admin/AdminSalesControlCenter";
 import AdminRetention from "./pages/admin/AdminRetention";
 import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
 import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
+import AdminMarketingTemplates from "./pages/admin/AdminMarketingTemplates";
 import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
 import AdminWebinars from "./pages/admin/AdminWebinars";
