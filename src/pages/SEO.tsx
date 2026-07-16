@@ -804,26 +804,49 @@ export default function SEO() {
               )}
               <p className="text-xs text-muted-foreground mt-3">Technical issues refresh on each audit run. Resolve issues on the site then re-run to clear them.</p>
             </DataCard>
-            {clientType === "financial_firm" && (
-              <>
-                <DataCard title="E-E-A-T signals" className="mt-4">
-                  {[
-                    { label: "Author bios with credentials", note: "Confirm credentials are visible on published content" },
-                    { label: "ADV Part 2 link in footer", note: "Required disclosure for registered investment advisors" },
-                    { label: "Disclaimer in footer", note: "Confirm regulatory disclaimer is present site-wide" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-start justify-between py-3 border-b border-border last:border-0 gap-3">
-                      <div>
-                        <p className="text-sm font-medium">{item.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.note}</p>
-                      </div>
-                      <Badge className="text-[10px] bg-blue-50 text-blue-700 shrink-0">verify</Badge>
-                    </div>
-                  ))}
-                </DataCard>
-                <p className="text-xs text-muted-foreground mt-2">E-E-A-T signals support your compliance standard. Verify these are in place on the client's live site.</p>
-              </>
-            )}
+            {clientType === "financial_firm" && (() => {
+              const eeatIssues = issues.filter((i: any) => i.category === "eeat");
+              const findEeat = (keywords: string[]) => eeatIssues.find((i: any) => keywords.some(k => (i.issue_title || "").toLowerCase().includes(k)));
+              const advIssue = findEeat(["adv part 2"]);
+              const disclaimerIssue = findEeat(["disclaimer"]);
+              const stateFor = (i: any): "pass" | "fail" | "unknown" => !i ? "unknown" : (i.status === "resolved" ? "pass" : "fail");
+              const items = [
+                { label: "Author bios with credentials", note: "Confirm credentials are visible on published content", state: "manual" as const, issue: null as any },
+                { label: "ADV Part 2 link in footer", note: "Required disclosure for registered investment advisors", state: stateFor(advIssue), issue: advIssue },
+                { label: "Disclaimer in footer", note: "Confirm regulatory disclaimer is present site-wide", state: stateFor(disclaimerIssue), issue: disclaimerIssue },
+              ];
+              return (
+                <>
+                  <DataCard title="E-E-A-T signals" className="mt-4">
+                    {items.map((item) => {
+                      const badgeClass =
+                        item.state === "pass" ? "bg-emerald-500/10 text-emerald-500" :
+                        item.state === "fail" ? "bg-red-500/10 text-red-500" :
+                        item.state === "unknown" ? "bg-amber-500/10 text-amber-500" :
+                        "bg-blue-50 text-blue-700";
+                      const badgeText =
+                        item.state === "pass" ? "pass" :
+                        item.state === "fail" ? "fail" :
+                        item.state === "unknown" ? "unknown" :
+                        "verify";
+                      return (
+                        <div key={item.label} className="flex items-start justify-between py-3 border-b border-border last:border-0 gap-3">
+                          <div>
+                            <p className="text-sm font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {item.issue?.recommendation || item.note}
+                            </p>
+                          </div>
+                          <Badge className={`text-[10px] shrink-0 ${badgeClass}`}>{badgeText}</Badge>
+                        </div>
+                      );
+                    })}
+                  </DataCard>
+                  <p className="text-xs text-muted-foreground mt-2">ADV Part 2 link and disclaimer checks are automated on each audit run. Author bio review remains manual.</p>
+                </>
+              );
+            })()}
+
           </TabsContent>
 
           <TabsContent value="content" className="mt-4">
