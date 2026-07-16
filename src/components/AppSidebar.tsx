@@ -32,6 +32,8 @@ interface NavEntry {
 
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
     type: "group", label: "Client Acquisition",
     items: [
@@ -66,8 +68,6 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Growth Intelligence",
     items: [
-      { title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-      { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
       { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
       { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
       { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
