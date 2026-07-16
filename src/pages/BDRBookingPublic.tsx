@@ -459,6 +459,21 @@ export default function BDRBookingPublic() {
                     </div>
                   );
                 })}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Sales Team Tools (optional)</span>
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
+                  {SALES_TOOLS.map(st => (
+                    <SimpleModuleCheckbox
+                      key={st.key}
+                      label={st.label}
+                      checked={selectedModules.includes(st.key)}
+                      onToggle={() => toggleModule(st.key)}
+                    />
+                  ))}
+                </div>
               </div>
             </Field>
 
