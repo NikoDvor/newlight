@@ -389,6 +389,47 @@ export default function AdminCloseCenter() {
     load();
   };
 
+  const [generatingStripeFor, setGeneratingStripeFor] = useState<string | null>(null);
+  const generateStripePaymentLink = async (inv: InvoiceRow) => {
+    setGeneratingStripeFor(inv.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
+        body: {
+          invoice_id: inv.id,
+          amount: inv.total_amount,
+          description: `${client?.business_name || "Client"} — ${inv.invoice_number || "Invoice"}`,
+          client_email: client?.owner_email,
+        },
+      });
+      if (error) {
+        const ctx: any = (error as any).context;
+        const status = ctx?.status;
+        let msg = (error as any).message || "Failed to generate payment link";
+        try {
+          const parsed = ctx?.body ? JSON.parse(ctx.body) : null;
+          if (parsed?.error) msg = parsed.error;
+        } catch { /* ignore */ }
+        if (status === 503 || /Stripe not configured/i.test(msg)) {
+          toast.error("Stripe isn't set up yet — add the API key in project secrets.");
+        } else {
+          toast.error(msg);
+        }
+        return;
+      }
+      if (data?.url) {
+        toast.success("Stripe payment link generated");
+        await logAction("invoice", inv.id, "stripe_link_generated", "system");
+        load();
+      } else {
+        toast.error("No URL returned from Stripe");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to generate payment link");
+    } finally {
+      setGeneratingStripeFor(null);
+    }
+  };
+
   const updateInvoiceNotes = async (inv: InvoiceRow, notes: string) => {
     await supabase.from("invoices").update({ payment_notes: notes } as any).eq("id", inv.id);
   };
