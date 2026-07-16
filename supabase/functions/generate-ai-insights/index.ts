@@ -162,6 +162,28 @@ serve(async (req) => {
       })
       .filter((s): s is Signal => s !== null && s.breach);
 
+    // Persist snapshot of all breached signals (used by UI Weaknesses panel)
+    const signalsSnapshot = signals
+      .sort((a, b) => b.gap_pct - a.gap_pct)
+      .map((s) => ({
+        metric_key: s.metric_key,
+        category: s.category,
+        actual: Number(s.actual.toFixed(2)),
+        benchmark: s.benchmark,
+        top_quartile: s.top_quartile,
+        unit: s.unit,
+        gap_pct: Number(s.gap_pct.toFixed(1)),
+        direction: s.direction,
+        human_label: s.human_label,
+      }));
+
+    await sb
+      .from("client_signal_snapshots")
+      .upsert(
+        { client_id, signals: signalsSnapshot, industry, computed_at: new Date().toISOString() },
+        { onConflict: "client_id" }
+      );
+
     if (signals.length === 0) {
       // still clear old 'new' recs; nothing to insert
       await sb.from("ai_recommendations").delete().eq("client_id", client_id).eq("status", "new");
