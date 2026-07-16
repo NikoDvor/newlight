@@ -4,6 +4,7 @@ import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
   ThumbsDown, CheckCircle2, Megaphone, Search, Share2, Star, Globe,
   Users, Zap, Loader2, ArrowRight, ListChecks, BarChart3, Activity,
+  AlertTriangle, Flame, BookOpen,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
