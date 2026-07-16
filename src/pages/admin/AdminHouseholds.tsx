@@ -139,6 +139,7 @@ export default function AdminHouseholds() {
     for (const c of contacts) {
       if (!c.date_of_birth) continue;
       const dob = new Date(c.date_of_birth);
+      const fired = Array.isArray(c.milestone_alerts_fired) ? c.milestone_alerts_fired : [];
       for (const m of MILESTONE_DEFS) {
         const when = new Date(dob);
         when.setFullYear(when.getFullYear() + m.years);
@@ -149,6 +150,7 @@ export default function AdminHouseholds() {
             kind: "milestone", id: `m-${c.id}-${m.code}`, when,
             label: `${c.full_name} — ${m.label}`,
             sub: `In ${days}d`,
+            notified: fired.includes(m.code),
           });
         }
       }
