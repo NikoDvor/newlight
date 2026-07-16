@@ -7,7 +7,7 @@ import {
   FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
-  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck,
+  CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSidebar } from "@/components/ui/sidebar";
