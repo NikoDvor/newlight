@@ -448,494 +448,509 @@ export default function CRM() {
       {/* Tabs */}
       <div className="mt-4">
         <Tabs defaultValue="contacts" className="w-full">
-          <TabsList className="bg-secondary h-10 rounded-lg flex-wrap">
+          <TabsList className="bg-secondary h-11 rounded-lg flex-wrap">
             <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts</TabsTrigger>
-            <TabsTrigger value="companies" className="rounded-md text-sm">Companies</TabsTrigger>
-            <TabsTrigger value="deals" className="rounded-md text-sm">Deals</TabsTrigger>
             <TabsTrigger value="pipeline" className="rounded-md text-sm">Pipeline</TabsTrigger>
-            <TabsTrigger value="tasks" className="rounded-md text-sm">Tasks</TabsTrigger>
-            <TabsTrigger value="followups" className="rounded-md text-sm">Follow-Ups</TabsTrigger>
-            <TabsTrigger value="appointments" className="rounded-md text-sm">Appointments</TabsTrigger>
-            <TabsTrigger value="emails" className="rounded-md text-sm">Emails</TabsTrigger>
-            <TabsTrigger value="notes" className="rounded-md text-sm">Notes</TabsTrigger>
+            <TabsTrigger value="schedule" className="rounded-md text-sm">Schedule</TabsTrigger>
             <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
           </TabsList>
-
-          {/* CONTACTS TABLE */}
-          <TabsContent value="contacts" className="mt-4">
-            <DataCard title="Contacts" action={contacts.length > 0 ? (
-              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(contacts, "contacts")}>
-                <Download className="h-3 w-3" /> Export
-              </Button>
-            ) : undefined}>
-              {contacts.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Users className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No contacts yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add your first contact to start building your CRM.</p>
-                  <div className="flex gap-2 justify-center">
-                    <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
-                    {crmMode === "external" && !crmConnection && (
-                      <Button size="sm" variant="outline"><Link2 className="h-4 w-4 mr-1" /> Connect CRM</Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                     <tr className="border-b border-border">
-                         {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status", "Updated"].map(h => (
-                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                         ))}
-                       </tr>
-                     </thead>
-                     <tbody>
-                       {filteredContacts.map(c => (
-                         <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
-                           onClick={() => navigate(`/crm/contacts/${c.id}`)}>
-                           <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
-                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
-                           <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
-                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.contact_owner ? getOwnerName(c.contact_owner) : "—"}</td>
-                           <td className="py-3 pr-3">
-                             {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
-                           </td>
-                           <td className="text-xs text-muted-foreground py-3 pr-3">{c.last_interaction_date ? new Date(c.last_interaction_date).toLocaleDateString() : "—"}</td>
-                            <td className="py-3 pr-3">
-                              <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
-                           </td>
-                           <td className="text-[10px] text-muted-foreground py-3">{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* COMPANIES TABLE */}
-          <TabsContent value="companies" className="mt-4">
-            <DataCard title="Companies" action={companies.length > 0 ? (
-              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(companies, "companies")}>
-                <Download className="h-3 w-3" /> Export
-              </Button>
-            ) : undefined}>
-              {companies.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Building2 className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No companies yet</p>
-                  <p className="text-xs text-muted-foreground mb-4">Add a company to organize your contacts and deals.</p>
-                  <Button size="sm" onClick={() => setCompanyOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Company</Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        {["Company", "Website", "Industry", "Phone", "Contacts", "Revenue"].map(h => (
-                          <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {companies.filter(co => !q || co.company_name?.toLowerCase().includes(q)).map(co => {
-                        const coContacts = contacts.filter(c => c.company_id === co.id);
-                        const coRevenue = deals.filter(d => d.company_id === co.id && d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
-                        return (
-                          <tr key={co.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
-                            onClick={() => navigate(`/crm/companies/${co.id}`)}>
-                            <td className="text-sm font-medium py-3 pr-3">{co.company_name}</td>
-                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.website || "—"}</td>
-                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.industry || "—"}</td>
-                            <td className="text-sm text-muted-foreground py-3 pr-3">{co.phone || "—"}</td>
-                            <td className="text-sm tabular-nums py-3 pr-3">{coContacts.length}</td>
-                            <td className="text-sm tabular-nums py-3">${coRevenue.toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* DEALS TABLE */}
-          <TabsContent value="deals" className="mt-4">
-            <DataCard title="Deals" action={deals.length > 0 ? (
-              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(deals, "deals")}>
-                <Download className="h-3 w-3" /> Export
-              </Button>
-            ) : undefined}>
-              {deals.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
-                    <Briefcase className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
-                  </div>
-                  <p className="text-sm font-medium text-foreground mb-1">No deals yet</p>
-                  <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Deal</Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                     <tr className="border-b border-border">
-                         {["Deal", "Contact", "Owner", "Stage", "Value", "Probability", "Status", "Updated", "Action"].map(h => (
-                           <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                         ))}
-                       </tr>
-                     </thead>
-                     <tbody>
-                       {filteredDeals.map(d => (
-                         <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                           <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
-                           <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                             onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
-                             {d.contact_id ? getContactName(d.contact_id) : "—"}
-                           </td>
-                           <td className="text-xs text-muted-foreground py-3 pr-3">{d.assigned_user ? getOwnerName(d.assigned_user) : "—"}</td>
-                           <td className="py-3 pr-3">
-                             <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
-                               {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
-                             </Badge>
-                           </td>
-                           <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
-                           <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
-                            <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
-                            <td className="text-[10px] text-muted-foreground py-3 pr-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}</td>
-                           <td className="py-3">
-                             {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
-                               <Select onValueChange={v => moveDealStage(d.id, v)}>
-                                 <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
-                                 <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
-                               </Select>
-                             )}
-                           </td>
-                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* PIPELINE BOARD */}
-          <TabsContent value="pipeline" className="mt-4">
-            <div className="flex gap-3 overflow-x-auto pb-4">
-              {PIPELINE_STAGES.map(stage => {
-                const stageDeals = deals.filter(d => d.pipeline_stage === stage);
-                const stageValue = stageDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
-                return (
-                  <div key={stage} className="min-w-[220px] flex-1"
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={e => { const id = e.dataTransfer.getData("dealId"); if (id) moveDealStage(id, stage); }}>
-                    <div className="rounded-xl border border-border bg-card">
-                      <div className="px-3 py-2.5 border-b border-border">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-semibold">{STAGE_LABELS[stage]}</h3>
-                          <span className="text-[10px] text-muted-foreground tabular-nums">{stageDeals.length}</span>
-                        </div>
-                        <p className="text-[10px] tabular-nums mt-0.5" style={{ color: "hsl(197 92% 48%)" }}>${stageValue.toLocaleString()}</p>
+          <TabsContent value="contacts" className="mt-4 space-y-2">
+            <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Contacts</p>
+            <Tabs defaultValue="contacts" className="w-full">
+              <TabsList className="bg-transparent h-9 rounded-none border-b border-border w-full justify-start gap-4 flex-wrap">
+                <TabsTrigger value="contacts" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Contacts</TabsTrigger>
+                <TabsTrigger value="companies" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Companies</TabsTrigger>
+              </TabsList>
+              <TabsContent value="contacts" className="mt-4">
+                <DataCard title="Contacts" action={contacts.length > 0 ? (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(contacts, "contacts")}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                ) : undefined}>
+                  {contacts.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <Users className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
                       </div>
-                      <div className="p-2 space-y-2 min-h-[120px]">
-                        {stageDeals.map(d => (
-                          <div key={d.id} draggable onDragStart={e => e.dataTransfer.setData("dealId", d.id)}
-                            className="card-widget p-3 rounded-xl cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow">
-                            <p className="text-sm font-medium truncate">{d.deal_name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 truncate cursor-pointer hover:text-primary"
-                              onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
-                              {d.contact_id ? getContactName(d.contact_id) : "Unlinked"}
-                            </p>
-                            <p className="text-xs font-medium tabular-nums mt-1" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</p>
+                      <p className="text-sm font-medium text-foreground mb-1">No contacts yet</p>
+                      <p className="text-xs text-muted-foreground mb-4">Add your first contact to start building your CRM.</p>
+                      <div className="flex gap-2 justify-center">
+                        <Button size="sm" onClick={() => setContactOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Contact</Button>
+                        {crmMode === "external" && !crmConnection && (
+                          <Button size="sm" variant="outline"><Link2 className="h-4 w-4 mr-1" /> Connect CRM</Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                         <tr className="border-b border-border">
+                             {["Name", "Email", "Phone", "Owner", "Stage", "Last Contact", "Status", "Updated"].map(h => (
+                               <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                             ))}
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {filteredContacts.map(c => (
+                             <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                               onClick={() => navigate(`/crm/contacts/${c.id}`)}>
+                               <td className="text-sm font-medium py-3 pr-3">{c.full_name}</td>
+                               <td className="text-sm text-muted-foreground py-3 pr-3">{c.email || "—"}</td>
+                               <td className="text-sm text-muted-foreground py-3 pr-3">{c.phone || "—"}</td>
+                               <td className="text-xs text-muted-foreground py-3 pr-3">{c.contact_owner ? getOwnerName(c.contact_owner) : "—"}</td>
+                               <td className="py-3 pr-3">
+                                 {c.pipeline_stage && <Badge className={`text-[10px] ${STAGE_COLORS[c.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[c.pipeline_stage] || c.pipeline_stage}</Badge>}
+                               </td>
+                               <td className="text-xs text-muted-foreground py-3 pr-3">{c.last_interaction_date ? new Date(c.last_interaction_date).toLocaleDateString() : "—"}</td>
+                                <td className="py-3 pr-3">
+                                  <Badge className={`text-[10px] ${STATUS_STYLE[c.contact_status] || "bg-secondary text-muted-foreground"}`}>{c.contact_status || "lead"}</Badge>
+                               </td>
+                               <td className="text-[10px] text-muted-foreground py-3">{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="companies" className="mt-4">
+                <DataCard title="Companies" action={companies.length > 0 ? (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(companies, "companies")}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                ) : undefined}>
+                  {companies.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <Building2 className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                      </div>
+                      <p className="text-sm font-medium text-foreground mb-1">No companies yet</p>
+                      <p className="text-xs text-muted-foreground mb-4">Add a company to organize your contacts and deals.</p>
+                      <Button size="sm" onClick={() => setCompanyOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Company</Button>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-border">
+                            {["Company", "Website", "Industry", "Phone", "Contacts", "Revenue"].map(h => (
+                              <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {companies.filter(co => !q || co.company_name?.toLowerCase().includes(q)).map(co => {
+                            const coContacts = contacts.filter(c => c.company_id === co.id);
+                            const coRevenue = deals.filter(d => d.company_id === co.id && d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+                            return (
+                              <tr key={co.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                                onClick={() => navigate(`/crm/companies/${co.id}`)}>
+                                <td className="text-sm font-medium py-3 pr-3">{co.company_name}</td>
+                                <td className="text-sm text-muted-foreground py-3 pr-3">{co.website || "—"}</td>
+                                <td className="text-sm text-muted-foreground py-3 pr-3">{co.industry || "—"}</td>
+                                <td className="text-sm text-muted-foreground py-3 pr-3">{co.phone || "—"}</td>
+                                <td className="text-sm tabular-nums py-3 pr-3">{coContacts.length}</td>
+                                <td className="text-sm tabular-nums py-3">${coRevenue.toLocaleString()}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="pipeline" className="mt-4 space-y-2">
+            <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Pipeline</p>
+            <Tabs defaultValue="deals" className="w-full">
+              <TabsList className="bg-transparent h-9 rounded-none border-b border-border w-full justify-start gap-4 flex-wrap">
+                <TabsTrigger value="deals" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Deals</TabsTrigger>
+                <TabsTrigger value="pipeline" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Pipeline</TabsTrigger>
+              </TabsList>
+              <TabsContent value="deals" className="mt-4">
+                <DataCard title="Deals" action={deals.length > 0 ? (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(deals, "deals")}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                ) : undefined}>
+                  {deals.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "hsla(211,96%,56%,.08)" }}>
+                        <Briefcase className="h-6 w-6" style={{ color: "hsl(211 96% 56%)" }} />
+                      </div>
+                      <p className="text-sm font-medium text-foreground mb-1">No deals yet</p>
+                      <Button size="sm" onClick={() => setDealOpen(true)}><Plus className="h-4 w-4 mr-1" /> Create Deal</Button>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                         <tr className="border-b border-border">
+                             {["Deal", "Contact", "Owner", "Stage", "Value", "Probability", "Status", "Updated", "Action"].map(h => (
+                               <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                             ))}
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {filteredDeals.map(d => (
+                             <tr key={d.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                               <td className="text-sm font-medium py-3 pr-3">{d.deal_name}</td>
+                               <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                                 onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                                 {d.contact_id ? getContactName(d.contact_id) : "—"}
+                               </td>
+                               <td className="text-xs text-muted-foreground py-3 pr-3">{d.assigned_user ? getOwnerName(d.assigned_user) : "—"}</td>
+                               <td className="py-3 pr-3">
+                                 <Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>
+                                   {STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}
+                                 </Badge>
+                               </td>
+                               <td className="text-sm tabular-nums py-3 pr-3">${Number(d.deal_value || 0).toLocaleString()}</td>
+                               <td className="text-sm tabular-nums py-3 pr-3">{d.close_probability || 0}%</td>
+                                <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                                <td className="text-[10px] text-muted-foreground py-3 pr-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}</td>
+                               <td className="py-3">
+                                 {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
+                                   <Select onValueChange={v => moveDealStage(d.id, v)}>
+                                     <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
+                                     <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                                   </Select>
+                                 )}
+                               </td>
+                             </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="pipeline" className="mt-4">
+                <div className="flex gap-3 overflow-x-auto pb-4">
+                  {PIPELINE_STAGES.map(stage => {
+                    const stageDeals = deals.filter(d => d.pipeline_stage === stage);
+                    const stageValue = stageDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+                    return (
+                      <div key={stage} className="min-w-[220px] flex-1"
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => { const id = e.dataTransfer.getData("dealId"); if (id) moveDealStage(id, stage); }}>
+                        <div className="rounded-xl border border-border bg-card">
+                          <div className="px-3 py-2.5 border-b border-border">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-xs font-semibold">{STAGE_LABELS[stage]}</h3>
+                              <span className="text-[10px] text-muted-foreground tabular-nums">{stageDeals.length}</span>
+                            </div>
+                            <p className="text-[10px] tabular-nums mt-0.5" style={{ color: "hsl(197 92% 48%)" }}>${stageValue.toLocaleString()}</p>
                           </div>
-                        ))}
-                        {stageDeals.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-6">No deals</p>}
+                          <div className="p-2 space-y-2 min-h-[120px]">
+                            {stageDeals.map(d => (
+                              <div key={d.id} draggable onDragStart={e => e.dataTransfer.setData("dealId", d.id)}
+                                className="card-widget p-3 rounded-xl cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow">
+                                <p className="text-sm font-medium truncate">{d.deal_name}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 truncate cursor-pointer hover:text-primary"
+                                  onClick={() => d.contact_id && navigate(`/crm/contacts/${d.contact_id}`)}>
+                                  {d.contact_id ? getContactName(d.contact_id) : "Unlinked"}
+                                </p>
+                                <p className="text-xs font-medium tabular-nums mt-1" style={{ color: "hsl(197 92% 48%)" }}>${Number(d.deal_value || 0).toLocaleString()}</p>
+                              </div>
+                            ))}
+                            {stageDeals.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-6">No deals</p>}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          {/* TASKS TABLE */}
-          <TabsContent value="tasks" className="mt-4">
-            <DataCard title="Tasks" action={
-              <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setTaskOpen(true)}>
-                <Plus className="h-3 w-3" /> Add Task
-              </Button>
-            }>
-              {tasks.length === 0 ? (
-                <div className="py-8 text-center">
-                  <ListChecks className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No tasks yet. Tasks are created automatically from automations and follow-up actions.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead><tr className="border-b border-border">
-                      {["Title", "Contact", "Due", "Priority", "Status", "Action"].map(h => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {tasks.map(t => {
-                        const statusColor =
-                          t.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                          t.status === "in_progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          t.status === "cancelled" ? "bg-muted text-muted-foreground" :
-                          "bg-amber-50 text-amber-700 border-amber-200";
-                        const priorityColor =
-                          t.priority === "high" ? "bg-red-50 text-red-700 border-red-200" :
-                          t.priority === "medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                          "bg-muted text-muted-foreground";
-                        return (
-                          <tr key={t.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                            <td className="text-sm font-medium py-3 pr-3">
-                              {t.title}
-                              {t.description && <p className="text-[10px] text-muted-foreground">{t.description}</p>}
-                            </td>
-                            <td className="text-xs text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                              onClick={() => t.contact_id && navigate(`/crm/contacts/${t.contact_id}`)}>
-                              {t.contact_id ? getContactName(t.contact_id) : "—"}
-                            </td>
-                            <td className="text-sm text-muted-foreground py-3 pr-3">{t.due_date ? new Date(t.due_date).toLocaleDateString() : "—"}</td>
-                            <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${priorityColor}`}>{t.priority}</Badge></td>
-                            <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${statusColor}`}>{t.status}</Badge></td>
-                            <td className="py-3">
-                              {t.status !== "completed" && (
-                                <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>Complete</Button>
+          <TabsContent value="schedule" className="mt-4 space-y-2">
+            <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Schedule</p>
+            <Tabs defaultValue="tasks" className="w-full">
+              <TabsList className="bg-transparent h-9 rounded-none border-b border-border w-full justify-start gap-4 flex-wrap">
+                <TabsTrigger value="tasks" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Tasks</TabsTrigger>
+                <TabsTrigger value="followups" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Follow-Ups</TabsTrigger>
+                <TabsTrigger value="appointments" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Appointments</TabsTrigger>
+              </TabsList>
+              <TabsContent value="tasks" className="mt-4">
+                <DataCard title="Tasks" action={
+                  <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setTaskOpen(true)}>
+                    <Plus className="h-3 w-3" /> Add Task
+                  </Button>
+                }>
+                  {tasks.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <ListChecks className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No tasks yet. Tasks are created automatically from automations and follow-up actions.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr className="border-b border-border">
+                          {["Title", "Contact", "Due", "Priority", "Status", "Action"].map(h => (
+                            <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3">{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {tasks.map(t => {
+                            const statusColor =
+                              t.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                              t.status === "in_progress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                              t.status === "cancelled" ? "bg-muted text-muted-foreground" :
+                              "bg-amber-50 text-amber-700 border-amber-200";
+                            const priorityColor =
+                              t.priority === "high" ? "bg-red-50 text-red-700 border-red-200" :
+                              t.priority === "medium" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                              "bg-muted text-muted-foreground";
+                            return (
+                              <tr key={t.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                                <td className="text-sm font-medium py-3 pr-3">
+                                  {t.title}
+                                  {t.description && <p className="text-[10px] text-muted-foreground">{t.description}</p>}
+                                </td>
+                                <td className="text-xs text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                                  onClick={() => t.contact_id && navigate(`/crm/contacts/${t.contact_id}`)}>
+                                  {t.contact_id ? getContactName(t.contact_id) : "—"}
+                                </td>
+                                <td className="text-sm text-muted-foreground py-3 pr-3">{t.due_date ? new Date(t.due_date).toLocaleDateString() : "—"}</td>
+                                <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${priorityColor}`}>{t.priority}</Badge></td>
+                                <td className="py-3 pr-3"><Badge variant="outline" className={`text-[10px] ${statusColor}`}>{t.status}</Badge></td>
+                                <td className="py-3">
+                                  {t.status !== "completed" && (
+                                    <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => updateTaskStatus(t.id, "completed")}>Complete</Button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="followups" className="mt-4">
+                <DataCard title="Follow-Ups" action={
+                  <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setFollowUpOpen(true)}>
+                    <Plus className="h-3 w-3" /> Add Follow-Up
+                  </Button>
+                }>
+                  {followUps.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <AlarmClock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No follow-ups. Follow-ups are created when deals go quiet or proposals go unread.</p>
+                    </div>
+                  ) : (() => {
+                    const now = Date.now();
+                    const isCompleted = (s: string) => (s || "").toLowerCase() === "completed";
+                    const overdue = followUps.filter(f => !isCompleted(f.status) && f.due_at && new Date(f.due_at).getTime() < now);
+                    const upcoming = followUps.filter(f => isCompleted(f.status) || !f.due_at || new Date(f.due_at).getTime() >= now);
+
+                    const relLabel = (due: string | null) => {
+                      if (!due) return "No due date";
+                      const d = new Date(due).getTime();
+                      const diff = d - now;
+                      const day = 86400000;
+                      if (diff < 0) {
+                        const days = Math.ceil(-diff / day);
+                        return `Overdue ${days}d`;
+                      }
+                      if (diff < day) return "Due Today";
+                      if (diff < 2 * day) return "Due Tomorrow";
+                      return `Due ${new Date(due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+                    };
+
+                    const priorityColor = (p: string) => {
+                      const v = (p || "").toLowerCase();
+                      if (v === "high") return "bg-red-50 text-red-700 border-red-200";
+                      if (v === "medium") return "bg-amber-50 text-amber-700 border-amber-200";
+                      return "bg-muted text-muted-foreground";
+                    };
+
+                    const renderRow = (f: any, isOverdue: boolean) => {
+                      const contactId = f.related_type === "contact" ? f.related_id : null;
+                      return (
+                        <div key={f.id} className="flex items-center justify-between gap-3 py-3 border-b border-border last:border-0">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{f.notes || f.queue_type || "Follow-up"}</p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {contactId && (
+                                <span className="text-[10px] text-muted-foreground cursor-pointer hover:text-primary" onClick={() => navigate(`/crm/contacts/${contactId}`)}>
+                                  {getContactName(contactId)}
+                                </span>
                               )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* FOLLOW-UPS */}
-          <TabsContent value="followups" className="mt-4">
-            <DataCard title="Follow-Ups" action={
-              <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setFollowUpOpen(true)}>
-                <Plus className="h-3 w-3" /> Add Follow-Up
-              </Button>
-            }>
-              {followUps.length === 0 ? (
-                <div className="py-8 text-center">
-                  <AlarmClock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No follow-ups. Follow-ups are created when deals go quiet or proposals go unread.</p>
-                </div>
-              ) : (() => {
-                const now = Date.now();
-                const isCompleted = (s: string) => (s || "").toLowerCase() === "completed";
-                const overdue = followUps.filter(f => !isCompleted(f.status) && f.due_at && new Date(f.due_at).getTime() < now);
-                const upcoming = followUps.filter(f => isCompleted(f.status) || !f.due_at || new Date(f.due_at).getTime() >= now);
-
-                const relLabel = (due: string | null) => {
-                  if (!due) return "No due date";
-                  const d = new Date(due).getTime();
-                  const diff = d - now;
-                  const day = 86400000;
-                  if (diff < 0) {
-                    const days = Math.ceil(-diff / day);
-                    return `Overdue ${days}d`;
-                  }
-                  if (diff < day) return "Due Today";
-                  if (diff < 2 * day) return "Due Tomorrow";
-                  return `Due ${new Date(due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
-                };
-
-                const priorityColor = (p: string) => {
-                  const v = (p || "").toLowerCase();
-                  if (v === "high") return "bg-red-50 text-red-700 border-red-200";
-                  if (v === "medium") return "bg-amber-50 text-amber-700 border-amber-200";
-                  return "bg-muted text-muted-foreground";
-                };
-
-                const renderRow = (f: any, isOverdue: boolean) => {
-                  const contactId = f.related_type === "contact" ? f.related_id : null;
-                  return (
-                    <div key={f.id} className="flex items-center justify-between gap-3 py-3 border-b border-border last:border-0">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{f.notes || f.queue_type || "Follow-up"}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {contactId && (
-                            <span className="text-[10px] text-muted-foreground cursor-pointer hover:text-primary" onClick={() => navigate(`/crm/contacts/${contactId}`)}>
-                              {getContactName(contactId)}
-                            </span>
+                              <Badge variant="outline" className={`text-[10px] ${priorityColor(f.priority)}`}>{f.priority}</Badge>
+                              <span className={`text-[10px] ${isOverdue ? "text-red-600" : "text-muted-foreground"}`}>{relLabel(f.due_at)}</span>
+                            </div>
+                          </div>
+                          {!isCompleted(f.status) && (
+                            <div className="flex gap-1.5 shrink-0">
+                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => snoozeFollowUp(f.id)}>Snooze</Button>
+                              <Button size="sm" className="h-7 text-[10px]" onClick={() => completeFollowUp(f.id)}>Mark Done</Button>
+                            </div>
                           )}
-                          <Badge variant="outline" className={`text-[10px] ${priorityColor(f.priority)}`}>{f.priority}</Badge>
-                          <span className={`text-[10px] ${isOverdue ? "text-red-600" : "text-muted-foreground"}`}>{relLabel(f.due_at)}</span>
                         </div>
-                      </div>
-                      {!isCompleted(f.status) && (
-                        <div className="flex gap-1.5 shrink-0">
-                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => snoozeFollowUp(f.id)}>Snooze</Button>
-                          <Button size="sm" className="h-7 text-[10px]" onClick={() => completeFollowUp(f.id)}>Mark Done</Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                };
+                      );
+                    };
 
-                return (
-                  <div className="space-y-6">
-                    {overdue.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-red-600 mb-2">Overdue ({overdue.length})</p>
-                        <div>{overdue.map(f => renderRow(f, true))}</div>
+                    return (
+                      <div className="space-y-6">
+                        {overdue.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-red-600 mb-2">Overdue ({overdue.length})</p>
+                            <div>{overdue.map(f => renderRow(f, true))}</div>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">Upcoming ({upcoming.length})</p>
+                          {upcoming.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-3">Nothing upcoming.</p>
+                          ) : (
+                            <div>{upcoming.map(f => renderRow(f, false))}</div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground mb-2">Upcoming ({upcoming.length})</p>
-                      {upcoming.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-3">Nothing upcoming.</p>
-                      ) : (
-                        <div>{upcoming.map(f => renderRow(f, false))}</div>
-                      )}
+                    );
+                  })()}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="appointments" className="mt-4">
+                <DataCard title="Appointments" action={appointments.length > 0 ? (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(appointments, "appointments")}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                ) : undefined}>
+                  {appointments.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No appointments yet. Schedule one from the Calendar.</p>
                     </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr className="border-b border-border">
+                          {["Title", "Contact", "Date", "Time", "Status", "Location", "Source"].map(h => (
+                            <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {appointments.map(ap => (
+                            <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                              <td className="text-sm font-medium py-3 pr-3">{ap.title}</td>
+                              <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                                onClick={() => ap.contact_id && navigate(`/crm/contacts/${ap.contact_id}`)}>
+                                {ap.contact_name || (ap.contact_id ? getContactName(ap.contact_id) : "—")}
+                              </td>
+                              <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleDateString()}</td>
+                              <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                              <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
+                              <td className="text-sm text-muted-foreground py-3 pr-3">{ap.location || "—"}</td>
+                              <td className="text-xs text-muted-foreground py-3">{ap.booking_source || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-4 space-y-2">
+            <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Activity</p>
+            <Tabs defaultValue="emails" className="w-full">
+              <TabsList className="bg-transparent h-9 rounded-none border-b border-border w-full justify-start gap-4 flex-wrap">
+                <TabsTrigger value="emails" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Emails</TabsTrigger>
+                <TabsTrigger value="notes" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Notes</TabsTrigger>
+                <TabsTrigger value="activity" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Activity</TabsTrigger>
+              </TabsList>
+              <TabsContent value="emails" className="mt-4">
+                <DataCard title="Emails">
+                  {emails.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <Mail className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No emails linked yet. Connect your email from the Email module.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr className="border-b border-border">
+                          {["Contact", "Subject", "Direction", "From/To", "Date"].map(h => (
+                            <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {emails.map(e => (
+                            <tr key={e.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                              <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
+                                onClick={() => e.contact_id && navigate(`/crm/contacts/${e.contact_id}`)}>
+                                {e.contact_id ? getContactName(e.contact_id) : e.from_name || "Unknown"}
+                              </td>
+                              <td className="text-sm font-medium py-3 pr-3 truncate max-w-[200px]">{e.subject || "(no subject)"}</td>
+                              <td className="py-3 pr-3">
+                                <Badge variant="outline" className={`text-[10px] ${e.direction === "inbound" ? "border-primary/30 text-primary" : ""}`}>
+                                  {e.direction}
+                                </Badge>
+                              </td>
+                              <td className="text-sm text-muted-foreground py-3 pr-3 truncate max-w-[160px]">{e.direction === "inbound" ? e.from_address : e.to_address}</td>
+                              <td className="text-xs text-muted-foreground py-3">{e.sent_at ? new Date(e.sent_at).toLocaleString() : new Date(e.created_at).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="notes" className="mt-4">
+                <DataCard title="Notes">
+                  <div className="mb-4 flex gap-2">
+                    <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note…" className="min-h-[44px] flex-1 resize-none" rows={2} />
+                    <Button size="icon" className="shrink-0 self-end" onClick={() => addNote()} disabled={!newNote.trim()}>
+                      <StickyNote className="h-4 w-4" />
+                    </Button>
                   </div>
-                );
-              })()}
-            </DataCard>
-          </TabsContent>
-
-          {/* APPOINTMENTS TABLE */}
-          <TabsContent value="appointments" className="mt-4">
-            <DataCard title="Appointments" action={appointments.length > 0 ? (
-              <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => exportCsv(appointments, "appointments")}>
-                <Download className="h-3 w-3" /> Export
-              </Button>
-            ) : undefined}>
-              {appointments.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No appointments yet. Schedule one from the Calendar.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead><tr className="border-b border-border">
-                      {["Title", "Contact", "Date", "Time", "Status", "Location", "Source"].map(h => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
+                  {notes.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-muted-foreground">No notes yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {notes.map((n: any) => (
+                        <div key={n.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                          <p className="text-sm whitespace-pre-wrap">{n.content}</p>
+                          <p className="text-[10px] text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
+                        </div>
                       ))}
-                    </tr></thead>
-                    <tbody>
-                      {appointments.map(ap => (
-                        <tr key={ap.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                          <td className="text-sm font-medium py-3 pr-3">{ap.title}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                            onClick={() => ap.contact_id && navigate(`/crm/contacts/${ap.contact_id}`)}>
-                            {ap.contact_name || (ap.contact_id ? getContactName(ap.contact_id) : "—")}
-                          </td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleDateString()}</td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{new Date(ap.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                          <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{ap.calendar_status}</Badge></td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3">{ap.location || "—"}</td>
-                          <td className="text-xs text-muted-foreground py-3">{ap.booking_source || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* EMAILS TABLE */}
-          <TabsContent value="emails" className="mt-4">
-            <DataCard title="Emails">
-              {emails.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Mail className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No emails linked yet. Connect your email from the Email module.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead><tr className="border-b border-border">
-                      {["Contact", "Subject", "Direction", "From/To", "Date"].map(h => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground py-3 pr-3 whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {emails.map(e => (
-                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                          <td className="text-sm text-muted-foreground py-3 pr-3 cursor-pointer hover:text-primary"
-                            onClick={() => e.contact_id && navigate(`/crm/contacts/${e.contact_id}`)}>
-                            {e.contact_id ? getContactName(e.contact_id) : e.from_name || "Unknown"}
-                          </td>
-                          <td className="text-sm font-medium py-3 pr-3 truncate max-w-[200px]">{e.subject || "(no subject)"}</td>
-                          <td className="py-3 pr-3">
-                            <Badge variant="outline" className={`text-[10px] ${e.direction === "inbound" ? "border-primary/30 text-primary" : ""}`}>
-                              {e.direction}
-                            </Badge>
-                          </td>
-                          <td className="text-sm text-muted-foreground py-3 pr-3 truncate max-w-[160px]">{e.direction === "inbound" ? e.from_address : e.to_address}</td>
-                          <td className="text-xs text-muted-foreground py-3">{e.sent_at ? new Date(e.sent_at).toLocaleString() : new Date(e.created_at).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* NOTES */}
-          <TabsContent value="notes" className="mt-4">
-            <DataCard title="Notes">
-              <div className="mb-4 flex gap-2">
-                <Textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add a quick note…" className="min-h-[44px] flex-1 resize-none" rows={2} />
-                <Button size="icon" className="shrink-0 self-end" onClick={() => addNote()} disabled={!newNote.trim()}>
-                  <StickyNote className="h-4 w-4" />
-                </Button>
-              </div>
-              {notes.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">No notes yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {notes.map((n: any) => (
-                    <div key={n.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
-                      <p className="text-sm whitespace-pre-wrap">{n.content}</p>
-                      <p className="text-[10px] text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </DataCard>
-          </TabsContent>
-
-          {/* ACTIVITY */}
-          <TabsContent value="activity" className="mt-4">
-            <DataCard title="Recent Activity">
-              {activities.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">Activity will appear as you use your CRM.</p>
-              ) : (
-                <div className="space-y-3">
-                  {activities.map(a => (
-                    <div key={a.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-                      <div className="h-2 w-2 rounded-full mt-2 shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
-                      <div>
-                        <p className="text-sm">{a.activity_note || a.activity_type}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
-                      </div>
+                  )}
+                </DataCard>
+              </TabsContent>
+              <TabsContent value="activity" className="mt-4">
+                <DataCard title="Recent Activity">
+                  {activities.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">Activity will appear as you use your CRM.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {activities.map(a => (
+                        <div key={a.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                          <div className="h-2 w-2 rounded-full mt-2 shrink-0" style={{ background: "hsl(211 96% 56%)" }} />
+                          <div>
+                            <p className="text-sm">{a.activity_note || a.activity_type}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </DataCard>
+                  )}
+                </DataCard>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
