@@ -211,23 +211,25 @@ export default function AdminBilling() {
               {payments.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No payment records yet.</p>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={headCls}>Company</th><th className={headCls}>Provider</th><th className={headCls}>Method</th><th className={headCls}>Status</th><th className={headCls}>Amount</th><th className={headCls}>Date</th>
-                  </tr></thead>
-                  <tbody>
-                    {payments.map((p: any) => (
-                      <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                        <td className={cellCls + " font-medium text-white"}>{(p.clients as any)?.business_name || "—"}</td>
-                        <td className={cellCls}>{p.payment_provider}</td>
-                        <td className={cellCls}>{p.payment_method_type}</td>
-                        <td className={cellCls}><SBadge status={p.payment_status} /></td>
-                        <td className={cellCls + " tabular-nums"}>${Number(p.amount || 0).toLocaleString()}</td>
-                        <td className={cellCls}>{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={headCls}>Company</th><th className={headCls}>Provider</th><th className={headCls}>Method</th><th className={headCls}>Status</th><th className={headCls}>Amount</th><th className={headCls}>Date</th>
+                    </tr></thead>
+                    <tbody>
+                      {payments.map((p: any) => (
+                        <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                          <td className={cellCls + " font-medium text-white"}>{(p.clients as any)?.business_name || "—"}</td>
+                          <td className={cellCls}>{p.payment_provider}</td>
+                          <td className={cellCls}>{p.payment_method_type}</td>
+                          <td className={cellCls}><SBadge status={p.payment_status} /></td>
+                          <td className={cellCls + " tabular-nums"}>${Number(p.amount || 0).toLocaleString()}</td>
+                          <td className={cellCls}>{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
