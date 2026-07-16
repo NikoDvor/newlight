@@ -173,6 +173,21 @@ export default function AdminPromoters() {
 
   useEffect(() => { load(); }, [activeClientId]);
 
+  // Deep-link: ?promoterId=xxx auto-opens the promoter Sheet.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const pid = searchParams.get("promoterId");
+    if (!pid) return;
+    const existing = promoters.find((p) => p.id === pid);
+    if (existing) {
+      openPromoter(existing);
+    } else {
+      supabase.from("promoters").select("*").eq("id", pid).maybeSingle().then(({ data }) => {
+        if (data) openPromoter(data as any);
+      });
+    }
+  }, [searchParams, promoters]);
+
 
 
 
