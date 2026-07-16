@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/components/LogoUploader";
-import { CORE_MODULES } from "@/lib/coreModules";
+import { CORE_MODULES, CoreModule } from "@/lib/coreModules";
 
 
 
