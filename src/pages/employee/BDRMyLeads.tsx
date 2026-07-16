@@ -151,6 +151,7 @@ const FILTER_TABS: { key: string; label: string }[] = [
 export default function BDRMyLeads() {
   const { user } = useWorkspace();
   const { clientId } = useEmployeeClientId();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<BdrLead[]>([]);
   const [calledLeadIds, setCalledLeadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
