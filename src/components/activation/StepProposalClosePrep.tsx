@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DollarSign, CheckCircle2 } from "lucide-react";
+import { DollarSign, CheckCircle2, Calendar, Copy, Check, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { ActivationHelp } from "./ActivationHelp";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import type { StepProps } from "./activationTypes";
 
 const inputCls = "bg-white/[0.06] border-white/10 text-white placeholder:text-white/30";
