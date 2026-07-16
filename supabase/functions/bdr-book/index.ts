@@ -26,6 +26,10 @@ Deno.serve(async (req) => {
       ? modules_of_interest.filter((m: unknown) => typeof m === "string" && m.length > 0).slice(0, 20)
       : null;
     const logoClean = typeof logo_url === "string" && logo_url.trim() ? logo_url.trim().slice(0, 2000) : null;
+    const hasSalesTeamClean: boolean | null = typeof has_sales_team === "boolean" ? has_sales_team : null;
+    const ALLOWED_TEAM_SIZES = new Set(["1-2", "3-5", "6-10", "10+"]);
+    const salesTeamSizeClean: string | null =
+      typeof sales_team_size === "string" && ALLOWED_TEAM_SIZES.has(sales_team_size) ? sales_team_size : null;
 
 
     const supabase = createClient(
