@@ -24,7 +24,6 @@ interface MI {
   id: string;
   score: number | null;
   contact_id: string | null;
-  deal_id: string | null;
 }
 
 export default function Meetings() {
@@ -46,7 +45,7 @@ export default function Meetings() {
         .limit(200);
       const { data: mi } = await supabase
         .from("meeting_intelligence")
-        .select("id,score,contact_id,deal_id")
+        .select("id,score,contact_id")
         .eq("client_id", activeClientId);
       if (!mounted) return;
       setMeetings((sm ?? []) as SalesMeeting[]);
@@ -64,9 +63,8 @@ export default function Meetings() {
     .filter((m) => !m.start_time || new Date(m.start_time).getTime() < now);
 
   const scoreFor = (m: SalesMeeting): number | null => {
-    const match = intel.find(
-      (i) => (m.deal_id && i.deal_id === m.deal_id) || (m.contact_id && i.contact_id === m.contact_id)
-    );
+    if (!m.contact_id) return null;
+    const match = intel.find((i) => i.contact_id === m.contact_id);
     return match?.score ?? null;
   };
 
