@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/components/LogoUploader";
-import { CORE_MODULES, CoreModuleDef } from "@/lib/coreModules";
+import { CORE_MODULES } from "@/lib/coreModules";
 
-// Included by default in every plan — displayed statically, always submitted.
+// Included by default in every plan — always submitted, never shown as selectable.
 const INCLUDED_MODULE_KEYS = [
   "paid_ads",
   "seo",
@@ -18,12 +18,9 @@ const INCLUDED_MODULE_KEYS = [
   "lifecycle_nurture",
   "reputation_reviews",
 ];
-// Compliance remains an optional user-toggled checkbox.
-const OPTIONAL_MODULE_GROUPS = [
-  { label: "Compliance", keys: ["financial_compliance"] },
-];
 const SALES_TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
 
+// Sales tools bundle — all keys included when the user answers "Yes" to having a sales team.
 const SALES_TOOLS = [
   { key: "sales_meeting_intelligence", label: "Meeting Intelligence" },
   { key: "sales_call_tracking", label: "Call Tracking" },
@@ -36,43 +33,14 @@ const SALES_TOOLS = [
   { key: "sales_appointments", label: "Appointments" },
   { key: "sales_approvals", label: "Approvals" },
 ];
+const SALES_TOOL_KEYS = SALES_TOOLS.map(t => t.key);
 
-const moduleByKey = CORE_MODULES.reduce((acc, m) => { acc[m.key] = m; return acc; }, {} as Record<string, CoreModuleDef>);
-function SimpleModuleCheckbox({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
-  return (
-    <label
-      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-      style={{
-        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
-        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
-      }}
-    >
-      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-      <div className="min-w-0">
-        <div className="text-sm text-white font-medium">{label}</div>
-      </div>
-    </label>
-  );
-}
+// Kept as a lookup for the "Included with every plan" static display.
+const includedModules = INCLUDED_MODULE_KEYS
+  .map(k => CORE_MODULES.find(m => m.key === k))
+  .filter((m): m is (typeof CORE_MODULES)[number] => !!m);
 
 
-function ModuleCheckbox({ m, checked, onToggle }: { m: CoreModuleDef; checked: boolean; onToggle: () => void }) {
-  return (
-    <label
-      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-      style={{
-        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
-        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
-      }}
-    >
-      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-      <div className="min-w-0">
-        <div className="text-sm text-white font-medium">{m.label}</div>
-        <div className="text-[11px] text-white/50">{m.desc}</div>
-      </div>
-    </label>
-  );
-}
 
 
 
