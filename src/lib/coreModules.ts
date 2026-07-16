@@ -1,6 +1,5 @@
-// Shared core-module registry + niche-based recommendation logic.
+// Shared core-module registry.
 // Kept in sync with the 8 core modules used by ProposalOfferBuilder.
-import type { NicheDefinition } from "@/lib/workspaceNiches";
 
 export interface CoreModuleDef {
   key: string;
@@ -18,23 +17,3 @@ export const CORE_MODULES: CoreModuleDef[] = [
   { key: "tracking_attribution", label: "Tracking + Attribution", desc: "Call tracking, analytics & channel attribution" },
   { key: "financial_compliance", label: "Financial Compliance", desc: "Compliance workflow & regulatory tracking" },
 ];
-
-/**
- * Compute recommended module keys for a niche using its modulePriority
- * (priority >= 4 = recommended). Mirrors the logic in ProposalOfferBuilder.tsx.
- */
-export function getRecommendedModulesForNiche(niche: NicheDefinition | null | undefined): string[] {
-  if (!niche) return [];
-  const p = niche.modulePriority;
-  const map: Record<string, number> = {
-    paid_ads: p.ads,
-    seo: p.seo,
-    website_management: p.website,
-    crm_automation: p.crm,
-    lifecycle_nurture: p.automation,
-    reputation_reviews: 3,
-    tracking_attribution: 3,
-    financial_compliance: niche.complianceLevel === "high" ? 5 : niche.complianceLevel === "moderate" ? 3 : 1,
-  };
-  return Object.entries(map).filter(([, v]) => v >= 4).map(([k]) => k);
-}
