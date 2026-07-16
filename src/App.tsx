@@ -122,6 +122,7 @@ import AdminRetention from "./pages/admin/AdminRetention";
 import AdminSignedDocuments from "./pages/admin/AdminSignedDocuments";
 import AdminMarketingReview from "./pages/admin/AdminMarketingReview";
 import AdminMarketingTemplates from "./pages/admin/AdminMarketingTemplates";
+import AdminRiskProfiles from "./pages/admin/AdminRiskProfiles";
 import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminHouseholds from "./pages/admin/AdminHouseholds";
 import AdminWebinars from "./pages/admin/AdminWebinars";
@@ -368,6 +369,7 @@ const App = () => {
                 <Route path="client-intelligence/signed-documents" element={<AdminSignedDocuments />} />
                 <Route path="marketing-review" element={<AdminMarketingReview />} />
                 <Route path="marketing-templates" element={<AdminMarketingTemplates />} />
+                <Route path="risk-profiles" element={<AdminRiskProfiles />} />
                 <Route path="promoters" element={<AdminPromoters />} />
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="webinars" element={<AdminWebinars />} />

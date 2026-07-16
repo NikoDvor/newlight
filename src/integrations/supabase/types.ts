@@ -2765,6 +2765,75 @@ export type Database = {
           },
         ]
       }
+      client_risk_profiles: {
+        Row: {
+          annual_income_range: string | null
+          client_id: string
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          existing_accounts_notes: string | null
+          id: string
+          net_worth_range: string | null
+          primary_goals: string[]
+          risk_tolerance:
+            | Database["public"]["Enums"]["risk_tolerance_level"]
+            | null
+          time_horizon_years: number | null
+          updated_at: string
+        }
+        Insert: {
+          annual_income_range?: string | null
+          client_id: string
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          existing_accounts_notes?: string | null
+          id?: string
+          net_worth_range?: string | null
+          primary_goals?: string[]
+          risk_tolerance?:
+            | Database["public"]["Enums"]["risk_tolerance_level"]
+            | null
+          time_horizon_years?: number | null
+          updated_at?: string
+        }
+        Update: {
+          annual_income_range?: string | null
+          client_id?: string
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          existing_accounts_notes?: string | null
+          id?: string
+          net_worth_range?: string | null
+          primary_goals?: string[]
+          risk_tolerance?:
+            | Database["public"]["Enums"]["risk_tolerance_level"]
+            | null
+          time_horizon_years?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_risk_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_risk_profiles_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_risk_records: {
         Row: {
           client_id: string
@@ -6516,6 +6585,7 @@ export type Database = {
         Row: {
           action_items: Json | null
           client_id: string
+          contact_id: string | null
           created_at: string
           duration_minutes: number | null
           external_meeting_id: string | null
@@ -6537,6 +6607,7 @@ export type Database = {
         Insert: {
           action_items?: Json | null
           client_id: string
+          contact_id?: string | null
           created_at?: string
           duration_minutes?: number | null
           external_meeting_id?: string | null
@@ -6558,6 +6629,7 @@ export type Database = {
         Update: {
           action_items?: Json | null
           client_id?: string
+          contact_id?: string | null
           created_at?: string
           duration_minutes?: number | null
           external_meeting_id?: string | null
@@ -6582,6 +6654,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_intelligence_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -13387,6 +13466,12 @@ export type Database = {
         | "coi_other"
         | "existing_client"
         | "other"
+      risk_tolerance_level:
+        | "conservative"
+        | "moderate_conservative"
+        | "moderate"
+        | "moderate_aggressive"
+        | "aggressive"
       testimonial_disclosure_method: "embedded" | "linked" | "verbal_disclosed"
       webinar_event_status: "draft" | "scheduled" | "completed" | "cancelled"
     }
@@ -13577,6 +13662,13 @@ export const Constants = {
         "coi_other",
         "existing_client",
         "other",
+      ],
+      risk_tolerance_level: [
+        "conservative",
+        "moderate_conservative",
+        "moderate",
+        "moderate_aggressive",
+        "aggressive",
       ],
       testimonial_disclosure_method: ["embedded", "linked", "verbal_disclosed"],
       webinar_event_status: ["draft", "scheduled", "completed", "cancelled"],

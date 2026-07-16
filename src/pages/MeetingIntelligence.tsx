@@ -5,11 +5,12 @@ import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { motion } from "framer-motion";
-import { Calendar, Target, TrendingUp, Star, ArrowUpRight, AlertTriangle, Plus, Loader2, Sparkles } from "lucide-react";
+import { Calendar, Target, TrendingUp, Star, ArrowUpRight, AlertTriangle, Plus, Loader2, Sparkles, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
+import { ManualMeetingNotesDialog } from "@/components/ManualMeetingNotesDialog";
 import { toast } from "@/hooks/use-toast";
 
 const OUTCOME_COLORS: Record<string, string> = {
@@ -46,6 +47,7 @@ export default function MeetingIntelligence() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   useEffect(() => {
     fetchMeetings();
@@ -107,6 +109,10 @@ export default function MeetingIntelligence() {
   return (
     <div>
       <PageHeader title="Meeting Intelligence" description="AI-powered meeting analysis and coaching insights">
+        <Button size="sm" variant="outline" onClick={() => setNotesOpen(true)}>
+          <NotebookPen className="h-4 w-4 mr-1" />
+          Log Manual Notes
+        </Button>
         <Button size="sm" variant="outline" onClick={scanOpportunities} disabled={scanning || !activeClientId}>
           {scanning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
           Scan for Opportunities
@@ -116,6 +122,8 @@ export default function MeetingIntelligence() {
           Log Outcome
         </Button>
       </PageHeader>
+
+      <ManualMeetingNotesDialog open={notesOpen} onOpenChange={setNotesOpen} onSaved={fetchMeetings} />
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard label="Meetings This Month" value={String(totalMeetings)} change="From sales pipeline" changeType="positive" icon={Calendar} />
