@@ -16,12 +16,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, niche, modules_of_interest } = body || {};
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const nicheClean = typeof niche === "string" && niche.trim() ? niche.trim().slice(0, 120) : null;
+    const modulesClean = Array.isArray(modules_of_interest)
+      ? modules_of_interest.filter((m: unknown) => typeof m === "string" && m.length > 0).slice(0, 20)
+      : null;
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
