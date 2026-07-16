@@ -3066,6 +3066,44 @@ export type Database = {
           },
         ]
       }
+      client_signal_snapshots: {
+        Row: {
+          client_id: string
+          computed_at: string
+          created_at: string
+          id: string
+          industry: string | null
+          signals: Json
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          computed_at?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          signals?: Json
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          computed_at?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          signals?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_signal_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_success_milestones: {
         Row: {
           assigned_user_id: string | null
