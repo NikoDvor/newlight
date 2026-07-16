@@ -50,6 +50,7 @@ const navStructure: NavEntry[] = [
     items: [
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
       { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
       { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
       { title: "Tasks", url: "/tasks", icon: ListChecks },
