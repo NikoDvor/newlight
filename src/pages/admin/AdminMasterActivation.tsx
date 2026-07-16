@@ -32,6 +32,8 @@ import { StepEmail } from "@/components/activation/StepEmail";
 import { StepReviews } from "@/components/activation/StepReviews";
 import { StepTeamSetup } from "@/components/activation/StepTeamSetup";
 import { StepIntegrations } from "@/components/activation/StepIntegrations";
+import { StepComplianceTools } from "@/components/activation/StepComplianceTools";
+import { StepSalesTeamTools } from "@/components/activation/StepSalesTeamTools";
 import { StepReview } from "@/components/activation/StepReview";
 import { StepProfileSelection } from "@/components/activation/StepProfileSelection";
 
@@ -679,16 +681,20 @@ export default function AdminMasterActivation() {
       case 6:
         return (
           <Tabs defaultValue="messaging" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 bg-white/[0.04] border border-white/10 mb-4">
+            <TabsList className="w-full grid grid-cols-6 bg-white/[0.04] border border-white/10 mb-4">
               <TabsTrigger value="messaging" className="text-[11px] data-[state=active]:bg-white/10">Messaging</TabsTrigger>
               <TabsTrigger value="reviews" className="text-[11px] data-[state=active]:bg-white/10">Reviews</TabsTrigger>
               <TabsTrigger value="team" className="text-[11px] data-[state=active]:bg-white/10">Team</TabsTrigger>
               <TabsTrigger value="integrations" className="text-[11px] data-[state=active]:bg-white/10">Integrations</TabsTrigger>
+              <TabsTrigger value="compliance" className="text-[11px] data-[state=active]:bg-white/10">Compliance</TabsTrigger>
+              <TabsTrigger value="salesteam" className="text-[11px] data-[state=active]:bg-white/10">Sales Team</TabsTrigger>
             </TabsList>
             <TabsContent value="messaging"><StepEmail {...stepProps} /></TabsContent>
             <TabsContent value="reviews"><StepReviews {...stepProps} /></TabsContent>
             <TabsContent value="team"><StepTeamSetup {...stepProps} /></TabsContent>
             <TabsContent value="integrations"><StepIntegrations {...stepProps} /></TabsContent>
+            <TabsContent value="compliance"><StepComplianceTools {...stepProps} /></TabsContent>
+            <TabsContent value="salesteam"><StepSalesTeamTools {...stepProps} /></TabsContent>
           </Tabs>
         );
       case 7: return <StepReview {...stepProps} />;
