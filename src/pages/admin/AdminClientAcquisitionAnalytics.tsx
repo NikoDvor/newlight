@@ -366,3 +366,103 @@ function StatBox({ label, value, color }: { label: string; value: string; color:
     </div>
   );
 }
+
+function MarketInsights() {
+  const insights = useMarketInsights();
+  const { topByViews, topByClose, ranked } = insights;
+  const recommendation = buildRecommendation(insights);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-[hsl(211_96%_62%)]" />
+        <h2 className="text-xs font-bold uppercase tracking-widest text-white/70">Market Insights</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InsightCallout
+          icon={Eye}
+          eyebrow="Top Performing — Volume"
+          channel={topByViews.channel}
+          color={topByViews.color}
+          primary={`${topByViews.views.toLocaleString()} views`}
+          secondary={`${topByViews.viewShare.toFixed(1)}% of total roster traffic · ${topByViews.closeRate.toFixed(1)}% close rate`}
+        />
+        <InsightCallout
+          icon={Trophy}
+          eyebrow="Top Performing — Conversion"
+          channel={topByClose.channel}
+          color={topByClose.color}
+          primary={`${topByClose.closeRate.toFixed(1)}% close rate`}
+          secondary={`${topByClose.viewShare.toFixed(1)}% of views · ${topByClose.views.toLocaleString()} total`}
+        />
+      </div>
+
+      <Card className="border-0 bg-gradient-to-br from-[hsla(211,96%,60%,0.10)] to-[hsla(280,70%,65%,0.06)]" style={{ boxShadow: "inset 0 0 0 1px hsla(211,96%,60%,.15)" }}>
+        <CardContent className="p-4 flex gap-3">
+          <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsla(211,96%,60%,.18)", boxShadow: "inset 0 0 0 1px hsla(211,96%,60%,.25)" }}>
+            <Lightbulb className="h-4 w-4 text-[hsl(211_96%_72%)]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(211_96%_72%)]">Recommendation</p>
+            <p className="text-sm text-white/85 mt-1 leading-relaxed">{recommendation}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 bg-white/[0.04]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center gap-1.5">
+            <Zap className="h-3 w-3" /> Channel Performance Ranking
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-1.5">
+          {ranked.map((c, i) => (
+            <div key={c.channel} className="flex items-center gap-3 py-1.5">
+              <span className="text-[10px] font-bold text-white/40 w-4 tabular-nums">#{i + 1}</span>
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ background: c.color }} />
+              <span className="text-sm text-white/90 font-medium w-40 shrink-0 truncate">{c.channel}</span>
+              <div className="flex-1 min-w-0">
+                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${c.score}%`, background: c.color }} />
+                </div>
+              </div>
+              <span className="text-[11px] text-white/50 w-48 text-right shrink-0 hidden sm:block">{c.label}</span>
+              <span className="text-xs font-semibold text-white tabular-nums w-10 text-right">{c.score}</span>
+            </div>
+          ))}
+          <p className="text-[10px] text-white/35 pt-2 mt-1 border-t border-white/[0.04]">
+            Score combines view volume (50%) and attributed close rate (50%), normalized across the roster.
+          </p>
+        </CardContent>
+      </Card>
+    </motion.section>
+  );
+}
+
+function InsightCallout({
+  icon: Icon, eyebrow, channel, color, primary, secondary,
+}: {
+  icon: typeof Eye; eyebrow: string; channel: string; color: string; primary: string; secondary: string;
+}) {
+  return (
+    <Card className="border-0 bg-white/[0.04] overflow-hidden relative">
+      <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ background: `radial-gradient(circle at 100% 0%, ${color}22, transparent 60%)` }} />
+      <CardContent className="p-4 relative">
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5" style={{ color }} />
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>{eyebrow}</p>
+        </div>
+        <p className="text-lg font-bold text-white mt-2">{channel}</p>
+        <p className="text-2xl font-bold mt-1" style={{ color }}>{primary}</p>
+        <p className="text-xs text-white/50 mt-1.5">{secondary}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
