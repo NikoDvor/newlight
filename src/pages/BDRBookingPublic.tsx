@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/components/LogoUploader";
-import { CORE_MODULES, CoreModuleDef } from "@/lib/coreModules";
+import { CORE_MODULES } from "@/lib/coreModules";
 
-// Included by default in every plan — displayed statically, always submitted.
+// Included by default in every plan — always submitted, never shown as selectable.
 const INCLUDED_MODULE_KEYS = [
   "paid_ads",
   "seo",
@@ -18,12 +18,9 @@ const INCLUDED_MODULE_KEYS = [
   "lifecycle_nurture",
   "reputation_reviews",
 ];
-// Compliance remains an optional user-toggled checkbox.
-const OPTIONAL_MODULE_GROUPS = [
-  { label: "Compliance", keys: ["financial_compliance"] },
-];
 const SALES_TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
 
+// Sales tools bundle — all keys included when the user answers "Yes" to having a sales team.
 const SALES_TOOLS = [
   { key: "sales_meeting_intelligence", label: "Meeting Intelligence" },
   { key: "sales_call_tracking", label: "Call Tracking" },
@@ -36,43 +33,14 @@ const SALES_TOOLS = [
   { key: "sales_appointments", label: "Appointments" },
   { key: "sales_approvals", label: "Approvals" },
 ];
+const SALES_TOOL_KEYS = SALES_TOOLS.map(t => t.key);
 
-const moduleByKey = CORE_MODULES.reduce((acc, m) => { acc[m.key] = m; return acc; }, {} as Record<string, CoreModuleDef>);
-function SimpleModuleCheckbox({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
-  return (
-    <label
-      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-      style={{
-        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
-        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
-      }}
-    >
-      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-      <div className="min-w-0">
-        <div className="text-sm text-white font-medium">{label}</div>
-      </div>
-    </label>
-  );
-}
+// Kept as a lookup for the "Included with every plan" static display.
+const includedModules = INCLUDED_MODULE_KEYS
+  .map(k => CORE_MODULES.find(m => m.key === k))
+  .filter((m): m is (typeof CORE_MODULES)[number] => !!m);
 
 
-function ModuleCheckbox({ m, checked, onToggle }: { m: CoreModuleDef; checked: boolean; onToggle: () => void }) {
-  return (
-    <label
-      className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
-      style={{
-        borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(255,255%,255%,.08)",
-        background: checked ? "hsla(211,96%,60%,.1)" : "hsla(0,0%,100%,.02)",
-      }}
-    >
-      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[hsl(211,96%,56%)]" />
-      <div className="min-w-0">
-        <div className="text-sm text-white font-medium">{m.label}</div>
-        <div className="text-[11px] text-white/50">{m.desc}</div>
-      </div>
-    </label>
-  );
-}
 
 
 
@@ -149,9 +117,8 @@ export default function BDRBookingPublic() {
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
-  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [hasSalesTeam, setHasSalesTeam] = useState<"" | "yes" | "no">("");
-  const [salesTeamSize, setSalesTeamSize] = useState<string>("");
+  const [hasCompliance, setHasCompliance] = useState<"" | "yes" | "no">("");
   const [logoUrl, setLogoUrl] = useState<string>("");
 
 
@@ -322,10 +289,13 @@ export default function BDRBookingPublic() {
   const submitBooking = async () => {
     if (!contact.customer_name || !selectedSlot) return;
     setSubmitting(true);
-    // Always include the mandatory modules; add any optional/sales-tool selections on top.
-    const mergedModules = Array.from(new Set([...INCLUDED_MODULE_KEYS, ...selectedModules]));
+    // Always include mandatory modules; conditionally add sales tools and compliance.
+    const mergedModules = Array.from(new Set([
+      ...INCLUDED_MODULE_KEYS,
+      ...(hasSalesTeam === "yes" ? SALES_TOOL_KEYS : []),
+      ...(hasCompliance === "yes" ? ["financial_compliance"] : []),
+    ]));
     const has_sales_team = hasSalesTeam === "" ? null : hasSalesTeam === "yes";
-    const sales_team_size = hasSalesTeam === "yes" && salesTeamSize ? salesTeamSize : null;
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
         booking_slug: cal.booking_slug || cal.id,
@@ -335,7 +305,7 @@ export default function BDRBookingPublic() {
         form_submission_id: savedSubmissionId,
         modules_of_interest: mergedModules,
         has_sales_team,
-        sales_team_size,
+        sales_team_size: null,
         logo_url: logoUrl || null,
       },
     });
@@ -345,8 +315,7 @@ export default function BDRBookingPublic() {
   };
 
 
-  const toggleModule = (k: string) =>
-    setSelectedModules(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
+
 
 
 
@@ -461,108 +430,48 @@ export default function BDRBookingPublic() {
                     Included with every plan
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {INCLUDED_MODULE_KEYS.map(k => {
-                      const m = moduleByKey[k];
-                      if (!m) return null;
-                      return (
-                        <span
-                          key={k}
-                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-white/80 border"
-                          style={{
-                            borderColor: "hsla(211,96%,60%,.35)",
-                            background: "hsla(211,96%,60%,.1)",
-                          }}
-                        >
-                          <Check className="h-3 w-3 text-[hsl(211,96%,68%)]" />
-                          {m.label}
-                        </span>
-                      );
-                    })}
+                    {includedModules.map(m => (
+                      <span
+                        key={m.key}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-white/80 border"
+                        style={{
+                          borderColor: "hsla(211,96%,60%,.35)",
+                          background: "hsla(211,96%,60%,.1)",
+                        }}
+                      >
+                        <Check className="h-3 w-3 text-[hsl(211,96%,68%)]" />
+                        {m.label}
+                      </span>
+                    ))}
                   </div>
                 </div>
 
-                {/* Optional groups (currently just Compliance) — still user-toggled. */}
-                {OPTIONAL_MODULE_GROUPS.map(group => {
-                  const groupModules = group.keys
-                    .map(k => moduleByKey[k])
-                    .filter((m): m is CoreModuleDef => !!m);
-                  if (groupModules.length === 0) return null;
-                  return (
-                    <div key={group.label} className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="h-px flex-1 bg-white/10" />
-                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">{group.label} (optional)</span>
-                        <div className="h-px flex-1 bg-white/10" />
-                      </div>
-                      {groupModules.map(m => (
-                        <ModuleCheckbox
-                          key={m.key}
-                          m={m}
-                          checked={selectedModules.includes(m.key)}
-                          onToggle={() => toggleModule(m.key)}
-                        />
-                      ))}
-                    </div>
-                  );
-                })}
+                <Field label="Do you have a sales team?">
+                  <select
+                    value={hasSalesTeam}
+                    onChange={e => setHasSalesTeam(e.target.value as "" | "yes" | "no")}
+                    className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+                  >
+                    <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                    <option value="yes" className="bg-[hsl(215,35%,12%)]">Yes</option>
+                    <option value="no" className="bg-[hsl(215,35%,12%)]">No</option>
+                  </select>
+                </Field>
 
-                {/* Sales team question — replaces the old Sales Team Tools checkbox group. */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Sales Team</span>
-                    <div className="h-px flex-1 bg-white/10" />
-                  </div>
-                  <Field label="Do you have a sales team?">
-                    <select
-                      value={hasSalesTeam}
-                      onChange={e => {
-                        const v = e.target.value as "" | "yes" | "no";
-                        setHasSalesTeam(v);
-                        if (v !== "yes") {
-                          setSalesTeamSize("");
-                          setSelectedModules(prev => prev.filter(k => !k.startsWith("sales_")));
-                        }
-                      }}
-                      className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-                    >
-                      <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
-                      <option value="yes" className="bg-[hsl(215,35%,12%)]">Yes</option>
-                      <option value="no" className="bg-[hsl(215,35%,12%)]">No</option>
-                    </select>
-                  </Field>
-                  {hasSalesTeam === "yes" && (
-                    <>
-                      <Field label="How many salespeople?">
-                        <select
-                          value={salesTeamSize}
-                          onChange={e => setSalesTeamSize(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-                        >
-                          <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
-                          {SALES_TEAM_SIZES.map(size => (
-                            <option key={size} value={size} className="bg-[hsl(215,35%,12%)]">{size}</option>
-                          ))}
-                        </select>
-                      </Field>
-                      <div className="space-y-1.5 pt-1">
-                        <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
-                          Sales Team Tools (optional)
-                        </div>
-                        {SALES_TOOLS.map(st => (
-                          <SimpleModuleCheckbox
-                            key={st.key}
-                            label={st.label}
-                            checked={selectedModules.includes(st.key)}
-                            onToggle={() => toggleModule(st.key)}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
+                <Field label="Do you have compliance restrictions?">
+                  <select
+                    value={hasCompliance}
+                    onChange={e => setHasCompliance(e.target.value as "" | "yes" | "no")}
+                    className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+                  >
+                    <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                    <option value="yes" className="bg-[hsl(215,35%,12%)]">Yes</option>
+                    <option value="no" className="bg-[hsl(215,35%,12%)]">No</option>
+                  </select>
+                </Field>
               </div>
             </Field>
+
 
 
             <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
