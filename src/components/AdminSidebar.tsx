@@ -100,7 +100,7 @@ const opsGroups: NavGroup[] = [
       { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
       { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
       { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-      { title: "AI Visibility", url: "/ai-visibility", icon: Eye },
+      { title: "AI Visibility", url: "/admin/ops/ai-visibility", icon: Eye },
 
     ],
   },

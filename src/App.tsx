@@ -391,6 +391,8 @@ const App = () => {
                 <Route path="ops/seo" element={<AdminOpsProvider><SEO /></AdminOpsProvider>} />
                 <Route path="ops/ads" element={<AdminOpsProvider><PaidAds /></AdminOpsProvider>} />
                 <Route path="ops/website" element={<AdminOpsProvider><Website /></AdminOpsProvider>} />
+                <Route path="ops/ai-visibility" element={<AdminOpsProvider><AIVisibility /></AdminOpsProvider>} />
+
                 <Route path="ops/ai-insights" element={<AdminOpsProvider><AIInsights /></AdminOpsProvider>} />
                 <Route path="ops/growth-advisor" element={<AdminOpsProvider><GrowthAdvisor /></AdminOpsProvider>} />
                 <Route path="ops/market-research" element={<AdminOpsProvider><MarketResearch /></AdminOpsProvider>} />
