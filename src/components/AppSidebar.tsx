@@ -120,17 +120,19 @@ export function AppSidebar() {
   const { hasAccess } = useWorkspacePermissions();
   const { isAdmin, activeClientId } = useWorkspace();
   const [clientIndustry, setClientIndustry] = useState<string | null>(null);
+  const [hasSalesTeam, setHasSalesTeam] = useState<boolean>(false);
 
-  // Load business type for meeting-intelligence visibility
+  // Load business type + operations flags for module visibility
   useEffect(() => {
     if (!activeClientId) return;
     (async () => {
       const { data } = await supabase
         .from("clients")
-        .select("industry")
+        .select("industry, has_sales_team")
         .eq("id", activeClientId)
         .maybeSingle();
       setClientIndustry(data?.industry?.toLowerCase() || null);
+      setHasSalesTeam(Boolean((data as any)?.has_sales_team));
     })();
   }, [activeClientId]);
 
