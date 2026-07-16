@@ -117,6 +117,10 @@ export interface ActivationFormState {
   kickoff_email: string;
   kickoff_phone: string;
   closing_notes: string;
+  initial_fee: string;
+  pricing_model: string; // "retainer" | "commission" | ""
+  recurring_fee: string;
+  commission_rate: string;
   sales_notes: string;
   assigned_account_manager: string;
   assigned_sales_rep: string;
@@ -463,6 +467,7 @@ export const defaultFormState = (): ActivationFormState => ({
   setup_fee: "", monthly_fee: "", contract_term: "", service_package: "enterprise",
   kickoff_contact: "", kickoff_email: "", kickoff_phone: "",
   closing_notes: "", sales_notes: "",
+  initial_fee: "", pricing_model: "retainer", recurring_fee: "", commission_rate: "",
   assigned_account_manager: "", assigned_sales_rep: "",
   activation_priority: "normal", requested_launch_date: "", immediate_activation: "no",
   close_outcome: "", pending_reason: "", revision_notes: "", next_follow_up_at: "", lost_reason: "",
