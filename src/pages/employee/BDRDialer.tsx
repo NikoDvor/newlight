@@ -25,6 +25,7 @@ interface Lead {
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
+  pipeline_stage: string | null;
 }
 
 interface OutcomeRow {
