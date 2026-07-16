@@ -696,6 +696,19 @@ export default function AdminCloseCenter() {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => generateStripePaymentLink(inv)}
+                  disabled={generatingStripeFor === inv.id || acting}
+                  className="text-xs h-7 gap-1 border-[hsl(var(--nl-electric))]/40 text-[hsl(var(--nl-sky))] hover:bg-[hsl(var(--nl-electric))]/10 whitespace-nowrap"
+                >
+                  {generatingStripeFor === inv.id ? (
+                    <><RefreshCw className="h-3 w-3 animate-spin" /> Generating…</>
+                  ) : (
+                    <><Zap className="h-3 w-3" /> Generate Stripe Payment Link</>
+                  )}
+                </Button>
               </div>
               {/* Notes */}
               <Input
