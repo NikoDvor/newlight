@@ -115,13 +115,13 @@ export default function AIVisibility() {
       <PageHeader
         title="AI Search Visibility"
         description="Track how often your brand appears, gets cited, and trends across AI search engines."
-        action={
-          <Button onClick={runCheck} disabled={running || !activeClientId} size="sm">
-            {running ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1.5" />}
-            Run Citation Check Now
-          </Button>
-        }
-      />
+      >
+        <Button onClick={runCheck} disabled={running || !activeClientId} size="sm">
+          {running ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1.5" />}
+          Run Citation Check Now
+        </Button>
+      </PageHeader>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m) => (
