@@ -1076,10 +1076,14 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
     const headerLike = rows[0].some(c => /business|name|phone|website|booking/i.test(c));
     const dataRows = headerLike ? rows.slice(1) : rows;
     let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3, bkIdx = 4;
+    let ptIdx = -1, blIdx = -1, bloIdx = -1;
     if (headerLike) {
       const h = rows[0].map(c => c.toLowerCase());
       h.forEach((c, i) => {
-        if (/business/.test(c)) biIdx = i;
+        if (/phone.?type|number.?type/.test(c)) ptIdx = i;
+        else if (/booking.?link.?(is.?)?owner|owner.?calendar/.test(c)) bloIdx = i;
+        else if (/booking.?(link|url)/.test(c)) blIdx = i;
+        else if (/business/.test(c)) biIdx = i;
         else if (/owner|contact/.test(c)) owIdx = i;
         else if (/phone/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
@@ -1093,10 +1097,18 @@ function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () =
       if (/^(n|no|false|0)$/.test(s)) return false;
       return null;
     };
+    const parsePhoneType = (v: string): string => {
+      const s = (v || "").trim().toLowerCase();
+      if (/owner|personal|cell|mobile|direct/.test(s)) return "owner";
+      return "front_desk";
+    };
     const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
       business_name: r[biIdx]?.trim() || "", owner_name: r[owIdx]?.trim() || "",
       phone: r[phIdx]?.trim() || "", website: r[webIdx]?.trim() || "",
       has_booking_system: parseBooking(r[bkIdx] || ""),
+      phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : "front_desk",
+      booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
+      booking_link_is_owner: bloIdx >= 0 ? parseBooking(r[bloIdx] || "") : null,
     }));
     setParsed(result); setChecked(result.map(() => true));
   };
