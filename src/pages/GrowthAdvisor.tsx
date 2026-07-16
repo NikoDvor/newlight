@@ -271,10 +271,7 @@ export default function GrowthAdvisor() {
           </div>
 
           {activeOpps.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/50 bg-card/30 p-12 text-center">
-              <Rocket className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-muted-foreground">No active opportunities yet. Generate your first growth plan above.</p>
-            </div>
+            <ExampleOpportunityPreview />
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {activeOpps
@@ -507,9 +504,7 @@ export default function GrowthAdvisor() {
             )}
 
             {competitors.length === 0 && !showAdd ? (
-              <div className="px-6 py-10 text-center text-muted-foreground text-sm">
-                No competitors tracked yet. Add your top 3-5 to unlock gap analysis.
-              </div>
+              <ExampleCompetitorRows />
             ) : (
               competitors.map((c) => (
                 <CompetitorRow
@@ -646,5 +641,153 @@ function CompetitorRow({
         <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="w-3.5 h-3.5 text-destructive/70" /></Button>
       </div>
     </div>
+  );
+}
+
+/* ---------- Empty-state preview blocks ---------- */
+// Rendered before any AI generation runs so the customer sees exactly
+// what real output will look like. Visually de-emphasized + labeled.
+
+const EXAMPLE_OPPS: Array<{
+  type: OppType;
+  title: string;
+  narrative: string;
+  low: number;
+  expected: number;
+  high: number;
+  confidence: number;
+  effort: string;
+}> = [
+  {
+    type: "new_channel",
+    title: "Launch a paid Google Local Services campaign",
+    narrative:
+      "Your current lead flow relies almost entirely on referrals. Adding Local Services Ads in your top 2 service areas typically produces 20–40 qualified leads/mo at competitive CPLs for businesses of your size.",
+    low: 4000,
+    expected: 8500,
+    high: 14000,
+    confidence: 72,
+    effort: "medium",
+  },
+  {
+    type: "retention",
+    title: "Re-engage lapsed customers with a 90-day win-back series",
+    narrative:
+      "Roughly 30% of past customers haven't been contacted in 6+ months. A 3-touch SMS + email win-back sequence tied to a small incentive typically converts 6–10% of that audience into a repeat purchase.",
+    low: 2200,
+    expected: 4800,
+    high: 7500,
+    confidence: 78,
+    effort: "low",
+  },
+];
+
+function ExampleOpportunityPreview() {
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-muted-foreground italic">
+        Preview — click <span className="font-semibold text-foreground">Generate Growth Plan</span> above to replace with your live opportunities.
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 opacity-80">
+        {EXAMPLE_OPPS.map((o, i) => {
+          const meta = TYPE_META[o.type];
+          const Icon = meta.icon;
+          return (
+            <div
+              key={i}
+              className="relative rounded-2xl border-2 border-dashed border-border/60 bg-card/40 backdrop-blur-sm p-7 overflow-hidden"
+            >
+              <div
+                className="absolute top-0 left-0 right-0 h-1 opacity-60"
+                style={{ background: `hsl(${meta.hue})` }}
+              />
+              <div className="absolute top-3 right-3">
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                  style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+                >
+                  Example — click Generate for your real plan
+                </span>
+              </div>
+
+              <div className="flex items-start gap-3 mb-4 mt-6">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: `hsla(${meta.hue}, 0.12)`, color: `hsl(${meta.hue})` }}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{meta.label}</div>
+                  <h4 className="text-lg font-semibold leading-tight">{o.title}</h4>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5">{o.narrative}</p>
+
+              <div className="rounded-xl bg-background/60 border border-border/40 p-4 mb-4">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Sized Monthly Revenue</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm text-muted-foreground">{currency(o.low)}</span>
+                  <span className="text-muted-foreground/40">—</span>
+                  <span className="text-3xl font-bold tracking-tight" style={{ color: `hsl(${meta.hue})` }}>
+                    {currency(o.expected)}
+                  </span>
+                  <span className="text-muted-foreground/40">—</span>
+                  <span className="text-sm text-muted-foreground">{currency(o.high)}</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 uppercase tracking-wider">
+                  <span>Low</span><span>Expected</span><span>High</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40">
+                  {o.confidence}% confidence
+                </span>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-muted/50 border border-border/40 capitalize">
+                  {o.effort} effort
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const EXAMPLE_COMPETITORS = [
+  { name: "Nearby Competitor A", reviews: 312, rating: 4.7, sov: 34 },
+  { name: "Nearby Competitor B", reviews: 148, rating: 4.4, sov: 22 },
+];
+
+function ExampleCompetitorRows() {
+  return (
+    <>
+      <div className="px-6 py-3 text-xs text-muted-foreground italic border-b border-border/30 bg-muted/10">
+        Preview — add your real competitors above to replace these example rows.
+      </div>
+      {EXAMPLE_COMPETITORS.map((c, i) => (
+        <div
+          key={i}
+          className="grid grid-cols-12 px-6 py-4 border-b border-dashed border-border/40 last:border-b-0 items-center opacity-70"
+        >
+          <div className="col-span-4 font-medium flex items-center gap-2">
+            {c.name}
+            <span
+              className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
+              style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+            >
+              Example row
+            </span>
+          </div>
+          <div className="col-span-2 text-right tabular-nums">{c.reviews.toLocaleString()}</div>
+          <div className="col-span-2 text-right tabular-nums">{c.rating.toFixed(1)}★</div>
+          <div className="col-span-2 text-right tabular-nums">{c.sov}%</div>
+          <div className="col-span-2 text-right text-[10px] text-muted-foreground uppercase tracking-wider">Read-only</div>
+        </div>
+      ))}
+    </>
   );
 }

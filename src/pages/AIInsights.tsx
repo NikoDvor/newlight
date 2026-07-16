@@ -3,8 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
   ThumbsDown, CheckCircle2, Megaphone, Search, Share2, Star, Globe,
-  Users, Zap, Loader2, ArrowRight, ListChecks,
+  Users, Zap, Loader2, ArrowRight, ListChecks, BarChart3, Activity,
 } from "lucide-react";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
+  LineChart, Line, CartesianGrid,
+} from "recharts";
 import { PageHeader } from "@/components/PageHeader";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -370,6 +374,9 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Category Performance ─────────────────────────────────── */}
+      <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
+
       {/* ── Category filter tabs ─────────────────────────────────── */}
       <div className="mt-8 flex flex-wrap gap-2">
         {FILTERS.map((f) => {
@@ -496,6 +503,9 @@ export default function AIInsights() {
           </div>
         </div>
       )}
+
+      {/* ── Insights & Feedback ──────────────────────────────────── */}
+      <InsightsFeedback recs={recs} wins={wins} />
     </div>
   );
 }
@@ -845,5 +855,327 @@ function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAc
         </DialogContent>
       </Dialog>
     </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Category Performance — 6 mini dashboards, always visible.
+// Uses illustrative placeholder numbers so the customer sees exactly
+// what the surface will look like once integrations are connected.
+// Clicking a card filters the "Do This Next" stack via existing state.
+// ─────────────────────────────────────────────────────────────────
+
+interface CatPerf {
+  key: Category;
+  stats: Array<{ label: string; value: string }>;
+  spark: Array<{ x: string; y: number }>;
+  chartType: "bar" | "line";
+}
+
+const CATEGORY_PERF_EXAMPLES: CatPerf[] = [
+  {
+    key: "ads",
+    stats: [
+      { label: "Cost / Lead", value: "$42" },
+      { label: "CTR", value: "3.8%" },
+      { label: "Spend / mo", value: "$2.4K" },
+    ],
+    spark: [
+      { x: "W1", y: 58 }, { x: "W2", y: 51 }, { x: "W3", y: 47 },
+      { x: "W4", y: 42 }, { x: "W5", y: 44 }, { x: "W6", y: 40 },
+    ],
+    chartType: "line",
+  },
+  {
+    key: "seo",
+    stats: [
+      { label: "Ranking Keywords", value: "128" },
+      { label: "Organic Traffic", value: "1.9K" },
+      { label: "Backlinks", value: "84" },
+    ],
+    spark: [
+      { x: "M1", y: 90 }, { x: "M2", y: 110 }, { x: "M3", y: 118 },
+      { x: "M4", y: 121 }, { x: "M5", y: 125 }, { x: "M6", y: 128 },
+    ],
+    chartType: "bar",
+  },
+  {
+    key: "social",
+    stats: [
+      { label: "Engagement Rate", value: "4.2%" },
+      { label: "Follower Growth", value: "+38 / mo" },
+      { label: "Posts / mo", value: "18" },
+    ],
+    spark: [
+      { x: "W1", y: 3.1 }, { x: "W2", y: 3.6 }, { x: "W3", y: 3.9 },
+      { x: "W4", y: 4.0 }, { x: "W5", y: 4.4 }, { x: "W6", y: 4.2 },
+    ],
+    chartType: "line",
+  },
+  {
+    key: "reviews",
+    stats: [
+      { label: "Avg Rating", value: "4.6★" },
+      { label: "Reviews / mo", value: "12" },
+      { label: "Response Rate", value: "92%" },
+    ],
+    spark: [
+      { x: "M1", y: 6 }, { x: "M2", y: 8 }, { x: "M3", y: 9 },
+      { x: "M4", y: 11 }, { x: "M5", y: 10 }, { x: "M6", y: 12 },
+    ],
+    chartType: "bar",
+  },
+  {
+    key: "website",
+    stats: [
+      { label: "Conversion Rate", value: "3.4%" },
+      { label: "Bounce Rate", value: "42%" },
+      { label: "Page Views / mo", value: "8.6K" },
+    ],
+    spark: [
+      { x: "W1", y: 2.6 }, { x: "W2", y: 2.9 }, { x: "W3", y: 3.1 },
+      { x: "W4", y: 3.2 }, { x: "W5", y: 3.3 }, { x: "W6", y: 3.4 },
+    ],
+    chartType: "line",
+  },
+  {
+    key: "crm",
+    stats: [
+      { label: "Open Deals", value: "24" },
+      { label: "Pipeline Value", value: "$86K" },
+      { label: "Avg Response", value: "12 min" },
+    ],
+    spark: [
+      { x: "M1", y: 14 }, { x: "M2", y: 17 }, { x: "M3", y: 19 },
+      { x: "M4", y: 22 }, { x: "M5", y: 23 }, { x: "M6", y: 24 },
+    ],
+    chartType: "bar",
+  },
+];
+
+function CategoryPerformanceGrid({
+  recs,
+  onSelect,
+  activeFilter,
+}: {
+  recs: Recommendation[];
+  onSelect: (k: "all" | Category) => void;
+  activeFilter: "all" | Category;
+}) {
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(280 75% 60%), hsl(211 96% 56%))" }}
+        >
+          <BarChart3 className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Category Performance</h3>
+        <span className="text-xs text-muted-foreground">Click a card to focus your action queue</span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {CATEGORY_PERF_EXAMPLES.map((cp, idx) => {
+          const meta = CATEGORY_META[cp.key];
+          const Icon = meta.icon;
+          const active = activeFilter === cp.key;
+          const catRecs = recs.filter((r) => normalizeCategory(r.category) === cp.key).length;
+          return (
+            <motion.button
+              key={cp.key}
+              type="button"
+              onClick={() => onSelect(active ? "all" : cp.key)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              whileHover={{ y: -3 }}
+              className="text-left rounded-2xl p-5 transition-all"
+              style={{
+                background: "hsla(210,50%,99%,.95)",
+                border: `1px solid ${active ? `hsla(${meta.hue},.45)` : "hsla(211,96%,56%,.1)"}`,
+                boxShadow: active
+                  ? `0 12px 32px -14px hsla(${meta.hue},.35)`
+                  : "0 2px 8px -4px hsla(215,25%,20%,.06)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, hsla(${meta.hue},.16), hsla(${meta.hue},.06))` }}
+                  >
+                    <Icon className="h-4.5 w-4.5" style={{ color: `hsl(${meta.hue})` }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground leading-tight">{meta.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {catRecs > 0 ? `${catRecs} recommendation${catRecs === 1 ? "" : "s"}` : "No live signals yet"}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full whitespace-nowrap"
+                  style={{
+                    background: "hsla(45,93%,50%,.14)",
+                    color: "hsl(38 90% 38%)",
+                  }}
+                  title="Illustrative numbers — connect the account below for live data"
+                >
+                  Example data
+                </span>
+              </div>
+
+              <div className="h-16 -mx-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  {cp.chartType === "line" ? (
+                    <LineChart data={cp.spark} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                      <Line
+                        type="monotone"
+                        dataKey="y"
+                        stroke={`hsl(${meta.hue})`}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  ) : (
+                    <BarChart data={cp.spark} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                      <Bar dataKey="y" fill={`hsl(${meta.hue})`} radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {cp.stats.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold truncate">{s.label}</p>
+                    <p className="text-sm font-bold text-foreground tabular-nums mt-0.5">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[10px] text-muted-foreground mt-3 leading-snug">
+                Connect your {meta.label.toLowerCase()} account in Integrations to replace with live numbers.
+              </p>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Insights & Feedback — engagement stats + per-category volume chart
+// ─────────────────────────────────────────────────────────────────
+
+function InsightsFeedback({ recs, wins }: { recs: Recommendation[]; wins: Recommendation[] }) {
+  const totalLive = recs.length + wins.length;
+  const isExample = totalLive < 3;
+
+  const total = isExample ? 42 : totalLive;
+  const accepted = isExample ? 28 : recs.filter((r) => r.status === "accepted").length + wins.length;
+  const acceptanceRate = total > 0 ? Math.round((accepted / total) * 100) : 0;
+  const avgConf = isExample
+    ? 74
+    : Math.round(
+        (recs.reduce((s, r) => s + (r.confidence_pct ?? 0), 0) || 0) / Math.max(1, recs.length)
+      );
+
+  const chartData = (["ads", "seo", "social", "reviews", "website", "crm"] as Category[]).map((k) => {
+    const meta = CATEGORY_META[k];
+    const liveCount =
+      recs.filter((r) => normalizeCategory(r.category) === k).length +
+      wins.filter((r) => normalizeCategory(r.category) === k).length;
+    const exampleCounts: Record<Category, number> = {
+      ads: 9, seo: 7, social: 6, reviews: 8, website: 5, crm: 7,
+    };
+    return {
+      name: meta.label,
+      count: isExample ? exampleCounts[k] : liveCount,
+      fill: `hsl(${meta.hue})`,
+    };
+  });
+
+  return (
+    <div className="mt-10">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(197 92% 48%), hsl(142 71% 45%))" }}
+        >
+          <Activity className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Insights &amp; Feedback</h3>
+        {isExample && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+          >
+            Example data
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="grid gap-3 lg:col-span-2 sm:grid-cols-3 lg:grid-cols-1">
+          <StatTile label="Recommendations generated" value={total.toString()} hue="211 96% 56%" />
+          <StatTile label="Acceptance rate" value={`${acceptanceRate}%`} hue="142 71% 45%" />
+          <StatTile label="Avg confidence" value={`${avgConf}%`} hue="280 75% 60%" />
+        </div>
+
+        <div
+          className="lg:col-span-3 rounded-2xl p-5"
+          style={{
+            background: "hsla(210,50%,99%,.95)",
+            border: "1px solid hsla(211,96%,56%,.1)",
+          }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Recommendation volume by category
+          </p>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsla(215,25%,60%,.15)" />
+                <XAxis dataKey="name" stroke="hsl(215 16% 55%)" fontSize={11} />
+                <YAxis stroke="hsl(215 16% 55%)" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(210 40% 98%)", border: "1px solid hsla(211,96%,56%,.2)", borderRadius: 8, fontSize: 12 }}
+                />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {chartData.map((d, i) => (
+                    <rect key={i} fill={d.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {isExample && (
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Illustrative distribution — real values appear as you refresh insights over time.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, hue }: { label: string; value: string; hue: string }) {
+  return (
+    <div
+      className="rounded-2xl p-5"
+      style={{
+        background: `linear-gradient(135deg, hsla(${hue},.08), hsla(${hue},.02))`,
+        border: `1px solid hsla(${hue},.18)`,
+      }}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-3xl font-bold text-foreground tabular-nums mt-2" style={{ color: `hsl(${hue})` }}>
+        {value}
+      </p>
+    </div>
   );
 }
