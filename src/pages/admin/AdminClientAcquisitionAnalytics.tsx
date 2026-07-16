@@ -142,15 +142,17 @@ export default function AdminClientAcquisitionAnalytics() {
             <Users className="h-4 w-4" /> Client Roster — click to expand
           </CardTitle>
         </CardHeader>
-        <div className="divide-y divide-white/[0.04]">
-          {MOCK_ACQUISITION_CLIENTS.map((c) => (
-            <ClientRow
-              key={c.id}
-              client={c}
-              expanded={expandedId === c.id}
-              onToggle={() => setExpandedId((prev) => (prev === c.id ? null : c.id))}
-            />
-          ))}
+        <div className="overflow-x-auto">
+          <div className="divide-y divide-white/[0.04]">
+            {MOCK_ACQUISITION_CLIENTS.map((c) => (
+              <ClientRow
+                key={c.id}
+                client={c}
+                expanded={expandedId === c.id}
+                onToggle={() => setExpandedId((prev) => (prev === c.id ? null : c.id))}
+              />
+            ))}
+          </div>
         </div>
       </Card>
     </div>
@@ -169,7 +171,7 @@ function ClientRow({
     <div>
       <button
         onClick={onToggle}
-        className="w-full grid grid-cols-12 gap-3 items-center px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
+        className="w-full grid grid-cols-12 min-w-[720px] gap-3 items-center px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
       >
         <div className="col-span-3 flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-3.5 w-3.5 text-white/40 transition-transform ${expanded ? "" : "-rotate-90"}`} />

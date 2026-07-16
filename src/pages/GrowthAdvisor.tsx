@@ -478,45 +478,47 @@ export default function GrowthAdvisor() {
           )}
 
           <div className="rounded-2xl border border-border/50 bg-card/60 overflow-hidden">
-            <div className="grid grid-cols-12 px-6 py-3 border-b border-border/40 text-[11px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/20">
-              <div className="col-span-4">Competitor</div>
-              <div className="col-span-2 text-right">Reviews</div>
-              <div className="col-span-2 text-right">Rating</div>
-              <div className="col-span-2 text-right">Share of Voice</div>
-              <div className="col-span-2 text-right">Actions</div>
-            </div>
-
-            {showAdd && (
-              <div className="grid grid-cols-12 px-6 py-3 border-b border-border/40 bg-primary/[0.03] gap-2 items-center">
-                <Input className="col-span-4" placeholder="Competitor name"
-                  value={newComp.name} onChange={(e) => setNewComp((s) => ({ ...s, name: e.target.value }))} />
-                <Input className="col-span-2 text-right" placeholder="0" type="number"
-                  value={newComp.reviews} onChange={(e) => setNewComp((s) => ({ ...s, reviews: e.target.value }))} />
-                <Input className="col-span-2 text-right" placeholder="4.5" type="number" step="0.1"
-                  value={newComp.rating} onChange={(e) => setNewComp((s) => ({ ...s, rating: e.target.value }))} />
-                <Input className="col-span-2 text-right" placeholder="%" type="number"
-                  value={newComp.sov} onChange={(e) => setNewComp((s) => ({ ...s, sov: e.target.value }))} />
-                <div className="col-span-2 flex justify-end gap-1">
-                  <Button size="sm" onClick={addCompetitor}><Check className="w-3.5 h-3.5" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setShowAdd(false)}><X className="w-3.5 h-3.5" /></Button>
-                </div>
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-12 min-w-[720px] px-6 py-3 border-b border-border/40 text-[11px] uppercase tracking-wider text-muted-foreground font-medium bg-muted/20">
+                <div className="col-span-4">Competitor</div>
+                <div className="col-span-2 text-right">Reviews</div>
+                <div className="col-span-2 text-right">Rating</div>
+                <div className="col-span-2 text-right">Share of Voice</div>
+                <div className="col-span-2 text-right">Actions</div>
               </div>
-            )}
 
-            {competitors.length === 0 && !showAdd ? (
-              <ExampleCompetitorRows />
-            ) : (
-              competitors.map((c) => (
-                <CompetitorRow
-                  key={c.id} competitor={c}
-                  editing={editingComp === c.id}
-                  onEdit={() => setEditingComp(c.id)}
-                  onCancel={() => setEditingComp(null)}
-                  onSave={(patch) => updateCompetitor(c.id, patch)}
-                  onDelete={() => deleteCompetitor(c.id)}
-                />
-              ))
-            )}
+              {showAdd && (
+                <div className="grid grid-cols-12 min-w-[720px] px-6 py-3 border-b border-border/40 bg-primary/[0.03] gap-2 items-center">
+                  <Input className="col-span-4" placeholder="Competitor name"
+                    value={newComp.name} onChange={(e) => setNewComp((s) => ({ ...s, name: e.target.value }))} />
+                  <Input className="col-span-2 text-right" placeholder="0" type="number"
+                    value={newComp.reviews} onChange={(e) => setNewComp((s) => ({ ...s, reviews: e.target.value }))} />
+                  <Input className="col-span-2 text-right" placeholder="4.5" type="number" step="0.1"
+                    value={newComp.rating} onChange={(e) => setNewComp((s) => ({ ...s, rating: e.target.value }))} />
+                  <Input className="col-span-2 text-right" placeholder="%" type="number"
+                    value={newComp.sov} onChange={(e) => setNewComp((s) => ({ ...s, sov: e.target.value }))} />
+                  <div className="col-span-2 flex justify-end gap-1">
+                    <Button size="sm" onClick={addCompetitor}><Check className="w-3.5 h-3.5" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => setShowAdd(false)}><X className="w-3.5 h-3.5" /></Button>
+                  </div>
+                </div>
+              )}
+
+              {competitors.length === 0 && !showAdd ? (
+                <ExampleCompetitorRows />
+              ) : (
+                competitors.map((c) => (
+                  <CompetitorRow
+                    key={c.id} competitor={c}
+                    editing={editingComp === c.id}
+                    onEdit={() => setEditingComp(c.id)}
+                    onCancel={() => setEditingComp(null)}
+                    onSave={(patch) => updateCompetitor(c.id, patch)}
+                    onDelete={() => deleteCompetitor(c.id)}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </section>
       </div>
@@ -612,7 +614,7 @@ function CompetitorRow({
 
   if (editing) {
     return (
-      <div className="grid grid-cols-12 px-6 py-3 border-b border-border/30 gap-2 items-center bg-primary/[0.03]">
+      <div className="grid grid-cols-12 min-w-[720px] px-6 py-3 border-b border-border/30 gap-2 items-center bg-primary/[0.03]">
         <Input className="col-span-4" value={name} onChange={(e) => setName(e.target.value)} />
         <Input className="col-span-2 text-right" type="number" value={reviews} onChange={(e) => setReviews(e.target.value)} />
         <Input className="col-span-2 text-right" type="number" step="0.1" value={rating} onChange={(e) => setRating(e.target.value)} />
@@ -631,7 +633,7 @@ function CompetitorRow({
   }
 
   return (
-    <div className="grid grid-cols-12 px-6 py-4 border-b border-border/30 last:border-b-0 items-center hover:bg-muted/10 transition-colors">
+    <div className="grid grid-cols-12 min-w-[720px] px-6 py-4 border-b border-border/30 last:border-b-0 items-center hover:bg-muted/10 transition-colors">
       <div className="col-span-4 font-medium">{competitor.competitor_name || "—"}</div>
       <div className="col-span-2 text-right tabular-nums">{competitor.review_count?.toLocaleString() ?? "—"}</div>
       <div className="col-span-2 text-right tabular-nums">{competitor.avg_rating != null ? `${Number(competitor.avg_rating).toFixed(1)}★` : "—"}</div>
@@ -771,7 +773,7 @@ function ExampleCompetitorRows() {
       {EXAMPLE_COMPETITORS.map((c, i) => (
         <div
           key={i}
-          className="grid grid-cols-12 px-6 py-4 border-b border-dashed border-border/40 last:border-b-0 items-center opacity-70"
+          className="grid grid-cols-12 min-w-[720px] px-6 py-4 border-b border-dashed border-border/40 last:border-b-0 items-center opacity-70"
         >
           <div className="col-span-4 font-medium flex items-center gap-2">
             {c.name}
