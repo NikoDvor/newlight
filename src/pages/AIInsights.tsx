@@ -413,6 +413,11 @@ export default function AIInsights() {
         })}
       </div>
 
+      {/* ── Priority / Roadmap / Homework strips ─────────────────── */}
+      <PriorityActionsStrip recs={recs} />
+      <NextStepsRoadmap recs={recs} wins={wins} />
+      <HomeworkPanel recs={recs} />
+
       {/* ── Do This Next ─────────────────────────────────────────── */}
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-4">
