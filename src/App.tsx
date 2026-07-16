@@ -183,6 +183,7 @@ import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import BDRCalendar from "./pages/employee/BDRCalendar";
+import ClosePrep from "./pages/employee/ClosePrep";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
