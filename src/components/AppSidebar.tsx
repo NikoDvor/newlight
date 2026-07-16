@@ -233,7 +233,7 @@ export function AppSidebar() {
           }
 
           const group = entry as NavEntry & { items: any[] };
-          const visibleItems = group.items!.filter(i => canSee(i.moduleKey));
+          const visibleItems = group.items!.filter(i => canSee(i.moduleKey, i.url));
           if (visibleItems.length === 0) return null;
 
           const isOpen = openGroups[group.label!] ?? false;
