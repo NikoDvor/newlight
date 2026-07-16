@@ -369,6 +369,9 @@ export interface ActivationFormState {
   readonly_users: string;
   client_team_members: string;
   worker_portal_users: string;
+
+  // Booking links (populated at wizard runtime, persisted with draft)
+  meeting_2_booking_slug: string;
 }
 
 // ── Legacy 15-step array (kept for backward compat) ──
@@ -562,6 +565,7 @@ export const defaultFormState = (): ActivationFormState => ({
   preferred_channels: "in_app", quiet_hours: "",
   team_roles_notes: "", manager_roles: "", readonly_users: "",
   client_team_members: "", worker_portal_users: "",
+  meeting_2_booking_slug: "",
 });
 
 export interface StepProps {
