@@ -145,6 +145,7 @@ import Workforce from "./pages/Workforce";
 import Chat from "./pages/Chat";
 import ContentPlanner from "./pages/ContentPlanner";
 import Proposals from "./pages/Proposals";
+import ClientDocuments from "./pages/ClientDocuments";
 import HelpDesk from "./pages/HelpDesk";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import CalendarManagement from "./pages/CalendarManagement";
@@ -508,6 +509,7 @@ const App = () => {
                 <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
                 <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
+                <Route path="/documents" element={<ClientDocuments />} />
                 
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
