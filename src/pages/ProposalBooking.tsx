@@ -139,7 +139,7 @@ export default function ProposalBooking() {
           top: "-150px", right: "-100px",
           background: "radial-gradient(circle, hsla(211,96%,62%,.12), transparent 70%)", filter: "blur(80px)",
         }} />
-        <div className="absolute w-[500px] h-[500px] rounded-full" style={{
+        <div className="absolute w-full max-w-[500px] h-[500px] rounded-full" style={{
           bottom: "-100px", left: "-80px",
           background: "radial-gradient(circle, hsla(197,92%,68%,.09), transparent 70%)", filter: "blur(80px)",
         }} />
