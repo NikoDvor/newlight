@@ -474,7 +474,7 @@ export default function BDRMyLeads() {
       {activeTab === "leads" ? (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             {[
               { label: "Total", value: stats.total },
               { label: "Contacted", value: stats.contacted },
