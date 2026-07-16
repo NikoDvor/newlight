@@ -14,6 +14,19 @@ const MODULE_GROUPS = [
   { label: "Compliance", keys: ["financial_compliance"] },
 ];
 
+const SALES_TOOLS = [
+  { key: "sales_meeting_intelligence", label: "Meeting Intelligence" },
+  { key: "sales_call_tracking", label: "Call Tracking" },
+  { key: "sales_followups", label: "Follow-Ups" },
+  { key: "sales_tasks", label: "Tasks" },
+  { key: "sales_contacts", label: "Contacts" },
+  { key: "sales_companies", label: "Companies" },
+  { key: "sales_deals", label: "Deals" },
+  { key: "sales_pipeline", label: "Pipeline" },
+  { key: "sales_appointments", label: "Appointments" },
+  { key: "sales_approvals", label: "Approvals" },
+];
+
 const moduleByKey = CORE_MODULES.reduce((acc, m) => { acc[m.key] = m; return acc; }, {} as Record<string, CoreModuleDef>);
 
 function ModuleCheckbox({ m, checked, onToggle }: { m: CoreModuleDef; checked: boolean; onToggle: () => void }) {
