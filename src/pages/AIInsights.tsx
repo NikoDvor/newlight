@@ -1429,3 +1429,164 @@ function HomeworkPanel({ recs }: { recs: Recommendation[] }) {
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Weaknesses — raw underperforming signals vs benchmark
+// ─────────────────────────────────────────────────────────────────
+
+interface WeaknessSignal {
+  metric_key: string;
+  category: string;
+  actual: number;
+  benchmark: number;
+  top_quartile?: number | null;
+  unit: string;
+  gap_pct: number;
+  direction?: "higher_is_better" | "lower_is_better";
+  human_label?: string;
+}
+
+const METRIC_LABELS: Record<string, string> = {
+  conversion_rate: "Lead-to-close conversion",
+  no_show_rate: "Appointment no-show rate",
+  review_velocity_monthly: "Review velocity",
+  avg_rating: "Average review rating",
+  reply_time_minutes: "Speed to lead",
+  reactivation_rate: "Lead reactivation rate",
+  cost_per_lead: "Cost per lead",
+  organic_traffic: "Organic traffic",
+  social_engagement: "Social engagement rate",
+  ad_ctr: "Ad click-through rate",
+};
+
+const EXAMPLE_WEAKNESSES: WeaknessSignal[] = [
+  { metric_key: "review_velocity_monthly", category: "reviews", actual: 3, benchmark: 12, unit: "/mo", gap_pct: 75 },
+  { metric_key: "no_show_rate", category: "crm", actual: 22, benchmark: 8, unit: "%", gap_pct: 175 },
+  { metric_key: "reply_time_minutes", category: "crm", actual: 240, benchmark: 15, unit: "min", gap_pct: 94 },
+  { metric_key: "conversion_rate", category: "crm", actual: 4, benchmark: 12, unit: "%", gap_pct: 67 },
+  { metric_key: "avg_rating", category: "reviews", actual: 4.1, benchmark: 4.7, unit: "★", gap_pct: 13 },
+  { metric_key: "cost_per_lead", category: "ads", actual: 82, benchmark: 45, unit: "$", gap_pct: 82 },
+  { metric_key: "organic_traffic", category: "seo", actual: 340, benchmark: 900, unit: "/mo", gap_pct: 62 },
+  { metric_key: "social_engagement", category: "social", actual: 1.1, benchmark: 3.5, unit: "%", gap_pct: 69 },
+  { metric_key: "ad_ctr", category: "ads", actual: 0.9, benchmark: 2.4, unit: "%", gap_pct: 63 },
+  { metric_key: "reactivation_rate", category: "crm", actual: 2, benchmark: 8, unit: "%", gap_pct: 75 },
+];
+
+function formatSignalValue(v: number, unit: string): string {
+  const u = (unit || "").trim();
+  if (u === "$") return `$${v.toLocaleString()}`;
+  if (u === "%") return `${v}%`;
+  if (u === "★" || u === "stars") return `${v.toFixed(1)}★`;
+  if (u === "min") return `${v} min`;
+  if (u === "/mo") return `${v}/mo`;
+  return unit ? `${v} ${unit}` : `${v}`;
+}
+
+function severityFor(gapPct: number): { hue: string; label: string } {
+  if (gapPct >= 60) return { hue: "0 72% 51%", label: "Severe" };
+  if (gapPct >= 30) return { hue: "24 95% 54%", label: "Moderate" };
+  return { hue: "45 93% 50%", label: "Mild" };
+}
+
+function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
+  const isExample = signals.length === 0;
+  const items = (isExample ? EXAMPLE_WEAKNESSES : signals)
+    .slice()
+    .sort((a, b) => b.gap_pct - a.gap_pct)
+    .slice(0, 10);
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(0 72% 51%), hsl(24 95% 54%))" }}
+        >
+          <TrendingDown className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">Top 10 Weaknesses</h3>
+        <span className="text-xs text-muted-foreground">Metrics falling short of industry benchmark</span>
+        {isExample && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
+          >
+            Example data
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+        {items.map((s, i) => {
+          const cat = normalizeCategory(s.category);
+          const meta = CATEGORY_META[cat];
+          const sev = severityFor(s.gap_pct);
+          const barWidth = Math.min(100, Math.max(6, s.gap_pct));
+          const label = METRIC_LABELS[s.metric_key] || s.metric_key.replace(/_/g, " ");
+          return (
+            <motion.div
+              key={`${s.metric_key}-${i}`}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="grid grid-cols-[auto,1fr,auto] gap-4 items-center px-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground w-5 tabular-nums shrink-0">
+                  #{i + 1}
+                </span>
+                <div
+                  className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `hsla(${meta.hue},.12)` }}
+                >
+                  <meta.icon className="h-4 w-4" style={{ color: `hsl(${meta.hue})` }} />
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-foreground truncate">{label}</p>
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                    style={{ background: `hsla(${meta.hue},.12)`, color: `hsl(${meta.hue})` }}
+                  >
+                    {meta.label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <div className="flex-1 max-w-[240px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(215,25%,50%,.12)" }}>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${barWidth}%` }}
+                      transition={{ delay: i * 0.04 + 0.1, duration: 0.5, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{ background: `linear-gradient(90deg, hsl(${sev.hue}), hsla(${sev.hue},.7))` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-semibold tabular-nums" style={{ color: `hsl(${sev.hue})` }}>
+                    {Math.round(s.gap_pct)}% gap · {sev.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0">
+                <p className="text-sm font-bold text-foreground tabular-nums leading-tight">
+                  {formatSignalValue(s.actual, s.unit)}
+                </p>
+                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
+                  vs {formatSignalValue(s.benchmark, s.unit)} benchmark
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {isExample && (
+        <p className="text-[10px] text-muted-foreground mt-2 px-1">
+          Refresh insights to compute your live weaknesses against industry benchmarks.
+        </p>
+      )}
+    </div>
+  );
+}
