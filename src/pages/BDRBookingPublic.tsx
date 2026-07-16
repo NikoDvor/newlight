@@ -8,11 +8,21 @@ import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/components/LogoUploader";
 import { CORE_MODULES, CoreModuleDef } from "@/lib/coreModules";
 
-const MODULE_GROUPS = [
-  { label: "Client Acquisition", keys: ["paid_ads", "seo", "website_management", "tracking_attribution"] },
-  { label: "Client Management", keys: ["crm_automation", "lifecycle_nurture", "reputation_reviews"] },
+// Included by default in every plan — displayed statically, always submitted.
+const INCLUDED_MODULE_KEYS = [
+  "paid_ads",
+  "seo",
+  "website_management",
+  "tracking_attribution",
+  "crm_automation",
+  "lifecycle_nurture",
+  "reputation_reviews",
+];
+// Compliance remains an optional user-toggled checkbox.
+const OPTIONAL_MODULE_GROUPS = [
   { label: "Compliance", keys: ["financial_compliance"] },
 ];
+const SALES_TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
 
 const SALES_TOOLS = [
   { key: "sales_meeting_intelligence", label: "Meeting Intelligence" },
