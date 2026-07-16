@@ -844,9 +844,6 @@ function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAc
           </DialogFooter>
         </DialogContent>
       </Dialog>
-          </div>
-        </div>
-      </div>
     </motion.div>
   );
 }
