@@ -124,11 +124,6 @@ export default function MeetingIntelligence() {
       </PageHeader>
 
       <ManualMeetingNotesDialog open={notesOpen} onOpenChange={setNotesOpen} onSaved={fetchMeetings} />
-        <Button size="sm" onClick={() => navigate("/meeting-outcome")}>
-          <Plus className="h-4 w-4 mr-1" />
-          Log Outcome
-        </Button>
-      </PageHeader>
 
       <WidgetGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
         <MetricCard label="Meetings This Month" value={String(totalMeetings)} change="From sales pipeline" changeType="positive" icon={Calendar} />
