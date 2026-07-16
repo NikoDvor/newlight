@@ -104,10 +104,8 @@ Deno.serve(async (req) => {
         pipeline_stage: "hot",
         notes: noteParts.join("\n") || null,
         list_name: "Booking Form",
-        niche: nicheClean,
         modules_of_interest: modulesClean,
         logo_url: logoClean,
-
       })
       .select("id")
       .single();
