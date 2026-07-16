@@ -177,39 +177,41 @@ export default function AdminAutomations() {
                   <p className="text-xs text-white/25">Use the Trigger Profiles tab to seed default automation workflows.</p>
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead><tr className="border-b border-white/[0.06]">
-                    <th className={hCls}>Name</th><th className={hCls}>Category</th><th className={hCls}>Scope</th><th className={hCls}>Trigger</th><th className={hCls}>Last Run</th><th className={hCls}>Success Rate</th><th className={hCls}>Status</th><th className={hCls}>Actions</th>
-                  </tr></thead>
-                  <tbody>
-                    {automations.map((a: any) => {
-                      const { lastRun, rate, totalRuns } = autoStats(a.id);
-                      return (
-                        <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                          <td className={cCls + " font-medium text-white"}>{a.name}</td>
-                          <td className={cCls}>{(a as any).automation_category || "—"}</td>
-                          <td className={cCls}><Badge variant="outline" className="border-0 text-[9px] bg-white/[0.06] text-white/50">{(a as any).workspace_scope_type || "—"}</Badge></td>
-                          <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{a.trigger_event}</code></td>
-                          <td className={cCls + " text-xs"}>{lastRun ? new Date(lastRun.started_at).toLocaleDateString() : "Never"}</td>
-                          <td className={cCls + " text-xs"}>{rate !== null ? `${rate}% (${totalRuns})` : "—"}</td>
-                          <td className={cCls}>
-                            <div className="flex items-center gap-2">
-                              <Switch checked={a.enabled} onCheckedChange={() => toggleEnabled(a.id, a.enabled)} className="scale-75" />
-                              <SBadge status={a.enabled ? "Active" : "Disabled"} />
-                            </div>
-                          </td>
-                          <td className={cCls}>
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10" onClick={() => duplicateAutomation(a)} title="Duplicate">
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="border-b border-white/[0.06]">
+                      <th className={hCls}>Name</th><th className={hCls}>Category</th><th className={hCls}>Scope</th><th className={hCls}>Trigger</th><th className={hCls}>Last Run</th><th className={hCls}>Success Rate</th><th className={hCls}>Status</th><th className={hCls}>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                      {automations.map((a: any) => {
+                        const { lastRun, rate, totalRuns } = autoStats(a.id);
+                        return (
+                          <tr key={a.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                            <td className={cCls + " font-medium text-white"}>{a.name}</td>
+                            <td className={cCls}>{(a as any).automation_category || "—"}</td>
+                            <td className={cCls}><Badge variant="outline" className="border-0 text-[9px] bg-white/[0.06] text-white/50">{(a as any).workspace_scope_type || "—"}</Badge></td>
+                            <td className={cCls}><code className="text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">{a.trigger_event}</code></td>
+                            <td className={cCls + " text-xs"}>{lastRun ? new Date(lastRun.started_at).toLocaleDateString() : "Never"}</td>
+                            <td className={cCls + " text-xs"}>{rate !== null ? `${rate}% (${totalRuns})` : "—"}</td>
+                            <td className={cCls}>
+                              <div className="flex items-center gap-2">
+                                <Switch checked={a.enabled} onCheckedChange={() => toggleEnabled(a.id, a.enabled)} className="scale-75" />
+                                <SBadge status={a.enabled ? "Active" : "Disabled"} />
+                              </div>
+                            </td>
+                            <td className={cCls}>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10" onClick={() => duplicateAutomation(a)} title="Duplicate">
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
