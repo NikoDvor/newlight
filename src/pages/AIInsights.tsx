@@ -550,11 +550,13 @@ interface CardProps {
   rec: Recommendation;
   index: number;
   expanded: boolean;
+  businessName: string;
   onToggle: () => void;
   onAction: (status: Status) => void;
 }
 
-function RecommendationCard({ rec, index, expanded, onToggle, onAction }: CardProps) {
+function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAction }: CardProps) {
+  const { toast } = useToast();
   const cat = normalizeCategory(rec.category);
   const meta = CATEGORY_META[cat];
   const CatIcon = meta.icon;
@@ -562,6 +564,11 @@ function RecommendationCard({ rec, index, expanded, onToggle, onAction }: CardPr
   const eff = effortStyle(rec.effort_level);
   const isAccepted = rec.status === "accepted";
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const executable = useMemo(() => isExecutable(rec), [rec]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const steps = useMemo(() => buildGuidedSteps(rec), [rec]);
+  const actionLabel = rec.action_label || "Take action";
 
   return (
     <motion.div
