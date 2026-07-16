@@ -3106,6 +3106,59 @@ export type Database = {
           },
         ]
       }
+      client_text_messages: {
+        Row: {
+          client_id: string
+          contact_id: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["text_message_direction"]
+          error_note: string | null
+          id: string
+          message_body: string
+          phone_number: string
+          send_status: string
+          sent_at: string
+          sent_by_user_id: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          client_id: string
+          contact_id?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["text_message_direction"]
+          error_note?: string | null
+          id?: string
+          message_body: string
+          phone_number: string
+          send_status?: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          client_id?: string
+          contact_id?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["text_message_direction"]
+          error_note?: string | null
+          id?: string
+          message_body?: string
+          phone_number?: string
+          send_status?: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_text_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_training_sop: {
         Row: {
           bdr_training_enabled: boolean
@@ -13473,6 +13526,7 @@ export type Database = {
         | "moderate_aggressive"
         | "aggressive"
       testimonial_disclosure_method: "embedded" | "linked" | "verbal_disclosed"
+      text_message_direction: "outbound" | "inbound"
       webinar_event_status: "draft" | "scheduled" | "completed" | "cancelled"
     }
     CompositeTypes: {
@@ -13671,6 +13725,7 @@ export const Constants = {
         "aggressive",
       ],
       testimonial_disclosure_method: ["embedded", "linked", "verbal_disclosed"],
+      text_message_direction: ["outbound", "inbound"],
       webinar_event_status: ["draft", "scheduled", "completed", "cancelled"],
     },
   },

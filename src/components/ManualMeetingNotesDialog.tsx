@@ -86,6 +86,11 @@ export function ManualMeetingNotesDialog({ open, onOpenChange, onSaved }: Props)
         <DialogHeader>
           <DialogTitle>Log Manual Meeting Notes</DialogTitle>
         </DialogHeader>
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs text-foreground/90 mb-2">
+          <strong>Free alternative to paid AI notetakers.</strong> Paste a transcript from Zoom/Teams/Meet's
+          built-in free transcription, or type notes manually — either way, this row is scanned for
+          money-in-motion signals just like a webhook-ingested notetaker transcript.
+        </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
