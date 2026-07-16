@@ -158,6 +158,7 @@ import AppointmentDetail from "./pages/AppointmentDetail";
 import TeamManagement from "./pages/TeamManagement";
 import BDRTeamPipeline from "./pages/BDRTeamPipeline";
 import BDRLeadSourcing from "./pages/BDRLeadSourcing";
+import SalesTeamPipeline from "./pages/SalesTeamPipeline";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import SetupCenter from "./pages/SetupCenter";
