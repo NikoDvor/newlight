@@ -109,10 +109,21 @@ export default function MeetingIntelligence() {
   return (
     <div>
       <PageHeader title="Meeting Intelligence" description="AI-powered meeting analysis and coaching insights">
+        <Button size="sm" variant="outline" onClick={() => setNotesOpen(true)}>
+          <NotebookPen className="h-4 w-4 mr-1" />
+          Log Manual Notes
+        </Button>
         <Button size="sm" variant="outline" onClick={scanOpportunities} disabled={scanning || !activeClientId}>
           {scanning ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
           Scan for Opportunities
         </Button>
+        <Button size="sm" onClick={() => navigate("/meeting-outcome")}>
+          <Plus className="h-4 w-4 mr-1" />
+          Log Outcome
+        </Button>
+      </PageHeader>
+
+      <ManualMeetingNotesDialog open={notesOpen} onOpenChange={setNotesOpen} onSaved={fetchMeetings} />
         <Button size="sm" onClick={() => navigate("/meeting-outcome")}>
           <Plus className="h-4 w-4 mr-1" />
           Log Outcome
