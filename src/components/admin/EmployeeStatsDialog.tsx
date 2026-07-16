@@ -265,7 +265,7 @@ export function EmployeeStatsDialog(props: Props) {
 
             {/* Pipeline / sales */}
             <Section title="Pipeline">
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {STAGES.map((s) => (
                   <Stat key={s} label={s} value={pipelineCounts[s] ?? 0} />
                 ))}
@@ -280,13 +280,13 @@ export function EmployeeStatsDialog(props: Props) {
             {/* Training */}
             <Section title="Training & Certification">
               <Row label="BDR certification" value={certStatus.replace(/_/g, " ")} />
-              <div className="grid grid-cols-5 gap-2 mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
                 {moduleProgress.map((m) => (
                   <Stat key={m.module} label={m.module} value={`${m.pct}%`} />
                 ))}
               </div>
               <div className="mt-3 text-[11px] text-white/40 uppercase tracking-wider">Quiz attempts</div>
-              <div className="grid grid-cols-5 gap-1 mt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 mt-1">
                 {quizAttempts.map((q) => (
                   <div key={`${q.module}-${q.level}`} className="rounded bg-white/[0.03] px-2 py-1 text-[11px]">
                     <span className="text-white/40">{q.module} {q.level}</span>
