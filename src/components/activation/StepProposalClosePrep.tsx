@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DollarSign, CheckCircle2 } from "lucide-react";
+import { DollarSign, CheckCircle2, Calendar, Copy, Check, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { ActivationHelp } from "./ActivationHelp";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import type { StepProps } from "./activationTypes";
 
 const inputCls = "bg-white/[0.06] border-white/10 text-white placeholder:text-white/30";
@@ -22,6 +24,32 @@ export function StepProposalClosePrep({ form, set, submitting, clientId }: Props
   } | null>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [overrideEdit, setOverrideEdit] = useState(false);
+  const [meeting2Copied, setMeeting2Copied] = useState(false);
+
+  // Ensure the current logged-in user has a personal BDR calendar and
+  // persist its booking_slug into the wizard draft.
+  useEffect(() => {
+    if (form.meeting_2_booking_slug) return;
+    let cancelled = false;
+    (async () => {
+      const cal = await ensureBdrCalendar();
+      if (cancelled || !cal?.booking_slug) return;
+      set("meeting_2_booking_slug", cal.booking_slug);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.meeting_2_booking_slug]);
+
+  const meeting2Url = form.meeting_2_booking_slug
+    ? `${window.location.origin}/bdr/book/${form.meeting_2_booking_slug}`
+    : null;
+  const copyMeeting2 = () => {
+    if (!meeting2Url) return;
+    navigator.clipboard.writeText(meeting2Url);
+    setMeeting2Copied(true);
+    toast.success("Booking link copied");
+    setTimeout(() => setMeeting2Copied(false), 1500);
+  };
 
   // Look up the linked deal for this client where the sales rep already completed close prep.
   useEffect(() => {
@@ -72,6 +100,45 @@ export function StepProposalClosePrep({ form, set, submitting, clientId }: Props
         "Pick a pricing model — flat retainer or commission on revenue",
         "Capture anything the closer needs to know",
       ]} />
+
+      {meeting2Url && (
+        <div
+          className="rounded-xl p-3 flex items-start gap-2.5"
+          style={{
+            background: "hsla(211,96%,60%,.06)",
+            border: "1px solid hsla(211,96%,60%,.22)",
+          }}
+        >
+          <Calendar className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "hsl(211,96%,66%)" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "hsl(211,96%,72%)" }}>
+              Meeting 2 Booking Link
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <code className="text-[11px] text-white/80 bg-white/[0.06] border border-white/10 rounded px-2 py-1 truncate max-w-full">
+                {meeting2Url}
+              </code>
+              <button
+                type="button"
+                onClick={copyMeeting2}
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                {meeting2Copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {meeting2Copied ? "Copied" : "Copy"}
+              </button>
+              <a
+                href={meeting2Url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                <ExternalLink className="h-3 w-3" /> Open
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {prefilledFromRep && (
         <div

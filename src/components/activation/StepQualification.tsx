@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase, Sparkles } from "lucide-react";
+import { Target, UserPlus, Mail, Phone, Globe, MapPin, Briefcase, Sparkles, Calendar, Copy, Check, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { ActivationHelp } from "./ActivationHelp";
 import type { StepProps } from "./activationTypes";
 
@@ -22,12 +24,63 @@ const MODULE_LABELS: Record<string, string> = {
 
 interface StepQualificationProps extends StepProps {
   bookingModules?: string[];
+  meeting1BookingLink?: { slug: string; ownerName: string } | null;
 }
 
-export function StepQualification({ form, set, submitting, bookingModules }: StepQualificationProps) {
+export function StepQualification({ form, set, submitting, bookingModules, meeting1BookingLink }: StepQualificationProps) {
   const preselected = bookingModules && bookingModules.length > 0 ? bookingModules : [];
+  const [copied, setCopied] = useState(false);
+  const meeting1Url = meeting1BookingLink
+    ? `${window.location.origin}/bdr/book/${meeting1BookingLink.slug}`
+    : null;
+  const copyMeeting1 = () => {
+    if (!meeting1Url) return;
+    navigator.clipboard.writeText(meeting1Url);
+    setCopied(true);
+    toast.success("Booking link copied");
+    setTimeout(() => setCopied(false), 1500);
+  };
   return (
     <div className="space-y-4">
+      {meeting1BookingLink && meeting1Url && (
+        <div
+          className="rounded-xl p-3 flex items-start gap-2.5"
+          style={{
+            background: "hsla(211,96%,60%,.06)",
+            border: "1px solid hsla(211,96%,60%,.22)",
+          }}
+        >
+          <Calendar className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "hsl(211,96%,66%)" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "hsl(211,96%,72%)" }}>
+              Meeting 1 Booking Link · {meeting1BookingLink.ownerName}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <code className="text-[11px] text-white/80 bg-white/[0.06] border border-white/10 rounded px-2 py-1 truncate max-w-full">
+                {meeting1Url}
+              </code>
+              <button
+                type="button"
+                onClick={copyMeeting1}
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <a
+                href={meeting1Url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-1 rounded border border-white/15 text-white/80 hover:bg-white/10"
+              >
+                <ExternalLink className="h-3 w-3" /> Open
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {preselected.length > 0 && (
         <div
           className="rounded-xl p-3 flex items-start gap-2.5"
