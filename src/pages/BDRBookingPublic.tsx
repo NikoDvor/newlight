@@ -398,6 +398,89 @@ export default function BDRBookingPublic() {
                 <option value="Meeting Intelligence" className="bg-[hsl(215,35%,12%)]">Meeting Intelligence</option>
               </select>
             </Field>
+
+            <Field label="Business niche (optional)">
+              <select
+                value={selectedNiche}
+                onChange={e => { setSelectedNiche(e.target.value); setSelectedModules([]); setShowAllModules(false); }}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">— Select your industry / niche —</option>
+                {Object.entries(nichesByIndustry).map(([industry, list]) => (
+                  <optgroup key={industry} label={industry.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}>
+                    {list.map(n => (
+                      <option key={n.id} value={n.id} className="bg-[hsl(215,35%,12%)]">{n.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </Field>
+
+            {selectedNiche && (
+              <Field label="Modules of interest (optional)">
+                <div className="space-y-2">
+                  {recommendedModules.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-[hsl(211,96%,68%)]">
+                        <Sparkles className="h-3 w-3" />
+                        Recommended for {activeNiche?.label}
+                      </div>
+                      {recommendedModules.map(m => {
+                        const checked = selectedModules.includes(m.key);
+                        return (
+                          <label key={m.key}
+                            className="flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors"
+                            style={{
+                              borderColor: checked ? "hsla(211,96%,60%,.5)" : "hsla(211,96%,60%,.2)",
+                              background: checked ? "hsla(211,96%,60%,.1)" : "hsla(211,96%,60%,.03)",
+                            }}
+                          >
+                            <input type="checkbox" checked={checked}
+                              onChange={() => toggleModule(m.key)}
+                              className="mt-0.5 accent-[hsl(211,96%,56%)]" />
+                            <div className="min-w-0">
+                              <div className="text-sm text-white font-medium">{m.label}</div>
+                              <div className="text-[11px] text-white/50">{m.desc}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {otherModules.length > 0 && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllModules(v => !v)}
+                        className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors"
+                      >
+                        <ChevronDown className={`h-3 w-3 transition-transform ${showAllModules ? "rotate-0" : "-rotate-90"}`} />
+                        {showAllModules ? "Hide" : "Show"} other modules ({otherModules.length})
+                      </button>
+                      {showAllModules && otherModules.map(m => {
+                        const checked = selectedModules.includes(m.key);
+                        return (
+                          <label key={m.key}
+                            className="flex items-start gap-2 p-2 rounded-md border border-white/10 bg-white/[0.02] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                          >
+                            <input type="checkbox" checked={checked}
+                              onChange={() => toggleModule(m.key)}
+                              className="mt-0.5 accent-[hsl(211,96%,56%)]" />
+                            <div className="min-w-0">
+                              <div className="text-sm text-white/85">{m.label}</div>
+                              <div className="text-[11px] text-white/40">{m.desc}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </Field>
+            )}
+
+
             <Field label="Preferred time *">
               <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
