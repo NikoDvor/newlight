@@ -503,6 +503,9 @@ export default function AIInsights() {
           </div>
         </div>
       )}
+
+      {/* ── Insights & Feedback ──────────────────────────────────── */}
+      <InsightsFeedback recs={recs} wins={wins} />
     </div>
   );
 }
