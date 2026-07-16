@@ -150,6 +150,8 @@ export default function BDRBookingPublic() {
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
+  const [hasSalesTeam, setHasSalesTeam] = useState<"" | "yes" | "no">("");
+  const [salesTeamSize, setSalesTeamSize] = useState<string>("");
   const [logoUrl, setLogoUrl] = useState<string>("");
 
 
