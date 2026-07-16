@@ -156,8 +156,8 @@ export default function ProposalView() {
     <div className="min-h-screen py-8 px-4" style={{ background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)" }}>
       {/* Background orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-[600px] h-[600px] rounded-full" style={{ top: "-150px", right: "-100px", background: "radial-gradient(circle, hsla(211,96%,62%,.1), transparent 70%)", filter: "blur(80px)" }} />
-        <div className="absolute w-[500px] h-[500px] rounded-full" style={{ bottom: "-100px", left: "-80px", background: "radial-gradient(circle, hsla(197,92%,68%,.07), transparent 70%)", filter: "blur(80px)" }} />
+        <div className="absolute w-full max-w-[600px] h-[600px] rounded-full" style={{ top: "-150px", right: "-100px", background: "radial-gradient(circle, hsla(211,96%,62%,.1), transparent 70%)", filter: "blur(80px)" }} />
+        <div className="absolute w-full max-w-[500px] h-[500px] rounded-full" style={{ bottom: "-100px", left: "-80px", background: "radial-gradient(circle, hsla(197,92%,68%,.07), transparent 70%)", filter: "blur(80px)" }} />
       </div>
 
       <motion.div className="max-w-3xl mx-auto relative z-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
