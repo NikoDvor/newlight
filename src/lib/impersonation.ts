@@ -83,7 +83,17 @@ export async function startImpersonation(args: ImpersonateArgs) {
     return_path: args.returnPath ?? window.location.pathname,
     saved_at: Date.now(),
   };
-  localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+  sessionStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+  try {
+    const marker: ImpersonationMarker = {
+      admin_user_id: session.user?.id,
+      admin_email: session.user?.email,
+      target_user_id: args.targetUserId,
+      target_email: args.targetEmail,
+      saved_at: Date.now(),
+    };
+    localStorage.setItem(MARKER_KEY, JSON.stringify(marker));
+  } catch { /* noop */ }
 
   try {
     // 2. Ask edge function for a token_hash for the target user
