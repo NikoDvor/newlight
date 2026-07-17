@@ -35,7 +35,7 @@ const OVERVIEW_ITEMS: Array<{
     match: /the offer/i,
     shortLabel: "The Offer",
     oneLiner:
-      "25 new customers/clients guaranteed in month one — or we work for free until we deliver.",
+      "We bring service-based businesses ready-to-buy customers — and take on all the risk to do it.",
     icon: Target,
     accent: "from-primary/25 to-primary/5",
   },
@@ -43,7 +43,7 @@ const OVERVIEW_ITEMS: Array<{
     match: /how we do it/i,
     shortLabel: "How We Do It",
     oneLiner:
-      "A six-step system: capture local search intent, redirect it to the client, convert it into booked appointments.",
+      "A six-step system: Build System, Ignite Visibility, Launch the Attack, Qualify Leads, Maximize Close Rate, Run the Growth.",
     icon: Workflow,
     accent: "from-[hsl(var(--accent))]/25 to-[hsl(var(--accent))]/5",
   },
@@ -51,7 +51,7 @@ const OVERVIEW_ITEMS: Array<{
     match: /zero risk|guarantee/i,
     shortLabel: "Zero Risk Guarantee",
     oneLiner:
-      "If we don't hit 25 in month one, we keep working at no cost until we do. The client never carries the risk.",
+      "We make their initial payment back in 90 days — or we work for free until we do. No specific numeric guarantee, ever.",
     icon: ShieldCheck,
     accent: "from-[hsl(152,60%,50%)]/25 to-[hsl(152,60%,50%)]/5",
   },
@@ -59,7 +59,7 @@ const OVERVIEW_ITEMS: Array<{
     match: /selling points/i,
     shortLabel: "Selling Points",
     oneLiner:
-      "Local exclusivity, done-for-you setup, real appointments (not leads), transparent reporting.",
+      "Zero-risk 90-day guarantee, one system replacing every scattered tool, AI-powered visibility competitors aren't running, and a free branded demo app for hesitant prospects.",
     icon: Sparkles,
     accent: "from-[hsl(48,96%,60%)]/25 to-[hsl(48,96%,60%)]/5",
   },
@@ -67,7 +67,7 @@ const OVERVIEW_ITEMS: Array<{
     match: /get ahold|get a hold|contact/i,
     shortLabel: "How We Get Ahold of Clients",
     oneLiner:
-      "Multi-channel outreach cadence — call, text, email — so no booked lead ever goes cold.",
+      "Outbound cold and warm calling to business owners who fit the target profile — the rep is the human outreach layer.",
     icon: PhoneCall,
     accent: "from-[hsl(var(--warning))]/25 to-[hsl(var(--warning))]/5",
   },
