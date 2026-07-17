@@ -90,15 +90,15 @@ export default function AdminTrainingCenter() {
         <TabsContent value="tracks" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
             <TrackCard
-              title="BDR Training Track"
-              subtitle="Business Development Rep Certification"
+              title="Salesmen Training Track"
+              subtitle="Unified BDR + SDR Sales Certification"
               badge="8 Modules"
               onOpen={() => navigate("/admin/training-center/bdr")}
               delay={0}
             />
             <TrackCard
-              title="SDR Training Track"
-              subtitle="Sales Development Rep Certification"
+              title="SDR Add-On Track"
+              subtitle="Coming soon — advanced closer specialization"
               badge="Coming Soon"
               badgeVariant="secondary"
               disabled
