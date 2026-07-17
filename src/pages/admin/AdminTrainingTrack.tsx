@@ -925,6 +925,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     </Button>
                   </div>
                 </div>
+              ) : isProductKnowledgeModule ? (
+                <ProductKnowledgeOverview chapters={selectedChapters as any} />
               ) : <div className="space-y-2 mb-6">
                 <h3 className="section-title mb-2">Chapters</h3>
                 {selectedChapters.length === 0 && !(isModule1 && glossaryModule) ? (
