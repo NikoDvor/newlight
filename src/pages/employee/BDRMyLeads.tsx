@@ -1270,13 +1270,25 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">{parsed.length} leads found → <span className="text-foreground font-medium">"{finalListName}"</span></p>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className="text-sm text-muted-foreground">{parsed.length} leads found → <span className="text-foreground font-medium">"{finalListName}"</span></p>
+              {skippedCount > 0 && (
+                <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(0,72%,50%,.15)", color: "hsl(0,72%,68%)", border: "1px solid hsla(0,72%,50%,.35)" }}>
+                  ⚠ {skippedCount} row{skippedCount !== 1 ? "s" : ""} skipped (wrong column count)
+                </span>
+              )}
+            </div>
             <div className="max-h-60 overflow-y-auto space-y-1">
-              {parsed.map((r, i) => (
-                <label key={i} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm cursor-pointer"
+              {parsed.map((r, i) => {
+                const flags = flagsFor(r.owner_name);
+                return (
+                <label key={i} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm cursor-pointer flex-wrap"
                   style={{ background: checked[i] ? "hsla(211,96%,56%,.06)" : "transparent", border: "1px solid hsla(211,96%,60%,.1)" }}>
                   <input type="checkbox" checked={checked[i]} onChange={() => toggle(i)} className="accent-[hsl(211,96%,56%)]" />
-                  <span className="font-medium text-foreground truncate flex-1">{r.business_name}</span>
+                  <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.business_name}</span>
+                  {flags.map(f => (
+                    <span key={f} className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)", border: "1px solid hsla(0,72%,50%,.4)" }}>{f}</span>
+                  ))}
                   {r.booking_platform && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }}>{r.booking_platform}</span>
                   )}
@@ -1284,10 +1296,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner</span>
                   )}
                 </label>
-              ))}
+                );
+              })}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => { setParsed([]); setChecked([]); }}>Back</Button>
+              <Button variant="outline" onClick={() => { setParsed([]); setChecked([]); setSkippedCount(0); }}>Back</Button>
               <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]), finalListName)} disabled={!selectedCount} className="flex-1">
                 Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""} to "{finalListName}"
               </Button>
