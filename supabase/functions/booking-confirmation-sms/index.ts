@@ -307,8 +307,15 @@ async function runNotifications(
         const industry = meta.improvement_area || meta.industry || null;
         const businessName = meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
 
-        const { data: provResp, error: provErr } = await supabase.functions.invoke("provision-from-booking", {
-          body: {
+        const cronSecret = Deno.env.get("CRON_SECRET") || "";
+        const provisionResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/provision-from-booking`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-cron-secret": cronSecret,
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
             business_name: businessName,
             contact_name: clientName || clientEmail.split("@")[0],
             contact_email: clientEmail,
@@ -320,8 +327,10 @@ async function runNotifications(
             preferred_contact_method: clientPhone ? "sms" : "email",
             sms_consent: Boolean(clientPhone),
             booking_source: "bdr_booking",
-          },
+          }),
         });
+        const provResp = await provisionResp.json().catch(() => ({}));
+        const provErr = provisionResp.ok ? null : { message: provResp?.error || `HTTP ${provisionResp.status}` };
         if (provErr) throw provErr;
         provisionOk = Boolean(provResp?.success);
         workspaceUrl = provResp?.workspace_url || null;

@@ -47,16 +47,22 @@ Deno.serve(async (req) => {
     };
 
     if (action === "force_password_reset") {
-      const email = target_email;
-      if (!email) return json({ error: "target_email required" }, 400);
-      // Look up target user_id by email if not provided
-      if (target_user_id && !(await checkScope(target_user_id))) {
-        return json({ error: "Forbidden" }, 403);
+      // Require BOTH target_user_id (for scope enforcement) AND target_email (for magic link).
+      if (!target_user_id) return json({ error: "target_user_id required" }, 400);
+      if (!target_email) return json({ error: "target_email required" }, 400);
+      // Verify the email actually belongs to target_user_id — prevents an authorized
+      // manager from triggering a reset email to an arbitrary address by pairing
+      // a legitimate target_user_id with an unrelated email.
+      const { data: targetUser, error: getErr } = await admin.auth.admin.getUserById(target_user_id);
+      if (getErr || !targetUser?.user) return json({ error: "Target user not found" }, 404);
+      if ((targetUser.user.email || "").toLowerCase() !== target_email.toLowerCase()) {
+        return json({ error: "target_email does not match target_user_id" }, 400);
       }
+      if (!(await checkScope(target_user_id))) return json({ error: "Forbidden" }, 403);
       const redirectTo = body.redirect_to ?? `${new URL(req.url).origin}/reset-password`;
       const { error } = await admin.auth.admin.generateLink({
         type: "recovery",
-        email,
+        email: target_email,
         options: { redirectTo },
       });
       if (error) return json({ error: error.message }, 400);
