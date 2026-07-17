@@ -503,7 +503,9 @@ export default function BDRDialer() {
                       ) : <span className="text-white/30">—</span>}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">
-                      {lead.has_booking_system === true ? (
+                      {lead.booking_platform ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold inline-block max-w-[110px] truncate" title={lead.booking_platform} style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)", border: "1px solid hsla(142,72%,42%,.35)" }}>{lead.booking_platform}</span>
+                      ) : lead.has_booking_system === true ? (
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>
                       ) : lead.has_booking_system === false ? (
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>
