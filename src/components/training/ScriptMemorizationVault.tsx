@@ -568,8 +568,8 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
   );
 }
 
-function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
-  const [activeScriptKey, setActiveScriptKey] = useState(SCRIPTS[0].key);
+function ScriptPracticeRecordings({ userId, scripts }: { userId: string | null; scripts: ScriptDefinition[] }) {
+  const [activeScriptKey, setActiveScriptKey] = useState(scripts[0].key);
   const [recordings, setRecordings] = useState<PracticeRecordingRow[]>([]);
   const [recordingType, setRecordingType] = useState<Exclude<RecordingType, "upload"> | null>(null);
   const [elapsed, setElapsed] = useState(0);
