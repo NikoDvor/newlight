@@ -616,7 +616,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           transition={{ duration: 0.4 }}
         >
           <div className="p-4 border-b border-border/40">
-            <h3 className="section-title">BDR Training Track</h3>
+            <h3 className="section-title">Salesmen Training Track</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">Numbered modules</p>
           </div>
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
