@@ -313,7 +313,7 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
           type="button"
           variant={submitted ? "outline" : "default"}
           onClick={() => submitted ? (setSubmitted(false), setAnswers({})) : setSubmitted(true)}
-          disabled={!submitted && Object.keys(answers).length < script.quiz.length}
+          disabled={!submitted && Object.keys(answers).length < quizList.length}
         >
           {submitted ? "Reset Quiz" : "Submit Quiz"}
         </Button>
