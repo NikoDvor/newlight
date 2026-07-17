@@ -17,16 +17,22 @@ interface AppIntroProps {
 }
 
 /**
- * AppIntro — ~3s particle convergence + burst intro.
+ * AppIntro — ~3s starburst convergence + burst reveal.
+ *
+ * Distinct visual treatment (v2):
+ *   - Warm amber/gold particles that shift to bright white at the flash
+ *   - Electric-blue secondary accent rays crossing through the center
+ *   - Grid-origin particles converge in straight starburst rays toward the center
+ *     (no spiral), then explode outward as radiating spokes on the burst.
  *
  * Timeline:
- *   0    – 2000ms: thousands of light particles drift and swirl inward on a dark background
- *   2000 – 2600ms: particles burst into a bright flash; background transitions from dark to light
- *   2600 – 3000ms: the overlay fades out to reveal the app
+ *   0    – 2000ms: grid-origin particles rush inward along straight rays on a dark bg
+ *   2000 – 2600ms: bright flash; background transitions from dark to light
+ *   2600 – 3000ms: overlay fades to reveal the app
  */
 export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0); // 0=converge, 1=burst, 2=fade, 3=done
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const startRef = useRef<number>(performance.now());
@@ -43,9 +49,9 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
 
   useEffect(() => {
     startRef.current = performance.now();
-    const t1 = setTimeout(() => setPhase(1), 2000); // bright flash / background light
-    const t2 = setTimeout(() => setPhase(2), 2600); // begin overlay fade
-    const t3 = setTimeout(finish, 3000);            // hard cap
+    const t1 = setTimeout(() => setPhase(1), 2000);
+    const t2 = setTimeout(() => setPhase(2), 2600);
+    const t3 = setTimeout(finish, 3000);
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, [finish, onComplete]);
 
@@ -57,7 +63,7 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, el.clientWidth / el.clientHeight, 0.1, 200);
-    camera.position.z = 40;
+    camera.position.z = 42;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
@@ -65,48 +71,68 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
 
-    // Particle count: thousands on desktop, capped on mobile.
-    const COUNT = isMobile ? 1200 : 4000;
+    const COUNT = isMobile ? 1400 : 4200;
     const positions = new Float32Array(COUNT * 3);
-    const angle = new Float32Array(COUNT);
-    const radius = new Float32Array(COUNT);
-    const height = new Float32Array(COUNT);
-    const radialVel = new Float32Array(COUNT);
-    const angularVel = new Float32Array(COUNT);
-    const heightVel = new Float32Array(COUNT);
-    const burstSpeed = new Float32Array(COUNT);
-    const burstDir = new Float32Array(COUNT);
-    const burstHeightDir = new Float32Array(COUNT);
+    const dirX = new Float32Array(COUNT);
+    const dirY = new Float32Array(COUNT);
+    const dirZ = new Float32Array(COUNT);
+    const dist = new Float32Array(COUNT);        // current distance from center along ray
+    const startDist = new Float32Array(COUNT);
+    const speed = new Float32Array(COUNT);
+    const accent = new Uint8Array(COUNT);        // 1 = electric-blue accent ray, 0 = amber
 
-    const SCATTER = 60;
-    for (let i = 0; i < COUNT; i++) {
-      angle[i] = Math.random() * Math.PI * 2;
-      radius[i] = 8 + Math.pow(Math.random(), 0.55) * SCATTER;
-      height[i] = (Math.random() - 0.5) * 30;
-      radialVel[i] = -(0.04 + Math.random() * 0.05);
-      angularVel[i] = (Math.random() < 0.5 ? 1 : -1) * (0.018 + Math.random() * 0.025);
-      heightVel[i] = (Math.random() - 0.5) * 0.02;
-      burstSpeed[i] = 0.8 + Math.random() * 1.2;
-      burstDir[i] = Math.random() * Math.PI * 2;
-      burstHeightDir[i] = Math.random() - 0.5;
+    // Grid-origin starburst: place particles on a coarse 3D grid, then compute
+    // a straight ray from that grid point through the origin. Particles march
+    // inward along that ray during convergence and blast outward on burst.
+    const GRID = isMobile ? 12 : 16;
+    const GRID_SPAN = 55;
+    let i = 0;
+    while (i < COUNT) {
+      // Grid cell with slight jitter so it doesn't look mechanical.
+      const gx = (Math.random() - 0.5) * GRID_SPAN + ((Math.floor(Math.random() * GRID) / GRID) - 0.5) * 6;
+      const gy = (Math.random() - 0.5) * GRID_SPAN + ((Math.floor(Math.random() * GRID) / GRID) - 0.5) * 6;
+      const gz = (Math.random() - 0.5) * 24;
+      const len = Math.hypot(gx, gy, gz);
+      if (len < 6) continue; // avoid particles that start on top of the center
+      dirX[i] = gx / len;
+      dirY[i] = gy / len;
+      dirZ[i] = gz / len;
+      startDist[i] = len;
+      dist[i] = len;
+      speed[i] = 0.35 + Math.random() * 0.35;
+      // ~14% of particles are the electric-blue accent, forming visible spokes.
+      accent[i] = Math.random() < 0.14 ? 1 : 0;
 
       const ix = i * 3;
-      positions[ix] = Math.cos(angle[i]) * radius[i];
-      positions[ix + 1] = Math.sin(angle[i]) * radius[i];
-      positions[ix + 2] = height[i];
+      positions[ix] = gx;
+      positions[ix + 1] = gy;
+      positions[ix + 2] = gz;
+      i++;
     }
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-    // Soft glowing sprite so each particle reads as a small light.
+    // Per-vertex colors so amber and electric-blue particles coexist.
+    const colors = new Float32Array(COUNT * 3);
+    const AMBER = new THREE.Color(0xffb347);         // warm gold/amber
+    const ELECTRIC = new THREE.Color(0x3ea8ff);      // electric blue accent
+    for (let k = 0; k < COUNT; k++) {
+      const c = accent[k] ? ELECTRIC : AMBER;
+      colors[k * 3] = c.r;
+      colors[k * 3 + 1] = c.g;
+      colors[k * 3 + 2] = c.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    // Soft glowing sprite.
     const spriteCanvas = document.createElement("canvas");
     spriteCanvas.width = 32;
     spriteCanvas.height = 32;
     const ctx = spriteCanvas.getContext("2d")!;
     const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
     grad.addColorStop(0, "rgba(255,255,255,1)");
-    grad.addColorStop(0.35, "rgba(255,255,255,0.45)");
+    grad.addColorStop(0.35, "rgba(255,255,255,0.5)");
     grad.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 32, 32);
@@ -114,11 +140,11 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     sprite.needsUpdate = true;
 
     const mat = new THREE.PointsMaterial({
-      color: 0x5aa8ff,
-      size: isMobile ? 0.4 : 0.32,
+      size: isMobile ? 0.5 : 0.42,
       map: sprite,
+      vertexColors: true,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.7,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       sizeAttenuation: true,
@@ -127,9 +153,9 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     scene.add(points);
 
     const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
-
-    const DARK_COLOR = new THREE.Color(0x5aa8ff);
-    const BRIGHT_COLOR = new THREE.Color(0xffffff);
+    const colAttr = geo.getAttribute("color") as THREE.BufferAttribute;
+    const WHITE = new THREE.Color(0xffffff);
+    const tmpColor = new THREE.Color();
 
     let raf = 0;
     let burstInitialized = false;
@@ -153,56 +179,56 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
       const burstT = Math.min(1, Math.max(0, (elapsed - BURST_START) / 0.5));
       const convergeT = Math.min(1, elapsed / BURST_START);
 
-      // Initialize outward burst velocities once at the moment of the flash.
       if (inBurst && !burstInitialized) {
         burstInitialized = true;
-        for (let i = 0; i < COUNT; i++) {
-          radialVel[i] = burstSpeed[i] * (0.35 + Math.random() * 0.15);
-          heightVel[i] = burstHeightDir[i] * burstSpeed[i] * 0.25;
-          angularVel[i] *= 1.3;
+        for (let k = 0; k < COUNT; k++) {
+          // Explode outward along the same ray, faster than convergence.
+          speed[k] = 1.4 + Math.random() * 1.2;
         }
       }
 
-      for (let i = 0; i < COUNT; i++) {
+      for (let k = 0; k < COUNT; k++) {
         if (!inBurst) {
-          // Gentle inward spiral with damping.
-          radialVel[i] += (0.6 - radius[i]) * 0.010 - radialVel[i] * 0.020;
-          angularVel[i] *= 1.0028;
-          heightVel[i] += (-height[i]) * 0.010 - heightVel[i] * 0.020;
+          // March inward along the straight ray with easing near the center.
+          const proximity = Math.max(0.15, dist[k] / startDist[k]);
+          dist[k] -= speed[k] * (0.35 + proximity * 0.9);
+          if (dist[k] < 0.5) dist[k] = 0.5;
         } else {
-          // Accelerating outward burst.
-          const decel = 1 - burstT * 0.45;
-          radialVel[i] += burstSpeed[i] * 0.025 * decel;
-          angularVel[i] += Math.sin(burstDir[i]) * 0.003 * decel;
-          heightVel[i] += burstHeightDir[i] * burstSpeed[i] * 0.02 * decel;
+          // Rush outward along the same ray.
+          const accel = 1 + burstT * 2.2;
+          dist[k] += speed[k] * accel;
         }
 
-        radius[i] += radialVel[i];
-        angle[i] += angularVel[i];
-        height[i] += heightVel[i];
-
-        const ix = i * 3;
-        positions[ix] = Math.cos(angle[i]) * radius[i];
-        positions[ix + 1] = Math.sin(angle[i]) * radius[i];
-        positions[ix + 2] = height[i];
+        const ix = k * 3;
+        positions[ix]     = dirX[k] * dist[k];
+        positions[ix + 1] = dirY[k] * dist[k];
+        positions[ix + 2] = dirZ[k] * dist[k];
       }
       posAttr.needsUpdate = true;
 
-      // Color warms from cool blue to bright white as particles converge.
-      mat.color.copy(DARK_COLOR).lerp(BRIGHT_COLOR, convergeT);
+      // Color: warm amber (or electric blue) → white as we approach the burst.
+      // Blend toward white based on convergeT, and snap fully to white at burst.
+      const toWhite = inBurst ? 1 : convergeT * 0.85;
+      for (let k = 0; k < COUNT; k++) {
+        const base = accent[k] ? ELECTRIC : AMBER;
+        tmpColor.copy(base).lerp(WHITE, toWhite);
+        const ix = k * 3;
+        colors[ix]     = tmpColor.r;
+        colors[ix + 1] = tmpColor.g;
+        colors[ix + 2] = tmpColor.b;
+      }
+      colAttr.needsUpdate = true;
 
-      // Opacity rises during convergence, peaks at the flash, then fades.
       if (ph >= 2) {
         const fadeT = Math.min(1, (elapsed - FADE_START) / 0.25);
         mat.opacity = Math.max(0, 1.0 - fadeT);
       } else if (inBurst) {
-        mat.opacity = 0.9 + 0.1 * burstT;
+        mat.opacity = 0.95 + 0.05 * burstT;
       } else {
-        mat.opacity = 0.55 + 0.35 * convergeT;
+        mat.opacity = 0.7 + 0.25 * convergeT;
       }
 
-      // Slow camera drift inward during the convergence.
-      camera.position.z = 40 - 18 * Math.min(1, elapsed / BURST_START);
+      camera.position.z = 42 - 18 * Math.min(1, elapsed / BURST_START);
 
       renderer.render(scene, camera);
     };
@@ -219,11 +245,11 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
     };
   }, []);
 
-  // Background: dark during convergence, snapping to bright white at the burst, then fading out.
+  // Background: warm dark amber-tinted during convergence, snapping bright at burst.
   const bg =
     phase === 0
-      ? "radial-gradient(circle at center, hsl(218,40%,15%) 0%, hsl(220,50%,6%) 100%)"
-      : "radial-gradient(circle at center, #ffffff 0%, #eef6ff 100%)";
+      ? "radial-gradient(circle at center, hsl(28,45%,10%) 0%, hsl(222,55%,5%) 100%)"
+      : "radial-gradient(circle at center, #ffffff 0%, #fff6e8 100%)";
 
   return (
     <div
@@ -248,7 +274,7 @@ export function AppIntro({ onComplete, launchLabel }: AppIntroProps) {
           src={newlightLogo}
           alt="NewLight"
           className="h-14 w-auto object-contain"
-          style={{ filter: "drop-shadow(0 0 14px rgba(26,58,107,0.35))" }}
+          style={{ filter: "drop-shadow(0 0 14px rgba(255,179,71,0.45))" }}
         />
         <p
           className="text-[11px] font-bold tracking-[0.32em] uppercase"
