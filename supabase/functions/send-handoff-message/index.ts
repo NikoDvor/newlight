@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const body: HandoffRequest = await req.json();
@@ -110,6 +111,32 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Auth: require CRON_SECRET header OR authenticated user with access to client_id
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
+    const secretOk = cronSecret && (req.headers.get("x-cron-secret") || "") === cronSecret;
+    if (!secretOk) {
+      const authHeader = req.headers.get("Authorization") || "";
+      if (!authHeader.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: canAccess } = await adminClient.rpc("user_can_access_client", { _user_id: user.id, _client_id: client_id });
+      if (!canAccess) {
+        return new Response(JSON.stringify({ error: "Forbidden: no access to this client" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
 
     const workspaceUrl = `${base_url}/w/${workspace_slug}`;
     const downloadUrl = `${base_url}/app/${workspace_slug}`;
