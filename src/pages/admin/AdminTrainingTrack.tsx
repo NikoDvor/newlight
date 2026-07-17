@@ -492,8 +492,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
-  const isScriptMasteryModule = trackKey === "bdr" && selectedModule?.module_number === 4;
-  const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
+  const isScriptMasteryModule = selectedModule?.module_number === 5;
+  const isModule6 = selectedModule?.module_number === 6;
   const module6DrillComplete = !!selectedModule && progress.some((p) => p.module_id === selectedModule.id && !p.chapter_id && p.status === "in_progress" && p.score === 100);
   const flashcardsByCategory = useMemo(() => {
     return flashcards.reduce<Record<string, FlashcardRow[]>>((acc, card) => {
