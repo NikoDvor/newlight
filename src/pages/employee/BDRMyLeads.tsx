@@ -1159,9 +1159,12 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     }
 
     // Skip trailing lines that don't match the expected column count
-    // (e.g., "Confidence flag: ..." lines that follow the table)
+    // (e.g., "Confidence flag: ..." lines that follow the table) and track how many
+    let malformedSkipped = 0;
     if (expectedCols > 1) {
+      const before = dataRows.length;
       dataRows = dataRows.filter(r => r.length === expectedCols);
+      malformedSkipped = before - dataRows.length;
     }
 
     const parseYesBlank = (v: string): boolean | null => {
