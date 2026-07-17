@@ -823,15 +823,7 @@ export default function BDRMyLeads() {
       )}
 
       {/* Modals */}
-      <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={useMemo(() => {
-        const map = new Map<string, number>();
-        leads.forEach(l => {
-          if (!l.list_name) return;
-          const t = new Date(l.created_at).getTime();
-          map.set(l.list_name, Math.max(map.get(l.list_name) || 0, t));
-        });
-        return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).map(([name]) => name);
-      }, [leads])} />
+      <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={existingListsByRecency} />
       <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
