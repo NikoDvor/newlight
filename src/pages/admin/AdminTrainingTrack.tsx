@@ -130,7 +130,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
       const { data: track } = await supabase
         .from("nl_training_tracks")
         .select("id, track_name")
-        .eq("track_key", trackKey || "bdr")
+        .eq("track_key", (trackKey === "bdr" || !trackKey) ? "salesmen" : trackKey)
         .maybeSingle();
 
       if (!track) {
