@@ -54,8 +54,8 @@ export default function EmployeeTrainingCenter() {
                   </div>
                   <Badge variant="default" className="font-medium">8 Modules</Badge>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-1.5">BDR Training Track</h3>
-                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">Business Development Rep Certification</p>
+                <h3 className="text-xl font-semibold text-foreground mb-1.5">Salesmen Training Track</h3>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">Unified BDR + SDR Sales Certification</p>
                 <Button
                   onClick={() => navigate("/employee/training/bdr")}
                   className="w-full group-hover:translate-x-0.5 transition-transform"
