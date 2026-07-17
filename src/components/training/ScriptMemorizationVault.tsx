@@ -581,7 +581,7 @@ function ScriptPracticeRecordings({ userId, scripts }: { userId: string | null; 
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeScript = SCRIPTS.find((script) => script.key === activeScriptKey) || SCRIPTS[0];
+  const activeScript = scripts.find((script) => script.key === activeScriptKey) || scripts[0];
 
   useEffect(() => {
     if (!recordingType) return;
