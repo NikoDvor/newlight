@@ -829,7 +829,19 @@ function ScriptPracticeRecordings({ userId, scripts }: { userId: string | null; 
   );
 }
 
-export function ScriptMemorizationVault() {
+interface ScriptMemorizationVaultProps {
+  scripts?: ScriptDefinition[];
+  title?: string;
+  subtitle?: string;
+  badgeLabel?: string;
+}
+
+export function ScriptMemorizationVault({
+  scripts = SCRIPTS,
+  title = "Script Memorization Vault",
+  subtitle = "Practice the exact BDR scripts line by line, then test the technique behind each move.",
+  badgeLabel = "Script Mastery",
+}: ScriptMemorizationVaultProps = {}) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -840,16 +852,16 @@ export function ScriptMemorizationVault() {
     <section className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Script Mastery</Badge>
-          <h2 className="text-xl font-semibold text-foreground">Script Memorization Vault</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Practice the exact BDR scripts line by line, then test the technique behind each move.</p>
+          <Badge variant="outline" className="mb-2 border-primary/30 text-primary">{badgeLabel}</Badge>
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
         </div>
         {!userId && <Badge variant="outline" className="w-fit border-[hsl(var(--warning))]/40 text-[hsl(var(--warning))]">Sign in to save progress</Badge>}
       </div>
       <div className="grid grid-cols-1 gap-5">
-        {SCRIPTS.map((script) => <ScriptCard key={script.key} script={script} userId={userId} />)}
+        {scripts.map((script) => <ScriptCard key={script.key} script={script} userId={userId} />)}
       </div>
-      <ScriptPracticeRecordings userId={userId} />
+      <ScriptPracticeRecordings userId={userId} scripts={scripts} />
     </section>
   );
 }
