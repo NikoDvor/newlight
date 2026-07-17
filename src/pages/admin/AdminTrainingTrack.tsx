@@ -85,6 +85,40 @@ interface AdminTrainingTrackProps {
   basePath?: string;
 }
 
+// Meeting Cadence practice scripts for Module 7 — spoken lines pulled from the
+// Meeting 1 (Discovery) and Meeting 2 (Final Closing) chapters.
+const MEETING_CADENCE_SCRIPTS: ScriptDefinition[] = [
+  {
+    key: "meeting_1_discovery",
+    name: "Meeting 1 — Discovery",
+    lines: [
+      "So here is the cadence for this call — I'm just going to give you some information about our company and what we do.",
+      "Then I'll ask some questions to learn more about you and your company.",
+      "After that, I'll open it up to you for any questions, comments, and concerns. Does that sound fair?",
+      "Where do your clients come from now — and in your opinion, is it enough to get you where you want to be?",
+      "About how many new client meetings are you booking a month right now?",
+      "What's your close rate and average ticket for the clients you're currently bringing in?",
+      "What's stopping you from getting more clients? Is it leads, or time to chase them down?",
+      "How much room do you have? If we brought in more appointments, would you even be able to fit them in?",
+      "If nothing changed, would you be happy with your calendar a year from now?",
+      "If I told you exactly how many clients you're losing every month to a competitor who shows up first when someone searches — what would that number need to be before it actually bothered you?",
+      "How many hours a week are you personally spending trying to drum up new business that you'd rather be spending running the business?",
+      "If you had to guess — the real problem here to scale is getting more leads, close rate, or something else?",
+    ],
+  },
+  {
+    key: "meeting_2_final_closing",
+    name: "Meeting 2 — Final Closing",
+    lines: [
+      "Hey [owner's name], good to see you again. Last time we talked about [pain point]. Since then I've put together exactly how we'd fix that for you. Sound good if I walk you through it?",
+      "Just to make sure I've got this right — you told me [discovery answers]. Does that still sound accurate, or has anything changed since we last spoke?",
+      "Based on what we talked about, we landed on [initial fee] to get started, with [recurring fee / commission structure]. Does that match what you remember from last time?",
+      "So would you like to get set up with the payment plan, or are you comfortable paying everything up front today?",
+      "We need a time to set up the activation onboarding meeting — do mornings, afternoons, or evenings work best for you?",
+    ],
+  },
+];
+
 export default function AdminTrainingTrack({ basePath = "/admin/training-center" }: AdminTrainingTrackProps) {
   const { trackKey } = useParams<{ trackKey: string }>();
   const navigate = useNavigate();
