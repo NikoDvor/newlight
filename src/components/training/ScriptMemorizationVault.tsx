@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
-interface ScriptDefinition {
+export interface ScriptDefinition {
   key: string;
   name: string;
   lines: string[];
-  quiz: QuizQuestion[];
+  quiz?: QuizQuestion[];
 }
 
-interface QuizQuestion {
+export interface QuizQuestion {
   question: string;
   answer: string;
   wrong: string[];
