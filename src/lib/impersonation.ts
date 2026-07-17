@@ -117,7 +117,8 @@ export async function startImpersonation(args: ImpersonateArgs) {
   } catch (e) {
     // If something failed mid-flight, drop the backup so we don't strand
     // the user in a broken hybrid state.
-    localStorage.removeItem(BACKUP_KEY);
+    sessionStorage.removeItem(BACKUP_KEY);
+    try { localStorage.removeItem(MARKER_KEY); } catch { /* noop */ }
     throw e;
   }
 }
