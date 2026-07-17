@@ -740,7 +740,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     </button>
                   );
                 })}
-                {trackKey === "bdr" && (
+                {(trackKey === "bdr" || trackKey === "salesmen" || !trackKey) && (
                   <>
                     <button
                       onClick={() => overallPct === 100 && navigate(`${basePath}/bdr/certification`)}
