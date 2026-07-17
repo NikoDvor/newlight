@@ -1085,6 +1085,15 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
               {isScriptMasteryModule && !isGlossaryModule && <ScriptMemorizationVault />}
 
+              {isMeetingCadenceModule && !isGlossaryModule && (
+                <ScriptMemorizationVault
+                  scripts={MEETING_CADENCE_SCRIPTS}
+                  title="Meeting Cadences Practice Vault"
+                  subtitle="Rehearse the Meeting 1 (Discovery) and Meeting 2 (Final Closing) scripts line by line, then record yourself running the full cadence."
+                  badgeLabel="Meeting Cadences"
+                />
+              )}
+
               {isModule6 && !isGlossaryModule && (
                 <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
