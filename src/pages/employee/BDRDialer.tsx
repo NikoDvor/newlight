@@ -22,6 +22,7 @@ interface Lead {
   callback_at?: string | null;
   website: string | null;
   has_booking_system: boolean | null;
+  booking_platform: string | null;
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
@@ -115,7 +116,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, phone_type, booking_link, booking_link_is_owner, pipeline_stage")
+          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_platform, phone_type, booking_link, booking_link_is_owner, pipeline_stage")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -502,7 +503,9 @@ export default function BDRDialer() {
                       ) : <span className="text-white/30">—</span>}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">
-                      {lead.has_booking_system === true ? (
+                      {lead.booking_platform ? (
+                        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold inline-block max-w-[110px] truncate" title={lead.booking_platform} style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)", border: "1px solid hsla(142,72%,42%,.35)" }}>{lead.booking_platform}</span>
+                      ) : lead.has_booking_system === true ? (
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>
                       ) : lead.has_booking_system === false ? (
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>
