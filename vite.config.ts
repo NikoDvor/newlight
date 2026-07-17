@@ -43,13 +43,10 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
         skipWaiting: true,
         clientsClaim: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-            options: { cacheName: "supabase-api", expiration: { maxEntries: 50, maxAgeSeconds: 300 } },
-          },
-        ],
+        // Do NOT runtime-cache Supabase requests. Caching /auth/v1/* responses
+        // causes stale/expired auth data to be returned on PWA cold-start,
+        // which logs the user out when they re-open the installed app.
+        runtimeCaching: [],
       },
       devOptions: {
         enabled: false,
