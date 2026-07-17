@@ -202,6 +202,16 @@ export default function BDRMyLeads() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [leads]);
 
+  const existingListsByRecency = useMemo(() => {
+    const map = new Map<string, number>();
+    leads.forEach(l => {
+      if (!l.list_name) return;
+      const t = new Date(l.created_at).getTime();
+      map.set(l.list_name, Math.max(map.get(l.list_name) || 0, t));
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).map(([name]) => name);
+  }, [leads]);
+
   const listScopedLeads = useMemo(() => {
     if (activeList === "__all__") return leads;
     if (activeList === "Unsorted") return leads.filter(l => !l.list_name);
