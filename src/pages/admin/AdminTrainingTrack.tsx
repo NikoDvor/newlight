@@ -130,7 +130,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
       const { data: track } = await supabase
         .from("nl_training_tracks")
         .select("id, track_name")
-        .eq("track_key", trackKey || "bdr")
+        .eq("track_key", (trackKey === "bdr" || !trackKey) ? "salesmen" : trackKey)
         .maybeSingle();
 
       if (!track) {
@@ -223,11 +223,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .eq("user_id", user.id);
         setLevelProgress((levels || []) as LevelProgressRow[]);
 
-        if (track.track_name && (trackKey || "bdr") === "bdr") {
+        if (track.track_name) {
           const { data: cards } = await (supabase as any)
             .from("nl_training_flashcards")
             .select("id, category, front, back, difficulty")
-            .eq("track_key", "bdr")
+            .eq("track_key", "salesmen")
             .order("category");
           const cardRows = (cards || []) as FlashcardRow[];
           setFlashcards(cardRows);
@@ -254,7 +254,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .from("nl_training_certifications")
             .select("id")
             .eq("user_id", user.id)
-            .eq("track_key", "bdr")
+            .eq("track_key", "salesmen")
             .eq("passed", true)
             .limit(1)
             .maybeSingle();
@@ -352,7 +352,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
   const selectedModule = modules.find((m) => m.id === selectedModuleId) || null;
   const isGlossaryModule = selectedModule?.module_number === 0;
   const isModule1 = selectedModule?.module_number === 1;
-  const isInfoOnlyModule = selectedModule?.module_number === 1 || selectedModule?.module_number === 2 || selectedModule?.module_number === 8;
+  const isInfoOnlyModule = selectedModule?.module_number === 1 || selectedModule?.module_number === 3;
   const selectedModuleLocked = selectedModule ? !isModuleUnlocked(selectedModule) : false;
   const selectedModuleStatus = selectedModule ? moduleStatus(selectedModule.id) : "not_started";
   const previousModuleNumber = selectedModule && selectedModule.module_number > 1 ? selectedModule.module_number - 1 : 0;
@@ -492,8 +492,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
   const module6ReviewedCount = flashcards.filter((card) => (flashProgress[card.id]?.times_seen || 0) > 0).length;
   const module6DrillReady = flashcards.length > 0 && module6ReviewedCount >= flashcards.length;
-  const isScriptMasteryModule = trackKey === "bdr" && selectedModule?.module_number === 4;
-  const isModule6 = trackKey === "bdr" && selectedModule?.module_number === 6;
+  const isScriptMasteryModule = selectedModule?.module_number === 5;
+  const isModule6 = selectedModule?.module_number === 6;
   const module6DrillComplete = !!selectedModule && progress.some((p) => p.module_id === selectedModule.id && !p.chapter_id && p.status === "in_progress" && p.score === 100);
   const flashcardsByCategory = useMemo(() => {
     return flashcards.reduce<Record<string, FlashcardRow[]>>((acc, card) => {
@@ -616,7 +616,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           transition={{ duration: 0.4 }}
         >
           <div className="p-4 border-b border-border/40">
-            <h3 className="section-title">BDR Training Track</h3>
+            <h3 className="section-title">Salesmen Training Track</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">Numbered modules</p>
           </div>
           <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
@@ -740,7 +740,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                     </button>
                   );
                 })}
-                {trackKey === "bdr" && (
+                {(trackKey === "bdr" || trackKey === "salesmen" || !trackKey) && (
                   <>
                     <button
                       onClick={() => overallPct === 100 && navigate(`${basePath}/bdr/certification`)}

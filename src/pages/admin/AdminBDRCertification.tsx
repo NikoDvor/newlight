@@ -139,7 +139,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
       const { data: track, error: trackError } = await supabase
         .from("nl_training_tracks")
         .select("id")
-        .eq("track_key", "bdr")
+        .eq("track_key", "salesmen")
         .maybeSingle();
 
       if (trackError) {
@@ -186,7 +186,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
         .from("nl_training_certifications")
         .select("id, certificate_number, issued_at, rep_name, score, total_questions")
         .eq("user_id", user.id)
-        .eq("track_key", "bdr")
+        .eq("track_key", "salesmen")
         .eq("passed", true)
         .order("issued_at", { ascending: false })
         .limit(1)
@@ -325,7 +325,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
             id: certification?.id || certificateId,
             user_id: user.id,
             track_id: trackId,
-            track_key: "bdr",
+            track_key: "salesmen",
             score: correct,
             total_questions: TOTAL_QUESTIONS,
             passed: true,

@@ -103,7 +103,7 @@ export function PracticeRecordingVaultPage() {
       return;
     }
 
-    const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "bdr").maybeSingle();
+    const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "salesmen").maybeSingle();
     const { data: moduleData } = track?.id
       ? await supabase.from("nl_training_modules").select("id,module_number,module_title").eq("track_id", track.id).order("module_number")
       : { data: [] as ModuleRow[] };
