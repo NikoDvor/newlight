@@ -562,7 +562,7 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
         )}
       </AnimatePresence>
 
-      <TechniqueQuiz script={script} />
+      {script.quiz && script.quiz.length > 0 && <TechniqueQuiz script={script as ScriptDefinition & { quiz: QuizQuestion[] }} />}
     </div>
   );
 }
