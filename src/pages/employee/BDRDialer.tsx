@@ -22,6 +22,7 @@ interface Lead {
   callback_at?: string | null;
   website: string | null;
   has_booking_system: boolean | null;
+  booking_platform: string | null;
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
