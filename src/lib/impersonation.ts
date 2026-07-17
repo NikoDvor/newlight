@@ -143,7 +143,8 @@ export async function restoreAdminSession(): Promise<boolean> {
     refresh_token: backup.refresh_token,
   });
 
-  localStorage.removeItem(BACKUP_KEY);
+  sessionStorage.removeItem(BACKUP_KEY);
+  try { localStorage.removeItem(MARKER_KEY); } catch { /* noop */ }
 
   if (error) {
     console.warn("[impersonation] restore failed, sending to /auth", error);
