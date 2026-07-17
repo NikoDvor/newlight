@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
-interface ScriptDefinition {
+export interface ScriptDefinition {
   key: string;
   name: string;
   lines: string[];
-  quiz: QuizQuestion[];
+  quiz?: QuizQuestion[];
 }
 
-interface QuizQuestion {
+export interface QuizQuestion {
   question: string;
   answer: string;
   wrong: string[];
@@ -260,11 +260,12 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const quizList = script.quiz ?? [];
   const quizOptions = useMemo(
-    () => script.quiz.map((q) => [q.answer, ...q.wrong]),
-    [script.quiz]
+    () => quizList.map((q) => [q.answer, ...q.wrong]),
+    [quizList]
   );
-  const correctCount = script.quiz.reduce((sum, _, idx) => sum + (answers[idx] === 0 ? 1 : 0), 0);
+  const correctCount = quizList.reduce((sum, _, idx) => sum + (answers[idx] === 0 ? 1 : 0), 0);
 
   return (
     <div className="mt-5 rounded-xl border border-primary/15 bg-background/30 p-4 sm:p-5">
@@ -276,7 +277,7 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
         {submitted && <Badge variant="outline" className="w-fit border-primary/30 text-primary">{correctCount}/6 correct</Badge>}
       </div>
       <div className="space-y-4">
-        {script.quiz.map((q, qIndex) => (
+        {quizList.map((q, qIndex) => (
           <div key={q.question} className="rounded-lg border border-border/45 bg-secondary/20 p-3 sm:p-4">
             <p className="text-sm font-medium leading-snug text-foreground">{qIndex + 1}. {q.question}</p>
             <div className="mt-3 grid grid-cols-1 gap-2">
@@ -312,7 +313,7 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
           type="button"
           variant={submitted ? "outline" : "default"}
           onClick={() => submitted ? (setSubmitted(false), setAnswers({})) : setSubmitted(true)}
-          disabled={!submitted && Object.keys(answers).length < script.quiz.length}
+          disabled={!submitted && Object.keys(answers).length < quizList.length}
         >
           {submitted ? "Reset Quiz" : "Submit Quiz"}
         </Button>
@@ -562,13 +563,13 @@ function ScriptCard({ script, userId }: { script: ScriptDefinition; userId: stri
         )}
       </AnimatePresence>
 
-      <TechniqueQuiz script={script} />
+      {script.quiz && script.quiz.length > 0 && <TechniqueQuiz script={script as ScriptDefinition & { quiz: QuizQuestion[] }} />}
     </div>
   );
 }
 
-function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
-  const [activeScriptKey, setActiveScriptKey] = useState(SCRIPTS[0].key);
+function ScriptPracticeRecordings({ userId, scripts }: { userId: string | null; scripts: ScriptDefinition[] }) {
+  const [activeScriptKey, setActiveScriptKey] = useState(scripts[0].key);
   const [recordings, setRecordings] = useState<PracticeRecordingRow[]>([]);
   const [recordingType, setRecordingType] = useState<Exclude<RecordingType, "upload"> | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -580,7 +581,7 @@ function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeScript = SCRIPTS.find((script) => script.key === activeScriptKey) || SCRIPTS[0];
+  const activeScript = scripts.find((script) => script.key === activeScriptKey) || scripts[0];
 
   useEffect(() => {
     if (!recordingType) return;
@@ -724,7 +725,7 @@ function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {SCRIPTS.map((script) => (
+        {scripts.map((script) => (
           <Button
             key={script.key}
             type="button"
@@ -828,7 +829,19 @@ function ScriptPracticeRecordings({ userId }: { userId: string | null }) {
   );
 }
 
-export function ScriptMemorizationVault() {
+interface ScriptMemorizationVaultProps {
+  scripts?: ScriptDefinition[];
+  title?: string;
+  subtitle?: string;
+  badgeLabel?: string;
+}
+
+export function ScriptMemorizationVault({
+  scripts = SCRIPTS,
+  title = "Script Memorization Vault",
+  subtitle = "Practice the exact BDR scripts line by line, then test the technique behind each move.",
+  badgeLabel = "Script Mastery",
+}: ScriptMemorizationVaultProps = {}) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -839,16 +852,16 @@ export function ScriptMemorizationVault() {
     <section className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Script Mastery</Badge>
-          <h2 className="text-xl font-semibold text-foreground">Script Memorization Vault</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Practice the exact BDR scripts line by line, then test the technique behind each move.</p>
+          <Badge variant="outline" className="mb-2 border-primary/30 text-primary">{badgeLabel}</Badge>
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
         </div>
         {!userId && <Badge variant="outline" className="w-fit border-[hsl(var(--warning))]/40 text-[hsl(var(--warning))]">Sign in to save progress</Badge>}
       </div>
       <div className="grid grid-cols-1 gap-5">
-        {SCRIPTS.map((script) => <ScriptCard key={script.key} script={script} userId={userId} />)}
+        {scripts.map((script) => <ScriptCard key={script.key} script={script} userId={userId} />)}
       </div>
-      <ScriptPracticeRecordings userId={userId} />
+      <ScriptPracticeRecordings userId={userId} scripts={scripts} />
     </section>
   );
 }
