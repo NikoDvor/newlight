@@ -7395,6 +7395,7 @@ export type Database = {
         Row: {
           booking_link: string | null
           booking_link_is_owner: boolean | null
+          booking_platform: string | null
           business_name: string
           callback_at: string | null
           callback_set_at: string | null
@@ -7412,6 +7413,7 @@ export type Database = {
           lead_source: string
           list_name: string | null
           logo_url: string | null
+          meeting_booked: string | null
           modules_of_interest: string[] | null
           niche: string | null
           notes: string | null
@@ -7422,6 +7424,7 @@ export type Database = {
           phone_type: string | null
           pipeline_stage: string | null
           sales_team_size: string | null
+          self_booking_widget_non_owner: boolean | null
           status: string
           updated_at: string
           user_id: string
@@ -7430,6 +7433,7 @@ export type Database = {
         Insert: {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
+          booking_platform?: string | null
           business_name: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7447,6 +7451,7 @@ export type Database = {
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
+          meeting_booked?: string | null
           modules_of_interest?: string[] | null
           niche?: string | null
           notes?: string | null
@@ -7457,6 +7462,7 @@ export type Database = {
           phone_type?: string | null
           pipeline_stage?: string | null
           sales_team_size?: string | null
+          self_booking_widget_non_owner?: boolean | null
           status?: string
           updated_at?: string
           user_id: string
@@ -7465,6 +7471,7 @@ export type Database = {
         Update: {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
+          booking_platform?: string | null
           business_name?: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7482,6 +7489,7 @@ export type Database = {
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
+          meeting_booked?: string | null
           modules_of_interest?: string[] | null
           niche?: string | null
           notes?: string | null
@@ -7492,6 +7500,7 @@ export type Database = {
           phone_type?: string | null
           pipeline_stage?: string | null
           sales_team_size?: string | null
+          self_booking_widget_non_owner?: boolean | null
           status?: string
           updated_at?: string
           user_id?: string
