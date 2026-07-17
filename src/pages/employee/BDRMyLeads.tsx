@@ -202,6 +202,16 @@ export default function BDRMyLeads() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [leads]);
 
+  const existingListsByRecency = useMemo(() => {
+    const map = new Map<string, number>();
+    leads.forEach(l => {
+      if (!l.list_name) return;
+      const t = new Date(l.created_at).getTime();
+      map.set(l.list_name, Math.max(map.get(l.list_name) || 0, t));
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).map(([name]) => name);
+  }, [leads]);
+
   const listScopedLeads = useMemo(() => {
     if (activeList === "__all__") return leads;
     if (activeList === "Unsorted") return leads.filter(l => !l.list_name);
@@ -278,10 +288,15 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null; phone_type?: string | null; booking_link?: string | null; booking_link_is_owner?: boolean | null }[], listName: string) => {
+  const handleImport = async (rows: any[], listName: string) => {
     if (!user?.id) return;
     const cleanList = listName.trim() || null;
-    const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
+    // Dedup scoped to the target list, not global
+    const existingNames = new Set(
+      leads
+        .filter(l => (l.list_name || null) === cleanList)
+        .map(l => (l.business_name || "").trim().toLowerCase())
+    );
     const seenInBatch = new Set<string>();
     let count = 0;
     let skipped = 0;
@@ -290,12 +305,18 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
-        user_id: user.id, client_id: clientId, business_name: row.business_name, owner_name: row.owner_name || null,
-        phone: row.phone || null, website: row.website || null,
+        user_id: user.id, client_id: clientId,
+        business_name: row.business_name,
+        owner_name: row.owner_name || null,
+        phone: row.phone || null,
+        website: row.website || null,
+        phone_type: row.phone_type ?? null,
+        booking_platform: row.booking_platform ?? null,
         has_booking_system: row.has_booking_system,
-        phone_type: row.phone_type || "front_desk",
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? null,
+        self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
+        meeting_booked: row.meeting_booked || null,
         list_name: cleanList,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
@@ -802,7 +823,7 @@ export default function BDRMyLeads() {
       )}
 
       {/* Modals */}
-      <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
+      <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={existingListsByRecency} />
       <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
@@ -1070,97 +1091,192 @@ function ObjectionDashboard({ userId }: { userId?: string }) {
 /* ═══════════════════════════════════════════════ */
 /* Import Modal                                    */
 /* ═══════════════════════════════════════════════ */
-function ImportModal({ open, onClose, onImport }: { open: boolean; onClose: () => void; onImport: (rows: any[], listName: string) => void }) {
+function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean; onClose: () => void; onImport: (rows: any[], listName: string) => void; existingLists: string[] }) {
   const [raw, setRaw] = useState("");
   const [listName, setListName] = useState("");
+  const [listMode, setListMode] = useState<"existing" | "new">("new");
   const [parsed, setParsed] = useState<any[]>([]);
   const [checked, setChecked] = useState<boolean[]>([]);
 
-  useEffect(() => { if (!open) { setRaw(""); setListName(""); setParsed([]); setChecked([]); } }, [open]);
+  useEffect(() => {
+    if (!open) { setRaw(""); setParsed([]); setChecked([]); return; }
+    if (existingLists.length > 0) {
+      setListMode("existing");
+      setListName(existingLists[0]);
+    } else {
+      setListMode("new");
+      setListName("");
+    }
+  }, [open, existingLists]);
 
   const parse = () => {
-    const lines = raw.trim().split("\n").filter(Boolean);
-    if (!lines.length) return;
-    const delim = lines[0].includes("\t") ? "\t" : lines[0].includes("|") ? "|" : ",";
-    const rows = lines.map(l => l.split(delim).map(c => c.trim()));
-    const headerLike = rows[0].some(c => /business|name|phone|website|booking/i.test(c));
-    const dataRows = headerLike ? rows.slice(1) : rows;
-    let biIdx = 0, owIdx = 1, phIdx = 2, webIdx = 3, bkIdx = 4;
-    let ptIdx = -1, blIdx = -1, bloIdx = -1;
-    if (headerLike) {
-      const h = rows[0].map(c => c.toLowerCase());
-      h.forEach((c, i) => {
-        if (/phone.?type|number.?type/.test(c)) ptIdx = i;
-        else if (/booking.?link.?(is.?)?owner|owner.?calendar/.test(c)) bloIdx = i;
-        else if (/booking.?(link|url)/.test(c)) blIdx = i;
-        else if (/business/.test(c)) biIdx = i;
-        else if (/owner|contact/.test(c)) owIdx = i;
-        else if (/phone/.test(c)) phIdx = i;
-        else if (/website|url|site/.test(c)) webIdx = i;
-        else if (/booking/.test(c)) bkIdx = i;
-      });
+    const linesRaw = raw.trim().split("\n").map(l => l.trim()).filter(Boolean);
+    if (!linesRaw.length) return;
+
+    // Detect delimiter from first line
+    const first = linesRaw[0];
+    const delim = first.includes("|") ? "|" : first.includes("\t") ? "\t" : ",";
+
+    // Split all lines
+    const allRows = linesRaw.map(l => l.split(delim).map(c => c.trim()));
+
+    // Locate a header row (any of the first 3 rows containing "business name")
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(3, allRows.length); i++) {
+      const joined = allRows[i].join(" ").toLowerCase();
+      if (/business\s*name/.test(joined)) { headerIdx = i; break; }
     }
-    const parseBooking = (v: string): boolean | null => {
+
+    // Fallback: assume default positional columns
+    let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
+        bkIdx = 4, blIdx = -1, bloIdx = -1, swIdx = -1, mbIdx = -1;
+    let expectedCols = -1;
+    let dataRows: string[][];
+
+    if (headerIdx >= 0) {
+      const header = allRows[headerIdx].map(c => c.toLowerCase());
+      expectedCols = header.length;
+      biIdx = owIdx = phIdx = webIdx = bkIdx = -1;
+      header.forEach((c, i) => {
+        if (/business\s*name/.test(c)) biIdx = i;
+        else if (/owner\s*name/.test(c)) owIdx = i;
+        else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
+        else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
+        else if (/website|url|site/.test(c)) webIdx = i;
+        else if (/booking\s*link\s*is\s*owner/.test(c)) bloIdx = i;
+        else if (/self.?booking\s*widget/.test(c)) swIdx = i;
+        else if (/booking\s*link/.test(c)) blIdx = i;
+        else if (/booking\s*system/.test(c)) bkIdx = i;
+        else if (/meeting\s*booked/.test(c)) mbIdx = i;
+      });
+      dataRows = allRows.slice(headerIdx + 1);
+      // Drop separator rows like "---|---|---"
+      dataRows = dataRows.filter(r => !r.every(c => /^-{2,}$/.test(c) || c === ""));
+    } else {
+      dataRows = allRows;
+      expectedCols = allRows[0].length;
+    }
+
+    // Skip trailing lines that don't match the expected column count
+    // (e.g., "Confidence flag: ..." lines that follow the table)
+    if (expectedCols > 1) {
+      dataRows = dataRows.filter(r => r.length === expectedCols);
+    }
+
+    const parseYesBlank = (v: string): boolean | null => {
       const s = (v || "").trim().toLowerCase();
-      if (!s) return null;
-      if (/^(y|yes|true|1|✓)$/.test(s)) return true;
-      if (/^(n|no|false|0)$/.test(s)) return false;
+      if (!s || s === "n/a" || s === "-" || s === "—") return null;
+      if (/^(y|yes|true|✓)$/.test(s)) return true;
+      if (/^(n|no|false)$/.test(s)) return false;
       return null;
     };
-    const parsePhoneType = (v: string): string => {
+    const parsePhoneType = (v: string): string | null => {
       const s = (v || "").trim().toLowerCase();
+      if (!s) return null;
       if (/owner|personal|cell|mobile|direct/.test(s)) return "owner";
+      if (/front|desk|reception|main/.test(s)) return "front_desk";
       return "front_desk";
     };
-    const result = dataRows.filter(r => r.length >= 1 && r[biIdx]?.trim()).map(r => ({
-      business_name: r[biIdx]?.trim() || "", owner_name: r[owIdx]?.trim() || "",
-      phone: r[phIdx]?.trim() || "", website: r[webIdx]?.trim() || "",
-      has_booking_system: parseBooking(r[bkIdx] || ""),
-      phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : "front_desk",
-      booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
-      booking_link_is_owner: bloIdx >= 0 ? parseBooking(r[bloIdx] || "") : null,
-    }));
+    const parseBookingPlatform = (v: string): { platform: string | null; has: boolean } => {
+      const s = (v || "").trim();
+      if (!s || /^no$/i.test(s) || s === "-" || s === "—") return { platform: null, has: false };
+      // Anything else = platform name
+      return { platform: s, has: true };
+    };
+
+    const result = dataRows
+      .filter(r => biIdx >= 0 && r[biIdx]?.trim())
+      .map(r => {
+        const bk = parseBookingPlatform(bkIdx >= 0 ? r[bkIdx] : "");
+        return {
+          business_name: r[biIdx]?.trim() || "",
+          owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
+          phone: phIdx >= 0 ? (r[phIdx]?.trim() || "") : "",
+          phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null,
+          website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
+          booking_platform: bk.platform,
+          has_booking_system: bk.has,
+          booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
+          booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
+          self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
+          meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
+        };
+      });
     setParsed(result); setChecked(result.map(() => true));
   };
 
   const toggle = (i: number) => setChecked(prev => { const n = [...prev]; n[i] = !n[i]; return n; });
   const selectedCount = checked.filter(Boolean).length;
+  const finalListName = listName.trim();
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import from Claude</DialogTitle>
-          <DialogDescription>Paste your cleaned lead table from Claude.ai</DialogDescription>
+          <DialogDescription>Paste your cleaned lead table from the Lead Researcher prompt.</DialogDescription>
         </DialogHeader>
         {parsed.length === 0 ? (
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-muted-foreground">List Name</label>
-              <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Ojai Hair Salons — State Street SB"' className="mt-1 h-9" />
-              <p className="text-[10px] text-muted-foreground mt-1">Name this batch so you can switch between lists later.</p>
+              <label className="text-xs font-medium text-muted-foreground">List</label>
+              {existingLists.length > 0 && (
+                <div className="mt-1 flex gap-1 mb-2">
+                  <button type="button" onClick={() => { setListMode("existing"); setListName(existingLists[0]); }}
+                    className="text-[11px] px-2 py-1 rounded-md border"
+                    style={{ background: listMode === "existing" ? "hsla(211,96%,56%,.15)" : "transparent",
+                             borderColor: listMode === "existing" ? "hsla(211,96%,56%,.5)" : "hsla(211,96%,60%,.15)",
+                             color: listMode === "existing" ? "hsl(211,96%,70%)" : "hsl(var(--muted-foreground))" }}>
+                    Append to existing
+                  </button>
+                  <button type="button" onClick={() => { setListMode("new"); setListName(""); }}
+                    className="text-[11px] px-2 py-1 rounded-md border"
+                    style={{ background: listMode === "new" ? "hsla(211,96%,56%,.15)" : "transparent",
+                             borderColor: listMode === "new" ? "hsla(211,96%,56%,.5)" : "hsla(211,96%,60%,.15)",
+                             color: listMode === "new" ? "hsl(211,96%,70%)" : "hsl(var(--muted-foreground))" }}>
+                    Create new list
+                  </button>
+                </div>
+              )}
+              {listMode === "existing" && existingLists.length > 0 ? (
+                <select value={listName} onChange={e => setListName(e.target.value)}
+                  className="mt-1 h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  style={{ borderColor: "hsla(211,96%,60%,.2)" }}>
+                  {existingLists.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              ) : (
+                <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Ojai Hair Salons — State Street SB"' className="mt-1 h-9" />
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {listMode === "existing" ? "Adds these leads to the selected list; duplicates by business name within the list are skipped." : "Name this batch so you can switch between lists later."}
+              </p>
             </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste your lead table here. Format:\nBusiness Name | Owner Name | Phone | Website | Booking System\n\nExample:\nJoe's HVAC | Joe Martinez | (805) 555-1234 | joeshvac.com | No"} />
-            <Button onClick={parse} disabled={!raw.trim() || !listName.trim()} className="w-full">Parse Leads</Button>
+              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Phone | Phone Type | Website | Booking System | Booking Link | Booking Link Is Owner | Any Self-Booking Widget (Non-Owner) | Meeting Booked"} />
+            <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">{parsed.length} leads found</p>
+            <p className="text-sm text-muted-foreground">{parsed.length} leads found → <span className="text-foreground font-medium">"{finalListName}"</span></p>
             <div className="max-h-60 overflow-y-auto space-y-1">
               {parsed.map((r, i) => (
                 <label key={i} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm cursor-pointer"
                   style={{ background: checked[i] ? "hsla(211,96%,56%,.06)" : "transparent", border: "1px solid hsla(211,96%,60%,.1)" }}>
                   <input type="checkbox" checked={checked[i]} onChange={() => toggle(i)} className="accent-[hsl(211,96%,56%)]" />
-                  <span className="font-medium text-foreground truncate">{r.business_name}</span>
-                  <span className="text-muted-foreground truncate hidden sm:inline">— {r.owner_name || "N/A"}</span>
+                  <span className="font-medium text-foreground truncate flex-1">{r.business_name}</span>
+                  {r.booking_platform && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }}>{r.booking_platform}</span>
+                  )}
+                  {r.phone_type === "owner" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner</span>
+                  )}
                 </label>
               ))}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setParsed([]); setChecked([]); }}>Back</Button>
-              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]), listName)} disabled={!selectedCount} className="flex-1">
-                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""}{listName.trim() ? ` to "${listName.trim()}"` : ""}
+              <Button onClick={() => onImport(parsed.filter((_, i) => checked[i]), finalListName)} disabled={!selectedCount} className="flex-1">
+                Import {selectedCount} Lead{selectedCount !== 1 ? "s" : ""} to "{finalListName}"
               </Button>
             </div>
           </div>
