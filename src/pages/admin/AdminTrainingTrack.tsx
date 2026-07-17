@@ -254,7 +254,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
             .from("nl_training_certifications")
             .select("id")
             .eq("user_id", user.id)
-            .eq("track_key", "bdr")
+            .eq("track_key", "salesmen")
             .eq("passed", true)
             .limit(1)
             .maybeSingle();
