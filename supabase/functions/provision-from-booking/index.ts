@@ -3,8 +3,57 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Auth guard: allow if
+//   (a) x-cron-secret header matches CRON_SECRET (internal edge-to-edge callers), OR
+//   (b) authenticated admin/operator caller, OR
+//   (c) request body carries a recent appointment_id (created <60m ago) whose
+//       contact_email matches body.contact_email — the public booking flows
+//       (BookingPage / BDRBookingPublic) already created a real appointment row
+//       via a slot-limited flow, which acts as our proof-of-booking.
+async function authorizeRequest(req: Request, body: any, supabaseUrl: string, serviceKey: string, anonKey: string): Promise<{ ok: boolean; reason?: string }> {
+  const cronSecret = Deno.env.get("CRON_SECRET") || "";
+  if (cronSecret && (req.headers.get("x-cron-secret") || "") === cronSecret) {
+    return { ok: true };
+  }
+
+  const authHeader = req.headers.get("Authorization") || "";
+  if (authHeader.startsWith("Bearer ")) {
+    try {
+      const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) {
+        const admin = createClient(supabaseUrl, serviceKey);
+        const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
+        if ((roles ?? []).some((r: any) => r.role === "admin" || r.role === "operator")) {
+          return { ok: true };
+        }
+      }
+    } catch (_) { /* fall through */ }
+  }
+
+  const apptId = body?.appointment_id;
+  const emailIn = (body?.contact_email || "").toString().trim().toLowerCase();
+  if (apptId && emailIn) {
+    const admin = createClient(supabaseUrl, serviceKey);
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: appt } = await admin
+      .from("appointments").select("id, contact_email, created_at")
+      .eq("id", apptId).gte("created_at", cutoff).maybeSingle();
+    if (appt && (appt.contact_email || "").toString().trim().toLowerCase() === emailIn) {
+      return { ok: true };
+    }
+    const { data: bdr } = await admin
+      .from("bdr_calendar_events").select("id, email, created_at")
+      .eq("id", apptId).gte("created_at", cutoff).maybeSingle();
+    if (bdr && (bdr.email || "").toString().trim().toLowerCase() === emailIn) {
+      return { ok: true };
+    }
+  }
+  return { ok: false, reason: "Unauthorized: missing shared secret, admin session, or valid recent appointment_id" };
+}
 
 function guessProvisionalProfile(businessType: string): string {
   const t = (businessType || "").toLowerCase();

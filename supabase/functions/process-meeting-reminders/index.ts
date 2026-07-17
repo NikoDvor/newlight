@@ -65,10 +65,36 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process_queue";
+
+    // Auth policy:
+    //  - cancel_meeting: public, but only affects the single meeting matching cancellation_token (validated in handler)
+    //  - all other actions (bulk send / queue): require CRON_SECRET header OR authenticated user
+    if (action !== "cancel_meeting") {
+      const providedSecret = req.headers.get("x-cron-secret") || "";
+      const secretOk = cronSecret && providedSecret === cronSecret;
+      let userOk = false;
+      if (!secretOk) {
+        const authHeader = req.headers.get("Authorization") || "";
+        if (authHeader.startsWith("Bearer ")) {
+          const userClient = createClient(supabaseUrl, anonKey, {
+            global: { headers: { Authorization: authHeader } },
+          });
+          const { data: { user } } = await userClient.auth.getUser();
+          userOk = !!user;
+        }
+      }
+      if (!secretOk && !userOk) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     if (action === "queue_booking_confirmation") {
       return await queueBookingConfirmation(supabase, body, supabaseUrl);
@@ -83,6 +109,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === "cancel_meeting") {
+      // Validate token presence — handler further restricts mutation to matching row only.
+      if (!body?.cancellation_token || typeof body.cancellation_token !== "string" || body.cancellation_token.length < 16) {
+        return new Response(JSON.stringify({ error: "cancellation_token required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return await handleCancellation(supabase, body);
     }
 
