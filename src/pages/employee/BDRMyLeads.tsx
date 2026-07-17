@@ -278,10 +278,15 @@ export default function BDRMyLeads() {
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
-  const handleImport = async (rows: { business_name: string; owner_name: string; phone: string; website: string; has_booking_system: boolean | null; phone_type?: string | null; booking_link?: string | null; booking_link_is_owner?: boolean | null }[], listName: string) => {
+  const handleImport = async (rows: any[], listName: string) => {
     if (!user?.id) return;
     const cleanList = listName.trim() || null;
-    const existingNames = new Set(leads.map(l => (l.business_name || "").trim().toLowerCase()));
+    // Dedup scoped to the target list, not global
+    const existingNames = new Set(
+      leads
+        .filter(l => (l.list_name || null) === cleanList)
+        .map(l => (l.business_name || "").trim().toLowerCase())
+    );
     const seenInBatch = new Set<string>();
     let count = 0;
     let skipped = 0;
@@ -290,12 +295,18 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
       const { data } = await (supabase as any).from("nl_bdr_leads").insert({
-        user_id: user.id, client_id: clientId, business_name: row.business_name, owner_name: row.owner_name || null,
-        phone: row.phone || null, website: row.website || null,
+        user_id: user.id, client_id: clientId,
+        business_name: row.business_name,
+        owner_name: row.owner_name || null,
+        phone: row.phone || null,
+        website: row.website || null,
+        phone_type: row.phone_type ?? null,
+        booking_platform: row.booking_platform ?? null,
         has_booking_system: row.has_booking_system,
-        phone_type: row.phone_type || "front_desk",
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? null,
+        self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
+        meeting_booked: row.meeting_booked || null,
         list_name: cleanList,
       }).select("id").single();
       if (data) { await createCRMRecords(row, data.id); count++; }
