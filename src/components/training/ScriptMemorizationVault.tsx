@@ -260,11 +260,12 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 
+  const quizList = script.quiz ?? [];
   const quizOptions = useMemo(
-    () => script.quiz.map((q) => [q.answer, ...q.wrong]),
-    [script.quiz]
+    () => quizList.map((q) => [q.answer, ...q.wrong]),
+    [quizList]
   );
-  const correctCount = script.quiz.reduce((sum, _, idx) => sum + (answers[idx] === 0 ? 1 : 0), 0);
+  const correctCount = quizList.reduce((sum, _, idx) => sum + (answers[idx] === 0 ? 1 : 0), 0);
 
   return (
     <div className="mt-5 rounded-xl border border-primary/15 bg-background/30 p-4 sm:p-5">
