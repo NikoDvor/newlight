@@ -277,7 +277,7 @@ function TechniqueQuiz({ script }: { script: ScriptDefinition }) {
         {submitted && <Badge variant="outline" className="w-fit border-primary/30 text-primary">{correctCount}/6 correct</Badge>}
       </div>
       <div className="space-y-4">
-        {script.quiz.map((q, qIndex) => (
+        {quizList.map((q, qIndex) => (
           <div key={q.question} className="rounded-lg border border-border/45 bg-secondary/20 p-3 sm:p-4">
             <p className="text-sm font-medium leading-snug text-foreground">{qIndex + 1}. {q.question}</p>
             <div className="mt-3 grid grid-cols-1 gap-2">
