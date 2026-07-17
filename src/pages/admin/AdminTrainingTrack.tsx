@@ -223,11 +223,11 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .eq("user_id", user.id);
         setLevelProgress((levels || []) as LevelProgressRow[]);
 
-        if (track.track_name && (trackKey || "bdr") === "bdr") {
+        if (track.track_name) {
           const { data: cards } = await (supabase as any)
             .from("nl_training_flashcards")
             .select("id, category, front, back, difficulty")
-            .eq("track_key", "bdr")
+            .eq("track_key", "salesmen")
             .order("category");
           const cardRows = (cards || []) as FlashcardRow[];
           setFlashcards(cardRows);
