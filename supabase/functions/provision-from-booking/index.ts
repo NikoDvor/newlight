@@ -483,7 +483,16 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const rawBody = await req.json();
+    const authz = await authorizeRequest(req, rawBody, supabaseUrl, serviceRoleKey, anonKey);
+    if (!authz.ok) {
+      return new Response(JSON.stringify({ error: authz.reason || "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const {
       business_name,
@@ -514,7 +523,7 @@ Deno.serve(async (req) => {
       booking_source,
       customer_notes,
       provisional_profile: explicit_profile,
-    } = await req.json();
+    } = rawBody;
 
     if (!contact_email || !business_name) {
       return new Response(
