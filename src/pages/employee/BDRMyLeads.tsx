@@ -1097,9 +1097,10 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
   const [listMode, setListMode] = useState<"existing" | "new">("new");
   const [parsed, setParsed] = useState<any[]>([]);
   const [checked, setChecked] = useState<boolean[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
 
   useEffect(() => {
-    if (!open) { setRaw(""); setParsed([]); setChecked([]); return; }
+    if (!open) { setRaw(""); setParsed([]); setChecked([]); setSkippedCount(0); return; }
     if (existingLists.length > 0) {
       setListMode("existing");
       setListName(existingLists[0]);
