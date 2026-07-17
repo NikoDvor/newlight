@@ -27,7 +27,7 @@ export default function SystemHealthPanel() {
       const { data: chapters } = await (supabase as any)
         .from("nl_training_chapters")
         .select("id, title, content, module_id, nl_training_modules!inner(track, module_number)")
-        .eq("nl_training_modules.track", "bdr")
+        .eq("nl_training_modules.track", "salesmen")
         .eq("nl_training_modules.module_number", 1);
       const term = (chapters || []).find((c: any) =>
         /terminology|glossary/i.test(c.title || "")
