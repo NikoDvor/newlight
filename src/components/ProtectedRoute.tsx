@@ -10,7 +10,7 @@ export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) 
   const { user, isAdmin, isSessionLoading } = useWorkspace();
   const location = useLocation();
 
-  // Wait for session restoration before deciding auth state.
+  // Wait for session restoration before deciding auth state (sync-forced).
   if (isSessionLoading) return null;
 
   if (!user) {
