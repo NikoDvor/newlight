@@ -45,8 +45,8 @@ export function useClientManifest() {
     return () => { cancelled = true; };
   }, [activeClientId]);
 
-
   useEffect(() => {
+
     const isClient = !!activeClientId;
     const useAdminOps = !isClient;
 
