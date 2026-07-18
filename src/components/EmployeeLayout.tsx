@@ -36,7 +36,7 @@ function EmployeeSidebar() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "bdr").maybeSingle();
+      const { data: track } = await supabase.from("nl_training_tracks").select("id").eq("track_key", "salesmen").maybeSingle();
       if (!track) return;
       const [{ data: mods }, { data: progress }, { data: certs }] = await Promise.all([
         supabase.from("nl_training_modules").select("id, module_number").eq("track_id", track.id),
