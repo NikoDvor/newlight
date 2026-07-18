@@ -358,8 +358,8 @@ export function ChapterRunner({
   });
   const effectiveLocked = lockCheck.checked ? lockCheck.locked : lockedPreview;
 
-  // Fresh DB check on every mount/module change. Module 1 is always open; Module 2+
-  // is unlocked only by an nl_module_completion row for the previous module.
+  // Fresh DB check on every mount/module change. Module-locking gating is disabled:
+  // every module resolves as unlocked so users can open any module directly.
   useEffect(() => {
     let cancelled = false;
     setLockCheck({ checked: false, locked: true, moduleNumber: null, previousModuleComplete: false, userId: null });
