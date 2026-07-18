@@ -51,7 +51,7 @@ export function AppLayout() {
   const hasCustomBranding = activeClientId && branding.primary_color && branding.primary_color !== "#3B82F6";
 
   // Wait for session restoration before deciding auth state — prevents
-  // a false redirect to /auth on refresh while getSession() is still pending.
+  // a false redirect to /auth on refresh while getSession() is still pending (sync-forced).
   if (isSessionLoading) return null;
 
   // Redirect unauthenticated users to login

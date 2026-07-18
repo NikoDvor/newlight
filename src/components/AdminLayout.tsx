@@ -17,7 +17,7 @@ export function AdminLayout() {
   const { viewMode, user, isAdmin, isSessionLoading } = useWorkspace();
   useClientManifest();
 
-  // Wait for session restoration to avoid a false redirect on refresh.
+  // Wait for session restoration to avoid a false redirect on refresh (sync-forced).
   if (isSessionLoading) return null;
 
   if (!user) {
