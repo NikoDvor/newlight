@@ -110,7 +110,7 @@ export default function AdminTrainingFlashcards() {
       const { data: cardData } = await (supabase as any)
         .from("nl_training_flashcards")
         .select("id, category, front, back, difficulty")
-        .eq("track_key", "bdr")
+        .eq("track_key", "salesmen")
         .order("category");
       const cardRows = (cardData || []) as Flashcard[];
       setCards(cardRows);

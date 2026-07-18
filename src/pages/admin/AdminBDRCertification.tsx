@@ -413,7 +413,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
             <h2>Business Development Representative</h2>
             <p>This certifies that</p>
             <div class="name">${safeRepName}</div>
-            <p>has completed the BDR Training Track and passed the certification exam.</p>
+            <p>has completed the Salesmen Training Track and passed the certification exam.</p>
             <div class="meta">
               <div>Date Issued<strong>${safeIssued}</strong></div>
               <div>Score<strong>${safeScore}</strong></div>
@@ -621,7 +621,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
           <Badge variant="secondary">48hr Retake on Fail</Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-6 max-w-xl mx-auto leading-relaxed">
-          This exam covers all 10 modules of the BDR Training Track. You must score 24 out of 30 or higher to earn your BDR Certification.
+          This exam covers all 8 modules of the Salesmen Training Track. You must score 24 out of 30 or higher to earn your BDR Certification.
         </p>
         <div className="mt-8">
           {retakeLocked && retakeAt ? (
