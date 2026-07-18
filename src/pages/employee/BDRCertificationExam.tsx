@@ -109,9 +109,8 @@ export default function BDRCertificationExam() {
       const pass = certRows.find(c => c.passed);
       setLatestPass(pass || null);
 
-      const realMods = moduleList.filter(m => m.module_number >= 1 && m.module_number <= 8);
-      const unlocked = realMods.length >= 8 && realMods.every(m => completedIds.has(m.id));
-      setPhase(unlocked ? "intro" : "locked");
+      // Gating disabled: exam always accessible regardless of module completion.
+      setPhase("intro");
     })();
   }, [user?.id]);
 
