@@ -12,7 +12,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { ClientFlagGate } from "@/components/ClientFlagGate";
-import { AppIntro, shouldPlayIntro, resetIntroState } from "@/components/AppIntro";
+
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
 // Pages
