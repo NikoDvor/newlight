@@ -23,16 +23,16 @@ type AdminBranding = {
  *
  * - Admin viewing a sub-account → that client's name + logo
  * - Logged in directly to a sub-account → that sub-account's name + logo
- * - Admin with no sub-account selected → NewLight Ops branding (from the
- *   ADMIN_OPS_CLIENT_ID client_branding row)
+ * - Any signed-in user with no sub-account selected → NewLight Ops branding
+ *   (from the ADMIN_OPS_CLIENT_ID client_branding row)
  */
 export function useClientManifest() {
-  const { activeClientId, branding, isAdmin } = useWorkspace();
+  const { activeClientId, branding } = useWorkspace();
   const [adminBranding, setAdminBranding] = useState<AdminBranding | null>(null);
 
-  // Load NewLight Ops branding when admin has no client selected
+  // Load NewLight Ops branding whenever no client workspace is selected
   useEffect(() => {
-    if (!isAdmin || activeClientId) return;
+    if (activeClientId) return;
     let cancelled = false;
     supabase
       .from("client_branding")
@@ -43,11 +43,11 @@ export function useClientManifest() {
         if (!cancelled) setAdminBranding((data as AdminBranding | null) ?? null);
       });
     return () => { cancelled = true; };
-  }, [isAdmin, activeClientId]);
+  }, [activeClientId]);
 
   useEffect(() => {
     const isClient = !!activeClientId;
-    const useAdminOps = !isClient && isAdmin;
+    const useAdminOps = !isClient;
 
     const appName = isClient
       ? (branding.company_name || branding.app_display_name || "NewLight")
@@ -116,7 +116,7 @@ export function useClientManifest() {
     const link = ensureManifestLink();
     link.setAttribute("crossorigin", "use-credentials");
     link.href = manifestUrl;
-  }, [activeClientId, branding, isAdmin, adminBranding]);
+  }, [activeClientId, branding, adminBranding]);
 
   function ensureManifestLink() {
     let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
