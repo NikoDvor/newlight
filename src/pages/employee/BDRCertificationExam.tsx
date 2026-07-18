@@ -62,10 +62,7 @@ export default function BDRCertificationExam() {
   const [resultWrongQuestions, setResultWrongQuestions] = useState<{ question_text: string; user_answer: string; correct_answer: string }[]>([]);
   const [resultAttemptNum, setResultAttemptNum] = useState(1);
 
-  const allUnlocked = useMemo(() => {
-    const realModules = modules.filter(m => m.module_number >= 1 && m.module_number <= 8);
-    return realModules.length >= 8 && realModules.every(m => completedModuleIds.has(m.id));
-  }, [modules, completedModuleIds]);
+  const allUnlocked = true; // Gating disabled: certification exam is always accessible.
 
   // Load initial data
   useEffect(() => {
