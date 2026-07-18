@@ -71,12 +71,7 @@ export function ObjectionMasteryTrack({ chapterId, unlockCategory }: Props) {
 
   if (!unlock) return null;
 
-  const isLevelUnlocked = (key: string) => {
-    if (key === "foundation") return true;
-    if (key === "intermediate") return !!unlock.foundation_passed;
-    if (key === "advanced") return !!unlock.intermediate_passed;
-    return false;
-  };
+  const isLevelUnlocked = (_key: string) => true; // Gating disabled: all objection-mastery levels always accessible.
 
   const isLevelPassed = (key: string) => {
     if (key === "foundation") return !!unlock.foundation_passed;
