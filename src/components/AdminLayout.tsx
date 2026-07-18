@@ -14,8 +14,11 @@ import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 
 export function AdminLayout() {
   const location = useLocation();
-  const { viewMode, user, isAdmin } = useWorkspace();
+  const { viewMode, user, isAdmin, isSessionLoading } = useWorkspace();
   useClientManifest();
+
+  // Wait for session restoration to avoid a false redirect on refresh.
+  if (isSessionLoading) return null;
 
   if (!user) {
     return <Navigate to="/auth" replace />;
