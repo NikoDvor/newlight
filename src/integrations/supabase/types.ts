@@ -13798,6 +13798,20 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_client_oauth_connection_status: {
+        Args: { _client_id: string; _integration_type: string }
+        Returns: {
+          client_id: string
+          connected_at: string
+          connected_by: string
+          id: string
+          integration_type: string
+          location_id: string
+          property_url: string
+          status: string
+          token_expiry: string
+        }[]
+      }
       get_employee_client_id: { Args: { _user_id: string }; Returns: string }
       get_proposal_token: { Args: never; Returns: string }
       get_public_bdr_calendar: {
