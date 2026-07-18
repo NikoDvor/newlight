@@ -50,12 +50,12 @@ export function useClientManifest() {
     const useAdminOps = !isClient;
 
     const appName = isClient
-
       ? (branding.company_name || branding.app_display_name || "NewLight")
       : useAdminOps
         ? (adminBranding?.company_name || adminBranding?.app_display_name || "NewLight")
         : "NewLight";
     const themeColor = isClient && branding.primary_color
+
       ? branding.primary_color
       : useAdminOps && adminBranding?.primary_color
         ? adminBranding.primary_color
