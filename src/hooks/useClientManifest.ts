@@ -72,8 +72,8 @@ export function useClientManifest() {
     setMeta("apple-mobile-web-app-title", appName);
     setMeta("application-name", appName);
     setMetaTheme(themeColor);
-
     setLink("apple-touch-icon", iconUrl);
+
     setLink("icon", (isClient || useAdminOps) ? iconUrl : "/favicon.ico");
 
     // Build manifest fresh for this account context and inject as a
@@ -119,8 +119,8 @@ export function useClientManifest() {
     link.href = manifestUrl;
   }, [activeClientId, branding, adminBranding]);
 
-
   function ensureManifestLink() {
+
     let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
     if (!manifestLink) {
       manifestLink = document.createElement("link");
