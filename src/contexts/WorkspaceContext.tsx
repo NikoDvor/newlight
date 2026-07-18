@@ -208,6 +208,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             pwa_icon_url: (data as any).pwa_icon_url || "",
             splash_logo_url: (data as any).splash_logo_url || "",
             app_display_name: (data as any).app_display_name || "",
+            updated_at: (data as any).updated_at ?? null,
           });
         } else {
           setBranding(defaultBranding);
