@@ -93,13 +93,16 @@ export default function SEO() {
       .limit(1)
       .maybeSingle();
     setPerfScore(perfRes.data || null);
-    const gscRes = await supabase
-      .from("client_oauth_connections")
-      .select("*")
-      .eq("client_id", activeClientId)
-      .eq("integration_type", "gsc")
-      .maybeSingle();
-    setGscConnection(gscRes.data || null);
+    // Read connection status via SECURITY DEFINER RPC — raw OAuth tokens are
+    // no longer readable by client users via the table directly.
+    const gscRes = await (supabase as any)
+      .rpc("get_client_oauth_connection_status", {
+        _client_id: activeClientId,
+        _integration_type: "gsc",
+      });
+    const gscRow = Array.isArray(gscRes.data) ? gscRes.data[0] ?? null : gscRes.data;
+    setGscConnection(gscRow);
+
     const gapRes = await supabase
       .from("seo_competitor_gaps")
       .select("*")

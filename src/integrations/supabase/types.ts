@@ -13798,8 +13798,37 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_client_oauth_connection_status: {
+        Args: { _client_id: string; _integration_type: string }
+        Returns: {
+          client_id: string
+          connected_at: string
+          connected_by: string
+          id: string
+          integration_type: string
+          location_id: string
+          property_url: string
+          status: string
+          token_expiry: string
+        }[]
+      }
       get_employee_client_id: { Args: { _user_id: string }; Returns: string }
       get_proposal_token: { Args: never; Returns: string }
+      get_public_bdr_calendar: {
+        Args: { _slug_or_id: string }
+        Returns: {
+          availability: Json
+          booking_active: boolean
+          booking_description: string
+          booking_form_id: string
+          booking_slug: string
+          booking_title: string
+          client_id: string
+          id: string
+          name: string
+          timezone: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string

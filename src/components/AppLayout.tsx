@@ -34,7 +34,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, setViewMode, setActiveClientId } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
   const navigate = useNavigate();
   useClientManifest();
 
@@ -49,6 +49,10 @@ export function AppLayout() {
 
   const displayName = branding.company_name || activeClientName;
   const hasCustomBranding = activeClientId && branding.primary_color && branding.primary_color !== "#3B82F6";
+
+  // Wait for session restoration before deciding auth state — prevents
+  // a false redirect to /auth on refresh while getSession() is still pending.
+  if (isSessionLoading) return null;
 
   // Redirect unauthenticated users to login
   if (!user) {
