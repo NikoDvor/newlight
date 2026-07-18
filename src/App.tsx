@@ -495,9 +495,6 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
       </QueryClientProvider>
-    </div>
-
-    </>
   );
 };
 
