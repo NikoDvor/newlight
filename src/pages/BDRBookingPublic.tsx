@@ -120,31 +120,15 @@ export default function BDRBookingPublic() {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lookupValue);
-      const cols = "id, client_id, name, booking_slug, availability, timezone, booking_title, booking_description, booking_active, booking_form_id";
-      // Supports both /bdr/book/{booking_slug} and /bdr/book/{calendar_uuid}.
-      const slugLookup = await (supabase as any)
-        .from("bdr_calendars")
-        .select(cols)
-        .eq("booking_slug", lookupValue)
-        .maybeSingle();
-      let data = slugLookup.data;
-      let calErr = slugLookup.error;
-      let lookupMode: "booking_slug" | "id" = "booking_slug";
-      if (!data && isUuid) {
-        const idLookup = await (supabase as any)
-          .from("bdr_calendars")
-          .select(cols)
-          .eq("id", lookupValue)
-          .maybeSingle();
-        data = idLookup.data;
-        calErr = idLookup.error || calErr;
-        lookupMode = "id";
-      }
+      // Call the SECURITY DEFINER RPC — the bdr_calendars table is no longer
+      // directly readable by anon; this RPC returns only the single matching calendar.
+      const { data: rpcData, error: calErr } = await (supabase as any)
+        .rpc("get_public_bdr_calendar", { _slug_or_id: lookupValue });
+      const data = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
       console.error("[BDRBookingPublic] calendar lookup", {
         rawSlug: slug,
         lookupValue,
         isUuid,
-        lookupMode,
         found: !!data,
         calendar_id: data?.id,
         booking_slug: data?.booking_slug,
@@ -153,6 +137,7 @@ export default function BDRBookingPublic() {
         calErr,
       });
       setCal(data);
+
 
       // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
       if (data?.booking_form_id) {
