@@ -22,6 +22,7 @@ interface ClientBranding {
   pwa_icon_url: string;
   splash_logo_url: string;
   app_display_name: string;
+  updated_at: string | null;
 }
 
 const defaultBranding: ClientBranding = {
