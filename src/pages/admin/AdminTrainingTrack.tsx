@@ -245,11 +245,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .eq("user_id", user.id);
         const completedModuleIds = new Set<string>((completionRows || []).map((row: any) => row.module_id as string));
         setFreshCompletedModuleIds(completedModuleIds);
-        moduleList = moduleList.map((mod) => {
-          if (mod.module_number <= 1) return { ...mod, is_locked: false };
-          const previousModule = moduleList.find((m) => m.module_number === mod.module_number - 1);
-          return { ...mod, is_locked: previousModule ? !completedModuleIds.has(previousModule.id) : true };
-        });
+        // Locking disabled: every module is always unlocked so reps can jump to any module/quiz/exam.
+        moduleList = moduleList.map((mod) => ({ ...mod, is_locked: false }));
         setModules(moduleList);
 
         const { data: levels } = await (supabase as any)
