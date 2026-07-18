@@ -154,9 +154,11 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const updateNow = useCallback(() => {
     localStorage.removeItem(updateDismissedKey);
     setUpdateAvailable(false);
-    const waitingWorker = waitingWorkerRef.current;
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    const updateSW = updateSWRef.current;
+    if (updateSW) {
+      // reloadPage=true → skipWaiting + activate + reload with the new bundle.
+      // A plain window.location.reload() would just re-serve the stale precache.
+      void updateSW(true);
       return;
     }
     window.location.reload();
