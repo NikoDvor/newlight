@@ -245,11 +245,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
           .eq("user_id", user.id);
         const completedModuleIds = new Set<string>((completionRows || []).map((row: any) => row.module_id as string));
         setFreshCompletedModuleIds(completedModuleIds);
-        moduleList = moduleList.map((mod) => {
-          if (mod.module_number <= 1) return { ...mod, is_locked: false };
-          const previousModule = moduleList.find((m) => m.module_number === mod.module_number - 1);
-          return { ...mod, is_locked: previousModule ? !completedModuleIds.has(previousModule.id) : true };
-        });
+        // Locking disabled: every module is always unlocked so reps can jump to any module/quiz/exam.
+        moduleList = moduleList.map((mod) => ({ ...mod, is_locked: false }));
         setModules(moduleList);
 
         const { data: levels } = await (supabase as any)
@@ -367,14 +364,9 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     return "not_started";
   };
 
-  // Explicit unlock chain: Module 1 always unlocked. Module N unlocked iff
-  // Module N-1 has an nl_module_completion record for the current user.
-  const isModuleUnlocked = (mod: Module): boolean => {
-    if (mod.module_number <= 1) return true;
-    const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
-    if (!prevModule) return false;
-    return hasModuleCompletion(prevModule.id);
-  };
+  // Locking disabled: every module is always unlocked so reps can jump to any
+  // module, chapter, quiz, or final exam directly regardless of prior progress.
+  const isModuleUnlocked = (_mod: Module): boolean => true;
 
   const getModuleChapterProgress = (moduleId: string) => {
     const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
@@ -780,17 +772,14 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                 {(trackKey === "bdr" || trackKey === "salesmen" || !trackKey) && (
                   <>
                     <button
-                      onClick={() => overallPct === 100 && navigate(`${basePath}/bdr/certification`)}
-                      disabled={overallPct < 100}
-                      className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
-                        overallPct === 100 ? "hover:bg-white/[0.03]" : "opacity-60 cursor-not-allowed"
-                      }`}
+                      onClick={() => navigate(`${basePath}/bdr/certification`)}
+                      className="w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 hover:bg-white/[0.03]"
                     >
                       <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-secondary">
                         {hasCertification ? (
                           <Star className="h-3.5 w-3.5 text-[hsl(var(--nl-gold))]" />
                         ) : (
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Award className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -800,10 +789,8 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
                             <Badge className="h-5 bg-[hsl(var(--nl-gold)/.16)] text-[hsl(var(--nl-gold))] border border-[hsl(var(--nl-gold)/.28)] hover:bg-[hsl(var(--nl-gold)/.16)] px-2 text-[10px]">
                               BDR Certified ✓
                             </Badge>
-                          ) : overallPct === 100 ? (
-                            <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Unlocked</span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground font-medium">Certification Locked</span>
+                            <span className="text-[10px] text-[hsl(var(--nl-neon))] font-medium">Available</span>
                           )}
                         </div>
                       </div>
@@ -1161,7 +1148,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
               {!isGlossaryModule && (() => {
                 const chaptersReadInfo = getModuleChaptersRead(selectedModule.id);
-                const allChaptersRead = chaptersReadInfo.total > 0 && chaptersReadInfo.read >= chaptersReadInfo.total;
+                const allChaptersRead = true; // Gating disabled: exam/complete buttons always available.
                 const moduleDone = isModuleCompleted(selectedModule.id) || moduleStatus(selectedModule.id) === "completed";
                 const exam = examHistory[selectedModule.id];
                 const examPassed = exam?.passed || moduleDone;
