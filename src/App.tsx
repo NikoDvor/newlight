@@ -390,6 +390,9 @@ const App = () => {
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
+              {/* Legacy employee dashboard redirect */}
+              <Route path="/employee/dashboard" element={<Navigate to="/employee/generic" replace />} />
+
               {/* Client Workspace */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />

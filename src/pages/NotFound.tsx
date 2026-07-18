@@ -2,10 +2,12 @@ import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 
 const NotFound = () => {
   const location = useLocation();
+  const { isAdmin, userRole, employeeProfile } = useWorkspace();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
