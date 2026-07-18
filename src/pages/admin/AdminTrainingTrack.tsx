@@ -1148,7 +1148,7 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
 
               {!isGlossaryModule && (() => {
                 const chaptersReadInfo = getModuleChaptersRead(selectedModule.id);
-                const allChaptersRead = chaptersReadInfo.total > 0 && chaptersReadInfo.read >= chaptersReadInfo.total;
+                const allChaptersRead = true; // Gating disabled: exam/complete buttons always available.
                 const moduleDone = isModuleCompleted(selectedModule.id) || moduleStatus(selectedModule.id) === "completed";
                 const exam = examHistory[selectedModule.id];
                 const examPassed = exam?.passed || moduleDone;
