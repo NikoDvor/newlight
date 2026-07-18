@@ -7,8 +7,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) {
-  const { user, isAdmin } = useWorkspace();
+  const { user, isAdmin, isSessionLoading } = useWorkspace();
   const location = useLocation();
+
+  // Wait for session restoration before deciding auth state.
+  if (isSessionLoading) return null;
 
   if (!user) {
     return <Navigate to="/auth" replace />;
