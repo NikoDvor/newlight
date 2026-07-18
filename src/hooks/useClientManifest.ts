@@ -71,8 +71,8 @@ export function useClientManifest() {
     document.title = appName;
     setMeta("apple-mobile-web-app-title", appName);
     setMeta("application-name", appName);
-
     setMetaTheme(themeColor);
+
     setLink("apple-touch-icon", iconUrl);
     setLink("icon", (isClient || useAdminOps) ? iconUrl : "/favicon.ico");
 
