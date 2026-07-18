@@ -55,12 +55,12 @@ export function useClientManifest() {
         ? (adminBranding?.company_name || adminBranding?.app_display_name || "NewLight")
         : "NewLight";
     const themeColor = isClient && branding.primary_color
-
       ? branding.primary_color
       : useAdminOps && adminBranding?.primary_color
         ? adminBranding.primary_color
         : "#FFFFFF";
     const clientIcon = branding.pwa_icon_url || branding.app_icon_url || branding.logo_url;
+
     const adminIcon = adminBranding?.pwa_icon_url || adminBranding?.app_icon_url || adminBranding?.logo_url;
     const iconUrl = isClient && clientIcon
       ? clientIcon
