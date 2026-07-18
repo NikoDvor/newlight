@@ -2,14 +2,28 @@ import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 
 const NotFound = () => {
   const location = useLocation();
+  const { isAdmin, userRole, employeeProfile } = useWorkspace();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
+
+  const dashboardPath = isAdmin
+    ? "/admin"
+    : employeeProfile ||
+      userRole === "marketing_staff" ||
+      userRole === "support_staff" ||
+      userRole === "employee" ||
+      userRole === "bdr" ||
+      userRole === "sdr" ||
+      userRole === "account_manager"
+      ? "/employee"
+      : "/dashboard";
 
   return (
     <div
@@ -30,8 +44,9 @@ const NotFound = () => {
         <p className="text-sm text-white/50 mb-6">
           The page <code className="text-white/30 text-xs bg-white/5 px-1.5 py-0.5 rounded">{location.pathname}</code> doesn't exist or you may not have access.
         </p>
+
         <div className="flex flex-wrap gap-3 justify-center">
-          <Link to="/dashboard">
+          <Link to={dashboardPath}>
             <Button
               className="gap-1.5 text-white border-0"
               style={{
