@@ -35,6 +35,7 @@ const defaultBranding: ClientBranding = {
   pwa_icon_url: "",
   splash_logo_url: "",
   app_display_name: "",
+  updated_at: null,
 };
 
 interface WorkspaceContextType {
