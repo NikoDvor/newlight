@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { registerSW } from "virtual:pwa-register";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
