@@ -46,8 +46,8 @@ export function useClientManifest() {
   }, [activeClientId]);
 
   useEffect(() => {
-
     const isClient = !!activeClientId;
+
     const useAdminOps = !isClient;
 
     const appName = isClient
