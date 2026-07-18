@@ -48,7 +48,7 @@ export function useClientManifest() {
 
   useEffect(() => {
     const isClient = !!activeClientId;
-    const useAdminOps = !isClient && isAdmin;
+    const useAdminOps = !isClient;
 
     const appName = isClient
       ? (branding.company_name || branding.app_display_name || "NewLight")
@@ -117,7 +117,8 @@ export function useClientManifest() {
     const link = ensureManifestLink();
     link.setAttribute("crossorigin", "use-credentials");
     link.href = manifestUrl;
-  }, [activeClientId, branding, isAdmin, adminBranding]);
+  }, [activeClientId, branding, adminBranding]);
+
 
   function ensureManifestLink() {
     let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
