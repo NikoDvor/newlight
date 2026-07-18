@@ -18,10 +18,10 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      // "autoUpdate" applies new deploys automatically on the next page load.
-      // No manual user action (clicking a banner) is required; skipWaiting and
-      // clientsClaim below activate the new service worker immediately.
-      registerType: "autoUpdate",
+      // "prompt" makes a new service worker enter the WAITING state so
+      // onNeedRefresh fires in registerSW() and we can show the update toast.
+      // The user controls when the reload happens via the update banner.
+      registerType: "prompt",
       injectRegister: false,
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
@@ -44,10 +44,10 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
-        // Activate the new service worker immediately so updates take effect
-        // on the next load without waiting for a user prompt.
-        skipWaiting: true,
-        clientsClaim: true,
+        // Intentionally NOT setting skipWaiting/clientsClaim so the user controls
+        // when the reload happens via the update banner (calling updateSW(true) on
+        // demand). A forced/automatic reload would interrupt an in-progress session
+        // restore.
         // Do NOT runtime-cache Supabase requests. Caching /auth/v1/* responses
         // causes stale/expired auth data to be returned on PWA cold-start,
         // which logs the user out when they re-open the installed app.
