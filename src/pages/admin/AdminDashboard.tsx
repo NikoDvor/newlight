@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { triggerIntroReplay } from "@/App";
+
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AdminDashboard() {
@@ -83,9 +83,6 @@ export default function AdminDashboard() {
         title="Admin Dashboard"
         subtitle="Platform overview and system monitoring"
       >
-        <Button onClick={() => triggerIntroReplay()} variant="outline" className="border-white/10 text-white hover:bg-white/10 hidden sm:inline-flex">
-          <Play className="h-4 w-4 mr-1" /> Replay Intro
-        </Button>
         <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10 flex-1 sm:flex-none text-xs sm:text-sm">
           <Hammer className="h-4 w-4 mr-1" /> Demo Build
         </Button>

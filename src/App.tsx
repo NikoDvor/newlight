@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import SplashScreen from '@/components/SplashScreen';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
@@ -12,7 +12,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { ClientFlagGate } from "@/components/ClientFlagGate";
-import { AppIntro, shouldPlayIntro, resetIntroState } from "@/components/AppIntro";
+
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
 // Pages
@@ -204,40 +204,6 @@ import CallTracking from "./pages/CallTracking";
 
 const queryClient = new QueryClient();
 
-// Global replay trigger – components call this to show the intro overlay
-let globalReplayTrigger: (() => void) | null = null;
-export function triggerIntroReplay() {
-  resetIntroState();
-  globalReplayTrigger?.();
-}
-
-/** Context-aware intro overlay that reads workspace state */
-function IntroOverlay() {
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      if (sessionStorage.getItem('nl_splash_done') !== '1') return false;
-      const splashTime = parseInt(sessionStorage.getItem('nl_splash_time') || '0', 10);
-      if (Date.now() - splashTime < 15000) return false;
-    } catch {}
-    return shouldPlayIntro();
-  });
-  const handleIntroComplete = useCallback(() => setShowIntro(false), []);
-  const { isAdmin, activeClientName, branding } = useWorkspace();
-
-  // Register global replay
-  globalReplayTrigger = useCallback(() => setShowIntro(true), []);
-
-  if (!showIntro) return null;
-
-  const displayName = branding.company_name || activeClientName;
-  const launchLabel = isAdmin
-    ? "Launching Admin Portal…"
-    : displayName
-      ? `Launching ${displayName}…`
-      : "Launching workspace…";
-
-  return <AppIntro onComplete={handleIntroComplete} launchLabel={launchLabel} />;
-}
 
 const App = () => {
   const [splashDone, setSplashDone]     = useState(() => {
@@ -276,7 +242,7 @@ const App = () => {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <WorkspaceProvider>
             <PWAInstallProvider>
-              <IntroOverlay />
+              
               <Routes>
               {/* Public landing */}
               <Route path="/" element={<Landing />} />
