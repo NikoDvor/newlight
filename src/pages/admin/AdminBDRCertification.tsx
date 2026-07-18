@@ -413,7 +413,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
             <h2>Business Development Representative</h2>
             <p>This certifies that</p>
             <div class="name">${safeRepName}</div>
-            <p>has completed the BDR Training Track and passed the certification exam.</p>
+            <p>has completed the Salesmen Training Track and passed the certification exam.</p>
             <div class="meta">
               <div>Date Issued<strong>${safeIssued}</strong></div>
               <div>Score<strong>${safeScore}</strong></div>
