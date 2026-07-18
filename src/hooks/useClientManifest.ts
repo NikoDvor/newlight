@@ -62,13 +62,13 @@ export function useClientManifest() {
     const clientIcon = branding.pwa_icon_url || branding.app_icon_url || branding.logo_url;
     const adminIcon = adminBranding?.pwa_icon_url || adminBranding?.app_icon_url || adminBranding?.logo_url;
     const iconUrl = isClient && clientIcon
-
       ? clientIcon
       : useAdminOps && adminIcon
         ? adminIcon
         : `${window.location.origin}/pwa-512x512.png`;
 
     // Document title + standard meta
+
     document.title = appName;
     setMeta("apple-mobile-web-app-title", appName);
     setMeta("application-name", appName);
