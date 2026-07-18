@@ -69,8 +69,8 @@ export function useClientManifest() {
 
     // Document title + standard meta
     document.title = appName;
-
     setMeta("apple-mobile-web-app-title", appName);
+
     setMeta("application-name", appName);
     setMetaTheme(themeColor);
     setLink("apple-touch-icon", iconUrl);
