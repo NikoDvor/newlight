@@ -177,9 +177,8 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
         .eq("track_id", track.id)
         .is("chapter_id", null);
 
-      const completed = moduleRows.length >= 10 && moduleRows.every((m) =>
-        (progressData || []).some((p) => p.module_id === m.id && p.status === "completed")
-      );
+      // Gating disabled: certification exam is always accessible regardless of module completion.
+      const completed = true;
       setAllModulesComplete(completed);
 
       const { data: certData } = await supabase
