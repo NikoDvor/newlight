@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { registerSW } from "virtual:pwa-register";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -52,7 +53,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+  const updateSWRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     setIsInstalled(detectInstalled());
@@ -91,64 +92,45 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let activeRegistration: ServiceWorkerRegistration | null = null;
-    let refreshing = false;
-    const cleanupCallbacks: Array<() => void> = [];
+    let cancelled = false;
+    let cleanupVisibility: (() => void) | null = null;
 
-    const markUpdateAvailable = (worker: ServiceWorker) => {
-      waitingWorkerRef.current = worker;
-      if (localStorage.getItem(updateDismissedKey) === "true") {
-        worker.postMessage({ type: "SKIP_WAITING" });
-        localStorage.removeItem(updateDismissedKey);
-        return;
-      }
-      setUpdateAvailable(true);
-    };
-
-    const watchWorker = (worker: ServiceWorker) => {
-      const stateChangeHandler = () => {
-        if (worker.state === "installed" && navigator.serviceWorker.controller) {
-          markUpdateAvailable(worker);
+    // Use vite-plugin-pwa's registerSW so onNeedRefresh fires when a NEW
+    // service worker has installed and is WAITING to activate. That's the
+    // exact "stale precache" case that caused the last deploy to look stuck.
+    const updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        if (cancelled) return;
+        // If the user previously dismissed an update, silently apply this one
+        // instead of nagging again on the very next deploy.
+        if (localStorage.getItem(updateDismissedKey) === "true") {
+          localStorage.removeItem(updateDismissedKey);
+          void updateSW(true);
+          return;
         }
-      };
-      worker.addEventListener("statechange", stateChangeHandler);
-      cleanupCallbacks.push(() => worker.removeEventListener("statechange", stateChangeHandler));
-    };
+        setUpdateAvailable(true);
+      },
+      onRegisteredSW(_swUrl, registration) {
+        if (!registration) return;
+        // Poll for updates when the tab becomes visible again so returning
+        // users pick up new deploys without a hard refresh.
+        const visibilityChange = () => {
+          if (document.visibilityState === "visible") {
+            registration.update().catch(() => undefined);
+          }
+        };
+        document.addEventListener("visibilitychange", visibilityChange);
+        cleanupVisibility = () => document.removeEventListener("visibilitychange", visibilityChange);
+      },
+    });
 
-    const bindRegistration = (registration: ServiceWorkerRegistration) => {
-      activeRegistration = registration;
-      if (registration.waiting && navigator.serviceWorker.controller) {
-        markUpdateAvailable(registration.waiting);
-      }
-      const updateFoundHandler = () => {
-        const newWorker = registration.installing;
-        if (newWorker) watchWorker(newWorker);
-      };
-      registration.addEventListener("updatefound", updateFoundHandler);
-      cleanupCallbacks.push(() => registration.removeEventListener("updatefound", updateFoundHandler));
-    };
-
-    navigator.serviceWorker.register("/sw.js").then(bindRegistration).catch(() => undefined);
-
-    const controllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    };
-
-    const visibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        activeRegistration?.update().catch(() => undefined);
-      }
-    };
-
-    navigator.serviceWorker.addEventListener("controllerchange", controllerChange);
-    document.addEventListener("visibilitychange", visibilityChange);
+    updateSWRef.current = updateSW;
 
     return () => {
-      cleanupCallbacks.forEach((cleanup) => cleanup());
-      navigator.serviceWorker.removeEventListener("controllerchange", controllerChange);
-      document.removeEventListener("visibilitychange", visibilityChange);
+      cancelled = true;
+      cleanupVisibility?.();
+      updateSWRef.current = null;
     };
   }, []);
 
@@ -172,9 +154,11 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const updateNow = useCallback(() => {
     localStorage.removeItem(updateDismissedKey);
     setUpdateAvailable(false);
-    const waitingWorker = waitingWorkerRef.current;
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    const updateSW = updateSWRef.current;
+    if (updateSW) {
+      // reloadPage=true → skipWaiting + activate + reload with the new bundle.
+      // A plain window.location.reload() would just re-serve the stale precache.
+      void updateSW(true);
       return;
     }
     window.location.reload();
