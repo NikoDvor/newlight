@@ -13800,6 +13800,21 @@ export type Database = {
       }
       get_employee_client_id: { Args: { _user_id: string }; Returns: string }
       get_proposal_token: { Args: never; Returns: string }
+      get_public_bdr_calendar: {
+        Args: { _slug_or_id: string }
+        Returns: {
+          availability: Json
+          booking_active: boolean
+          booking_description: string
+          booking_form_id: string
+          booking_slug: string
+          booking_title: string
+          client_id: string
+          id: string
+          name: string
+          timezone: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
