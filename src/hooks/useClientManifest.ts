@@ -68,8 +68,8 @@ export function useClientManifest() {
         : `${window.location.origin}/pwa-512x512.png`;
 
     // Document title + standard meta
-
     document.title = appName;
+
     setMeta("apple-mobile-web-app-title", appName);
     setMeta("application-name", appName);
     setMetaTheme(themeColor);
