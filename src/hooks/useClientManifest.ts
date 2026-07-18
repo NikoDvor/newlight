@@ -47,10 +47,10 @@ export function useClientManifest() {
 
   useEffect(() => {
     const isClient = !!activeClientId;
-
     const useAdminOps = !isClient;
 
     const appName = isClient
+
       ? (branding.company_name || branding.app_display_name || "NewLight")
       : useAdminOps
         ? (adminBranding?.company_name || adminBranding?.app_display_name || "NewLight")
