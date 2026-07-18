@@ -10,7 +10,14 @@ type AdminBranding = {
   app_icon_url: string | null;
   pwa_icon_url: string | null;
   primary_color: string | null;
+  updated_at: string | null;
 };
+
+function withCacheBust(url: string, version: string | null | undefined): string {
+  if (!version) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${encodeURIComponent(version)}`;
+}
 
 /**
  * Dynamically updates the web app manifest, theme-color, and apple-touch-icon
