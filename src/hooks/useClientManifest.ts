@@ -79,7 +79,6 @@ export function useClientManifest() {
     // same-origin data: URL so start_url/scope resolve to the app origin.
     const lower = iconUrl.split("?")[0].toLowerCase();
     const mime = lower.endsWith(".svg")
-
       ? "image/svg+xml"
       : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
         ? "image/jpeg"
@@ -124,7 +123,6 @@ export function useClientManifest() {
     if (!manifestLink) {
       manifestLink = document.createElement("link");
       manifestLink.rel = "manifest";
-
       document.head.appendChild(manifestLink);
     }
     return manifestLink;
