@@ -43,7 +43,7 @@ export function useClientManifest() {
     let cancelled = false;
     supabase
       .from("client_branding")
-      .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color")
+      .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color, updated_at")
       .eq("client_id", ADMIN_OPS_CLIENT_ID)
       .maybeSingle()
       .then(({ data }) => {
@@ -68,11 +68,18 @@ export function useClientManifest() {
         : "#FFFFFF";
     const clientIcon = branding.pwa_icon_url || branding.app_icon_url || branding.logo_url;
     const adminIcon = adminBranding?.pwa_icon_url || adminBranding?.app_icon_url || adminBranding?.logo_url;
-    const iconUrl = isClient && clientIcon
+    const rawIconUrl = isClient && clientIcon
       ? clientIcon
       : useAdminOps && adminIcon
         ? adminIcon
         : `${window.location.origin}/pwa-512x512.png`;
+    const isDefaultFallback = !((isClient && clientIcon) || (useAdminOps && adminIcon));
+    const cacheBustVersion = isDefaultFallback
+      ? null
+      : isClient
+        ? branding.updated_at
+        : adminBranding?.updated_at ?? null;
+    const iconUrl = isDefaultFallback ? rawIconUrl : withCacheBust(rawIconUrl, cacheBustVersion);
 
     // Document title + standard meta
     document.title = appName;
