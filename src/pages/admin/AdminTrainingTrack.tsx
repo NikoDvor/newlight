@@ -364,14 +364,9 @@ export default function AdminTrainingTrack({ basePath = "/admin/training-center"
     return "not_started";
   };
 
-  // Explicit unlock chain: Module 1 always unlocked. Module N unlocked iff
-  // Module N-1 has an nl_module_completion record for the current user.
-  const isModuleUnlocked = (mod: Module): boolean => {
-    if (mod.module_number <= 1) return true;
-    const prevModule = numberedModules.find((m) => m.module_number === mod.module_number - 1);
-    if (!prevModule) return false;
-    return hasModuleCompletion(prevModule.id);
-  };
+  // Locking disabled: every module is always unlocked so reps can jump to any
+  // module, chapter, quiz, or final exam directly regardless of prior progress.
+  const isModuleUnlocked = (_mod: Module): boolean => true;
 
   const getModuleChapterProgress = (moduleId: string) => {
     const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
