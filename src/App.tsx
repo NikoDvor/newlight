@@ -1,5 +1,3 @@
-import { useState } from "react";
-import SplashScreen from '@/components/SplashScreen';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -206,35 +204,7 @@ const queryClient = new QueryClient();
 
 
 const App = () => {
-  const [splashDone, setSplashDone]     = useState(() => {
-    try { return sessionStorage.getItem('nl_splash_done') === '1'; }
-    catch { return false; }
-  });
-  const [splashFading, setSplashFading] = useState(() => {
-    try { return sessionStorage.getItem('nl_splash_done') === '1'; }
-    catch { return false; }
-  });
-
   return (
-    <>
-      {!splashDone && (
-        <SplashScreen
-          onStartFade={() => setSplashFading(true)}
-        onComplete={() => {
-          try {
-            sessionStorage.setItem('nl_splash_done', '1');
-            sessionStorage.setItem('nl_splash_time', String(Date.now()));
-          } catch {}
-          setSplashDone(true);
-          setSplashFading(true);
-        }}
-        />
-      )}
-    <div style={{
-      opacity: splashFading ? 1 : 0,
-      visibility: splashFading ? 'visible' : 'hidden',
-      transition: splashFading ? 'opacity 1.1s ease' : 'none',
-    }}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -524,9 +494,6 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
       </QueryClientProvider>
-    </div>
-
-    </>
   );
 };
 
