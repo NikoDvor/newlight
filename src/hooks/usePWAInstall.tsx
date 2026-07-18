@@ -53,7 +53,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+  const updateSWRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     setIsInstalled(detectInstalled());
