@@ -180,8 +180,8 @@ export function EmployeeLayout() {
             <GlobalAtmosphere />
             <AnimatePresence mode="wait">
               <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1">
-                <PWAUpdateBanner />
                 <PWAInstallBanner />
+
                 <Outlet />
               </motion.div>
             </AnimatePresence>
