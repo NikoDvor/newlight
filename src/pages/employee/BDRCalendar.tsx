@@ -9,6 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  MonthGrid,
+  DayAgendaSheet,
+  CalendarGridSkeleton,
+  CalendarAgendaSkeleton,
+  CalendarEmptyState,
+  BookingLinkCard,
+  resolveEventKind,
+  eventColor,
+  EVENT_LABEL,
+  type CalendarEventLike,
+} from "@/components/calendar";
 
 interface Event {
   id: string;
