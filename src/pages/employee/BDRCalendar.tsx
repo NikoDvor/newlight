@@ -197,21 +197,50 @@ export default function BDRCalendar() {
           <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => setShowShare(true)}
-            className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white h-9 rounded-full px-4">
-            <Link2 className="h-3.5 w-3.5 mr-1.5" /> Share Booking Link
-          </Button>
-          <Button variant="ghost" size="icon" onClick={openPrimaryBookingLink}
-            aria-label="Open booking link in new tab"
-            title="Open booking link"
-            disabled={!bookingUrl}
-            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5 rounded-full">
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={addAnotherBookingLink} disabled={creatingExtra}
-            className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white h-9 rounded-full px-3">
-            {creatingExtra ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Plus className="h-3.5 w-3.5 mr-1" /> Add booking link</>}
-          </Button>
+          {/* Split button: primary click opens booking link; dropdown exposes copy/share/manage */}
+          <div className="inline-flex items-stretch rounded-full overflow-hidden border border-white/10 bg-white/[0.04]">
+            <button
+              onClick={openPrimaryBookingLink}
+              disabled={!bookingUrl}
+              title={bookingUrl ? "Open booking link in new tab" : "No booking link yet"}
+              className="flex items-center gap-1.5 px-4 h-9 text-xs font-medium text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> Open Booking Link
+            </button>
+            <div className="w-px bg-white/10" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label="Booking link options"
+                  className="flex items-center px-2 h-9 text-white/70 hover:bg-white/[0.08] hover:text-white transition-colors"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[200px]">
+                <DropdownMenuItem onClick={openPrimaryBookingLink} disabled={!bookingUrl}>
+                  <ExternalLink className="h-4 w-4 mr-2" /> Open in new tab
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    if (!bookingUrl) return;
+                    try { await navigator.clipboard.writeText(bookingUrl); toast({ title: "Link copied" }); }
+                    catch { toast({ title: "Couldn't copy", variant: "destructive" }); }
+                  }}
+                  disabled={!bookingUrl}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copy link
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowShare(true)}>
+                  <Share2 className="h-4 w-4 mr-2" /> Share & manage links
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={addAnotherBookingLink} disabled={creatingExtra}>
+                  <Plus className="h-4 w-4 mr-2" /> Add another booking link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
             aria-label="Calendar settings"
             className="h-9 w-9 text-white/65 hover:text-white hover:bg-white/5 rounded-full">
