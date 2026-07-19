@@ -244,43 +244,85 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
   const gridStart = startOfWeek(first);
   const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const today = new Date();
+  const DOW_FULL = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const DOW_SHORT = ["S","M","T","W","T","F","S"];
+  const cellBorder = "1px solid hsla(0,0%,100%,.08)";
   return (
-    <div className="w-full rounded-2xl overflow-hidden p-2 sm:p-3"
-      style={{ border: "1px solid hsla(0,0%,100%,.07)", background: "hsla(215,30%,9%,.7)", boxShadow: "0 1px 0 hsla(0,0%,100%,.04) inset" }}>
-      <div className="grid grid-cols-7 grid-preserve w-full text-[10px] uppercase tracking-[0.14em] text-white/40 mb-1">
-        {["S","M","T","W","T","F","S"].map((d, i) => (
-          <div key={i} className="min-w-0 py-2 text-center font-semibold">{d}</div>
+    <div
+      className="w-full rounded-xl overflow-hidden"
+      style={{ border: "1px solid hsla(0,0%,100%,.1)", background: "hsla(215,30%,9%,.7)" }}
+    >
+      {/* Day-of-week header row */}
+      <div className="grid grid-cols-7 grid-preserve w-full" style={{ borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}>
+        {DOW_FULL.map((d, i) => (
+          <div
+            key={i}
+            className="min-w-0 py-2 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50"
+            style={{ borderRight: i < 6 ? cellBorder : "none" }}
+          >
+            <span className="hidden sm:inline">{d}</span>
+            <span className="sm:hidden">{DOW_SHORT[i]}</span>
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 grid-preserve w-full gap-y-1">
+      {/* Bordered day cells */}
+      <div className="grid grid-cols-7 grid-preserve w-full">
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
           const dayEvents = eventsByDay.get(key) || [];
           const isToday = sameDay(d, today);
           const isSelected = sameDay(d, selectedDay);
-          const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 3);
-          const showRing = isSelected && !isToday;
+          const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 4);
+          const rowIndex = Math.floor(i / 7);
+          const isLastRow = rowIndex === 5;
+          const colIndex = i % 7;
+          const isLastCol = colIndex === 6;
+          const bg = isSelected
+            ? "hsla(211,96%,56%,.10)"
+            : isToday
+              ? "hsla(211,96%,56%,.05)"
+              : inMonth ? "transparent" : "hsla(215,30%,6%,.5)";
           return (
-            <button key={i} onClick={() => onSelectDay(d)}
-              className="min-w-0 h-12 sm:h-14 flex flex-col items-center justify-center gap-1 transition-colors"
-              style={{ opacity: inMonth ? 1 : 0.3 }}>
+            <button
+              key={i}
+              onClick={() => onSelectDay(d)}
+              className="min-w-0 flex flex-col items-start text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus:bg-white/[0.05] p-1.5 sm:p-2"
+              style={{
+                borderRight: isLastCol ? "none" : cellBorder,
+                borderBottom: isLastRow ? "none" : cellBorder,
+                minHeight: "3.5rem",
+                background: bg,
+                boxShadow: isSelected ? "inset 0 0 0 1.5px hsla(211,96%,60%,.55)" : undefined,
+              }}
+            >
               <span
-                className="inline-flex items-center justify-center text-[13px] transition-all"
+                className="inline-flex items-center justify-center text-[11px] sm:text-[12px] leading-none"
                 style={{
-                  width: 32, height: 32, borderRadius: 999,
-                  background: isToday ? "hsl(211,96%,56%)" : (showRing ? "hsla(211,96%,56%,.14)" : "transparent"),
-                  color: isToday ? "white" : (showRing ? "hsl(211,96%,82%)" : "hsl(0,0%,90%)"),
-                  boxShadow: isToday ? "0 4px 14px -4px hsla(211,96%,55%,.7)" : (showRing ? "inset 0 0 0 1px hsla(211,96%,60%,.45)" : undefined),
+                  minWidth: 20, height: 20, borderRadius: 6,
+                  background: isToday ? "hsl(211,96%,56%)" : "transparent",
+                  color: isToday ? "white" : (inMonth ? "hsl(0,0%,90%)" : "hsl(0,0%,45%)"),
                   fontWeight: isToday ? 700 : 500,
-                }}>
+                  padding: isToday ? "0 6px" : "0 2px",
+                  boxShadow: isToday ? "0 2px 8px -2px hsla(211,96%,55%,.6)" : undefined,
+                }}
+              >
                 {d.getDate()}
               </span>
-              <span className="flex gap-1 h-1.5 items-center">
-                {sources.map(s => (
-                  <span key={s} className="h-1.5 w-1.5 rounded-full" style={{ background: SOURCE_TONE[s] || "#888" }} />
-                ))}
-              </span>
+              {sources.length > 0 && (
+                <span className="mt-auto pt-1 flex gap-1 items-center flex-wrap">
+                  {sources.map(s => (
+                    <span
+                      key={s}
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: SOURCE_TONE[s] || "#888" }}
+                    />
+                  ))}
+                  {dayEvents.length > 4 && (
+                    <span className="text-[8px] text-white/40 leading-none">+{dayEvents.length - 4}</span>
+                  )}
+                </span>
+              )}
             </button>
           );
         })}
@@ -288,6 +330,7 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
     </div>
   );
 }
+
 
 function DayAgenda({ day, events, onEventClick }: {
   day: Date; events: Event[]; onEventClick: (e: Event) => void;
