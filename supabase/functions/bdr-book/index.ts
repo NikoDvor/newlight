@@ -40,17 +40,19 @@ Deno.serve(async (req) => {
 
     // 1. Find the originating calendar by booking slug first, then UUID fallback.
     const lookupValue = String(booking_slug).trim();
+    const slugColumn = isClosing ? "closing_booking_slug" : "booking_slug";
+    const activeColumn = isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select("id, user_id, client_id, name, booking_active, round_robin_pool")
-      .eq("booking_slug", lookupValue)
+      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool`)
+      .eq(slugColumn, lookupValue)
       .maybeSingle();
     let originCal = slugCal;
     let calErr = slugErr;
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, round_robin_pool")
+        .select("id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
@@ -61,7 +63,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (originCal.booking_active === false) {
+    if ((originCal as any)[activeColumn] === false) {
       return new Response(JSON.stringify({ error: "Bookings are paused" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
