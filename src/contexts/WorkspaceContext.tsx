@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startSession, endSession, installSessionLifecycleHandlers } from "@/lib/sessionTracking";
 
@@ -135,6 +135,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const initialCheckDone = useRef(false);
+
   useEffect(() => {
     installSessionLifecycleHandlers();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -155,10 +157,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         }
         setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
       } else {
-        setIsAdmin(false);
-        setUserRole(null);
-        setEmployeeProfile(null);
-        setIsSessionLoading(false);
+        // Guard against the race where onAuthStateChange fires with a
+        // momentarily-null session before getSession() has restored from
+        // storage. Only close the loading gate on a no-user signal once the
+        // authoritative initial getSession() check has completed.
+        if (initialCheckDone.current) {
+          setIsAdmin(false);
+          setUserRole(null);
+          setEmployeeProfile(null);
+          setIsSessionLoading(false);
+        }
       }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -166,13 +174,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setUser(u);
       (window as any).__nl_token__ = session?.access_token;
       if (u) {
-        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
+        setTimeout(() => fetchUserRole(u.id).finally(() => {
+          setIsSessionLoading(false);
+          initialCheckDone.current = true;
+        }), 0);
       } else {
         setIsSessionLoading(false);
+        initialCheckDone.current = true;
       }
     });
     return () => subscription.unsubscribe();
   }, []);
+
 
   // Fetch client name + branding when activeClientId changes
   useEffect(() => {
