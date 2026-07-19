@@ -46,6 +46,8 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .from("bdr_calendars")
     .select("*")
     .eq("user_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (existing) {
     // Backfill closing slug for pre-feature calendars so the Meeting 2 link always resolves.
@@ -82,7 +84,8 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .single();
   if (error) {
     const { data: again } = await (supabase as any)
-      .from("bdr_calendars").select("*").eq("user_id", user.id).maybeSingle();
+      .from("bdr_calendars").select("*").eq("user_id", user.id)
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
     return (again as BdrCalendar) || null;
   }
   // Ensure closing slug is filled in for calendars created before the closing feature.
