@@ -253,7 +253,10 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
       style={{ border: "1px solid hsla(0,0%,100%,.1)", background: "hsla(215,30%,9%,.7)" }}
     >
       {/* Day-of-week header row */}
-      <div className="grid grid-cols-7 grid-preserve w-full" style={{ borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}>
+      <div
+        className="grid grid-cols-7 grid-preserve w-full"
+        style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}
+      >
         {DOW_FULL.map((d, i) => (
           <div
             key={i}
