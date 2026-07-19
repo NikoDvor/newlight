@@ -269,7 +269,7 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
         ))}
       </div>
       {/* Bordered day cells */}
-      <div className="grid grid-cols-7 grid-preserve w-full">
+      <div className="grid grid-cols-7 grid-preserve w-full" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
