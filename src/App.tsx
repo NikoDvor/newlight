@@ -199,6 +199,7 @@ import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
 import CallTracking from "./pages/CallTracking";
 import SessionGate from "@/components/SessionGate";
+import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 
 
 const queryClient = new QueryClient();
