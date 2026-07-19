@@ -47,7 +47,18 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
-  if (existing) return existing as BdrCalendar;
+  if (existing) {
+    // Backfill closing slug for pre-feature calendars so the Meeting 2 link always resolves.
+    if (!(existing as any).closing_booking_slug && (existing as any).booking_slug) {
+      const closingSlug = `${(existing as any).booking_slug}-closing`;
+      await (supabase as any)
+        .from("bdr_calendars")
+        .update({ closing_booking_slug: closingSlug })
+        .eq("id", (existing as any).id);
+      (existing as any).closing_booking_slug = closingSlug;
+    }
+    return existing as BdrCalendar;
+  }
 
   const display = opts?.firstName
     || opts?.fullName?.split(" ")[0]
