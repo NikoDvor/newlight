@@ -46,6 +46,8 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .from("bdr_calendars")
     .select("*")
     .eq("user_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (existing) {
     // Backfill closing slug for pre-feature calendars so the Meeting 2 link always resolves.
