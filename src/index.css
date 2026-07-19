@@ -228,6 +228,12 @@
 }
 
 @layer utilities {
+  /* Safe-area helpers for fixed/overlay elements that escape body padding */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .top-safe-header { top: calc(3.5rem + env(safe-area-inset-top)); }
+  .inset-safe-top { top: env(safe-area-inset-top); }
+
   .overflow-x-auto,
   .overflow-x-scroll {
     -webkit-overflow-scrolling: touch;

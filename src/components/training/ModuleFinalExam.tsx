@@ -272,7 +272,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "hsla(215,35%,10%,.95)" }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center pt-safe" style={{ background: "hsla(215,35%,10%,.95)" }}>
         <div className="text-center">
           <div className="animate-pulse text-foreground/60 text-sm">Loading exam…</div>
         </div>
@@ -282,7 +282,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
 
   if (questions.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "hsla(215,35%,10%,.95)" }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center pt-safe" style={{ background: "hsla(215,35%,10%,.95)" }}>
         <div className="text-center space-y-4">
           <p className="text-foreground/60 text-sm">No questions available for this module exam.</p>
           <Button variant="outline" onClick={onClose}>Back to module</Button>
@@ -292,7 +292,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: "hsla(215,35%,10%,.95)" }}>
+    <div className="fixed inset-0 z-50 overflow-y-auto pt-safe" style={{ background: "hsla(215,35%,10%,.95)" }}>
       {/* Confetti / celebration glow */}
       {showConfetti && (
         <motion.div

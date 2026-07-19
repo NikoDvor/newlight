@@ -632,7 +632,7 @@ export function ChapterRunner({
   ) : null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+    <div className="fixed inset-x-0 bottom-0 top-safe-header z-50 bg-background/95 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
       <div className="w-full max-w-4xl mx-auto px-3 pb-10 pt-5 sm:px-4 sm:pb-14 sm:pt-8">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5 sm:mb-6">
           <Button variant="ghost" size="sm" onClick={onClose} className="gap-2">
