@@ -195,10 +195,21 @@ export default function BDRCalendar() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{calendar.name}</h1>
           <p className="text-xs text-white/50 mt-1">Your personal pipeline calendar</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => setShowShare(true)}
             className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white h-9 rounded-full px-4">
             <Link2 className="h-3.5 w-3.5 mr-1.5" /> Share Booking Link
+          </Button>
+          <Button variant="ghost" size="icon" onClick={openPrimaryBookingLink}
+            aria-label="Open booking link in new tab"
+            title="Open booking link"
+            disabled={!bookingUrl}
+            className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/5 rounded-full">
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={addAnotherBookingLink} disabled={creatingExtra}
+            className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white h-9 rounded-full px-3">
+            {creatingExtra ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Plus className="h-3.5 w-3.5 mr-1" /> Add booking link</>}
           </Button>
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}
             aria-label="Calendar settings"
