@@ -284,7 +284,10 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     const has_sales_team = hasSalesTeam === "" ? null : hasSalesTeam === "yes";
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
-        booking_slug: cal.booking_slug || cal.id,
+        booking_slug: mode === "closing"
+          ? (cal.closing_booking_slug || cal.booking_slug || cal.id)
+          : (cal.booking_slug || cal.id),
+        meeting_kind: mode === "closing" ? "closing" : "discovery",
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,
