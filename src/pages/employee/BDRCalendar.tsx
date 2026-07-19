@@ -143,6 +143,43 @@ export default function BDRCalendar() {
     setShowAdd(true);
   };
 
+  const openPrimaryBookingLink = () => {
+    if (!bookingUrl) {
+      toast({ title: "No booking link yet", description: "Configure it under Settings." });
+      return;
+    }
+    window.open(bookingUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const addAnotherBookingLink = async () => {
+    if (!calendar || creatingExtra) return;
+    setCreatingExtra(true);
+    try {
+      const rand = Math.random().toString(36).slice(2, 6);
+      const base = (calendar.booking_slug || "bdr").replace(/-alt.*$/, "");
+      const slug = `${base}-alt-${rand}`;
+      const { data, error } = await (supabase as any)
+        .from("bdr_calendars")
+        .insert({
+          user_id: calendar.user_id,
+          client_id: (calendar as any).client_id,
+          name: `Extra Booking Link (${extraCalendars.length + 2})`,
+          booking_slug: slug,
+          closing_booking_slug: `${slug}-closing`,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      setExtraCalendars((prev) => [...prev, data as BdrCalendar]);
+      setShowShare(true);
+      toast({ title: "New booking link created" });
+    } catch (e: any) {
+      toast({ title: "Couldn't create link", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setCreatingExtra(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
   }
