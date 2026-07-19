@@ -65,6 +65,7 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       client_id: clientId,
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
+      closing_booking_slug: `${baseSlug}-closing`,
     })
     .select("*")
     .single();
@@ -72,6 +73,15 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     const { data: again } = await (supabase as any)
       .from("bdr_calendars").select("*").eq("user_id", user.id).maybeSingle();
     return (again as BdrCalendar) || null;
+  }
+  // Ensure closing slug is filled in for calendars created before the closing feature.
+  if (created && !(created as any).closing_booking_slug && (created as any).booking_slug) {
+    const closingSlug = `${(created as any).booking_slug}-closing`;
+    await (supabase as any)
+      .from("bdr_calendars")
+      .update({ closing_booking_slug: closingSlug })
+      .eq("id", (created as any).id);
+    (created as any).closing_booking_slug = closingSlug;
   }
   return created as BdrCalendar;
 }
