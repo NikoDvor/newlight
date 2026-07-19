@@ -27,7 +27,9 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
 });
 
 const standaloneQuery = "(display-mode: standalone)";
-const updateDismissedKey = "newlight-pwa-update-dismissed";
+const pwaLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) console.log("[PWA]", ...args);
+};
 
 function isPreviewOrFramed() {
   const isFramed = (() => {
