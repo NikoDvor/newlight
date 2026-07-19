@@ -613,10 +613,19 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   );
 }
 
-function ShareDialog({ open, onOpenChange, discoveryUrl, closingUrl }: {
-  open: boolean; onOpenChange: (v: boolean) => void; discoveryUrl: string; closingUrl: string;
+function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChanged }: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  origin: string;
+  primary: BdrCalendar | null;
+  extras: BdrCalendar[];
+  onExtrasChanged: () => void | Promise<void>;
 }) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
   const copy = (key: string, url: string) => {
     if (!url) return;
     navigator.clipboard.writeText(url);
@@ -627,6 +636,35 @@ function ShareDialog({ open, onOpenChange, discoveryUrl, closingUrl }: {
     if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const discoveryUrlFor = (c: BdrCalendar) =>
+    c.booking_slug ? `${origin}/bdr/book/${c.booking_slug}` : "";
+  const closingUrlFor = (c: BdrCalendar) =>
+    (c as any).closing_booking_slug ? `${origin}/bdr/book-closing/${(c as any).closing_booking_slug}` : "";
+
+  const saveRename = async (cal: BdrCalendar) => {
+    const nextName = editingName.trim();
+    if (!nextName || nextName === cal.name) { setEditingId(null); return; }
+    setBusyId(cal.id);
+    const { error } = await (supabase as any)
+      .from("bdr_calendars").update({ name: nextName }).eq("id", cal.id);
+    setBusyId(null);
+    if (error) { toast({ title: "Couldn't rename", description: error.message, variant: "destructive" }); return; }
+    setEditingId(null);
+    await onExtrasChanged();
+    toast({ title: "Renamed" });
+  };
+
+  const deleteExtra = async (cal: BdrCalendar) => {
+    if (!confirm(`Delete "${cal.name}"? Its booking link will stop working.`)) return;
+    setBusyId(cal.id);
+    const { error } = await (supabase as any).from("bdr_calendars").delete().eq("id", cal.id);
+    setBusyId(null);
+    if (error) { toast({ title: "Couldn't delete", description: error.message, variant: "destructive" }); return; }
+    await onExtrasChanged();
+    toast({ title: "Booking link deleted" });
+  };
+
   const Row = ({ label, subtitle, url, k }: { label: string; subtitle: string; url: string; k: string }) => (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
@@ -651,19 +689,69 @@ function ShareDialog({ open, onOpenChange, discoveryUrl, closingUrl }: {
       </div>
     </div>
   );
+
+  const CalendarBlock = ({ cal, isPrimary }: { cal: BdrCalendar; isPrimary: boolean }) => {
+    const isEditing = editingId === cal.id;
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <>
+              <Input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                className="bg-white/5 border-white/10 text-white h-8 text-sm"
+                autoFocus
+              />
+              <Button size="sm" className="h-8 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+                disabled={busyId === cal.id}
+                onClick={() => saveRename(cal)}>
+                {busyId === cal.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-white/60"
+                onClick={() => setEditingId(null)}>Cancel</Button>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-semibold text-white flex-1 truncate">
+                {cal.name}
+                {isPrimary && <span className="ml-2 text-[10px] uppercase tracking-wider text-[hsl(211,96%,70%)]">Primary</span>}
+              </div>
+              <Button size="sm" variant="ghost" className="h-8 text-white/60 hover:text-white text-xs"
+                onClick={() => { setEditingId(cal.id); setEditingName(cal.name); }}>
+                Rename
+              </Button>
+              {!isPrimary && (
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-white/50 hover:text-red-400"
+                  aria-label="Delete booking link"
+                  disabled={busyId === cal.id}
+                  onClick={() => deleteExtra(cal)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+        <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrlFor(cal)} k={`disc-${cal.id}`} />
+        <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrlFor(cal)} k={`close-${cal.id}`} />
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white max-h-[85dvh] overflow-y-auto">
         <DialogHeader><DialogTitle>Your booking links</DialogTitle></DialogHeader>
         <p className="text-xs text-white/60">Share these with prospects. Bookings show up on your calendar and are added to My Leads.</p>
-        <div className="space-y-4 mt-2">
-          <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrl} k="disc" />
-          <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrl} k="close" />
+        <div className="space-y-3 mt-2">
+          {primary && <CalendarBlock cal={primary} isPrimary />}
+          {extras.map((c) => <CalendarBlock key={c.id} cal={c} isPrimary={false} />)}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null; onClose: () => void; onDeleted: () => void; }) {
   const [deleting, setDeleting] = useState(false);
