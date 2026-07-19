@@ -214,8 +214,9 @@ const App = () => {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <WorkspaceProvider>
             <PWAInstallProvider>
-              
+              <PWAUpdateBanner />
               <Routes>
+
               {/* Public landing */}
               <Route path="/" element={<SessionGate><Landing /></SessionGate>} />
               <Route path="/install" element={<Install />} />
