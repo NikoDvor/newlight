@@ -457,7 +457,7 @@ export default function AdminBDRCertification({ basePath = "/admin/training-cent
 
   if (phase === "exam" && current) {
     return (
-      <div className="fixed inset-0 z-50 nl-dark-bg overflow-y-auto">
+      <div className="fixed inset-0 z-50 nl-dark-bg overflow-y-auto pt-safe">
         <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 min-h-screen flex flex-col">
           <div className="mb-6">
             <div className="flex items-center justify-between gap-4 mb-3">
