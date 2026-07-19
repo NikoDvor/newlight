@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
