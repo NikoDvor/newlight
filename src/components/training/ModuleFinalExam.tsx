@@ -292,7 +292,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: "hsla(215,35%,10%,.95)" }}>
+    <div className="fixed inset-0 z-50 overflow-y-auto pt-safe" style={{ background: "hsla(215,35%,10%,.95)" }}>
       {/* Confetti / celebration glow */}
       {showConfetti && (
         <motion.div
