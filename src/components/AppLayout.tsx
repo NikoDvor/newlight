@@ -184,8 +184,8 @@ export function AppLayout() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1"
               >
-                <PWAUpdateBanner />
                 <PWAInstallBanner />
+
                 <Outlet />
               </motion.div>
             </AnimatePresence>
