@@ -356,84 +356,94 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
       className="w-full rounded-xl overflow-hidden"
       style={{ border: "1px solid hsla(0,0%,100%,.1)", background: "hsla(215,30%,9%,.7)" }}
     >
-      {/* Day-of-week header row */}
+      {/* Day-of-week header row — flex-based to bypass any .grid-cols-7 mobile stacking rule */}
       <div
-        className="grid grid-cols-7 grid-preserve w-full"
-        style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}
+        className="w-full"
+        style={{ display: "flex", flexDirection: "row", borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}
       >
         {DOW_FULL.map((d, i) => (
           <div
             key={i}
-            className="min-w-0 py-2 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50"
-            style={{ borderRight: i < 6 ? cellBorder : "none" }}
+            className="py-2 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50"
+            style={{ flex: "1 1 0", minWidth: 0, borderRight: i < 6 ? cellBorder : "none" }}
           >
             <span className="hidden sm:inline">{d}</span>
             <span className="sm:hidden">{DOW_SHORT[i]}</span>
           </div>
         ))}
       </div>
-      {/* Bordered day cells */}
-      <div className="grid grid-cols-7 grid-preserve w-full" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
-        {days.map((d, i) => {
-          const inMonth = d.getMonth() === cursor.getMonth();
-          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-          const dayEvents = eventsByDay.get(key) || [];
-          const isToday = sameDay(d, today);
-          const isSelected = sameDay(d, selectedDay);
-          const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 4);
-          const rowIndex = Math.floor(i / 7);
-          const isLastRow = rowIndex === 5;
-          const colIndex = i % 7;
-          const isLastCol = colIndex === 6;
-          const bg = isSelected
-            ? "hsla(211,96%,56%,.10)"
-            : isToday
-              ? "hsla(211,96%,56%,.05)"
-              : inMonth ? "transparent" : "hsla(215,30%,6%,.5)";
-          return (
-            <button
-              key={i}
-              onClick={() => onSelectDay(d)}
-              className="min-w-0 flex flex-col items-start text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus:bg-white/[0.05] p-1.5 sm:p-2"
-              style={{
-                borderRight: isLastCol ? "none" : cellBorder,
-                borderBottom: isLastRow ? "none" : cellBorder,
-                minHeight: "3.5rem",
-                background: bg,
-                boxShadow: isSelected ? "inset 0 0 0 1.5px hsla(211,96%,60%,.55)" : undefined,
-              }}
-            >
-              <span
-                className="inline-flex items-center justify-center text-[11px] sm:text-[12px] leading-none"
-                style={{
-                  minWidth: 20, height: 20, borderRadius: 6,
-                  background: isToday ? "hsl(211,96%,56%)" : "transparent",
-                  color: isToday ? "white" : (inMonth ? "hsl(0,0%,90%)" : "hsl(0,0%,45%)"),
-                  fontWeight: isToday ? 700 : 500,
-                  padding: isToday ? "0 6px" : "0 2px",
-                  boxShadow: isToday ? "0 2px 8px -2px hsla(211,96%,55%,.6)" : undefined,
-                }}
-              >
-                {d.getDate()}
-              </span>
-              {sources.length > 0 && (
-                <span className="mt-auto pt-1 flex gap-1 items-center flex-wrap">
-                  {sources.map(s => (
-                    <span
-                      key={s}
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ background: SOURCE_TONE[s] || "#888" }}
-                    />
-                  ))}
-                  {dayEvents.length > 4 && (
-                    <span className="text-[8px] text-white/40 leading-none">+{dayEvents.length - 4}</span>
+      {/* Six week rows, each a flex row of 7 equal cells. No .grid-cols-* class = immune to mobile grid-collapse rule. */}
+      {Array.from({ length: 6 }, (_, weekIdx) => {
+        const isLastRow = weekIdx === 5;
+        return (
+          <div
+            key={weekIdx}
+            className="w-full"
+            style={{ display: "flex", flexDirection: "row" }}
+          >
+            {Array.from({ length: 7 }, (_, colIndex) => {
+              const i = weekIdx * 7 + colIndex;
+              const d = days[i];
+              const inMonth = d.getMonth() === cursor.getMonth();
+              const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+              const dayEvents = eventsByDay.get(key) || [];
+              const isToday = sameDay(d, today);
+              const isSelected = sameDay(d, selectedDay);
+              const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 4);
+              const isLastCol = colIndex === 6;
+              const bg = isSelected
+                ? "hsla(211,96%,56%,.10)"
+                : isToday
+                  ? "hsla(211,96%,56%,.05)"
+                  : inMonth ? "transparent" : "hsla(215,30%,6%,.5)";
+              return (
+                <button
+                  key={i}
+                  onClick={() => onSelectDay(d)}
+                  className="flex flex-col items-start text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus:bg-white/[0.05] p-1.5 sm:p-2"
+                  style={{
+                    flex: "1 1 0",
+                    minWidth: 0,
+                    borderRight: isLastCol ? "none" : cellBorder,
+                    borderBottom: isLastRow ? "none" : cellBorder,
+                    minHeight: "3.5rem",
+                    background: bg,
+                    boxShadow: isSelected ? "inset 0 0 0 1.5px hsla(211,96%,60%,.55)" : undefined,
+                  }}
+                >
+                  <span
+                    className="inline-flex items-center justify-center text-[11px] sm:text-[12px] leading-none"
+                    style={{
+                      minWidth: 20, height: 20, borderRadius: 6,
+                      background: isToday ? "hsl(211,96%,56%)" : "transparent",
+                      color: isToday ? "white" : (inMonth ? "hsl(0,0%,90%)" : "hsl(0,0%,45%)"),
+                      fontWeight: isToday ? 700 : 500,
+                      padding: isToday ? "0 6px" : "0 2px",
+                      boxShadow: isToday ? "0 2px 8px -2px hsla(211,96%,55%,.6)" : undefined,
+                    }}
+                  >
+                    {d.getDate()}
+                  </span>
+                  {sources.length > 0 && (
+                    <span className="mt-auto pt-1 flex gap-1 items-center flex-wrap">
+                      {sources.map(s => (
+                        <span
+                          key={s}
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: SOURCE_TONE[s] || "#888" }}
+                        />
+                      ))}
+                      {dayEvents.length > 4 && (
+                        <span className="text-[8px] text-white/40 leading-none">+{dayEvents.length - 4}</span>
+                      )}
+                    </span>
                   )}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
