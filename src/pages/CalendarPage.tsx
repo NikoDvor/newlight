@@ -446,12 +446,12 @@ function CalendarPageInner() {
       {/* MONTH VIEW */}
       {view === "month" && (
         <div className="mt-4 card-widget rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-border">
+          <div className="grid grid-cols-7 grid-preserve border-b border-border">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
               <div key={d} className="px-2 py-2 text-[10px] font-semibold text-muted-foreground text-center uppercase">{d}</div>
             ))}
           </div>
-          <div className="grid grid-cols-7">
+          <div className="grid grid-cols-7 grid-preserve">
             {monthGrid.map((cell, i) => {
               const dayEvents = eventsForDay(cell.date);
               const isToday = isSameDay(cell.date, new Date());
