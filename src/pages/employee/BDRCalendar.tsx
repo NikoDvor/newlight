@@ -493,19 +493,52 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   );
 }
 
-function ShareDialog({ open, onOpenChange, url, copied, onCopy }: {
-  open: boolean; onOpenChange: (v: boolean) => void; url: string; copied: boolean; onCopy: () => void;
+function ShareDialog({ open, onOpenChange, discoveryUrl, closingUrl }: {
+  open: boolean; onOpenChange: (v: boolean) => void; discoveryUrl: string; closingUrl: string;
 }) {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copy = (key: string, url: string) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
+  const openLink = (url: string) => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  const Row = ({ label, subtitle, url, k }: { label: string; subtitle: string; url: string; k: string }) => (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <div className="text-sm font-semibold text-white">{label}</div>
+        <div className="text-[10px] uppercase tracking-wider text-white/40">{subtitle}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input readOnly value={url || "Not configured yet"} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+        <Button type="button" onClick={() => openLink(url)} disabled={!url}
+          variant="outline" size="icon"
+          aria-label={`Open ${label}`}
+          title="Open in new tab"
+          className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white shrink-0">
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+        <Button type="button" onClick={() => copy(k, url)} disabled={!url}
+          aria-label={`Copy ${label}`}
+          title="Copy link"
+          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] shrink-0">
+          {copiedKey === k ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </Button>
+      </div>
+    </div>
+  );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
-        <DialogHeader><DialogTitle>Your booking link</DialogTitle></DialogHeader>
-        <p className="text-xs text-white/60">Share this link with prospects. Bookings show up on your calendar and are added to My Leads as Hot Leads.</p>
-        <div className="flex items-center gap-2 mt-3">
-          <Input readOnly value={url} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
-          <Button onClick={onCopy} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
+        <DialogHeader><DialogTitle>Your booking links</DialogTitle></DialogHeader>
+        <p className="text-xs text-white/60">Share these with prospects. Bookings show up on your calendar and are added to My Leads.</p>
+        <div className="space-y-4 mt-2">
+          <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrl} k="disc" />
+          <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrl} k="close" />
         </div>
       </DialogContent>
     </Dialog>
