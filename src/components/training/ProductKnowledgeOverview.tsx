@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, ShieldCheck, Workflow, Target, PhoneCall, BookOpen, ChevronDown } from "lucide-react";
+import { Sparkles, ShieldCheck, Workflow, Target, PhoneCall, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
