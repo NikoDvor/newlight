@@ -348,7 +348,7 @@ function WeekView({ cursor, events, selectedDay, onSelectDay, onEventClick }: {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 grid-preserve gap-1.5">
         {days.map((d, i) => {
           const isToday = sameDay(d, today);
           const isSelected = sameDay(d, selectedDay);
