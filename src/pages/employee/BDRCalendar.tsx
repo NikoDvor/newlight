@@ -245,12 +245,12 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
   return (
     <div className="w-full rounded-2xl overflow-hidden p-2 sm:p-3"
       style={{ border: "1px solid hsla(0,0%,100%,.07)", background: "hsla(215,30%,9%,.7)", boxShadow: "0 1px 0 hsla(0,0%,100%,.04) inset" }}>
-      <div className="grid grid-cols-7 w-full text-[10px] uppercase tracking-[0.14em] text-white/40 mb-1">
+      <div className="grid grid-cols-7 grid-preserve w-full text-[10px] uppercase tracking-[0.14em] text-white/40 mb-1">
         {["S","M","T","W","T","F","S"].map((d, i) => (
           <div key={i} className="min-w-0 py-2 text-center font-semibold">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 w-full gap-y-1">
+      <div className="grid grid-cols-7 grid-preserve w-full gap-y-1">
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
