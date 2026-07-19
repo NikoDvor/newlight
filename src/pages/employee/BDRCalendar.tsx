@@ -282,8 +282,14 @@ export default function BDRCalendar() {
         onCreated={() => { setShowAdd(false); refresh(); }}
       />
 
-      <ShareDialog open={showShare} onOpenChange={setShowShare}
-        discoveryUrl={bookingUrl} closingUrl={closingBookingUrl} />
+      <ShareDialog
+        open={showShare}
+        onOpenChange={setShowShare}
+        origin={origin}
+        primary={calendar}
+        extras={extraCalendars}
+        onExtrasChanged={reloadCalendars}
+      />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
 
