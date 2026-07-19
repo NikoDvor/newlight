@@ -47,7 +47,10 @@ interface Cal {
   booking_description: string | null;
   booking_active: boolean;
   booking_form_id: string | null;
+  closing_booking_slug?: string | null;
 }
+
+export type BookingMode = "discovery" | "closing";
 
 interface FormDef {
   id: string;
@@ -92,7 +95,7 @@ function buildSlots(availability: any) {
   return slots;
 }
 
-export default function BDRBookingPublic() {
+export default function BDRBookingPublic({ mode = "discovery" }: { mode?: BookingMode } = {}) {
   const { slug } = useParams<{ slug: string }>();
   const [cal, setCal] = useState<Cal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,23 +122,29 @@ export default function BDRBookingPublic() {
     (async () => {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lookupValue);
-      // Call the SECURITY DEFINER RPC — the bdr_calendars table is no longer
-      // directly readable by anon; this RPC returns only the single matching calendar.
+      const rpcName = mode === "closing" ? "get_public_bdr_closing_calendar" : "get_public_bdr_calendar";
       const { data: rpcData, error: calErr } = await (supabase as any)
-        .rpc("get_public_bdr_calendar", { _slug_or_id: lookupValue });
-      const data = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
-      console.error("[BDRBookingPublic] calendar lookup", {
-        rawSlug: slug,
-        lookupValue,
-        isUuid,
-        found: !!data,
-        calendar_id: data?.id,
-        booking_slug: data?.booking_slug,
-        booking_active: data?.booking_active,
-        booking_form_id: data?.booking_form_id,
-        calErr,
-      });
+        .rpc(rpcName, { _slug_or_id: lookupValue });
+      const raw = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
+      // Normalize closing-mode rows so downstream code can read the same fields.
+      const data: Cal | null = raw
+        ? (mode === "closing"
+            ? {
+                id: raw.id,
+                client_id: raw.client_id,
+                name: raw.name,
+                booking_slug: raw.booking_slug,
+                availability: raw.availability,
+                timezone: raw.timezone,
+                booking_title: raw.closing_booking_title,
+                booking_description: raw.closing_booking_description,
+                booking_active: raw.closing_booking_active,
+                booking_form_id: raw.closing_booking_form_id,
+                closing_booking_slug: raw.closing_booking_slug,
+              }
+            : raw)
+        : null;
+      console.error("[BDRBookingPublic] calendar lookup", { mode, lookupValue, found: !!data, calErr });
       setCal(data);
 
 
@@ -275,7 +284,10 @@ export default function BDRBookingPublic() {
     const has_sales_team = hasSalesTeam === "" ? null : hasSalesTeam === "yes";
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
-        booking_slug: cal.booking_slug || cal.id,
+        booking_slug: mode === "closing"
+          ? (cal.closing_booking_slug || cal.booking_slug || cal.id)
+          : (cal.booking_slug || cal.id),
+        meeting_kind: mode === "closing" ? "closing" : "discovery",
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,

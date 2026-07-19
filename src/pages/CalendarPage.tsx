@@ -446,12 +446,12 @@ function CalendarPageInner() {
       {/* MONTH VIEW */}
       {view === "month" && (
         <div className="mt-4 card-widget rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-border">
+          <div className="grid grid-cols-7 grid-preserve border-b border-border">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
               <div key={d} className="px-2 py-2 text-[10px] font-semibold text-muted-foreground text-center uppercase">{d}</div>
             ))}
           </div>
-          <div className="grid grid-cols-7">
+          <div className="grid grid-cols-7 grid-preserve">
             {monthGrid.map((cell, i) => {
               const dayEvents = eventsForDay(cell.date);
               const isToday = isSameDay(cell.date, new Date());
@@ -476,7 +476,7 @@ function CalendarPageInner() {
       {/* WEEK VIEW */}
       {view === "week" && (
         <div className="mt-4 card-widget rounded-2xl overflow-hidden overflow-x-auto">
-          <div className="grid grid-cols-8 min-w-[700px]">
+          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
             <div className="border-b border-r border-border p-2" />
             {weekDays.map((d, i) => (
               <div key={i} className={`border-b border-r border-border p-2 text-center ${isSameDay(d, new Date()) ? "bg-primary/5" : ""}`}>
@@ -485,7 +485,7 @@ function CalendarPageInner() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-8 min-w-[700px]">
+          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
             {HOURS.map(hour => (
               <div key={hour} className="contents">
                 <div className="border-b border-r border-border px-2 py-3 text-[10px] text-muted-foreground text-right pr-3">

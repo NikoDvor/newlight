@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
+    const { booking_slug, meeting_kind, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
+    const isClosing = meeting_kind === "closing";
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -39,17 +40,19 @@ Deno.serve(async (req) => {
 
     // 1. Find the originating calendar by booking slug first, then UUID fallback.
     const lookupValue = String(booking_slug).trim();
+    const slugColumn = isClosing ? "closing_booking_slug" : "booking_slug";
+    const activeColumn = isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select("id, user_id, client_id, name, booking_active, round_robin_pool")
-      .eq("booking_slug", lookupValue)
+      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool`)
+      .eq(slugColumn, lookupValue)
       .maybeSingle();
     let originCal = slugCal;
     let calErr = slugErr;
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, round_robin_pool")
+        .select("id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
@@ -60,7 +63,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (originCal.booking_active === false) {
+    if ((originCal as any)[activeColumn] === false) {
       return new Response(JSON.stringify({ error: "Bookings are paused" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -125,13 +128,13 @@ Deno.serve(async (req) => {
         user_id: assignedCal.user_id,
         client_id: assignedCal.client_id,
         calendar_id: assignedCal.id,
-        title: `Booking: ${customer_name}${business_name ? " — " + business_name : ""}`,
+        title: `${isClosing ? "Closing" : "Booking"}: ${customer_name}${business_name ? " — " + business_name : ""}`,
         description: notes || null,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         lead_id: lead.id,
-        stage: "hot",
-        source: roundRobin ? "round_robin" : "booking_form",
+        stage: isClosing ? "closing" : "hot",
+        source: isClosing ? "closing_booking" : (roundRobin ? "round_robin" : "booking_form"),
         notes: notes || null,
         metadata: {
           customer_name,
@@ -140,6 +143,7 @@ Deno.serve(async (req) => {
           email,
           round_robin: roundRobin,
           origin_calendar_id: originCal.id,
+          meeting_kind: isClosing ? "closing" : "discovery",
         },
       })
       .select("id")

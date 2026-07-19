@@ -10,6 +10,11 @@ export interface BdrCalendar {
   booking_title: string | null;
   booking_description: string | null;
   booking_active: boolean;
+  closing_booking_slug?: string | null;
+  closing_booking_title?: string | null;
+  closing_booking_description?: string | null;
+  closing_booking_active?: boolean;
+  closing_booking_form_id?: string | null;
 }
 
 function slugify(input: string) {
@@ -42,7 +47,18 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
-  if (existing) return existing as BdrCalendar;
+  if (existing) {
+    // Backfill closing slug for pre-feature calendars so the Meeting 2 link always resolves.
+    if (!(existing as any).closing_booking_slug && (existing as any).booking_slug) {
+      const closingSlug = `${(existing as any).booking_slug}-closing`;
+      await (supabase as any)
+        .from("bdr_calendars")
+        .update({ closing_booking_slug: closingSlug })
+        .eq("id", (existing as any).id);
+      (existing as any).closing_booking_slug = closingSlug;
+    }
+    return existing as BdrCalendar;
+  }
 
   const display = opts?.firstName
     || opts?.fullName?.split(" ")[0]
@@ -60,6 +76,7 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       client_id: clientId,
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
+      closing_booking_slug: `${baseSlug}-closing`,
     })
     .select("*")
     .single();
@@ -67,6 +84,15 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     const { data: again } = await (supabase as any)
       .from("bdr_calendars").select("*").eq("user_id", user.id).maybeSingle();
     return (again as BdrCalendar) || null;
+  }
+  // Ensure closing slug is filled in for calendars created before the closing feature.
+  if (created && !(created as any).closing_booking_slug && (created as any).booking_slug) {
+    const closingSlug = `${(created as any).booking_slug}-closing`;
+    await (supabase as any)
+      .from("bdr_calendars")
+      .update({ closing_booking_slug: closingSlug })
+      .eq("id", (created as any).id);
+    (created as any).closing_booking_slug = closingSlug;
   }
   return created as BdrCalendar;
 }

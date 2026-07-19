@@ -228,6 +228,7 @@ const App = () => {
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/bdr/book/:slug" element={<BDRBookingPublic />} />
+              <Route path="/bdr/book-closing/:slug" element={<BDRBookingPublic mode="closing" />} />
               <Route path="/app/:slug" element={<AppDownload />} />
               <Route path="/webinar/:slug" element={<WebinarRegistration />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />

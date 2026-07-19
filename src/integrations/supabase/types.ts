@@ -1011,6 +1011,11 @@ export type Database = {
           booking_slug: string | null
           booking_title: string | null
           client_id: string
+          closing_booking_active: boolean
+          closing_booking_description: string | null
+          closing_booking_form_id: string | null
+          closing_booking_slug: string | null
+          closing_booking_title: string | null
           created_at: string
           google_sync_enabled: boolean
           id: string
@@ -1030,6 +1035,11 @@ export type Database = {
           booking_slug?: string | null
           booking_title?: string | null
           client_id: string
+          closing_booking_active?: boolean
+          closing_booking_description?: string | null
+          closing_booking_form_id?: string | null
+          closing_booking_slug?: string | null
+          closing_booking_title?: string | null
           created_at?: string
           google_sync_enabled?: boolean
           id?: string
@@ -1049,6 +1059,11 @@ export type Database = {
           booking_slug?: string | null
           booking_title?: string | null
           client_id?: string
+          closing_booking_active?: boolean
+          closing_booking_description?: string | null
+          closing_booking_form_id?: string | null
+          closing_booking_slug?: string | null
+          closing_booking_title?: string | null
           created_at?: string
           google_sync_enabled?: boolean
           id?: string
@@ -13824,6 +13839,22 @@ export type Database = {
           booking_slug: string
           booking_title: string
           client_id: string
+          id: string
+          name: string
+          timezone: string
+        }[]
+      }
+      get_public_bdr_closing_calendar: {
+        Args: { _slug_or_id: string }
+        Returns: {
+          availability: Json
+          booking_slug: string
+          client_id: string
+          closing_booking_active: boolean
+          closing_booking_description: string
+          closing_booking_form_id: string
+          closing_booking_slug: string
+          closing_booking_title: string
           id: string
           name: string
           timezone: string

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, ShieldCheck, Workflow, Target, PhoneCall, BookOpen, ChevronDown } from "lucide-react";
+import { Sparkles, ShieldCheck, Workflow, Target, PhoneCall, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -167,8 +167,8 @@ export function ProductKnowledgeOverview({ chapters }: Props) {
                         {meta.oneLiner}
                       </p>
                     </div>
-                    <ChevronDown className="chev h-5 w-5 shrink-0 text-primary transition-transform duration-300" />
                   </div>
+
                 </AccordionTrigger>
                 <AccordionContent className="pb-5">
                   <div className="mt-1 rounded-lg border border-primary/15 bg-background/70 p-4 sm:p-5">

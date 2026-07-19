@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Plus, Link2, Copy, Check, X, Trash2, Settings, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,7 +111,9 @@ export default function BDRCalendar() {
     return m;
   }, [visibleEvents]);
 
-  const bookingUrl = calendar?.booking_slug ? `https://newlight-app.com/bdr/book/${calendar.booking_slug}` : "";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
+  const bookingUrl = calendar?.booking_slug ? `${origin}/bdr/book/${calendar.booking_slug}` : "";
+  const closingBookingUrl = (calendar as any)?.closing_booking_slug ? `${origin}/bdr/book-closing/${(calendar as any).closing_booking_slug}` : "";
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
@@ -212,8 +214,8 @@ export default function BDRCalendar() {
         onCreated={() => { setShowAdd(false); refresh(); }}
       />
 
-      <ShareDialog open={showShare} onOpenChange={setShowShare} url={bookingUrl} copied={copied}
-        onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
+      <ShareDialog open={showShare} onOpenChange={setShowShare}
+        discoveryUrl={bookingUrl} closingUrl={closingBookingUrl} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
 
@@ -245,12 +247,12 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
   return (
     <div className="w-full rounded-2xl overflow-hidden p-2 sm:p-3"
       style={{ border: "1px solid hsla(0,0%,100%,.07)", background: "hsla(215,30%,9%,.7)", boxShadow: "0 1px 0 hsla(0,0%,100%,.04) inset" }}>
-      <div className="grid grid-cols-7 w-full text-[10px] uppercase tracking-[0.14em] text-white/40 mb-1">
+      <div className="grid grid-cols-7 grid-preserve w-full text-[10px] uppercase tracking-[0.14em] text-white/40 mb-1">
         {["S","M","T","W","T","F","S"].map((d, i) => (
           <div key={i} className="min-w-0 py-2 text-center font-semibold">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 w-full gap-y-1">
+      <div className="grid grid-cols-7 grid-preserve w-full gap-y-1">
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursor.getMonth();
           const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -348,7 +350,7 @@ function WeekView({ cursor, events, selectedDay, onSelectDay, onEventClick }: {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 grid-preserve gap-1.5">
         {days.map((d, i) => {
           const isToday = sameDay(d, today);
           const isSelected = sameDay(d, selectedDay);
@@ -491,19 +493,52 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   );
 }
 
-function ShareDialog({ open, onOpenChange, url, copied, onCopy }: {
-  open: boolean; onOpenChange: (v: boolean) => void; url: string; copied: boolean; onCopy: () => void;
+function ShareDialog({ open, onOpenChange, discoveryUrl, closingUrl }: {
+  open: boolean; onOpenChange: (v: boolean) => void; discoveryUrl: string; closingUrl: string;
 }) {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copy = (key: string, url: string) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
+  const openLink = (url: string) => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  const Row = ({ label, subtitle, url, k }: { label: string; subtitle: string; url: string; k: string }) => (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <div className="text-sm font-semibold text-white">{label}</div>
+        <div className="text-[10px] uppercase tracking-wider text-white/40">{subtitle}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input readOnly value={url || "Not configured yet"} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+        <Button type="button" onClick={() => openLink(url)} disabled={!url}
+          variant="outline" size="icon"
+          aria-label={`Open ${label}`}
+          title="Open in new tab"
+          className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white shrink-0">
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+        <Button type="button" onClick={() => copy(k, url)} disabled={!url}
+          aria-label={`Copy ${label}`}
+          title="Copy link"
+          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] shrink-0">
+          {copiedKey === k ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </Button>
+      </div>
+    </div>
+  );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
-        <DialogHeader><DialogTitle>Your booking link</DialogTitle></DialogHeader>
-        <p className="text-xs text-white/60">Share this link with prospects. Bookings show up on your calendar and are added to My Leads as Hot Leads.</p>
-        <div className="flex items-center gap-2 mt-3">
-          <Input readOnly value={url} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
-          <Button onClick={onCopy} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
+        <DialogHeader><DialogTitle>Your booking links</DialogTitle></DialogHeader>
+        <p className="text-xs text-white/60">Share these with prospects. Bookings show up on your calendar and are added to My Leads.</p>
+        <div className="space-y-4 mt-2">
+          <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrl} k="disc" />
+          <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrl} k="close" />
         </div>
       </DialogContent>
     </Dialog>
@@ -586,6 +621,11 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [closingTitle, setClosingTitle] = useState<string>((calendar as any).closing_booking_title ?? "");
+  const [closingDesc, setClosingDesc] = useState<string>((calendar as any).closing_booking_description ?? "");
+  const [closingActive, setClosingActive] = useState<boolean>((calendar as any).closing_booking_active ?? true);
+  const [closingFormId, setClosingFormId] = useState<string>((calendar as any).closing_booking_form_id ?? "");
+
   useEffect(() => {
     if (open) {
       setName(calendar.name);
@@ -596,6 +636,10 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setRoundRobin((calendar as any).round_robin_pool ?? false);
       setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
+      setClosingTitle((calendar as any).closing_booking_title ?? "");
+      setClosingDesc((calendar as any).closing_booking_description ?? "");
+      setClosingActive((calendar as any).closing_booking_active ?? true);
+      setClosingFormId((calendar as any).closing_booking_form_id ?? "");
       (async () => {
         const { data } = await (supabase as any)
           .from("client_forms")
@@ -633,6 +677,10 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
       booking_form_id: bookingFormId || null,
+      closing_booking_title: closingTitle.trim() || null,
+      closing_booking_description: closingDesc.trim() || null,
+      closing_booking_active: closingActive,
+      closing_booking_form_id: closingFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
@@ -746,6 +794,54 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
               </div>
             </div>
           </section>
+
+          {/* Closing (Meeting 2) booking page */}
+          <section className="space-y-3">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Final Closing Meeting (Meeting 2)</div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Page title</Label>
+              <Input value={closingTitle} onChange={e => setClosingTitle(e.target.value)}
+                placeholder="Final Closing Meeting"
+                className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Description / bio</Label>
+              <textarea value={closingDesc} onChange={e => setClosingDesc(e.target.value)} rows={3}
+                placeholder="Reserved slot for the closing call after Discovery…"
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Closing Form (optional)</Label>
+              <select
+                value={closingFormId}
+                onChange={e => setClosingFormId(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">No form</option>
+                {availableForms.map(f => (
+                  <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
+              <div>
+                <div className="text-sm text-white">Closing link active</div>
+                <div className="text-xs text-white/50">Pause to stop accepting closing bookings.</div>
+              </div>
+              <input type="checkbox" checked={closingActive}
+                onChange={e => setClosingActive(e.target.checked)}
+                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
+            </label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Your closing link</Label>
+              <Input readOnly
+                value={(calendar as any).closing_booking_slug
+                  ? `${typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com"}/bdr/book-closing/${(calendar as any).closing_booking_slug}`
+                  : "Save the calendar to generate a closing link"}
+                className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+            </div>
+          </section>
+
 
           {/* Round-Robin Pool */}
           <section className="space-y-2">
