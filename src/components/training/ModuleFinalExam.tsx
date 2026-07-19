@@ -272,7 +272,7 @@ export function ModuleFinalExam({ moduleId, moduleName, trackId, modules, onClos
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "hsla(215,35%,10%,.95)" }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center pt-safe" style={{ background: "hsla(215,35%,10%,.95)" }}>
         <div className="text-center">
           <div className="animate-pulse text-foreground/60 text-sm">Loading exam…</div>
         </div>
