@@ -621,6 +621,11 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [closingTitle, setClosingTitle] = useState<string>((calendar as any).closing_booking_title ?? "");
+  const [closingDesc, setClosingDesc] = useState<string>((calendar as any).closing_booking_description ?? "");
+  const [closingActive, setClosingActive] = useState<boolean>((calendar as any).closing_booking_active ?? true);
+  const [closingFormId, setClosingFormId] = useState<string>((calendar as any).closing_booking_form_id ?? "");
+
   useEffect(() => {
     if (open) {
       setName(calendar.name);
@@ -631,6 +636,10 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setRoundRobin((calendar as any).round_robin_pool ?? false);
       setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
+      setClosingTitle((calendar as any).closing_booking_title ?? "");
+      setClosingDesc((calendar as any).closing_booking_description ?? "");
+      setClosingActive((calendar as any).closing_booking_active ?? true);
+      setClosingFormId((calendar as any).closing_booking_form_id ?? "");
       (async () => {
         const { data } = await (supabase as any)
           .from("client_forms")
@@ -668,6 +677,10 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
       booking_form_id: bookingFormId || null,
+      closing_booking_title: closingTitle.trim() || null,
+      closing_booking_description: closingDesc.trim() || null,
+      closing_booking_active: closingActive,
+      closing_booking_form_id: closingFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
