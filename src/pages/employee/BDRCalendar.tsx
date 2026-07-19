@@ -48,6 +48,7 @@ function toLocalInput(d: Date) {
 
 export default function BDRCalendar() {
   const [calendar, setCalendar] = useState<BdrCalendar | null>(null);
+  const [extraCalendars, setExtraCalendars] = useState<BdrCalendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"month" | "week">("month");
@@ -60,6 +61,7 @@ export default function BDRCalendar() {
   const [selected, setSelected] = useState<Event | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [creatingExtra, setCreatingExtra] = useState(false);
 
   const handleEventClick = (e: Event) => {
     if (e.lead_id) setProfileLeadId(e.lead_id);
