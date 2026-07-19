@@ -197,7 +197,12 @@ export default function BDRCalendar() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
+    return (
+      <div className="space-y-4">
+        <CalendarGridSkeleton />
+        <CalendarAgendaSkeleton />
+      </div>
+    );
   }
   if (!calendar) {
     return <div className="p-8 text-white/60 text-sm">Could not load your calendar.</div>;
