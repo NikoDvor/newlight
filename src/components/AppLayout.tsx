@@ -12,7 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
-import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
 
