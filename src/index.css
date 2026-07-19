@@ -249,13 +249,13 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .grid.grid-cols-2,
-    .grid.grid-cols-3,
-    .grid.grid-cols-4,
-    .grid.grid-cols-5,
-    .grid.grid-cols-6,
-    .grid.grid-cols-7,
-    .grid.grid-cols-8 {
+    .grid.grid-cols-2:not(.grid-preserve),
+    .grid.grid-cols-3:not(.grid-preserve),
+    .grid.grid-cols-4:not(.grid-preserve),
+    .grid.grid-cols-5:not(.grid-preserve),
+    .grid.grid-cols-6:not(.grid-preserve),
+    .grid.grid-cols-7:not(.grid-preserve),
+    .grid.grid-cols-8:not(.grid-preserve) {
       grid-template-columns: minmax(0, 1fr);
     }
 
