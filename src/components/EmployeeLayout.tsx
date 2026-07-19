@@ -12,7 +12,7 @@ import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
-import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
