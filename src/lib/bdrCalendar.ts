@@ -10,6 +10,11 @@ export interface BdrCalendar {
   booking_title: string | null;
   booking_description: string | null;
   booking_active: boolean;
+  closing_booking_slug?: string | null;
+  closing_booking_title?: string | null;
+  closing_booking_description?: string | null;
+  closing_booking_active?: boolean;
+  closing_booking_form_id?: string | null;
 }
 
 function slugify(input: string) {
