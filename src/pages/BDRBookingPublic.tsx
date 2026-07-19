@@ -122,23 +122,29 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     (async () => {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lookupValue);
-      // Call the SECURITY DEFINER RPC — the bdr_calendars table is no longer
-      // directly readable by anon; this RPC returns only the single matching calendar.
+      const rpcName = mode === "closing" ? "get_public_bdr_closing_calendar" : "get_public_bdr_calendar";
       const { data: rpcData, error: calErr } = await (supabase as any)
-        .rpc("get_public_bdr_calendar", { _slug_or_id: lookupValue });
-      const data = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
-      console.error("[BDRBookingPublic] calendar lookup", {
-        rawSlug: slug,
-        lookupValue,
-        isUuid,
-        found: !!data,
-        calendar_id: data?.id,
-        booking_slug: data?.booking_slug,
-        booking_active: data?.booking_active,
-        booking_form_id: data?.booking_form_id,
-        calErr,
-      });
+        .rpc(rpcName, { _slug_or_id: lookupValue });
+      const raw = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
+      // Normalize closing-mode rows so downstream code can read the same fields.
+      const data: Cal | null = raw
+        ? (mode === "closing"
+            ? {
+                id: raw.id,
+                client_id: raw.client_id,
+                name: raw.name,
+                booking_slug: raw.booking_slug,
+                availability: raw.availability,
+                timezone: raw.timezone,
+                booking_title: raw.closing_booking_title,
+                booking_description: raw.closing_booking_description,
+                booking_active: raw.closing_booking_active,
+                booking_form_id: raw.closing_booking_form_id,
+                closing_booking_slug: raw.closing_booking_slug,
+              }
+            : raw)
+        : null;
+      console.error("[BDRBookingPublic] calendar lookup", { mode, lookupValue, found: !!data, calErr });
       setCal(data);
 
 
