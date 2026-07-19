@@ -214,8 +214,8 @@ export default function BDRCalendar() {
         onCreated={() => { setShowAdd(false); refresh(); }}
       />
 
-      <ShareDialog open={showShare} onOpenChange={setShowShare} url={bookingUrl} copied={copied}
-        onCopy={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} />
+      <ShareDialog open={showShare} onOpenChange={setShowShare}
+        discoveryUrl={bookingUrl} closingUrl={closingBookingUrl} />
 
       <EventDetailDialog event={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); refresh(); }} />
 
