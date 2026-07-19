@@ -95,7 +95,7 @@ function buildSlots(availability: any) {
   return slots;
 }
 
-export default function BDRBookingPublic() {
+export default function BDRBookingPublic({ mode = "discovery" }: { mode?: BookingMode } = {}) {
   const { slug } = useParams<{ slug: string }>();
   const [cal, setCal] = useState<Cal | null>(null);
   const [loading, setLoading] = useState(true);
