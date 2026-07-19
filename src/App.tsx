@@ -199,6 +199,7 @@ import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
 import CallTracking from "./pages/CallTracking";
 import SessionGate from "@/components/SessionGate";
+import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 
 
 const queryClient = new QueryClient();
@@ -213,8 +214,9 @@ const App = () => {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <WorkspaceProvider>
             <PWAInstallProvider>
-              
+              <PWAUpdateBanner />
               <Routes>
+
               {/* Public landing */}
               <Route path="/" element={<SessionGate><Landing /></SessionGate>} />
               <Route path="/install" element={<Install />} />

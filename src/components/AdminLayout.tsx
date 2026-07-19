@@ -9,7 +9,7 @@ import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
-import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 
 export function AdminLayout() {
@@ -85,8 +85,8 @@ export function AdminLayout() {
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1"
               >
-                <PWAUpdateBanner />
                 <PWAInstallBanner />
+
                 <Outlet />
               </motion.div>
             </AnimatePresence>

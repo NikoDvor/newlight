@@ -27,7 +27,9 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
 });
 
 const standaloneQuery = "(display-mode: standalone)";
-const updateDismissedKey = "newlight-pwa-update-dismissed";
+const pwaLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) console.log("[PWA]", ...args);
+};
 
 function isPreviewOrFramed() {
   const isFramed = (() => {
@@ -102,22 +104,35 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       immediate: true,
       onNeedRefresh() {
         if (cancelled) return;
-        // If the user previously dismissed an update, silently apply this one
-        // instead of nagging again on the very next deploy.
-        if (localStorage.getItem(updateDismissedKey) === "true") {
-          localStorage.removeItem(updateDismissedKey);
-          void updateSW(true);
-          return;
-        }
+        pwaLog("onNeedRefresh — new service worker waiting, prompting user");
+        // Always surface the banner for a fresh update. A prior dismissal
+        // must not permanently silence future deploys.
         setUpdateAvailable(true);
       },
-      onRegisteredSW(_swUrl, registration) {
+      onOfflineReady() {
+        pwaLog("onOfflineReady — service worker precached the app shell");
+      },
+      onRegisterError(error) {
+        console.error("[PWA] Service worker registration failed:", error);
+      },
+      onRegisteredSW(swUrl, registration) {
+        pwaLog("onRegisteredSW", swUrl, registration);
         if (!registration) return;
+
+        // Aggressive check: kick off an update() as soon as we register so
+        // returning users detect a new deploy at the earliest possible moment
+        // instead of waiting for the next visibilitychange.
+        registration.update().catch((error) => {
+          pwaLog("initial registration.update() failed", error);
+        });
+
         // Poll for updates when the tab becomes visible again so returning
         // users pick up new deploys without a hard refresh.
         const visibilityChange = () => {
           if (document.visibilityState === "visible") {
-            registration.update().catch(() => undefined);
+            registration.update().catch((error) => {
+              pwaLog("visibility registration.update() failed", error);
+            });
           }
         };
         document.addEventListener("visibilitychange", visibilityChange);
@@ -152,7 +167,6 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   }, [deferredPrompt, isInstalled, isIOS]);
 
   const updateNow = useCallback(() => {
-    localStorage.removeItem(updateDismissedKey);
     setUpdateAvailable(false);
     const updateSW = updateSWRef.current;
     if (updateSW) {
@@ -165,9 +179,11 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissUpdate = useCallback(() => {
-    localStorage.setItem(updateDismissedKey, "true");
+    // Only hide the current banner. Do NOT persist — the next onNeedRefresh
+    // for a future deploy must re-show the prompt.
     setUpdateAvailable(false);
   }, []);
+
 
   const value = useMemo(() => ({
     canInstall: !isInstalled,
