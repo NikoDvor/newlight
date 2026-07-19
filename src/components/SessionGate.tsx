@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useClientManifest } from "@/hooks/useClientManifest";
 import { getEmployeeRoute } from "@/lib/employeeRouting";
 
 interface SessionGateProps {
@@ -8,8 +9,10 @@ interface SessionGateProps {
 }
 
 export function SessionGate({ children }: SessionGateProps) {
+  useClientManifest();
   const { user, isAdmin, userRole, employeeProfile, isSessionLoading } = useWorkspace();
   const navigate = useNavigate();
+
 
   const shouldRedirect = !isSessionLoading && !!user && !!userRole;
 
