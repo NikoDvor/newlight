@@ -72,15 +72,33 @@ export default function BDRCalendar() {
     const cal = await ensureBdrCalendar();
     setCalendar(cal);
     if (cal) {
-      const { data } = await (supabase as any)
-        .from("bdr_calendar_events")
-        .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes")
-        .eq("user_id", cal.user_id)
-        .order("starts_at", { ascending: true });
-      setEvents(data || []);
+      const [{ data: eventRows }, { data: allCals }] = await Promise.all([
+        (supabase as any)
+          .from("bdr_calendar_events")
+          .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes")
+          .eq("user_id", cal.user_id)
+          .order("starts_at", { ascending: true }),
+        (supabase as any)
+          .from("bdr_calendars")
+          .select("*")
+          .eq("user_id", cal.user_id)
+          .order("created_at", { ascending: true }),
+      ]);
+      setEvents(eventRows || []);
+      setExtraCalendars(((allCals || []) as BdrCalendar[]).filter((c) => c.id !== cal.id));
     }
     setLoading(false);
   })(); }, []);
+
+  const reloadCalendars = useCallback(async () => {
+    if (!calendar) return;
+    const { data: allCals } = await (supabase as any)
+      .from("bdr_calendars")
+      .select("*")
+      .eq("user_id", calendar.user_id)
+      .order("created_at", { ascending: true });
+    setExtraCalendars(((allCals || []) as BdrCalendar[]).filter((c) => c.id !== calendar.id));
+  }, [calendar]);
 
   const refresh = useCallback(async () => {
     if (!calendar) return;
