@@ -9,7 +9,7 @@ import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
-import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
+
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 
 export function AdminLayout() {
