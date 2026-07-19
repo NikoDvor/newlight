@@ -476,7 +476,7 @@ function CalendarPageInner() {
       {/* WEEK VIEW */}
       {view === "week" && (
         <div className="mt-4 card-widget rounded-2xl overflow-hidden overflow-x-auto">
-          <div className="grid grid-cols-8 min-w-[700px]">
+          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
             <div className="border-b border-r border-border p-2" />
             {weekDays.map((d, i) => (
               <div key={i} className={`border-b border-r border-border p-2 text-center ${isSameDay(d, new Date()) ? "bg-primary/5" : ""}`}>
@@ -485,7 +485,7 @@ function CalendarPageInner() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-8 min-w-[700px]">
+          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
             {HOURS.map(hour => (
               <div key={hour} className="contents">
                 <div className="border-b border-r border-border px-2 py-3 text-[10px] text-muted-foreground text-right pr-3">
