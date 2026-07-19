@@ -198,6 +198,7 @@ import AdminWinTracking from "./pages/admin/AdminWinTracking";
 import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
 import CallTracking from "./pages/CallTracking";
+import SessionGate from "@/components/SessionGate";
 
 
 const queryClient = new QueryClient();
@@ -215,12 +216,13 @@ const App = () => {
               
               <Routes>
               {/* Public landing */}
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={<SessionGate><Landing /></SessionGate>} />
               <Route path="/install" element={<Install />} />
 
 
               {/* Auth */}
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth" element={<SessionGate><Auth /></SessionGate>} />
+
               <Route path="/activate" element={<ActivateAccount />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/meeting/cancel/:token" element={<MeetingCancel />} />
