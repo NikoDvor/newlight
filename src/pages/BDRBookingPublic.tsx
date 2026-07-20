@@ -125,11 +125,14 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     (async () => {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
-      const rpcName = mode === "closing" ? "get_public_bdr_closing_calendar" : "get_public_bdr_calendar";
+      const rpcName =
+        mode === "closing" ? "get_public_bdr_closing_calendar"
+        : mode === "payment" ? "get_public_bdr_payment_calendar"
+        : "get_public_bdr_calendar";
       const { data: rpcData, error: calErr } = await (supabase as any)
         .rpc(rpcName, { _slug_or_id: lookupValue });
       const raw = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
-      // Normalize closing-mode rows so downstream code can read the same fields.
+      // Normalize closing/payment-mode rows so downstream code can read the same fields.
       const data: Cal | null = raw
         ? (mode === "closing"
             ? {
@@ -144,6 +147,20 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
                 booking_active: raw.closing_booking_active,
                 booking_form_id: raw.closing_booking_form_id,
                 closing_booking_slug: raw.closing_booking_slug,
+              }
+            : mode === "payment"
+            ? {
+                id: raw.id,
+                client_id: raw.client_id,
+                name: raw.name,
+                booking_slug: raw.booking_slug,
+                availability: raw.availability,
+                timezone: raw.timezone,
+                booking_title: raw.payment_booking_title,
+                booking_description: raw.payment_booking_description,
+                booking_active: raw.payment_booking_active,
+                booking_form_id: raw.payment_booking_form_id,
+                payment_booking_slug: raw.payment_booking_slug,
               }
             : raw)
         : null;
