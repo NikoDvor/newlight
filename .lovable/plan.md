@@ -1,80 +1,78 @@
-## Multi-tenant isolation for the employee system
+# Calendar UI Unification Plan
 
-### Discovery that changes the plan
-BDR/SDR accounts created via Add Manually are stored as platform-wide `marketing_staff` in `employee_profiles` — they are NOT inserted into `workspace_users`. So "workspace_users.client_id" alone can't drive isolation for BDRs. We need an authoritative client_id on `employee_profiles` and to extend the Add Manually form to assign it.
+Goal: one shared calendar component system, adopted everywhere, matching the Tier 1/2/3 spec. Backend, queries, and booking-link generation stay untouched.
 
-### Step 1 — Schema (single migration)
+## 1. Calendar surfaces found
 
-1. Insert a dedicated `clients` row with `workspace_slug = 'newlight-internal'`, `business_name = 'NewLight Internal'`, capture its UUID into a local var.
-2. Add `client_id uuid REFERENCES clients(id) ON DELETE RESTRICT` to:
-   - `employee_profiles` (NEW)
-   - `bdr_call_outcomes`
-   - `bdr_calendars`
-   - `bdr_calendar_events`
-   (`nl_bdr_leads.client_id` already exists.)
-3. Backfill every NULL `client_id` on those four tables + `nl_bdr_leads` to the NewLight Internal id.
-4. `ALTER COLUMN client_id SET NOT NULL` on all four (kept nullable only on `nl_bdr_leads` if any orphans block it — will verify after backfill).
-5. Indexes: `(client_id)` on each table; composite `(client_id, user_id)` on leads/outcomes.
+**Full month/week grids (primary targets)**
+- `src/pages/employee/BDRCalendar.tsx` — MonthView (flexbox), WeekView, DayAgenda, ShareDialog with per-calendar cards
+- `src/pages/CalendarPage.tsx` — client-facing month/week/day + agenda (uses `grid-cols-7 grid-preserve`)
+- `src/pages/CalendarManagement.tsx` — per-calendar management view (event list; verify if a grid exists)
 
-### Step 2 — Helper functions (SECURITY DEFINER)
+**Mini date-pickers / slot pickers (secondary targets — same visual language)**
+- `src/components/BookingSlotPicker.tsx` — public booking slot grid
+- `src/components/CalendarSlotPicker.tsx` — internal booking slot picker
+- `src/components/ui/calendar.tsx` — shadcn/react-day-picker wrapper (used in date filters)
+- `src/pages/BookingPage.tsx`, `src/pages/BDRBookingPublic.tsx` — consume the pickers
 
-- `public.get_employee_client_id(_user_id uuid) returns uuid` — resolves in order: `employee_profiles.client_id` → first `workspace_users.client_id` → NewLight Internal id constant fallback.
-- `public.user_can_access_client(_user_id uuid, _client_id uuid) returns boolean` — true if:
-   - has role `admin` (cross-tenant), OR
-   - has role `operator` AND a matching `workspace_users` row for that client (Service Manager scope), OR
-   - their `get_employee_client_id` equals `_client_id`.
-- A `service_manager`-style operator with no workspace_users rows still sees nothing — explicit by design.
+**Grid-lookalikes (NOT true calendars — leave alone)**
+- `AdminTrainingHealth`, `AdminImplementationRequests/Queue/Detail`, `AdminClientLifecycle` — use `grid-cols-7` for layout, not date grids. Exclude from refactor.
 
-### Step 3 — RLS rewrite (all four tables)
+**Related management/list views (not grids, but share tokens)**
+- `AdminStaffCalendars`, `AdminBDRCalendars` — calendar list tables; will adopt shared BookingLinkCard where booking-link cards exist.
 
-Replace per-table policies with:
-- SELECT: `user_can_access_client(auth.uid(), client_id)`
-- INSERT: `user_can_access_client(auth.uid(), client_id) AND auth.uid() = user_id` (owner stamping preserved)
-- UPDATE/DELETE: `user_can_access_client(auth.uid(), client_id) AND (auth.uid() = user_id OR has_role(auth.uid(), 'admin'))`
+## 2. Proposed shared module: `src/components/calendar/`
 
-Existing "Admins can view/update all" policies are subsumed.
+```text
+src/components/calendar/
+├── types.ts              # CalendarEvent, EventKind, EventSource, dot color map
+├── tokens.ts             # semantic dot colors (discovery, closing, dialer, manual, booking_form, sdr_mirror, generic)
+├── MonthGrid.tsx         # 7-col flex grid, header row, 6 week rows, day cells with dots + "+N"
+├── WeekGrid.tsx          # 7-col week strip w/ hour rail
+├── DayCell.tsx           # today ring/fill, selected outline, dim other-month, ≥44px, aria-label
+├── EventDots.tsx         # up to 3 dots + "+N" overflow chip
+├── DayAgendaSheet.tsx    # bottom-sheet on mobile (shadcn Sheet, side="bottom"), inline panel ≥md
+├── CalendarSkeleton.tsx  # grid + list skeleton
+├── CalendarEmptyState.tsx
+├── BookingLinkCard.tsx   # Copy-link primary CTA, active/paused toggle, ⋯ menu (Open/Edit/Duplicate/Delete)
+├── MonthNavigator.tsx    # ‹ Month YYYY › + Today, swipe handlers
+└── useCalendarSwipe.ts   # touch swipe + prefers-reduced-motion aware
+```
 
-### Step 4 — `create-user-manual` edge function
+Design tokens live in `src/index.css` as CSS vars — no hardcoded colors:
+- `--cal-today`, `--cal-selected`, `--cal-dim`, `--cal-grid-line`
+- `--cal-dot-discovery`, `--cal-dot-closing`, `--cal-dot-dialer`, `--cal-dot-manual`, `--cal-dot-booking-form`, `--cal-dot-sdr-mirror`, `--cal-dot-default`
 
-- Accept `client_id` for `bdr` / `sdr` as well (default to NewLight Internal id when empty).
-- Insert that `client_id` on the new `employee_profiles` row.
-- Keep `user_roles` behavior unchanged (BDR/SDR stay `marketing_staff` platform-wide for routing).
+## 3. Spec mapping
 
-### Step 5 — Admin "Add Manually" form (`src/pages/admin/AdminTeam.tsx`)
+**Tier 1**
+- Dots: `EventDots` maps `event.kind`/`event.source` → token color; renders up to 3, then `+N` chip. Legend rendered by `MonthGrid` prop.
+- Day tap: `MonthGrid` calls `onDaySelect`; parent renders `DayAgendaSheet` (Sheet side="bottom" on mobile via `useIsMobile`, inline panel on desktop).
+- Today vs selected: today = filled accent circle on date number; selected = ring-2 outline (never simultaneously identical — today+selected gets ring on filled circle).
+- Other-month dimming: `text-muted-foreground/40` + `bg-transparent`, verified against WCAG.
+- Booking-link cards: `BookingLinkCard` replaces bespoke rows in `BDRCalendar` `ShareDialog` and in `AdminBDRCalendars` / `AdminStaffCalendars` link columns. Reconciles the current split-button in `BDRCalendar` header by keeping the header's primary "Open" split-button (rep's own quick action) AND using `BookingLinkCard` inside the ShareDialog list.
 
-- Show the Client picker for `bdr` and `sdr` too, defaulting to "NewLight Internal" but selectable to any client (for sub-account BDR/SDR hires).
-- Validate selection before submit.
+**Tier 2**
+- `MonthNavigator` + `useCalendarSwipe` for month↔week and swipe.
+- `CalendarSkeleton` replaces spinners in BDRCalendar, CalendarPage.
+- `CalendarEmptyState` for zero-events days + empty booking-link lists.
 
-### Step 6 — Frontend query scoping
+**Tier 3**
+- `DayCell` and action buttons min-h-11 min-w-11, `aria-label` on all icon-only buttons, `focus-visible:ring-2 ring-ring`.
+- All motion wrapped in `motion-safe:` / respects `prefers-reduced-motion`.
+- Contrast pass on dark theme tokens against `--background` (target 4.5:1 for text, 3:1 for large/UI).
 
-Add a tiny hook `useEmployeeClientId()` that selects from `employee_profiles.client_id` (fallback `workspace_users.client_id`) once per session.
-Update writes/reads in:
-- `src/pages/employee/BDRMyLeads.tsx` — stamp `client_id` on every insert; add `.eq('client_id', clientId)` on selects (in addition to existing `user_id` filter).
-- `src/pages/employee/BDRDialer.tsx` — same for leads + call_outcomes.
-- `src/pages/employee/BDRCalendar.tsx` — same for events; stamp on inserts.
-- `src/components/CustomerProfilePanel.tsx` — stamp `client_id` on follow-up event insert.
-- `src/lib/bdrCalendar.ts` — stamp `client_id` when auto-creating calendar + on event inserts from booking flow (derive from calendar row).
-- `src/components/BDRCallbackCountdown.tsx` — add client filter.
+## 4. Rollout order
 
-RLS will already block cross-tenant reads, but explicit filters keep queries fast and prevent showing stale cached rows.
+1. **Foundation (no visual change yet):** add `src/components/calendar/*` with types, tokens, MonthGrid, DayCell, EventDots, CalendarSkeleton, CalendarEmptyState, DayAgendaSheet, MonthNavigator, BookingLinkCard. Add CSS vars to `index.css`. Typecheck.
+2. **Migrate `BDRCalendar.tsx`:** swap MonthView/WeekView/DayAgenda/ShareDialog rows to shared components. Keep all Supabase calls, event fetching, slug logic, and existing split-button header intact.
+3. **Migrate `CalendarPage.tsx`:** same swap; keep data hooks.
+4. **Migrate `CalendarManagement.tsx`** if it renders a grid (verify during build); otherwise only adopt `BookingLinkCard`.
+5. **Adopt `BookingLinkCard` in `AdminBDRCalendars` and `AdminStaffCalendars`** link columns.
+6. **Mini pickers:** align `BookingSlotPicker`, `CalendarSlotPicker`, and shadcn `ui/calendar.tsx` styles to the same tokens (dot color, today/selected treatment). No API changes.
+7. **A11y + reduced-motion + contrast audit pass** with Playwright screenshots at mobile + desktop; typecheck.
 
-### Step 7 — Edge function `bdr-book` and `AdminBDRCalendars`
-
-- `bdr-book/index.ts`: when inserting `bdr_calendar_events` from a booking, copy `client_id` from the chosen calendar row.
-- `AdminBDRCalendars.tsx`: no functional change required (admin role already cross-tenant); add a "Client" column for visibility.
-
-### Step 8 — Verification
-
-After migration:
-- `SELECT count(*) FROM nl_bdr_leads WHERE client_id IS NULL` → expect 0.
-- Same for the other 3 tables.
-- Spot-load BDRMyLeads + BDRDialer + BDRCalendar as an existing BDR — rows still appear (they're stamped to NewLight Internal and the user resolves to that same id).
-
-### Out of scope (per earlier turn)
-- External Google/Outlook sync stays as Coming Soon toggles.
-- No changes to other employee modules (training, objections) unless they query the four tables — they don't.
-
-### Technical notes
-- `workspace_users.role_preset` already supports project/service managers; we reuse that surface for the operator-scoped admin override.
-- `ON DELETE RESTRICT` on the NewLight Internal client prevents accidental deletion of the tenant that owns all legacy rows.
-- No backfilling of `nl_bdr_leads.user_id → workspace` is needed — we deliberately route all legacy data to NewLight Internal per your choice.
+## Assumptions / open items
+- Assuming `DayAgenda` becomes a shadcn Sheet on mobile and stays inline ≥md — confirms your "bottom-feeling panel" instruction.
+- Assuming `AdminTrainingHealth`, `AdminImplementation*`, `AdminClientLifecycle` `grid-cols-7` usages are non-calendar layouts and stay out of scope. Will double-check during step 1.
+- No backend/data/query changes anywhere. No booking-link generation logic changes.

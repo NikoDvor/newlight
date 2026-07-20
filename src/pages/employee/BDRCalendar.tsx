@@ -9,6 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  MonthGrid,
+  DayAgendaSheet,
+  CalendarGridSkeleton,
+  CalendarAgendaSkeleton,
+  CalendarEmptyState,
+  BookingLinkCard,
+  resolveEventKind,
+  eventColor,
+  EVENT_LABEL,
+  type CalendarEventLike,
+} from "@/components/calendar";
 
 interface Event {
   id: string;
@@ -48,6 +61,7 @@ function toLocalInput(d: Date) {
 }
 
 export default function BDRCalendar() {
+  const isMobile = useIsMobile();
   const [calendar, setCalendar] = useState<BdrCalendar | null>(null);
   const [extraCalendars, setExtraCalendars] = useState<BdrCalendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -62,6 +76,7 @@ export default function BDRCalendar() {
   const [selected, setSelected] = useState<Event | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [showDaySheet, setShowDaySheet] = useState(false);
   const [creatingExtra, setCreatingExtra] = useState(false);
 
   const handleEventClick = (e: Event) => {
@@ -182,7 +197,12 @@ export default function BDRCalendar() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>;
+    return (
+      <div className="space-y-4">
+        <CalendarGridSkeleton />
+        <CalendarAgendaSkeleton />
+      </div>
+    );
   }
   if (!calendar) {
     return <div className="p-8 text-white/60 text-sm">Could not load your calendar.</div>;
@@ -283,13 +303,37 @@ export default function BDRCalendar() {
 
       {view === "month" ? (
         <>
-          <MonthView cursor={cursor} eventsByDay={eventsByDay} selectedDay={selectedDay}
-            onSelectDay={(d) => setSelectedDay(d)} />
-          <DayAgenda
-            day={selectedDay}
-            events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
-            onEventClick={handleEventClick}
+          <MonthGrid
+            monthCursor={cursor}
+            selectedDay={selectedDay}
+            events={visibleEvents.map<CalendarEventLike>((e) => ({
+              id: e.id,
+              startsAt: e.starts_at,
+              endsAt: e.ends_at,
+              title: e.title,
+              description: e.description,
+              kind: resolveEventKind(e.source),
+              raw: e,
+            }))}
+            onSelectDay={(d) => {
+              setSelectedDay(d);
+              if (isMobile) setShowDaySheet(true);
+            }}
           />
+          <DayAgendaSheet
+            day={selectedDay}
+            open={showDaySheet}
+            onOpenChange={setShowDaySheet}
+            eventCount={
+              (eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []).length
+            }
+          >
+            <DayAgenda
+              day={selectedDay}
+              events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
+              onEventClick={handleEventClick}
+            />
+          </DayAgendaSheet>
         </>
       ) : (
         <WeekView cursor={cursor} events={events} selectedDay={selectedDay}
@@ -341,107 +385,46 @@ export default function BDRCalendar() {
   );
 }
 
-function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
-  cursor: Date; eventsByDay: Map<string, Event[]>; selectedDay: Date; onSelectDay: (d: Date) => void;
+function DayAgenda({ day: _day, events, onEventClick }: {
+  day: Date; events: Event[]; onEventClick: (e: Event) => void;
 }) {
-  const first = startOfMonth(cursor);
-  const gridStart = startOfWeek(first);
-  const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  const today = new Date();
-  const DOW_FULL = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const DOW_SHORT = ["S","M","T","W","T","F","S"];
-  const cellBorder = "1px solid hsla(0,0%,100%,.08)";
+  const sorted = [...events].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+  if (sorted.length === 0) {
+    return (
+      <CalendarEmptyState
+        title="No events scheduled"
+        description="Tap + to add one."
+        compact
+      />
+    );
+  }
   return (
-    <div
-      className="w-full rounded-xl overflow-hidden"
-      style={{ border: "1px solid hsla(0,0%,100%,.1)", background: "hsla(215,30%,9%,.7)" }}
-    >
-      {/* Day-of-week header row — flex-based to bypass any .grid-cols-7 mobile stacking rule */}
-      <div
-        className="w-full"
-        style={{ display: "flex", flexDirection: "row", borderBottom: cellBorder, background: "hsla(215,30%,7%,.6)" }}
-      >
-        {DOW_FULL.map((d, i) => (
-          <div
-            key={i}
-            className="py-2 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50"
-            style={{ flex: "1 1 0", minWidth: 0, borderRight: i < 6 ? cellBorder : "none" }}
-          >
-            <span className="hidden sm:inline">{d}</span>
-            <span className="sm:hidden">{DOW_SHORT[i]}</span>
-          </div>
-        ))}
-      </div>
-      {/* Six week rows, each a flex row of 7 equal cells. No .grid-cols-* class = immune to mobile grid-collapse rule. */}
-      {Array.from({ length: 6 }, (_, weekIdx) => {
-        const isLastRow = weekIdx === 5;
+    <div className="space-y-2">
+      {sorted.map(e => {
+        const kind = resolveEventKind(e.source);
+        const tone = eventColor(kind);
         return (
-          <div
-            key={weekIdx}
-            className="w-full"
-            style={{ display: "flex", flexDirection: "row" }}
+          <button
+            key={e.id}
+            onClick={() => onEventClick(e)}
+            className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-xl bg-card/80 border border-border transition-all hover:translate-x-0.5 focus-visible:ring-2 focus-visible:ring-ring focus:outline-none min-h-11"
+            style={{ borderLeft: `3px solid ${tone}` }}
           >
-            {Array.from({ length: 7 }, (_, colIndex) => {
-              const i = weekIdx * 7 + colIndex;
-              const d = days[i];
-              const inMonth = d.getMonth() === cursor.getMonth();
-              const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-              const dayEvents = eventsByDay.get(key) || [];
-              const isToday = sameDay(d, today);
-              const isSelected = sameDay(d, selectedDay);
-              const sources = Array.from(new Set(dayEvents.map(e => e.source))).slice(0, 4);
-              const isLastCol = colIndex === 6;
-              const bg = isSelected
-                ? "hsla(211,96%,56%,.10)"
-                : isToday
-                  ? "hsla(211,96%,56%,.05)"
-                  : inMonth ? "transparent" : "hsla(215,30%,6%,.5)";
-              return (
-                <button
-                  key={i}
-                  onClick={() => onSelectDay(d)}
-                  className="flex flex-col items-start text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus:bg-white/[0.05] p-1.5 sm:p-2"
-                  style={{
-                    flex: "1 1 0",
-                    minWidth: 0,
-                    borderRight: isLastCol ? "none" : cellBorder,
-                    borderBottom: isLastRow ? "none" : cellBorder,
-                    minHeight: "3.5rem",
-                    background: bg,
-                    boxShadow: isSelected ? "inset 0 0 0 1.5px hsla(211,96%,60%,.55)" : undefined,
-                  }}
-                >
-                  <span
-                    className="inline-flex items-center justify-center text-[11px] sm:text-[12px] leading-none"
-                    style={{
-                      minWidth: 20, height: 20, borderRadius: 6,
-                      background: isToday ? "hsl(211,96%,56%)" : "transparent",
-                      color: isToday ? "white" : (inMonth ? "hsl(0,0%,90%)" : "hsl(0,0%,45%)"),
-                      fontWeight: isToday ? 700 : 500,
-                      padding: isToday ? "0 6px" : "0 2px",
-                      boxShadow: isToday ? "0 2px 8px -2px hsla(211,96%,55%,.6)" : undefined,
-                    }}
-                  >
-                    {d.getDate()}
-                  </span>
-                  {sources.length > 0 && (
-                    <span className="mt-auto pt-1 flex gap-1 items-center flex-wrap">
-                      {sources.map(s => (
-                        <span
-                          key={s}
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: SOURCE_TONE[s] || "#888" }}
-                        />
-                      ))}
-                      {dayEvents.length > 4 && (
-                        <span className="text-[8px] text-white/40 leading-none">+{dayEvents.length - 4}</span>
-                      )}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            <div className="flex flex-col items-center justify-center w-14 shrink-0">
+              <span className="text-[11px] text-foreground/70 font-medium leading-none">{fmtTime(new Date(e.starts_at))}</span>
+              <span className="text-[10px] text-muted-foreground mt-0.5 leading-none">{fmtTime(new Date(e.ends_at))}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-foreground truncate font-medium">{e.title}</div>
+              {e.description && <div className="text-[11px] text-muted-foreground truncate mt-0.5">{e.description}</div>}
+            </div>
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0"
+              style={{ background: `color-mix(in oklab, ${tone} 18%, transparent)`, color: tone }}
+            >
+              {EVENT_LABEL[kind] || e.source}
+            </span>
+          </button>
         );
       })}
     </div>
@@ -449,51 +432,6 @@ function MonthView({ cursor, eventsByDay, selectedDay, onSelectDay }: {
 }
 
 
-function DayAgenda({ day, events, onEventClick }: {
-  day: Date; events: Event[]; onEventClick: (e: Event) => void;
-}) {
-  const sorted = [...events].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
-  return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between px-1">
-        <div className="text-white text-base font-semibold">
-          {day.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
-        </div>
-        <div className="text-[11px] text-white/45">{sorted.length} {sorted.length === 1 ? "event" : "events"}</div>
-      </div>
-      {sorted.length === 0 ? (
-        <div className="rounded-2xl py-10 text-center text-xs text-white/40"
-          style={{ border: "1px dashed hsla(0,0%,100%,.08)", background: "hsla(215,30%,9%,.4)" }}>
-          No events scheduled. Tap + to add one.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {sorted.map(e => {
-            const tone = SOURCE_TONE[e.source] || "#888";
-            return (
-              <button key={e.id} onClick={() => onEventClick(e)}
-                className="w-full flex items-center gap-3 text-left px-3 py-3 rounded-xl transition-all hover:translate-x-0.5"
-                style={{ background: "hsla(215,30%,11%,.85)", border: "1px solid hsla(0,0%,100%,.06)", borderLeft: `3px solid ${tone}` }}>
-                <div className="flex flex-col items-center justify-center w-14 shrink-0">
-                  <span className="text-[11px] text-white/55 font-medium leading-none">{fmtTime(new Date(e.starts_at))}</span>
-                  <span className="text-[10px] text-white/30 mt-0.5 leading-none">{fmtTime(new Date(e.ends_at))}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-white truncate font-medium">{e.title}</div>
-                  {e.description && <div className="text-[11px] text-white/45 truncate mt-0.5">{e.description}</div>}
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0"
-                  style={{ background: `${tone}22`, color: tone }}>
-                  {SOURCE_LABEL[e.source] || e.source}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function WeekView({ cursor, events, selectedDay, onSelectDay, onEventClick }: {
   cursor: Date; events: Event[]; selectedDay: Date; onSelectDay: (d: Date) => void; onEventClick: (e: Event) => void;

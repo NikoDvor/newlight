@@ -61,6 +61,21 @@
     --chart-3: 187 70% 58%;
     --chart-4: 222 68% 44%;
     --chart-5: 210 55% 86%;
+
+    /* ── Shared calendar system tokens ── */
+    --cal-grid-line: 222 20% 16%;
+    --cal-today: 211 96% 56%;
+    --cal-selected: 211 96% 60%;
+    --cal-dim: 215 18% 42%;
+
+    /* Event-kind dot colors (hsl strings so consumers can use hsl(var(--...))) */
+    --cal-dot-discovery: hsl(146 68% 48%);
+    --cal-dot-closing: hsl(38 92% 58%);
+    --cal-dot-dialer: hsl(211 96% 62%);
+    --cal-dot-manual: hsl(268 82% 68%);
+    --cal-dot-booking-form: hsl(160 70% 52%);
+    --cal-dot-sdr-mirror: hsl(24 90% 60%);
+    --cal-dot-default: hsl(215 18% 55%);
   }
 
   .dark {
