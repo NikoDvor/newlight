@@ -1129,25 +1129,31 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (/business\s*name/.test(joined)) { headerIdx = i; break; }
     }
 
-    // Fallback: assume default positional columns
+    // Column indices — -1 means "not present in this header"
     let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
-        bkIdx = 4, blIdx = -1, bloIdx = -1, swIdx = -1, mbIdx = -1;
+        bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
+        bseIdx = -1,    // new "Booking System Exists" (Yes/No)
+        bpIdx = -1,     // new "Booking Platform" (name)
+        blIdx = -1, bloIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
     if (headerIdx >= 0) {
       const header = allRows[headerIdx].map(c => c.toLowerCase());
       expectedCols = header.length;
-      biIdx = owIdx = phIdx = webIdx = bkIdx = -1;
+      biIdx = owIdx = phIdx = webIdx = -1;
       header.forEach((c, i) => {
         if (/business\s*name/.test(c)) biIdx = i;
         else if (/owner\s*name/.test(c)) owIdx = i;
         else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
-        else if (/booking\s*link\s*is\s*owner/.test(c)) bloIdx = i;
+        else if (/booking\s*link\s*is\s*owner|owner.?s?\s*calendar\s*confirmed/.test(c)) bloIdx = i;
         else if (/self.?booking\s*widget/.test(c)) swIdx = i;
+        else if (/dialer.?bookable/.test(c)) dbIdx = i;
         else if (/booking\s*link/.test(c)) blIdx = i;
+        else if (/booking\s*system\s*exists/.test(c)) bseIdx = i;
+        else if (/booking\s*platform/.test(c)) bpIdx = i;
         else if (/booking\s*system/.test(c)) bkIdx = i;
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
       });
@@ -1182,28 +1188,45 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (/front|desk|reception|main/.test(s)) return "front_desk";
       return "front_desk";
     };
-    const parseBookingPlatform = (v: string): { platform: string | null; has: boolean } => {
+    // Legacy path: "Booking System" column held the platform name OR "No"
+    const parseLegacyBookingSystem = (v: string): { platform: string | null; has: boolean } => {
       const s = (v || "").trim();
       if (!s || /^no$/i.test(s) || s === "-" || s === "—") return { platform: null, has: false };
-      // Anything else = platform name
       return { platform: s, has: true };
+    };
+    const parsePlatformName = (v: string): string | null => {
+      const s = (v || "").trim();
+      if (!s || /^no$/i.test(s) || s === "-" || s === "—" || /^n\/a$/i.test(s)) return null;
+      return s;
     };
 
     const result = dataRows
       .filter(r => biIdx >= 0 && r[biIdx]?.trim())
       .map(r => {
-        const bk = parseBookingPlatform(bkIdx >= 0 ? r[bkIdx] : "");
+        // Booking system + platform: prefer new schema (separate columns), fall back to legacy
+        let has_booking_system: boolean | null;
+        let booking_platform: string | null;
+        if (bseIdx >= 0 || bpIdx >= 0) {
+          const yes = bseIdx >= 0 ? parseYesBlank(r[bseIdx] || "") : null;
+          booking_platform = bpIdx >= 0 ? parsePlatformName(r[bpIdx] || "") : null;
+          has_booking_system = yes !== null ? yes : (booking_platform != null);
+        } else {
+          const bk = parseLegacyBookingSystem(bkIdx >= 0 ? r[bkIdx] : "");
+          booking_platform = bk.platform;
+          has_booking_system = bk.has;
+        }
         return {
           business_name: r[biIdx]?.trim() || "",
           owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
           phone: phIdx >= 0 ? (r[phIdx]?.trim() || "") : "",
           phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null,
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
-          booking_platform: bk.platform,
-          has_booking_system: bk.has,
+          booking_platform,
+          has_booking_system,
           booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
           booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
           self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
+          dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
         };
       });
