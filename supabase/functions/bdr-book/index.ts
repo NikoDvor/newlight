@@ -129,13 +129,13 @@ Deno.serve(async (req) => {
         user_id: assignedCal.user_id,
         client_id: assignedCal.client_id,
         calendar_id: assignedCal.id,
-        title: `${isClosing ? "Closing" : "Booking"}: ${customer_name}${business_name ? " — " + business_name : ""}`,
+        title: `${isPayment ? "Onboarding & Payment" : isClosing ? "Closing" : "Booking"}: ${customer_name}${business_name ? " — " + business_name : ""}`,
         description: notes || null,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         lead_id: lead.id,
-        stage: isClosing ? "closing" : "hot",
-        source: isClosing ? "closing_booking" : (roundRobin ? "round_robin" : "booking_form"),
+        stage: isPayment ? "payment" : isClosing ? "closing" : "hot",
+        source: isPayment ? "payment_booking" : isClosing ? "closing_booking" : (roundRobin ? "round_robin" : "booking_form"),
         notes: notes || null,
         metadata: {
           customer_name,
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
           email,
           round_robin: roundRobin,
           origin_calendar_id: originCal.id,
-          meeting_kind: isClosing ? "closing" : "discovery",
+          meeting_kind: isPayment ? "payment" : isClosing ? "closing" : "discovery",
         },
       })
       .select("id")
