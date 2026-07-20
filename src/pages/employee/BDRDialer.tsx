@@ -508,6 +508,20 @@ export default function BDRDialer() {
                             {lead.booking_link_is_owner ? "Owner's Calendar" : "Booking Link"}
                           </a>
                         )}
+                        {lead.owner_booking_link && (
+                          <a
+                            href={lead.owner_booking_link.startsWith("http") ? lead.owner_booking_link : `https://${lead.owner_booking_link}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-bold hover:brightness-110 w-fit uppercase tracking-wide"
+                            style={{ background: "linear-gradient(135deg, hsla(38,95%,55%,.28), hsla(38,95%,50%,.18))", color: "hsl(38,100%,72%)", border: "1px solid hsla(38,95%,55%,.6)", boxShadow: "0 0 0 1px hsla(38,95%,55%,.15) inset" }}
+                            title={`Send-ready owner calendar link: ${lead.owner_booking_link}`}
+                          >
+                            <Calendar className="h-3 w-3" />
+                            Book with Owner
+                          </a>
+                        )}
                         {lead.self_booking_widget_non_owner && !lead.booking_link_is_owner && (
                           <span
                             className="text-[10px] inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium w-fit"
