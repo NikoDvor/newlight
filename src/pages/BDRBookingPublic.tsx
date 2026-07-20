@@ -48,9 +48,10 @@ interface Cal {
   booking_active: boolean;
   booking_form_id: string | null;
   closing_booking_slug?: string | null;
+  payment_booking_slug?: string | null;
 }
 
-export type BookingMode = "discovery" | "closing";
+export type BookingMode = "discovery" | "closing" | "payment";
 
 interface FormDef {
   id: string;
