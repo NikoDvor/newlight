@@ -30,6 +30,9 @@ import { LockBadge } from "@/components/LockedFeature";
 import { useLockContext } from "@/hooks/useLockContext";
 import {
   MonthGrid,
+  WeekGrid,
+  DayView,
+  ViewSwitcher,
   CalendarGridSkeleton,
   CalendarAgendaSkeleton,
   CalendarEmptyState,
