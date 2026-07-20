@@ -414,8 +414,15 @@ export function GenericPipelineDashboard() {
 
       {/* 4. RECOMMENDED PRACTICE */}
       {topObjection && (
-        <Card className="border-2 p-5 relative overflow-hidden" style={{ borderColor: "hsl(190,90%,55%)", background: "linear-gradient(135deg, hsla(190,90%,55%,.08), hsla(230,90%,55%,.04))" }}>
-          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20" style={{ background: "radial-gradient(circle, hsl(190,90%,55%) 0%, transparent 70%)" }} />
+        <Reveal>
+        <Card className={`${GLASS} border-2 p-5 relative overflow-hidden`} style={{ borderColor: "hsl(190,90%,55%)", background: "linear-gradient(135deg, hsla(190,90%,55%,.08), hsla(230,90%,55%,.04))" }}>
+          <motion.div
+            aria-hidden
+            className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20"
+            style={{ background: "radial-gradient(circle, hsl(190,90%,55%) 0%, transparent 70%)" }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          />
           <div className="flex items-start justify-between gap-4 relative">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[hsl(190,90%,65%)]">
@@ -438,7 +445,9 @@ export function GenericPipelineDashboard() {
             </div>
           </div>
         </Card>
+        </Reveal>
       )}
+
 
       {/* 5. TRAINING PROGRESS */}
       <SectionCard title="Training Progress" icon={GraduationCap} right={training && (
