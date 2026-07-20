@@ -6,6 +6,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import SystemHealthPanel from "@/components/training/SystemHealthPanel";
+import { DAILY_DIAL_GOAL } from "@/lib/bdrCalendar";
+
+/** Group dial-event timestamps by local YYYY-MM-DD and split hit vs missed against DAILY_DIAL_GOAL. */
+function computeDaysHitMissed(timestamps: string[]) {
+  const byDay = new Map<string, number>();
+  for (const ts of timestamps) {
+    if (!ts) continue;
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    byDay.set(key, (byDay.get(key) ?? 0) + 1);
+  }
+  let hit = 0, missed = 0;
+  byDay.forEach((count) => {
+    if (count <= 0) return;
+    if (count >= DAILY_DIAL_GOAL) hit++;
+    else missed++;
+  });
+  return { hit, missed, activeDays: hit + missed };
+}
 
 /* ─── constants ─── */
 const OBJECTION_CATEGORIES = [
