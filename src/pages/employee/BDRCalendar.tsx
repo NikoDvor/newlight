@@ -12,11 +12,13 @@ import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonthGrid,
+  WeekGrid,
   DayAgendaSheet,
   CalendarGridSkeleton,
   CalendarAgendaSkeleton,
   CalendarEmptyState,
   BookingLinkCard,
+  ViewSwitcher,
   resolveEventKind,
   eventColor,
   EVENT_LABEL,
