@@ -239,6 +239,8 @@ async function runNotifications(
     clientName: string;
     clientPhone: string;
     clientEmail: string;
+    clientBusinessName: string;
+    clientLogoUrl: string;
     bdrUserId: string | undefined;
     bdrPhone: string;
     bdrEmail: string;
@@ -249,7 +251,7 @@ async function runNotifications(
   },
 ): Promise<void> {
   try {
-    const { clientName, clientPhone, clientEmail, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
+    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
     const when = formatDateTime(startsAt);
 
     // --- 1. SMS to client ----------------------------------------------------
