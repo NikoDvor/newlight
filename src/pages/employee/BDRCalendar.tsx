@@ -349,43 +349,7 @@ export default function BDRCalendar() {
         />
       )}
 
-      {view === "month" ? (
-        <>
-          <MonthGrid
-            monthCursor={cursor}
-            selectedDay={selectedDay}
-            events={visibleEvents.map<CalendarEventLike>((e) => ({
-              id: e.id,
-              startsAt: e.starts_at,
-              endsAt: e.ends_at,
-              title: e.title,
-              description: e.description,
-              kind: resolveEventKind(e.source),
-              raw: e,
-            }))}
-            onSelectDay={(d) => {
-              setSelectedDay(d);
-              if (isMobile) setShowDaySheet(true);
-            }}
-          />
-          <DayAgendaSheet
-            day={selectedDay}
-            open={showDaySheet}
-            onOpenChange={setShowDaySheet}
-            eventCount={
-              (eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []).length
-            }
-          >
-            <DayAgenda
-              day={selectedDay}
-              events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
-              onEventClick={handleEventClick}
-            />
-          </DayAgendaSheet>
-        </>
-      ) : (
-        <WeekView cursor={cursor} events={events} selectedDay={selectedDay}
-          onSelectDay={setSelectedDay} onEventClick={handleEventClick} />)}
+
 
       {/* Floating Add button */}
       <button
