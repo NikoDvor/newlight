@@ -185,6 +185,7 @@ export default function BDRCalendar() {
           name: `Extra Booking Link (${extraCalendars.length + 2})`,
           booking_slug: slug,
           closing_booking_slug: `${slug}-closing`,
+          payment_booking_slug: `${slug}-payment`,
         })
         .select("*")
         .single();
