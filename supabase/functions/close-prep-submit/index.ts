@@ -395,9 +395,12 @@ async function sendClosePrepNotifications(supabase: any, args: {
       lead.phone ? `  • Phone: ${lead.phone}` : "",
       lead.email ? `  • Email: ${lead.email}` : "",
       ``,
+      `Send this link to the client during the closing meeting so they can pay + e-sign in one flow:`,
+      paySignUrl,
+      ``,
       `— NewLight`,
     ].filter(Boolean).join("\n");
-    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead });
+    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl });
     await sendEmail(repEmail, subj, html, text);
   }
 }
@@ -410,8 +413,9 @@ function closePrepHtml(args: {
   priceLine: string;
   closing_notes: string | null;
   lead: any;
+  paySignUrl?: string;
 }): string {
-  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead } = args;
+  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl } = args;
   const rows: string[] = [
     `<tr><td style="padding:6px 0;color:#6b7280;width:130px;">BDR</td><td style="padding:6px 0;"><strong>${repName || "-"}</strong></td></tr>`,
     `<tr><td style="padding:6px 0;color:#6b7280;">Client</td><td style="padding:6px 0;"><strong>${who}</strong></td></tr>`,
