@@ -162,33 +162,75 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
       setCal(data);
 
 
-      // If a form is assigned, load its definition from client_forms (fields live in intake_questions jsonb).
+      // If a form is assigned, prefer the new `forms` + `form_fields` schema,
+      // fall back to the legacy `client_forms.intake_questions` payload.
+      // (Turn A dual-read — nothing removed yet.)
       if (data?.booking_form_id) {
         const formId = data.booking_form_id as string;
-        const { data: fd, error: fdErr } = await (supabase as any)
+
+        // Legacy read stays for form_settings (payment link/requires_payment
+        // live only in client_forms until Turns B/C).
+        const { data: legacy, error: legacyErr } = await (supabase as any)
           .from("client_forms")
           .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message, form_settings")
           .eq("id", formId)
           .maybeSingle();
-        console.error("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
-        const settings = (fd as any)?.form_settings || {};
+        console.error("[BDRBookingPublic] legacy client_forms row:", legacy, "err:", legacyErr);
+
+        const settings = (legacy as any)?.form_settings || {};
         setRequiresPayment(Boolean(settings.requires_payment));
         setPaymentLinkUrl(typeof settings.stripe_payment_link_url === "string" && settings.stripe_payment_link_url.trim()
           ? settings.stripe_payment_link_url.trim()
           : null);
-        if (fd) {
+
+        // Preferred read: new schema.
+        const { data: newForm } = await (supabase as any)
+          .from("forms")
+          .select("id, form_name, client_id, confirmation_message, is_active")
+          .eq("id", formId)
+          .maybeSingle();
+        const { data: newFields } = await (supabase as any)
+          .from("form_fields")
+          .select("id, field_label, field_key, field_type, placeholder_text, help_text, is_required, field_order, options_json")
+          .eq("form_id", formId)
+          .order("field_order", { ascending: true });
+        console.error("[BDRBookingPublic] new-schema form:", newForm, "fields:", newFields?.length ?? 0);
+
+        const useNew = !!newForm && Array.isArray(newFields) && newFields.length > 0;
+
+        if (useNew) {
           setFormDef({
-            id: fd.id,
-            form_name: fd.form_name,
-            intro_text: fd.confirmation_message || null,
+            id: newForm.id,
+            form_name: newForm.form_name,
+            intro_text: newForm.confirmation_message || null,
             button_text: null,
-            client_id: fd.client_id,
+            client_id: newForm.client_id,
           });
-          const requiredKeys: string[] = Array.isArray(fd.required_fields)
-            ? fd.required_fields.map((r: any) => String(r))
+          const mapped: FormField[] = (newFields as any[]).map((f, idx) => ({
+            id: String(f.field_key || f.id || `q_${idx}`),
+            field_label: String(f.field_label ?? f.field_key ?? ""),
+            field_key: String(f.field_key ?? f.id ?? `q_${idx}`),
+            field_type: String(f.field_type ?? "text"),
+            placeholder_text: f.placeholder_text ?? null,
+            help_text: f.help_text ?? null,
+            is_required: Boolean(f.is_required),
+            field_order: Number(f.field_order ?? idx),
+            options_json: f.options_json ?? null,
+          }));
+          setFormFields(mapped);
+          if (mapped.length === 0) setFormStepComplete(true);
+        } else if (legacy) {
+          setFormDef({
+            id: legacy.id,
+            form_name: legacy.form_name,
+            intro_text: legacy.confirmation_message || null,
+            button_text: null,
+            client_id: legacy.client_id,
+          });
+          const requiredKeys: string[] = Array.isArray(legacy.required_fields)
+            ? legacy.required_fields.map((r: any) => String(r))
             : [];
-          let questions: any[] = Array.isArray(fd.intake_questions) ? fd.intake_questions : [];
-          // Fallback: form exists but has no configured questions — render a sensible default intake.
+          let questions: any[] = Array.isArray(legacy.intake_questions) ? legacy.intake_questions : [];
           if (questions.length === 0) {
             questions = [
               { id: "full_name", label: "Your full name", type: "text", required: true },
@@ -213,14 +255,14 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
               options_json: q.options ?? q.options_json ?? null,
             };
           }).sort((a, b) => a.field_order - b.field_order);
-          console.error("[BDRBookingPublic] mapped form fields:", mapped);
           setFormFields(mapped);
           if (mapped.length === 0) setFormStepComplete(true);
         } else {
-          console.error("[BDRBookingPublic] booking_form_id set but client_forms row not visible (RLS?)");
+          console.error("[BDRBookingPublic] booking_form_id set but no form row visible in either schema");
           setFormStepComplete(true);
         }
       } else {
+
         // No form => Step 1 is a no-op; go straight to Step 2.
         setFormStepComplete(true);
       }
