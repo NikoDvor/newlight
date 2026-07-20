@@ -202,6 +202,12 @@ export function BDRDashboard() {
         <StatCard label="Appointments Booked This Week" value={appointments.length} icon={CheckCircle2} />
         <StatCard label="Booking Rate This Week" value={`${bookingRate}%`} icon={TrendingUp} />
       </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard label="Assigned Leads" value={contacts.length} icon={Users} />
+        <StatCard label="Upcoming Meetings" value={appointments.filter(a => a.start_time && new Date(a.start_time) >= today).length} icon={CalendarClock} />
+        <StatCard label="Active Booking Links" value={3} icon={Link2} />
+      </div>
+      <YourBookingLinks />
       <div className="grid gap-4 xl:grid-cols-2">
         <TrainingProgress trackKey="bdr" />
         <SectionCard title="Daily Targets">
