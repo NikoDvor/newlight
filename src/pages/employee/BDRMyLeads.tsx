@@ -1210,14 +1210,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
   };
 
-  const flagsFor = (ownerName: string): string[] => {
-    const s = (ownerName || "").toLowerCase();
-    const out: string[] = [];
-    if (s.includes("corporate account")) out.push("CORPORATE");
-    if (s.includes("booth renter")) out.push("BOOTH RENTER");
-    if (s.includes("bd-affiliated") || s.includes("bd affiliated")) out.push("BD-AFFILIATED");
-    return out;
-  };
+  const flagsFor = (ownerName: string): string[] => parseLeadFlags(ownerName);
 
   const toggle = (i: number) => setChecked(prev => { const n = [...prev]; n[i] = !n[i]; return n; });
   const selectedCount = checked.filter(Boolean).length;
