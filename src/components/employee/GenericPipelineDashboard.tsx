@@ -78,6 +78,7 @@ export function GenericPipelineDashboard() {
   const [unlocks, setUnlocks] = useState<any[]>([]);
   const [training, setTraining] = useState<TrainingStats | null>(null);
   const [dailyActivity, setDailyActivity] = useState<{ day: string; count: number }[]>([]);
+  const [dialCounts, setDialCounts] = useState({ today: 0, week: 0, month: 0 });
 
   // live tick
   useEffect(() => {
