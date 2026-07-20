@@ -291,17 +291,63 @@ export default function BDRCalendar() {
           }}><ChevronRight className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" className="h-8 px-3 ml-1 text-white/70 text-xs rounded-full hover:text-white hover:bg-white/5" onClick={() => { const t = new Date(); setCursor(t); setSelectedDay(t); }}>Today</Button>
         </div>
-        <div className="flex rounded-full overflow-hidden bg-white/[0.04] border border-white/10 shrink-0 p-0.5">
-          {(["month","week"] as const).map(v => (
-            <button key={v} onClick={() => setView(v)}
-              className="px-3 py-1 text-[11px] font-semibold capitalize transition-colors rounded-full"
-              style={{
-                background: view === v ? "hsl(211,96%,56%)" : "transparent",
-                color: view === v ? "white" : "hsl(0,0%,65%)",
-              }}>{v}</button>
-          ))}
-        </div>
+        <ViewSwitcher value={view} onChange={setView} views={[
+          { key: "month", label: "Month" },
+          { key: "week", label: "Week" },
+        ]} />
       </div>
+
+      {view === "month" ? (
+        <>
+          <MonthGrid
+            monthCursor={cursor}
+            selectedDay={selectedDay}
+            events={visibleEvents.map<CalendarEventLike>((e) => ({
+              id: e.id,
+              startsAt: e.starts_at,
+              endsAt: e.ends_at,
+              title: e.title,
+              description: e.description,
+              kind: resolveEventKind(e.source),
+              raw: e,
+            }))}
+            onSelectDay={(d) => {
+              setSelectedDay(d);
+              if (isMobile) setShowDaySheet(true);
+            }}
+          />
+          <DayAgendaSheet
+            day={selectedDay}
+            open={showDaySheet}
+            onOpenChange={setShowDaySheet}
+            eventCount={
+              (eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []).length
+            }
+          >
+            <DayAgenda
+              day={selectedDay}
+              events={eventsByDay.get(`${selectedDay.getFullYear()}-${selectedDay.getMonth()}-${selectedDay.getDate()}`) || []}
+              onEventClick={handleEventClick}
+            />
+          </DayAgendaSheet>
+        </>
+      ) : (
+        <WeekGrid
+          weekCursor={cursor}
+          selectedDay={selectedDay}
+          events={events.map<CalendarEventLike>((e) => ({
+            id: e.id,
+            startsAt: e.starts_at,
+            endsAt: e.ends_at,
+            title: e.title,
+            description: e.description,
+            kind: resolveEventKind(e.source),
+            raw: e,
+          }))}
+          onSelectDay={setSelectedDay}
+          onEventClick={(ev) => handleEventClick((ev.raw as Event) ?? (ev as unknown as Event))}
+        />
+      )}
 
       {view === "month" ? (
         <>
