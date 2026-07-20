@@ -28,7 +28,7 @@ export default function EmployeePaySign() {
       if (!leadId) { setError("Missing lead id"); setLoading(false); return; }
       const { data: dealRow, error: dealErr } = await supabase
         .from("crm_deals")
-        .select("id, deal_name, pay_sign_status, service_agreement_envelope_id, payment_invoice_id, proposal_id_current, contact_id, contact_name, contact_email")
+        .select("id, deal_name, pay_sign_status, service_agreement_envelope_id, payment_invoice_id, proposal_id_current, contact_id")
         .eq("id", leadId)
         .maybeSingle();
       if (dealErr || !dealRow) { setError(dealErr?.message || "Deal not found"); setLoading(false); return; }
