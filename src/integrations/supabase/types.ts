@@ -7491,6 +7491,7 @@ export type Database = {
           notes: string | null
           objection_category: string | null
           outcome_history: Json
+          owner_booking_link: string | null
           owner_name: string | null
           phone: string | null
           phone_type: string | null
@@ -7530,6 +7531,7 @@ export type Database = {
           notes?: string | null
           objection_category?: string | null
           outcome_history?: Json
+          owner_booking_link?: string | null
           owner_name?: string | null
           phone?: string | null
           phone_type?: string | null
@@ -7569,6 +7571,7 @@ export type Database = {
           notes?: string | null
           objection_category?: string | null
           outcome_history?: Json
+          owner_booking_link?: string | null
           owner_name?: string | null
           phone?: string | null
           phone_type?: string | null
