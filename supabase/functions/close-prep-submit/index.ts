@@ -231,7 +231,15 @@ Deno.serve(async (req) => {
     const proposalId = proposal!.id as string;
 
     // 5b. Create service_agreement envelope + items (Form 2 artifact #2)
-    const summaryHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service Agreement Summary</title></head><body style="font-family:Arial,sans-serif;padding:32px;max-width:640px;margin:0 auto;color:#111"><h1 style="font-size:22px">Service Agreement — ${lead.business_name.replace(/</g,"&lt;")}</h1><p><strong>Terms:</strong> ${priceLineForDoc}</p>${closing_notes ? `<p><strong>Notes:</strong><br>${closing_notes.replace(/</g,"&lt;").replace(/\n/g,"<br>")}</p>` : ""}<p style="margin-top:32px;font-size:12px;color:#555">By signing this envelope you agree to the terms above. A formal Service Agreement PDF will be attached by NewLight staff and countersigned.</p></body></html>`;
+    const summaryHtml = buildServiceAgreementHtml({
+      businessName: lead.business_name,
+      priceLine: priceLineForDoc,
+      pricingModel: pricing_model,
+      initialFee: initial_fee != null ? Number(initial_fee) : 0,
+      recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
+      commissionRate: commission_rate != null ? Number(commission_rate) : null,
+      closingNotes: closing_notes || null,
+    });
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
 
     const { data: envelope, error: envErr } = await supabase
