@@ -115,13 +115,20 @@ export function computeAvailableSlots(
     const [sh, sm] = parseHM(row.start_time, [9, 0]);
     const [eh, em] = parseHM(row.end_time, [17, 0]);
     const startMin = sh * 60 + sm;
-    const endMin = eh * 60 + em;
+    let endMin = eh * 60 + em;
+    // Treat "23:59" or "24:00" as end-of-day (1440) so 24/7 windows include
+    // the final slot without rolling slotStart into the next calendar day.
+    if (endMin === 1439 || endMin >= 1440) endMin = 1440;
     const stepMin = row.slot_interval_minutes || step;
 
     for (let m = startMin; m + duration + bufAfter <= endMin; m += stepMin) {
       if (m - bufBefore < startMin && bufBefore > 0) continue;
       const slotStart = new Date(day);
-      slotStart.setHours(Math.floor(m / 60), m % 60, 0, 0);
+      // Cap slotStart's hour at 23 so we never roll to next day; final slot
+      // (e.g. 23:30 with 30-min duration) still ends at 24:00 on slotEnd.
+      const hh = Math.min(23, Math.floor(m / 60));
+      const mm = Math.floor(m / 60) >= 24 ? 59 : (m % 60);
+      slotStart.setHours(hh, mm, 0, 0);
       if (slotStart < cutoff) continue;
       const slotEnd = new Date(slotStart.getTime() + duration * 60_000);
       if (overlapsBooked(slotStart, slotEnd, booked)) continue;
