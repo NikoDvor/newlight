@@ -49,6 +49,7 @@ interface Cal {
   booking_form_id: string | null;
   closing_booking_slug?: string | null;
   payment_booking_slug?: string | null;
+  min_notice_minutes?: number | null;
 }
 
 export type BookingMode = "discovery" | "closing" | "payment";
