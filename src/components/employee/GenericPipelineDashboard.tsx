@@ -248,23 +248,37 @@ export function GenericPipelineDashboard() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <DashboardAtmosphere />
+
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
-      <YourForms />
+      <Reveal><YourForms /></Reveal>
 
       {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
+      <Reveal delay={0.05}>
       {(() => {
         const hit = dialCounts.today >= DAILY_DIAL_GOAL;
+        const behind = dialCounts.today < DAILY_DIAL_GOAL * 0.75;
         const remaining = Math.max(0, DAILY_DIAL_GOAL - dialCounts.today);
         const pct = Math.min(100, Math.round((dialCounts.today / DAILY_DIAL_GOAL) * 100));
         const tone = hit
-          ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)" }
-          : dialCounts.today >= DAILY_DIAL_GOAL * 0.75
-          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)" }
-          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)" };
+          ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)", glow: "0 0 0 1px hsla(142,72%,42%,0.25), 0 12px 40px -12px hsla(142,72%,42%,0.35)" }
+          : !behind
+          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)", glow: "0 0 0 1px hsla(45,95%,55%,0.28), 0 12px 40px -12px hsla(45,95%,55%,0.35)" }
+          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)", glow: "0 0 0 1px hsla(0,72%,55%,0.28), 0 12px 40px -12px hsla(0,72%,55%,0.4)" };
         return (
-          <Card className="border p-4" style={{ borderColor: tone.border, background: tone.bg }}>
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+          <Card
+            className="border p-4 backdrop-blur-xl relative overflow-hidden"
+            style={{ borderColor: tone.border, background: tone.bg, boxShadow: tone.glow }}
+          >
+            <motion.div
+              aria-hidden
+              className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-30 pointer-events-none"
+              style={{ background: `radial-gradient(circle, ${tone.bar} 0%, transparent 70%)` }}
+              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="flex items-center justify-between gap-4 flex-wrap relative">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-background/40 ${tone.text}`}>
                   <PhoneCall className="h-5 w-5" />
@@ -272,7 +286,9 @@ export function GenericPipelineDashboard() {
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Dials Today</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-foreground tabular-nums">{dialCounts.today}</span>
+                    <span className={`text-2xl font-bold tabular-nums ${tone.text}`}>
+                      <PulseNumber value={dialCounts.today} />
+                    </span>
                     <span className="text-xs text-muted-foreground">/ {DAILY_DIAL_GOAL} goal</span>
                   </div>
                 </div>
@@ -281,16 +297,25 @@ export function GenericPipelineDashboard() {
                 {hit ? `✓ Goal hit — ${dialCounts.today - DAILY_DIAL_GOAL} over` : `${remaining} dials to go`}
               </div>
               <div className="flex gap-4 text-xs">
-                <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.week}</span></div>
-                <div><span className="text-muted-foreground">Month</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.month}</span></div>
+                <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums"><PulseNumber value={dialCounts.week} /></span></div>
+                <div><span className="text-muted-foreground">Month</span> <span className="text-foreground font-semibold ml-1 tabular-nums"><PulseNumber value={dialCounts.month} /></span></div>
               </div>
             </div>
             <div className="mt-3 h-1.5 w-full rounded-full bg-background/50 overflow-hidden">
-              <div className="h-full transition-all" style={{ width: `${pct}%`, background: tone.bar }} />
+              <motion.div
+                className="h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+                style={{ background: tone.bar, boxShadow: `0 0 12px ${tone.bar}` }}
+              />
             </div>
           </Card>
         );
       })()}
+      </Reveal>
+
+
 
 
 
