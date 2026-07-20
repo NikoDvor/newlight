@@ -561,6 +561,8 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
     c.booking_slug ? `${origin}/bdr/book/${c.booking_slug}` : "";
   const closingUrlFor = (c: BdrCalendar) =>
     (c as any).closing_booking_slug ? `${origin}/bdr/book-closing/${(c as any).closing_booking_slug}` : "";
+  const paymentUrlFor = (c: BdrCalendar) =>
+    (c as any).payment_booking_slug ? `${origin}/bdr/book-payment/${(c as any).payment_booking_slug}` : "";
 
   const saveRename = async (cal: BdrCalendar) => {
     const nextName = editingName.trim();
