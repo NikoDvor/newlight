@@ -1,0 +1,1 @@
+ALTER TYPE public.envelope_type ADD VALUE IF NOT EXISTS 'service_agreement';

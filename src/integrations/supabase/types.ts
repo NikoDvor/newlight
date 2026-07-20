@@ -14020,7 +14020,11 @@ export type Database = {
         | "signed"
         | "declined"
         | "expired"
-      envelope_type: "proposal" | "onboarding_bundle" | "other"
+      envelope_type:
+        | "proposal"
+        | "onboarding_bundle"
+        | "other"
+        | "service_agreement"
       household_relationship_role:
         | "head_of_household"
         | "spouse"
@@ -14213,7 +14217,12 @@ export const Constants = {
         "declined",
         "expired",
       ],
-      envelope_type: ["proposal", "onboarding_bundle", "other"],
+      envelope_type: [
+        "proposal",
+        "onboarding_bundle",
+        "other",
+        "service_agreement",
+      ],
       household_relationship_role: [
         "head_of_household",
         "spouse",
