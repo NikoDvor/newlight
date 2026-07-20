@@ -7477,6 +7477,7 @@ export type Database = {
           crm_contact_id: string | null
           crm_deal_id: string | null
           customer_notes: string | null
+          dialer_bookable: boolean | null
           email: string | null
           has_booking_system: boolean | null
           has_sales_team: boolean | null
@@ -7515,6 +7516,7 @@ export type Database = {
           crm_contact_id?: string | null
           crm_deal_id?: string | null
           customer_notes?: string | null
+          dialer_bookable?: boolean | null
           email?: string | null
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
@@ -7553,6 +7555,7 @@ export type Database = {
           crm_contact_id?: string | null
           crm_deal_id?: string | null
           customer_notes?: string | null
+          dialer_bookable?: boolean | null
           email?: string | null
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
