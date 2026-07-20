@@ -119,12 +119,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         setEmployeeProfile(profile ?? null);
       } else {
-        // Client user — pick the first role
-        setUserRole(roles[0].role);
+        // Client user — prefer a role row that carries an explicit client_id
+        // (e.g. the client_owner row from provisioning) over the default
+        // client_team row inserted by the signup trigger, which has null
+        // client_id and would leave the workspace unresolved.
+        const withClient = roles.find(r => !!r.client_id) || roles[0];
+        setUserRole(withClient.role);
         setIsAdmin(false);
         // Only auto-set client if none is already set (e.g. from /w/:slug)
-        if (!activeClientId && roles[0].client_id) {
-          setActiveClientId(roles[0].client_id);
+        if (!activeClientId && withClient.client_id) {
+          setActiveClientId(withClient.client_id);
           setViewMode("workspace");
         }
       }
