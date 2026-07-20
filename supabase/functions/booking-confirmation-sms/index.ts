@@ -312,7 +312,8 @@ async function runNotifications(
         tempPassword = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
 
         const industry = meta.improvement_area || meta.industry || null;
-        const businessName = meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
+        const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
+        const logoUrl = clientLogoUrl || meta.logo_url || null;
 
         const cronSecret = Deno.env.get("CRON_SECRET") || "";
         const provisionResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/provision-from-booking`, {
@@ -324,6 +325,8 @@ async function runNotifications(
           },
           body: JSON.stringify({
             business_name: businessName,
+            company_name: businessName,
+            logo_url: logoUrl,
             contact_name: clientName || clientEmail.split("@")[0],
             contact_email: clientEmail,
             contact_phone: clientPhone || null,
