@@ -1150,6 +1150,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
         else if (/booking\s*link\s*is\s*owner|owner.?s?\s*calendar\s*confirmed/.test(c)) bloIdx = i;
+        else if (/owner\s*booking\s*link/.test(c)) oblIdx = i;
         else if (/self.?booking\s*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
         else if (/booking\s*link/.test(c)) blIdx = i;
