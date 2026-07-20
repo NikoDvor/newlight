@@ -311,8 +311,10 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
       body: {
         booking_slug: mode === "closing"
           ? (cal.closing_booking_slug || cal.booking_slug || cal.id)
+          : mode === "payment"
+          ? ((cal as any).payment_booking_slug || cal.booking_slug || cal.id)
           : (cal.booking_slug || cal.id),
-        meeting_kind: mode === "closing" ? "closing" : "discovery",
+        meeting_kind: mode === "closing" ? "closing" : mode === "payment" ? "payment" : "discovery",
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,
