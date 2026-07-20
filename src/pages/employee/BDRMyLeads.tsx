@@ -317,6 +317,7 @@ export default function BDRMyLeads() {
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? null,
         self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
+        dialer_bookable: row.dialer_bookable ?? null,
         meeting_booked: row.meeting_booked || null,
         list_name: cleanList,
       }).select("id").single();
