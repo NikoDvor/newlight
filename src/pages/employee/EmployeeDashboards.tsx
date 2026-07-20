@@ -61,6 +61,54 @@ function EmptyLine({ label }: { label: string }) {
   return <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">{label}</div>;
 }
 
+function YourBookingLinks() {
+  const [cal, setCal] = useState<BdrCalendar | null>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
+  useEffect(() => { (async () => { const c = await ensureBdrCalendar(); setCal(c); })(); }, []);
+  if (!cal) return null;
+  const anyCal = cal as any;
+  const links = [
+    {
+      name: "Discovery Call",
+      badge: "Meeting 1",
+      slug: cal.booking_slug,
+      url: cal.booking_slug ? `${origin}/bdr/book/${cal.booking_slug}` : "",
+      active: cal.booking_active !== false,
+    },
+    {
+      name: "Final Closing Meeting",
+      badge: "Meeting 2",
+      slug: anyCal.closing_booking_slug,
+      url: anyCal.closing_booking_slug ? `${origin}/bdr/book-closing/${anyCal.closing_booking_slug}` : "",
+      active: anyCal.closing_booking_active !== false,
+    },
+    {
+      name: "Onboarding & Payment",
+      badge: "Meeting 3",
+      slug: anyCal.payment_booking_slug,
+      url: anyCal.payment_booking_slug ? `${origin}/bdr/book-payment/${anyCal.payment_booking_slug}` : "",
+      active: anyCal.payment_booking_active !== false,
+    },
+  ];
+  return (
+    <SectionCard title="Your Booking Links">
+      <div className="grid gap-3 md:grid-cols-3">
+        {links.map(l => (
+          <div key={l.badge} className="relative">
+            <BookingLinkCard name={l.name} badge={l.badge} url={l.url} />
+            {!l.active && (
+              <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
+                Paused
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+
 function Header({ title }: { title: string }) {
   return (
     <div className="flex items-end justify-between gap-4 flex-wrap">
