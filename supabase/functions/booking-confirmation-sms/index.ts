@@ -142,17 +142,21 @@ Deno.serve(async (req) => {
     let clientName: string = meta.customer_name || "";
     let clientPhone: string = meta.phone || "";
     let clientEmail: string = meta.email || meta.owner_email || "";
+    let clientBusinessName: string = meta.business_name || meta.company_name || "";
+    let clientLogoUrl: string = meta.logo_url || "";
 
-    if ((!clientName || !clientPhone || !clientEmail) && leadId) {
+    if (leadId) {
       const { data: lead } = await supabase
         .from("nl_bdr_leads")
-        .select("owner_name, business_name, phone, owner_email")
+        .select("owner_name, business_name, phone, email, logo_url")
         .eq("id", leadId)
         .maybeSingle();
       if (lead) {
         if (!clientName) clientName = lead.owner_name || lead.business_name || "";
         if (!clientPhone) clientPhone = lead.phone || "";
-        if (!clientEmail) clientEmail = lead.owner_email || "";
+        if (!clientEmail) clientEmail = lead.email || "";
+        if (!clientBusinessName) clientBusinessName = lead.business_name || "";
+        if (!clientLogoUrl) clientLogoUrl = lead.logo_url || "";
       }
     }
 
