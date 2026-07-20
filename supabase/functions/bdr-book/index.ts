@@ -41,11 +41,11 @@ Deno.serve(async (req) => {
 
     // 1. Find the originating calendar by booking slug first, then UUID fallback.
     const lookupValue = String(booking_slug).trim();
-    const slugColumn = isClosing ? "closing_booking_slug" : "booking_slug";
-    const activeColumn = isClosing ? "closing_booking_active" : "booking_active";
+    const slugColumn = isPayment ? "payment_booking_slug" : isClosing ? "closing_booking_slug" : "booking_slug";
+    const activeColumn = isPayment ? "payment_booking_active" : isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool`)
+      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool`)
       .eq(slugColumn, lookupValue)
       .maybeSingle();
     let originCal = slugCal;
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, closing_booking_active, round_robin_pool")
+        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
