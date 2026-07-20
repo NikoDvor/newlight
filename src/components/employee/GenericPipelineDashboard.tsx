@@ -377,14 +377,18 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
 
       {/* 2. STATS ROW */}
+      <Reveal delay={0.05}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Close Rate (Month)" value={`${closeRate}%`} icon={TrendingUp} tone="success" />
         <StatCard label="Deals Closed (Month)" value={closedMonth} icon={Target} tone="success" />
         <StatCard label="Objections Logged (Month)" value={monthObjections} icon={AlertTriangle} tone="warn" />
         <StatCard label="Calls / Meetings (Month)" value={monthCalls + monthMeetings} icon={PhoneCall} />
       </div>
+      </Reveal>
+
 
       {/* 3. OBJECTIONS BREAKDOWN */}
       <SectionCard title="Objections Breakdown" icon={BarChart3}>
