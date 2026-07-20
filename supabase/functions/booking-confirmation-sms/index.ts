@@ -142,17 +142,21 @@ Deno.serve(async (req) => {
     let clientName: string = meta.customer_name || "";
     let clientPhone: string = meta.phone || "";
     let clientEmail: string = meta.email || meta.owner_email || "";
+    let clientBusinessName: string = meta.business_name || meta.company_name || "";
+    let clientLogoUrl: string = meta.logo_url || "";
 
-    if ((!clientName || !clientPhone || !clientEmail) && leadId) {
+    if (leadId) {
       const { data: lead } = await supabase
         .from("nl_bdr_leads")
-        .select("owner_name, business_name, phone, owner_email")
+        .select("owner_name, business_name, phone, email, logo_url")
         .eq("id", leadId)
         .maybeSingle();
       if (lead) {
         if (!clientName) clientName = lead.owner_name || lead.business_name || "";
         if (!clientPhone) clientPhone = lead.phone || "";
-        if (!clientEmail) clientEmail = lead.owner_email || "";
+        if (!clientEmail) clientEmail = lead.email || "";
+        if (!clientBusinessName) clientBusinessName = lead.business_name || "";
+        if (!clientLogoUrl) clientLogoUrl = lead.logo_url || "";
       }
     }
 
@@ -191,6 +195,7 @@ Deno.serve(async (req) => {
     // EdgeRuntime.waitUntil so the isolate stays alive after we return 202.
     const contacts = {
       clientName, clientPhone, clientEmail,
+      clientBusinessName, clientLogoUrl,
       bdrUserId, bdrPhone, bdrEmail, bdrName,
       startsAt, meta, recordId: record.id as string,
     };
@@ -234,6 +239,8 @@ async function runNotifications(
     clientName: string;
     clientPhone: string;
     clientEmail: string;
+    clientBusinessName: string;
+    clientLogoUrl: string;
     bdrUserId: string | undefined;
     bdrPhone: string;
     bdrEmail: string;
@@ -244,7 +251,7 @@ async function runNotifications(
   },
 ): Promise<void> {
   try {
-    const { clientName, clientPhone, clientEmail, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
+    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
     const when = formatDateTime(startsAt);
 
     // --- 1. SMS to client ----------------------------------------------------
@@ -305,7 +312,8 @@ async function runNotifications(
         tempPassword = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
 
         const industry = meta.improvement_area || meta.industry || null;
-        const businessName = meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
+        const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
+        const logoUrl = clientLogoUrl || meta.logo_url || null;
 
         const cronSecret = Deno.env.get("CRON_SECRET") || "";
         const provisionResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/provision-from-booking`, {
@@ -317,6 +325,8 @@ async function runNotifications(
           },
           body: JSON.stringify({
             business_name: businessName,
+            company_name: businessName,
+            logo_url: logoUrl,
             contact_name: clientName || clientEmail.split("@")[0],
             contact_email: clientEmail,
             contact_phone: clientPhone || null,
