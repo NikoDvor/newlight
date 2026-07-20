@@ -391,6 +391,7 @@ export function GenericPipelineDashboard() {
 
 
       {/* 3. OBJECTIONS BREAKDOWN */}
+      <Reveal>
       <SectionCard title="Objections Breakdown" icon={BarChart3}>
         {objectionCounts.length === 0 ? (
           <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No objections logged yet.</div>
@@ -408,6 +409,8 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
+
 
       {/* 4. RECOMMENDED PRACTICE */}
       {topObjection && (
