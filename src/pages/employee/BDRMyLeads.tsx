@@ -1227,6 +1227,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           has_booking_system,
           booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
           booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
+          owner_booking_link: oblIdx >= 0 ? (r[oblIdx]?.trim() || null) : null,
           self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
           dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
