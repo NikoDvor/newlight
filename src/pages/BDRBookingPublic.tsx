@@ -48,9 +48,10 @@ interface Cal {
   booking_active: boolean;
   booking_form_id: string | null;
   closing_booking_slug?: string | null;
+  payment_booking_slug?: string | null;
 }
 
-export type BookingMode = "discovery" | "closing";
+export type BookingMode = "discovery" | "closing" | "payment";
 
 interface FormDef {
   id: string;
@@ -108,6 +109,8 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [formStepComplete, setFormStepComplete] = useState(false);
   const [savedSubmissionId, setSavedSubmissionId] = useState<string | null>(null);
+  const [paymentLinkUrl, setPaymentLinkUrl] = useState<string | null>(null);
+  const [requiresPayment, setRequiresPayment] = useState(false);
 
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
@@ -122,11 +125,14 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     (async () => {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
-      const rpcName = mode === "closing" ? "get_public_bdr_closing_calendar" : "get_public_bdr_calendar";
+      const rpcName =
+        mode === "closing" ? "get_public_bdr_closing_calendar"
+        : mode === "payment" ? "get_public_bdr_payment_calendar"
+        : "get_public_bdr_calendar";
       const { data: rpcData, error: calErr } = await (supabase as any)
         .rpc(rpcName, { _slug_or_id: lookupValue });
       const raw = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
-      // Normalize closing-mode rows so downstream code can read the same fields.
+      // Normalize closing/payment-mode rows so downstream code can read the same fields.
       const data: Cal | null = raw
         ? (mode === "closing"
             ? {
@@ -142,6 +148,20 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
                 booking_form_id: raw.closing_booking_form_id,
                 closing_booking_slug: raw.closing_booking_slug,
               }
+            : mode === "payment"
+            ? {
+                id: raw.id,
+                client_id: raw.client_id,
+                name: raw.name,
+                booking_slug: raw.booking_slug,
+                availability: raw.availability,
+                timezone: raw.timezone,
+                booking_title: raw.payment_booking_title,
+                booking_description: raw.payment_booking_description,
+                booking_active: raw.payment_booking_active,
+                booking_form_id: raw.payment_booking_form_id,
+                payment_booking_slug: raw.payment_booking_slug,
+              }
             : raw)
         : null;
       console.error("[BDRBookingPublic] calendar lookup", { mode, lookupValue, found: !!data, calErr });
@@ -153,10 +173,15 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
         const formId = data.booking_form_id as string;
         const { data: fd, error: fdErr } = await (supabase as any)
           .from("client_forms")
-          .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message")
+          .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message, form_settings")
           .eq("id", formId)
           .maybeSingle();
         console.error("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
+        const settings = (fd as any)?.form_settings || {};
+        setRequiresPayment(Boolean(settings.requires_payment));
+        setPaymentLinkUrl(typeof settings.stripe_payment_link_url === "string" && settings.stripe_payment_link_url.trim()
+          ? settings.stripe_payment_link_url.trim()
+          : null);
         if (fd) {
           setFormDef({
             id: fd.id,
@@ -286,8 +311,10 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
       body: {
         booking_slug: mode === "closing"
           ? (cal.closing_booking_slug || cal.booking_slug || cal.id)
+          : mode === "payment"
+          ? ((cal as any).payment_booking_slug || cal.booking_slug || cal.id)
           : (cal.booking_slug || cal.id),
-        meeting_kind: mode === "closing" ? "closing" : "discovery",
+        meeting_kind: mode === "closing" ? "closing" : mode === "payment" ? "payment" : "discovery",
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,
@@ -448,11 +475,35 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
 
 
 
+            {mode === "payment" && requiresPayment && (
+              <div className="rounded-xl border border-[hsl(211,96%,56%)]/40 bg-[hsl(211,96%,56%)]/10 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Step 1 · Complete your payment</p>
+                  <p className="text-xs text-white/60 mt-1">
+                    Secure your onboarding by completing payment first. Then pick a kickoff time below.
+                  </p>
+                </div>
+                {paymentLinkUrl ? (
+                  <Button
+                    type="button"
+                    onClick={() => window.open(paymentLinkUrl!, "_blank", "noopener,noreferrer")}
+                    className="w-full h-12 text-base bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,36%)] text-white font-semibold"
+                  >
+                    Pay Now
+                  </Button>
+                ) : (
+                  <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+                    Payment link not configured yet — contact your admin to finalize this step.
+                  </div>
+                )}
+              </div>
+            )}
+
             <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
 
             <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book appointment"}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === "payment" ? "Book kickoff call" : "Book appointment")}
             </Button>
             {!contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot ? (
               <p className="text-sm text-red-400 text-center">Please fill in all required fields and select a time slot.</p>

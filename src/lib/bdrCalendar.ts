@@ -15,6 +15,11 @@ export interface BdrCalendar {
   closing_booking_description?: string | null;
   closing_booking_active?: boolean;
   closing_booking_form_id?: string | null;
+  payment_booking_slug?: string | null;
+  payment_booking_title?: string | null;
+  payment_booking_description?: string | null;
+  payment_booking_active?: boolean;
+  payment_booking_form_id?: string | null;
 }
 
 function slugify(input: string) {
@@ -79,6 +84,7 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
       closing_booking_slug: `${baseSlug}-closing`,
+      payment_booking_slug: `${baseSlug}-payment`,
     })
     .select("*")
     .single();

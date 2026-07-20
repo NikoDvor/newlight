@@ -1022,6 +1022,11 @@ export type Database = {
           last_assigned_at: string | null
           name: string
           outlook_sync_enabled: boolean
+          payment_booking_active: boolean | null
+          payment_booking_description: string | null
+          payment_booking_form_id: string | null
+          payment_booking_slug: string | null
+          payment_booking_title: string | null
           round_robin_pool: boolean
           timezone: string
           updated_at: string
@@ -1046,6 +1051,11 @@ export type Database = {
           last_assigned_at?: string | null
           name: string
           outlook_sync_enabled?: boolean
+          payment_booking_active?: boolean | null
+          payment_booking_description?: string | null
+          payment_booking_form_id?: string | null
+          payment_booking_slug?: string | null
+          payment_booking_title?: string | null
           round_robin_pool?: boolean
           timezone?: string
           updated_at?: string
@@ -1070,6 +1080,11 @@ export type Database = {
           last_assigned_at?: string | null
           name?: string
           outlook_sync_enabled?: boolean
+          payment_booking_active?: boolean | null
+          payment_booking_description?: string | null
+          payment_booking_form_id?: string | null
+          payment_booking_slug?: string | null
+          payment_booking_title?: string | null
           round_robin_pool?: boolean
           timezone?: string
           updated_at?: string
@@ -13857,6 +13872,22 @@ export type Database = {
           closing_booking_title: string
           id: string
           name: string
+          timezone: string
+        }[]
+      }
+      get_public_bdr_payment_calendar: {
+        Args: { _slug_or_id: string }
+        Returns: {
+          availability: Json
+          booking_slug: string
+          client_id: string
+          id: string
+          name: string
+          payment_booking_active: boolean
+          payment_booking_description: string
+          payment_booking_form_id: string
+          payment_booking_slug: string
+          payment_booking_title: string
           timezone: string
         }[]
       }
