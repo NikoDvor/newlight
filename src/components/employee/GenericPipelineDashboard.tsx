@@ -73,11 +73,13 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
     : tone === "warn" ? "bg-amber-500/15 text-amber-400"
     : "bg-primary/15 text-primary";
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-4">
+    <Card className={`${GLASS} p-4 transition-all hover:border-primary/40`}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+          <p className="mt-2 text-2xl font-bold text-foreground tabular-nums">
+            <PulseNumber value={value} />
+          </p>
         </div>
         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${bg}`}>
           <Icon className="h-5 w-5" />
@@ -89,7 +91,7 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 
 function SectionCard({ title, icon: Icon, right, children }: { title: string; icon?: typeof PhoneCall; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-5">
+    <Card className={`${GLASS} p-5`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
           {Icon && <Icon className="h-4 w-4 text-primary" />} {title}
@@ -100,6 +102,7 @@ function SectionCard({ title, icon: Icon, right, children }: { title: string; ic
     </Card>
   );
 }
+
 
 export function GenericPipelineDashboard() {
   const { user } = useWorkspace();
