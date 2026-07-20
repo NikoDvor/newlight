@@ -300,12 +300,21 @@ Deno.serve(async (req) => {
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
       commission_rate: commission_rate != null ? Number(commission_rate) : null,
       closing_notes: closing_notes || null,
+      paySignUrl,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
     // deno-lint-ignore no-explicit-any
     const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
     if (typeof waitUntil === "function") waitUntil(notifyTask); else void notifyTask;
 
-    return new Response(JSON.stringify({ ok: true, deal_id: dealId, event_id: evt.id }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      deal_id: dealId,
+      event_id: evt.id,
+      proposal_id: proposalId,
+      envelope_id: envelopeId,
+      envelope_share_token: envelopeToken,
+      pay_sign_url: paySignUrl,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
