@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Clock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { computeAvailableSlots, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
 interface CalendarSlotPickerProps {
   calendarId: string;
@@ -11,6 +11,7 @@ interface CalendarSlotPickerProps {
   duration: number;
   bufferBefore?: number;
   bufferAfter?: number;
+  minNoticeMinutes?: number;
   selectedDate: string;
   selectedTime: string;
   onDateChange: (date: string) => void;
