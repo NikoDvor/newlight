@@ -239,10 +239,10 @@ export default function Onboarding() {
       ];
       await supabase.from("pipeline_stages").insert(defaultPipelineStages);
 
-      // 7. Create default availability settings
-      const defaultAvailability = [1, 2, 3, 4, 5].map(day => ({
+      // 7. Create default 24/7 availability settings (all 7 days)
+      const defaultAvailability = [0, 1, 2, 3, 4, 5, 6].map(day => ({
         client_id: activeClientId, day_of_week: day, enabled: true,
-        start_time: "09:00", end_time: "17:00",
+        start_time: "00:00", end_time: "23:59",
       }));
       await supabase.from("availability_settings").insert(defaultAvailability);
 
