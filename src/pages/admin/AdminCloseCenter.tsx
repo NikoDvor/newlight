@@ -542,7 +542,17 @@ export default function AdminCloseCenter() {
         </Button>
       </div>
 
+      {/* ─── Legacy Notice ─────────────────────────────────────── */}
+      <div className="rounded-xl p-3 flex items-start gap-3 border" style={{ background: "hsla(38,92%,50%,.06)", borderColor: "hsla(38,92%,50%,.22)" }}>
+        <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+        <div className="flex-1 text-xs text-amber-100/90 leading-relaxed">
+          <div className="font-semibold text-amber-200 mb-0.5">Legacy Close Center</div>
+          For any <span className="font-semibold">new deal</span>, use the real end-to-end flow: <span className="font-mono">Form 2 · Close Prep</span> → <span className="font-mono">Form 3 · Pay &amp; Sign</span>. That path creates a real Stripe invoice and a signable <span className="font-mono">service_agreement</span> envelope automatically. This page remains available to view existing <span className="font-mono">client_agreements</span>/invoices and for historical edge cases only.
+        </div>
+      </div>
+
       {/* ─── Booking Links (Meeting 1 / Meeting 2) ─────────────── */}
+
       {(bookingLinks.meeting1 || bookingLinks.meeting2) && (
         <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-1.5">
           {([
