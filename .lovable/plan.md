@@ -1,69 +1,70 @@
+## 1. Calendar surfaces found
 
-## Where calendars render today
+**Full month/week/day calendars**
+- `src/pages/employee/BDRCalendar.tsx` — inline `MonthView` (already migrated to `MonthGrid`), inline `WeekView` (still local), Share dialog with booking-link rows.
+- `src/pages/CalendarPage.tsx` — workspace calendar, month view migrated to shared `MonthGrid`; week/day still local.
+- `src/pages/CalendarManagement.tsx` — admin calendar list/management (booking-link cards).
+- `src/pages/CalendarDetail.tsx` — individual calendar detail.
+- `src/pages/admin/AdminStaffCalendars.tsx`, `src/pages/admin/AdminBDRCalendars.tsx` — admin oversight of rep calendars + booking links.
+- `src/pages/BookingPage.tsx`, `src/pages/BDRBookingPublic.tsx` — public booking; use `BookingSlotPicker`.
+- `src/pages/MeetingCancel.tsx`, `src/pages/AppointmentDetail.tsx`, `src/pages/Meetings.tsx`, `src/pages/MeetingIntelligence.tsx` — meeting surfaces referencing calendars but no grid.
+- `src/pages/CalendarIntegrations.tsx` — integration config, no grid.
 
-**Full month/week grids**
-- `src/pages/employee/BDRCalendar.tsx` — MonthView + WeekView + DayAgenda + ShareDialog (BDR's personal pipeline calendar). **Already migrated last turn** to shared `MonthGrid` / `DayAgendaSheet` / skeletons / empty state.
-- `src/pages/CalendarPage.tsx` — client-facing workspace calendar; month grid rendered via inline `grid grid-cols-7 grid-preserve` (lines ~449, ~460). Still uses its own week view and event chips.
+**Slot / date pickers**
+- `src/components/BookingSlotPicker.tsx` (used by `BDRBookingPublic.tsx`).
+- `src/components/ui/calendar.tsx` (shadcn wrapper) — not currently imported anywhere; safe to leave as-is.
+- `src/components/activation/StepCalendar.tsx`, `StepQualification.tsx`, `StepProposalClosePrep.tsx` — reference booking links, no grid rendering.
 
-**Read-only month renders**
-- `src/pages/CalendarManagement.tsx` — availability preview.
-- `src/pages/admin/AdminStaffCalendars.tsx` — table of staff calendars (no grid; just a list — out of scope).
-- `src/pages/admin/AdminBDRCalendars.tsx` — same (list, out of scope).
+**Existing shared calendar system** (`src/components/calendar/`)
+`MonthGrid`, `DayCell`, `EventDots`, `DayAgendaSheet`, `CalendarSkeleton`, `CalendarEmptyState`, `BookingLinkCard`, `MonthNavigator`, `tokens.ts`, `types.ts`, `index.ts`. Phase 1 already wired into `BDRCalendar` (month) and `CalendarPage` (month) + `BDRCalendar` ShareDialog.
 
-**Date + slot pickers (booking flows)**
-- `src/components/CalendarSlotPicker.tsx` — used inside activation wizard for internal booking.
-- `src/components/BookingSlotPicker.tsx` — public booking (`BDRBookingPublic.tsx`, `BookingPage.tsx`) — horizontal date strip + slot buttons.
-- `src/components/ui/calendar.tsx` — shadcn/react-day-picker primitive, wrapped by `Popover` date inputs across ~20 pages (Meetings, CRM, Tasks, ContactDetail, admin activation steps, etc.).
+## 2. Proposed shared component structure
 
-**Note:** the ui/calendar primitive is a solved, consistent surface (shadcn). Standardizing it is out of scope; the redesign target is the *event-bearing* month/week/day views.
+Extend `src/components/calendar/` with:
 
-## Shared component system (already scaffolded in `src/components/calendar/`)
+```text
+src/components/calendar/
+  MonthGrid.tsx          (exists)  — TIER 1 dots + "+N", today filled circle, selected ring, dimmed OOM
+  WeekGrid.tsx           (new)     — 7-col time-axis week view; same DayCell header
+  DayView.tsx            (new)     — single-day time-axis agenda
+  DayCell.tsx            (exists)  — 44x44 hit target, aria-label, today/selected states
+  EventDots.tsx          (exists)  — up to 3 colored dots + "+N"
+  DayAgendaSheet.tsx     (exists)  — bottom-sheet on mobile, inline panel ≥md
+  MonthNavigator.tsx     (exists)  — ‹ Month YYYY › + Today, view-switcher slot
+  ViewSwitcher.tsx       (new)     — Month / Week / Day segmented control
+  CalendarSkeleton.tsx   (exists)  — grid + agenda skeletons
+  CalendarEmptyState.tsx (exists)  — illustration + CTA
+  BookingLinkCard.tsx    (exists)  — reconciled version below
+  useCalendarA11y.ts     (new)     — keyboard nav + reduced-motion hook
+  tokens.ts / types.ts / index.ts
+```
 
-Built last turn:
-- `types.ts` — `CalendarEventLike`, `EventKind`.
-- `tokens.ts` — `resolveEventKind`, `eventColor`, `EVENT_LABEL` mapping (Discovery / Closing / Dialer / Manual / Booking Form / SDR Mirror), backed by CSS tokens in `src/index.css` (`--cal-dot-*`, `--cal-today`, `--cal-selected`, `--cal-grid-line`, `--cal-dim`).
-- `EventDots.tsx` — up to 3 dots + `+N`.
-- `DayCell.tsx` — a11y button, ≥44px, today (filled accent circle) vs. selected (ring), dim for non-current-month.
-- `MonthGrid.tsx` — flex-based 7-col grid (immune to mobile grid-collapse), DOW header, 6 week rows.
-- `DayAgendaSheet.tsx` — bottom sheet on mobile / inline panel on desktop.
-- `CalendarSkeleton.tsx` — `CalendarGridSkeleton` + `CalendarAgendaSkeleton`.
-- `CalendarEmptyState.tsx` — descriptive zero-state.
-- `BookingLinkCard.tsx` — Copy primary CTA + inline active toggle + ⋯ overflow.
-- `MonthNavigator.tsx` — ‹ Today › + month label.
-- `index.ts` — barrel export.
+**`BookingLinkCard` reconciliation** — replaces both the split "Open Booking Link + dropdown" and ShareDialog's `CalendarBlock`/`Row`:
+- Header: label + kind pill (Discovery / Closing / Custom).
+- Primary CTA: **Copy link** (full-width on mobile).
+- Inline **Active / Paused** switch (no backend change — reuses existing `is_active`).
+- Overflow `⋯` menu: Open, Edit, Duplicate, Delete.
+- Secondary row: truncated URL + "Open ↗".
 
-BDRCalendar now consumes: `MonthGrid`, `DayAgendaSheet`, `CalendarGridSkeleton`, `CalendarAgendaSkeleton`, `CalendarEmptyState`, and shared `resolveEventKind` / `eventColor` / `EVENT_LABEL` for its per-event chips.
+**Token additions** (in `tokens.ts` / `index.css`):
+- `--cal-today` (filled accent bg), `--cal-selected-ring`, `--cal-oom-fg` (dimmed), `--cal-grid-line`.
+- Event-kind dots already tokenized; verify AA contrast on `--background`.
 
-## Rollout order (front-end only — no data / query changes)
+## 3. TIER coverage
 
-**Phase 1 — Finish primary parity**
-1. **`src/pages/CalendarPage.tsx`** — replace the inline month grid + DOW header block with `<MonthGrid>`, map its event objects to `CalendarEventLike`, swap the spinner for `CalendarGridSkeleton`, use `CalendarEmptyState` for no-events days, and wire `DayAgendaSheet` for mobile day taps. Keep its week view for now (Phase 3).
-2. **`src/pages/employee/BDRCalendar.tsx`** — ShareDialog reconciliation. The dialog currently renders **two** links per calendar (Discovery + Closing) inside a `CalendarBlock`. Refactor each URL row (`Row`) to reuse `BookingLinkCard`'s visual language: prominent Copy CTA, ⋯ overflow (Open / Rename-parent / Delete-parent), preserving the existing rename/delete/active-toggle logic that lives on the parent calendar (not the URL).
+- **T1** — MonthGrid (dots+N, today filled vs selected ring, dimmed OOM, day-agenda sheet), reconciled BookingLinkCard.
+- **T2** — Keep existing month/week transition; swap remaining spinners for `CalendarSkeleton`; wire `CalendarEmptyState` everywhere.
+- **T3** — 44×44 min hit targets in `DayCell` + `BookingLinkCard` menu items; `aria-label` on day cells ("Tuesday July 21, 3 events"); `prefers-reduced-motion` → disable transitions in `useCalendarA11y`; audit dark-theme contrast for dot colors + OOM text.
 
-**Phase 2 — Skeletons + empty states everywhere**
-3. `CalendarManagement.tsx` availability preview → shared skeleton on load.
-4. Any calendar page still showing a bare `Loader2` on initial load → skeleton.
+## 4. Implementation order (front-end only, no backend/query changes)
 
-**Phase 3 — Week view + gestures (TIER 2)**
-5. Extract `WeekGrid.tsx` (columnar 7-day view with hour rail) from BDRCalendar's `WeekView` and reuse in `CalendarPage.tsx`.
-6. Add `useSwipeMonth` hook + `prefers-reduced-motion` guard on framer-motion transitions in `MonthGrid` / `DayAgendaSheet`.
+1. **Foundation polish** — audit `tokens.ts` for T3 contrast; add `useCalendarA11y` + reduced-motion; ensure DayCell has full a11y + 44px.
+2. **BookingLinkCard reconciliation** — one canonical card; update `BDRCalendar` ShareDialog + split-button call sites to consume it.
+3. **WeekGrid + DayView** — extract from `BDRCalendar`'s local `WeekView`; migrate `BDRCalendar` and `CalendarPage` week/day views to shared.
+4. **ViewSwitcher + MonthNavigator** integration across `BDRCalendar`, `CalendarPage`, `CalendarDetail`.
+5. **Admin surfaces** — migrate `CalendarManagement`, `AdminStaffCalendars`, `AdminBDRCalendars` booking-link lists to `BookingLinkCard`; any embedded month previews to `MonthGrid`.
+6. **Skeletons + empty states** — replace remaining spinners across all migrated files.
+7. **Slot picker alignment** — restyle `BookingSlotPicker` to share tokens/typography (no logic change).
+8. **QA pass** — typecheck, dark-mode visual check, keyboard nav, reduced-motion, mobile hit targets.
 
-**Phase 4 — Slot pickers (TIER 3 consistency)**
-7. Align `CalendarSlotPicker.tsx` and `BookingSlotPicker.tsx` on a shared `<DateStrip>` + `<SlotButton>` from the calendar package. Same tokens, same ≥44px hit targets, same focus rings. Data-fetching untouched.
-
-**Phase 5 — Accessibility + contrast sweep**
-8. Verify aria-labels on every icon-only calendar button.
-9. Verify dark-theme contrast on `--cal-dim`, dot colors, and agenda chips against `bg-card` (target 4.5:1 for text, 3:1 for non-text).
-10. Add `@media (prefers-reduced-motion: reduce)` overrides in `src/index.css` for calendar transitions.
-
-## Scope guardrails
-
-- No changes to Supabase queries, `bdrCalendar.ts`, `provision-from-booking`, `bdr-book`, availability/blackout logic, or any RPC.
-- Event → `CalendarEventLike` mapping stays at each consumer site (page-owned); the shared components never talk to the DB.
-- ui/calendar (shadcn day-picker) untouched — different use case (single date input).
-
-## Deliverable per phase
-
-TypeScript passes; each page swap is a same-turn diff you can review; no visual regression on desktop (existing Flexbox month grid is preserved semantics-wise).
-
-Ready to proceed with **Phase 1 → CalendarPage.tsx migration + ShareDialog card refactor** on approval.
+No Supabase queries, RPCs, edge functions, or booking-link generation logic will be modified.
