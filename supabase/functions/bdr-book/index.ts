@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { booking_slug, meeting_kind, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
     const isClosing = meeting_kind === "closing";
+    const isPayment = meeting_kind === "payment";
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
