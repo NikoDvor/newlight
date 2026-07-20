@@ -28,6 +28,7 @@ interface Lead {
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
   self_booking_widget_non_owner: boolean | null;
+  dialer_bookable: boolean | null;
   pipeline_stage: string | null;
 }
 
