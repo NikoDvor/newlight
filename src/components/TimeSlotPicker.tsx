@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { computeAvailableSlots, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
 interface TimeSlotPickerProps {
   clientId: string;
@@ -13,6 +12,7 @@ interface TimeSlotPickerProps {
   selectedTime: string; // HH:MM
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  minNoticeMinutes?: number;
 }
 
 interface AvailabilityWindow {
@@ -20,22 +20,6 @@ interface AvailabilityWindow {
   start_time: string;
   end_time: string;
   enabled: boolean;
-}
-
-function generateSlots(startTime: string, endTime: string, durationMin: number, bufferMin: number = 0): string[] {
-  const slots: string[] = [];
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
-  const startMinutes = sh * 60 + sm;
-  const endMinutes = eh * 60 + em;
-  const step = durationMin + bufferMin;
-
-  for (let m = startMinutes; m + durationMin <= endMinutes; m += step) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
-  }
-  return slots;
 }
 
 function formatTime12(time: string) {
