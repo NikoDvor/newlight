@@ -6,6 +6,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import SystemHealthPanel from "@/components/training/SystemHealthPanel";
+import { DAILY_DIAL_GOAL } from "@/lib/bdrCalendar";
+
+/** Group dial-event timestamps by local YYYY-MM-DD and split hit vs missed against DAILY_DIAL_GOAL. */
+function computeDaysHitMissed(timestamps: string[]) {
+  const byDay = new Map<string, number>();
+  for (const ts of timestamps) {
+    if (!ts) continue;
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    byDay.set(key, (byDay.get(key) ?? 0) + 1);
+  }
+  let hit = 0, missed = 0;
+  byDay.forEach((count) => {
+    if (count <= 0) return;
+    if (count >= DAILY_DIAL_GOAL) hit++;
+    else missed++;
+  });
+  return { hit, missed, activeDays: hit + missed };
+}
 
 /* ─── constants ─── */
 const OBJECTION_CATEGORIES = [
@@ -81,6 +100,7 @@ export default function AdminBDRPerformance() {
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
+  const [dialEvents, setDialEvents] = useState<{ user_id: string; starts_at: string }[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
@@ -89,14 +109,16 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }, { data: c }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
+        (supabase as any).from("bdr_calendar_events").select("user_id, starts_at").eq("source", "dialer"),
       ]);
       setLeads(l || []);
       setObjections(o || []);
       setCalls(c || []);
+      setDialEvents(dEvts || []);
 
       // Fetch BDR names
       const userIds = [...new Set([
@@ -144,15 +166,19 @@ export default function AdminBDRPerformance() {
   // Team-wide call metrics (independent of date filter — buckets are today/week/month/all)
   const teamCallMetrics = useMemo(() => computeCallMetrics(calls), [calls]);
 
-  // Per-BDR call metrics
+  // Per-BDR call metrics + daily-dial-goal days hit/missed (from bdr_calendar_events source='dialer')
   const bdrCallRows = useMemo(() => {
-    const uids = [...new Set(calls.map((c: any) => c.bdr_user_id).filter(Boolean))];
+    const uids = [...new Set([
+      ...calls.map((c: any) => c.bdr_user_id).filter(Boolean),
+      ...dialEvents.map((e) => e.user_id).filter(Boolean),
+    ])];
     return uids.map(uid => ({
       uid,
       name: profiles[uid] || uid.slice(0, 8),
       metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
+      dialDays: computeDaysHitMissed(dialEvents.filter((e) => e.user_id === uid).map((e) => e.starts_at)),
     })).sort((a, b) => b.metrics.all.total - a.metrics.all.total);
-  }, [calls, profiles]);
+  }, [calls, dialEvents, profiles]);
 
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
@@ -320,22 +346,29 @@ export default function AdminBDRPerformance() {
           <p className="text-sm text-muted-foreground text-center py-8">No calls logged yet.</p>
         ) : (
           <div className="space-y-1.5">
-            <div className="hidden sm:grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
               <span className="col-span-2">BDR</span>
               <span>Today</span><span>Week</span><span>Month</span><span>Total</span>
-              <span>Sched % (Total)</span><span>Top Outcome (Total)</span>
+              <span>Sched % (Total)</span><span>Days Hit / Missed</span><span>Top Outcome</span>
             </div>
             {bdrCallRows.map(row => {
               const top = row.metrics.all.breakdown[0];
+              const dd = row.dialDays;
               return (
                 <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
-                  <div className="sm:grid sm:grid-cols-8 sm:gap-2 sm:items-center flex flex-col gap-1">
+                  <div className="sm:grid sm:grid-cols-9 sm:gap-2 sm:items-center flex flex-col gap-1">
                     <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
                     <span className="text-sm text-foreground">{row.metrics.today.total}</span>
                     <span className="text-sm text-foreground">{row.metrics.week.total}</span>
                     <span className="text-sm text-foreground">{row.metrics.month.total}</span>
                     <span className="text-sm text-foreground">{row.metrics.all.total}</span>
                     <span className="text-sm text-foreground">{row.metrics.all.schedPct}%</span>
+                    <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
+                      <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>
+                      <span className="text-muted-foreground"> hit / </span>
+                      <span className="text-[hsl(0,72%,65%)] font-semibold tabular-nums">{dd.missed}</span>
+                      <span className="text-muted-foreground"> missed</span>
+                    </span>
                     <span className="text-xs text-muted-foreground truncate">{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
                   </div>
                   {/* Sched Appt % per bucket + outcome breakdown */}

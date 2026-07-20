@@ -1,5 +1,29 @@
 import { supabase } from "@/integrations/supabase/client";
 
+/** Daily dial expectation for BDRs/Salesmen — matches Role training module. */
+export const DAILY_DIAL_GOAL = 200;
+
+/** Start of the current calendar week (Sunday 00:00 local), matching CallTracking.tsx. */
+export function startOfCurrentWeek(): Date {
+  const now = new Date();
+  const s = new Date(now);
+  s.setDate(now.getDate() - now.getDay());
+  s.setHours(0, 0, 0, 0);
+  return s;
+}
+
+/** Start of the current calendar month (day 1, 00:00 local). */
+export function startOfCurrentMonth(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+/** Start of today (00:00 local). */
+export function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 export interface BdrCalendar {
   id: string;
   user_id: string;
