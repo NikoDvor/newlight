@@ -478,72 +478,41 @@ function CalendarPageInner() {
 
       {/* WEEK VIEW */}
       {view === "week" && (
-        <div className="mt-4 card-widget rounded-2xl overflow-hidden overflow-x-auto">
-          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
-            <div className="border-b border-r border-border p-2" />
-            {weekDays.map((d, i) => (
-              <div key={i} className={`border-b border-r border-border p-2 text-center ${isSameDay(d, new Date()) ? "bg-primary/5" : ""}`}>
-                <p className="text-[10px] text-muted-foreground uppercase">{d.toLocaleDateString("en-US", { weekday: "short" })}</p>
-                <p className={`text-sm font-semibold ${isSameDay(d, new Date()) ? "text-primary" : "text-foreground"}`}>{d.getDate()}</p>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
-            {HOURS.map(hour => (
-              <div key={hour} className="contents">
-                <div className="border-b border-r border-border px-2 py-3 text-[10px] text-muted-foreground text-right pr-3">
-                  {hour > 12 ? hour - 12 : hour}{hour >= 12 ? "pm" : "am"}
-                </div>
-                {weekDays.map((d, di) => {
-                  const dayEv = eventsForDay(d).filter(e => new Date(e.start_time).getHours() === hour);
-                  return (
-                    <div key={di} className="border-b border-r border-border p-0.5 min-h-[48px] relative">
-                      {dayEv.map(ev => (
-                        <div key={ev.id} onClick={() => setDetailEvent(ev)}
-                          className="text-[9px] leading-tight px-1 py-0.5 rounded bg-primary/10 text-primary mb-0.5 cursor-pointer hover:bg-primary/20 truncate">
-                          {ev.title}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+        <div className="mt-4">
+          <WeekGrid
+            weekCursor={currentDate}
+            selectedDay={currentDate}
+            events={events.map<CalendarEventLike>((ev) => ({
+              id: ev.id,
+              startsAt: ev.start_time,
+              endsAt: ev.end_time,
+              title: ev.title,
+              description: ev.customer_notes,
+              kind: resolveEventKind(ev.booking_source),
+              raw: ev,
+            }))}
+            onSelectDay={(d) => setCurrentDate(d)}
+            onEventClick={(e) => setDetailEvent(e.raw)}
+          />
         </div>
       )}
 
       {/* DAY VIEW */}
       {view === "day" && (
-        <div className="mt-4 card-widget rounded-2xl overflow-hidden">
-          <div className="p-3 border-b border-border">
-            <p className="text-sm font-semibold text-foreground">{currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-            <p className="text-xs text-muted-foreground">{eventsForDay(currentDate).length} appointments</p>
-          </div>
-          {HOURS.map(hour => {
-            const dayEv = eventsForDay(currentDate).filter(e => new Date(e.start_time).getHours() === hour);
-            return (
-              <div key={hour} className="flex border-b border-border min-h-[56px]">
-                <div className="w-16 shrink-0 px-3 py-3 text-[11px] text-muted-foreground text-right border-r border-border">
-                  {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
-                </div>
-                <div className="flex-1 p-1 space-y-1">
-                  {dayEv.map(ev => (
-                    <div key={ev.id} onClick={() => setDetailEvent(ev)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors">
-                      <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{ev.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{ev.contact_name || "No contact"} · {Math.round((new Date(ev.end_time).getTime() - new Date(ev.start_time).getTime()) / 60000)} min</p>
-                      </div>
-                      {locationIcon(ev.location || "other")}
-                      <Badge variant="outline" className={`text-[9px] ${STATUS_STYLE[ev.status] || ""}`}>{STATUS_LABEL[ev.status] || ev.status}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+        <div className="mt-4">
+          <DayView
+            day={currentDate}
+            events={events.map<CalendarEventLike>((ev) => ({
+              id: ev.id,
+              startsAt: ev.start_time,
+              endsAt: ev.end_time,
+              title: ev.title,
+              description: ev.contact_name || undefined,
+              kind: resolveEventKind(ev.booking_source),
+              raw: ev,
+            }))}
+            onEventClick={(e) => setDetailEvent(e.raw)}
+          />
         </div>
       )}
 
