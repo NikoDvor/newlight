@@ -63,6 +63,8 @@ import FinancialCompliance from "./pages/FinancialCompliance";
 import ReferralProgram from "./pages/ReferralProgram";
 import AIVisibility from "./pages/AIVisibility";
 import Auth from "./pages/Auth";
+import PaySign from "./pages/PaySign";
+import Activation from "./pages/Activation";
 import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
