@@ -91,6 +91,19 @@ Deno.serve(async (req) => {
     const start = new Date(starts_at);
     const end = new Date(start.getTime() + (Number(duration_minutes) || 30) * 60_000);
 
+    // Enforce per-calendar minimum notice server-side (defense in depth; the
+    // DB trigger also enforces this on insert).
+    const minNoticeMinutes = Number((originCal as any).min_notice_minutes ?? 60);
+    if (Number.isFinite(minNoticeMinutes) && minNoticeMinutes > 0) {
+      const cutoff = new Date(Date.now() + minNoticeMinutes * 60_000);
+      if (start < cutoff) {
+        return new Response(
+          JSON.stringify({ error: `Bookings must be at least ${minNoticeMinutes} minutes from now.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // 3. Create lead (CRM record for the BDR's My Leads)
     const noteParts: string[] = [];
     if (roundRobin && assignedCal.user_id !== originCal.user_id) {
