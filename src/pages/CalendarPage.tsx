@@ -28,6 +28,14 @@ import { toast } from "@/hooks/use-toast";
 import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 import { LockBadge } from "@/components/LockedFeature";
 import { useLockContext } from "@/hooks/useLockContext";
+import {
+  MonthGrid,
+  CalendarGridSkeleton,
+  CalendarAgendaSkeleton,
+  CalendarEmptyState,
+  resolveEventKind,
+  type CalendarEventLike,
+} from "@/components/calendar";
 
 function useWorkspaceZoomEnabled(clientId: string | null) {
   const [zoomEnabled, setZoomEnabled] = useState<boolean | null>(null);
