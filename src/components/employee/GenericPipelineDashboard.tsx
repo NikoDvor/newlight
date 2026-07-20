@@ -213,6 +213,48 @@ export function GenericPipelineDashboard() {
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <YourForms />
 
+      {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
+      {(() => {
+        const hit = dialCounts.today >= DAILY_DIAL_GOAL;
+        const remaining = Math.max(0, DAILY_DIAL_GOAL - dialCounts.today);
+        const pct = Math.min(100, Math.round((dialCounts.today / DAILY_DIAL_GOAL) * 100));
+        const tone = hit
+          ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)" }
+          : dialCounts.today >= DAILY_DIAL_GOAL * 0.75
+          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)" }
+          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)" };
+        return (
+          <Card className="border p-4" style={{ borderColor: tone.border, background: tone.bg }}>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-background/40 ${tone.text}`}>
+                  <PhoneCall className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Dials Today</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-foreground tabular-nums">{dialCounts.today}</span>
+                    <span className="text-xs text-muted-foreground">/ {DAILY_DIAL_GOAL} goal</span>
+                  </div>
+                </div>
+              </div>
+              <div className={`text-sm font-semibold ${tone.text}`}>
+                {hit ? `✓ Goal hit — ${dialCounts.today - DAILY_DIAL_GOAL} over` : `${remaining} dials to go`}
+              </div>
+              <div className="flex gap-4 text-xs">
+                <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.week}</span></div>
+                <div><span className="text-muted-foreground">Month</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.month}</span></div>
+              </div>
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-background/50 overflow-hidden">
+              <div className="h-full transition-all" style={{ width: `${pct}%`, background: tone.bar }} />
+            </div>
+          </Card>
+        );
+      })()}
+
+
+
       {/* 1. PIPELINE TABLE */}
       <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
         {rows.length === 0 ? (
