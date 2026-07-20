@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const activeColumn = isPayment ? "payment_booking_active" : isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool`)
+      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes`)
       .eq(slugColumn, lookupValue)
       .maybeSingle();
     let originCal = slugCal;
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool")
+        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
