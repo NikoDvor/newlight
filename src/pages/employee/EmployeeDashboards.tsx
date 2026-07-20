@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
+import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
 
 const today = new Date();
 const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
