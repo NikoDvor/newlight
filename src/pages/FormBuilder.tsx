@@ -31,6 +31,7 @@ import { FormTemplateDialog } from "@/components/forms/FormTemplateDialog";
 export default function FormBuilder() {
   const { activeClientId } = useWorkspace();
   const [forms, setForms] = useState<any[]>([]);
+  const [globalForms, setGlobalForms] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -42,12 +43,14 @@ export default function FormBuilder() {
   const fetchData = useCallback(async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [fRes, sRes] = await Promise.all([
+    const [fRes, sRes, gRes] = await Promise.all([
       supabase.from("forms").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("form_submissions").select("*").eq("client_id", activeClientId).order("submitted_at", { ascending: false }).limit(50),
+      supabase.from("forms").select("id, form_slug, form_name, description, external_route, sequence_number, is_active, form_type").eq("is_global", true).order("sequence_number", { ascending: true, nullsFirst: true }),
     ]);
     setForms(fRes.data || []);
     setSubmissions(sRes.data || []);
+    setGlobalForms(gRes.data || []);
     setLoading(false);
   }, [activeClientId]);
 
