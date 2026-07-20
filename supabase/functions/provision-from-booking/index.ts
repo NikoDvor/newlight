@@ -626,6 +626,7 @@ Deno.serve(async (req) => {
         welcome_message: `Welcome to ${displayName}`,
         app_display_name: displayName,
         app_icon_url: logo_url || null,
+        pwa_icon_url: logo_url || null,
         splash_logo_url: logo_url || null,
         workspace_header_name: displayName,
       }),
