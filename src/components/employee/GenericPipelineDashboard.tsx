@@ -4,11 +4,47 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Award, BarChart3, CalendarClock, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getTrainingStatsForUser, type TrainingStats } from "@/lib/trainingStatsService";
 import { YourForms } from "@/components/employee/YourForms";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
+import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
+
+/* ── Glass panel class shared across cards ── */
+const GLASS =
+  "border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)]";
+
+/* ── Reveal wrapper: fade+slide as sections enter viewport ── */
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ── Pulsing number: soft glow on value change ── */
+function PulseNumber({ value, className }: { value: number | string; className?: string }) {
+  return (
+    <motion.span
+      key={String(value)}
+      initial={{ textShadow: "0 0 14px hsla(197,92%,70%,0.9)", opacity: 0.75 }}
+      animate={{ textShadow: "0 0 0px hsla(197,92%,70%,0)", opacity: 1 }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
+      className={className}
+    >
+      {value}
+    </motion.span>
+  );
+}
+
 
 const iso = (d: Date) => d.toISOString();
 const startOfMonth = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); };
