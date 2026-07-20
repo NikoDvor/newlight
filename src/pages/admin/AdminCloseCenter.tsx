@@ -323,7 +323,15 @@ export default function AdminCloseCenter() {
 
   // ─── Agreement actions ───────────────────────────────────────
   const createAgreement = async () => {
+    if (!window.confirm(
+      "LEGACY FLOW — Are you sure?\n\n" +
+      "New deals should use Form 2 (Close Prep) → Form 3 (Pay & Sign), " +
+      "which creates a real service_agreement e-sign envelope and Stripe invoice automatically.\n\n" +
+      "Only use this legacy 'Create Agreement' action for historical cleanup or edge cases " +
+      "the new flow doesn't cover. Continue?"
+    )) return;
     setActing(true);
+
     const title = `${client?.business_name || "Client"} — Service Agreement`;
     const latestProposal = proposals[0];
     const { data, error } = await supabase.from("client_agreements").insert({
