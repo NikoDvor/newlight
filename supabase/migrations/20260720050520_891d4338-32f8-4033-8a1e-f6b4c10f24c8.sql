@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "tmp_public_booking_delete" ON storage.objects;

@@ -1,0 +1,2 @@
+CREATE POLICY "tmp_public_booking_delete" ON storage.objects FOR DELETE TO anon
+  USING (bucket_id='client-logos' AND (storage.foldername(name))[1]='public-booking' AND name LIKE 'public-booking/test-%');
