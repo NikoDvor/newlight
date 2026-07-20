@@ -398,6 +398,7 @@ const App = () => {
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="close-prep/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><ClosePrep /></ClientFlagGate>} />
+                <Route path="pay-sign/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><EmployeePaySign /></ClientFlagGate>} />
                 <Route path="profile" element={<EmployeePlaceholder title="My Profile" />} />
               </Route>
 
