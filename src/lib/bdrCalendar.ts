@@ -84,6 +84,7 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
       closing_booking_slug: `${baseSlug}-closing`,
+      payment_booking_slug: `${baseSlug}-payment`,
     })
     .select("*")
     .single();
