@@ -448,7 +448,24 @@ export default function BDRDialer() {
                   <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors align-top">
                     <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>{i + 1}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
-                    <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">{lead.owner_name || "—"}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
+                      {(() => {
+                        const flags = parseLeadFlags(lead.owner_name);
+                        const cleaned = stripLeadFlags(lead.owner_name);
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <span>{cleaned || "—"}</span>
+                            {flags.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {flags.map(f => (
+                                  <span key={f} className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)", border: "1px solid hsla(0,72%,50%,.4)" }}>{f}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       <div className="flex flex-col gap-1">
                         {lead.phone ? (
