@@ -188,6 +188,9 @@ export function GenericPipelineDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
+      <YourForms />
+
       {/* 1. PIPELINE TABLE */}
       <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
         {rows.length === 0 ? (
