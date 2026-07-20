@@ -173,10 +173,15 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
         const formId = data.booking_form_id as string;
         const { data: fd, error: fdErr } = await (supabase as any)
           .from("client_forms")
-          .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message")
+          .select("id, form_name, client_id, intake_questions, required_fields, confirmation_message, form_settings")
           .eq("id", formId)
           .maybeSingle();
         console.error("[BDRBookingPublic] booking_form_id:", formId, "client_forms row:", fd, "err:", fdErr);
+        const settings = (fd as any)?.form_settings || {};
+        setRequiresPayment(Boolean(settings.requires_payment));
+        setPaymentLinkUrl(typeof settings.stripe_payment_link_url === "string" && settings.stripe_payment_link_url.trim()
+          ? settings.stripe_payment_link_url.trim()
+          : null);
         if (fd) {
           setFormDef({
             id: fd.id,
