@@ -13875,6 +13875,22 @@ export type Database = {
           timezone: string
         }[]
       }
+      get_public_bdr_payment_calendar: {
+        Args: { _slug_or_id: string }
+        Returns: {
+          availability: Json
+          booking_slug: string
+          client_id: string
+          id: string
+          name: string
+          payment_booking_active: boolean
+          payment_booking_description: string
+          payment_booking_form_id: string
+          payment_booking_slug: string
+          payment_booking_title: string
+          timezone: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
