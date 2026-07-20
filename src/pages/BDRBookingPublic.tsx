@@ -475,6 +475,30 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
 
 
 
+            {mode === "payment" && requiresPayment && (
+              <div className="rounded-xl border border-[hsl(211,96%,56%)]/40 bg-[hsl(211,96%,56%)]/10 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Step 1 · Complete your payment</p>
+                  <p className="text-xs text-white/60 mt-1">
+                    Secure your onboarding by completing payment first. Then pick a kickoff time below.
+                  </p>
+                </div>
+                {paymentLinkUrl ? (
+                  <Button
+                    type="button"
+                    onClick={() => window.open(paymentLinkUrl!, "_blank", "noopener,noreferrer")}
+                    className="w-full h-12 text-base bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,36%)] text-white font-semibold"
+                  >
+                    Pay Now
+                  </Button>
+                ) : (
+                  <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+                    Payment link not configured yet — contact your admin to finalize this step.
+                  </div>
+                )}
+              </div>
+            )}
+
             <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
 
             <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot}
