@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarClock, CheckCircle2, Clock3, DollarSign, GraduationCap, PhoneCall, Target, TrendingUp } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock3, DollarSign, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
 import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
+import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
+import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 
 const today = new Date();
 const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
