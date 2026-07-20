@@ -335,8 +335,9 @@ async function sendClosePrepNotifications(supabase: any, args: {
   recurring_fee: number | null;
   commission_rate: number | null;
   closing_notes: string | null;
+  paySignUrl: string;
 }) {
-  const { userId, userEmail, lead, when, pricing_model, initial_fee, recurring_fee, commission_rate, closing_notes } = args;
+  const { userId, userEmail, lead, when, pricing_model, initial_fee, recurring_fee, commission_rate, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
 
