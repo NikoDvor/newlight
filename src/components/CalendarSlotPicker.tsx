@@ -19,21 +19,6 @@ interface CalendarSlotPickerProps {
   variant?: "default" | "dark";
 }
 
-function generateSlots(startTime: string, endTime: string, durationMin: number, interval: number, bufferBefore: number, bufferAfter: number): string[] {
-  const slots: string[] = [];
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
-  const startMinutes = sh * 60 + sm;
-  const endMinutes = eh * 60 + em;
-
-  for (let m = startMinutes; m + durationMin + bufferAfter <= endMinutes; m += interval) {
-    if (m - bufferBefore < startMinutes && bufferBefore > 0) continue;
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
-  }
-  return slots;
-}
 
 function formatTime12(time: string) {
   const [h, m] = time.split(":").map(Number);
