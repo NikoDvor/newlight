@@ -382,7 +382,14 @@ export default function AdminCloseCenter() {
 
   // ─── Invoice/Payment actions ─────────────────────────────────
   const createInvoice = async () => {
+    if (!window.confirm(
+      "LEGACY FLOW — Are you sure?\n\n" +
+      "New deals should use Form 3 (Pay & Sign) which generates a real Stripe checkout session " +
+      "via pay-sign-context automatically.\n\n" +
+      "Only use this legacy 'Create Invoice' action for historical cleanup. Continue?"
+    )) return;
     setActing(true);
+
     const latestProposal = proposals[0];
     const setupFee = latestProposal?.setup_fee || 0;
     const monthlyFee = latestProposal?.monthly_fee || 0;
