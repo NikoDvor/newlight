@@ -12,11 +12,13 @@ import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonthGrid,
+  WeekGrid,
   DayAgendaSheet,
   CalendarGridSkeleton,
   CalendarAgendaSkeleton,
   CalendarEmptyState,
   BookingLinkCard,
+  ViewSwitcher,
   resolveEventKind,
   eventColor,
   EVENT_LABEL,
@@ -289,16 +291,10 @@ export default function BDRCalendar() {
           }}><ChevronRight className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" className="h-8 px-3 ml-1 text-white/70 text-xs rounded-full hover:text-white hover:bg-white/5" onClick={() => { const t = new Date(); setCursor(t); setSelectedDay(t); }}>Today</Button>
         </div>
-        <div className="flex rounded-full overflow-hidden bg-white/[0.04] border border-white/10 shrink-0 p-0.5">
-          {(["month","week"] as const).map(v => (
-            <button key={v} onClick={() => setView(v)}
-              className="px-3 py-1 text-[11px] font-semibold capitalize transition-colors rounded-full"
-              style={{
-                background: view === v ? "hsl(211,96%,56%)" : "transparent",
-                color: view === v ? "white" : "hsl(0,0%,65%)",
-              }}>{v}</button>
-          ))}
-        </div>
+        <ViewSwitcher<"month" | "week"> value={view} onChange={setView} views={[
+          { key: "month", label: "Month" },
+          { key: "week", label: "Week" },
+        ]} />
       </div>
 
       {view === "month" ? (
@@ -336,8 +332,24 @@ export default function BDRCalendar() {
           </DayAgendaSheet>
         </>
       ) : (
-        <WeekView cursor={cursor} events={events} selectedDay={selectedDay}
-          onSelectDay={setSelectedDay} onEventClick={handleEventClick} />)}
+        <WeekGrid
+          weekCursor={cursor}
+          selectedDay={selectedDay}
+          events={events.map<CalendarEventLike>((e) => ({
+            id: e.id,
+            startsAt: e.starts_at,
+            endsAt: e.ends_at,
+            title: e.title,
+            description: e.description,
+            kind: resolveEventKind(e.source),
+            raw: e,
+          }))}
+          onSelectDay={setSelectedDay}
+          onEventClick={(ev) => handleEventClick((ev.raw as Event) ?? (ev as unknown as Event))}
+        />
+      )}
+
+
 
       {/* Floating Add button */}
       <button
@@ -433,77 +445,6 @@ function DayAgenda({ day: _day, events, onEventClick }: {
 
 
 
-function WeekView({ cursor, events, selectedDay, onSelectDay, onEventClick }: {
-  cursor: Date; events: Event[]; selectedDay: Date; onSelectDay: (d: Date) => void; onEventClick: (e: Event) => void;
-}) {
-  const start = startOfWeek(cursor);
-  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  const today = new Date();
-  const slots: { h: number; m: number }[] = [];
-  for (let h = 6; h <= 20; h++) { slots.push({ h, m: 0 }); slots.push({ h, m: 30 }); }
-  slots.push({ h: 21, m: 0 });
-
-  const dayEvents = events.filter(e => sameDay(new Date(e.starts_at), selectedDay))
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-7 grid-preserve gap-1.5" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
-        {days.map((d, i) => {
-          const isToday = sameDay(d, today);
-          const isSelected = sameDay(d, selectedDay);
-          return (
-            <button key={i} onClick={() => onSelectDay(d)}
-              className="min-w-0 flex flex-col items-center gap-1 py-2 rounded-xl transition-all"
-              style={{
-                background: isSelected ? "hsl(211,96%,56%)" : "hsla(215,30%,11%,.7)",
-                border: `1px solid ${isSelected ? "hsla(211,96%,70%,.5)" : "hsla(0,0%,100%,.06)"}`,
-              }}>
-              <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: isSelected ? "rgba(255,255,255,.85)" : "hsl(0,0%,55%)" }}>
-                {["S","M","T","W","T","F","S"][d.getDay()]}
-              </span>
-              <span className="text-base font-bold" style={{ color: isSelected ? "white" : (isToday ? "hsl(211,96%,72%)" : "hsl(0,0%,90%)") }}>
-                {d.getDate()}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid hsla(0,0%,100%,.07)", background: "hsla(215,30%,9%,.7)" }}>
-        <div className="max-h-[58vh] overflow-y-auto divide-y divide-white/[0.04]">
-          {slots.map(({ h, m }) => {
-            const slotStart = new Date(selectedDay); slotStart.setHours(h, m, 0, 0);
-            const slotEnd = new Date(slotStart.getTime() + 30 * 60_000);
-            const inSlot = dayEvents.filter(e => {
-              const t = new Date(e.starts_at);
-              return t >= slotStart && t < slotEnd;
-            });
-            const label = `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2,"0")} ${h < 12 ? "AM" : "PM"}`;
-            return (
-              <div key={`${h}-${m}`} className="grid grid-cols-[68px_1fr] min-h-[44px]">
-                <div className="px-2 py-2 text-[10px] text-white/35 text-right font-medium">{label}</div>
-                <div className="px-2 py-1.5 space-y-1">
-                  {inSlot.map(e => {
-                    const tone = SOURCE_TONE[e.source] || "#888";
-                    return (
-                      <button key={e.id} onClick={() => onEventClick(e)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-md text-[12px] truncate transition-colors"
-                        style={{ background: `${tone}22`, borderLeft: `3px solid ${tone}` }}>
-                        <span className="text-white font-medium">{e.title}</span>
-                        <span className="text-white/50 ml-2 text-[10px]">{fmtTime(new Date(e.starts_at))}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   open: boolean; onOpenChange: (v: boolean) => void; prefill: Date | null; calendar: BdrCalendar; onCreated: () => void;
@@ -643,35 +584,11 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
     toast({ title: "Booking link deleted" });
   };
 
-  const Row = ({ label, subtitle, url, k }: { label: string; subtitle: string; url: string; k: string }) => (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between">
-        <div className="text-sm font-semibold text-white">{label}</div>
-        <div className="text-[10px] uppercase tracking-wider text-white/40">{subtitle}</div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Input readOnly value={url || "Not configured yet"} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
-        <Button type="button" onClick={() => openLink(url)} disabled={!url}
-          variant="outline" size="icon"
-          aria-label={`Open ${label}`}
-          title="Open in new tab"
-          className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white shrink-0">
-          <ExternalLink className="h-4 w-4" />
-        </Button>
-        <Button type="button" onClick={() => copy(k, url)} disabled={!url}
-          aria-label={`Copy ${label}`}
-          title="Copy link"
-          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] shrink-0">
-          {copiedKey === k ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </div>
-    </div>
-  );
-
   const CalendarBlock = ({ cal, isPrimary }: { cal: BdrCalendar; isPrimary: boolean }) => {
     const isEditing = editingId === cal.id;
+    const rename = () => { setEditingId(cal.id); setEditingName(cal.name); };
     return (
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
@@ -690,31 +607,30 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
                 onClick={() => setEditingId(null)}>Cancel</Button>
             </>
           ) : (
-            <>
-              <div className="text-sm font-semibold text-white flex-1 truncate">
-                {cal.name}
-                {isPrimary && <span className="ml-2 text-[10px] uppercase tracking-wider text-[hsl(211,96%,70%)]">Primary</span>}
-              </div>
-              <Button size="sm" variant="ghost" className="h-8 text-white/60 hover:text-white text-xs"
-                onClick={() => { setEditingId(cal.id); setEditingName(cal.name); }}>
-                Rename
-              </Button>
-              {!isPrimary && (
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-white/50 hover:text-red-400"
-                  aria-label="Delete booking link"
-                  disabled={busyId === cal.id}
-                  onClick={() => deleteExtra(cal)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </>
+            <div className="text-sm font-semibold text-white flex-1 truncate">
+              {cal.name}
+              {isPrimary && <span className="ml-2 text-[10px] uppercase tracking-wider text-[hsl(211,96%,70%)]">Primary</span>}
+            </div>
           )}
         </div>
-        <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrlFor(cal)} k={`disc-${cal.id}`} />
-        <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrlFor(cal)} k={`close-${cal.id}`} />
+        <BookingLinkCard
+          name="Discovery Call"
+          badge="Meeting 1"
+          url={discoveryUrlFor(cal)}
+          onEdit={rename}
+          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
+        />
+        <BookingLinkCard
+          name="Final Closing Meeting"
+          badge="Meeting 2"
+          url={closingUrlFor(cal)}
+          onEdit={rename}
+          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
+        />
       </div>
     );
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

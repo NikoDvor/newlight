@@ -28,6 +28,17 @@ import { toast } from "@/hooks/use-toast";
 import { onAppointmentBooked, onAppointmentCompleted, onAppointmentCancelled, onNoShow } from "@/lib/crmAutomations";
 import { LockBadge } from "@/components/LockedFeature";
 import { useLockContext } from "@/hooks/useLockContext";
+import {
+  MonthGrid,
+  WeekGrid,
+  DayView,
+  ViewSwitcher,
+  CalendarGridSkeleton,
+  CalendarAgendaSkeleton,
+  CalendarEmptyState,
+  resolveEventKind,
+  type CalendarEventLike,
+} from "@/components/calendar";
 
 function useWorkspaceZoomEnabled(clientId: string | null) {
   const [zoomEnabled, setZoomEnabled] = useState<boolean | null>(null);
@@ -445,137 +456,63 @@ function CalendarPageInner() {
 
       {/* MONTH VIEW */}
       {view === "month" && (
-        <div className="mt-4 card-widget rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-7 grid-preserve border-b border-border bg-secondary/40">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, di) => (
-              <div
-                key={d}
-                className={`px-2 py-2 text-[10px] font-semibold text-muted-foreground text-center uppercase tracking-[0.12em] ${di < 6 ? "border-r border-border" : ""}`}
-              >
-                <span className="hidden sm:inline">{d}</span>
-                <span className="sm:hidden">{d[0]}</span>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 grid-preserve">
-            {monthGrid.map((cell, i) => {
-              const dayEvents = eventsForDay(cell.date);
-              const isToday = isSameDay(cell.date, new Date());
-              const colIndex = i % 7;
-              const rowIndex = Math.floor(i / 7);
-              const totalRows = Math.ceil(monthGrid.length / 7);
-              const isLastRow = rowIndex === totalRows - 1;
-              const isLastCol = colIndex === 6;
-              return (
-                <div
-                  key={i}
-                  onClick={() => { setCurrentDate(cell.date); setView("day"); }}
-                  className={`min-h-[76px] sm:min-h-[104px] p-1.5 sm:p-2 flex flex-col cursor-pointer hover:bg-secondary/50 transition-colors ${!cell.inMonth ? "bg-muted/30" : ""} ${isToday ? "bg-primary/5" : ""} ${!isLastCol ? "border-r" : ""} ${!isLastRow ? "border-b" : ""} border-border`}
-                >
-                  <div className="flex items-center justify-start">
-                    <span
-                      className={`text-[11px] sm:text-[12px] font-semibold leading-none inline-flex items-center justify-center h-5 min-w-5 px-1 rounded ${
-                        isToday
-                          ? "bg-primary text-primary-foreground shadow-[0_2px_8px_-2px_hsla(211,96%,55%,.55)]"
-                          : cell.inMonth
-                            ? "text-foreground"
-                            : "text-muted-foreground/60"
-                      }`}
-                    >
-                      {cell.day}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex-1 flex flex-col gap-0.5 overflow-hidden">
-                    {dayEvents.slice(0, 3).map(ev => (
-                      <div
-                        key={ev.id}
-                        onClick={e => { e.stopPropagation(); setDetailEvent(ev); }}
-                        className="text-[9px] sm:text-[10px] leading-tight truncate px-1.5 py-0.5 rounded bg-primary/15 text-primary border-l-2 border-primary/60 cursor-pointer hover:bg-primary/25"
-                      >
-                        <span className="hidden sm:inline">{new Date(ev.start_time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} </span>
-                        {ev.title}
-                      </div>
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 3} more</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="mt-4">
+          <MonthGrid
+            monthCursor={currentDate}
+            selectedDay={currentDate}
+            events={events.map<CalendarEventLike>((ev) => ({
+              id: ev.id,
+              startsAt: ev.start_time,
+              endsAt: ev.end_time,
+              title: ev.title,
+              description: ev.customer_notes,
+              kind: resolveEventKind(ev.booking_source),
+              raw: ev,
+            }))}
+            onSelectDay={(d) => { setCurrentDate(d); setView("day"); }}
+          />
         </div>
       )}
 
 
+
       {/* WEEK VIEW */}
       {view === "week" && (
-        <div className="mt-4 card-widget rounded-2xl overflow-hidden overflow-x-auto">
-          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
-            <div className="border-b border-r border-border p-2" />
-            {weekDays.map((d, i) => (
-              <div key={i} className={`border-b border-r border-border p-2 text-center ${isSameDay(d, new Date()) ? "bg-primary/5" : ""}`}>
-                <p className="text-[10px] text-muted-foreground uppercase">{d.toLocaleDateString("en-US", { weekday: "short" })}</p>
-                <p className={`text-sm font-semibold ${isSameDay(d, new Date()) ? "text-primary" : "text-foreground"}`}>{d.getDate()}</p>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-8 grid-preserve min-w-[700px]">
-            {HOURS.map(hour => (
-              <div key={hour} className="contents">
-                <div className="border-b border-r border-border px-2 py-3 text-[10px] text-muted-foreground text-right pr-3">
-                  {hour > 12 ? hour - 12 : hour}{hour >= 12 ? "pm" : "am"}
-                </div>
-                {weekDays.map((d, di) => {
-                  const dayEv = eventsForDay(d).filter(e => new Date(e.start_time).getHours() === hour);
-                  return (
-                    <div key={di} className="border-b border-r border-border p-0.5 min-h-[48px] relative">
-                      {dayEv.map(ev => (
-                        <div key={ev.id} onClick={() => setDetailEvent(ev)}
-                          className="text-[9px] leading-tight px-1 py-0.5 rounded bg-primary/10 text-primary mb-0.5 cursor-pointer hover:bg-primary/20 truncate">
-                          {ev.title}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+        <div className="mt-4">
+          <WeekGrid
+            weekCursor={currentDate}
+            selectedDay={currentDate}
+            events={events.map<CalendarEventLike>((ev) => ({
+              id: ev.id,
+              startsAt: ev.start_time,
+              endsAt: ev.end_time,
+              title: ev.title,
+              description: ev.customer_notes,
+              kind: resolveEventKind(ev.booking_source),
+              raw: ev,
+            }))}
+            onSelectDay={(d) => setCurrentDate(d)}
+            onEventClick={(e) => setDetailEvent(e.raw)}
+          />
         </div>
       )}
 
       {/* DAY VIEW */}
       {view === "day" && (
-        <div className="mt-4 card-widget rounded-2xl overflow-hidden">
-          <div className="p-3 border-b border-border">
-            <p className="text-sm font-semibold text-foreground">{currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-            <p className="text-xs text-muted-foreground">{eventsForDay(currentDate).length} appointments</p>
-          </div>
-          {HOURS.map(hour => {
-            const dayEv = eventsForDay(currentDate).filter(e => new Date(e.start_time).getHours() === hour);
-            return (
-              <div key={hour} className="flex border-b border-border min-h-[56px]">
-                <div className="w-16 shrink-0 px-3 py-3 text-[11px] text-muted-foreground text-right border-r border-border">
-                  {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? "PM" : "AM"}
-                </div>
-                <div className="flex-1 p-1 space-y-1">
-                  {dayEv.map(ev => (
-                    <div key={ev.id} onClick={() => setDetailEvent(ev)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 transition-colors">
-                      <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{ev.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{ev.contact_name || "No contact"} · {Math.round((new Date(ev.end_time).getTime() - new Date(ev.start_time).getTime()) / 60000)} min</p>
-                      </div>
-                      {locationIcon(ev.location || "other")}
-                      <Badge variant="outline" className={`text-[9px] ${STATUS_STYLE[ev.status] || ""}`}>{STATUS_LABEL[ev.status] || ev.status}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+        <div className="mt-4">
+          <DayView
+            day={currentDate}
+            events={events.map<CalendarEventLike>((ev) => ({
+              id: ev.id,
+              startsAt: ev.start_time,
+              endsAt: ev.end_time,
+              title: ev.title,
+              description: ev.contact_name || undefined,
+              kind: resolveEventKind(ev.booking_source),
+              raw: ev,
+            }))}
+            onEventClick={(e) => setDetailEvent(e.raw)}
+          />
         </div>
       )}
 
