@@ -166,15 +166,19 @@ export default function AdminBDRPerformance() {
   // Team-wide call metrics (independent of date filter — buckets are today/week/month/all)
   const teamCallMetrics = useMemo(() => computeCallMetrics(calls), [calls]);
 
-  // Per-BDR call metrics
+  // Per-BDR call metrics + daily-dial-goal days hit/missed (from bdr_calendar_events source='dialer')
   const bdrCallRows = useMemo(() => {
-    const uids = [...new Set(calls.map((c: any) => c.bdr_user_id).filter(Boolean))];
+    const uids = [...new Set([
+      ...calls.map((c: any) => c.bdr_user_id).filter(Boolean),
+      ...dialEvents.map((e) => e.user_id).filter(Boolean),
+    ])];
     return uids.map(uid => ({
       uid,
       name: profiles[uid] || uid.slice(0, 8),
       metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
+      dialDays: computeDaysHitMissed(dialEvents.filter((e) => e.user_id === uid).map((e) => e.starts_at)),
     })).sort((a, b) => b.metrics.all.total - a.metrics.all.total);
-  }, [calls, profiles]);
+  }, [calls, dialEvents, profiles]);
 
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
