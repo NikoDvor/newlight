@@ -630,6 +630,13 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
           onEdit={rename}
           onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
         />
+        <BookingLinkCard
+          name="Onboarding & Payment"
+          badge="Meeting 3"
+          url={paymentUrlFor(cal)}
+          onEdit={rename}
+          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
+        />
       </div>
     );
   };
