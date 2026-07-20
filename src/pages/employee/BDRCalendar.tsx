@@ -757,6 +757,10 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setClosingDesc((calendar as any).closing_booking_description ?? "");
       setClosingActive((calendar as any).closing_booking_active ?? true);
       setClosingFormId((calendar as any).closing_booking_form_id ?? "");
+      setPaymentTitle((calendar as any).payment_booking_title ?? "");
+      setPaymentDesc((calendar as any).payment_booking_description ?? "");
+      setPaymentActive((calendar as any).payment_booking_active ?? true);
+      setPaymentFormId((calendar as any).payment_booking_form_id ?? "");
       (async () => {
         const { data } = await (supabase as any)
           .from("client_forms")
