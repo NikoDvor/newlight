@@ -7,6 +7,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getTrainingStatsForUser, type TrainingStats } from "@/lib/trainingStatsService";
+import { YourForms } from "@/components/employee/YourForms";
 
 const iso = (d: Date) => d.toISOString();
 const startOfMonth = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); };
