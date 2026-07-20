@@ -231,7 +231,15 @@ Deno.serve(async (req) => {
     const proposalId = proposal!.id as string;
 
     // 5b. Create service_agreement envelope + items (Form 2 artifact #2)
-    const summaryHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service Agreement Summary</title></head><body style="font-family:Arial,sans-serif;padding:32px;max-width:640px;margin:0 auto;color:#111"><h1 style="font-size:22px">Service Agreement — ${lead.business_name.replace(/</g,"&lt;")}</h1><p><strong>Terms:</strong> ${priceLineForDoc}</p>${closing_notes ? `<p><strong>Notes:</strong><br>${closing_notes.replace(/</g,"&lt;").replace(/\n/g,"<br>")}</p>` : ""}<p style="margin-top:32px;font-size:12px;color:#555">By signing this envelope you agree to the terms above. A formal Service Agreement PDF will be attached by NewLight staff and countersigned.</p></body></html>`;
+    const summaryHtml = buildServiceAgreementHtml({
+      businessName: lead.business_name,
+      priceLine: priceLineForDoc,
+      pricingModel: pricing_model,
+      initialFee: initial_fee != null ? Number(initial_fee) : 0,
+      recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
+      commissionRate: commission_rate != null ? Number(commission_rate) : null,
+      closingNotes: closing_notes || null,
+    });
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
 
     const { data: envelope, error: envErr } = await supabase
@@ -439,4 +447,99 @@ function closePrepHtml(args: {
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Bring this to your closing meeting.</p>
   </div>
 </body></html>`;
+}
+
+function esc(s: string): string {
+  return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function buildServiceAgreementHtml(args: {
+  businessName: string;
+  priceLine: string;
+  pricingModel: string;
+  initialFee: number;
+  recurringFee: number | null;
+  commissionRate: number | null;
+  closingNotes: string | null;
+}): string {
+  const { businessName, priceLine, pricingModel, initialFee, recurringFee, commissionRate, closingNotes } = args;
+  const bn = esc(businessName);
+  const initFmt = `$${(initialFee || 0).toLocaleString()}`;
+  const recurringBlock = pricingModel === "retainer"
+    ? `<p>Following recoupment of the Initial Fee (or immediately if Client opts out of the guarantee mechanism in writing), Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong>, invoiced in advance, due on the same calendar day each month.</p>`
+    : `<p>Following recoupment of the Initial Fee (or immediately if Client opts out of the guarantee mechanism in writing), Client will pay Agency a performance commission equal to <strong>${commissionRate ?? 0}% of Attributable Revenue</strong>, invoiced monthly in arrears based on the agreed system of record.</p>`;
+  const notesBlock = closingNotes
+    ? `<div class="notes"><h3>Deal-Specific Notes</h3><p>${esc(closingNotes).replace(/\n/g,"<br>")}</p></div>`
+    : "";
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service Agreement — ${bn}</title>
+<style>
+  body { font-family: Georgia, 'Times New Roman', serif; color:#1a1a1a; background:#ffffff; margin:0; padding:0; line-height:1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 40px 64px; }
+  .draft-banner { background:#fff4e5; border:2px solid #d97706; color:#7c2d12; padding:14px 18px; border-radius:8px; font-family:Arial,sans-serif; font-size:13px; font-weight:700; text-align:center; letter-spacing:0.5px; margin-bottom:28px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing:0.3px; }
+  .subtitle { font-size: 13px; color:#555; margin: 0 0 24px; font-family:Arial,sans-serif; }
+  h2 { font-size: 17px; margin: 28px 0 8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; color:#111; }
+  h3 { font-size: 14px; margin: 18px 0 6px; color:#111; font-family:Arial,sans-serif; }
+  p, li { font-size: 14px; }
+  ul, ol { padding-left: 22px; }
+  .terms { background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px 20px; margin: 16px 0 8px; font-family:Arial,sans-serif; font-size:14px; }
+  .terms strong { color:#111; }
+  .notes { background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:14px 18px; margin: 16px 0; font-family:Arial,sans-serif; font-size:13px; }
+  .fine { font-size: 12px; color:#6b7280; font-family:Arial,sans-serif; margin-top: 32px; }
+</style></head><body><div class="wrap">
+  <div class="draft-banner">⚠ DRAFT — PENDING ATTORNEY REVIEW · NOT FINAL LEGAL LANGUAGE</div>
+
+  <h1>Master Services Agreement</h1>
+  <p class="subtitle">Between NewLight Generation ("Agency") and ${bn} ("Client")</p>
+
+  <div class="terms">
+    <strong>Commercial Terms:</strong> ${esc(priceLine)}<br>
+    <strong>Initial Fee at signing:</strong> ${initFmt}
+  </div>
+
+  ${notesBlock}
+
+  <h2>1. Performance Guarantee</h2>
+  <p><strong>1.1 Initial Fee.</strong> Client will pay Agency the Initial Fee stated above upon execution of this Agreement. The Initial Fee is non-refundable and compensates Agency for onboarding, strategy, creative production, technical setup, and the first campaign cycle.</p>
+  <p><strong>1.2 Guarantee Period.</strong> Agency will use commercially reasonable efforts, over a period of ninety (90) days from the date the Initial Fee is received (the "Guarantee Period"), to generate Attributable Revenue for Client at least equal to the Initial Fee.</p>
+  <p><strong>1.3 Attributable Revenue.</strong> "Attributable Revenue" means gross revenue reasonably traceable to Agency's campaigns and creative through the agreed system of record (analytics, CRM, and/or ad-platform reporting), applying last-touch attribution, net of refunds, chargebacks, and cancellations, and <em>excluding</em> (a) organic and direct/brand-search traffic, (b) revenue from customers who transacted with Client in the twelve (12) months preceding the Effective Date, and (c) revenue from channels Agency does not manage.</p>
+  <p><strong>1.4 Recoupment Remedy.</strong> If, at the end of the Guarantee Period, Attributable Revenue is less than the Initial Fee, Agency will continue to provide services at no additional charge until Attributable Revenue at least equals the Initial Fee, subject to the Client Cooperation Conditions in Section 1.6, for up to an additional sixty (60) days (150 days total from receipt of the Initial Fee). After that combined period, either party may terminate this Agreement with no further obligation to the other, and Agency will owe no further service and no payment.</p>
+  <p><strong>1.5 Sole and Exclusive Remedy; No Refund.</strong> The continued-service remedy in Section 1.4 is Client's <strong>sole and exclusive remedy</strong> for any failure to achieve Attributable Revenue equal to or greater than the Initial Fee. Under no circumstance — including where Agency ultimately generates Attributable Revenue in excess of the Initial Fee — will Client be entitled to any cash refund, credit, rebate, or bonus payment of any kind. The Initial Fee is fully earned upon receipt.</p>
+  <p><strong>1.6 Client Cooperation Conditions.</strong> Client's rights under Sections 1.2–1.4 are conditioned on Client, throughout the Guarantee Period and any extension:</p>
+  <ul>
+    <li>maintaining active, uninterrupted access for Agency to all analytics, CRM, ad accounts, and reporting systems used as the system of record;</li>
+    <li>maintaining agreed paid-media spend at or above the minimum specified at kickoff;</li>
+    <li>responding to Agency approval requests and creative reviews within three (3) business days;</li>
+    <li>not materially altering pricing, offer, landing pages, website, or intake process without prior consultation with Agency; and</li>
+    <li>promptly notifying Agency of any operational, inventory, staffing, or fulfillment issue that affects conversion.</li>
+  </ul>
+  <p>If tracking, analytics, or ad-account access is revoked, suspended, or degraded, the Guarantee Period is automatically tolled (paused) until access is restored. Repeated or material breach of these conditions terminates the guarantee remedy.</p>
+  <p><strong>1.7 No Guarantee of Specific Results.</strong> Except for the recoupment mechanism expressly stated in Sections 1.2–1.5, Agency makes <strong>no guarantee</strong> of any specific ranking, traffic volume, lead volume, conversion rate, customer count, revenue amount, ROAS, or profitability. Performance in any channel depends on factors outside Agency's control including market conditions, competition, Client's product and pricing, seasonality, and third-party platform behavior.</p>
+
+  <h2>2. Ongoing Fees</h2>
+  ${recurringBlock}
+  <p>Invoices are due upon receipt. Amounts more than ten (10) days past due accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is lower. Agency may suspend services for any invoice more than fifteen (15) days past due.</p>
+
+  <h2>3. Term & Termination</h2>
+  <p><strong>3.1 Term.</strong> This Agreement begins on the Effective Date (the date of Client's signature and receipt of the Initial Fee) and continues on a month-to-month basis thereafter.</p>
+  <p><strong>3.2 Termination for Convenience.</strong> After the Guarantee Period, either party may terminate this Agreement for any reason on thirty (30) days' prior written notice.</p>
+  <p><strong>3.3 Termination for Cause.</strong> Agency may terminate this Agreement immediately upon written notice for (a) non-payment of any undisputed invoice more than fifteen (15) days past due, or (b) material breach of the Client Cooperation Conditions that is not cured within seven (7) days of written notice.</p>
+  <p><strong>3.4 Effect of Termination.</strong> Upon termination, Agency's obligation to continue services under Section 1.4 (including any free-service continuation) ends. No portion of the Initial Fee, and no fees paid for services already performed, are refundable. Sections 1.5, 4, 5, and 6 survive termination.</p>
+
+  <h2>4. Confidentiality</h2>
+  <p>Each party will hold the other party's non-public business, financial, technical, customer, and marketing information ("Confidential Information") in confidence and use it only to perform this Agreement, with the same degree of care it uses for its own confidential information (and no less than reasonable care). Confidential Information excludes information that is or becomes public through no fault of the receiving party, was already known to the receiving party without a duty of confidentiality, or is independently developed. This obligation survives for two (2) years after termination.</p>
+  <p><strong>4.1 Client Data Ownership.</strong> As between the parties, Client owns all Client-provided data, customer lists, brand assets, and campaign performance data generated on Client's accounts. On written request within thirty (30) days of termination, Agency will export and deliver Client's data in a commercially reasonable format and will then delete Agency's working copies (subject to backup retention and legal-hold requirements).</p>
+
+  <h2>5. Limitation of Liability</h2>
+  <p><strong>5.1 Cap.</strong> Except as provided in Section 5.2, the total aggregate liability of either party arising out of or related to this Agreement, whether in contract, tort, or otherwise, will not exceed the total fees actually paid by Client to Agency in the three (3) months immediately preceding the event giving rise to the claim.</p>
+  <p><strong>5.2 Guarantee Remedy Excluded.</strong> The recoupment remedy in Section 1.4 is governed exclusively by Sections 1.2–1.6 and is not subject to the cap in Section 5.1, nor does it entitle Client to any monetary damages beyond continued free service as expressly stated.</p>
+  <p><strong>5.3 Exclusion of Indirect Damages.</strong> Neither party will be liable for lost profits, lost revenue, lost data, or any indirect, incidental, consequential, special, or punitive damages, even if advised of the possibility.</p>
+
+  <h2>6. General</h2>
+  <p>This Agreement, together with any statement of work or order form referencing it, is the entire agreement of the parties and supersedes prior discussions on the same subject. It may be modified only in a writing signed by both parties. Neither party may assign this Agreement without the other's consent, except to a successor in a merger, acquisition, or sale of substantially all assets. If any provision is held unenforceable, the remainder remains in effect. This Agreement is governed by the laws of the State of California, without regard to conflict-of-law principles. Any dispute will be resolved in the state or federal courts located in San Luis Obispo County, California, and each party consents to that jurisdiction.</p>
+
+  <p class="fine">By signing the accompanying envelope, Client acknowledges receipt of this Agreement, agrees to be bound by its terms, and confirms that the Initial Fee is non-refundable and that Client's sole and exclusive remedy for underperformance during the Guarantee Period is the continued-service mechanism in Section 1.4.</p>
+  <p class="fine">This is a DRAFT document pending attorney review. Final executed version will be countersigned by NewLight Generation and retained with the signed envelope in Client's records.</p>
+</div></body></html>`;
 }
