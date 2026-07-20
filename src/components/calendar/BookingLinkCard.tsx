@@ -176,19 +176,19 @@ export function BookingLinkCard({
       </div>
 
       {/* URL + primary Copy action */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-stretch gap-2 min-w-0">
         <div
-          className="flex-1 min-w-0 rounded-md bg-muted/40 border border-border px-3 py-2 font-mono text-xs text-foreground/80 truncate"
+          className="flex-1 min-w-0 max-w-full rounded-md bg-muted/40 border border-border px-3 py-2 font-mono text-xs text-foreground/80 overflow-x-auto overflow-y-hidden [scrollbar-width:thin]"
           title={url || undefined}
         >
-          {url || "Not configured yet"}
+          <span className="block break-all">{url || "Not configured yet"}</span>
         </div>
         <Button
           type="button"
           onClick={copy}
           disabled={disabled}
           aria-label="Copy booking link"
-          className="min-w-[92px] min-h-11"
+          className="w-full sm:w-auto sm:min-w-[92px] min-h-11 shrink-0"
         >
           {copied ? (
             <>

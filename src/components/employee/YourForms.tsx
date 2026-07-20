@@ -53,7 +53,7 @@ export function YourForms() {
   ];
 
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-5">
+    <Card className="border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground">Your Forms</h2>
         <Badge variant="outline" className="text-[10px]">NewLight 5-form structure</Badge>

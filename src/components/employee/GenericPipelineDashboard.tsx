@@ -4,11 +4,47 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Award, BarChart3, CalendarClock, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getTrainingStatsForUser, type TrainingStats } from "@/lib/trainingStatsService";
 import { YourForms } from "@/components/employee/YourForms";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
+import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
+
+/* ── Glass panel class shared across cards ── */
+const GLASS =
+  "border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)]";
+
+/* ── Reveal wrapper: fade+slide as sections enter viewport ── */
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ── Pulsing number: soft glow on value change ── */
+function PulseNumber({ value, className }: { value: number | string; className?: string }) {
+  return (
+    <motion.span
+      key={String(value)}
+      initial={{ textShadow: "0 0 14px hsla(197,92%,70%,0.9)", opacity: 0.75 }}
+      animate={{ textShadow: "0 0 0px hsla(197,92%,70%,0)", opacity: 1 }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
+      className={className}
+    >
+      {value}
+    </motion.span>
+  );
+}
+
 
 const iso = (d: Date) => d.toISOString();
 const startOfMonth = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); };
@@ -37,11 +73,13 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
     : tone === "warn" ? "bg-amber-500/15 text-amber-400"
     : "bg-primary/15 text-primary";
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-4">
+    <Card className={`${GLASS} p-4 transition-all hover:border-primary/40`}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+          <p className="mt-2 text-2xl font-bold text-foreground tabular-nums">
+            <PulseNumber value={value} />
+          </p>
         </div>
         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${bg}`}>
           <Icon className="h-5 w-5" />
@@ -53,7 +91,7 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 
 function SectionCard({ title, icon: Icon, right, children }: { title: string; icon?: typeof PhoneCall; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-5">
+    <Card className={`${GLASS} p-5`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
           {Icon && <Icon className="h-4 w-4 text-primary" />} {title}
@@ -64,6 +102,7 @@ function SectionCard({ title, icon: Icon, right, children }: { title: string; ic
     </Card>
   );
 }
+
 
 export function GenericPipelineDashboard() {
   const { user } = useWorkspace();
@@ -209,23 +248,37 @@ export function GenericPipelineDashboard() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <DashboardAtmosphere />
+
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
-      <YourForms />
+      <Reveal><YourForms /></Reveal>
 
       {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
+      <Reveal delay={0.05}>
       {(() => {
         const hit = dialCounts.today >= DAILY_DIAL_GOAL;
+        const behind = dialCounts.today < DAILY_DIAL_GOAL * 0.75;
         const remaining = Math.max(0, DAILY_DIAL_GOAL - dialCounts.today);
         const pct = Math.min(100, Math.round((dialCounts.today / DAILY_DIAL_GOAL) * 100));
         const tone = hit
-          ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)" }
-          : dialCounts.today >= DAILY_DIAL_GOAL * 0.75
-          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)" }
-          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)" };
+          ? { border: "hsl(142,72%,42%)", bg: "hsla(142,72%,42%,.08)", text: "text-emerald-400", bar: "hsl(142,72%,42%)", glow: "0 0 0 1px hsla(142,72%,42%,0.25), 0 12px 40px -12px hsla(142,72%,42%,0.35)" }
+          : !behind
+          ? { border: "hsl(45,95%,55%)", bg: "hsla(45,95%,55%,.08)", text: "text-[hsl(45,95%,60%)]", bar: "hsl(45,95%,55%)", glow: "0 0 0 1px hsla(45,95%,55%,0.28), 0 12px 40px -12px hsla(45,95%,55%,0.35)" }
+          : { border: "hsl(0,72%,55%)", bg: "hsla(0,72%,55%,.08)", text: "text-[hsl(0,72%,65%)]", bar: "hsl(0,72%,55%)", glow: "0 0 0 1px hsla(0,72%,55%,0.28), 0 12px 40px -12px hsla(0,72%,55%,0.4)" };
         return (
-          <Card className="border p-4" style={{ borderColor: tone.border, background: tone.bg }}>
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+          <Card
+            className="border p-4 backdrop-blur-xl relative overflow-hidden"
+            style={{ borderColor: tone.border, background: tone.bg, boxShadow: tone.glow }}
+          >
+            <motion.div
+              aria-hidden
+              className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-30 pointer-events-none"
+              style={{ background: `radial-gradient(circle, ${tone.bar} 0%, transparent 70%)` }}
+              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="flex items-center justify-between gap-4 flex-wrap relative">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-background/40 ${tone.text}`}>
                   <PhoneCall className="h-5 w-5" />
@@ -233,7 +286,9 @@ export function GenericPipelineDashboard() {
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Dials Today</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-foreground tabular-nums">{dialCounts.today}</span>
+                    <span className={`text-2xl font-bold tabular-nums ${tone.text}`}>
+                      <PulseNumber value={dialCounts.today} />
+                    </span>
                     <span className="text-xs text-muted-foreground">/ {DAILY_DIAL_GOAL} goal</span>
                   </div>
                 </div>
@@ -242,20 +297,31 @@ export function GenericPipelineDashboard() {
                 {hit ? `✓ Goal hit — ${dialCounts.today - DAILY_DIAL_GOAL} over` : `${remaining} dials to go`}
               </div>
               <div className="flex gap-4 text-xs">
-                <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.week}</span></div>
-                <div><span className="text-muted-foreground">Month</span> <span className="text-foreground font-semibold ml-1 tabular-nums">{dialCounts.month}</span></div>
+                <div><span className="text-muted-foreground">Week</span> <span className="text-foreground font-semibold ml-1 tabular-nums"><PulseNumber value={dialCounts.week} /></span></div>
+                <div><span className="text-muted-foreground">Month</span> <span className="text-foreground font-semibold ml-1 tabular-nums"><PulseNumber value={dialCounts.month} /></span></div>
               </div>
             </div>
             <div className="mt-3 h-1.5 w-full rounded-full bg-background/50 overflow-hidden">
-              <div className="h-full transition-all" style={{ width: `${pct}%`, background: tone.bar }} />
+              <motion.div
+                className="h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+                style={{ background: tone.bar, boxShadow: `0 0 12px ${tone.bar}` }}
+              />
             </div>
           </Card>
         );
       })()}
+      </Reveal>
+
+
 
 
 
       {/* 1. PIPELINE TABLE */}
+      <Reveal delay={0.1}>
+
       <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
         {rows.length === 0 ? (
           <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No upcoming callbacks or meetings.</div>
@@ -311,16 +377,21 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
 
       {/* 2. STATS ROW */}
+      <Reveal delay={0.05}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Close Rate (Month)" value={`${closeRate}%`} icon={TrendingUp} tone="success" />
         <StatCard label="Deals Closed (Month)" value={closedMonth} icon={Target} tone="success" />
         <StatCard label="Objections Logged (Month)" value={monthObjections} icon={AlertTriangle} tone="warn" />
         <StatCard label="Calls / Meetings (Month)" value={monthCalls + monthMeetings} icon={PhoneCall} />
       </div>
+      </Reveal>
+
 
       {/* 3. OBJECTIONS BREAKDOWN */}
+      <Reveal>
       <SectionCard title="Objections Breakdown" icon={BarChart3}>
         {objectionCounts.length === 0 ? (
           <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No objections logged yet.</div>
@@ -338,11 +409,20 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
+
 
       {/* 4. RECOMMENDED PRACTICE */}
       {topObjection && (
-        <Card className="border-2 p-5 relative overflow-hidden" style={{ borderColor: "hsl(190,90%,55%)", background: "linear-gradient(135deg, hsla(190,90%,55%,.08), hsla(230,90%,55%,.04))" }}>
-          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20" style={{ background: "radial-gradient(circle, hsl(190,90%,55%) 0%, transparent 70%)" }} />
+        <Reveal>
+        <Card className={`${GLASS} border-2 p-5 relative overflow-hidden`} style={{ borderColor: "hsl(190,90%,55%)", background: "linear-gradient(135deg, hsla(190,90%,55%,.08), hsla(230,90%,55%,.04))" }}>
+          <motion.div
+            aria-hidden
+            className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20"
+            style={{ background: "radial-gradient(circle, hsl(190,90%,55%) 0%, transparent 70%)" }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          />
           <div className="flex items-start justify-between gap-4 relative">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[hsl(190,90%,65%)]">
@@ -365,9 +445,12 @@ export function GenericPipelineDashboard() {
             </div>
           </div>
         </Card>
+        </Reveal>
       )}
 
+
       {/* 5. TRAINING PROGRESS */}
+      <Reveal>
       <SectionCard title="Training Progress" icon={GraduationCap} right={training && (
         <span className="text-xs text-muted-foreground">
           Cert: <span className={training.certStatus === "passed" ? "text-emerald-400 font-semibold" : training.certStatus === "failed" ? "text-[hsl(0,72%,65%)] font-semibold" : "text-muted-foreground"}>{training.certStatus.replace("_", " ")}</span>
@@ -383,7 +466,7 @@ export function GenericPipelineDashboard() {
                 <span className="text-foreground font-medium">Overall</span>
                 <span className="text-muted-foreground">· {activeModules} of {training.moduleProgress.length} modules started</span>
               </div>
-              <span className="text-xl font-bold text-primary">{overallTrainingPct}%</span>
+              <span className="text-xl font-bold text-primary"><PulseNumber value={`${overallTrainingPct}%`} /></span>
             </div>
             <Progress value={overallTrainingPct} />
             <div className="h-52 pt-2">
@@ -400,8 +483,10 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
 
       {/* 6. 14-DAY ACTIVITY */}
+      <Reveal>
       <SectionCard title="Activity — Last 14 Days" icon={TrendingUp} right={<span className="text-xs text-muted-foreground">Calls logged</span>}>
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
@@ -415,6 +500,8 @@ export function GenericPipelineDashboard() {
           </ResponsiveContainer>
         </div>
       </SectionCard>
+      </Reveal>
+
     </div>
   );
 }
