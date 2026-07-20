@@ -967,6 +967,55 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
             </div>
           </section>
 
+          {/* Payment (Meeting 3) booking page */}
+          <section className="space-y-3">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Onboarding & Payment (Meeting 3)</div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Page title</Label>
+              <Input value={paymentTitle} onChange={e => setPaymentTitle(e.target.value)}
+                placeholder="Onboarding & Payment"
+                className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Description / bio</Label>
+              <textarea value={paymentDesc} onChange={e => setPaymentDesc(e.target.value)} rows={3}
+                placeholder="Collect payment and schedule the kickoff call…"
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Payment Form (optional)</Label>
+              <select
+                value={paymentFormId}
+                onChange={e => setPaymentFormId(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">No form</option>
+                {availableForms.map(f => (
+                  <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
+              <div>
+                <div className="text-sm text-white">Payment link active</div>
+                <div className="text-xs text-white/50">Pause to stop accepting new onboarding bookings.</div>
+              </div>
+              <input type="checkbox" checked={paymentActive}
+                onChange={e => setPaymentActive(e.target.checked)}
+                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
+            </label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/60">Your payment link</Label>
+              <Input readOnly
+                value={(calendar as any).payment_booking_slug
+                  ? `${typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com"}/bdr/book-payment/${(calendar as any).payment_booking_slug}`
+                  : "Save the calendar to generate a payment link"}
+                className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+            </div>
+          </section>
+
+
+
 
           {/* Round-Robin Pool */}
           <section className="space-y-2">
