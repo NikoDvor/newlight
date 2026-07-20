@@ -202,7 +202,63 @@ Deno.serve(async (req) => {
       .single();
     if (evtErr) throw evtErr;
 
-    // 5. Update the deal with pricing + close_prep timestamp + meeting id
+    // 5a. Create Proposal row (Form 2 artifact #1)
+    const priceLineForDoc =
+      pricing_model === "retainer"
+        ? `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month`
+        : `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of revenue`;
+
+    const { data: proposal, error: propErr } = await supabase
+      .from("proposals")
+      .insert({
+        client_id: lead.client_id,
+        contact_id: contactId,
+        deal_id: dealId,
+        proposal_title: `${lead.business_name} — Service Proposal`,
+        proposal_type: "close_prep",
+        proposal_status: "draft",
+        pricing_model,
+        setup_fee: initial_fee != null ? Number(initial_fee) : null,
+        monthly_fee: pricing_model === "retainer" && recurring_fee != null ? Number(recurring_fee) : null,
+        offer_summary: priceLineForDoc,
+        internal_summary: closing_notes || null,
+        created_by: userId,
+        assigned_salesman_user_id: userId,
+      } as any)
+      .select("id, share_token")
+      .single();
+    if (propErr) throw propErr;
+    const proposalId = proposal!.id as string;
+
+    // 5b. Create service_agreement envelope + items (Form 2 artifact #2)
+    const summaryHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service Agreement Summary</title></head><body style="font-family:Arial,sans-serif;padding:32px;max-width:640px;margin:0 auto;color:#111"><h1 style="font-size:22px">Service Agreement — ${lead.business_name.replace(/</g,"&lt;")}</h1><p><strong>Terms:</strong> ${priceLineForDoc}</p>${closing_notes ? `<p><strong>Notes:</strong><br>${closing_notes.replace(/</g,"&lt;").replace(/\n/g,"<br>")}</p>` : ""}<p style="margin-top:32px;font-size:12px;color:#555">By signing this envelope you agree to the terms above. A formal Service Agreement PDF will be attached by NewLight staff and countersigned.</p></body></html>`;
+    const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
+
+    const { data: envelope, error: envErr } = await supabase
+      .from("document_envelopes")
+      .insert({
+        client_id: lead.client_id,
+        envelope_type: "service_agreement",
+        title: `Service Agreement — ${lead.business_name}`,
+        status: "draft",
+        related_type: "crm_deal",
+        related_id: dealId,
+        recipient_name: lead.owner_name || null,
+        recipient_email: lead.email || null,
+        created_by: userId,
+      } as any)
+      .select("id, share_token")
+      .single();
+    if (envErr) throw envErr;
+    const envelopeId = envelope!.id as string;
+    const envelopeToken = envelope!.share_token as string;
+
+    await supabase.from("document_envelope_items").insert([
+      { envelope_id: envelopeId, document_name: "Service Agreement", document_url: summaryDataUrl, display_order: 0 },
+      { envelope_id: envelopeId, document_name: "Receipt / Terms Summary", document_url: summaryDataUrl, display_order: 1 },
+    ] as any);
+
+    // 5c. Update the deal with pricing + close_prep timestamp + meeting id + envelope/pay-sign linkage
     const dealPatch: Record<string, unknown> = {
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       pricing_model,
@@ -211,6 +267,9 @@ Deno.serve(async (req) => {
       closing_notes: closing_notes || null,
       close_prep_completed_at: new Date().toISOString(),
       close_prep_meeting_id: evt.id,
+      proposal_id_current: proposalId,
+      service_agreement_envelope_id: envelopeId,
+      pay_sign_status: "pending",
     };
     await supabase.from("crm_deals").update(dealPatch as any).eq("id", dealId);
 
@@ -224,6 +283,12 @@ Deno.serve(async (req) => {
       lead_id: lead.id, deal_id: dealId, user_id: userId,
     } as any);
 
+    // Construct the client-facing Pay & Sign URL
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    let originBase = "";
+    try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+    const paySignUrl = originBase ? `${originBase}/pay-sign/${envelopeToken}` : `/pay-sign/${envelopeToken}`;
+
     // 7. Notifications (fire-and-forget)
     const notifyTask = sendClosePrepNotifications(supabase, {
       userId,
@@ -235,12 +300,21 @@ Deno.serve(async (req) => {
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
       commission_rate: commission_rate != null ? Number(commission_rate) : null,
       closing_notes: closing_notes || null,
+      paySignUrl,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
     // deno-lint-ignore no-explicit-any
     const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
     if (typeof waitUntil === "function") waitUntil(notifyTask); else void notifyTask;
 
-    return new Response(JSON.stringify({ ok: true, deal_id: dealId, event_id: evt.id }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      deal_id: dealId,
+      event_id: evt.id,
+      proposal_id: proposalId,
+      envelope_id: envelopeId,
+      envelope_share_token: envelopeToken,
+      pay_sign_url: paySignUrl,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
@@ -261,8 +335,9 @@ async function sendClosePrepNotifications(supabase: any, args: {
   recurring_fee: number | null;
   commission_rate: number | null;
   closing_notes: string | null;
+  paySignUrl: string;
 }) {
-  const { userId, userEmail, lead, when, pricing_model, initial_fee, recurring_fee, commission_rate, closing_notes } = args;
+  const { userId, userEmail, lead, when, pricing_model, initial_fee, recurring_fee, commission_rate, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
 
@@ -320,9 +395,12 @@ async function sendClosePrepNotifications(supabase: any, args: {
       lead.phone ? `  • Phone: ${lead.phone}` : "",
       lead.email ? `  • Email: ${lead.email}` : "",
       ``,
+      `Send this link to the client during the closing meeting so they can pay + e-sign in one flow:`,
+      paySignUrl,
+      ``,
       `— NewLight`,
     ].filter(Boolean).join("\n");
-    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead });
+    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl });
     await sendEmail(repEmail, subj, html, text);
   }
 }
@@ -335,8 +413,9 @@ function closePrepHtml(args: {
   priceLine: string;
   closing_notes: string | null;
   lead: any;
+  paySignUrl?: string;
 }): string {
-  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead } = args;
+  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl } = args;
   const rows: string[] = [
     `<tr><td style="padding:6px 0;color:#6b7280;width:130px;">BDR</td><td style="padding:6px 0;"><strong>${repName || "-"}</strong></td></tr>`,
     `<tr><td style="padding:6px 0;color:#6b7280;">Client</td><td style="padding:6px 0;"><strong>${who}</strong></td></tr>`,
@@ -348,11 +427,15 @@ function closePrepHtml(args: {
   const notesBlock = closing_notes
     ? `<div style="margin-top:16px;padding:12px 14px;background:#f9fafb;border-radius:8px;font-size:13px;color:#374151;white-space:pre-wrap;">${closing_notes.replace(/</g, "&lt;")}</div>`
     : "";
+  const paySignBlock = paySignUrl
+    ? `<div style="margin-top:20px;padding:14px 16px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;color:#065f46;"><strong>Pay &amp; Sign link (send to client):</strong><br><a href="${paySignUrl}" style="color:#065f46;word-break:break-all;">${paySignUrl}</a></div>`
+    : "";
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">${heading}</h1>
     <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;margin:0 0 8px;">${rows.join("")}</table>
     ${notesBlock}
+    ${paySignBlock}
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Bring this to your closing meeting.</p>
   </div>
 </body></html>`;

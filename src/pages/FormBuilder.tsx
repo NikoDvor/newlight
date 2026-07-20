@@ -31,6 +31,7 @@ import { FormTemplateDialog } from "@/components/forms/FormTemplateDialog";
 export default function FormBuilder() {
   const { activeClientId } = useWorkspace();
   const [forms, setForms] = useState<any[]>([]);
+  const [globalForms, setGlobalForms] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -42,12 +43,14 @@ export default function FormBuilder() {
   const fetchData = useCallback(async () => {
     if (!activeClientId) { setLoading(false); return; }
     setLoading(true);
-    const [fRes, sRes] = await Promise.all([
+    const [fRes, sRes, gRes] = await Promise.all([
       supabase.from("forms").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }),
       supabase.from("form_submissions").select("*").eq("client_id", activeClientId).order("submitted_at", { ascending: false }).limit(50),
+      supabase.from("forms").select("id, form_slug, form_name, description, external_route, sequence_number, is_active, form_type").eq("is_global", true).order("sequence_number", { ascending: true, nullsFirst: true }),
     ]);
     setForms(fRes.data || []);
     setSubmissions(sRes.data || []);
+    setGlobalForms(gRes.data || []);
     setLoading(false);
   }, [activeClientId]);
 
@@ -213,6 +216,39 @@ export default function FormBuilder() {
         <MetricCard label="Active Forms" value={String(activeForms)} change="Accepting submissions" changeType="positive" icon={CheckCircle2} />
         <MetricCard label="Templates Available" value="5" change="Ready to use" changeType="positive" icon={LayoutTemplate} />
       </WidgetGrid>
+
+      {globalForms.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> NewLight Global Forms
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Company-wide forms registered by NewLight (not scoped to this workspace). Admin/operator only.
+              </p>
+            </div>
+            <Badge variant="outline" className="text-[10px]">{globalForms.length} registered</Badge>
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {globalForms.map((g: any) => (
+              <li key={g.id} className="rounded-lg border border-border/60 bg-background/40 p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {g.sequence_number != null && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/15 text-primary">Form {g.sequence_number}</span>
+                  )}
+                  <span className="text-xs font-medium truncate">{g.form_name}</span>
+                  <Badge variant={g.is_active ? "default" : "secondary"} className="ml-auto text-[9px]">{g.is_active ? "Active" : "Inactive"}</Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{g.description}</p>
+                {g.external_route && (
+                  <code className="text-[10px] text-muted-foreground/70 truncate block mt-1">{g.external_route}</code>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-8">
         <Tabs defaultValue="forms">

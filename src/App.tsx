@@ -63,6 +63,8 @@ import FinancialCompliance from "./pages/FinancialCompliance";
 import ReferralProgram from "./pages/ReferralProgram";
 import AIVisibility from "./pages/AIVisibility";
 import Auth from "./pages/Auth";
+import PaySign from "./pages/PaySign";
+import Activation from "./pages/Activation";
 import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
@@ -238,6 +240,9 @@ const App = () => {
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               <Route path="/intake" element={<ClientIntakeForm />} />
+              <Route path="/pay-sign/:token" element={<PaySign />} />
+              <Route path="/sign/:token" element={<PaySign />} />
+              <Route path="/activation" element={<Activation />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
               {/* Admin Portal */}

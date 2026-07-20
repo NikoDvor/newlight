@@ -4357,12 +4357,15 @@ export type Database = {
           lead_source: string | null
           meeting_id_latest: string | null
           notes_summary: string | null
+          pay_sign_status: string
+          payment_invoice_id: string | null
           pipeline_stage: string
           pipeline_stage_id: string | null
           pricing_model: string | null
           proposal_id_current: string | null
           qualification_status: string | null
           recurring_fee: number | null
+          service_agreement_envelope_id: string | null
           status: string
           updated_at: string
           urgency_level: string | null
@@ -4390,12 +4393,15 @@ export type Database = {
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
+          pay_sign_status?: string
+          payment_invoice_id?: string | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
           pricing_model?: string | null
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          service_agreement_envelope_id?: string | null
           status?: string
           updated_at?: string
           urgency_level?: string | null
@@ -4423,12 +4429,15 @@ export type Database = {
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
+          pay_sign_status?: string
+          payment_invoice_id?: string | null
           pipeline_stage?: string
           pipeline_stage_id?: string | null
           pricing_model?: string | null
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          service_agreement_envelope_id?: string | null
           status?: string
           updated_at?: string
           urgency_level?: string | null
@@ -4470,6 +4479,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_deals_payment_invoice_fk"
+            columns: ["payment_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "crm_deals_pipeline_stage_id_fkey"
             columns: ["pipeline_stage_id"]
             isOneToOne: false
@@ -4481,6 +4497,13 @@ export type Database = {
             columns: ["proposal_id_current"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_service_envelope_fk"
+            columns: ["service_agreement_envelope_id"]
+            isOneToOne: false
+            referencedRelation: "document_envelopes"
             referencedColumns: ["id"]
           },
         ]
@@ -5875,23 +5898,27 @@ export type Database = {
         Row: {
           booking_mode: string | null
           button_text: string | null
-          client_id: string
+          client_id: string | null
           collect_notes: boolean
           confirmation_message: string | null
           create_contact_on_submit: boolean
           create_task_on_submit: boolean
           created_at: string
           description: string | null
+          external_route: string | null
           form_name: string
+          form_slug: string | null
           form_type: string
           id: string
           intro_text: string | null
           is_active: boolean
+          is_global: boolean
           linked_appointment_type_id: string | null
           linked_calendar_id: string | null
           linked_notification_owner_id: string | null
           linked_pipeline_stage_id: string | null
           page_title: string | null
+          sequence_number: number | null
           show_logo: boolean
           show_timezone: boolean
           update_existing_contact: boolean
@@ -5900,23 +5927,27 @@ export type Database = {
         Insert: {
           booking_mode?: string | null
           button_text?: string | null
-          client_id: string
+          client_id?: string | null
           collect_notes?: boolean
           confirmation_message?: string | null
           create_contact_on_submit?: boolean
           create_task_on_submit?: boolean
           created_at?: string
           description?: string | null
+          external_route?: string | null
           form_name: string
+          form_slug?: string | null
           form_type?: string
           id?: string
           intro_text?: string | null
           is_active?: boolean
+          is_global?: boolean
           linked_appointment_type_id?: string | null
           linked_calendar_id?: string | null
           linked_notification_owner_id?: string | null
           linked_pipeline_stage_id?: string | null
           page_title?: string | null
+          sequence_number?: number | null
           show_logo?: boolean
           show_timezone?: boolean
           update_existing_contact?: boolean
@@ -5925,23 +5956,27 @@ export type Database = {
         Update: {
           booking_mode?: string | null
           button_text?: string | null
-          client_id?: string
+          client_id?: string | null
           collect_notes?: boolean
           confirmation_message?: string | null
           create_contact_on_submit?: boolean
           create_task_on_submit?: boolean
           created_at?: string
           description?: string | null
+          external_route?: string | null
           form_name?: string
+          form_slug?: string | null
           form_type?: string
           id?: string
           intro_text?: string | null
           is_active?: boolean
+          is_global?: boolean
           linked_appointment_type_id?: string | null
           linked_calendar_id?: string | null
           linked_notification_owner_id?: string | null
           linked_pipeline_stage_id?: string | null
           page_title?: string | null
+          sequence_number?: number | null
           show_logo?: boolean
           show_timezone?: boolean
           update_existing_contact?: boolean
@@ -13985,7 +14020,11 @@ export type Database = {
         | "signed"
         | "declined"
         | "expired"
-      envelope_type: "proposal" | "onboarding_bundle" | "other"
+      envelope_type:
+        | "proposal"
+        | "onboarding_bundle"
+        | "other"
+        | "service_agreement"
       household_relationship_role:
         | "head_of_household"
         | "spouse"
@@ -14178,7 +14217,12 @@ export const Constants = {
         "declined",
         "expired",
       ],
-      envelope_type: ["proposal", "onboarding_bundle", "other"],
+      envelope_type: [
+        "proposal",
+        "onboarding_bundle",
+        "other",
+        "service_agreement",
+      ],
       household_relationship_role: [
         "head_of_household",
         "spouse",
