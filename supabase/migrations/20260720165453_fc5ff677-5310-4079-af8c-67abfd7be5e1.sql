@@ -1,0 +1,1 @@
+DELETE FROM public.nl_bdr_leads WHERE business_name IN ('__TEST_RED__ Acme','__TEST_YELLOW__ Beta');
