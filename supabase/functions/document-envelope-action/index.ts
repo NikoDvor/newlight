@@ -110,7 +110,33 @@ serve(async (req) => {
 
       await emitOnboardingEvent("onboarding_bundle_signed", "Onboarding Bundle Signed", { signer: signer_name, signer_email, ip });
 
-      return json({ success: true, status: "signed", signature: sig });
+      // If this is a service_agreement whose linked deal already has its initial invoice paid,
+      // atomically transition to paid_signed and notify ops.
+      let notify: any = null;
+      if (envelope.envelope_type === "service_agreement" && envelope.related_type === "crm_deal" && envelope.related_id) {
+        const { data: deal } = await supabase
+          .from("crm_deals")
+          .select("id, payment_invoice_id")
+          .eq("id", envelope.related_id)
+          .maybeSingle();
+        if (deal?.payment_invoice_id) {
+          const { data: inv } = await supabase
+            .from("invoices")
+            .select("invoice_status")
+            .eq("id", deal.payment_invoice_id)
+            .maybeSingle();
+          if (inv?.invoice_status === "paid") {
+            const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+            let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+            const paySignUrl = originBase ? `${originBase}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
+            notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl, envelopeId: envelope.id });
+          } else {
+            await supabase.from("crm_deals").update({ pay_sign_status: "signed" }).eq("id", deal.id);
+          }
+        }
+      }
+
+      return json({ success: true, status: "signed", signature: sig, notify });
     }
 
     if (action === "decline") {
