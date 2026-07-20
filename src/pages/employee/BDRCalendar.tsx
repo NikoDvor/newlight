@@ -738,6 +738,11 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [closingActive, setClosingActive] = useState<boolean>((calendar as any).closing_booking_active ?? true);
   const [closingFormId, setClosingFormId] = useState<string>((calendar as any).closing_booking_form_id ?? "");
 
+  const [paymentTitle, setPaymentTitle] = useState<string>((calendar as any).payment_booking_title ?? "");
+  const [paymentDesc, setPaymentDesc] = useState<string>((calendar as any).payment_booking_description ?? "");
+  const [paymentActive, setPaymentActive] = useState<boolean>((calendar as any).payment_booking_active ?? true);
+  const [paymentFormId, setPaymentFormId] = useState<string>((calendar as any).payment_booking_form_id ?? "");
+
   useEffect(() => {
     if (open) {
       setName(calendar.name);
