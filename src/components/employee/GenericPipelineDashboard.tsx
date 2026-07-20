@@ -168,6 +168,26 @@ export function GenericPipelineDashboard() {
 
       const stats = await getTrainingStatsForUser(userId);
       if (!cancelled) setTraining(stats);
+
+      // Dials: bdr_calendar_events where source='dialer', bucketed today/week/month
+      const monthStartD = startOfCurrentMonth();
+      const { data: dialEvents } = await (supabase as any)
+        .from("bdr_calendar_events")
+        .select("starts_at")
+        .eq("user_id", userId)
+        .eq("source", "dialer")
+        .gte("starts_at", monthStartD.toISOString());
+      if (cancelled) return;
+      const todayD = startOfToday();
+      const weekD = startOfCurrentWeek();
+      let dToday = 0, dWeek = 0, dMonth = 0;
+      (dialEvents || []).forEach((e: any) => {
+        const t = new Date(e.starts_at);
+        dMonth++;
+        if (t >= weekD) dWeek++;
+        if (t >= todayD) dToday++;
+      });
+      setDialCounts({ today: dToday, week: dWeek, month: dMonth });
     })();
     return () => { cancelled = true; };
   }, [userId]);
