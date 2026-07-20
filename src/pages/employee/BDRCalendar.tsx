@@ -643,35 +643,11 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
     toast({ title: "Booking link deleted" });
   };
 
-  const Row = ({ label, subtitle, url, k }: { label: string; subtitle: string; url: string; k: string }) => (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between">
-        <div className="text-sm font-semibold text-white">{label}</div>
-        <div className="text-[10px] uppercase tracking-wider text-white/40">{subtitle}</div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Input readOnly value={url || "Not configured yet"} className="bg-white/5 border-white/10 text-white font-mono text-xs" />
-        <Button type="button" onClick={() => openLink(url)} disabled={!url}
-          variant="outline" size="icon"
-          aria-label={`Open ${label}`}
-          title="Open in new tab"
-          className="border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08] hover:text-white shrink-0">
-          <ExternalLink className="h-4 w-4" />
-        </Button>
-        <Button type="button" onClick={() => copy(k, url)} disabled={!url}
-          aria-label={`Copy ${label}`}
-          title="Copy link"
-          className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] shrink-0">
-          {copiedKey === k ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </div>
-    </div>
-  );
-
   const CalendarBlock = ({ cal, isPrimary }: { cal: BdrCalendar; isPrimary: boolean }) => {
     const isEditing = editingId === cal.id;
+    const rename = () => { setEditingId(cal.id); setEditingName(cal.name); };
     return (
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
@@ -690,31 +666,30 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
                 onClick={() => setEditingId(null)}>Cancel</Button>
             </>
           ) : (
-            <>
-              <div className="text-sm font-semibold text-white flex-1 truncate">
-                {cal.name}
-                {isPrimary && <span className="ml-2 text-[10px] uppercase tracking-wider text-[hsl(211,96%,70%)]">Primary</span>}
-              </div>
-              <Button size="sm" variant="ghost" className="h-8 text-white/60 hover:text-white text-xs"
-                onClick={() => { setEditingId(cal.id); setEditingName(cal.name); }}>
-                Rename
-              </Button>
-              {!isPrimary && (
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-white/50 hover:text-red-400"
-                  aria-label="Delete booking link"
-                  disabled={busyId === cal.id}
-                  onClick={() => deleteExtra(cal)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </>
+            <div className="text-sm font-semibold text-white flex-1 truncate">
+              {cal.name}
+              {isPrimary && <span className="ml-2 text-[10px] uppercase tracking-wider text-[hsl(211,96%,70%)]">Primary</span>}
+            </div>
           )}
         </div>
-        <Row label="Discovery Call" subtitle="Meeting 1" url={discoveryUrlFor(cal)} k={`disc-${cal.id}`} />
-        <Row label="Final Closing Meeting" subtitle="Meeting 2" url={closingUrlFor(cal)} k={`close-${cal.id}`} />
+        <BookingLinkCard
+          name="Discovery Call"
+          badge="Meeting 1"
+          url={discoveryUrlFor(cal)}
+          onEdit={rename}
+          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
+        />
+        <BookingLinkCard
+          name="Final Closing Meeting"
+          badge="Meeting 2"
+          url={closingUrlFor(cal)}
+          onEdit={rename}
+          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
+        />
       </div>
     );
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
