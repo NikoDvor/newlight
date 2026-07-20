@@ -31,12 +31,12 @@ function formatTime12(time: string) {
 
 export function TimeSlotPicker({
   clientId, duration, selectedDate, selectedTime, onDateChange, onTimeChange,
+  minNoticeMinutes = DEFAULT_MIN_NOTICE_MINUTES,
 }: TimeSlotPickerProps) {
   const [availability, setAvailability] = useState<AvailabilityWindow[]>([]);
-  const [bookedSlots, setBookedSlots] = useState<{ start: string; end: string }[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<{ start: Date; end: Date }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Generate next 14 days
   const dateOptions = useMemo(() => {
     const dates: { value: string; label: string; dayOfWeek: number }[] = [];
     const today = new Date();
@@ -59,7 +59,6 @@ export function TimeSlotPicker({
         if (data && data.length > 0) {
           setAvailability(data);
         } else {
-          // Default: Mon-Fri 9am-5pm
           setAvailability([1, 2, 3, 4, 5].map(d => ({
             day_of_week: d, start_time: "09:00", end_time: "17:00", enabled: true,
           })));
@@ -79,8 +78,8 @@ export function TimeSlotPicker({
       .lte("start_time", dayEnd)
       .then(({ data }) => {
         setBookedSlots((data || []).map(e => ({
-          start: new Date(e.start_time).toTimeString().slice(0, 5),
-          end: new Date(e.end_time).toTimeString().slice(0, 5),
+          start: new Date(e.start_time),
+          end: new Date(e.end_time),
         })));
       });
   }, [clientId, selectedDate]);
@@ -89,22 +88,28 @@ export function TimeSlotPicker({
   const dayAvailability = availability.find(a => a.day_of_week === selectedDayOfWeek && a.enabled);
 
   const availableSlots = useMemo(() => {
-    if (!dayAvailability) return [];
-    const allSlots = generateSlots(dayAvailability.start_time, dayAvailability.end_time, duration);
-    // Filter out booked slots
-    return allSlots.filter(slot => {
-      const [sh, sm] = slot.split(":").map(Number);
-      const slotStart = sh * 60 + sm;
-      const slotEnd = slotStart + duration;
-      return !bookedSlots.some(booked => {
-        const [bsh, bsm] = booked.start.split(":").map(Number);
-        const [beh, bem] = booked.end.split(":").map(Number);
-        const bookedStart = bsh * 60 + bsm;
-        const bookedEnd = beh * 60 + bem;
-        return slotStart < bookedEnd && slotEnd > bookedStart;
-      });
-    });
-  }, [dayAvailability, bookedSlots, duration]);
+    if (!dayAvailability || !selectedDate) return [] as string[];
+    const anchor = new Date(selectedDate + "T00:00:00");
+    const now = new Date();
+    const isToday = anchor.toDateString() === now.toDateString();
+    const dates = computeAvailableSlots(
+      [{
+        day_of_week: dayAvailability.day_of_week,
+        start_time: dayAvailability.start_time,
+        end_time: dayAvailability.end_time,
+        enabled: true,
+      }],
+      {
+        durationMinutes: duration,
+        slotIntervalMinutes: duration,
+        minNoticeMinutes: isToday ? minNoticeMinutes : 0,
+        daysAhead: 1,
+        booked: bookedSlots,
+        now: isToday ? now : anchor,
+      },
+    );
+    return dates.map(d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+  }, [dayAvailability, bookedSlots, duration, minNoticeMinutes, selectedDate]);
 
   // Filter dates to only show available days
   const availableDates = dateOptions.filter(d => {
