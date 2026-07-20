@@ -490,19 +490,31 @@ export default function BDRDialer() {
                             )}
                           </span>
                         ) : <span className="text-white/30">—</span>}
-                        {lead.booking_link && lead.booking_link_is_owner && (
+                        {lead.booking_link && (
                           <a
                             href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="text-xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline w-fit"
-                            style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}
+                            style={lead.booking_link_is_owner
+                              ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }
+                              : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,68%)", border: "1px dashed hsla(211,96%,60%,.35)" }}
                             title={lead.booking_link}
                           >
                             <Calendar className="h-3 w-3" />
-                            Owner's Calendar
+                            {lead.booking_link_is_owner ? "Owner's Calendar" : "Booking Link"}
                           </a>
+                        )}
+                        {lead.self_booking_widget_non_owner && !lead.booking_link_is_owner && (
+                          <span
+                            className="text-[10px] inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium w-fit"
+                            style={{ background: "hsla(280,70%,60%,.15)", color: "hsl(280,80%,78%)", border: "1px solid hsla(280,70%,60%,.4)" }}
+                            title="Self-booking widget exists but not confirmed as the owner's"
+                          >
+                            <CalendarClock className="h-3 w-3" />
+                            Self-Booking Widget
+                          </span>
                         )}
                       </div>
                     </td>
