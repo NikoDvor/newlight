@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const activeColumn = isPayment ? "payment_booking_active" : isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool`)
+      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes`)
       .eq(slugColumn, lookupValue)
       .maybeSingle();
     let originCal = slugCal;
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool")
+        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
@@ -90,6 +90,19 @@ Deno.serve(async (req) => {
 
     const start = new Date(starts_at);
     const end = new Date(start.getTime() + (Number(duration_minutes) || 30) * 60_000);
+
+    // Enforce per-calendar minimum notice server-side (defense in depth; the
+    // DB trigger also enforces this on insert).
+    const minNoticeMinutes = Number((originCal as any).min_notice_minutes ?? 60);
+    if (Number.isFinite(minNoticeMinutes) && minNoticeMinutes > 0) {
+      const cutoff = new Date(Date.now() + minNoticeMinutes * 60_000);
+      if (start < cutoff) {
+        return new Response(
+          JSON.stringify({ error: `Bookings must be at least ${minNoticeMinutes} minutes from now.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
 
     // 3. Create lead (CRM record for the BDR's My Leads)
     const noteParts: string[] = [];

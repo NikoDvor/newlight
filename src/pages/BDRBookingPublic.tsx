@@ -49,6 +49,7 @@ interface Cal {
   booking_form_id: string | null;
   closing_booking_slug?: string | null;
   payment_booking_slug?: string | null;
+  min_notice_minutes?: number | null;
 }
 
 export type BookingMode = "discovery" | "closing" | "payment";
@@ -73,27 +74,20 @@ interface FormField {
   options_json: any;
 }
 
-function buildSlots(availability: any) {
-  const slots: { date: Date; label: string }[] = [];
-  const now = new Date();
-  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    const key = days[d.getDay()];
-    const cfg = availability?.[key];
-    if (!cfg?.enabled) continue;
-    const [sh, sm] = String(cfg.start || "09:00").split(":").map(Number);
-    const [eh, em] = String(cfg.end || "17:00").split(":").map(Number);
-    const startMin = sh * 60 + (sm || 0);
-    const endMin = eh * 60 + (em || 0);
-    for (let m = startMin; m + 30 <= endMin; m += 30) {
-      const s = new Date(d);
-      s.setHours(Math.floor(m / 60), m % 60, 0, 0);
-      slots.push({ date: s, label: s.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) });
-    }
-  }
-  return slots;
+import { computeAvailableSlots, weeklyMapToRows, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
+
+function buildSlots(availability: any, minNoticeMinutes: number) {
+  const rows = weeklyMapToRows(availability || {});
+  const dates = computeAvailableSlots(rows, {
+    durationMinutes: 30,
+    slotIntervalMinutes: 30,
+    minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
+    daysAhead: 15,
+  });
+  return dates.map(s => ({
+    date: s,
+    label: s.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+  }));
 }
 
 export default function BDRBookingPublic({ mode = "discovery" }: { mode?: BookingMode } = {}) {
@@ -234,7 +228,7 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     })();
   }, [slug]);
 
-  const slots = useMemo(() => (cal ? buildSlots(cal.availability) : []), [cal]);
+  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES) : []), [cal]);
 
   // Prefill Step-2 contact fields from common form keys (name/email/phone/business) if present.
   useEffect(() => {

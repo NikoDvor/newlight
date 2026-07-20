@@ -1020,6 +1020,7 @@ export type Database = {
           google_sync_enabled: boolean
           id: string
           last_assigned_at: string | null
+          min_notice_minutes: number
           name: string
           outlook_sync_enabled: boolean
           payment_booking_active: boolean | null
@@ -1049,6 +1050,7 @@ export type Database = {
           google_sync_enabled?: boolean
           id?: string
           last_assigned_at?: string | null
+          min_notice_minutes?: number
           name: string
           outlook_sync_enabled?: boolean
           payment_booking_active?: boolean | null
@@ -1078,6 +1080,7 @@ export type Database = {
           google_sync_enabled?: boolean
           id?: string
           last_assigned_at?: string | null
+          min_notice_minutes?: number
           name?: string
           outlook_sync_enabled?: boolean
           payment_booking_active?: boolean | null
@@ -2049,6 +2052,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          min_notice_minutes: number
           owner_user_id: string | null
           status: string
           timezone: string | null
@@ -2065,6 +2069,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          min_notice_minutes?: number
           owner_user_id?: string | null
           status?: string
           timezone?: string | null
@@ -2081,6 +2086,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          min_notice_minutes?: number
           owner_user_id?: string | null
           status?: string
           timezone?: string | null
@@ -13855,6 +13861,7 @@ export type Database = {
           booking_title: string
           client_id: string
           id: string
+          min_notice_minutes: number
           name: string
           timezone: string
         }[]
@@ -13871,6 +13878,7 @@ export type Database = {
           closing_booking_slug: string
           closing_booking_title: string
           id: string
+          min_notice_minutes: number
           name: string
           timezone: string
         }[]
@@ -13882,6 +13890,7 @@ export type Database = {
           booking_slug: string
           client_id: string
           id: string
+          min_notice_minutes: number
           name: string
           payment_booking_active: boolean
           payment_booking_description: string

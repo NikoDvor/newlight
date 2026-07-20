@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Clock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { computeAvailableSlots, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
 interface CalendarSlotPickerProps {
   calendarId: string;
@@ -11,6 +11,7 @@ interface CalendarSlotPickerProps {
   duration: number;
   bufferBefore?: number;
   bufferAfter?: number;
+  minNoticeMinutes?: number;
   selectedDate: string;
   selectedTime: string;
   onDateChange: (date: string) => void;
@@ -18,21 +19,6 @@ interface CalendarSlotPickerProps {
   variant?: "default" | "dark";
 }
 
-function generateSlots(startTime: string, endTime: string, durationMin: number, interval: number, bufferBefore: number, bufferAfter: number): string[] {
-  const slots: string[] = [];
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
-  const startMinutes = sh * 60 + sm;
-  const endMinutes = eh * 60 + em;
-
-  for (let m = startMinutes; m + durationMin + bufferAfter <= endMinutes; m += interval) {
-    if (m - bufferBefore < startMinutes && bufferBefore > 0) continue;
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
-  }
-  return slots;
-}
 
 function formatTime12(time: string) {
   const [h, m] = time.split(":").map(Number);
@@ -43,17 +29,22 @@ function formatTime12(time: string) {
 
 export function CalendarSlotPicker({
   calendarId, clientId, duration, bufferBefore = 0, bufferAfter = 0,
+  minNoticeMinutes,
   selectedDate, selectedTime, onDateChange, onTimeChange, variant = "default",
 }: CalendarSlotPickerProps) {
   const [availability, setAvailability] = useState<any[]>([]);
   const [blackouts, setBlackouts] = useState<any[]>([]);
-  const [bookedSlots, setBookedSlots] = useState<{ start: string; end: string }[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<{ start: Date; end: Date }[]>([]);
+  const [calMinNotice, setCalMinNotice] = useState<number>(DEFAULT_MIN_NOTICE_MINUTES);
   const [loading, setLoading] = useState(true);
+
+  const effectiveMinNotice = minNoticeMinutes ?? calMinNotice;
 
   const dateOptions = useMemo(() => {
     const dates: { value: string; label: string; dayOfWeek: number }[] = [];
     const today = new Date();
-    for (let i = 1; i <= 30; i++) {
+    // Include today (i=0) so "next hour" slots can appear when eligible.
+    for (let i = 0; i <= 30; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       dates.push({
@@ -70,9 +61,12 @@ export function CalendarSlotPicker({
     Promise.all([
       supabase.from("calendar_availability").select("*").eq("calendar_id", calendarId).eq("is_active", true),
       supabase.from("calendar_blackout_dates").select("start_datetime, end_datetime").eq("calendar_id", calendarId),
-    ]).then(([avRes, blRes]) => {
+      supabase.from("calendars").select("min_notice_minutes").eq("id", calendarId).maybeSingle(),
+    ]).then(([avRes, blRes, calRes]) => {
       setAvailability(avRes.data || []);
       setBlackouts(blRes.data || []);
+      const mn = (calRes.data as any)?.min_notice_minutes;
+      if (typeof mn === "number") setCalMinNotice(mn);
       setLoading(false);
     });
   }, [calendarId]);
@@ -88,8 +82,8 @@ export function CalendarSlotPicker({
       .lte("start_time", dayEnd)
       .then(({ data }) => {
         setBookedSlots((data || []).map(e => ({
-          start: new Date(e.start_time).toTimeString().slice(0, 5),
-          end: new Date(e.end_time).toTimeString().slice(0, 5),
+          start: new Date(e.start_time),
+          end: new Date(e.end_time),
         })));
       });
   }, [calendarId, selectedDate]);
@@ -107,23 +101,32 @@ export function CalendarSlotPicker({
   const dayAvail = availability.find(a => a.day_of_week === selectedDayOfWeek);
 
   const availableSlots = useMemo(() => {
-    if (!dayAvail) return [];
-    const interval = dayAvail.slot_interval_minutes || 30;
-    const allSlots = generateSlots(dayAvail.start_time, dayAvail.end_time, duration, interval, bufferBefore, bufferAfter);
-    // Filter booked
-    return allSlots.filter(slot => {
-      const [sh, sm] = slot.split(":").map(Number);
-      const slotStart = sh * 60 + sm - bufferBefore;
-      const slotEnd = sh * 60 + sm + duration + bufferAfter;
-      return !bookedSlots.some(booked => {
-        const [bsh, bsm] = booked.start.split(":").map(Number);
-        const [beh, bem] = booked.end.split(":").map(Number);
-        const bookedStart = bsh * 60 + bsm;
-        const bookedEnd = beh * 60 + bem;
-        return slotStart < bookedEnd && slotEnd > bookedStart;
-      });
+    if (!dayAvail || !selectedDate) return [] as string[];
+    const rows = [{
+      day_of_week: dayAvail.day_of_week,
+      start_time: dayAvail.start_time,
+      end_time: dayAvail.end_time,
+      slot_interval_minutes: dayAvail.slot_interval_minutes || 30,
+      enabled: true,
+    }];
+    // Anchor "today" of the util at the selected date so only that day is generated.
+    const anchor = new Date(selectedDate + "T00:00:00");
+    const now = new Date();
+    // If the selected date is in the future, allow all slots on it (min notice already
+    // satisfied by definition once we're past today), so pass now=anchor when needed.
+    const useNow = anchor.toDateString() === now.toDateString() ? now : anchor;
+    const dates = computeAvailableSlots(rows, {
+      durationMinutes: duration,
+      slotIntervalMinutes: dayAvail.slot_interval_minutes || 30,
+      bufferBeforeMinutes: bufferBefore,
+      bufferAfterMinutes: bufferAfter,
+      minNoticeMinutes: anchor.toDateString() === now.toDateString() ? effectiveMinNotice : 0,
+      daysAhead: 1,
+      booked: bookedSlots,
+      now: useNow,
     });
-  }, [dayAvail, bookedSlots, duration, bufferBefore, bufferAfter]);
+    return dates.map(d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+  }, [dayAvail, bookedSlots, duration, bufferBefore, bufferAfter, effectiveMinNotice, selectedDate]);
 
   const availableDates = dateOptions.filter(d => {
     if (isBlackedOut(d.value)) return false;
