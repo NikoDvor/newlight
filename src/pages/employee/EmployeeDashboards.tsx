@@ -288,7 +288,12 @@ export function SDRDashboard() {
 export function GenericEmployeeDashboard() {
   const { user, employeeProfile } = useWorkspace();
   const name = employeeProfile?.full_name || user?.user_metadata?.full_name || user?.email;
-  return <div className="space-y-6"><Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} /><SectionCard title="Employee Dashboard"><EmptyLine label="Your internal dashboard is ready. Role-specific widgets will appear here as your team workflow is configured." /></SectionCard></div>;
+  return (
+    <div className="space-y-6">
+      <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
+      <GenericPipelineDashboard />
+    </div>
+  );
 }
 
 export function AccountManagerDashboard() {
