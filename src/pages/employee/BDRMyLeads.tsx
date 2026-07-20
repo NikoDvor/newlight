@@ -1135,7 +1135,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // new "Booking System Exists" (Yes/No)
         bpIdx = -1,     // new "Booking Platform" (name)
-        blIdx = -1, bloIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
+        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
