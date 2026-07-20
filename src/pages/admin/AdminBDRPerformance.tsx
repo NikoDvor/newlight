@@ -100,6 +100,7 @@ export default function AdminBDRPerformance() {
   const [leads, setLeads] = useState<any[]>([]);
   const [objections, setObjections] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
+  const [dialEvents, setDialEvents] = useState<{ user_id: string; starts_at: string }[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
