@@ -450,6 +450,7 @@ export function GenericPipelineDashboard() {
 
 
       {/* 5. TRAINING PROGRESS */}
+      <Reveal>
       <SectionCard title="Training Progress" icon={GraduationCap} right={training && (
         <span className="text-xs text-muted-foreground">
           Cert: <span className={training.certStatus === "passed" ? "text-emerald-400 font-semibold" : training.certStatus === "failed" ? "text-[hsl(0,72%,65%)] font-semibold" : "text-muted-foreground"}>{training.certStatus.replace("_", " ")}</span>
@@ -465,7 +466,7 @@ export function GenericPipelineDashboard() {
                 <span className="text-foreground font-medium">Overall</span>
                 <span className="text-muted-foreground">· {activeModules} of {training.moduleProgress.length} modules started</span>
               </div>
-              <span className="text-xl font-bold text-primary">{overallTrainingPct}%</span>
+              <span className="text-xl font-bold text-primary"><PulseNumber value={`${overallTrainingPct}%`} /></span>
             </div>
             <Progress value={overallTrainingPct} />
             <div className="h-52 pt-2">
@@ -482,8 +483,10 @@ export function GenericPipelineDashboard() {
           </div>
         )}
       </SectionCard>
+      </Reveal>
 
       {/* 6. 14-DAY ACTIVITY */}
+      <Reveal>
       <SectionCard title="Activity — Last 14 Days" icon={TrendingUp} right={<span className="text-xs text-muted-foreground">Calls logged</span>}>
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
@@ -497,6 +500,8 @@ export function GenericPipelineDashboard() {
           </ResponsiveContainer>
         </div>
       </SectionCard>
+      </Reveal>
+
     </div>
   );
 }
