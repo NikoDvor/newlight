@@ -480,7 +480,26 @@ export default function Onboarding() {
 
   return (
     <div>
-      <PageHeader title="Workspace Setup" description="Complete your master onboarding form to auto-configure your workspace" />
+      <PageHeader
+        title={isAdminOps ? "Onboarding · Form 4 Admin View" : "Workspace Setup"}
+        description={
+          isAdminOps
+            ? "Admin-side view of the Form 4 activation flow. The client-facing unified version lives at /activation."
+            : "Complete your master onboarding form to auto-configure your workspace"
+        }
+      />
+      {isAdminOps && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <span className="text-foreground">
+            This is the admin-side onboarding surface. The client-facing unified Form 4 lives at{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">/activation</code>.
+          </span>
+          <Button variant="outline" size="sm" onClick={() => navigate("/activation")}>
+            Open client-facing /activation
+          </Button>
+        </div>
+      )}
+
 
       {/* Step indicator */}
       <div className="mb-6">
