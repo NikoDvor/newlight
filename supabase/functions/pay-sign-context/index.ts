@@ -2,6 +2,7 @@
 // and (on demand) creates an invoice + Stripe checkout session for the linked deal.
 // No JWT required — the share_token itself is the capability.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
