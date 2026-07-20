@@ -195,6 +195,7 @@ Deno.serve(async (req) => {
     // EdgeRuntime.waitUntil so the isolate stays alive after we return 202.
     const contacts = {
       clientName, clientPhone, clientEmail,
+      clientBusinessName, clientLogoUrl,
       bdrUserId, bdrPhone, bdrEmail, bdrName,
       startsAt, meta, recordId: record.id as string,
     };
