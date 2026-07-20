@@ -320,6 +320,8 @@ export function GenericPipelineDashboard() {
 
 
       {/* 1. PIPELINE TABLE */}
+      <Reveal delay={0.1}>
+
       <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
         {rows.length === 0 ? (
           <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No upcoming callbacks or meetings.</div>
