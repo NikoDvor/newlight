@@ -1,0 +1,1 @@
+ALTER TABLE public.nl_bdr_leads ADD COLUMN IF NOT EXISTS owner_booking_link text;

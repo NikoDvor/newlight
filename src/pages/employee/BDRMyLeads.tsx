@@ -316,6 +316,7 @@ export default function BDRMyLeads() {
         has_booking_system: row.has_booking_system,
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? null,
+        owner_booking_link: row.owner_booking_link || null,
         self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
         dialer_bookable: row.dialer_bookable ?? null,
         meeting_booked: row.meeting_booked || null,
@@ -1135,7 +1136,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // new "Booking System Exists" (Yes/No)
         bpIdx = -1,     // new "Booking Platform" (name)
-        blIdx = -1, bloIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
+        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1150,6 +1151,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
         else if (/booking\s*link\s*is\s*owner|owner.?s?\s*calendar\s*confirmed/.test(c)) bloIdx = i;
+        else if (/owner\s*booking\s*link/.test(c)) oblIdx = i;
         else if (/self.?booking\s*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
         else if (/booking\s*link/.test(c)) blIdx = i;
@@ -1226,6 +1228,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           has_booking_system,
           booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
           booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
+          owner_booking_link: oblIdx >= 0 ? (r[oblIdx]?.trim() || null) : null,
           self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
           dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
@@ -1283,7 +1286,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
               </p>
             </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Phone | Phone Type | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Dialer-Bookable | Meeting Booked"} />
+              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Phone | Phone Type | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
             <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
           </div>
         ) : (
