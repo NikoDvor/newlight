@@ -240,6 +240,9 @@ const App = () => {
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               <Route path="/intake" element={<ClientIntakeForm />} />
+              <Route path="/pay-sign/:token" element={<PaySign />} />
+              <Route path="/sign/:token" element={<PaySign />} />
+              <Route path="/activation" element={<Activation />} />
               <Route path="/site/:clientSlug/:pageSlug" element={<PublicSite />} />
 
               {/* Admin Portal */}
