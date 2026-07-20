@@ -316,6 +316,7 @@ export default function BDRMyLeads() {
         has_booking_system: row.has_booking_system,
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? null,
+        owner_booking_link: row.owner_booking_link || null,
         self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
         dialer_bookable: row.dialer_bookable ?? null,
         meeting_booked: row.meeting_booked || null,
