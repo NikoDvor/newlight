@@ -427,11 +427,15 @@ function closePrepHtml(args: {
   const notesBlock = closing_notes
     ? `<div style="margin-top:16px;padding:12px 14px;background:#f9fafb;border-radius:8px;font-size:13px;color:#374151;white-space:pre-wrap;">${closing_notes.replace(/</g, "&lt;")}</div>`
     : "";
+  const paySignBlock = paySignUrl
+    ? `<div style="margin-top:20px;padding:14px 16px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;color:#065f46;"><strong>Pay &amp; Sign link (send to client):</strong><br><a href="${paySignUrl}" style="color:#065f46;word-break:break-all;">${paySignUrl}</a></div>`
+    : "";
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">${heading}</h1>
     <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;margin:0 0 8px;">${rows.join("")}</table>
     ${notesBlock}
+    ${paySignBlock}
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Bring this to your closing meeting.</p>
   </div>
 </body></html>`;
