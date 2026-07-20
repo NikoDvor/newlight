@@ -291,7 +291,7 @@ export default function BDRCalendar() {
           }}><ChevronRight className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" className="h-8 px-3 ml-1 text-white/70 text-xs rounded-full hover:text-white hover:bg-white/5" onClick={() => { const t = new Date(); setCursor(t); setSelectedDay(t); }}>Today</Button>
         </div>
-        <ViewSwitcher value={view} onChange={setView} views={[
+        <ViewSwitcher<"month" | "week"> value={view} onChange={setView} views={[
           { key: "month", label: "Month" },
           { key: "week", label: "Week" },
         ]} />
