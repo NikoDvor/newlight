@@ -180,11 +180,20 @@ Deno.serve(async (req) => {
       payment_method: "stripe",
     }).eq("id", deal.payment_invoice_id);
 
-    // If envelope also signed, bump deal to paid_signed; else just paid
-    const newStatus = envelope.status === "signed" ? "paid_signed" : "paid";
-    await supabase.from("crm_deals").update({ pay_sign_status: newStatus }).eq("id", deal.id);
+    // If envelope also signed, transition deal to paid_signed and notify ops; else just mark paid.
+    let newStatus = "paid";
+    let notify: any = null;
+    if (envelope.status === "signed") {
+      const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+      let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+      const paySignUrl = originBase ? `${originBase}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
+      notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl, envelopeId: envelope.id });
+      newStatus = "paid_signed";
+    } else {
+      await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
+    }
 
-    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus });
+    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify });
   }
 
   return json({ error: "Unknown action" }, 400);
