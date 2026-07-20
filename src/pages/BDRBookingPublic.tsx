@@ -109,6 +109,8 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [formStepComplete, setFormStepComplete] = useState(false);
   const [savedSubmissionId, setSavedSubmissionId] = useState<string | null>(null);
+  const [paymentLinkUrl, setPaymentLinkUrl] = useState<string | null>(null);
+  const [requiresPayment, setRequiresPayment] = useState(false);
 
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
