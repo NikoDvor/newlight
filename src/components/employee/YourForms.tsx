@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
-import { QuickActionCard } from "@/components/employee/QuickActionCard";
+import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
 
