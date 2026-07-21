@@ -349,26 +349,11 @@ async function sendBookingNotifications(supabase: any, args: {
     console.error("[bdr-book notifications] owner lookup failed:", e);
   }
 
-  // 1) Notify calendar owner on their own channels (skip silently if missing)
-  if (ownerPhone) {
-    await sendSms(ownerPhone, `New booking confirmed: ${who} at ${when}. Check your NewLight calendar.`);
-  }
-  if (ownerEmail) {
-    const subj = `New Booking: ${who} at ${when}`;
-    const text = `Hi ${ownerName || "there"},\n\nYou have a new booking.\n\nClient: ${who}\nWhen: ${when}\n\nCheck your calendar in the NewLight app.`;
-    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">New booking confirmed</h1>
-    <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi ${ownerName || "there"},</p>
-    <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;margin:0 0 20px;">
-      <tr><td style="padding:6px 0;color:#6b7280;width:110px;">Client</td><td style="padding:6px 0;"><strong>${who}</strong></td></tr>
-      <tr><td style="padding:6px 0;color:#6b7280;">When</td><td style="padding:6px 0;"><strong>${when}</strong></td></tr>
-    </table>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Check your calendar in the NewLight app.</p>
-  </div>
-</body></html>`;
-    await sendEmail(ownerEmail, subj, html, text);
-  }
+  // NOTE: BDR-facing SMS and email were removed from this path. The
+  // booking-confirmation-sms database webhook is now the single source of
+  // client + BDR notifications (it also includes the Zoom join link).
+  // This function only fires the universal ops notification below.
+
 
   // 2) Universal notifications for every booking
   const bdrLabel = ownerName || "Unknown BDR";
