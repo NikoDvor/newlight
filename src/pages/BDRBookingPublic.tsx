@@ -47,12 +47,8 @@ interface Cal {
   booking_description: string | null;
   booking_active: boolean;
   booking_form_id: string | null;
-  closing_booking_slug?: string | null;
-  payment_booking_slug?: string | null;
   min_notice_minutes?: number | null;
 }
-
-export type BookingMode = "discovery" | "closing" | "payment";
 
 interface FormDef {
   id: string;
@@ -90,7 +86,7 @@ function buildSlots(availability: any, minNoticeMinutes: number) {
   }));
 }
 
-export default function BDRBookingPublic({ mode = "discovery" }: { mode?: BookingMode } = {}) {
+export default function BDRBookingPublic() {
   const { slug } = useParams<{ slug: string }>();
   const [cal, setCal] = useState<Cal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,46 +115,10 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     (async () => {
       if (!slug) return;
       const lookupValue = decodeURIComponent(slug).trim();
-      const rpcName =
-        mode === "closing" ? "get_public_bdr_closing_calendar"
-        : mode === "payment" ? "get_public_bdr_payment_calendar"
-        : "get_public_bdr_calendar";
       const { data: rpcData, error: calErr } = await (supabase as any)
-        .rpc(rpcName, { _slug_or_id: lookupValue });
-      const raw = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
-      // Normalize closing/payment-mode rows so downstream code can read the same fields.
-      const data: Cal | null = raw
-        ? (mode === "closing"
-            ? {
-                id: raw.id,
-                client_id: raw.client_id,
-                name: raw.name,
-                booking_slug: raw.booking_slug,
-                availability: raw.availability,
-                timezone: raw.timezone,
-                booking_title: raw.closing_booking_title,
-                booking_description: raw.closing_booking_description,
-                booking_active: raw.closing_booking_active,
-                booking_form_id: raw.closing_booking_form_id,
-                closing_booking_slug: raw.closing_booking_slug,
-              }
-            : mode === "payment"
-            ? {
-                id: raw.id,
-                client_id: raw.client_id,
-                name: raw.name,
-                booking_slug: raw.booking_slug,
-                availability: raw.availability,
-                timezone: raw.timezone,
-                booking_title: raw.payment_booking_title,
-                booking_description: raw.payment_booking_description,
-                booking_active: raw.payment_booking_active,
-                booking_form_id: raw.payment_booking_form_id,
-                payment_booking_slug: raw.payment_booking_slug,
-              }
-            : raw)
-        : null;
-      console.error("[BDRBookingPublic] calendar lookup", { mode, lookupValue, found: !!data, calErr });
+        .rpc("get_public_bdr_calendar", { _slug_or_id: lookupValue });
+      const data: Cal | null = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
+      console.error("[BDRBookingPublic] calendar lookup", { lookupValue, found: !!data, calErr });
       setCal(data);
 
 
@@ -345,12 +305,8 @@ export default function BDRBookingPublic({ mode = "discovery" }: { mode?: Bookin
     const has_sales_team = hasSalesTeam === "" ? null : hasSalesTeam === "yes";
     const { error } = await supabase.functions.invoke("bdr-book", {
       body: {
-        booking_slug: mode === "closing"
-          ? (cal.closing_booking_slug || cal.booking_slug || cal.id)
-          : mode === "payment"
-          ? ((cal as any).payment_booking_slug || cal.booking_slug || cal.id)
-          : (cal.booking_slug || cal.id),
-        meeting_kind: mode === "closing" ? "closing" : mode === "payment" ? "payment" : "discovery",
+        booking_slug: cal.booking_slug || cal.id,
+        meeting_kind: "discovery",
         ...contact,
         starts_at: selectedSlot,
         duration_minutes: 30,
