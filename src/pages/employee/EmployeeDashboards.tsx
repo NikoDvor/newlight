@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CalendarClock, CheckCircle2, Clock3, CreditCard, DollarSign, FileText, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock3, CreditCard, DollarSign, FileText, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
 import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
+import { QuickActionCard } from "@/components/employee/QuickActionCard";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
 
