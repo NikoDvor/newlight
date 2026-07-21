@@ -212,7 +212,7 @@ export default function BDRLeadSourcing() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">Filters</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
           <div>
             <Label className="text-xs">State</Label>
             <Select value={state} onValueChange={setState}>
@@ -222,6 +222,10 @@ export default function BDRLeadSourcing() {
                 {US_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label className="text-xs">City</Label>
+            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Optional" className="h-9" />
           </div>
           <div className="md:col-span-2">
             <Label className="text-xs">Keyword</Label>
