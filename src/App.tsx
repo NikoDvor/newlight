@@ -33,7 +33,7 @@ import Billing from "./pages/Billing";
 import Tasks from "./pages/Tasks";
 import Pipeline from "./pages/Pipeline";
 import Inbox from "./pages/Inbox";
-import ProposalBooking from "./pages/ProposalBooking";
+
 import ProspectDetail from "./pages/ProspectDetail";
 import AuditPack from "./pages/AuditPack";
 import MeetingOutcome from "./pages/MeetingOutcome";
@@ -171,7 +171,7 @@ import ConversationsPage from "./pages/ConversationsPage";
 import FollowUpQueue from "./pages/FollowUpQueue";
 import MessageTemplates from "./pages/MessageTemplates";
 import PublicSite from "./pages/PublicSite";
-import ClientIntakeForm from "./pages/ClientIntakeForm";
+
 import SetupPortal from "./pages/SetupPortal";
 import Landing from "./pages/Landing";
 import Install from "./pages/Install";
@@ -238,7 +238,7 @@ const App = () => {
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
-              <Route path="/intake" element={<ClientIntakeForm />} />
+              
               <Route path="/pay-sign/:token" element={<PaySign />} />
               <Route path="/sign/:token" element={<PaySign />} />
               <Route path="/activation" element={<Activation />} />
@@ -429,7 +429,7 @@ const App = () => {
                 <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
                 <Route path="/inbox" element={<Navigate to="/conversations" replace />} />
                 <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
-                <Route path="/proposal-booking" element={<ProposalBooking />} />
+                
                 <Route path="/prospect-detail" element={<ProspectDetail />} />
                 <Route path="/audit-pack" element={<AuditPack />} />
                 <Route path="/meeting-outcome" element={<MeetingOutcome />} />
