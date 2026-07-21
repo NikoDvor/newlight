@@ -46,6 +46,7 @@ export default function BDRLeadSourcing() {
   const { clientId } = useEmployeeClientId();
 
   const [state, setState] = useState("CA");
+  const [city, setCity] = useState("");
   const [keyword, setKeyword] = useState("wealth");
   const [minAum, setMinAum] = useState("");
   const [maxAum, setMaxAum] = useState("");
@@ -85,7 +86,9 @@ export default function BDRLeadSourcing() {
     try {
       const { data, error } = await supabase.functions.invoke("sec-firm-search", {
         body: {
-          state, keyword,
+          state,
+          city: city.trim() || null,
+          keyword,
           min_aum: minAum ? Number(minAum) : null,
           max_aum: maxAum ? Number(maxAum) : null,
           max_results: maxResults,
@@ -209,7 +212,7 @@ export default function BDRLeadSourcing() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">Filters</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
           <div>
             <Label className="text-xs">State</Label>
             <Select value={state} onValueChange={setState}>
@@ -219,6 +222,10 @@ export default function BDRLeadSourcing() {
                 {US_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label className="text-xs">City</Label>
+            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Optional" className="h-9" />
           </div>
           <div className="md:col-span-2">
             <Label className="text-xs">Keyword</Label>
@@ -237,7 +244,7 @@ export default function BDRLeadSourcing() {
             <Input type="number" value={maxResults} min={1} max={50}
               onChange={(e) => setMaxResults(Math.max(1, Math.min(50, Number(e.target.value) || 25)))} className="h-9" />
           </div>
-          <div className="md:col-span-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="md:col-span-7 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-[11px] text-muted-foreground max-w-xl">
               AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment.
             </p>
