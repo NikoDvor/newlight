@@ -936,6 +936,9 @@ export type Database = {
           metadata: Json
           notes: string | null
           outcome: string | null
+          reminder_15m_sent_at: string | null
+          reminder_24h_sent_at: string | null
+          reminder_3h_sent_at: string | null
           source: string
           stage: string | null
           starts_at: string
@@ -962,6 +965,9 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           outcome?: string | null
+          reminder_15m_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_3h_sent_at?: string | null
           source?: string
           stage?: string | null
           starts_at: string
@@ -988,6 +994,9 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           outcome?: string | null
+          reminder_15m_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          reminder_3h_sent_at?: string | null
           source?: string
           stage?: string | null
           starts_at?: string
