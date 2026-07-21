@@ -1543,6 +1543,9 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [promptText, setPromptText] = React.useState<string>("");
   const [loadingPrompt, setLoadingPrompt] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [copiedHandoff, setCopiedHandoff] = React.useState(false);
+
+  const SEC_HANDOFF_LINE = "This list came from the SEC IAPD tool — go ahead and research each one.";
 
   React.useEffect(() => {
     if (!open) return;
@@ -1570,6 +1573,17 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
       setCopied(true);
       toast({ title: "Master Prompt copied", description: `${promptText.length.toLocaleString()} characters copied to clipboard.` });
       setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
+
+  const copyHandoff = async () => {
+    try {
+      await navigator.clipboard.writeText(SEC_HANDOFF_LINE);
+      setCopiedHandoff(true);
+      toast({ title: "Handoff line copied" });
+      setTimeout(() => setCopiedHandoff(false), 2500);
     } catch {
       toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
     }
@@ -1605,6 +1619,18 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
               style={{ background: "hsla(158,70%,45%,.9)", color: "hsl(215,40%,8%)" }}>
               Open SEC Lead Sourcing Tool →
             </Button>
+
+            <div className="mt-3 rounded-lg p-3" style={{ background: "hsla(158,70%,45%,.06)", border: "1px solid hsla(158,70%,45%,.2)" }}>
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                <Label className="text-xs font-medium text-foreground/90">Paste this before your list:</Label>
+                <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={copyHandoff}>
+                  {copiedHandoff ? "Copied ✓" : "Copy"}
+                </Button>
+              </div>
+              <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2">
+                <p className="text-xs text-foreground/85 italic">{SEC_HANDOFF_LINE}</p>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
@@ -1638,6 +1664,46 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="rounded-xl p-4 space-y-4" style={{ background: "hsla(220,12%,25%,.18)", border: "1px solid hsla(220,12%,40%,.25)" }}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={{ background: "hsla(220,12%,40%,.25)", color: "hsl(220,12%,70%)" }}>New Here? Follow These Steps</span>
+            </div>
+            <p className="text-xs leading-relaxed text-foreground/80">
+              <span className="font-semibold text-foreground">Only use the SEC tool for financial advisors/RIAs.</span> For any other business type, skip straight to Path B — just tell Claude the state and business type directly.
+            </p>
+
+            <div className="space-y-3">
+              <div className="rounded-lg p-3" style={{ background: "hsla(158,70%,40%,.06)", border: "1px solid hsla(158,70%,45%,.2)" }}>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "hsl(158,70%,65%)" }}>Path A — Financial Advisors (Use SEC)</h4>
+                <ol className="space-y-1.5 text-xs leading-relaxed text-foreground/85 list-decimal list-inside">
+                  <li>Tap the green <span className="font-semibold text-foreground">Open SEC Lead Sourcing Tool</span> button above</li>
+                  <li>Type a state (like Texas) and a word like <span className="italic">wealth</span> or <span className="italic">financial advisor</span></li>
+                  <li>Tap <span className="font-semibold text-foreground">Search</span></li>
+                  <li>Tap <span className="font-semibold text-foreground">Copy for Claude Research</span></li>
+                  <li>Open a new chat with Claude (make sure <span className="font-semibold text-foreground">web search</span> is turned on)</li>
+                  <li>Paste the Master Prompt (copy button above) as your first message</li>
+                  <li>Paste the small line <span className="italic text-foreground/70">"This list came from the SEC IAPD tool..."</span> (copy button above) as your second message, then paste your list right after it in the same message</li>
+                  <li>Claude will research each business and give you a finished list</li>
+                  <li>Copy that finished list</li>
+                  <li>Come back here, tap <span className="font-semibold text-foreground">Import</span>, paste it, then tap <span className="font-semibold text-foreground">Parse Leads</span></li>
+                </ol>
+              </div>
+
+              <div className="rounded-lg p-3" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.2)" }}>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "hsl(211,96%,70%)" }}>Path B — Any Other Business Type</h4>
+                <ol className="space-y-1.5 text-xs leading-relaxed text-foreground/85 list-decimal list-inside">
+                  <li>Open a new chat with Claude (web search turned on)</li>
+                  <li>Paste the Master Prompt as your first message</li>
+                  <li>As your second message, just type the state and business type, like: <span className="font-mono text-[11px] text-foreground/80">"Texas, hair salons"</span> or <span className="font-mono text-[11px] text-foreground/80">"Ohio, HVAC contractors"</span></li>
+                  <li>Claude will find the businesses itself and research each one</li>
+                  <li>Copy the finished list</li>
+                  <li>Come back here, tap <span className="font-semibold text-foreground">Import</span>, paste it, then tap <span className="font-semibold text-foreground">Parse Leads</span></li>
+                </ol>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>
