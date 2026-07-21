@@ -16,9 +16,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, meeting_kind, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
-    const isClosing = meeting_kind === "closing";
-    const isPayment = meeting_kind === "payment";
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -40,20 +38,20 @@ Deno.serve(async (req) => {
     );
 
     // 1. Find the originating calendar by booking slug first, then UUID fallback.
+    //    Discovery is the only supported public booking mode; closing/payment
+    //    modes were removed along with their public pages.
     const lookupValue = String(booking_slug).trim();
-    const slugColumn = isPayment ? "payment_booking_slug" : isClosing ? "closing_booking_slug" : "booking_slug";
-    const activeColumn = isPayment ? "payment_booking_active" : isClosing ? "closing_booking_active" : "booking_active";
     const { data: slugCal, error: slugErr } = await supabase
       .from("bdr_calendars")
-      .select(`id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes`)
-      .eq(slugColumn, lookupValue)
+      .select(`id, user_id, client_id, name, booking_active, round_robin_pool, min_notice_minutes`)
+      .eq("booking_slug", lookupValue)
       .maybeSingle();
     let originCal = slugCal;
     let calErr = slugErr;
     if (!originCal && uuidRegex.test(lookupValue)) {
       const { data: idCal, error: idErr } = await supabase
         .from("bdr_calendars")
-        .select("id, user_id, client_id, name, booking_active, closing_booking_active, payment_booking_active, round_robin_pool, min_notice_minutes")
+        .select("id, user_id, client_id, name, booking_active, round_robin_pool, min_notice_minutes")
         .eq("id", lookupValue)
         .maybeSingle();
       originCal = idCal;
@@ -64,7 +62,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if ((originCal as any)[activeColumn] === false) {
+    if ((originCal as any).booking_active === false) {
       return new Response(JSON.stringify({ error: "Bookings are paused" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
