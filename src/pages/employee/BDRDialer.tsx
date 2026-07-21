@@ -15,6 +15,8 @@ interface Lead {
   business_name: string;
   owner_name: string | null;
   phone: string | null;
+  front_desk_phone: string | null;
+  owner_direct_phone: string | null;
   city: string | null;
   niche: string | null;
   list_name: string | null;
