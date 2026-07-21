@@ -7472,7 +7472,9 @@ export type Database = {
           callback_set_at: string | null
           called: boolean
           city: string | null
+          city_normalized: string | null
           client_id: string
+          crd: string | null
           created_at: string
           crm_contact_id: string | null
           crm_deal_id: string | null
@@ -7487,6 +7489,7 @@ export type Database = {
           logo_url: string | null
           meeting_booked: string | null
           modules_of_interest: string[] | null
+          name_normalized: string | null
           niche: string | null
           notes: string | null
           objection_category: string | null
@@ -7515,7 +7518,9 @@ export type Database = {
           callback_set_at?: string | null
           called?: boolean
           city?: string | null
+          city_normalized?: string | null
           client_id: string
+          crd?: string | null
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
@@ -7530,6 +7535,7 @@ export type Database = {
           logo_url?: string | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
+          name_normalized?: string | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
@@ -7558,7 +7564,9 @@ export type Database = {
           callback_set_at?: string | null
           called?: boolean
           city?: string | null
+          city_normalized?: string | null
           client_id?: string
+          crd?: string | null
           created_at?: string
           crm_contact_id?: string | null
           crm_deal_id?: string | null
@@ -7573,6 +7581,7 @@ export type Database = {
           logo_url?: string | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
+          name_normalized?: string | null
           niche?: string | null
           notes?: string | null
           objection_category?: string | null
@@ -13887,6 +13896,15 @@ export type Database = {
           claimed_by_self: boolean
         }[]
       }
+      check_sec_results_claimed: {
+        Args: { _rows: Json }
+        Returns: {
+          claimed_by_name: string
+          claimed_by_self: boolean
+          crd: string
+          match_type: string
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -13977,6 +13995,8 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_business_name: { Args: { _n: string }; Returns: string }
+      normalize_city_name: { Args: { _c: string }; Returns: string }
       normalize_phone_last10: { Args: { _p: string }; Returns: string }
       normalize_website_host: { Args: { _w: string }; Returns: string }
       read_email_batch: {
