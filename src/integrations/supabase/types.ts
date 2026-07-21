@@ -7491,6 +7491,7 @@ export type Database = {
           booking_link: string | null
           booking_link_is_owner: boolean | null
           booking_platform: string | null
+          booking_system_exists: boolean | null
           business_name: string
           callback_at: string | null
           callback_set_at: string | null
@@ -7519,6 +7520,8 @@ export type Database = {
           objection_category: string | null
           outcome_history: Json
           owner_booking_link: string | null
+          owner_booking_link_send_ready: string | null
+          owner_calendar_confirmed: boolean | null
           owner_name: string | null
           phone: string | null
           phone_normalized: string | null
@@ -7537,6 +7540,7 @@ export type Database = {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
           booking_platform?: string | null
+          booking_system_exists?: boolean | null
           business_name: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7565,6 +7569,8 @@ export type Database = {
           objection_category?: string | null
           outcome_history?: Json
           owner_booking_link?: string | null
+          owner_booking_link_send_ready?: string | null
+          owner_calendar_confirmed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           phone_normalized?: string | null
@@ -7583,6 +7589,7 @@ export type Database = {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
           booking_platform?: string | null
+          booking_system_exists?: boolean | null
           business_name?: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7611,6 +7618,8 @@ export type Database = {
           objection_category?: string | null
           outcome_history?: Json
           owner_booking_link?: string | null
+          owner_booking_link_send_ready?: string | null
+          owner_calendar_confirmed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           phone_normalized?: string | null
