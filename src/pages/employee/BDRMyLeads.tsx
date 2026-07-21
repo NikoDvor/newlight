@@ -1512,8 +1512,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                   {r.booking_platform && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }}>{r.booking_platform}</span>
                   )}
-                  {r.phone_type === "owner" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner</span>
+                  {(r.owner_direct_phone || r.phone_type === "owner") && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner Direct</span>
+                  )}
+                  {r.front_desk_phone && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(211,50%,55%,.15)", color: "hsl(211,60%,72%)" }}>Front Desk</span>
                   )}
                 </label>
                 );
