@@ -1186,9 +1186,14 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     // Column indices — -1 means "not present in this header"
     let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
-        bseIdx = -1,    // new "Booking System Exists" (Yes/No)
-        bpIdx = -1,     // new "Booking Platform" (name)
-        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
+        bseIdx = -1,    // "Booking System Exists" (Yes/No)
+        bpIdx = -1,     // "Booking Platform" (name)
+        blIdx = -1,
+        bloIdx = -1,    // legacy V13 "Booking Link is Owner"
+        occIdx = -1,    // V16 "Owner's Calendar Confirmed"
+        oblIdx = -1,    // legacy V13 "Owner Booking Link"
+        oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
+        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1202,7 +1207,9 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
-        else if (/booking\s*link\s*is\s*owner|owner.?s?\s*calendar\s*confirmed/.test(c)) bloIdx = i;
+        else if (/owner.?s?\s*calendar\s*confirmed/.test(c)) occIdx = i;
+        else if (/booking\s*link\s*is\s*owner/.test(c)) bloIdx = i;
+        else if (/owner\s*booking\s*link\s*\(?\s*send.?ready/.test(c)) oblsrIdx = i;
         else if (/owner\s*booking\s*link/.test(c)) oblIdx = i;
         else if (/self.?booking\s*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
@@ -1231,9 +1238,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       malformedSkipped = before - dataRows.length;
     }
 
-    const parseYesBlank = (v: string): boolean | null => {
+    // Tri-state: true=Yes, false=No, null=N/A/blank. Callers that need bool-only
+    // fall back to null.
+    const parseYesNoNA = (v: string): boolean | null => {
       const s = (v || "").trim().toLowerCase();
-      if (!s || s === "n/a" || s === "-" || s === "—") return null;
+      if (!s || s === "n/a" || s === "na" || s === "-" || s === "—") return null;
       if (/^(y|yes|true|✓)$/.test(s)) return true;
       if (/^(n|no|false)$/.test(s)) return false;
       return null;
@@ -1256,22 +1265,44 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (!s || /^no$/i.test(s) || s === "-" || s === "—" || /^n\/a$/i.test(s)) return null;
       return s;
     };
+    const cleanLink = (v: string): string | null => {
+      const s = (v || "").trim();
+      if (!s || s === "-" || s === "—" || /^n\/a$/i.test(s) || /^blank$/i.test(s)) return null;
+      return s;
+    };
 
     const result = dataRows
       .filter(r => biIdx >= 0 && r[biIdx]?.trim())
       .map(r => {
-        // Booking system + platform: prefer new schema (separate columns), fall back to legacy
+        // V16 prefers separate "Booking System Exists" (Yes/No) + "Booking Platform" name
+        let booking_system_exists: boolean | null;
         let has_booking_system: boolean | null;
         let booking_platform: string | null;
         if (bseIdx >= 0 || bpIdx >= 0) {
-          const yes = bseIdx >= 0 ? parseYesBlank(r[bseIdx] || "") : null;
+          const yes = bseIdx >= 0 ? parseYesNoNA(r[bseIdx] || "") : null;
           booking_platform = bpIdx >= 0 ? parsePlatformName(r[bpIdx] || "") : null;
-          has_booking_system = yes !== null ? yes : (booking_platform != null);
+          booking_system_exists = yes !== null ? yes : (booking_platform != null ? true : null);
+          has_booking_system = booking_system_exists;
         } else {
           const bk = parseLegacyBookingSystem(bkIdx >= 0 ? r[bkIdx] : "");
           booking_platform = bk.platform;
           has_booking_system = bk.has;
+          booking_system_exists = bk.has;
         }
+        // Owner's Calendar Confirmed (V16) vs Booking Link is Owner (V13 legacy)
+        // Yes = confirmed owner calendar; No = system exists but not owner's;
+        // null = N/A (no system) or missing column
+        const owner_calendar_confirmed = occIdx >= 0
+          ? parseYesNoNA(r[occIdx] || "")
+          : (bloIdx >= 0 ? parseYesNoNA(r[bloIdx] || "") : null);
+        // Send-ready is the V16 rep-ready deep link; legacy owner_booking_link is fallback
+        const owner_booking_link_send_ready = oblsrIdx >= 0
+          ? cleanLink(r[oblsrIdx] || "")
+          : (oblIdx >= 0 ? cleanLink(r[oblIdx] || "") : null);
+        const owner_booking_link = oblIdx >= 0
+          ? cleanLink(r[oblIdx] || "")
+          : owner_booking_link_send_ready;
+
         return {
           business_name: r[biIdx]?.trim() || "",
           owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
@@ -1280,11 +1311,14 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
           has_booking_system,
-          booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
-          booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
-          owner_booking_link: oblIdx >= 0 ? (r[oblIdx]?.trim() || null) : null,
-          self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
-          dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
+          booking_system_exists,
+          booking_link: blIdx >= 0 ? cleanLink(r[blIdx] || "") : null,
+          booking_link_is_owner: owner_calendar_confirmed, // kept in sync w/ V16
+          owner_calendar_confirmed,
+          owner_booking_link,
+          owner_booking_link_send_ready,
+          self_booking_widget_non_owner: swIdx >= 0 ? parseYesNoNA(r[swIdx] || "") : null,
+          dialer_bookable: dbIdx >= 0 ? parseYesNoNA(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
           city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
