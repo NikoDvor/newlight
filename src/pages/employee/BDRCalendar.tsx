@@ -560,10 +560,6 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
 
   const discoveryUrlFor = (c: BdrCalendar) =>
     c.booking_slug ? `${origin}/bdr/book/${c.booking_slug}` : "";
-  const closingUrlFor = (c: BdrCalendar) =>
-    (c as any).closing_booking_slug ? `${origin}/bdr/book-closing/${(c as any).closing_booking_slug}` : "";
-  const paymentUrlFor = (c: BdrCalendar) =>
-    (c as any).payment_booking_slug ? `${origin}/bdr/book-payment/${(c as any).payment_booking_slug}` : "";
 
   const saveRename = async (cal: BdrCalendar) => {
     const nextName = editingName.trim();
@@ -624,20 +620,9 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
           onEdit={rename}
           onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
         />
-        <BookingLinkCard
-          name="Final Closing Meeting"
-          badge="Meeting 2"
-          url={closingUrlFor(cal)}
-          onEdit={rename}
-          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
-        />
-        <BookingLinkCard
-          name="Onboarding & Payment"
-          badge="Meeting 3"
-          url={paymentUrlFor(cal)}
-          onEdit={rename}
-          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
-        />
+        <p className="text-[11px] text-white/45 px-1">
+          Meeting 2 (Close) and Meeting 3 (Pay &amp; Sign) are not public booking links — the closing meeting is scheduled from Close Prep on each lead, and Pay &amp; Sign is auto-generated after Close Prep submits.
+        </p>
       </div>
     );
   };
