@@ -1545,10 +1545,12 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
 /* Add Lead Modal                                  */
 /* ═══════════════════════════════════════════════ */
 function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (f: Record<string, string>) => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ business_name: "", owner_name: "", phone: "", website: "", niche: "", city: "", notes: "" });
+  const emptyForm = { business_name: "", owner_name: "", front_desk_phone: "", owner_direct_phone: "", website: "", niche: "", city: "", notes: "" };
+  const [form, setForm] = useState<Record<string, string>>(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (!open) setForm({ business_name: "", owner_name: "", phone: "", website: "", niche: "", city: "", notes: "" }); }, [open]);
+  useEffect(() => { if (!open) setForm(emptyForm); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const handleSave = async () => {
     if (!form.business_name.trim()) return;
