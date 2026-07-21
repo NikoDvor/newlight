@@ -13,7 +13,7 @@ type Kind = "close-prep" | "pay-sign";
 type LeadRow = {
   id: string;
   business_name: string | null;
-  contact_name: string | null;
+  owner_name: string | null;
   pipeline_stage: string | null;
   status: string | null;
   crm_deal_id: string | null;
@@ -22,7 +22,7 @@ type LeadRow = {
 async function fetchEligible(userId: string, kind: Kind): Promise<LeadRow[]> {
   let q = (supabase as any)
     .from("nl_bdr_leads")
-    .select("id,business_name,contact_name,pipeline_stage,status,crm_deal_id")
+    .select("id,business_name,owner_name,pipeline_stage,status,crm_deal_id")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (kind === "close-prep") {
@@ -133,8 +133,8 @@ export function FormLeadPickerCard({
                 <p className="text-sm font-semibold text-foreground truncate">
                   {lead.business_name || "(no business name)"}
                 </p>
-                {lead.contact_name && (
-                  <p className="text-xs text-muted-foreground truncate">{lead.contact_name}</p>
+                {lead.owner_name && (
+                  <p className="text-xs text-muted-foreground truncate">{lead.owner_name}</p>
                 )}
                 <p className="text-[10px] uppercase tracking-wide text-primary mt-1">
                   {lead.pipeline_stage || lead.status || "—"}
