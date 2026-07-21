@@ -47,11 +47,16 @@ Deno.serve(async (req) => {
     let lastUrl = "";
     let stoppedReason: "end_of_results" | "safety_cap" | "satisfied" = "end_of_results";
 
+    // SEC uses `start` offset (Elasticsearch-style), NOT `pageNumber`. Each
+    // response returns ~20 hits regardless of pageSize. The `pageNumber` param
+    // is silently ignored, so paginating with it just re-fetches page 1.
+    const SEC_HITS_PER_PAGE = 20;
+
     for (let pageNumber = 1; pageNumber <= HARD_PAGE_CAP; pageNumber++) {
+      const start = (pageNumber - 1) * SEC_HITS_PER_PAGE;
       const params = new URLSearchParams({
         query: keyword || "*",
-        pageNumber: String(pageNumber),
-        pageSize: String(SEC_PAGE_SIZE),
+        start: String(start),
         hl: "true",
         includePrevious: "false",
         sortField: "Relevance",
