@@ -46,6 +46,7 @@ export default function BDRLeadSourcing() {
   const { clientId } = useEmployeeClientId();
 
   const [state, setState] = useState("CA");
+  const [city, setCity] = useState("");
   const [keyword, setKeyword] = useState("wealth");
   const [minAum, setMinAum] = useState("");
   const [maxAum, setMaxAum] = useState("");
