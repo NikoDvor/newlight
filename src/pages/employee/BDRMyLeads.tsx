@@ -353,6 +353,8 @@ export default function BDRMyLeads() {
         self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
         dialer_bookable: row.dialer_bookable ?? null,
         meeting_booked: row.meeting_booked || null,
+        crd: row.crd || null,
+        city: row.city || null,
         list_name: cleanList,
       }).select("id").single();
       // Safety net: unique index race
@@ -1178,7 +1180,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // new "Booking System Exists" (Yes/No)
         bpIdx = -1,     // new "Booking Platform" (name)
-        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1;
+        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1201,6 +1203,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/booking\s*platform/.test(c)) bpIdx = i;
         else if (/booking\s*system/.test(c)) bkIdx = i;
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
+        else if (/^crd$|crd\s*(number|#|no\.?)/.test(c)) crdIdx = i;
+        else if (/^city$|city\s*\/?\s*state|location/.test(c)) cityIdx = i;
       });
       dataRows = allRows.slice(headerIdx + 1);
       // Drop separator rows like "---|---|---"
@@ -1274,6 +1278,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
           dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
+          crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
+          city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
