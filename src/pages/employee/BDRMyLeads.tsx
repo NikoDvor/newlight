@@ -363,6 +363,7 @@ export default function BDRMyLeads() {
         meeting_booked: row.meeting_booked || null,
         crd: row.crd || null,
         city: row.city || null,
+        notes: row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
         list_name: cleanList,
       }).select("id").single();
       // Safety net: unique index race
@@ -1203,6 +1204,28 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
   }, [open, existingLists]);
 
   const parse = () => {
+    // Extract "RAPPORT NOTES" addendum section (V17) before splitting the table.
+    // Pattern: a header line matching /^rapport notes/i, followed by lines of
+    // "Business Name: fact, source: where." — terminated by blank line or EOF.
+    const rapportMap: Record<string, string> = {};
+    const rapportHeaderRe = /^\s*rapport\s+notes\s*:?\s*$/i;
+    const rawLinesForRapport = raw.split("\n");
+    for (let i = 0; i < rawLinesForRapport.length; i++) {
+      if (rapportHeaderRe.test(rawLinesForRapport[i])) {
+        for (let j = i + 1; j < rawLinesForRapport.length; j++) {
+          const line = rawLinesForRapport[j].trim();
+          if (!line) break;
+          if (/^(confidence\s+flag|session[-\s]?cap|━|---|===)/i.test(line)) break;
+          const colon = line.indexOf(":");
+          if (colon <= 0) continue;
+          const name = line.slice(0, colon).trim().toLowerCase();
+          const rest = line.slice(colon + 1).trim().replace(/^[-–—]\s*/, "");
+          if (name && rest) rapportMap[name] = rest;
+        }
+        break;
+      }
+    }
+
     const linesRaw = raw.trim().split("\n").map(l => l.trim()).filter(Boolean);
     if (!linesRaw.length) return;
 
@@ -1359,6 +1382,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
           city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
+          rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
