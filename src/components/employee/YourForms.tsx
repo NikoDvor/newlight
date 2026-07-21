@@ -2,8 +2,34 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
+import { QuickActionCard } from "@/components/employee/QuickActionCard";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
-import { ClipboardCheck, ScrollText, Users } from "lucide-react";
+import { ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
+
+type LinkedForm = {
+  kind: "link";
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  name: string;
+  badge: string;
+  url: string;
+  active: boolean;
+  hint: string;
+};
+
+type ActionForm = {
+  kind: "action";
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  name: string;
+  badge: string;
+  to: string;
+  hint: string;
+};
+
+type FormItem = LinkedForm | ActionForm;
 
 export function YourForms() {
   const [cal, setCal] = useState<BdrCalendar | null>(null);
@@ -17,10 +43,10 @@ export function YourForms() {
   }, []);
 
   if (!cal) return null;
-  const anyCal = cal as any;
 
-  const forms = [
+  const forms: FormItem[] = [
     {
+      kind: "link",
       key: "form-1",
       label: "Form 1",
       icon: Users,
@@ -31,23 +57,23 @@ export function YourForms() {
       hint: "Public discovery booking — share with prospects.",
     },
     {
+      kind: "action",
       key: "form-2",
       label: "Form 2",
       icon: ClipboardCheck,
       name: "Close Prep",
       badge: "Meeting 2",
-      url: "",
-      active: true,
+      to: "/employee/leads",
       hint: "Open Close Prep from any hot lead in My Leads to submit Form 2.",
     },
     {
+      kind: "action",
       key: "form-3",
       label: "Form 3",
       icon: ScrollText,
       name: "Pay & Sign",
       badge: "Meeting 3",
-      url: "",
-      active: true,
+      to: "/employee/leads",
       hint: "Auto-generated after Form 2 submits — sent to the client.",
     },
   ];
@@ -63,15 +89,27 @@ export function YourForms() {
           const Icon = f.icon;
           return (
             <div key={f.key} className="relative">
-              <BookingLinkCard name={`${f.label} · ${f.name}`} badge={f.badge} url={f.url} />
-              <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                <Icon className="h-3 w-3" />
-                <span className="truncate">{f.hint}</span>
-              </div>
-              {!f.active && (
-                <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
-                  Paused
-                </span>
+              {f.kind === "link" ? (
+                <>
+                  <BookingLinkCard name={`${f.label} · ${f.name}`} badge={f.badge} url={f.url} />
+                  <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <Icon className="h-3 w-3" />
+                    <span className="truncate">{f.hint}</span>
+                  </div>
+                  {!f.active && (
+                    <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
+                      Paused
+                    </span>
+                  )}
+                </>
+              ) : (
+                <QuickActionCard
+                  name={`${f.label} · ${f.name}`}
+                  badge={f.badge}
+                  description={f.hint}
+                  icon={Icon}
+                  to={f.to}
+                />
               )}
             </div>
           );
