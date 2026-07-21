@@ -7494,14 +7494,17 @@ export type Database = {
           owner_booking_link: string | null
           owner_name: string | null
           phone: string | null
+          phone_normalized: string | null
           phone_type: string | null
           pipeline_stage: string | null
+          released_at: string | null
           sales_team_size: string | null
           self_booking_widget_non_owner: boolean | null
           status: string
           updated_at: string
           user_id: string
           website: string | null
+          website_host: string | null
         }
         Insert: {
           booking_link?: string | null
@@ -7534,14 +7537,17 @@ export type Database = {
           owner_booking_link?: string | null
           owner_name?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
           status?: string
           updated_at?: string
           user_id: string
           website?: string | null
+          website_host?: string | null
         }
         Update: {
           booking_link?: string | null
@@ -7574,14 +7580,17 @@ export type Database = {
           owner_booking_link?: string | null
           owner_name?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
           status?: string
           updated_at?: string
           user_id?: string
           website?: string | null
+          website_host?: string | null
         }
         Relationships: [
           {
@@ -13866,6 +13875,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reassign_lead: {
+        Args: { _lead_id: string; _new_user: string }
+        Returns: undefined
+      }
+      check_lead_claimed: {
+        Args: { _phone: string; _website: string }
+        Returns: {
+          claimed: boolean
+          claimed_by_name: string
+          claimed_by_self: boolean
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -13941,6 +13962,12 @@ export type Database = {
           timezone: string
         }[]
       }
+      list_lead_conflicts: {
+        Args: { _lead_ids: string[] }
+        Returns: {
+          lead_id: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -13950,12 +13977,20 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_phone_last10: { Args: { _p: string }; Returns: string }
+      normalize_website_host: { Args: { _w: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      release_stale_bdr_leads: {
+        Args: { _days?: number }
+        Returns: {
+          released_count: number
         }[]
       }
       run_household_review_scan: {

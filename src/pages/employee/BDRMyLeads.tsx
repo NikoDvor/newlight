@@ -277,14 +277,38 @@ export default function BDRMyLeads() {
     }
   };
 
+  const checkClaim = async (phone?: string | null, website?: string | null) => {
+    try {
+      const { data } = await (supabase as any).rpc("check_lead_claimed", {
+        _phone: phone || null,
+        _website: website || null,
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      return row as { claimed: boolean; claimed_by_self: boolean; claimed_by_name: string | null } | null;
+    } catch {
+      return null;
+    }
+  };
+
   const handleAddLead = async (form: Record<string, string>) => {
     if (!user?.id) return;
+    const claim = await checkClaim(form.phone, form.website);
+    if (claim?.claimed && !claim.claimed_by_self) {
+      toast({ title: "Lead already claimed", description: `This phone/website is already owned by ${claim.claimed_by_name || "another rep"}.`, variant: "destructive" });
+      return;
+    }
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
       user_id: user.id, client_id: clientId, business_name: form.business_name, owner_name: form.owner_name || null,
       phone: form.phone || null, website: form.website || null, niche: form.niche || null,
       city: form.city || null, notes: form.notes || null,
     }).select("id").single();
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    if (error) {
+      const msg = (error as any).code === "23505"
+        ? "This phone number is already claimed by another rep."
+        : error.message;
+      toast({ title: "Error", description: msg, variant: "destructive" });
+      return;
+    }
     await createCRMRecords(form as any, data.id);
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
@@ -301,11 +325,20 @@ export default function BDRMyLeads() {
     const seenInBatch = new Set<string>();
     let count = 0;
     let skipped = 0;
+    let claimedByOther = 0;
     for (const row of rows) {
       const key = (row.business_name || "").trim().toLowerCase();
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
-      const { data } = await (supabase as any).from("nl_bdr_leads").insert({
+
+      // Pre-flight cross-rep claim check (phone-first, website-fallback)
+      const claim = await checkClaim(row.phone, row.website);
+      if (claim?.claimed && !claim.claimed_by_self) {
+        claimedByOther++;
+        continue;
+      }
+
+      const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
         user_id: user.id, client_id: clientId,
         business_name: row.business_name,
         owner_name: row.owner_name || null,
@@ -322,12 +355,21 @@ export default function BDRMyLeads() {
         meeting_booked: row.meeting_booked || null,
         list_name: cleanList,
       }).select("id").single();
+      // Safety net: unique index race
+      if (error && (error as any).code === "23505") { claimedByOther++; continue; }
       if (data) { await createCRMRecords(row, data.id); count++; }
     }
-    toast({ title: `${count} leads imported${cleanList ? ` to "${cleanList}"` : ""}`, description: skipped > 0 ? `${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : undefined });
+    const parts: string[] = [];
+    if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
+    if (claimedByOther > 0) parts.push(`${claimedByOther} already claimed by another rep`);
+    toast({
+      title: `${count} leads imported${cleanList ? ` to "${cleanList}"` : ""}`,
+      description: parts.length ? parts.join(" · ") : undefined,
+    });
     if (cleanList) setActiveList(cleanList);
     setShowImport(false); fetchLeads();
   };
+
 
   const handleSaveOutcome = async (outcome: OutcomeDef, note: string): Promise<{ promptObjection: boolean; lead: BdrLead; outcomeLabel: string }> => {
     if (!outcomeLead || !user?.id) return { promptObjection: false, lead: outcomeLead!, outcomeLabel: "" };
