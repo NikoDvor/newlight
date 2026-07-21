@@ -30,11 +30,16 @@ interface BdrLead {
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
   has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
   list_name: string | null;
   pipeline_stage: string | null;
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
+  owner_calendar_confirmed: boolean | null;
+  owner_booking_link: string | null;
+  owner_booking_link_send_ready: string | null;
+  dialer_bookable: boolean | null;
   created_at: string;
 }
 
@@ -347,9 +352,12 @@ export default function BDRMyLeads() {
         phone_type: row.phone_type ?? null,
         booking_platform: row.booking_platform ?? null,
         has_booking_system: row.has_booking_system,
+        booking_system_exists: row.booking_system_exists ?? row.has_booking_system ?? null,
         booking_link: row.booking_link || null,
-        booking_link_is_owner: row.booking_link_is_owner ?? null,
-        owner_booking_link: row.owner_booking_link || null,
+        booking_link_is_owner: row.booking_link_is_owner ?? row.owner_calendar_confirmed ?? null,
+        owner_calendar_confirmed: row.owner_calendar_confirmed ?? row.booking_link_is_owner ?? null,
+        owner_booking_link: row.owner_booking_link || row.owner_booking_link_send_ready || null,
+        owner_booking_link_send_ready: row.owner_booking_link_send_ready || row.owner_booking_link || null,
         self_booking_widget_non_owner: row.self_booking_widget_non_owner ?? null,
         dialer_bookable: row.dialer_bookable ?? null,
         meeting_booked: row.meeting_booked || null,
@@ -740,21 +748,48 @@ export default function BDRMyLeads() {
                               )}
                             </span>
                           )}
-                          {lead.booking_link && (
+                          {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
+                            <a
+                              href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")
+                                ? (lead.owner_booking_link_send_ready || lead.owner_booking_link)!
+                                : `https://${lead.owner_booking_link_send_ready || lead.owner_booking_link}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-bold hover:brightness-110 uppercase tracking-wide"
+                              style={{ background: "linear-gradient(135deg, hsla(38,95%,55%,.28), hsla(38,95%,50%,.18))", color: "hsl(38,100%,72%)", border: "1px solid hsla(38,95%,55%,.6)" }}
+                              title="Send-ready owner calendar link"
+                            >
+                              <Calendar className="h-3 w-3" /> Book with Owner
+                            </a>
+                          )}
+                          {lead.booking_link && !(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                             <a
                               href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
                               target="_blank"
                               rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="text-xs flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline"
-                              style={lead.booking_link_is_owner
+                              style={(lead.owner_calendar_confirmed ?? lead.booking_link_is_owner) === true
                                 ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }
-                                : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,56%)" }}
+                                : (lead.owner_calendar_confirmed ?? lead.booking_link_is_owner) === false
+                                  ? { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,56%)", border: "1px dashed hsla(211,96%,60%,.35)" }
+                                  : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,56%)" }}
                               title={lead.booking_link}
                             >
                               <Calendar className="h-3 w-3" />
-                              {lead.booking_link_is_owner ? "Owner's Calendar" : "Booking Link"}
+                              {(lead.owner_calendar_confirmed ?? lead.booking_link_is_owner) === true
+                                ? "Owner's Calendar"
+                                : (lead.owner_calendar_confirmed ?? lead.booking_link_is_owner) === false
+                                  ? "Booking Link (not owner)"
+                                  : "Booking Link"}
                             </a>
+                          )}
+                          {lead.dialer_bookable === true && (
+                            <span className="text-[10px] rounded-full px-2 py-0.5 font-bold uppercase tracking-wide" title="Platform supports embedded booking from the dialer"
+                              style={{ background: "hsla(142,80%,45%,.22)", color: "hsl(142,85%,68%)", border: "1px solid hsla(142,80%,50%,.55)" }}>
+                              Dialer-Bookable
+                            </span>
                           )}
                           {lead.website ? (
                             <a
@@ -1178,9 +1213,14 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     // Column indices — -1 means "not present in this header"
     let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
-        bseIdx = -1,    // new "Booking System Exists" (Yes/No)
-        bpIdx = -1,     // new "Booking Platform" (name)
-        blIdx = -1, bloIdx = -1, oblIdx = -1, swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
+        bseIdx = -1,    // "Booking System Exists" (Yes/No)
+        bpIdx = -1,     // "Booking Platform" (name)
+        blIdx = -1,
+        bloIdx = -1,    // legacy V13 "Booking Link is Owner"
+        occIdx = -1,    // V16 "Owner's Calendar Confirmed"
+        oblIdx = -1,    // legacy V13 "Owner Booking Link"
+        oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
+        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1194,7 +1234,9 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
-        else if (/booking\s*link\s*is\s*owner|owner.?s?\s*calendar\s*confirmed/.test(c)) bloIdx = i;
+        else if (/owner.?s?\s*calendar\s*confirmed/.test(c)) occIdx = i;
+        else if (/booking\s*link\s*is\s*owner/.test(c)) bloIdx = i;
+        else if (/owner\s*booking\s*link\s*\(?\s*send.?ready/.test(c)) oblsrIdx = i;
         else if (/owner\s*booking\s*link/.test(c)) oblIdx = i;
         else if (/self.?booking\s*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
@@ -1223,9 +1265,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       malformedSkipped = before - dataRows.length;
     }
 
-    const parseYesBlank = (v: string): boolean | null => {
+    // Tri-state: true=Yes, false=No, null=N/A/blank. Callers that need bool-only
+    // fall back to null.
+    const parseYesNoNA = (v: string): boolean | null => {
       const s = (v || "").trim().toLowerCase();
-      if (!s || s === "n/a" || s === "-" || s === "—") return null;
+      if (!s || s === "n/a" || s === "na" || s === "-" || s === "—") return null;
       if (/^(y|yes|true|✓)$/.test(s)) return true;
       if (/^(n|no|false)$/.test(s)) return false;
       return null;
@@ -1248,22 +1292,44 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (!s || /^no$/i.test(s) || s === "-" || s === "—" || /^n\/a$/i.test(s)) return null;
       return s;
     };
+    const cleanLink = (v: string): string | null => {
+      const s = (v || "").trim();
+      if (!s || s === "-" || s === "—" || /^n\/a$/i.test(s) || /^blank$/i.test(s)) return null;
+      return s;
+    };
 
     const result = dataRows
       .filter(r => biIdx >= 0 && r[biIdx]?.trim())
       .map(r => {
-        // Booking system + platform: prefer new schema (separate columns), fall back to legacy
+        // V16 prefers separate "Booking System Exists" (Yes/No) + "Booking Platform" name
+        let booking_system_exists: boolean | null;
         let has_booking_system: boolean | null;
         let booking_platform: string | null;
         if (bseIdx >= 0 || bpIdx >= 0) {
-          const yes = bseIdx >= 0 ? parseYesBlank(r[bseIdx] || "") : null;
+          const yes = bseIdx >= 0 ? parseYesNoNA(r[bseIdx] || "") : null;
           booking_platform = bpIdx >= 0 ? parsePlatformName(r[bpIdx] || "") : null;
-          has_booking_system = yes !== null ? yes : (booking_platform != null);
+          booking_system_exists = yes !== null ? yes : (booking_platform != null ? true : null);
+          has_booking_system = booking_system_exists;
         } else {
           const bk = parseLegacyBookingSystem(bkIdx >= 0 ? r[bkIdx] : "");
           booking_platform = bk.platform;
           has_booking_system = bk.has;
+          booking_system_exists = bk.has;
         }
+        // Owner's Calendar Confirmed (V16) vs Booking Link is Owner (V13 legacy)
+        // Yes = confirmed owner calendar; No = system exists but not owner's;
+        // null = N/A (no system) or missing column
+        const owner_calendar_confirmed = occIdx >= 0
+          ? parseYesNoNA(r[occIdx] || "")
+          : (bloIdx >= 0 ? parseYesNoNA(r[bloIdx] || "") : null);
+        // Send-ready is the V16 rep-ready deep link; legacy owner_booking_link is fallback
+        const owner_booking_link_send_ready = oblsrIdx >= 0
+          ? cleanLink(r[oblsrIdx] || "")
+          : (oblIdx >= 0 ? cleanLink(r[oblIdx] || "") : null);
+        const owner_booking_link = oblIdx >= 0
+          ? cleanLink(r[oblIdx] || "")
+          : owner_booking_link_send_ready;
+
         return {
           business_name: r[biIdx]?.trim() || "",
           owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
@@ -1272,11 +1338,14 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
           has_booking_system,
-          booking_link: blIdx >= 0 ? (r[blIdx]?.trim() || null) : null,
-          booking_link_is_owner: bloIdx >= 0 ? parseYesBlank(r[bloIdx] || "") : null,
-          owner_booking_link: oblIdx >= 0 ? (r[oblIdx]?.trim() || null) : null,
-          self_booking_widget_non_owner: swIdx >= 0 ? parseYesBlank(r[swIdx] || "") : null,
-          dialer_bookable: dbIdx >= 0 ? parseYesBlank(r[dbIdx] || "") : null,
+          booking_system_exists,
+          booking_link: blIdx >= 0 ? cleanLink(r[blIdx] || "") : null,
+          booking_link_is_owner: owner_calendar_confirmed, // kept in sync w/ V16
+          owner_calendar_confirmed,
+          owner_booking_link,
+          owner_booking_link_send_ready,
+          self_booking_widget_non_owner: swIdx >= 0 ? parseYesNoNA(r[swIdx] || "") : null,
+          dialer_bookable: dbIdx >= 0 ? parseYesNoNA(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
           city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
@@ -1552,7 +1621,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V13</span>
+                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V16</span>
                 <h3 className="text-sm font-semibold text-foreground">Lead Researcher Protocol</h3>
               </div>
               <Button size="sm" onClick={copyPrompt} disabled={loadingPrompt || !promptText}>
