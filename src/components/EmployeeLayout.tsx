@@ -16,6 +16,7 @@ import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
+import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
@@ -133,10 +134,12 @@ export function EmployeeLayout() {
 
   const name = employeeProfile?.full_name || user.user_metadata?.full_name || user.email || "NewLight";
   const badge = userRole === "support_staff" ? "Support" : getRoleBadge(employeeProfile?.job_title);
+  const impersonating = hasAdminBackup();
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background text-foreground">
+      <div className={`min-h-screen flex w-full bg-background text-foreground ${impersonating ? "pt-8" : ""}`}>
+        <AdminImpersonationBar />
         <EmployeeSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl relative z-10">
