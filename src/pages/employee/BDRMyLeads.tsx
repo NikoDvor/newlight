@@ -363,6 +363,7 @@ export default function BDRMyLeads() {
         meeting_booked: row.meeting_booked || null,
         crd: row.crd || null,
         city: row.city || null,
+        notes: row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
         list_name: cleanList,
       }).select("id").single();
       // Safety net: unique index race
