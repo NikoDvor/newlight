@@ -8,6 +8,7 @@
 //   2. To the BDR who owns the calendar — new booking notification.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createZoomMeeting } from "../_shared/zoom.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -254,8 +255,46 @@ async function runNotifications(
     const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
     const when = formatDateTime(startsAt);
 
+    // --- 0. Create Zoom meeting for this booking -----------------------------
+    let zoomJoinUrl: string | null = null;
+    let zoomStartUrl: string | null = null;
+    let zoomMeetingId: string | null = null;
+    try {
+      const startsAtDate = new Date(startsAt);
+      const endsAtStr = (record as any)?.ends_at as string | undefined;
+      const durationMinutes = endsAtStr
+        ? Math.max(15, Math.round((new Date(endsAtStr).getTime() - startsAtDate.getTime()) / 60000))
+        : 30;
+      const topicLabel = clientBusinessName || clientName || "NewLight Strategy Session";
+      const zoom = await createZoomMeeting({
+        topic: `NewLight × ${topicLabel}`,
+        startTime: startsAtDate.toISOString(),
+        durationMinutes,
+        timezone: "UTC",
+        agenda: [meta.improvement_area ? `Interest: ${meta.improvement_area}` : "", meta.notes ? `Notes: ${meta.notes}` : ""].filter(Boolean).join("\n"),
+      });
+      zoomJoinUrl = zoom.join_url;
+      zoomStartUrl = zoom.start_url;
+      zoomMeetingId = String(zoom.id);
+      console.log(`[zoom] meeting created id=${zoomMeetingId} join=${zoomJoinUrl}`);
+
+      const { error: zoomUpdErr } = await supabase
+        .from("bdr_calendar_events")
+        .update({
+          zoom_meeting_id: zoomMeetingId,
+          zoom_join_url: zoomJoinUrl,
+          zoom_start_url: zoomStartUrl,
+        })
+        .eq("id", recordId);
+      if (zoomUpdErr) console.error("[zoom] persist error:", zoomUpdErr);
+    } catch (e) {
+      console.error("[zoom] create meeting failed (continuing without Zoom link):", e);
+    }
+
+    const joinLine = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
+
     // --- 1. SMS to client ----------------------------------------------------
-    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
+    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
     let clientSent = false;
     if (clientPhone) {
       clientSent = await sendSms(clientPhone, clientMsg);
