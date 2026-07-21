@@ -103,13 +103,14 @@ export function YourForms() {
                   )}
                 </>
               ) : (
-                <QuickActionCard
+                <FormLeadPickerCard
+                  kind={f.pickerKind}
                   name={`${f.label} · ${f.name}`}
                   badge={f.badge}
                   description={f.hint}
                   icon={Icon}
-                  to={f.to}
                 />
+
               )}
             </div>
           );
