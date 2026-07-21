@@ -266,6 +266,8 @@ export default function BDRDialer() {
       if (def.label === "Won") pipelineStage = "won";
       else if (def.label === "Lost") pipelineStage = "cold";
       else if (def.label === "Schedule Callback") pipelineStage = "hot";
+      else if (def.label === "Said They Would Reach Out") pipelineStage = "warm";
+      else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
       else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
       if (!lead.called) leadPatch.called = true;
