@@ -30,11 +30,16 @@ interface BdrLead {
   outcome_history: OutcomeEntry[];
   objection_category: string | null;
   has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
   list_name: string | null;
   pipeline_stage: string | null;
   phone_type: string | null;
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
+  owner_calendar_confirmed: boolean | null;
+  owner_booking_link: string | null;
+  owner_booking_link_send_ready: string | null;
+  dialer_bookable: boolean | null;
   created_at: string;
 }
 
