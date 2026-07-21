@@ -1552,7 +1552,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
     setLoadingPrompt(true);
     supabase
       .from("nl_training_chapters")
-      .select("content,updated_at")
+      .select("content")
       .eq("id", MASTER_PROMPT_CHAPTER_ID)
       .maybeSingle()
       .then(({ data }) => {
