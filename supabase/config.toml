@@ -28,3 +28,6 @@ verify_jwt = false
 
 [functions.ai-citation-check]
 verify_jwt = false
+
+[functions.meeting-reminder-scan]
+verify_jwt = false
