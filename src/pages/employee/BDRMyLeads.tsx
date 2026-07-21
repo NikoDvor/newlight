@@ -1381,6 +1381,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
           city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
+          rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
