@@ -14028,40 +14028,6 @@ export type Database = {
           timezone: string
         }[]
       }
-      get_public_bdr_closing_calendar: {
-        Args: { _slug_or_id: string }
-        Returns: {
-          availability: Json
-          booking_slug: string
-          client_id: string
-          closing_booking_active: boolean
-          closing_booking_description: string
-          closing_booking_form_id: string
-          closing_booking_slug: string
-          closing_booking_title: string
-          id: string
-          min_notice_minutes: number
-          name: string
-          timezone: string
-        }[]
-      }
-      get_public_bdr_payment_calendar: {
-        Args: { _slug_or_id: string }
-        Returns: {
-          availability: Json
-          booking_slug: string
-          client_id: string
-          id: string
-          min_notice_minutes: number
-          name: string
-          payment_booking_active: boolean
-          payment_booking_description: string
-          payment_booking_form_id: string
-          payment_booking_slug: string
-          payment_booking_title: string
-          timezone: string
-        }[]
-      }
       list_lead_conflicts: {
         Args: { _lead_ids: string[] }
         Returns: {
