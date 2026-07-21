@@ -49,6 +49,8 @@ interface OutcomeRow {
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
   { label: "Lost", objection: null },
+  { label: "Said They Would Reach Out", objection: null },
+  { label: "Didn't Answer", objection: null },
   { label: "Gatekeeper", objection: "Gatekeeper" },
   { label: "Not Interested", objection: "Not Interested" },
   { label: "Don't See the Value", objection: "Don't See the Value" },
@@ -264,6 +266,8 @@ export default function BDRDialer() {
       if (def.label === "Won") pipelineStage = "won";
       else if (def.label === "Lost") pipelineStage = "cold";
       else if (def.label === "Schedule Callback") pipelineStage = "hot";
+      else if (def.label === "Said They Would Reach Out") pipelineStage = "warm";
+      else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
       else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
       if (!lead.called) leadPatch.called = true;
@@ -342,6 +346,8 @@ export default function BDRDialer() {
     { label: "Total Calls", key: "__total__", tone: "hsl(211,96%,60%)" },
     { label: "Won", key: "Won", tone: "hsl(142,72%,42%)" },
     { label: "Lost", key: "Lost", tone: "hsl(0,72%,55%)" },
+    { label: "Will Reach Out", key: "Said They Would Reach Out", tone: "hsl(168,76%,48%)" },
+    { label: "No Answer", key: "Didn't Answer", tone: "hsl(215,14%,55%)" },
     { label: "Callbacks", key: "Schedule Callback", tone: "hsl(190,90%,55%)" },
     { label: "Gatekeeper", key: "Gatekeeper", tone: "hsl(38,92%,55%)" },
     { label: "Not Interested", key: "Not Interested", tone: "hsl(0,0%,70%)" },
