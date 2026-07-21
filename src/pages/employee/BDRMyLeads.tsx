@@ -1427,7 +1427,40 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 /* ──────────────────────────────────────────────── */
 /* How to Import Leads Modal                         */
 /* ──────────────────────────────────────────────── */
+const MASTER_PROMPT_CHAPTER_ID = "96ab38ae-6b56-4536-af0d-a809b4ea181a";
+
 function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+  const [promptText, setPromptText] = React.useState<string>("");
+  const [loadingPrompt, setLoadingPrompt] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open || promptText) return;
+    setLoadingPrompt(true);
+    supabase
+      .from("nl_training_chapters")
+      .select("content")
+      .eq("id", MASTER_PROMPT_CHAPTER_ID)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPromptText((data?.content as string) ?? "");
+        setLoadingPrompt(false);
+      });
+  }, [open, promptText]);
+
+  const copyPrompt = async () => {
+    if (!promptText) return;
+    try {
+      await navigator.clipboard.writeText(promptText);
+      setCopied(true);
+      toast({ title: "Master Prompt copied", description: `${promptText.length.toLocaleString()} characters copied to clipboard.` });
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
+
   const mobileSteps = [
     "Download the Orion Browser app from the App Store",
     "Open Orion → tap the three-dot menu (···) in the bottom right",
@@ -1486,11 +1519,47 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
       <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>How to Import Leads</DialogTitle>
-          <DialogDescription>Step-by-step guide to scrape and import leads from Google Maps.</DialogDescription>
+          <DialogDescription>Two ways to source leads, plus the Master Prompt for enrichment.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <Section title="Mobile (iPhone via Orion Browser)" badge="Mobile" steps={mobileSteps} />
-          <Section title="Desktop (Chrome on laptop/computer)" badge="Desktop" steps={desktopSteps} />
+          <div className="rounded-xl p-4" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Option 2 · Fastest</span>
+              <h3 className="text-sm font-semibold text-foreground">SEC IAPD Sourcing Tool (Financial Advisors)</h3>
+            </div>
+            <p className="text-xs leading-relaxed text-foreground/85 mb-3">
+              For registered financial advisor / RIA leads, skip Google Maps entirely. Use the in-app SEC IAPD tool to pull a
+              clean <span className="font-mono text-[11px]">Business Name | City | CRD</span> list by state + city, then paste it straight into
+              the Master Prompt below — Phase 0 is already done for you.
+            </p>
+            <Button size="sm" onClick={() => { onClose(); navigate("/employee/lead-sourcing"); }}
+              style={{ background: "hsla(158,70%,45%,.9)", color: "hsl(215,40%,8%)" }}>
+              Open SEC Lead Sourcing Tool →
+            </Button>
+          </div>
+
+          <Section title="Option 1 · Mobile (iPhone via Orion Browser)" badge="Mobile" steps={mobileSteps} />
+          <Section title="Option 1 · Desktop (Chrome on laptop/computer)" badge="Desktop" steps={desktopSteps} />
+
+          <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
+            <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V13</span>
+                <h3 className="text-sm font-semibold text-foreground">Lead Researcher Protocol</h3>
+              </div>
+              <Button size="sm" onClick={copyPrompt} disabled={loadingPrompt || !promptText}>
+                {copied ? "Copied ✓" : loadingPrompt ? "Loading…" : "Copy Prompt"}
+              </Button>
+            </div>
+            <p className="text-xs leading-relaxed text-foreground/85">
+              Paste this into your Lead Researcher Claude Project (see Module 3 for setup) or a fresh Claude chat with web search ON.
+              Then feed it your raw list from the SEC tool or Google Maps scrape — it returns enriched, dial-ready rows.
+              {promptText ? <span className="ml-1 text-foreground/60">({promptText.length.toLocaleString()} chars)</span> : null}
+            </p>
+          </div>
+
           <div className="rounded-xl p-4" style={{ background: "hsla(38,92%,55%,.08)", border: "1px solid hsla(38,92%,55%,.25)" }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
