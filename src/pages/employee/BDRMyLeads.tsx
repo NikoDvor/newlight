@@ -1269,6 +1269,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
 
     // Column indices — -1 means "not present in this header"
     let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
+        fdpIdx = -1,    // NEW V17.1 "Front Desk Phone"
+        odpIdx = -1,    // NEW V17.1 "Owner Direct Phone"
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // "Booking System Exists" (Yes/No)
         bpIdx = -1,     // "Booking Platform" (name)
@@ -1288,6 +1290,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       header.forEach((c, i) => {
         if (/business\s*name/.test(c)) biIdx = i;
         else if (/owner\s*name/.test(c)) owIdx = i;
+        else if (/front\s*desk\s*phone/.test(c)) fdpIdx = i;
+        else if (/owner\s*direct\s*phone/.test(c)) odpIdx = i;
         else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
