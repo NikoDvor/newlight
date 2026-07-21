@@ -31,6 +31,7 @@ const OBJECTION_CATEGORIES = [
   { key: "WALL", chapter: "5.1" }, { key: "AUTOPILOT", chapter: "5.2" }, { key: "STALL", chapter: "5.3" },
   { key: "VALUE_GAP", chapter: "5.4" }, { key: "COST", chapter: "5.5" }, { key: "TRUST_DEFICIT", chapter: "5.6" },
   { key: "STATUS_QUO", chapter: "5.7" }, { key: "PROOF_DEMAND", chapter: "5.8" }, { key: "STACKED", chapter: "5.9" },
+  { key: "WE_WILL_REACH_OUT", chapter: "19" },
 ];
 
 const DATE_FILTERS = [

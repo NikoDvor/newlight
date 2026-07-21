@@ -138,6 +138,7 @@ const OBJECTION_CATEGORIES = [
   { key: "STATUS_QUO", label: "STATUS QUO — Already has someone", chapter: "5.7" },
   { key: "PROOF_DEMAND", label: "PROOF DEMAND — Wants results first", chapter: "5.8" },
   { key: "STACKED", label: "STACKED — Multiple objections", chapter: "5.9" },
+  { key: "WE_WILL_REACH_OUT", label: "WE WILL REACH OUT — Prospect said they'd reach out", chapter: "19" },
 ];
 
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = {
