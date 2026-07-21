@@ -140,9 +140,19 @@ export default function BDRDialer() {
         if (r.lead_id && !latest[r.lead_id]) latest[r.lead_id] = r.outcome;
       }
       setLatestOutcomeByLead(latest);
+      // Defensive: flag any of my leads whose phone also exists under another rep
+      const ids = (leadRows || []).map((l: any) => l.id).filter(Boolean);
+      if (ids.length) {
+        const { data: conflicts } = await (supabase as any).rpc("list_lead_conflicts", { _lead_ids: ids });
+        const conflictIds = new Set((conflicts || []).map((r: any) => r.lead_id));
+        if (conflictIds.size > 0) {
+          setLeads(prev => prev.map(l => conflictIds.has(l.id) ? { ...l, _claimConflict: true } : l));
+        }
+      }
       setLoading(false);
     })();
   }, []);
+
 
   const lists = useMemo(() => {
     const map = new Map<string, number>();
