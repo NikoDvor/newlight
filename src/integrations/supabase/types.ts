@@ -10120,6 +10120,21 @@ export type Database = {
           },
         ]
       }
+      public_upload_rate_limit: {
+        Row: {
+          bucket_window: string
+          count: number
+        }
+        Insert: {
+          bucket_window: string
+          count?: number
+        }
+        Update: {
+          bucket_window?: string
+          count?: number
+        }
+        Relationships: []
+      }
       recommendation_package_links: {
         Row: {
           created_at: string
@@ -13950,6 +13965,10 @@ export type Database = {
       admin_reassign_lead: {
         Args: { _lead_id: string; _new_user: string }
         Returns: undefined
+      }
+      check_and_increment_public_booking_upload: {
+        Args: never
+        Returns: boolean
       }
       check_lead_claimed: {
         Args: { _phone: string; _website: string }
