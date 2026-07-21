@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export function CheckForUpdatesButton({ className = "" }: { className?: string }) {
-  const { checkForUpdates } = usePWAInstall();
+  const { checkForUpdates, updateNow } = usePWAInstall();
   const [checking, setChecking] = useState(false);
 
   const handleClick = async () => {
@@ -13,7 +13,8 @@ export function CheckForUpdatesButton({ className = "" }: { className?: string }
     try {
       const result = await checkForUpdates();
       if (result === "update-found") {
-        toast.success("Update available — reloading with the new version.");
+        toast.success("Update found — applying now and reloading.");
+        updateNow();
       } else if (result === "up-to-date") {
         toast("You're on the latest version.");
       } else {
