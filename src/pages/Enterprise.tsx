@@ -56,7 +56,7 @@ export default function Enterprise() {
           <Link to="/auth">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs">Sign In</Button>
           </Link>
-          <Link to="/proposal-booking">
+          <Link to="/bdr/book/team">
             <Button size="sm" className="text-xs h-9" style={{
               background: "linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%))",
               boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
@@ -86,7 +86,7 @@ export default function Enterprise() {
             Built for businesses ready to scale.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/proposal-booking">
+            <Link to="/bdr/book/team">
               <Button size="lg" className="h-12 px-8 text-base" style={{
                 background: "linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%))",
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",
@@ -95,7 +95,7 @@ export default function Enterprise() {
                 Get My Custom Growth Demo
               </Button>
             </Link>
-            <Link to="/proposal-booking">
+            <Link to="/bdr/book/team">
               <Button size="lg" variant="outline" className="h-12 px-8 text-base border-white/15 text-white hover:bg-white/10">
                 <Calendar className="h-5 w-5 mr-2" />
                 Book Strategy Call
@@ -103,7 +103,7 @@ export default function Enterprise() {
             </Link>
           </div>
           <div className="flex items-center justify-center gap-6 mt-6">
-            <Link to="/proposal-booking" className="text-xs text-white/40 hover:text-white/70 transition-colors flex items-center gap-1">
+            <Link to="/bdr/book/team" className="text-xs text-white/40 hover:text-white/70 transition-colors flex items-center gap-1">
               <Shield className="h-3 w-3" /> Apply for Enterprise Setup
             </Link>
             <a href="#how-it-works" className="text-xs text-white/40 hover:text-white/70 transition-colors flex items-center gap-1">
@@ -191,7 +191,7 @@ export default function Enterprise() {
           <h3 className="text-xl font-bold text-white mb-2">Ready to Scale?</h3>
           <p className="text-sm text-white/40 mb-5">Get your custom growth demo and see exactly how NewLight can transform your business.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/proposal-booking">
+            <Link to="/bdr/book/team">
               <Button size="lg" style={{
                 background: "linear-gradient(135deg, hsl(217 90% 58%), hsl(211 96% 56%))",
                 boxShadow: "0 4px 20px -4px hsla(211,96%,56%,.4)",

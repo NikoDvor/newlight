@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 type CTAVariant = "book-strategy" | "apply-enterprise" | "see-how" | "complete-setup" | "connect-accounts" | "upload-assets" | "book-kickoff" | "review-workspace" | "approve-launch" | "contact-expert" | "request-setup" | "activate-system";
 
 const ctaConfig: Record<CTAVariant, { label: string; icon: any; to: string; className?: string }> = {
-  "book-strategy": { label: "Book Strategy Call", icon: Calendar, to: "/proposal-booking", className: "btn-gradient" },
-  "apply-enterprise": { label: "Apply for Enterprise Setup", icon: Rocket, to: "/proposal-booking", className: "btn-gradient" },
+  "book-strategy": { label: "Book Strategy Call", icon: Calendar, to: "/bdr/book/team", className: "btn-gradient" },
+  "apply-enterprise": { label: "Apply for Enterprise Setup", icon: Rocket, to: "/bdr/book/team", className: "btn-gradient" },
   "see-how": { label: "See How It Works", icon: Eye, to: "/enterprise", className: "" },
   "complete-setup": { label: "Complete Setup", icon: Settings, to: "/onboarding" },
   "connect-accounts": { label: "Connect Accounts", icon: Zap, to: "/integrations" },
@@ -15,9 +15,9 @@ const ctaConfig: Record<CTAVariant, { label: string; icon: any; to: string; clas
   "book-kickoff": { label: "Book Kickoff", icon: Video, to: "/meetings" },
   "review-workspace": { label: "Review Workspace", icon: CheckCircle, to: "/onboarding" },
   "approve-launch": { label: "Approve Launch", icon: Rocket, to: "/onboarding" },
-  "contact-expert": { label: "Contact Expert", icon: Phone, to: "/proposal-booking" },
-  "request-setup": { label: "Request Setup", icon: Wrench, to: "/proposal-booking" },
-  "activate-system": { label: "Activate This System", icon: Zap, to: "/proposal-booking" },
+  "contact-expert": { label: "Contact Expert", icon: Phone, to: "/bdr/book/team" },
+  "request-setup": { label: "Request Setup", icon: Wrench, to: "/bdr/book/team" },
+  "activate-system": { label: "Activate This System", icon: Zap, to: "/bdr/book/team" },
 };
 
 interface CTAButtonProps {

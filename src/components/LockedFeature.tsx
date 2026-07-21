@@ -95,7 +95,7 @@ export function LockedFeature({
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-lg font-medium text-sm">
-            <Link to="/proposal-booking">
+            <Link to="/bdr/book/team">
               <Calendar className="h-3.5 w-3.5 mr-1.5" />
               Contact Expert
             </Link>

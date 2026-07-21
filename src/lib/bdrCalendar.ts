@@ -78,18 +78,7 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (existing) {
-    // Backfill closing slug for pre-feature calendars so the Meeting 2 link always resolves.
-    if (!(existing as any).closing_booking_slug && (existing as any).booking_slug) {
-      const closingSlug = `${(existing as any).booking_slug}-closing`;
-      await (supabase as any)
-        .from("bdr_calendars")
-        .update({ closing_booking_slug: closingSlug })
-        .eq("id", (existing as any).id);
-      (existing as any).closing_booking_slug = closingSlug;
-    }
-    return existing as BdrCalendar;
-  }
+  if (existing) return existing as BdrCalendar;
 
   const display = opts?.firstName
     || opts?.fullName?.split(" ")[0]
@@ -107,8 +96,6 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       client_id: clientId,
       name: `${display}'s Pipeline Calendar`,
       booking_slug: baseSlug,
-      closing_booking_slug: `${baseSlug}-closing`,
-      payment_booking_slug: `${baseSlug}-payment`,
     })
     .select("*")
     .single();
@@ -117,15 +104,6 @@ export async function ensureBdrCalendar(opts?: { firstName?: string | null; full
       .from("bdr_calendars").select("*").eq("user_id", user.id)
       .order("created_at", { ascending: true }).limit(1).maybeSingle();
     return (again as BdrCalendar) || null;
-  }
-  // Ensure closing slug is filled in for calendars created before the closing feature.
-  if (created && !(created as any).closing_booking_slug && (created as any).booking_slug) {
-    const closingSlug = `${(created as any).booking_slug}-closing`;
-    await (supabase as any)
-      .from("bdr_calendars")
-      .update({ closing_booking_slug: closingSlug })
-      .eq("id", (created as any).id);
-    (created as any).closing_booking_slug = closingSlug;
   }
   return created as BdrCalendar;
 }

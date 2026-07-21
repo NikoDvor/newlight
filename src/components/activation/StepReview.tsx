@@ -151,7 +151,7 @@ export function StepReview({ form }: StepProps & { clientId?: string }) {
 
   const copyIntakeLink = () => {
     if (!intakeToken) return;
-    const link = `${window.location.origin}/intake?token=${intakeToken.token}`;
+    const link = `${window.location.origin}/activation?token=${intakeToken.token}`;
     navigator.clipboard.writeText(link);
     toast.success("Intake link copied to clipboard");
   };

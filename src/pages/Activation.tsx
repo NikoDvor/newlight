@@ -31,7 +31,7 @@ const ICONS: Record<string, any> = {
 const LAUNCHERS = [
   { key: "master", label: "Master Activation Wizard", desc: "Full 16-step client activation.", route: "/admin/master-activation", icon: Rocket },
   { key: "onboarding", label: "Onboarding Command Center", desc: "Post-sale pipeline & handoff tracking.", route: "/admin/onboarding-command-center", icon: CalendarCheck2 },
-  { key: "intake", label: "Client Intake (public)", desc: "Token-based intake form for clients.", route: "/intake", icon: ClipboardCheck },
+  
   { key: "webinars", label: "Webinar Registrations", desc: "Manage webinar events & sign-ups.", route: "/admin/webinars", icon: GraduationCap },
 ];
 
