@@ -1,1 +1,1 @@
-export const BUILD_TAG = '2026-07-21-dual-phone-columns';
+export const BUILD_TAG = '2026-07-21-master-prompt-version-badge';
