@@ -121,6 +121,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       onRegisteredSW(swUrl, registration) {
         pwaLog("onRegisteredSW", swUrl, registration);
         if (!registration) return;
+        registrationRef.current = registration;
 
         // Aggressive check: kick off an update() as soon as we register so
         // returning users detect a new deploy at the earliest possible moment
