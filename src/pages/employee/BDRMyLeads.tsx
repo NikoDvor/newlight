@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
-import { parseLeadFlags } from "@/lib/leadFlags";
+import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
@@ -22,6 +22,8 @@ interface BdrLead {
   business_name: string;
   owner_name: string | null;
   phone: string | null;
+  front_desk_phone: string | null;
+  owner_direct_phone: string | null;
   website: string | null;
   niche: string | null;
   city: string | null;
