@@ -763,16 +763,22 @@ export default function BDRMyLeads() {
                         </div>
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {lead.phone && (
-                            <span className="inline-flex items-center gap-1">
-                              <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>
-                              {lead.phone_type === "owner" ? (
-                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner</span>
-                              ) : (
-                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
-                              )}
-                            </span>
-                          )}
+                          {getLeadPhones(lead).map((p) => {
+                            const isOwner = p.kind === "owner_direct" || p.kind === "legacy_owner";
+                            const isFrontDesk = p.kind === "front_desk" || p.kind === "legacy_front_desk";
+                            return (
+                              <span key={p.kind + p.number} className="inline-flex items-center gap-1">
+                                <a href={`tel:${p.number}`} onClick={e => e.stopPropagation()} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {p.number}</a>
+                                {isOwner ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner Direct</span>
+                                ) : isFrontDesk ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
+                                ) : (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Phone</span>
+                                )}
+                              </span>
+                            );
+                          })}
                           {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                             <a
                               href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")
