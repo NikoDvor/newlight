@@ -14,6 +14,7 @@ interface PWAInstallContextValue {
   updateNow: () => void;
   dismissUpdate: () => void;
   install: () => Promise<boolean>;
+  checkForUpdates: () => Promise<"update-found" | "up-to-date" | "unavailable">;
 }
 
 const PWAInstallContext = createContext<PWAInstallContextValue>({
@@ -24,6 +25,7 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
   updateNow: () => undefined,
   dismissUpdate: () => undefined,
   install: async () => false,
+  checkForUpdates: async () => "unavailable",
 });
 
 const standaloneQuery = "(display-mode: standalone)";
@@ -56,6 +58,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const [isIOS, setIsIOS] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const updateSWRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     setIsInstalled(detectInstalled());
@@ -118,6 +121,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
       onRegisteredSW(swUrl, registration) {
         pwaLog("onRegisteredSW", swUrl, registration);
         if (!registration) return;
+        registrationRef.current = registration;
 
         // Aggressive check: kick off an update() as soon as we register so
         // returning users detect a new deploy at the earliest possible moment
@@ -185,6 +189,46 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
+  const checkForUpdates = useCallback(async (): Promise<"update-found" | "up-to-date" | "unavailable"> => {
+    if (!("serviceWorker" in navigator)) return "unavailable";
+    let registration = registrationRef.current;
+    if (!registration) {
+      registration = (await navigator.serviceWorker.getRegistration()) ?? null;
+    }
+    if (!registration) return "unavailable";
+    try {
+      await registration.update();
+    } catch (error) {
+      pwaLog("manual checkForUpdates failed", error);
+      return "unavailable";
+    }
+    // If a waiting worker exists (or installing that will become waiting), an update is available.
+    if (registration.waiting) {
+      setUpdateAvailable(true);
+      return "update-found";
+    }
+    if (registration.installing) {
+      // Wait briefly for install to complete so we can classify accurately.
+      const installing = registration.installing;
+      const result = await new Promise<"update-found" | "up-to-date">((resolve) => {
+        const done = () => {
+          installing.removeEventListener("statechange", done);
+          if (registration!.waiting) {
+            setUpdateAvailable(true);
+            resolve("update-found");
+          } else if (installing.state === "activated" || installing.state === "redundant") {
+            resolve("up-to-date");
+          }
+        };
+        installing.addEventListener("statechange", done);
+        setTimeout(() => resolve(registration!.waiting ? "update-found" : "up-to-date"), 4000);
+      });
+      return result;
+    }
+    return "up-to-date";
+  }, []);
+
+
   const value = useMemo(() => ({
     canInstall: !isInstalled,
     isInstalled,
@@ -193,7 +237,8 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     updateNow,
     dismissUpdate,
     install,
-  }), [isInstalled, isIOS, updateAvailable, updateNow, dismissUpdate, install]);
+    checkForUpdates,
+  }), [isInstalled, isIOS, updateAvailable, updateNow, dismissUpdate, install, checkForUpdates]);
 
   return <PWAInstallContext.Provider value={value}>{children}</PWAInstallContext.Provider>;
 }

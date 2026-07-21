@@ -11,6 +11,7 @@ import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
@@ -154,6 +155,7 @@ export function EmployeeLayout() {
             </div>
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-3 overflow-x-auto touch-x-scroll">
               <PWAInstallButton />
+              <CheckForUpdatesButton />
               <GlobalModuleSearch variant="employee" />
               <div className="hidden sm:flex flex-col items-end leading-tight">
                 <span className="text-xs font-semibold text-foreground/80 max-w-40 truncate">{name}</span>

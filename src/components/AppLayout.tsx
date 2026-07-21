@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
@@ -140,6 +141,7 @@ export function AppLayout() {
               <GlobalSearch />
               {isAdmin && <WorkspaceSwitcher />}
               <PWAInstallButton />
+              <CheckForUpdatesButton />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full" style={{
