@@ -244,7 +244,7 @@ export default function BDRLeadSourcing() {
             <Input type="number" value={maxResults} min={1} max={50}
               onChange={(e) => setMaxResults(Math.max(1, Math.min(50, Number(e.target.value) || 25)))} className="h-9" />
           </div>
-          <div className="md:col-span-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="md:col-span-7 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-[11px] text-muted-foreground max-w-xl">
               AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment.
             </p>
