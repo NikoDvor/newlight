@@ -1605,6 +1605,12 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [copied, setCopied] = React.useState(false);
   const [copiedHandoff, setCopiedHandoff] = React.useState(false);
 
+  const promptVersion = useMemo(() => {
+    const match = promptText.match(/—\s*(V\d+)/);
+    return match?.[1] ?? null;
+  }, [promptText]);
+
+
   const SEC_HANDOFF_LINE = "This list came from the SEC IAPD tool — go ahead and research each one.";
 
   React.useEffect(() => {
