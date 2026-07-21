@@ -1621,7 +1621,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V13</span>
+                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V16</span>
                 <h3 className="text-sm font-semibold text-foreground">Lead Researcher Protocol</h3>
               </div>
               <Button size="sm" onClick={copyPrompt} disabled={loadingPrompt || !promptText}>
