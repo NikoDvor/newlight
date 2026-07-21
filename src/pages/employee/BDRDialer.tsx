@@ -49,6 +49,8 @@ interface OutcomeRow {
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
   { label: "Lost", objection: null },
+  { label: "Said They Would Reach Out", objection: null },
+  { label: "Didn't Answer", objection: null },
   { label: "Gatekeeper", objection: "Gatekeeper" },
   { label: "Not Interested", objection: "Not Interested" },
   { label: "Don't See the Value", objection: "Don't See the Value" },
