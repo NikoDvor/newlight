@@ -1593,7 +1593,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   const proTips = [
     "Run the master research prompt in a separate Claude chat with web search ON to find owner names and phone numbers before importing",
     "Paste the raw SEC output directly into the Master Prompt — Business Name | City | CRD is all it needs to start Phase 0",
-    "For firms missing public contact info, the Master Prompt's tiered phone research (Phase 3a–c) will locate the best number",
+    "For firms missing public contact info, the Master Prompt's tiered phone research (Phase 3, Tier 0 government databases plus the full route waterfall) will locate the best number",
     "If phone research only turns up a front-desk number, check data broker sites (RocketReach, Seamless.AI) for a partially-masked personal mobile — it won't give you the full number for free, but confirms whether a direct line exists at all before you spend on a paid lookup. No browser tool needed for this, only search.",
     "Verify each lead isn't already claimed by another rep before dialing — the import flow will flag duplicates automatically",
   ];
@@ -1603,7 +1603,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
       <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>How to Import Leads</DialogTitle>
-          <DialogDescription>Use the SEC IAPD Sourcing Tool to pull registered financial advisor leads, then enrich them with the Master Prompt before importing. Chrome / browser tools are only needed for the booking-system verification piece (Route 8's flow-walk) — owner name and phone research are pure search and work without any browser connector.</DialogDescription>
+          <DialogDescription>Use the SEC IAPD Sourcing Tool to pull registered financial advisor leads, then enrich them with the Master Prompt before importing. Chrome / browser tools are only needed for the booking-system verification piece (the flow-walk in the booking-verification section) — owner name and phone research are pure search and work without any browser connector.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
