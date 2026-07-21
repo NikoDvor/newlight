@@ -11,6 +11,7 @@ import { getEmployeeRoute, getRoleBadge } from "@/lib/employeeRouting";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
