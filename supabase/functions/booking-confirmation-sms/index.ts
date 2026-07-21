@@ -435,7 +435,7 @@ async function runNotifications(
              <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${zoomJoinUrl}</p>
            </div>`
         : "";
-      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
@@ -443,10 +443,6 @@ async function runNotifications(
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
     ${zoomBlockHtml}
     ${credsBlockHtml}
-    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Before we meet, download the NewLight app so your system is ready to go:</p>
-    <div style="text-align:center;margin:24px 0;">
-      <a href="${appUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;">Download the NewLight App</a>
-    </div>
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Questions? Call (805) 836-3557.</p>
     <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">— The NewLight Team</p>
   </div>
