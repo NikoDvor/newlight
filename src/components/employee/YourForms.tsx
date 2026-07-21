@@ -25,7 +25,7 @@ type ActionForm = {
   icon: LucideIcon;
   name: string;
   badge: string;
-  to: string;
+  pickerKind: "close-prep" | "pay-sign";
   hint: string;
 };
 
