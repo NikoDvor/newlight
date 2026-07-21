@@ -134,10 +134,11 @@ export function EmployeeLayout() {
 
   const name = employeeProfile?.full_name || user.user_metadata?.full_name || user.email || "NewLight";
   const badge = userRole === "support_staff" ? "Support" : getRoleBadge(employeeProfile?.job_title);
+  const impersonating = hasAdminBackup();
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background text-foreground">
+      <div className={`min-h-screen flex w-full bg-background text-foreground ${impersonating ? "pt-8" : ""}`}>
         <AdminImpersonationBar />
         <EmployeeSidebar />
         <div className="flex-1 flex flex-col min-w-0">
