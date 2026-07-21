@@ -184,7 +184,13 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
             <section className="space-y-2">
               <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white/50" /><span className="text-sm">{lead.owner_name || "Unknown"}</span></div>
               <div className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-white/50" /><span className="text-sm">{lead.business_name}</span></div>
-              {lead.phone && <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-white/50" /><a href={`tel:${lead.phone}`} className="text-sm hover:underline">{lead.phone}</a></div>}
+              {getLeadPhones(lead).map((p) => (
+                <div key={p.kind + p.number} className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-white/50" />
+                  <a href={`tel:${p.number}`} className="text-sm hover:underline">{p.number}</a>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide text-white/60 border border-white/10">{p.label}</span>
+                </div>
+              ))}
               {lead.email && <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-white/50" /><a href={`mailto:${lead.email}`} className="text-sm hover:underline truncate">{lead.email}</a></div>}
             </section>
 
