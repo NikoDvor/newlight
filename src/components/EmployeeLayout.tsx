@@ -16,6 +16,7 @@ import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
+import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
