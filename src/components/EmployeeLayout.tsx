@@ -22,6 +22,7 @@ import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 const navItems = [
   { title: "Dashboard", url: "/employee", icon: BarChart3 },
   { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
+  { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
   { title: "Dialer", url: "/employee/dialer", icon: Phone },
   { title: "Training Center", url: "/employee/training", icon: GraduationCap },
   { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
