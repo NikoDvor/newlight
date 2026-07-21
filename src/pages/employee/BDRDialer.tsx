@@ -31,7 +31,9 @@ interface Lead {
   self_booking_widget_non_owner: boolean | null;
   dialer_bookable: boolean | null;
   pipeline_stage: string | null;
+  _claimConflict?: boolean;
 }
+
 
 interface OutcomeRow {
   lead_id: string | null;
