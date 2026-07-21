@@ -86,7 +86,9 @@ export default function BDRLeadSourcing() {
     try {
       const { data, error } = await supabase.functions.invoke("sec-firm-search", {
         body: {
-          state, keyword,
+          state,
+          city: city.trim() || null,
+          keyword,
           min_aum: minAum ? Number(minAum) : null,
           max_aum: maxAum ? Number(maxAum) : null,
           max_results: maxResults,
