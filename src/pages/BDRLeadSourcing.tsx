@@ -237,13 +237,16 @@ export default function BDRLeadSourcing() {
             <Input type="number" value={maxResults} min={1} max={50}
               onChange={(e) => setMaxResults(Math.max(1, Math.min(50, Number(e.target.value) || 25)))} className="h-9" />
           </div>
-          <div className="md:col-span-6 flex items-center justify-between flex-wrap gap-2">
+          <div className="md:col-span-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-[11px] text-muted-foreground max-w-xl">
               AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment.
             </p>
-            <div className="flex items-center gap-2">
-              <Input value={listName} onChange={(e) => setListName(e.target.value)} placeholder="Import list name" className="h-9 w-56" />
-              <Button onClick={runSearch} disabled={loading} className="h-9">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+              <div className="flex-1 sm:flex-none sm:w-56">
+                <Label className="text-xs sm:hidden">Import list name</Label>
+                <Input value={listName} onChange={(e) => setListName(e.target.value)} placeholder="Import list name" className="h-9 w-full" />
+              </div>
+              <Button onClick={runSearch} disabled={loading} className="h-9 w-full sm:w-auto">
                 {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
                 Search SEC IAPD
               </Button>
