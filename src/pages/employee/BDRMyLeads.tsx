@@ -1391,11 +1391,31 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           ? cleanLink(r[oblIdx] || "")
           : owner_booking_link_send_ready;
 
+        // New V17.1 dual-phone columns take precedence when present. If only
+        // the legacy "Phone"+"Phone Type" pair is in the header, map the
+        // single phone into whichever new-format slot matches its type — that
+        // way legacy pastes still get normalized into the new schema.
+        const legacyPhone = phIdx >= 0 ? (r[phIdx]?.trim() || "") : "";
+        const legacyPhoneType = ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null;
+        const newFrontDesk = fdpIdx >= 0 ? (r[fdpIdx]?.trim() || "") : "";
+        const newOwnerDirect = odpIdx >= 0 ? (r[odpIdx]?.trim() || "") : "";
+        const hasNewCols = fdpIdx >= 0 || odpIdx >= 0;
+        const front_desk_phone = hasNewCols
+          ? (newFrontDesk || null)
+          : (legacyPhoneType === "front_desk" ? (legacyPhone || null) : null);
+        const owner_direct_phone = hasNewCols
+          ? (newOwnerDirect || null)
+          : (legacyPhoneType === "owner" ? (legacyPhone || null) : null);
+
         return {
           business_name: r[biIdx]?.trim() || "",
           owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
-          phone: phIdx >= 0 ? (r[phIdx]?.trim() || "") : "",
-          phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null,
+          front_desk_phone,
+          owner_direct_phone,
+          // Legacy-shape fields kept only for the fallback branch in handleImport
+          // (used when neither new column produced a value).
+          phone: hasNewCols ? "" : legacyPhone,
+          phone_type: hasNewCols ? null : legacyPhoneType,
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
           has_booking_system,
