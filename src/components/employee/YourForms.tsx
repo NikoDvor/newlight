@@ -73,7 +73,7 @@ export function YourForms() {
       icon: ScrollText,
       name: "Pay & Sign",
       badge: "Meeting 3",
-      to: "/employee/leads?filter=stage:won",
+      pickerKind: "pay-sign",
       hint: "Opens your won leads — tap Pay & Sign on the one ready to onboard.",
     },
   ];
