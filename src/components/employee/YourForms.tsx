@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
-import { QuickActionCard } from "@/components/employee/QuickActionCard";
+import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { ClipboardCheck, ScrollText, Users, type LucideIcon } from "lucide-react";
 
@@ -25,7 +25,7 @@ type ActionForm = {
   icon: LucideIcon;
   name: string;
   badge: string;
-  to: string;
+  pickerKind: "close-prep" | "pay-sign";
   hint: string;
 };
 
@@ -63,7 +63,7 @@ export function YourForms() {
       icon: ClipboardCheck,
       name: "Close Prep",
       badge: "Meeting 2",
-      to: "/employee/leads?filter=stage:hot",
+      pickerKind: "close-prep",
       hint: "Opens your hot leads — tap Close Prep on the one you just met with.",
     },
     {
@@ -73,7 +73,7 @@ export function YourForms() {
       icon: ScrollText,
       name: "Pay & Sign",
       badge: "Meeting 3",
-      to: "/employee/leads?filter=stage:won",
+      pickerKind: "pay-sign",
       hint: "Opens your won leads — tap Pay & Sign on the one ready to onboard.",
     },
   ];
@@ -103,13 +103,14 @@ export function YourForms() {
                   )}
                 </>
               ) : (
-                <QuickActionCard
+                <FormLeadPickerCard
+                  kind={f.pickerKind}
                   name={`${f.label} · ${f.name}`}
                   badge={f.badge}
                   description={f.hint}
                   icon={Icon}
-                  to={f.to}
                 />
+
               )}
             </div>
           );

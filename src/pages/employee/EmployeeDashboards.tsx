@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
 import { QuickActionCard } from "@/components/employee/QuickActionCard";
+import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
 
@@ -82,20 +83,21 @@ function YourBookingLinks() {
             </span>
           )}
         </div>
-        <QuickActionCard
+        <FormLeadPickerCard
+          kind="close-prep"
           name="Close Prep"
           badge="Per Lead"
-          description="Opens your hot leads — tap Close Prep on the one you just met with."
+          description="Jumps straight into Close Prep for your hot lead — or lets you pick if you have several."
           icon={FileText}
-          to="/employee/leads?filter=stage:hot"
         />
-        <QuickActionCard
+        <FormLeadPickerCard
+          kind="pay-sign"
           name="Pay & Sign"
           badge="Per Deal"
-          description="Opens your won leads — tap Pay & Sign on the one ready to onboard."
+          description="Opens Pay & Sign for your ready deal — or lets you pick if you have several."
           icon={CreditCard}
-          to="/employee/leads?filter=stage:won"
         />
+
       </div>
     </SectionCard>
   );
