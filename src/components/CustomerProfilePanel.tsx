@@ -16,6 +16,9 @@ interface LeadLite {
   business_name: string;
   owner_name: string | null;
   phone: string | null;
+  phone_type?: string | null;
+  front_desk_phone?: string | null;
+  owner_direct_phone?: string | null;
   email?: string | null;
   notes?: string | null;
   customer_notes?: string | null;
