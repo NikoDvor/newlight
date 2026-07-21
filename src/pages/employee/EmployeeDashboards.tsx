@@ -12,6 +12,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
 import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
 import { QuickActionCard } from "@/components/employee/QuickActionCard";
+import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
 
