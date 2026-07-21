@@ -14,6 +14,7 @@ interface PWAInstallContextValue {
   updateNow: () => void;
   dismissUpdate: () => void;
   install: () => Promise<boolean>;
+  checkForUpdates: () => Promise<"update-found" | "up-to-date" | "unavailable">;
 }
 
 const PWAInstallContext = createContext<PWAInstallContextValue>({
@@ -24,6 +25,7 @@ const PWAInstallContext = createContext<PWAInstallContextValue>({
   updateNow: () => undefined,
   dismissUpdate: () => undefined,
   install: async () => false,
+  checkForUpdates: async () => "unavailable",
 });
 
 const standaloneQuery = "(display-mode: standalone)";
