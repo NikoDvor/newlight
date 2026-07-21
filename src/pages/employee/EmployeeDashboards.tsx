@@ -62,48 +62,66 @@ function EmptyLine({ label }: { label: string }) {
   return <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">{label}</div>;
 }
 
+function QuickActionCard({ name, badge, description, icon: Icon, to }: {
+  name: string;
+  badge: string;
+  description: string;
+  icon: typeof PhoneCall;
+  to: string;
+}) {
+  return (
+    <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-4 flex flex-col h-full">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <span className="inline-flex items-center rounded-full bg-primary/15 text-primary text-[10px] font-semibold px-2 py-0.5 mb-2">
+            {badge}
+          </span>
+          <p className="text-sm font-semibold text-foreground">{name}</p>
+        </div>
+        <div className="h-9 w-9 rounded-lg bg-muted/50 text-muted-foreground flex items-center justify-center">
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2 mb-3 flex-1">{description}</p>
+      <Button asChild size="sm" variant="outline" className="w-full gap-2">
+        <Link to={to}>Open <ArrowRight className="h-3.5 w-3.5" /></Link>
+      </Button>
+    </Card>
+  );
+}
+
 function YourBookingLinks() {
   const [cal, setCal] = useState<BdrCalendar | null>(null);
   const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
   useEffect(() => { (async () => { const c = await ensureBdrCalendar(); setCal(c); })(); }, []);
   if (!cal) return null;
-  const anyCal = cal as any;
-  const links = [
-    {
-      name: "Discovery Call",
-      badge: "Meeting 1",
-      slug: cal.booking_slug,
-      url: cal.booking_slug ? `${origin}/bdr/book/${cal.booking_slug}` : "",
-      active: cal.booking_active !== false,
-    },
-    {
-      name: "Final Closing Meeting",
-      badge: "Meeting 2",
-      slug: anyCal.closing_booking_slug,
-      url: anyCal.closing_booking_slug ? `${origin}/bdr/book-closing/${anyCal.closing_booking_slug}` : "",
-      active: anyCal.closing_booking_active !== false,
-    },
-    {
-      name: "Onboarding & Payment",
-      badge: "Meeting 3",
-      slug: anyCal.payment_booking_slug,
-      url: anyCal.payment_booking_slug ? `${origin}/bdr/book-payment/${anyCal.payment_booking_slug}` : "",
-      active: anyCal.payment_booking_active !== false,
-    },
-  ];
+  const discoveryUrl = cal.booking_slug ? `${origin}/bdr/book/${cal.booking_slug}` : "";
+  const discoveryActive = cal.booking_active !== false;
   return (
     <SectionCard title="Your Booking Links">
       <div className="grid gap-3 md:grid-cols-3">
-        {links.map(l => (
-          <div key={l.badge} className="relative">
-            <BookingLinkCard name={l.name} badge={l.badge} url={l.url} />
-            {!l.active && (
-              <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
-                Paused
-              </span>
-            )}
-          </div>
-        ))}
+        <div className="relative">
+          <BookingLinkCard name="Discovery Call" badge="Meeting 1" url={discoveryUrl} />
+          {!discoveryActive && (
+            <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
+              Paused
+            </span>
+          )}
+        </div>
+        <QuickActionCard
+          name="Close Prep"
+          badge="Per Lead"
+          description="Prepare a proposal and close materials for each lead."
+          icon={FileText}
+          to="/employee/leads"
+        />
+        <QuickActionCard
+          name="Pay & Sign"
+          badge="Per Deal"
+          description="Generate the service agreement and collect payment for each deal."
+          icon={CreditCard}
+          to="/employee/leads"
+        />
       </div>
     </SectionCard>
   );
