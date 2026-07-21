@@ -63,7 +63,7 @@ export function YourForms() {
       icon: ClipboardCheck,
       name: "Close Prep",
       badge: "Meeting 2",
-      to: "/employee/leads?filter=stage:hot",
+      pickerKind: "close-prep",
       hint: "Opens your hot leads — tap Close Prep on the one you just met with.",
     },
     {
