@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
-import { parseLeadFlags } from "@/lib/leadFlags";
+import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
@@ -22,6 +22,8 @@ interface BdrLead {
   business_name: string;
   owner_name: string | null;
   phone: string | null;
+  front_desk_phone: string | null;
+  owner_direct_phone: string | null;
   website: string | null;
   niche: string | null;
   city: string | null;
@@ -305,14 +307,19 @@ export default function BDRMyLeads() {
 
   const handleAddLead = async (form: Record<string, string>) => {
     if (!user?.id) return;
-    const claim = await checkClaim(form.phone, form.website);
+    const primaryPhone = form.owner_direct_phone || form.front_desk_phone || "";
+    // Claim check runs against whichever phone the rep entered (owner takes
+    // precedence when both are present, matching how getPrimaryLeadPhone picks).
+    const claim = await checkClaim(primaryPhone, form.website);
     if (claim?.claimed && !claim.claimed_by_self) {
       toast({ title: "Lead already claimed", description: `This phone/website is already owned by ${claim.claimed_by_name || "another rep"}.`, variant: "destructive" });
       return;
     }
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
       user_id: user.id, client_id: clientId, business_name: form.business_name, owner_name: form.owner_name || null,
-      phone: form.phone || null, website: form.website || null, niche: form.niche || null,
+      front_desk_phone: form.front_desk_phone || null,
+      owner_direct_phone: form.owner_direct_phone || null,
+      website: form.website || null, niche: form.niche || null,
       city: form.city || null, notes: form.notes || null,
     }).select("id").single();
     if (error) {
@@ -322,9 +329,10 @@ export default function BDRMyLeads() {
       toast({ title: "Error", description: msg, variant: "destructive" });
       return;
     }
-    await createCRMRecords(form as any, data.id);
+    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website }, data.id);
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
+
 
   const handleImport = async (rows: any[], listName: string) => {
     if (!user?.id) return;
@@ -344,8 +352,11 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
 
-      // Pre-flight cross-rep claim check (phone-first, website-fallback)
-      const claim = await checkClaim(row.phone, row.website);
+      // Pre-flight cross-rep claim check (owner-direct first, then front-desk,
+      // then legacy phone, then website fallback). Owner wins because it's the
+      // more distinctive identifier when both exist.
+      const primaryPhone = row.owner_direct_phone || row.front_desk_phone || row.phone || null;
+      const claim = await checkClaim(primaryPhone, row.website);
       if (claim?.claimed && !claim.claimed_by_self) {
         claimedByOther++;
         continue;
@@ -355,9 +366,14 @@ export default function BDRMyLeads() {
         user_id: user.id, client_id: clientId,
         business_name: row.business_name,
         owner_name: row.owner_name || null,
-        phone: row.phone || null,
+        // New-format columns
+        front_desk_phone: row.front_desk_phone || null,
+        owner_direct_phone: row.owner_direct_phone || null,
+        // Legacy fallthrough: only populate legacy phone/phone_type if the new
+        // columns weren't produced by the parser (i.e. pasting old V17 data).
+        phone: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone || null) : null,
+        phone_type: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone_type ?? null) : null,
         website: row.website || null,
-        phone_type: row.phone_type ?? null,
         booking_platform: row.booking_platform ?? null,
         has_booking_system: row.has_booking_system,
         booking_system_exists: row.booking_system_exists ?? row.has_booking_system ?? null,
@@ -376,7 +392,7 @@ export default function BDRMyLeads() {
       }).select("id").single();
       // Safety net: unique index race
       if (error && (error as any).code === "23505") { claimedByOther++; continue; }
-      if (data) { await createCRMRecords(row, data.id); count++; }
+      if (data) { await createCRMRecords({ ...row, phone: primaryPhone }, data.id); count++; }
     }
     const parts: string[] = [];
     if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
@@ -747,16 +763,22 @@ export default function BDRMyLeads() {
                         </div>
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {lead.phone && (
-                            <span className="inline-flex items-center gap-1">
-                              <a href={`tel:${lead.phone}`} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {lead.phone}</a>
-                              {lead.phone_type === "owner" ? (
-                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner</span>
-                              ) : (
-                                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
-                              )}
-                            </span>
-                          )}
+                          {getLeadPhones(lead).map((p) => {
+                            const isOwner = p.kind === "owner_direct" || p.kind === "legacy_owner";
+                            const isFrontDesk = p.kind === "front_desk" || p.kind === "legacy_front_desk";
+                            return (
+                              <span key={p.kind + p.number} className="inline-flex items-center gap-1">
+                                <a href={`tel:${p.number}`} onClick={e => e.stopPropagation()} className="text-xs flex items-center gap-1" style={{ color: "hsl(211,96%,56%)" }}><Phone className="h-3 w-3" /> {p.number}</a>
+                                {isOwner ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner Direct</span>
+                                ) : isFrontDesk ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
+                                ) : (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Phone</span>
+                                )}
+                              </span>
+                            );
+                          })}
                           {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                             <a
                               href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")
@@ -1253,6 +1275,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
 
     // Column indices — -1 means "not present in this header"
     let biIdx = 0, owIdx = 1, phIdx = 2, ptIdx = -1, webIdx = 3,
+        fdpIdx = -1,    // NEW V17.1 "Front Desk Phone"
+        odpIdx = -1,    // NEW V17.1 "Owner Direct Phone"
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // "Booking System Exists" (Yes/No)
         bpIdx = -1,     // "Booking Platform" (name)
@@ -1272,6 +1296,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       header.forEach((c, i) => {
         if (/business\s*name/.test(c)) biIdx = i;
         else if (/owner\s*name/.test(c)) owIdx = i;
+        else if (/front\s*desk\s*phone/.test(c)) fdpIdx = i;
+        else if (/owner\s*direct\s*phone/.test(c)) odpIdx = i;
         else if (/phone\s*type|number\s*type/.test(c)) ptIdx = i;
         else if (/^phone$|^phone\s|\sphone$/.test(c)) phIdx = i;
         else if (/website|url|site/.test(c)) webIdx = i;
@@ -1371,11 +1397,31 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           ? cleanLink(r[oblIdx] || "")
           : owner_booking_link_send_ready;
 
+        // New V17.1 dual-phone columns take precedence when present. If only
+        // the legacy "Phone"+"Phone Type" pair is in the header, map the
+        // single phone into whichever new-format slot matches its type — that
+        // way legacy pastes still get normalized into the new schema.
+        const legacyPhone = phIdx >= 0 ? (r[phIdx]?.trim() || "") : "";
+        const legacyPhoneType = ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null;
+        const newFrontDesk = fdpIdx >= 0 ? (r[fdpIdx]?.trim() || "") : "";
+        const newOwnerDirect = odpIdx >= 0 ? (r[odpIdx]?.trim() || "") : "";
+        const hasNewCols = fdpIdx >= 0 || odpIdx >= 0;
+        const front_desk_phone = hasNewCols
+          ? (newFrontDesk || null)
+          : (legacyPhoneType === "front_desk" ? (legacyPhone || null) : null);
+        const owner_direct_phone = hasNewCols
+          ? (newOwnerDirect || null)
+          : (legacyPhoneType === "owner" ? (legacyPhone || null) : null);
+
         return {
           business_name: r[biIdx]?.trim() || "",
           owner_name: owIdx >= 0 ? (r[owIdx]?.trim() || "") : "",
-          phone: phIdx >= 0 ? (r[phIdx]?.trim() || "") : "",
-          phone_type: ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null,
+          front_desk_phone,
+          owner_direct_phone,
+          // Legacy-shape fields kept only for the fallback branch in handleImport
+          // (used when neither new column produced a value).
+          phone: hasNewCols ? "" : legacyPhone,
+          phone_type: hasNewCols ? null : legacyPhoneType,
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
           has_booking_system,
@@ -1445,7 +1491,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
               </p>
             </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Phone | Phone Type | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
+              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Front Desk Phone | Owner Direct Phone | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
             <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
           </div>
         ) : (
@@ -1472,8 +1518,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                   {r.booking_platform && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }}>{r.booking_platform}</span>
                   )}
-                  {r.phone_type === "owner" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner</span>
+                  {(r.owner_direct_phone || r.phone_type === "owner") && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(38,92%,55%,.15)", color: "hsl(38,92%,65%)" }}>Owner Direct</span>
+                  )}
+                  {r.front_desk_phone && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(211,50%,55%,.15)", color: "hsl(211,60%,72%)" }}>Front Desk</span>
                   )}
                 </label>
                 );
@@ -1496,10 +1545,12 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
 /* Add Lead Modal                                  */
 /* ═══════════════════════════════════════════════ */
 function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (f: Record<string, string>) => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ business_name: "", owner_name: "", phone: "", website: "", niche: "", city: "", notes: "" });
+  const emptyForm = { business_name: "", owner_name: "", front_desk_phone: "", owner_direct_phone: "", website: "", niche: "", city: "", notes: "" };
+  const [form, setForm] = useState<Record<string, string>>(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (!open) setForm({ business_name: "", owner_name: "", phone: "", website: "", niche: "", city: "", notes: "" }); }, [open]);
+  useEffect(() => { if (!open) setForm(emptyForm); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const handleSave = async () => {
     if (!form.business_name.trim()) return;
@@ -1527,7 +1578,8 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
         <div className="space-y-3 pt-1">
           {field("business_name", "Business Name", true)}
           {field("owner_name", "Owner Name")}
-          {field("phone", "Phone")}
+          {field("front_desk_phone", "Front Desk Phone")}
+          {field("owner_direct_phone", "Owner Direct Phone")}
           {field("website", "Website")}
           {field("niche", "Niche")}
           {field("city", "City")}

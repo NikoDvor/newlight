@@ -8,13 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
-import { parseLeadFlags, stripLeadFlags } from "@/lib/leadFlags";
+import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 
 interface Lead {
   id: string;
   business_name: string;
   owner_name: string | null;
   phone: string | null;
+  front_desk_phone: string | null;
+  owner_direct_phone: string | null;
   city: string | null;
   niche: string | null;
   list_name: string | null;
@@ -127,7 +129,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -491,28 +493,38 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       <div className="flex flex-col gap-1">
-                        {lead.phone ? (
-                          <span className="inline-flex items-center gap-1 flex-wrap">
-                            <a href={`tel:${lead.phone}`}
-                              onClick={() => {
-                                if (lead.called) return;
-                                setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
-                                (supabase as any).from("nl_bdr_leads")
-                                  .update({ called: true })
-                                  .eq("id", lead.id)
-                                  .eq("user_id", userId)
-                                  .then(() => {});
-                              }}
-                              className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
-                              <Phone className="h-3 w-3" /> {lead.phone}
-                            </a>
-                            {lead.phone_type === "owner" ? (
-                              <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner</span>
-                            ) : (
-                              <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
-                            )}
-                          </span>
-                        ) : <span className="text-white/30">—</span>}
+                        {(() => {
+                          const phones = getLeadPhones(lead);
+                          if (phones.length === 0) return <span className="text-white/30">—</span>;
+                          return phones.map((p) => {
+                            const isOwner = p.kind === "owner_direct" || p.kind === "legacy_owner";
+                            const isFrontDesk = p.kind === "front_desk" || p.kind === "legacy_front_desk";
+                            return (
+                              <span key={p.kind + p.number} className="inline-flex items-center gap-1 flex-wrap">
+                                <a href={`tel:${p.number}`}
+                                  onClick={() => {
+                                    if (lead.called) return;
+                                    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+                                    (supabase as any).from("nl_bdr_leads")
+                                      .update({ called: true })
+                                      .eq("id", lead.id)
+                                      .eq("user_id", userId)
+                                      .then(() => {});
+                                  }}
+                                  className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
+                                  <Phone className="h-3 w-3" /> {p.number}
+                                </a>
+                                {isOwner ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Owner Direct</span>
+                                ) : isFrontDesk ? (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Front Desk</span>
+                                ) : (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>Phone</span>
+                                )}
+                              </span>
+                            );
+                          });
+                        })()}
                         {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                           <a
                             href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")

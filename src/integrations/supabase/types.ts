@@ -7506,6 +7506,8 @@ export type Database = {
           customer_notes: string | null
           dialer_bookable: boolean | null
           email: string | null
+          front_desk_phone: string | null
+          front_desk_phone_normalized: string | null
           has_booking_system: boolean | null
           has_sales_team: boolean | null
           id: string
@@ -7522,6 +7524,8 @@ export type Database = {
           owner_booking_link: string | null
           owner_booking_link_send_ready: string | null
           owner_calendar_confirmed: boolean | null
+          owner_direct_phone: string | null
+          owner_direct_phone_normalized: string | null
           owner_name: string | null
           phone: string | null
           phone_normalized: string | null
@@ -7555,6 +7559,8 @@ export type Database = {
           customer_notes?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
+          front_desk_phone?: string | null
+          front_desk_phone_normalized?: string | null
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
@@ -7571,6 +7577,8 @@ export type Database = {
           owner_booking_link?: string | null
           owner_booking_link_send_ready?: string | null
           owner_calendar_confirmed?: boolean | null
+          owner_direct_phone?: string | null
+          owner_direct_phone_normalized?: string | null
           owner_name?: string | null
           phone?: string | null
           phone_normalized?: string | null
@@ -7604,6 +7612,8 @@ export type Database = {
           customer_notes?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
+          front_desk_phone?: string | null
+          front_desk_phone_normalized?: string | null
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
@@ -7620,6 +7630,8 @@ export type Database = {
           owner_booking_link?: string | null
           owner_booking_link_send_ready?: string | null
           owner_calendar_confirmed?: boolean | null
+          owner_direct_phone?: string | null
+          owner_direct_phone_normalized?: string | null
           owner_name?: string | null
           phone?: string | null
           phone_normalized?: string | null
