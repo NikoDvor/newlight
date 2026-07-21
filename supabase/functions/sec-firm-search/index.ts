@@ -5,7 +5,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SEC_ENDPOINT = "https://api.adviserinfo.sec.gov/search/firm";
 // SEC's search endpoint caps at ~20 hits/page regardless of requested pageSize.
-const SEC_PAGE_SIZE = 100; // requested; actual returned is typically 20
+const SEC_REQUESTED_PAGE_SIZE = 100; // requested; actual returned is typically 20
 
 interface FirmResult {
   crd: string;
@@ -28,15 +28,15 @@ Deno.serve(async (req) => {
     const state = typeof body.state === "string" ? body.state.trim().toUpperCase() : "";
     const city = typeof body.city === "string" ? body.city.trim() : "";
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
-    const pageSize = Math.max(1, Math.min(100, Number(body.max_results) || 25));
+    const requestedMaxResults = Math.max(1, Math.min(100, Number(body.max_results) || 25));
 
     if (!keyword && !state && !city) {
       return json({ error: "Provide at least a keyword, state, or city." }, 400);
     }
 
-    // Scale raw-record depth by filter narrowness. SEC returns ~20 hits/page
-    // regardless of requested pageSize, so cap in terms of records, not pages.
-    const maxRawRecords = city && state ? 2500 : state ? 1500 : 500;
+    // Scale raw-record depth by filter narrowness. These map to the requested
+    // 5/10/20 page safety caps at SEC's documented 100-result max page size.
+    const maxRawRecords = city && state ? 2000 : state ? 1000 : 500;
     const HARD_PAGE_CAP = 150; // absolute safety net
 
     const cityLower = city.toLowerCase();
@@ -57,6 +57,8 @@ Deno.serve(async (req) => {
       const params = new URLSearchParams({
         query: keyword || "*",
         start: String(start),
+        pageSize: String(SEC_REQUESTED_PAGE_SIZE),
+        size: String(SEC_REQUESTED_PAGE_SIZE),
         hl: "true",
         includePrevious: "false",
         sortField: "Relevance",
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
       }
 
       // Short-circuit once we've satisfied the requested count
-      if (filtered.length >= pageSize) {
+      if (filtered.length >= requestedMaxResults) {
         stoppedReason = "satisfied";
         break;
       }
@@ -143,7 +145,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const results = filtered.slice(0, pageSize);
+    const results = filtered.slice(0, requestedMaxResults);
 
     return json({
       results,
@@ -153,6 +155,7 @@ Deno.serve(async (req) => {
       raw_walked: rawResults.length,
       pages_fetched: pagesFetched,
       max_raw_records: maxRawRecords,
+      requested_sec_page_size: SEC_REQUESTED_PAGE_SIZE,
       stopped_reason: stoppedReason,
       source: "SEC IAPD",
       source_url: lastUrl,
