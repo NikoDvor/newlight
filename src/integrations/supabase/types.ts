@@ -942,6 +942,11 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          zoom_join_url: string | null
+          zoom_meeting_id: string | null
+          zoom_start_url: string | null
+          zoom_transcript: string | null
+          zoom_transcript_fetched_at: string | null
         }
         Insert: {
           all_day?: boolean
@@ -963,6 +968,11 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          zoom_join_url?: string | null
+          zoom_meeting_id?: string | null
+          zoom_start_url?: string | null
+          zoom_transcript?: string | null
+          zoom_transcript_fetched_at?: string | null
         }
         Update: {
           all_day?: boolean
@@ -984,6 +994,11 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          zoom_join_url?: string | null
+          zoom_meeting_id?: string | null
+          zoom_start_url?: string | null
+          zoom_transcript?: string | null
+          zoom_transcript_fetched_at?: string | null
         }
         Relationships: [
           {
@@ -13878,6 +13893,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      zoom_webhook_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          zoom_meeting_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          zoom_meeting_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          zoom_meeting_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

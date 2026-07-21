@@ -8,6 +8,7 @@
 //   2. To the BDR who owns the calendar — new booking notification.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createZoomMeeting } from "../_shared/zoom.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -254,8 +255,46 @@ async function runNotifications(
     const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
     const when = formatDateTime(startsAt);
 
+    // --- 0. Create Zoom meeting for this booking -----------------------------
+    let zoomJoinUrl: string | null = null;
+    let zoomStartUrl: string | null = null;
+    let zoomMeetingId: string | null = null;
+    try {
+      const startsAtDate = new Date(startsAt);
+      const endsAtStr = (record as any)?.ends_at as string | undefined;
+      const durationMinutes = endsAtStr
+        ? Math.max(15, Math.round((new Date(endsAtStr).getTime() - startsAtDate.getTime()) / 60000))
+        : 30;
+      const topicLabel = clientBusinessName || clientName || "NewLight Strategy Session";
+      const zoom = await createZoomMeeting({
+        topic: `NewLight × ${topicLabel}`,
+        startTime: startsAtDate.toISOString(),
+        durationMinutes,
+        timezone: "UTC",
+        agenda: [meta.improvement_area ? `Interest: ${meta.improvement_area}` : "", meta.notes ? `Notes: ${meta.notes}` : ""].filter(Boolean).join("\n"),
+      });
+      zoomJoinUrl = zoom.join_url;
+      zoomStartUrl = zoom.start_url;
+      zoomMeetingId = String(zoom.id);
+      console.log(`[zoom] meeting created id=${zoomMeetingId} join=${zoomJoinUrl}`);
+
+      const { error: zoomUpdErr } = await supabase
+        .from("bdr_calendar_events")
+        .update({
+          zoom_meeting_id: zoomMeetingId,
+          zoom_join_url: zoomJoinUrl,
+          zoom_start_url: zoomStartUrl,
+        })
+        .eq("id", recordId);
+      if (zoomUpdErr) console.error("[zoom] persist error:", zoomUpdErr);
+    } catch (e) {
+      console.error("[zoom] create meeting failed (continuing without Zoom link):", e);
+    }
+
+    const joinLine = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
+
     // --- 1. SMS to client ----------------------------------------------------
-    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
+    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
     let clientSent = false;
     if (clientPhone) {
       clientSent = await sendSms(clientPhone, clientMsg);
@@ -265,7 +304,7 @@ async function runNotifications(
     }
 
     // --- 2. SMS to BDR -------------------------------------------------------
-    const bdrMsg = `New booking confirmed: ${clientName || "New lead"} at ${when}. Check your calendar.`;
+    const bdrMsg = `New booking confirmed: ${clientName || "New lead"} at ${when}. Check your calendar.${zoomJoinUrl ? ` Zoom: ${zoomJoinUrl}` : ""}`;
     let bdrSent = false;
     if (bdrPhone) {
       bdrSent = await sendSms(bdrPhone, bdrMsg);
@@ -279,7 +318,7 @@ async function runNotifications(
     if (bdrEmail) {
       const label = clientName || "New lead";
       const subj = `New Booking: ${label} at ${when}`;
-      const text = `Hi ${bdrName || "there"},\n\nYou have a new booking.\n\nClient: ${label}\nWhen: ${when}\nPhone: ${clientPhone || "n/a"}\nEmail: ${clientEmail || "n/a"}\n${meta.notes ? `Notes: ${meta.notes}\n` : ""}${meta.improvement_area ? `Interest: ${meta.improvement_area}\n` : ""}\nCheck your calendar in the NewLight app.`;
+      const text = `Hi ${bdrName || "there"},\n\nYou have a new booking.\n\nClient: ${label}\nWhen: ${when}\nPhone: ${clientPhone || "n/a"}\nEmail: ${clientEmail || "n/a"}\n${meta.notes ? `Notes: ${meta.notes}\n` : ""}${meta.improvement_area ? `Interest: ${meta.improvement_area}\n` : ""}${zoomJoinUrl ? `\nZoom join: ${zoomJoinUrl}\n${zoomStartUrl ? `Zoom start (host): ${zoomStartUrl}\n` : ""}` : ""}\nCheck your calendar in the NewLight app.`;
       const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">New booking confirmed</h1>
@@ -292,6 +331,8 @@ async function runNotifications(
       <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${clientEmail || "—"}</td></tr>
       ${meta.improvement_area ? `<tr><td style="padding:6px 0;color:#6b7280;">Interest</td><td style="padding:6px 0;">${meta.improvement_area}</td></tr>` : ""}
       ${meta.notes ? `<tr><td style="padding:6px 0;color:#6b7280;vertical-align:top;">Notes</td><td style="padding:6px 0;">${meta.notes}</td></tr>` : ""}
+      ${zoomJoinUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom join</td><td style="padding:6px 0;"><a href="${zoomJoinUrl}">${zoomJoinUrl}</a></td></tr>` : ""}
+      ${zoomStartUrl ? `<tr><td style="padding:6px 0;color:#6b7280;">Zoom start (host)</td><td style="padding:6px 0;"><a href="${zoomStartUrl}">${zoomStartUrl}</a></td></tr>` : ""}
     </table>
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Check your calendar in the NewLight app.</p>
   </div>
@@ -386,12 +427,21 @@ async function runNotifications(
              <p style="margin:12px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
            </div>`
         : "";
-      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${credsBlockText}\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const zoomBlockText = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
+      const zoomBlockHtml = zoomJoinUrl
+        ? `<div style="margin:24px 0;padding:20px;background:#EFF6FF;border-radius:12px;border:1px solid #BFDBFE;text-align:center;">
+             <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#1E3A8A;">Your Zoom meeting</p>
+             <a href="${zoomJoinUrl}" style="display:inline-block;background:#2563EB;color:#fff;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;text-decoration:none;">Join Zoom Meeting</a>
+             <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${zoomJoinUrl}</p>
+           </div>`
+        : "";
+      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}\n\nBefore we meet, download the NewLight app so your system is ready to go:\n${appUrl}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
     <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${greeting}</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
+    ${zoomBlockHtml}
     ${credsBlockHtml}
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Before we meet, download the NewLight app so your system is ready to go:</p>
     <div style="text-align:center;margin:24px 0;">

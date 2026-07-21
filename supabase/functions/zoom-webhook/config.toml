@@ -1,0 +1,2 @@
+[functions.zoom-webhook]
+verify_jwt = false
