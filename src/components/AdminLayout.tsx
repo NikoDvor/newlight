@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 import { GlobalModuleSearch } from "@/components/GlobalModuleSearch";
