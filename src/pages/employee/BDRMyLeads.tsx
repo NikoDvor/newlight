@@ -1485,7 +1485,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
               </p>
             </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
-              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Phone | Phone Type | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
+              placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Front Desk Phone | Owner Direct Phone | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
             <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
           </div>
         ) : (
