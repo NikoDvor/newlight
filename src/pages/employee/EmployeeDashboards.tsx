@@ -85,16 +85,16 @@ function YourBookingLinks() {
         <QuickActionCard
           name="Close Prep"
           badge="Per Lead"
-          description="Prepare a proposal and close materials for each lead."
+          description="Opens your hot leads — tap Close Prep on the one you just met with."
           icon={FileText}
-          to="/employee/leads"
+          to="/employee/leads?filter=stage:hot"
         />
         <QuickActionCard
           name="Pay & Sign"
           badge="Per Deal"
-          description="Generate the service agreement and collect payment for each deal."
+          description="Opens your won leads — tap Pay & Sign on the one ready to onboard."
           icon={CreditCard}
-          to="/employee/leads"
+          to="/employee/leads?filter=stage:won"
         />
       </div>
     </SectionCard>

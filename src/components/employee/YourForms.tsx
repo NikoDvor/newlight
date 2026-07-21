@@ -63,8 +63,8 @@ export function YourForms() {
       icon: ClipboardCheck,
       name: "Close Prep",
       badge: "Meeting 2",
-      to: "/employee/leads",
-      hint: "Open Close Prep from any hot lead in My Leads to submit Form 2.",
+      to: "/employee/leads?filter=stage:hot",
+      hint: "Opens your hot leads — tap Close Prep on the one you just met with.",
     },
     {
       kind: "action",
@@ -73,8 +73,8 @@ export function YourForms() {
       icon: ScrollText,
       name: "Pay & Sign",
       badge: "Meeting 3",
-      to: "/employee/leads",
-      hint: "Auto-generated after Form 2 submits — sent to the client.",
+      to: "/employee/leads?filter=stage:won",
+      hint: "Opens your won leads — tap Pay & Sign on the one ready to onboard.",
     },
   ];
 
