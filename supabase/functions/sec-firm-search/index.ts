@@ -25,17 +25,20 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const state = typeof body.state === "string" ? body.state.trim().toUpperCase() : "";
+    const city = typeof body.city === "string" ? body.city.trim() : "";
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
     const pageSize = Math.max(1, Math.min(50, Number(body.max_results) || 25));
+    // Over-fetch when we'll post-filter, so we still return a useful count
+    const fetchSize = state || city ? Math.min(50, pageSize * 3) : pageSize;
 
-    if (!keyword && !state) {
-      return json({ error: "Provide at least a keyword or a state." }, 400);
+    if (!keyword && !state && !city) {
+      return json({ error: "Provide at least a keyword, state, or city." }, 400);
     }
 
     const params = new URLSearchParams({
       query: keyword || "*",
       pageNumber: "1",
-      pageSize: String(pageSize),
+      pageSize: String(fetchSize),
       hl: "true",
       includePrevious: "false",
       sortField: "Relevance",
@@ -65,7 +68,8 @@ Deno.serve(async (req) => {
     const hits = Array.isArray(data?.hits?.hits) ? data.hits.hits : [];
     const total = data?.hits?.total ?? hits.length;
 
-    const results: FirmResult[] = hits.map((h: any) => {
+    const cityLower = city.toLowerCase();
+    const rawResults: FirmResult[] = hits.map((h: any) => {
       const s = h?._source ?? {};
       let addr: any = {};
       try {
@@ -88,14 +92,24 @@ Deno.serve(async (req) => {
       };
     });
 
+    // Strict server-side post-filtering — SEC's own state filter leaks other states
+    const filtered = rawResults.filter((r) => {
+      if (state && (r.state ?? "").toUpperCase() !== state) return false;
+      if (cityLower && (r.city ?? "").toLowerCase() !== cityLower) return false;
+      return true;
+    });
+    const results = filtered.slice(0, pageSize);
+
     return json({
       results,
       total,
       returned: results.length,
+      filtered_out: rawResults.length - filtered.length,
       source: "SEC IAPD",
       source_url: secUrl,
-      note: "AUM is not exposed by the SEC IAPD search index. Enable AUM enrichment by fetching Form ADV Part 1 filings in a follow-up.",
+      note: "Results are strictly post-filtered by state and city (SEC's own filter leaks). AUM requires Form ADV parsing.",
     });
+
   } catch (err) {
     return json({ error: (err as Error).message || "Unknown error" }, 500);
   }
