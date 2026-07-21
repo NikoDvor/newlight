@@ -138,6 +138,7 @@ export function EmployeeLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background text-foreground">
+        <AdminImpersonationBar />
         <EmployeeSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl relative z-10">
