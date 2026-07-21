@@ -103,8 +103,7 @@ Deno.serve(async (req) => {
     }
 
     // 3. Resolve lead — dedupe by email/phone within this BDR's leads first.
-    //    Applies to ALL meeting kinds (discovery/closing/payment): re-collecting
-    //    contact info on a follow-up booking must not create a fresh row.
+    //    Re-collecting contact info on a follow-up booking must not create a fresh row.
     const noteParts: string[] = [];
     if (roundRobin && assignedCal.user_id !== originCal.user_id) {
       noteParts.push(`Round-robin from ${originCal.name}`);
@@ -143,7 +142,7 @@ Deno.serve(async (req) => {
         await supabase.from("nl_bdr_leads").update(patch).eq("id", existingLead.id);
       }
       lead = { id: existingLead.id };
-      console.log(`[bdr-book] reused existing lead ${lead.id} for kind=${isPayment ? "payment" : isClosing ? "closing" : "discovery"}`);
+      console.log(`[bdr-book] reused existing lead ${lead.id}`);
     } else {
       const { data: newLead, error: leadErr } = await supabase
         .from("nl_bdr_leads")
