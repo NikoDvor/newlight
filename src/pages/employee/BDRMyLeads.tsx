@@ -307,14 +307,19 @@ export default function BDRMyLeads() {
 
   const handleAddLead = async (form: Record<string, string>) => {
     if (!user?.id) return;
-    const claim = await checkClaim(form.phone, form.website);
+    const primaryPhone = form.owner_direct_phone || form.front_desk_phone || "";
+    // Claim check runs against whichever phone the rep entered (owner takes
+    // precedence when both are present, matching how getPrimaryLeadPhone picks).
+    const claim = await checkClaim(primaryPhone, form.website);
     if (claim?.claimed && !claim.claimed_by_self) {
       toast({ title: "Lead already claimed", description: `This phone/website is already owned by ${claim.claimed_by_name || "another rep"}.`, variant: "destructive" });
       return;
     }
     const { data, error } = await (supabase as any).from("nl_bdr_leads").insert({
       user_id: user.id, client_id: clientId, business_name: form.business_name, owner_name: form.owner_name || null,
-      phone: form.phone || null, website: form.website || null, niche: form.niche || null,
+      front_desk_phone: form.front_desk_phone || null,
+      owner_direct_phone: form.owner_direct_phone || null,
+      website: form.website || null, niche: form.niche || null,
       city: form.city || null, notes: form.notes || null,
     }).select("id").single();
     if (error) {
@@ -324,9 +329,10 @@ export default function BDRMyLeads() {
       toast({ title: "Error", description: msg, variant: "destructive" });
       return;
     }
-    await createCRMRecords(form as any, data.id);
+    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website }, data.id);
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
+
 
   const handleImport = async (rows: any[], listName: string) => {
     if (!user?.id) return;
