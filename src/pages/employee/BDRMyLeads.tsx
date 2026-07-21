@@ -1575,75 +1575,29 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
     }
   };
 
-  const mobileSteps = [
-    "Download the Orion Browser app from the App Store",
-    "Open Orion → tap the three-dot menu (···) in the bottom right",
-    "Tap Settings → scroll down to Advanced → enable Chrome Extensions toggle",
-    "Go back to the menu → tap Extensions → tap the + button → search \"Instant Data Scraper\" → install it",
-    "In Orion, go to maps.google.com in the address bar",
-    "Search your target niche and city (e.g. \"hair salons Ojai CA\")",
-    "Let the results fully load and scroll through the entire list",
-    "Tap the three-dot menu (···) → tap Instant Data Scraper",
-    "If it says \"doesn't support this site\" — make sure you are on the Google Maps results page with a list visible, not a blank page",
-    "When the scraper detects the table, tap Start Crawling",
-    "Tap XLSX to download the file to your phone",
-    "Come back to My Leads → tap Import → name your list → paste or upload the data → tap Parse Leads",
-  ];
-  const desktopSteps = [
-    "Open Google Chrome on your computer",
-    "Go to chrome.google.com/webstore",
-    "Search \"Instant Data Scraper\" → click Add to Chrome → confirm install",
-    "Go to maps.google.com",
-    "Search your target niche and city (e.g. \"med spas Santa Barbara CA\")",
-    "Scroll through the full results list so all listings load",
-    "Click the Instant Data Scraper icon in your Chrome toolbar (puzzle piece icon top right → find it in your extensions)",
-    "The scraper will auto-detect the data table — click Start Crawling",
-    "Let it run through all pages",
-    "Click Download CSV or XLSX when complete",
-    "Come back to My Leads → tap Import → name your list → paste the data → tap Parse Leads",
-  ];
   const proTips = [
-    "Always search by niche + city for best results (e.g. \"chiropractors Santa Barbara CA\")",
-    "Scroll through ALL results before scraping so everything loads",
-    "Desktop gives cleaner data than mobile",
     "Run the master research prompt in a separate Claude chat with web search ON to find owner names and phone numbers before importing",
+    "Paste the raw SEC output directly into the Master Prompt — Business Name | City | CRD is all it needs to start Phase 0",
+    "For firms missing public contact info, the Master Prompt's tiered phone research (Phase 3a–c) will locate the best number",
+    "Verify each lead isn't already claimed by another rep before dialing — the import flow will flag duplicates automatically",
   ];
-
-  const Section = ({ title, badge, steps }: { title: string; badge: string; steps: string[] }) => (
-    <div className="rounded-xl p-4" style={{ background: "hsla(215,35%,10%,.5)", border: "1px solid hsla(211,80%,60%,.15)" }}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-              style={{ background: "hsla(211,96%,56%,.15)", color: "hsl(211,96%,70%)" }}>{badge}</span>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      </div>
-      <ol className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={i} className="flex gap-3 text-xs leading-relaxed text-foreground/85">
-            <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                  style={{ background: "hsla(211,96%,56%,.15)", color: "hsl(211,96%,70%)" }}>{i + 1}</span>
-            <span>{s}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>How to Import Leads</DialogTitle>
-          <DialogDescription>Two ways to source leads, plus the Master Prompt for enrichment.</DialogDescription>
+          <DialogDescription>Use the SEC IAPD Sourcing Tool to pull registered financial advisor leads, then enrich them with the Master Prompt before importing.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-xl p-4" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                    style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Option 2 · Fastest</span>
+                    style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Recommended</span>
               <h3 className="text-sm font-semibold text-foreground">SEC IAPD Sourcing Tool (Financial Advisors)</h3>
             </div>
             <p className="text-xs leading-relaxed text-foreground/85 mb-3">
-              For registered financial advisor / RIA leads, skip Google Maps entirely. Use the in-app SEC IAPD tool to pull a
+              For registered financial advisor / RIA leads, use the in-app SEC IAPD tool to pull a
               clean <span className="font-mono text-[11px]">Business Name | City | CRD</span> list by state + city, then paste it straight into
               the Master Prompt below — Phase 0 is already done for you.
             </p>
@@ -1653,14 +1607,11 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             </Button>
           </div>
 
-          <Section title="Option 1 · Mobile (iPhone via Orion Browser)" badge="Mobile" steps={mobileSteps} />
-          <Section title="Option 1 · Desktop (Chrome on laptop/computer)" badge="Desktop" steps={desktopSteps} />
-
           <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V16</span>
+                      style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>Master Prompt · V17</span>
                 <h3 className="text-sm font-semibold text-foreground">Lead Researcher Protocol</h3>
               </div>
               <Button size="sm" onClick={copyPrompt} disabled={loadingPrompt || !promptText}>
@@ -1669,7 +1620,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             </div>
             <p className="text-xs leading-relaxed text-foreground/85">
               Paste this into your Lead Researcher Claude Project (see Module 3 for setup) or a fresh Claude chat with web search ON.
-              Then feed it your raw list from the SEC tool or Google Maps scrape — it returns enriched, dial-ready rows.
+              Then feed it your raw list from the SEC tool — it returns enriched, dial-ready rows.
               {promptText ? <span className="ml-1 text-foreground/60">({promptText.length.toLocaleString()} chars)</span> : null}
             </p>
           </div>
