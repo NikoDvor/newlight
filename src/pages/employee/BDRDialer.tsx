@@ -507,37 +507,42 @@ export default function BDRDialer() {
                             )}
                           </span>
                         ) : <span className="text-white/30">—</span>}
-                        {lead.booking_link && (
+                        {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                           <a
-                            href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline w-fit"
-                            style={lead.booking_link_is_owner
-                              ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }
-                              : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,68%)", border: "1px dashed hsla(211,96%,60%,.35)" }}
-                            title={lead.booking_link}
-                          >
-                            <Calendar className="h-3 w-3" />
-                            {lead.booking_link_is_owner ? "Owner's Calendar" : "Booking Link"}
-                          </a>
-                        )}
-                        {lead.owner_booking_link && (
-                          <a
-                            href={lead.owner_booking_link.startsWith("http") ? lead.owner_booking_link : `https://${lead.owner_booking_link}`}
+                            href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")
+                              ? (lead.owner_booking_link_send_ready || lead.owner_booking_link)!
+                              : `https://${lead.owner_booking_link_send_ready || lead.owner_booking_link}`}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="text-xs inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-bold hover:brightness-110 w-fit uppercase tracking-wide"
                             style={{ background: "linear-gradient(135deg, hsla(38,95%,55%,.28), hsla(38,95%,50%,.18))", color: "hsl(38,100%,72%)", border: "1px solid hsla(38,95%,55%,.6)", boxShadow: "0 0 0 1px hsla(38,95%,55%,.15) inset" }}
-                            title={`Send-ready owner calendar link: ${lead.owner_booking_link}`}
+                            title={`Send-ready owner calendar link: ${lead.owner_booking_link_send_ready || lead.owner_booking_link}`}
                           >
                             <Calendar className="h-3 w-3" />
                             Book with Owner
                           </a>
                         )}
-                        {lead.self_booking_widget_non_owner && !lead.booking_link_is_owner && (
+                        {lead.booking_link && !(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (() => {
+                          const conf = lead.owner_calendar_confirmed ?? lead.booking_link_is_owner;
+                          return (
+                            <a
+                              href={lead.booking_link.startsWith("http") ? lead.booking_link : `https://${lead.booking_link}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:underline w-fit"
+                              style={conf === true
+                                ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }
+                                : { background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,68%)", border: "1px dashed hsla(211,96%,60%,.35)" }}
+                              title={lead.booking_link}
+                            >
+                              <Calendar className="h-3 w-3" />
+                              {conf === true ? "Owner's Calendar" : conf === false ? "Booking Link (not owner)" : "Booking Link"}
+                            </a>
+                          );
+                        })()}
+                        {lead.self_booking_widget_non_owner && (lead.owner_calendar_confirmed ?? lead.booking_link_is_owner) !== true && (
                           <span
                             className="text-[10px] inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium w-fit"
                             style={{ background: "hsla(280,70%,60%,.15)", color: "hsl(280,80%,78%)", border: "1px solid hsla(280,70%,60%,.4)" }}
