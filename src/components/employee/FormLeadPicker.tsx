@@ -48,7 +48,7 @@ export function FormLeadPickerCard({
   description: string;
   icon: LucideIcon;
 }) {
-  const { user } = useAuth();
+  const { user } = useWorkspace();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
