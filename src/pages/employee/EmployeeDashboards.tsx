@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarClock, CheckCircle2, Clock3, DollarSign, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, Clock3, CreditCard, DollarSign, FileText, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
 import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
