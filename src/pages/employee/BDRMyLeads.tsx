@@ -1545,7 +1545,10 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
-    if (!open || promptText) return;
+    if (!open) return;
+    // Refetch every open — chapter content can change server-side; caching
+    // in state across the whole session would silently serve stale prompts.
+    let cancelled = false;
     setLoadingPrompt(true);
     supabase
       .from("nl_training_chapters")
@@ -1553,10 +1556,12 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
       .eq("id", MASTER_PROMPT_CHAPTER_ID)
       .maybeSingle()
       .then(({ data }) => {
+        if (cancelled) return;
         setPromptText((data?.content as string) ?? "");
         setLoadingPrompt(false);
       });
-  }, [open, promptText]);
+    return () => { cancelled = true; };
+  }, [open]);
 
   const copyPrompt = async () => {
     if (!promptText) return;
