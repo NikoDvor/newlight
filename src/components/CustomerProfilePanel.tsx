@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Calendar, Clock, Mail, Phone, Building2, User, CheckCircle2, XCircle, RotateCcw, Loader2, Plus } from "lucide-react";
+import { getLeadPhones } from "@/lib/leadFlags";
 
 type Attendance = "pending" | "attended" | "no_show" | "rescheduled";
 
