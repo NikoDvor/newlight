@@ -59,6 +59,7 @@ export function AdminLayout() {
             <div className="flex items-center gap-3">
               <WorkspaceSwitcher />
               <PWAInstallButton />
+              <CheckForUpdatesButton />
               <GlobalModuleSearch variant="admin" />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
