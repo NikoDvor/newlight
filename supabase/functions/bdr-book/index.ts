@@ -104,36 +104,74 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Create lead (CRM record for the BDR's My Leads)
+    // 3. Resolve lead — dedupe by email/phone within this BDR's leads first.
+    //    Applies to ALL meeting kinds (discovery/closing/payment): re-collecting
+    //    contact info on a follow-up booking must not create a fresh row.
     const noteParts: string[] = [];
     if (roundRobin && assignedCal.user_id !== originCal.user_id) {
       noteParts.push(`Round-robin from ${originCal.name}`);
     }
     if (notes) noteParts.push(notes);
 
-    const { data: lead, error: leadErr } = await supabase
-      .from("nl_bdr_leads")
-      .insert({
-        user_id: assignedCal.user_id,
-        client_id: assignedCal.client_id,
-        business_name: business_name || customer_name,
-        owner_name: customer_name,
-        phone: phone || null,
-        email: email || null,
-        lead_source: "booking_form",
-        status: "follow_up",
-        pipeline_stage: "hot",
-        notes: noteParts.join("\n") || null,
-        list_name: "Booking Form",
-        modules_of_interest: modulesClean,
-        logo_url: logoClean,
-        has_sales_team: hasSalesTeamClean,
-        sales_team_size: salesTeamSizeClean,
-      })
-      .select("id")
-      .single();
+    const emailNorm = typeof email === "string" && email.trim() ? email.trim().toLowerCase() : null;
+    const phoneDigits = typeof phone === "string" ? phone.replace(/\D/g, "") : "";
+    const phoneNorm = phoneDigits.length === 11 && phoneDigits.startsWith("1")
+      ? phoneDigits.slice(1)
+      : phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
 
-    if (leadErr) throw leadErr;
+    let existingLead: any = null;
+    if (emailNorm || phoneNorm) {
+      const orClauses: string[] = [];
+      if (emailNorm) orClauses.push(`email.ilike.${emailNorm}`);
+      if (phoneNorm) orClauses.push(`phone_normalized.eq.${phoneNorm}`);
+      const { data: matches } = await supabase
+        .from("nl_bdr_leads")
+        .select("id, business_name, owner_name, phone, email")
+        .eq("user_id", assignedCal.user_id)
+        .or(orClauses.join(","))
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (matches && matches.length) existingLead = matches[0];
+    }
+
+    let lead: { id: string };
+    if (existingLead) {
+      const patch: Record<string, any> = {};
+      if (!existingLead.business_name && (business_name || customer_name)) patch.business_name = business_name || customer_name;
+      if (!existingLead.owner_name && customer_name) patch.owner_name = customer_name;
+      if (!existingLead.phone && phone) patch.phone = phone;
+      if (!existingLead.email && email) patch.email = email;
+      if (Object.keys(patch).length) {
+        await supabase.from("nl_bdr_leads").update(patch).eq("id", existingLead.id);
+      }
+      lead = { id: existingLead.id };
+      console.log(`[bdr-book] reused existing lead ${lead.id} for kind=${isPayment ? "payment" : isClosing ? "closing" : "discovery"}`);
+    } else {
+      const { data: newLead, error: leadErr } = await supabase
+        .from("nl_bdr_leads")
+        .insert({
+          user_id: assignedCal.user_id,
+          client_id: assignedCal.client_id,
+          business_name: business_name || customer_name,
+          owner_name: customer_name,
+          phone: phone || null,
+          email: email || null,
+          lead_source: "booking_form",
+          status: "follow_up",
+          pipeline_stage: "hot",
+          notes: noteParts.join("\n") || null,
+          list_name: "Booking Form",
+          modules_of_interest: modulesClean,
+          logo_url: logoClean,
+          has_sales_team: hasSalesTeamClean,
+          sales_team_size: salesTeamSizeClean,
+        })
+        .select("id")
+        .single();
+      if (leadErr) throw leadErr;
+      lead = newLead;
+    }
+
 
     // 4. Create event on assigned BDR's calendar
     const { data: evt, error: evtErr } = await supabase
