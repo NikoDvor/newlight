@@ -1578,7 +1578,8 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
         <div className="space-y-3 pt-1">
           {field("business_name", "Business Name", true)}
           {field("owner_name", "Owner Name")}
-          {field("phone", "Phone")}
+          {field("front_desk_phone", "Front Desk Phone")}
+          {field("owner_direct_phone", "Owner Direct Phone")}
           {field("website", "Website")}
           {field("niche", "Niche")}
           {field("city", "City")}
