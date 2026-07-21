@@ -728,14 +728,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setRoundRobin((calendar as any).round_robin_pool ?? false);
       setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
-      setClosingTitle((calendar as any).closing_booking_title ?? "");
-      setClosingDesc((calendar as any).closing_booking_description ?? "");
-      setClosingActive((calendar as any).closing_booking_active ?? true);
-      setClosingFormId((calendar as any).closing_booking_form_id ?? "");
-      setPaymentTitle((calendar as any).payment_booking_title ?? "");
-      setPaymentDesc((calendar as any).payment_booking_description ?? "");
-      setPaymentActive((calendar as any).payment_booking_active ?? true);
-      setPaymentFormId((calendar as any).payment_booking_form_id ?? "");
       (async () => {
         const { data } = await (supabase as any)
           .from("client_forms")
