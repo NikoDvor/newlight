@@ -352,8 +352,11 @@ export default function BDRMyLeads() {
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
       seenInBatch.add(key);
 
-      // Pre-flight cross-rep claim check (phone-first, website-fallback)
-      const claim = await checkClaim(row.phone, row.website);
+      // Pre-flight cross-rep claim check (owner-direct first, then front-desk,
+      // then legacy phone, then website fallback). Owner wins because it's the
+      // more distinctive identifier when both exist.
+      const primaryPhone = row.owner_direct_phone || row.front_desk_phone || row.phone || null;
+      const claim = await checkClaim(primaryPhone, row.website);
       if (claim?.claimed && !claim.claimed_by_self) {
         claimedByOther++;
         continue;
@@ -363,9 +366,14 @@ export default function BDRMyLeads() {
         user_id: user.id, client_id: clientId,
         business_name: row.business_name,
         owner_name: row.owner_name || null,
-        phone: row.phone || null,
+        // New-format columns
+        front_desk_phone: row.front_desk_phone || null,
+        owner_direct_phone: row.owner_direct_phone || null,
+        // Legacy fallthrough: only populate legacy phone/phone_type if the new
+        // columns weren't produced by the parser (i.e. pasting old V17 data).
+        phone: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone || null) : null,
+        phone_type: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone_type ?? null) : null,
         website: row.website || null,
-        phone_type: row.phone_type ?? null,
         booking_platform: row.booking_platform ?? null,
         has_booking_system: row.has_booking_system,
         booking_system_exists: row.booking_system_exists ?? row.has_booking_system ?? null,
@@ -384,7 +392,7 @@ export default function BDRMyLeads() {
       }).select("id").single();
       // Safety net: unique index race
       if (error && (error as any).code === "23505") { claimedByOther++; continue; }
-      if (data) { await createCRMRecords(row, data.id); count++; }
+      if (data) { await createCRMRecords({ ...row, phone: primaryPhone }, data.id); count++; }
     }
     const parts: string[] = [];
     if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
