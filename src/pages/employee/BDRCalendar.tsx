@@ -151,8 +151,6 @@ export default function BDRCalendar() {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
   const bookingUrl = calendar?.booking_slug ? `${origin}/bdr/book/${calendar.booking_slug}` : "";
-  const closingBookingUrl = (calendar as any)?.closing_booking_slug ? `${origin}/bdr/book-closing/${(calendar as any).closing_booking_slug}` : "";
-  const paymentBookingUrl = (calendar as any)?.payment_booking_slug ? `${origin}/bdr/book-payment/${(calendar as any).payment_booking_slug}` : "";
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
@@ -560,10 +558,6 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
 
   const discoveryUrlFor = (c: BdrCalendar) =>
     c.booking_slug ? `${origin}/bdr/book/${c.booking_slug}` : "";
-  const closingUrlFor = (c: BdrCalendar) =>
-    (c as any).closing_booking_slug ? `${origin}/bdr/book-closing/${(c as any).closing_booking_slug}` : "";
-  const paymentUrlFor = (c: BdrCalendar) =>
-    (c as any).payment_booking_slug ? `${origin}/bdr/book-payment/${(c as any).payment_booking_slug}` : "";
 
   const saveRename = async (cal: BdrCalendar) => {
     const nextName = editingName.trim();
@@ -624,20 +618,9 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
           onEdit={rename}
           onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
         />
-        <BookingLinkCard
-          name="Final Closing Meeting"
-          badge="Meeting 2"
-          url={closingUrlFor(cal)}
-          onEdit={rename}
-          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
-        />
-        <BookingLinkCard
-          name="Onboarding & Payment"
-          badge="Meeting 3"
-          url={paymentUrlFor(cal)}
-          onEdit={rename}
-          onDelete={isPrimary ? undefined : () => deleteExtra(cal)}
-        />
+        <p className="text-[11px] text-white/45 px-1">
+          Meeting 2 (Close) and Meeting 3 (Pay &amp; Sign) are not public booking links — the closing meeting is scheduled from Close Prep on each lead, and Pay &amp; Sign is auto-generated after Close Prep submits.
+        </p>
       </div>
     );
   };
@@ -734,15 +717,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [closingTitle, setClosingTitle] = useState<string>((calendar as any).closing_booking_title ?? "");
-  const [closingDesc, setClosingDesc] = useState<string>((calendar as any).closing_booking_description ?? "");
-  const [closingActive, setClosingActive] = useState<boolean>((calendar as any).closing_booking_active ?? true);
-  const [closingFormId, setClosingFormId] = useState<string>((calendar as any).closing_booking_form_id ?? "");
-
-  const [paymentTitle, setPaymentTitle] = useState<string>((calendar as any).payment_booking_title ?? "");
-  const [paymentDesc, setPaymentDesc] = useState<string>((calendar as any).payment_booking_description ?? "");
-  const [paymentActive, setPaymentActive] = useState<boolean>((calendar as any).payment_booking_active ?? true);
-  const [paymentFormId, setPaymentFormId] = useState<string>((calendar as any).payment_booking_form_id ?? "");
 
   useEffect(() => {
     if (open) {
@@ -754,14 +728,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setRoundRobin((calendar as any).round_robin_pool ?? false);
       setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
-      setClosingTitle((calendar as any).closing_booking_title ?? "");
-      setClosingDesc((calendar as any).closing_booking_description ?? "");
-      setClosingActive((calendar as any).closing_booking_active ?? true);
-      setClosingFormId((calendar as any).closing_booking_form_id ?? "");
-      setPaymentTitle((calendar as any).payment_booking_title ?? "");
-      setPaymentDesc((calendar as any).payment_booking_description ?? "");
-      setPaymentActive((calendar as any).payment_booking_active ?? true);
-      setPaymentFormId((calendar as any).payment_booking_form_id ?? "");
       (async () => {
         const { data } = await (supabase as any)
           .from("client_forms")
@@ -799,14 +765,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
       booking_form_id: bookingFormId || null,
-      closing_booking_title: closingTitle.trim() || null,
-      closing_booking_description: closingDesc.trim() || null,
-      closing_booking_active: closingActive,
-      closing_booking_form_id: closingFormId || null,
-      payment_booking_title: paymentTitle.trim() || null,
-      payment_booking_description: paymentDesc.trim() || null,
-      payment_booking_active: paymentActive,
-      payment_booking_form_id: paymentFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
@@ -921,99 +879,14 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
             </div>
           </section>
 
-          {/* Closing (Meeting 2) booking page */}
-          <section className="space-y-3">
-            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Final Closing Meeting (Meeting 2)</div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Page title</Label>
-              <Input value={closingTitle} onChange={e => setClosingTitle(e.target.value)}
-                placeholder="Final Closing Meeting"
-                className="bg-white/5 border-white/10 text-white" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Description / bio</Label>
-              <textarea value={closingDesc} onChange={e => setClosingDesc(e.target.value)} rows={3}
-                placeholder="Reserved slot for the closing call after Discovery…"
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Closing Form (optional)</Label>
-              <select
-                value={closingFormId}
-                onChange={e => setClosingFormId(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-              >
-                <option value="" className="bg-[hsl(215,35%,12%)]">No form</option>
-                {availableForms.map(f => (
-                  <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
-                ))}
-              </select>
-            </div>
-            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
-              <div>
-                <div className="text-sm text-white">Closing link active</div>
-                <div className="text-xs text-white/50">Pause to stop accepting closing bookings.</div>
-              </div>
-              <input type="checkbox" checked={closingActive}
-                onChange={e => setClosingActive(e.target.checked)}
-                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
-            </label>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Your closing link</Label>
-              <Input readOnly
-                value={(calendar as any).closing_booking_slug
-                  ? `${typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com"}/bdr/book-closing/${(calendar as any).closing_booking_slug}`
-                  : "Save the calendar to generate a closing link"}
-                className="bg-white/5 border-white/10 text-white font-mono text-xs" />
+          {/* Meeting 2 & 3 note */}
+          <section className="space-y-2">
+            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Meeting 2 &amp; 3</div>
+            <div className="rounded-md border border-white/10 bg-white/[0.03] p-3 text-xs text-white/60">
+              The Final Closing Meeting (Meeting 2) is scheduled internally from <span className="text-white/80 font-medium">Close Prep</span> on each hot lead. The Pay &amp; Sign step (Meeting 3) is auto-generated after Close Prep submits and sent directly to the client. Neither is a public self-serve booking link.
             </div>
           </section>
 
-          {/* Payment (Meeting 3) booking page */}
-          <section className="space-y-3">
-            <div className="text-xs uppercase tracking-wider text-white/50 font-semibold">Onboarding & Payment (Meeting 3)</div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Page title</Label>
-              <Input value={paymentTitle} onChange={e => setPaymentTitle(e.target.value)}
-                placeholder="Onboarding & Payment"
-                className="bg-white/5 border-white/10 text-white" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Description / bio</Label>
-              <textarea value={paymentDesc} onChange={e => setPaymentDesc(e.target.value)} rows={3}
-                placeholder="Collect payment and schedule the kickoff call…"
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Payment Form (optional)</Label>
-              <select
-                value={paymentFormId}
-                onChange={e => setPaymentFormId(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white"
-              >
-                <option value="" className="bg-[hsl(215,35%,12%)]">No form</option>
-                {availableForms.map(f => (
-                  <option key={f.id} value={f.id} className="bg-[hsl(215,35%,12%)]">{f.form_name}</option>
-                ))}
-              </select>
-            </div>
-            <label className="flex items-center justify-between gap-2 p-3 rounded-md bg-white/[0.03] border border-white/10 cursor-pointer">
-              <div>
-                <div className="text-sm text-white">Payment link active</div>
-                <div className="text-xs text-white/50">Pause to stop accepting new onboarding bookings.</div>
-              </div>
-              <input type="checkbox" checked={paymentActive}
-                onChange={e => setPaymentActive(e.target.checked)}
-                className="h-5 w-9 accent-[hsl(211,96%,56%)] cursor-pointer" />
-            </label>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Your payment link</Label>
-              <Input readOnly
-                value={(calendar as any).payment_booking_slug
-                  ? `${typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com"}/bdr/book-payment/${(calendar as any).payment_booking_slug}`
-                  : "Save the calendar to generate a payment link"}
-                className="bg-white/5 border-white/10 text-white font-mono text-xs" />
-            </div>
-          </section>
 
 
 

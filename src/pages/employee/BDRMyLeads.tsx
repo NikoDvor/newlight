@@ -862,6 +862,16 @@ export default function BDRMyLeads() {
                             Close Prep
                           </Button>
                         )}
+                        {!selectMode && lead.crm_deal_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 border-[hsl(150,70%,50%)]/40 text-[hsl(150,70%,60%)] hover:bg-[hsl(150,70%,50%)]/10"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/employee/pay-sign/${lead.crm_deal_id}`); }}
+                          >
+                            Pay &amp; Sign
+                          </Button>
+                        )}
                         {!selectMode && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
