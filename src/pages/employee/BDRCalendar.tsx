@@ -765,14 +765,6 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       booking_active: bookingActive,
       round_robin_pool: roundRobin,
       booking_form_id: bookingFormId || null,
-      closing_booking_title: closingTitle.trim() || null,
-      closing_booking_description: closingDesc.trim() || null,
-      closing_booking_active: closingActive,
-      closing_booking_form_id: closingFormId || null,
-      payment_booking_title: paymentTitle.trim() || null,
-      payment_booking_description: paymentDesc.trim() || null,
-      payment_booking_active: paymentActive,
-      payment_booking_form_id: paymentFormId || null,
     };
     const { data, error } = await (supabase as any)
       .from("bdr_calendars")
