@@ -573,6 +573,10 @@ export default function BDRDialer() {
                         {lead.dialer_bookable === true && (
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide" title="Platform supports embedded booking from the dialer" style={{ background: "hsla(142,80%,45%,.22)", color: "hsl(142,85%,68%)", border: "1px solid hsla(142,80%,50%,.55)" }}>Embeddable</span>
                         )}
+                        {lead._claimConflict && (
+                          <span className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide" title="This phone number also exists under another rep's account. Contact an admin to resolve." style={{ background: "hsla(38,90%,55%,.18)", color: "hsl(38,95%,68%)", border: "1px solid hsla(38,90%,55%,.55)" }}>Claim Conflict</span>
+                        )}
+
                       </div>
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">
