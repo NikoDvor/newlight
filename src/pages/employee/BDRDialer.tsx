@@ -346,6 +346,8 @@ export default function BDRDialer() {
     { label: "Total Calls", key: "__total__", tone: "hsl(211,96%,60%)" },
     { label: "Won", key: "Won", tone: "hsl(142,72%,42%)" },
     { label: "Lost", key: "Lost", tone: "hsl(0,72%,55%)" },
+    { label: "Will Reach Out", key: "Said They Would Reach Out", tone: "hsl(168,76%,48%)" },
+    { label: "No Answer", key: "Didn't Answer", tone: "hsl(215,14%,55%)" },
     { label: "Callbacks", key: "Schedule Callback", tone: "hsl(190,90%,55%)" },
     { label: "Gatekeeper", key: "Gatekeeper", tone: "hsl(38,92%,55%)" },
     { label: "Not Interested", key: "Not Interested", tone: "hsl(0,0%,70%)" },
