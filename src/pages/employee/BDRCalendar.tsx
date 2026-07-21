@@ -151,8 +151,6 @@ export default function BDRCalendar() {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
   const bookingUrl = calendar?.booking_slug ? `${origin}/bdr/book/${calendar.booking_slug}` : "";
-  const closingBookingUrl = (calendar as any)?.closing_booking_slug ? `${origin}/bdr/book-closing/${(calendar as any).closing_booking_slug}` : "";
-  const paymentBookingUrl = (calendar as any)?.payment_booking_slug ? `${origin}/bdr/book-payment/${(calendar as any).payment_booking_slug}` : "";
 
   const onCellClick = (date: Date) => {
     const d = new Date(date);
