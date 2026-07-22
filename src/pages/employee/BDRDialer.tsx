@@ -231,10 +231,24 @@ export default function BDRDialer() {
     const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
     const result: Record<"today" | "week" | "month" | "all", number> = {} as any;
     for (const b of buckets) {
-      result[b] = outcomes.filter(o => inBucket(o.logged_at, b)).length;
+      result[b] = dialLog.filter(d => inBucket(d.dialed_at, b)).length;
     }
     return result;
-  }, [outcomes]);
+  }, [dialLog]);
+
+  const recordDial = useCallback(async (leadId: string) => {
+    if (!userId) return;
+    const nowIso = new Date().toISOString();
+    setDialLog(prev => [{ dialed_at: nowIso }, ...prev]);
+    const { error } = await (supabase as any).from("nl_bdr_dial_log").insert({
+      bdr_user_id: userId,
+      lead_id: leadId,
+      dialed_at: nowIso,
+    });
+    if (error) {
+      setDialLog(prev => prev.filter(d => d.dialed_at !== nowIso));
+    }
+  }, [userId]);
 
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
@@ -248,6 +262,7 @@ export default function BDRDialer() {
       return;
     }
     if (next) {
+      recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -255,7 +270,7 @@ export default function BDRDialer() {
         notes: lead.notes,
       }).catch(() => {});
     }
-  }, [userId]);
+  }, [userId, recordDial]);
 
   const saveNotes = useCallback(async (lead: Lead, value: string) => {
     if (!userId) return;
