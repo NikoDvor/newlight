@@ -16,9 +16,7 @@ import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
-import { CategoryNichePicker } from "@/components/CategoryNichePicker";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
-import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 import { seedDemoSopShell } from "@/lib/clientSopShell";
 interface Client {
   id: string;
@@ -70,12 +68,14 @@ export default function AdminClients() {
   const [appLinkClient, setAppLinkClient] = useState<Client | null>(null);
   
   const [form, setForm] = useState({
-    business_name: "", workspace_slug: "", industry: "", provisional_profile: "" as string,
-    primary_location: "",
-    timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
-    owner_phone: "", preferred_contact_method: "email", sms_consent: false,
-    logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+    business_name: "",
+    owner_name: "",
+    owner_email: "",
+    owner_phone: "",
     notes: "",
+    logo_url: "",
+    has_sales_team: "" as "" | "yes" | "no",
+    has_compliance_requirements: "" as "" | "yes" | "no",
   });
   const { setViewMode, setActiveClientId } = useWorkspace();
   const navigate = useNavigate();
@@ -122,40 +122,46 @@ export default function AdminClients() {
   const [createdClient, setCreatedClient] = useState<Client | null>(null);
 
   const handleCreate = async () => {
-    if (!form.business_name || !form.workspace_slug) {
-      toast.error("Business name and workspace slug are required");
-      return;
-    }
-    if (!form.owner_email) {
-      toast.error("Owner email is required to create a login account");
+    if (!form.business_name || !form.owner_name || !form.owner_phone || !form.owner_email) {
+      toast.error("Name, business, phone, and email are required");
       return;
     }
     setCreating(true);
-    const slug = form.workspace_slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
-    // Check slug uniqueness
-    const { data: slugCheck } = await supabase.from("clients").select("id").eq("workspace_slug", slug).maybeSingle();
-    if (slugCheck) {
-      toast.error("A workspace with this slug already exists. Choose a different slug.");
-      setCreating(false);
-      return;
+    // Auto-generate unique slug from business name
+    const baseSlug = form.business_name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "client";
+    let slug = baseSlug;
+    for (let n = 2; n <= 50; n++) {
+      const { data: existing } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("workspace_slug", slug)
+        .maybeSingle();
+      if (!existing) break;
+      slug = `${baseSlug}-${n}`;
     }
 
     // 1. Create client record
     const { data, error } = await supabase.from("clients").insert({
       business_name: form.business_name,
       workspace_slug: slug,
-      industry: form.industry || null,
-      provisional_profile: form.provisional_profile || null,
-      primary_location: form.primary_location || null,
-      timezone: form.timezone,
-      service_package: form.service_package,
-      owner_name: form.owner_name || null,
+      industry: null,
+      provisional_profile: null,
+      primary_location: null,
+      timezone: "America/Los_Angeles",
+      service_package: "enterprise",
+      owner_name: form.owner_name,
       owner_email: form.owner_email,
-      owner_phone: form.owner_phone || null,
-      preferred_contact_method: form.preferred_contact_method || "email",
-      sms_consent: form.sms_consent,
+      owner_phone: form.owner_phone,
+      preferred_contact_method: "email",
+      sms_consent: false,
       notes: form.notes || null,
+      has_sales_team: form.has_sales_team === "yes" ? true : form.has_sales_team === "no" ? false : null,
+      has_compliance_requirements: form.has_compliance_requirements === "yes" ? true : form.has_compliance_requirements === "no" ? false : null,
     }).select().single();
 
     if (error) {
@@ -180,9 +186,9 @@ export default function AdminClients() {
         client_id: data.id,
         company_name: form.business_name,
         logo_url: form.logo_url || null,
-        primary_color: form.primary_color || "#3B82F6",
-        secondary_color: form.secondary_color || "#06B6D4",
-        welcome_message: form.welcome_message || "Welcome to your business dashboard",
+        primary_color: "#3B82F6",
+        secondary_color: "#06B6D4",
+        welcome_message: "Welcome to your business dashboard",
       }),
       supabase.from("client_health_scores").insert({ client_id: data.id }),
       seedDemoSopShell(data.id),
@@ -192,8 +198,8 @@ export default function AdminClients() {
     // 3. Full app provisioning — creates calendars, services, forms, content blocks, workspace user, billing stub, recommendations
     try {
       const result = await provisionWorkspaceDefaults(data.id, {
-        industry: form.industry,
-        timezone: form.timezone,
+        industry: null,
+        timezone: "America/Los_Angeles",
         skipIfExists: true,
         ownerEmail: form.owner_email,
         ownerName: form.owner_name,
@@ -247,6 +253,7 @@ export default function AdminClients() {
     setCreating(false);
     fetchClients();
   };
+
 
   const handleResendInvite = async (client: Client) => {
     if (!client.owner_email) {
@@ -344,12 +351,14 @@ export default function AdminClients() {
     setInviteResult(null);
     setCreatedClient(null);
     setForm({
-      business_name: "", workspace_slug: "", industry: "", provisional_profile: "",
-      primary_location: "",
-      timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
-      owner_phone: "", preferred_contact_method: "email", sms_consent: false,
-      logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+      business_name: "",
+      owner_name: "",
+      owner_email: "",
+      owner_phone: "",
       notes: "",
+      logo_url: "",
+      has_sales_team: "",
+      has_compliance_requirements: "",
     });
   };
 
@@ -428,19 +437,8 @@ export default function AdminClients() {
     return "bg-white/5 text-white/40";
   };
 
-  const formFields = [
-    { label: "Business Name *", key: "business_name", placeholder: "Acme Corp" },
-    { label: "Workspace Slug *", key: "workspace_slug", placeholder: "acme-corp" },
-    
-    { label: "Primary Location", key: "primary_location", placeholder: "City, State" },
-    { label: "Owner Name", key: "owner_name", placeholder: "John Smith" },
-    { label: "Owner Email *", key: "owner_email", placeholder: "john@example.com", type: "email" },
-    { label: "Owner Phone", key: "owner_phone", placeholder: "(555) 123-4567", type: "tel" },
-  ];
 
-  const brandingFields = [
-    { label: "Welcome Message", key: "welcome_message", placeholder: "Welcome to your dashboard" },
-  ];
+
 
   return (
     <div className="space-y-6">
@@ -535,76 +533,43 @@ export default function AdminClients() {
 
             {!inviteResult && (
               <div className="space-y-3 mt-2">
-                {formFields.map(f => (
-                  <div key={f.key}>
-                    <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                    <Input
-                      type={(f as any).type || "text"}
-                      value={(form as any)[f.key]}
-                      onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      placeholder={f.placeholder}
-                      className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                    />
-                  </div>
-                ))}
-
-                {/* Business Category + Niche */}
-                <CategoryNichePicker
-                  categoryId={(form as any).categoryId || null}
-                  nicheId={(form as any).nicheId || null}
-                  onCategoryChange={(catId) => setForm(prev => ({ ...prev, categoryId: catId } as any))}
-                  onNicheChange={(nId) => setForm(prev => ({ ...prev, nicheId: nId } as any))}
-                  onProfileChange={(profile: StructuredWorkspaceProfile) => {
-                    setForm(prev => ({
-                      ...prev,
-                      industry: profile.legacy.industry,
-                      provisional_profile: profile.legacy.provisional_profile,
-                    }));
-                  }}
-                  variant="dark"
-                />
-
-                {/* Preferred Contact Method */}
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Preferred Contact Method</label>
-                  <select
-                    value={form.preferred_contact_method}
-                    onChange={e => setForm(prev => ({ ...prev, preferred_contact_method: e.target.value }))}
-                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                  >
-                    <option value="email">Email</option>
-                    <option value="sms">SMS</option>
-                    <option value="both">Both</option>
-                  </select>
+                  <label className="text-xs text-white/50 mb-1 block">Your name *</label>
+                  <Input
+                    value={form.owner_name}
+                    onChange={e => setForm(prev => ({ ...prev, owner_name: e.target.value }))}
+                    placeholder="John Smith"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
                 </div>
-
-                {/* SMS Consent */}
-                {(form.preferred_contact_method === "sms" || form.preferred_contact_method === "both") && (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.sms_consent}
-                      onChange={e => setForm(prev => ({ ...prev, sms_consent: e.target.checked }))}
-                      className="h-4 w-4 rounded border-white/20 bg-white/[0.06] accent-[hsl(var(--nl-electric))]"
-                    />
-                    <span className="text-xs text-white/60">OK to receive onboarding texts</span>
-                  </label>
-                )}
-
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Timezone</label>
-                  <select
-                    value={form.timezone}
-                    onChange={e => setForm(prev => ({ ...prev, timezone: e.target.value }))}
-                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                  >
-                    <option value="America/New_York">Eastern</option>
-                    <option value="America/Chicago">Central</option>
-                    <option value="America/Denver">Mountain</option>
-                    <option value="America/Los_Angeles">Pacific</option>
-                    <option value="Europe/London">London</option>
-                    <option value="Australia/Sydney">Sydney</option>
-                  </select>
+                  <label className="text-xs text-white/50 mb-1 block">Business *</label>
+                  <Input
+                    value={form.business_name}
+                    onChange={e => setForm(prev => ({ ...prev, business_name: e.target.value }))}
+                    placeholder="Acme Corp"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Phone *</label>
+                  <Input
+                    type="tel"
+                    value={form.owner_phone}
+                    onChange={e => setForm(prev => ({ ...prev, owner_phone: e.target.value }))}
+                    placeholder="(555) 123-4567"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Email *</label>
+                  <Input
+                    type="email"
+                    value={form.owner_email}
+                    onChange={e => setForm(prev => ({ ...prev, owner_email: e.target.value }))}
+                    placeholder="john@example.com"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
                 </div>
 
                 <div>
@@ -613,40 +578,44 @@ export default function AdminClients() {
                     value={form.notes}
                     onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
-                    placeholder="Internal notes about this client (context, source, special requirements…)"
+                    placeholder="Anything else we should know…"
                     className="w-full rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 py-2 placeholder:text-white/30 resize-y"
                   />
                 </div>
 
-                {/* Branding Section */}
+                <LogoUploader
+                  value={form.logo_url}
+                  onChange={url => setForm(prev => ({ ...prev, logo_url: url }))}
+                  label="Business logo (optional)"
+                  dark={true}
+                />
+
                 <div className="pt-3 border-t border-white/10">
-                  <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
-                  <LogoUploader value={form.logo_url} onChange={url => setForm(prev => ({ ...prev, logo_url: url }))} label="Logo" dark={true} className="mb-3" />
-                  {brandingFields.map(f => (
-                    <div key={f.key} className="mb-3">
-                      <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                      <Input
-                        value={(form as any)[f.key]}
-                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                      />
-                    </div>
-                  ))}
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Modules of interest</p>
+                  <div className="space-y-3">
                     <div>
-                      <label className="text-xs text-white/50 mb-1 block">Primary Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={form.primary_color} onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" />
-                        <Input value={form.primary_color} onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))} className="bg-white/[0.06] border-white/10 text-white flex-1" />
-                      </div>
+                      <label className="text-xs text-white/50 mb-1 block">Do you have a sales team?</label>
+                      <select
+                        value={form.has_sales_team}
+                        onChange={e => setForm(prev => ({ ...prev, has_sales_team: e.target.value as "" | "yes" | "no" }))}
+                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                      >
+                        <option value="">Select…</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
                     </div>
                     <div>
-                      <label className="text-xs text-white/50 mb-1 block">Secondary Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={form.secondary_color} onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" />
-                        <Input value={form.secondary_color} onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))} className="bg-white/[0.06] border-white/10 text-white flex-1" />
-                      </div>
+                      <label className="text-xs text-white/50 mb-1 block">Do you have compliance restrictions?</label>
+                      <select
+                        value={form.has_compliance_requirements}
+                        onChange={e => setForm(prev => ({ ...prev, has_compliance_requirements: e.target.value as "" | "yes" | "no" }))}
+                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                      >
+                        <option value="">Select…</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -663,6 +632,7 @@ export default function AdminClients() {
                 </Button>
               </div>
             )}
+
           </DialogContent>
         </Dialog>
       </div>
