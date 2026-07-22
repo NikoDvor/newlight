@@ -607,6 +607,17 @@ export default function AdminClients() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Notes (optional)</label>
+                  <textarea
+                    value={form.notes}
+                    onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={3}
+                    placeholder="Internal notes about this client (context, source, special requirements…)"
+                    className="w-full rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 py-2 placeholder:text-white/30 resize-y"
+                  />
+                </div>
+
                 {/* Branding Section */}
                 <div className="pt-3 border-t border-white/10">
                   <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
