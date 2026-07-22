@@ -66,6 +66,16 @@ export function AppLayout() {
     return <Navigate to="/auth" replace />;
   }
 
+  // Employees (marketing_staff / support_staff) live under /employee/*.
+  // If one lands on an AppLayout-wrapped route (e.g. via a stale bookmark
+  // or cached ?redirect=), send them to their real dashboard instead of
+  // showing the "No Workspace Assigned" blocker.
+  const EMPLOYEE_ROLES = ["marketing_staff", "support_staff"];
+  if (!isAdmin && userRole && EMPLOYEE_ROLES.includes(userRole)) {
+    const dest = getEmployeeRoute(userRole, employeeProfile?.job_title) || "/employee/generic";
+    return <Navigate to={dest} replace />;
+  }
+
   // Block client users without an assigned workspace
   if (!isAdmin && !activeClientId && userRole) {
     return (
