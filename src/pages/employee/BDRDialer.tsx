@@ -427,8 +427,8 @@ export default function BDRDialer() {
             ) : searchMatches.map(m => (
               <button key={m.id} onClick={() => jumpToLead(m)}
                 className="w-full text-left px-3 py-2 hover:bg-white/[0.06] transition-colors border-b border-white/5 last:border-b-0">
-                <div className="text-sm text-white truncate">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
-                <div className="text-[11px] text-white/50 truncate">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
+                <div className="text-sm text-white break-words">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
+                <div className="text-[11px] text-white/50 break-words">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
               </button>
             ))}
           </div>
