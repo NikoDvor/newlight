@@ -48,7 +48,8 @@ export default function Auth() {
     }
 
     const userId = data.user?.id;
-    let dest = searchParams.get("redirect") || "/dashboard";
+    const redirectParam = searchParams.get("redirect");
+    let dest = redirectParam || "/dashboard";
 
     if (userId) {
       const [{ data: roles }, { data: profile }] = await Promise.all([
@@ -59,15 +60,15 @@ export default function Auth() {
       const roleList = (roles ?? []).map((r) => r.role);
       const adminRoles = ["admin", "operator"];
       const employeeRoles = ["marketing_staff", "support_staff"];
+      const empRole = roleList.find((r) => employeeRoles.includes(r));
 
-      if (!searchParams.get("redirect")) {
+      // Employees always route to their /employee/* dashboard — ignore any
+      // stale ?redirect= that would drop them into a client AppLayout route.
+      if (empRole) {
+        dest = getEmployeeRoute(empRole, profile?.job_title) || "/employee/generic";
+      } else if (!redirectParam) {
         if (roleList.some((r) => adminRoles.includes(r))) {
           dest = "/admin/dashboard";
-        } else {
-          const empRole = roleList.find((r) => employeeRoles.includes(r));
-          if (empRole) {
-            dest = getEmployeeRoute(empRole, profile?.job_title) || "/dashboard";
-          }
         }
       }
     }
