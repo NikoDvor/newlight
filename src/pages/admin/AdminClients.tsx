@@ -122,8 +122,8 @@ export default function AdminClients() {
   const [createdClient, setCreatedClient] = useState<Client | null>(null);
 
   const handleCreate = async () => {
-    if (!form.business_name || !form.owner_name || !form.owner_phone || !form.owner_email) {
-      toast.error("Name, business, phone, and email are required");
+    if (!form.business_name || !form.owner_name) {
+      toast.error("Name and business are required");
       return;
     }
     setCreating(true);
@@ -211,38 +211,41 @@ export default function AdminClients() {
       toast.error(`Workspace created but full provisioning failed: ${provErr.message}`);
     }
 
-    // 4. Auto-create auth account for client owner
-    try {
-      const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-user", {
-        body: {
-          email: form.owner_email,
-          role: "client_owner",
-          client_id: data.id,
-        },
-      });
+    // 4. Auto-create auth account for client owner (only if email provided)
+    if (form.owner_email) {
+      try {
+        const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-user", {
+          body: {
+            email: form.owner_email,
+            role: "client_owner",
+            client_id: data.id,
+          },
+        });
 
-      if (inviteError) {
-        toast.error(`Workspace created but invite failed: ${inviteError.message}`);
-        setInviteResult({ email: form.owner_email, sent: false, link: null });
-      } else if (inviteData) {
-        if (inviteData.already_existed) {
-          toast.success("Workspace created! Existing user linked to this new workspace.");
+        if (inviteError) {
+          toast.error(`Workspace created but invite failed: ${inviteError.message}`);
           setInviteResult({ email: form.owner_email, sent: false, link: null });
-        } else if (inviteData.invite_email_sent) {
-          toast.success("Workspace created! Invite email sent to client.");
-          setInviteResult({ email: form.owner_email, sent: true, link: null });
-        } else if (inviteData.setup_link) {
-          toast.success("Workspace created! Copy the setup link below for the client.");
-          setInviteResult({ email: form.owner_email, sent: false, link: inviteData.setup_link });
-        } else {
-          toast.success("Workspace created and user account linked!");
-          setInviteResult({ email: form.owner_email, sent: false, link: null });
+        } else if (inviteData) {
+          if (inviteData.already_existed) {
+            toast.success("Workspace created! Existing user linked to this new workspace.");
+            setInviteResult({ email: form.owner_email, sent: false, link: null });
+          } else if (inviteData.invite_email_sent) {
+            toast.success("Workspace created! Invite email sent to client.");
+            setInviteResult({ email: form.owner_email, sent: true, link: null });
+          } else if (inviteData.setup_link) {
+            toast.success("Workspace created! Copy the setup link below for the client.");
+            setInviteResult({ email: form.owner_email, sent: false, link: inviteData.setup_link });
+          } else {
+            toast.success("Workspace created and user account linked!");
+            setInviteResult({ email: form.owner_email, sent: false, link: null });
+          }
         }
+      } catch (err: any) {
+        toast.error(`Workspace created but invite failed: ${err.message}`);
+        setInviteResult({ email: form.owner_email, sent: false, link: null });
       }
-    } catch (err: any) {
-      toast.error(`Workspace created but invite failed: ${err.message}`);
-      setInviteResult({ email: form.owner_email, sent: false, link: null });
     }
+
 
     // 5. Update provision status
     await supabase.from("provision_queue").update({ provision_status: "setup_in_progress" }).eq("client_id", data.id);
@@ -552,7 +555,7 @@ export default function AdminClients() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Phone *</label>
+                  <label className="text-xs text-white/50 mb-1 block">Phone</label>
                   <Input
                     type="tel"
                     value={form.owner_phone}
@@ -562,7 +565,7 @@ export default function AdminClients() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Email *</label>
+                  <label className="text-xs text-white/50 mb-1 block">Email</label>
                   <Input
                     type="email"
                     value={form.owner_email}
@@ -623,7 +626,7 @@ export default function AdminClients() {
                 <div className="pt-2 rounded-lg p-3 mt-1" style={{ background: "hsla(211,96%,60%,.06)", border: "1px solid hsla(211,96%,60%,.1)" }}>
                   <div className="flex items-center gap-2 text-xs text-white/60">
                     <UserPlus className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-                    <span>A login account will be automatically created for the owner email.</span>
+                    <span>A login account will be created automatically if you provide an email.</span>
                   </div>
                 </div>
 
