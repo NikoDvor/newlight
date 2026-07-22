@@ -489,16 +489,28 @@ export default function BDRDialer() {
           All Leads <span className="opacity-60 ml-1">{leads.length}</span>
         </button>
         {lists.map(([name, count]) => (
-          <button key={name}
-            onClick={() => setActiveList(name)}
-            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
+          <div key={name} className="shrink-0 inline-flex items-center rounded-lg"
             style={{
               background: activeList === name ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
               color: activeList === name ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
               border: `1px solid ${activeList === name ? "hsla(211,96%,56%,.4)" : "hsla(211,96%,60%,.12)"}`,
             }}>
-            {name} <span className="opacity-60 ml-1">{count}</span>
-          </button>
+            <button onClick={() => setActiveList(name)}
+              className="pl-3 pr-1 py-1.5 text-xs font-medium whitespace-nowrap">
+              {name} <span className="opacity-60 ml-1">{count}</span>
+            </button>
+            {name !== "Uncategorized" && (
+              <RenameListButton
+                listName={name}
+                existingLists={lists.map(([n]) => n).filter(n => n !== "Uncategorized")}
+                onRenamed={(oldN, newN) => {
+                  setLeads(prev => prev.map(l => l.list_name === oldN ? { ...l, list_name: newN } : l));
+                  setActiveList(cur => cur === oldN ? newN : cur);
+                }}
+                className="mr-1.5 ml-0.5 inline-flex items-center justify-center rounded p-1 hover:bg-white/10 transition-colors"
+              />
+            )}
+          </div>
         ))}
       </div>
 
