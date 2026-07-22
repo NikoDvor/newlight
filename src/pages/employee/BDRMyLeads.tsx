@@ -644,11 +644,24 @@ export default function BDRMyLeads() {
                   All Lists <span className="opacity-70">({leads.length})</span>
                 </button>
                 {lists.map(([name, count]) => (
-                  <button key={name} onClick={() => setActiveList(name)}
-                    className="shrink-0 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
+                  <div key={name} className="shrink-0 inline-flex items-center rounded-full"
                     style={{ background: activeList === name ? "hsl(211,96%,56%)" : "hsla(211,96%,60%,.08)", color: activeList === name ? "#fff" : "hsl(211,96%,56%)" }}>
-                    {name} <span className="opacity-70">({count})</span>
-                  </button>
+                    <button onClick={() => setActiveList(name)}
+                      className="pl-4 pr-1.5 py-2 text-xs font-medium whitespace-nowrap flex items-center gap-1.5">
+                      {name} <span className="opacity-70">({count})</span>
+                    </button>
+                    {name !== "Unsorted" && (
+                      <RenameListButton
+                        listName={name}
+                        existingLists={lists.map(([n]) => n).filter(n => n !== "Unsorted")}
+                        onRenamed={(oldN, newN) => {
+                          setLeads(prev => prev.map(l => l.list_name === oldN ? { ...l, list_name: newN } : l));
+                          setActiveList(cur => cur === oldN ? newN : cur);
+                        }}
+                        className="mr-2 ml-0.5 inline-flex items-center justify-center rounded-full p-1 hover:bg-white/10 transition-colors"
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
