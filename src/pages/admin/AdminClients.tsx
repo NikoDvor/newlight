@@ -124,40 +124,46 @@ export default function AdminClients() {
   const [createdClient, setCreatedClient] = useState<Client | null>(null);
 
   const handleCreate = async () => {
-    if (!form.business_name || !form.workspace_slug) {
-      toast.error("Business name and workspace slug are required");
-      return;
-    }
-    if (!form.owner_email) {
-      toast.error("Owner email is required to create a login account");
+    if (!form.business_name || !form.owner_name || !form.owner_phone || !form.owner_email) {
+      toast.error("Name, business, phone, and email are required");
       return;
     }
     setCreating(true);
-    const slug = form.workspace_slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
-    // Check slug uniqueness
-    const { data: slugCheck } = await supabase.from("clients").select("id").eq("workspace_slug", slug).maybeSingle();
-    if (slugCheck) {
-      toast.error("A workspace with this slug already exists. Choose a different slug.");
-      setCreating(false);
-      return;
+    // Auto-generate unique slug from business name
+    const baseSlug = form.business_name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "client";
+    let slug = baseSlug;
+    for (let n = 2; n <= 50; n++) {
+      const { data: existing } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("workspace_slug", slug)
+        .maybeSingle();
+      if (!existing) break;
+      slug = `${baseSlug}-${n}`;
     }
 
     // 1. Create client record
     const { data, error } = await supabase.from("clients").insert({
       business_name: form.business_name,
       workspace_slug: slug,
-      industry: form.industry || null,
-      provisional_profile: form.provisional_profile || null,
-      primary_location: form.primary_location || null,
-      timezone: form.timezone,
-      service_package: form.service_package,
-      owner_name: form.owner_name || null,
+      industry: null,
+      provisional_profile: null,
+      primary_location: null,
+      timezone: "America/Los_Angeles",
+      service_package: "enterprise",
+      owner_name: form.owner_name,
       owner_email: form.owner_email,
-      owner_phone: form.owner_phone || null,
-      preferred_contact_method: form.preferred_contact_method || "email",
-      sms_consent: form.sms_consent,
+      owner_phone: form.owner_phone,
+      preferred_contact_method: "email",
+      sms_consent: false,
       notes: form.notes || null,
+      has_sales_team: form.has_sales_team === "yes" ? true : form.has_sales_team === "no" ? false : null,
+      has_compliance_requirements: form.has_compliance_requirements === "yes" ? true : form.has_compliance_requirements === "no" ? false : null,
     }).select().single();
 
     if (error) {
@@ -182,9 +188,9 @@ export default function AdminClients() {
         client_id: data.id,
         company_name: form.business_name,
         logo_url: form.logo_url || null,
-        primary_color: form.primary_color || "#3B82F6",
-        secondary_color: form.secondary_color || "#06B6D4",
-        welcome_message: form.welcome_message || "Welcome to your business dashboard",
+        primary_color: "#3B82F6",
+        secondary_color: "#06B6D4",
+        welcome_message: "Welcome to your business dashboard",
       }),
       supabase.from("client_health_scores").insert({ client_id: data.id }),
       seedDemoSopShell(data.id),
@@ -194,8 +200,8 @@ export default function AdminClients() {
     // 3. Full app provisioning — creates calendars, services, forms, content blocks, workspace user, billing stub, recommendations
     try {
       const result = await provisionWorkspaceDefaults(data.id, {
-        industry: form.industry,
-        timezone: form.timezone,
+        industry: null,
+        timezone: "America/Los_Angeles",
         skipIfExists: true,
         ownerEmail: form.owner_email,
         ownerName: form.owner_name,
@@ -249,6 +255,7 @@ export default function AdminClients() {
     setCreating(false);
     fetchClients();
   };
+
 
   const handleResendInvite = async (client: Client) => {
     if (!client.owner_email) {
