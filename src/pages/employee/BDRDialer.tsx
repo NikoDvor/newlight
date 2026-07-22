@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
+import RenameListButton from "@/components/employee/RenameListButton";
 
 interface Lead {
   id: string;
