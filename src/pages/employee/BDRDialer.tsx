@@ -615,6 +615,7 @@ export default function BDRDialer() {
                                       .eq("id", lead.id)
                                       .eq("user_id", userId)
                                       .then(() => {});
+                                    recordDial(lead.id);
                                   }}
                                   className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                                   <Phone className="h-3 w-3" /> {p.number}
