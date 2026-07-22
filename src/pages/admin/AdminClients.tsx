@@ -353,12 +353,14 @@ export default function AdminClients() {
     setInviteResult(null);
     setCreatedClient(null);
     setForm({
-      business_name: "", workspace_slug: "", industry: "", provisional_profile: "",
-      primary_location: "",
-      timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
-      owner_phone: "", preferred_contact_method: "email", sms_consent: false,
-      logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+      business_name: "",
+      owner_name: "",
+      owner_email: "",
+      owner_phone: "",
       notes: "",
+      logo_url: "",
+      has_sales_team: "",
+      has_compliance_requirements: "",
     });
   };
 
