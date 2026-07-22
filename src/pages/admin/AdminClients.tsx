@@ -16,9 +16,7 @@ import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
-import { CategoryNichePicker } from "@/components/CategoryNichePicker";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
-import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 import { seedDemoSopShell } from "@/lib/clientSopShell";
 interface Client {
   id: string;
