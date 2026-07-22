@@ -48,6 +48,12 @@ interface OutcomeRow {
   logged_at: string | null;
 }
 
+interface DialLogRow {
+  dialed_at: string | null;
+}
+
+
+
 // Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
