@@ -643,7 +643,7 @@ export default function BDRDialer() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-xs hover:underline truncate inline-block max-w-[160px] align-middle"
+                          className="text-xs hover:underline break-all inline-block align-middle"
                           style={{ color: "hsl(211,96%,68%)" }}
                           title={lead.website}
                         >
