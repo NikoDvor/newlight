@@ -95,6 +95,15 @@ function computeCallMetrics(rows: any[]) {
   return out;
 }
 
+function computeDialCounts(rows: { dialed_at: string }[]) {
+  const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+  const out: Record<"today" | "week" | "month" | "all", number> = { today: 0, week: 0, month: 0, all: 0 };
+  for (const b of buckets) {
+    out[b] = rows.filter(r => inBucket(r.dialed_at, b)).length;
+  }
+  return out;
+}
+
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
   const { isAdmin } = useWorkspace();
