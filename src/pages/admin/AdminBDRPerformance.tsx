@@ -111,16 +111,18 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }, { data: dLog }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
         (supabase as any).from("bdr_calendar_events").select("user_id, starts_at").eq("source", "dialer"),
+        (supabase as any).from("nl_bdr_dial_log").select("bdr_user_id, dialed_at"),
       ]);
       setLeads(l || []);
       setObjections(o || []);
       setCalls(c || []);
       setDialEvents(dEvts || []);
+      setDialLog((dLog || []).map((r: any) => ({ bdr_user_id: r.bdr_user_id, dialed_at: r.dialed_at })));
 
       // Fetch BDR names
       const userIds = [...new Set([
