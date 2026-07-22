@@ -402,7 +402,41 @@ export default function BDRDialer() {
         </Button>
       </div>
 
+      {/* Owner search */}
+      <div className="relative">
+        <div className="flex items-center h-10 rounded-lg px-3 gap-2"
+          style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.18)" }}>
+          <Search className="h-4 w-4 text-white/40 shrink-0" />
+          <input
+            value={ownerSearch}
+            onChange={(e) => setOwnerSearch(e.target.value)}
+            placeholder="Search owner name..."
+            className="bg-transparent outline-none text-sm text-white placeholder:text-white/35 w-full"
+          />
+          {ownerSearch && (
+            <button onClick={() => setOwnerSearch("")} className="text-white/40 hover:text-white/70 shrink-0" aria-label="Clear search">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {ownerSearch.trim() && (
+          <div className="absolute z-40 mt-1 w-full rounded-lg overflow-hidden shadow-lg"
+            style={{ background: "hsl(215,35%,10%)", border: "1px solid hsla(211,96%,60%,.25)" }}>
+            {searchMatches.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-white/40">No owners match "{ownerSearch}".</div>
+            ) : searchMatches.map(m => (
+              <button key={m.id} onClick={() => jumpToLead(m)}
+                className="w-full text-left px-3 py-2 hover:bg-white/[0.06] transition-colors border-b border-white/5 last:border-b-0">
+                <div className="text-sm text-white truncate">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
+                <div className="text-[11px] text-white/50 truncate">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Call count summary */}
+
       <div className="overflow-x-auto -mx-1 px-1">
         <div className="flex items-stretch gap-2 min-w-max pb-1">
           {[
