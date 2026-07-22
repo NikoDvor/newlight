@@ -119,6 +119,9 @@ export default function BDRDialer() {
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
   const [callbackDate, setCallbackDate] = useState<string>("");
   const [callbackTime, setCallbackTime] = useState<string>("");
+  const [ownerSearch, setOwnerSearch] = useState<string>("");
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   useEffect(() => {
     (async () => {
