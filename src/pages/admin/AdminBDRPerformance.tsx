@@ -95,6 +95,15 @@ function computeCallMetrics(rows: any[]) {
   return out;
 }
 
+function computeDialCounts(rows: { dialed_at: string }[]) {
+  const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
+  const out: Record<"today" | "week" | "month" | "all", number> = { today: 0, week: 0, month: 0, all: 0 };
+  for (const b of buckets) {
+    out[b] = rows.filter(r => inBucket(r.dialed_at, b)).length;
+  }
+  return out;
+}
+
 /* ─── page ─── */
 export default function AdminBDRPerformance() {
   const { isAdmin } = useWorkspace();
@@ -102,6 +111,7 @@ export default function AdminBDRPerformance() {
   const [objections, setObjections] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
   const [dialEvents, setDialEvents] = useState<{ user_id: string; starts_at: string }[]>([]);
+  const [dialLog, setDialLog] = useState<{ bdr_user_id: string; dialed_at: string }[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
@@ -110,16 +120,18 @@ export default function AdminBDRPerformance() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }] = await Promise.all([
+      const [{ data: l }, { data: o }, { data: c }, { data: dEvts }, { data: dLog }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("nl_bdr_objections").select("*").order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes").select("*").order("logged_at", { ascending: false }),
         (supabase as any).from("bdr_calendar_events").select("user_id, starts_at").eq("source", "dialer"),
+        (supabase as any).from("nl_bdr_dial_log").select("bdr_user_id, dialed_at"),
       ]);
       setLeads(l || []);
       setObjections(o || []);
       setCalls(c || []);
       setDialEvents(dEvts || []);
+      setDialLog((dLog || []).map((r: any) => ({ bdr_user_id: r.bdr_user_id, dialed_at: r.dialed_at })));
 
       // Fetch BDR names
       const userIds = [...new Set([
@@ -166,20 +178,24 @@ export default function AdminBDRPerformance() {
 
   // Team-wide call metrics (independent of date filter — buckets are today/week/month/all)
   const teamCallMetrics = useMemo(() => computeCallMetrics(calls), [calls]);
+  // Raw dial counts come from nl_bdr_dial_log (canonical dial source of truth)
+  const teamDialCounts = useMemo(() => computeDialCounts(dialLog), [dialLog]);
 
   // Per-BDR call metrics + daily-dial-goal days hit/missed (from bdr_calendar_events source='dialer')
   const bdrCallRows = useMemo(() => {
     const uids = [...new Set([
       ...calls.map((c: any) => c.bdr_user_id).filter(Boolean),
       ...dialEvents.map((e) => e.user_id).filter(Boolean),
+      ...dialLog.map((d) => d.bdr_user_id).filter(Boolean),
     ])];
     return uids.map(uid => ({
       uid,
       name: profiles[uid] || uid.slice(0, 8),
       metrics: computeCallMetrics(calls.filter((c: any) => c.bdr_user_id === uid)),
+      dialCounts: computeDialCounts(dialLog.filter(d => d.bdr_user_id === uid)),
       dialDays: computeDaysHitMissed(dialEvents.filter((e) => e.user_id === uid).map((e) => e.starts_at)),
-    })).sort((a, b) => b.metrics.all.total - a.metrics.all.total);
-  }, [calls, dialEvents, profiles]);
+    })).sort((a, b) => b.dialCounts.all - a.dialCounts.all);
+  }, [calls, dialEvents, dialLog, profiles]);
 
   // Objection leaderboard
   const objLeaderboard = useMemo(() => {
@@ -273,10 +289,10 @@ export default function AdminBDRPerformance() {
         <h2 className="text-sm font-bold text-foreground mb-3">Team Call Activity</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Total Calls", value: teamCallMetrics.all.total },
-            { label: "Calls Today", value: teamCallMetrics.today.total },
-            { label: "Calls This Week", value: teamCallMetrics.week.total },
-            { label: "Calls This Month", value: teamCallMetrics.month.total },
+            { label: "Total Calls", value: teamDialCounts.all },
+            { label: "Calls Today", value: teamDialCounts.today },
+            { label: "Calls This Week", value: teamDialCounts.week },
+            { label: "Calls This Month", value: teamDialCounts.month },
           ].map(s => (
             <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
               <p className="text-lg font-bold text-foreground">{s.value}</p>
@@ -359,10 +375,10 @@ export default function AdminBDRPerformance() {
                 <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
                   <div className="sm:grid sm:grid-cols-9 sm:gap-2 sm:items-center flex flex-col gap-1">
                     <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                    <span className="text-sm text-foreground">{row.metrics.today.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.week.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.month.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.all.total}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.today}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.week}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.month}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.all}</span>
                     <span className="text-sm text-foreground">{row.metrics.all.schedPct}%</span>
                     <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
                       <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>

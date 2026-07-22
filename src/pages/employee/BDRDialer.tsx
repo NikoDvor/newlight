@@ -48,6 +48,12 @@ interface OutcomeRow {
   logged_at: string | null;
 }
 
+interface DialLogRow {
+  dialed_at: string | null;
+}
+
+
+
 // Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
 const OUTCOMES: { label: string; objection: string | null }[] = [
   { label: "Won", objection: null },
@@ -111,6 +117,7 @@ export default function BDRDialer() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [outcomes, setOutcomes] = useState<OutcomeRow[]>([]);
+  const [dialLog, setDialLog] = useState<DialLogRow[]>([]);
   const [latestOutcomeByLead, setLatestOutcomeByLead] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -131,7 +138,7 @@ export default function BDRDialer() {
       setUserId(user.id);
       const cid = await resolveEmployeeClientId(user.id);
       setClientId(cid);
-      const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
+      const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
           .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
           .eq("user_id", user.id)
@@ -141,6 +148,9 @@ export default function BDRDialer() {
           .eq("bdr_user_id", user.id)
           .order("logged_at", { ascending: false })
           .order("created_at", { ascending: false }),
+        (supabase as any).from("nl_bdr_dial_log")
+          .select("dialed_at")
+          .eq("bdr_user_id", user.id),
       ]);
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
@@ -148,6 +158,7 @@ export default function BDRDialer() {
         logged_at: r.logged_at || r.created_at || null,
       }));
       setOutcomes(all);
+      setDialLog((dialRows || []).map((r: any) => ({ dialed_at: r.dialed_at })));
       const latest: Record<string, string> = {};
       for (const r of (outcomeRows || [])) {
         if (r.lead_id && !latest[r.lead_id]) latest[r.lead_id] = r.outcome;
@@ -220,10 +231,24 @@ export default function BDRDialer() {
     const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
     const result: Record<"today" | "week" | "month" | "all", number> = {} as any;
     for (const b of buckets) {
-      result[b] = outcomes.filter(o => inBucket(o.logged_at, b)).length;
+      result[b] = dialLog.filter(d => inBucket(d.dialed_at, b)).length;
     }
     return result;
-  }, [outcomes]);
+  }, [dialLog]);
+
+  const recordDial = useCallback(async (leadId: string) => {
+    if (!userId) return;
+    const nowIso = new Date().toISOString();
+    setDialLog(prev => [{ dialed_at: nowIso }, ...prev]);
+    const { error } = await (supabase as any).from("nl_bdr_dial_log").insert({
+      bdr_user_id: userId,
+      lead_id: leadId,
+      dialed_at: nowIso,
+    });
+    if (error) {
+      setDialLog(prev => prev.filter(d => d.dialed_at !== nowIso));
+    }
+  }, [userId]);
 
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
@@ -237,6 +262,7 @@ export default function BDRDialer() {
       return;
     }
     if (next) {
+      recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -244,7 +270,7 @@ export default function BDRDialer() {
         notes: lead.notes,
       }).catch(() => {});
     }
-  }, [userId]);
+  }, [userId, recordDial]);
 
   const saveNotes = useCallback(async (lead: Lead, value: string) => {
     if (!userId) return;
@@ -299,13 +325,15 @@ export default function BDRDialer() {
       else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
       else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
-      if (!lead.called) leadPatch.called = true;
+      const dialTransition = !lead.called;
+      if (dialTransition) leadPatch.called = true;
       if (callbackAt) {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
       }
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+      if (dialTransition) recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -339,7 +367,7 @@ export default function BDRDialer() {
     } finally {
       setSavingId(null);
     }
-  }, [userId, clientId]);
+  }, [userId, clientId, recordDial]);
 
   const confirmCallback = useCallback(async () => {
     if (!callbackLead || !callbackDate || !callbackTime) return;
@@ -587,6 +615,7 @@ export default function BDRDialer() {
                                       .eq("id", lead.id)
                                       .eq("user_id", userId)
                                       .then(() => {});
+                                    recordDial(lead.id);
                                   }}
                                   className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
                                   <Phone className="h-3 w-3" /> {p.number}
