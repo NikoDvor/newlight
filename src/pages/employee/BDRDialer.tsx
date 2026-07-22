@@ -180,6 +180,29 @@ export default function BDRDialer() {
     return leads.filter(l => (l.list_name || "Uncategorized") === activeList);
   }, [leads, activeList]);
 
+  const searchMatches = useMemo(() => {
+    const q = ownerSearch.trim().toLowerCase();
+    if (!q) return [] as Lead[];
+    return leads
+      .filter(l => (l.owner_name || "").toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [leads, ownerSearch]);
+
+  const jumpToLead = useCallback((lead: Lead) => {
+    if (lead.list_name && (lead.list_name || "Uncategorized") !== activeList) {
+      setActiveList(lead.list_name || "Uncategorized");
+    } else if (!lead.list_name && activeList !== ALL_LIST && activeList !== "Uncategorized") {
+      setActiveList(ALL_LIST);
+    }
+    setOwnerSearch("");
+    setHighlightId(lead.id);
+    setTimeout(() => {
+      rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    setTimeout(() => setHighlightId(null), 2400);
+  }, [activeList]);
+
+
   const stats = useMemo(() => {
     const counts: Record<string, number> = Object.fromEntries(STAT_KEYS.map(k => [k, 0]));
     let total = 0;
