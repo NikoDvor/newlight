@@ -367,7 +367,7 @@ export default function BDRDialer() {
     } finally {
       setSavingId(null);
     }
-  }, [userId, clientId]);
+  }, [userId, clientId, recordDial]);
 
   const confirmCallback = useCallback(async () => {
     if (!callbackLead || !callbackDate || !callbackTime) return;
