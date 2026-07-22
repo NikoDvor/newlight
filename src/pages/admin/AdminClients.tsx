@@ -155,6 +155,7 @@ export default function AdminClients() {
       owner_phone: form.owner_phone || null,
       preferred_contact_method: form.preferred_contact_method || "email",
       sms_consent: form.sms_consent,
+      notes: form.notes || null,
     }).select().single();
 
     if (error) {
