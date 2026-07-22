@@ -427,8 +427,8 @@ export default function BDRDialer() {
             ) : searchMatches.map(m => (
               <button key={m.id} onClick={() => jumpToLead(m)}
                 className="w-full text-left px-3 py-2 hover:bg-white/[0.06] transition-colors border-b border-white/5 last:border-b-0">
-                <div className="text-sm text-white truncate">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
-                <div className="text-[11px] text-white/50 truncate">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
+                <div className="text-sm text-white break-words">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
+                <div className="text-[11px] text-white/50 break-words">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
               </button>
             ))}
           </div>
@@ -643,7 +643,7 @@ export default function BDRDialer() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-xs hover:underline truncate inline-block max-w-[160px] align-middle"
+                          className="text-xs hover:underline break-all inline-block align-middle"
                           style={{ color: "hsl(211,96%,68%)" }}
                           title={lead.website}
                         >
@@ -656,7 +656,7 @@ export default function BDRDialer() {
                         {(() => {
                           const exists = lead.booking_system_exists ?? lead.has_booking_system;
                           if (lead.booking_platform) return (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold inline-block max-w-[110px] truncate" title={lead.booking_platform} style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)", border: "1px solid hsla(142,72%,42%,.35)" }}>{lead.booking_platform}</span>
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold inline-block break-words" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)", border: "1px solid hsla(142,72%,42%,.35)" }}>{lead.booking_platform}</span>
                           );
                           if (exists === true) return <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>;
                           if (exists === false) return <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>;
