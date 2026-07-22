@@ -289,10 +289,10 @@ export default function AdminBDRPerformance() {
         <h2 className="text-sm font-bold text-foreground mb-3">Team Call Activity</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Total Calls", value: teamCallMetrics.all.total },
-            { label: "Calls Today", value: teamCallMetrics.today.total },
-            { label: "Calls This Week", value: teamCallMetrics.week.total },
-            { label: "Calls This Month", value: teamCallMetrics.month.total },
+            { label: "Total Calls", value: teamDialCounts.all },
+            { label: "Calls Today", value: teamDialCounts.today },
+            { label: "Calls This Week", value: teamDialCounts.week },
+            { label: "Calls This Month", value: teamDialCounts.month },
           ].map(s => (
             <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
               <p className="text-lg font-bold text-foreground">{s.value}</p>
