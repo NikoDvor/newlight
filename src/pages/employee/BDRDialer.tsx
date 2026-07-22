@@ -530,7 +530,11 @@ export default function BDRDialer() {
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 return (
-                  <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors align-top">
+                  <tr key={lead.id}
+                    ref={(el) => { rowRefs.current[lead.id] = el; }}
+                    className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
+                    style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : undefined}>
+
                     <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>{i + 1}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
