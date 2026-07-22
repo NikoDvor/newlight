@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Phone, Calendar, CalendarClock } from "lucide-react";
+import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -119,6 +119,9 @@ export default function BDRDialer() {
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
   const [callbackDate, setCallbackDate] = useState<string>("");
   const [callbackTime, setCallbackTime] = useState<string>("");
+  const [ownerSearch, setOwnerSearch] = useState<string>("");
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   useEffect(() => {
     (async () => {
@@ -176,6 +179,29 @@ export default function BDRDialer() {
     if (activeList === ALL_LIST) return leads;
     return leads.filter(l => (l.list_name || "Uncategorized") === activeList);
   }, [leads, activeList]);
+
+  const searchMatches = useMemo(() => {
+    const q = ownerSearch.trim().toLowerCase();
+    if (!q) return [] as Lead[];
+    return leads
+      .filter(l => (l.owner_name || "").toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [leads, ownerSearch]);
+
+  const jumpToLead = useCallback((lead: Lead) => {
+    if (lead.list_name && (lead.list_name || "Uncategorized") !== activeList) {
+      setActiveList(lead.list_name || "Uncategorized");
+    } else if (!lead.list_name && activeList !== ALL_LIST && activeList !== "Uncategorized") {
+      setActiveList(ALL_LIST);
+    }
+    setOwnerSearch("");
+    setHighlightId(lead.id);
+    setTimeout(() => {
+      rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    setTimeout(() => setHighlightId(null), 2400);
+  }, [activeList]);
+
 
   const stats = useMemo(() => {
     const counts: Record<string, number> = Object.fromEntries(STAT_KEYS.map(k => [k, 0]));
@@ -376,7 +402,41 @@ export default function BDRDialer() {
         </Button>
       </div>
 
+      {/* Owner search */}
+      <div className="relative">
+        <div className="flex items-center h-10 rounded-lg px-3 gap-2"
+          style={{ background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.18)" }}>
+          <Search className="h-4 w-4 text-white/40 shrink-0" />
+          <input
+            value={ownerSearch}
+            onChange={(e) => setOwnerSearch(e.target.value)}
+            placeholder="Search owner name..."
+            className="bg-transparent outline-none text-sm text-white placeholder:text-white/35 w-full"
+          />
+          {ownerSearch && (
+            <button onClick={() => setOwnerSearch("")} className="text-white/40 hover:text-white/70 shrink-0" aria-label="Clear search">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {ownerSearch.trim() && (
+          <div className="absolute z-40 mt-1 w-full rounded-lg overflow-hidden shadow-lg"
+            style={{ background: "hsl(215,35%,10%)", border: "1px solid hsla(211,96%,60%,.25)" }}>
+            {searchMatches.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-white/40">No owners match "{ownerSearch}".</div>
+            ) : searchMatches.map(m => (
+              <button key={m.id} onClick={() => jumpToLead(m)}
+                className="w-full text-left px-3 py-2 hover:bg-white/[0.06] transition-colors border-b border-white/5 last:border-b-0">
+                <div className="text-sm text-white truncate">{stripLeadFlags(m.owner_name) || <span className="italic text-white/40">No owner name</span>}</div>
+                <div className="text-[11px] text-white/50 truncate">{m.business_name}{m.list_name ? ` · ${m.list_name}` : ""}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Call count summary */}
+
       <div className="overflow-x-auto -mx-1 px-1">
         <div className="flex items-stretch gap-2 min-w-max pb-1">
           {[
@@ -470,7 +530,11 @@ export default function BDRDialer() {
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 return (
-                  <tr key={lead.id} className="hover:bg-white/[0.03] transition-colors align-top">
+                  <tr key={lead.id}
+                    ref={(el) => { rowRefs.current[lead.id] = el; }}
+                    className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
+                    style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : undefined}>
+
                     <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>{i + 1}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
