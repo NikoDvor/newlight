@@ -7486,6 +7486,38 @@ export type Database = {
           },
         ]
       }
+      nl_bdr_dial_log: {
+        Row: {
+          bdr_user_id: string
+          created_at: string
+          dialed_at: string
+          id: string
+          lead_id: string
+        }
+        Insert: {
+          bdr_user_id: string
+          created_at?: string
+          dialed_at?: string
+          id?: string
+          lead_id: string
+        }
+        Update: {
+          bdr_user_id?: string
+          created_at?: string
+          dialed_at?: string
+          id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_bdr_dial_log_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_bdr_leads: {
         Row: {
           booking_link: string | null
