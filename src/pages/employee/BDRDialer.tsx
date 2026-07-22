@@ -138,7 +138,7 @@ export default function BDRDialer() {
       setUserId(user.id);
       const cid = await resolveEmployeeClientId(user.id);
       setClientId(cid);
-      const [{ data: leadRows }, { data: outcomeRows }] = await Promise.all([
+      const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
           .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
           .eq("user_id", user.id)
@@ -148,6 +148,9 @@ export default function BDRDialer() {
           .eq("bdr_user_id", user.id)
           .order("logged_at", { ascending: false })
           .order("created_at", { ascending: false }),
+        (supabase as any).from("nl_bdr_dial_log")
+          .select("dialed_at")
+          .eq("bdr_user_id", user.id),
       ]);
       setLeads(leadRows || []);
       const all: OutcomeRow[] = (outcomeRows || []).map((r: any) => ({
@@ -155,6 +158,7 @@ export default function BDRDialer() {
         logged_at: r.logged_at || r.created_at || null,
       }));
       setOutcomes(all);
+      setDialLog((dialRows || []).map((r: any) => ({ dialed_at: r.dialed_at })));
       const latest: Record<string, string> = {};
       for (const r of (outcomeRows || [])) {
         if (r.lead_id && !latest[r.lead_id]) latest[r.lead_id] = r.outcome;
