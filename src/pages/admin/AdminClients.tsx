@@ -535,76 +535,43 @@ export default function AdminClients() {
 
             {!inviteResult && (
               <div className="space-y-3 mt-2">
-                {formFields.map(f => (
-                  <div key={f.key}>
-                    <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                    <Input
-                      type={(f as any).type || "text"}
-                      value={(form as any)[f.key]}
-                      onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      placeholder={f.placeholder}
-                      className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                    />
-                  </div>
-                ))}
-
-                {/* Business Category + Niche */}
-                <CategoryNichePicker
-                  categoryId={(form as any).categoryId || null}
-                  nicheId={(form as any).nicheId || null}
-                  onCategoryChange={(catId) => setForm(prev => ({ ...prev, categoryId: catId } as any))}
-                  onNicheChange={(nId) => setForm(prev => ({ ...prev, nicheId: nId } as any))}
-                  onProfileChange={(profile: StructuredWorkspaceProfile) => {
-                    setForm(prev => ({
-                      ...prev,
-                      industry: profile.legacy.industry,
-                      provisional_profile: profile.legacy.provisional_profile,
-                    }));
-                  }}
-                  variant="dark"
-                />
-
-                {/* Preferred Contact Method */}
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Preferred Contact Method</label>
-                  <select
-                    value={form.preferred_contact_method}
-                    onChange={e => setForm(prev => ({ ...prev, preferred_contact_method: e.target.value }))}
-                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                  >
-                    <option value="email">Email</option>
-                    <option value="sms">SMS</option>
-                    <option value="both">Both</option>
-                  </select>
+                  <label className="text-xs text-white/50 mb-1 block">Your name *</label>
+                  <Input
+                    value={form.owner_name}
+                    onChange={e => setForm(prev => ({ ...prev, owner_name: e.target.value }))}
+                    placeholder="John Smith"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
                 </div>
-
-                {/* SMS Consent */}
-                {(form.preferred_contact_method === "sms" || form.preferred_contact_method === "both") && (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.sms_consent}
-                      onChange={e => setForm(prev => ({ ...prev, sms_consent: e.target.checked }))}
-                      className="h-4 w-4 rounded border-white/20 bg-white/[0.06] accent-[hsl(var(--nl-electric))]"
-                    />
-                    <span className="text-xs text-white/60">OK to receive onboarding texts</span>
-                  </label>
-                )}
-
                 <div>
-                  <label className="text-xs text-white/50 mb-1 block">Timezone</label>
-                  <select
-                    value={form.timezone}
-                    onChange={e => setForm(prev => ({ ...prev, timezone: e.target.value }))}
-                    className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
-                  >
-                    <option value="America/New_York">Eastern</option>
-                    <option value="America/Chicago">Central</option>
-                    <option value="America/Denver">Mountain</option>
-                    <option value="America/Los_Angeles">Pacific</option>
-                    <option value="Europe/London">London</option>
-                    <option value="Australia/Sydney">Sydney</option>
-                  </select>
+                  <label className="text-xs text-white/50 mb-1 block">Business *</label>
+                  <Input
+                    value={form.business_name}
+                    onChange={e => setForm(prev => ({ ...prev, business_name: e.target.value }))}
+                    placeholder="Acme Corp"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Phone *</label>
+                  <Input
+                    type="tel"
+                    value={form.owner_phone}
+                    onChange={e => setForm(prev => ({ ...prev, owner_phone: e.target.value }))}
+                    placeholder="(555) 123-4567"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Email *</label>
+                  <Input
+                    type="email"
+                    value={form.owner_email}
+                    onChange={e => setForm(prev => ({ ...prev, owner_email: e.target.value }))}
+                    placeholder="john@example.com"
+                    className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
+                  />
                 </div>
 
                 <div>
@@ -613,40 +580,44 @@ export default function AdminClients() {
                     value={form.notes}
                     onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
-                    placeholder="Internal notes about this client (context, source, special requirements…)"
+                    placeholder="Anything else we should know…"
                     className="w-full rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 py-2 placeholder:text-white/30 resize-y"
                   />
                 </div>
 
-                {/* Branding Section */}
+                <LogoUploader
+                  value={form.logo_url}
+                  onChange={url => setForm(prev => ({ ...prev, logo_url: url }))}
+                  label="Business logo (optional)"
+                  dark={true}
+                />
+
                 <div className="pt-3 border-t border-white/10">
-                  <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Workspace Branding (Optional)</p>
-                  <LogoUploader value={form.logo_url} onChange={url => setForm(prev => ({ ...prev, logo_url: url }))} label="Logo" dark={true} className="mb-3" />
-                  {brandingFields.map(f => (
-                    <div key={f.key} className="mb-3">
-                      <label className="text-xs text-white/50 mb-1 block">{f.label}</label>
-                      <Input
-                        value={(form as any)[f.key]}
-                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="bg-white/[0.06] border-white/10 text-white placeholder:text-white/30"
-                      />
-                    </div>
-                  ))}
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-wider">Modules of interest</p>
+                  <div className="space-y-3">
                     <div>
-                      <label className="text-xs text-white/50 mb-1 block">Primary Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={form.primary_color} onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" />
-                        <Input value={form.primary_color} onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))} className="bg-white/[0.06] border-white/10 text-white flex-1" />
-                      </div>
+                      <label className="text-xs text-white/50 mb-1 block">Do you have a sales team?</label>
+                      <select
+                        value={form.has_sales_team}
+                        onChange={e => setForm(prev => ({ ...prev, has_sales_team: e.target.value as "" | "yes" | "no" }))}
+                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                      >
+                        <option value="">Select…</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
                     </div>
                     <div>
-                      <label className="text-xs text-white/50 mb-1 block">Secondary Color</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={form.secondary_color} onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))} className="h-10 w-10 rounded-lg border-0 cursor-pointer bg-transparent" />
-                        <Input value={form.secondary_color} onChange={e => setForm(prev => ({ ...prev, secondary_color: e.target.value }))} className="bg-white/[0.06] border-white/10 text-white flex-1" />
-                      </div>
+                      <label className="text-xs text-white/50 mb-1 block">Do you have compliance restrictions?</label>
+                      <select
+                        value={form.has_compliance_requirements}
+                        onChange={e => setForm(prev => ({ ...prev, has_compliance_requirements: e.target.value as "" | "yes" | "no" }))}
+                        className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3"
+                      >
+                        <option value="">Select…</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -663,6 +634,7 @@ export default function AdminClients() {
                 </Button>
               </div>
             )}
+
           </DialogContent>
         </Dialog>
       </div>
