@@ -36,7 +36,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, employeeProfile, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
   const navigate = useNavigate();
   useClientManifest();
 
