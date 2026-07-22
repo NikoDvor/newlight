@@ -375,10 +375,10 @@ export default function AdminBDRPerformance() {
                 <div key={row.uid} className="rounded-xl px-4 py-3" style={cardStyle}>
                   <div className="sm:grid sm:grid-cols-9 sm:gap-2 sm:items-center flex flex-col gap-1">
                     <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                    <span className="text-sm text-foreground">{row.metrics.today.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.week.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.month.total}</span>
-                    <span className="text-sm text-foreground">{row.metrics.all.total}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.today}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.week}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.month}</span>
+                    <span className="text-sm text-foreground">{row.dialCounts.all}</span>
                     <span className="text-sm text-foreground">{row.metrics.all.schedPct}%</span>
                     <span className="text-xs whitespace-nowrap" title={`${DAILY_DIAL_GOAL}+ dials = hit; 1–${DAILY_DIAL_GOAL - 1} = missed; 0 = not counted`}>
                       <span className="text-emerald-400 font-semibold tabular-nums">{dd.hit}</span>
