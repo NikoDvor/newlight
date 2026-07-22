@@ -325,13 +325,15 @@ export default function BDRDialer() {
       else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
       else pipelineStage = "warm";
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
-      if (!lead.called) leadPatch.called = true;
+      const dialTransition = !lead.called;
+      if (dialTransition) leadPatch.called = true;
       if (callbackAt) {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
       }
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
+      if (dialTransition) recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
