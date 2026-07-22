@@ -3466,6 +3466,7 @@ export type Database = {
           invite_status: string | null
           last_handoff_sent_at: string | null
           legal_business_name: string | null
+          notes: string | null
           notification_channel: string
           notification_fallback_channel: string
           onboarding_stage: string
@@ -3515,6 +3516,7 @@ export type Database = {
           invite_status?: string | null
           last_handoff_sent_at?: string | null
           legal_business_name?: string | null
+          notes?: string | null
           notification_channel?: string
           notification_fallback_channel?: string
           onboarding_stage?: string
@@ -3564,6 +3566,7 @@ export type Database = {
           invite_status?: string | null
           last_handoff_sent_at?: string | null
           legal_business_name?: string | null
+          notes?: string | null
           notification_channel?: string
           notification_fallback_channel?: string
           onboarding_stage?: string

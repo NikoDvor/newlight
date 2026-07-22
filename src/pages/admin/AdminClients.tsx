@@ -75,6 +75,7 @@ export default function AdminClients() {
     timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
     owner_phone: "", preferred_contact_method: "email", sms_consent: false,
     logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+    notes: "",
   });
   const { setViewMode, setActiveClientId } = useWorkspace();
   const navigate = useNavigate();
@@ -154,6 +155,7 @@ export default function AdminClients() {
       owner_phone: form.owner_phone || null,
       preferred_contact_method: form.preferred_contact_method || "email",
       sms_consent: form.sms_consent,
+      notes: form.notes || null,
     }).select().single();
 
     if (error) {
@@ -347,6 +349,7 @@ export default function AdminClients() {
       timezone: "America/Los_Angeles", service_package: "enterprise", owner_name: "", owner_email: "",
       owner_phone: "", preferred_contact_method: "email", sms_consent: false,
       logo_url: "", primary_color: "#3B82F6", secondary_color: "#06B6D4", welcome_message: "",
+      notes: "",
     });
   };
 
@@ -602,6 +605,17 @@ export default function AdminClients() {
                     <option value="Europe/London">London</option>
                     <option value="Australia/Sydney">Sydney</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-white/50 mb-1 block">Notes (optional)</label>
+                  <textarea
+                    value={form.notes}
+                    onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={3}
+                    placeholder="Internal notes about this client (context, source, special requirements…)"
+                    className="w-full rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3 py-2 placeholder:text-white/30 resize-y"
+                  />
                 </div>
 
                 {/* Branding Section */}
