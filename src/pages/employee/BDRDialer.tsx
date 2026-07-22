@@ -117,6 +117,7 @@ export default function BDRDialer() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [outcomes, setOutcomes] = useState<OutcomeRow[]>([]);
+  const [dialLog, setDialLog] = useState<DialLogRow[]>([]);
   const [latestOutcomeByLead, setLatestOutcomeByLead] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
