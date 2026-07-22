@@ -425,7 +425,7 @@ export default function BDRBookingPublic() {
               <Field label="Phone" required><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
               <Field label="Email" required><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
             </div>
-            <Field label="Notes" required>
+            <Field label="Notes (optional)">
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
                 className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
             </Field>
@@ -470,11 +470,11 @@ export default function BDRBookingPublic() {
 
             <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
 
-            <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot}
+            <Button onClick={submitBooking} disabled={submitting || !contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !hasSalesTeam || !hasCompliance || !selectedSlot}
               className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book appointment"}
             </Button>
-            {!contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !contact.notes || !hasSalesTeam || !hasCompliance || !selectedSlot ? (
+            {!contact.customer_name || !contact.business_name || !contact.phone || !contact.email || !hasSalesTeam || !hasCompliance || !selectedSlot ? (
               <p className="text-sm text-red-400 text-center">Please fill in all required fields and select a time slot.</p>
             ) : null}
           </div>
