@@ -13,6 +13,7 @@ import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
+import { getEmployeeRoute } from "@/lib/employeeRouting";
 
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
@@ -35,7 +36,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, employeeProfile, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
   const navigate = useNavigate();
   useClientManifest();
 
@@ -63,6 +64,16 @@ export function AppLayout() {
   // Block unverified email users
   if (!user.email_confirmed_at) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Employees (marketing_staff / support_staff) live under /employee/*.
+  // If one lands on an AppLayout-wrapped route (e.g. via a stale bookmark
+  // or cached ?redirect=), send them to their real dashboard instead of
+  // showing the "No Workspace Assigned" blocker.
+  const EMPLOYEE_ROLES = ["marketing_staff", "support_staff"];
+  if (!isAdmin && userRole && EMPLOYEE_ROLES.includes(userRole)) {
+    const dest = getEmployeeRoute(userRole, employeeProfile?.job_title) || "/employee/generic";
+    return <Navigate to={dest} replace />;
   }
 
   // Block client users without an assigned workspace

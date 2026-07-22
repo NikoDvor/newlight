@@ -1,1 +1,1 @@
-export const BUILD_TAG = '2026-07-21-master-prompt-version-badge';
+export const BUILD_TAG = '2026-07-22-employee-workspace-gate-fix';
