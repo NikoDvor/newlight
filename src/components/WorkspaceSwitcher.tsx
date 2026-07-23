@@ -19,12 +19,19 @@ export function WorkspaceSwitcher() {
   const navigate = useNavigate();
   const location = useLocation();
   const [clients, setClients] = useState<ClientItem[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     supabase.from("clients").select("id, business_name, workspace_slug, status").neq("status", "archived").order("business_name").then(({ data }) => {
       setClients(data ?? []);
     });
   }, []);
+
+  const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter((c) => c.business_name.toLowerCase().includes(q));
+  }, [clients, search]);
 
   const isAdminView = location.pathname.startsWith("/admin");
 
