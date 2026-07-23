@@ -1,11 +1,11 @@
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Shield, Building2, ChevronDown } from "lucide-react";
+import { Shield, Building2, ChevronDown, Search } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface ClientItem {
   id: string;
@@ -19,12 +19,19 @@ export function WorkspaceSwitcher() {
   const navigate = useNavigate();
   const location = useLocation();
   const [clients, setClients] = useState<ClientItem[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     supabase.from("clients").select("id, business_name, workspace_slug, status").neq("status", "archived").order("business_name").then(({ data }) => {
       setClients(data ?? []);
     });
   }, []);
+
+  const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter((c) => c.business_name.toLowerCase().includes(q));
+  }, [clients, search]);
 
   const isAdminView = location.pathname.startsWith("/admin");
 
@@ -76,22 +83,40 @@ export function WorkspaceSwitcher() {
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-white/10" />
         <DropdownMenuLabel className="text-white/40 text-[10px] uppercase tracking-wider">Client Workspaces</DropdownMenuLabel>
-        {clients.length === 0 && (
-          <DropdownMenuItem disabled className="text-white/30 text-xs">No clients yet</DropdownMenuItem>
-        )}
-        {clients.map((c) => (
-          <DropdownMenuItem
-            key={c.id}
-            onClick={() => handleClientSwitch(c)}
-            className={`gap-2 cursor-pointer text-white/80 hover:text-white hover:bg-white/10 focus:bg-white/10 focus:text-white ${activeClientId === c.id && !isAdminView ? "bg-[hsla(211,96%,60%,.12)]" : ""}`}
-          >
-            <Building2 className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-            <span className="truncate">{c.business_name}</span>
-            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
-              c.status === "active" ? "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]" : "bg-white/5 text-white/30"
-            }`}>{c.status}</span>
-          </DropdownMenuItem>
-        ))}
+        <div className="px-2 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search clients..."
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[hsla(211,96%,60%,.4)]"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+        <div
+          className="overflow-y-auto -webkit-overflow-scrolling-touch"
+          style={{ maxHeight: "min(60vh, 400px)" }}
+        >
+          {filteredClients.length === 0 && (
+            <DropdownMenuItem disabled className="text-white/30 text-xs">No clients found</DropdownMenuItem>
+          )}
+          {filteredClients.map((c) => (
+            <DropdownMenuItem
+              key={c.id}
+              onClick={() => handleClientSwitch(c)}
+              className={`gap-2 cursor-pointer text-white/80 hover:text-white hover:bg-white/10 focus:bg-white/10 focus:text-white ${activeClientId === c.id && !isAdminView ? "bg-[hsla(211,96%,60%,.12)]" : ""}`}
+            >
+              <Building2 className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+              <span className="truncate">{c.business_name}</span>
+              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+                c.status === "active" ? "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]" : "bg-white/5 text-white/30"
+              }`}>{c.status}</span>
+            </DropdownMenuItem>
+          ))}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
