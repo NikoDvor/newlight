@@ -1,11 +1,11 @@
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Shield, Building2, ChevronDown } from "lucide-react";
+import { Shield, Building2, ChevronDown, Search } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface ClientItem {
   id: string;
