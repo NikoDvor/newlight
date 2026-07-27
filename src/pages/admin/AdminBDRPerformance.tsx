@@ -145,9 +145,31 @@ export default function AdminBDRPerformance() {
         const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", userIds);
         const map: Record<string, string> = {};
         (p || []).forEach((u: any) => { if (u.display_name) map[u.user_id] = u.display_name; });
-        setProfiles(map);
+        setProfiles(prev => ({ ...prev, ...map }));
       }
       setLoading(false);
+    })();
+  }, []);
+
+  // Street Sweep data (admin sees all reps)
+  useEffect(() => {
+    (async () => {
+      const [{ data: r }, { data: v }] = await Promise.all([
+        (supabase as any).from("street_sweep_routes").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("street_sweep_visits").select("*").order("created_at", { ascending: false }),
+      ]);
+      setSweepRoutes(r || []);
+      setSweepVisits(v || []);
+      const uids = [...new Set([
+        ...(r || []).map((x: any) => x.created_by),
+        ...(v || []).map((x: any) => x.visited_by),
+      ].filter(Boolean))] as string[];
+      if (uids.length) {
+        const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", uids);
+        const map: Record<string, string> = {};
+        (p || []).forEach((u: any) => { if (u.display_name) map[u.user_id] = u.display_name; });
+        setProfiles(prev => ({ ...map, ...prev }));
+      }
     })();
   }, []);
 
