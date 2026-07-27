@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Loader2, MapPin, Plus, Trash2, Camera, Copy, CheckCircle2, LocateFixed, Pencil, X,
+  Loader2, MapPin, Plus, Trash2, Camera, Copy, CheckCircle2, LocateFixed, Pencil, X, ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,28 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { PageHeader } from "@/components/PageHeader";
+
+export const STREET_SWEEP_RESEARCH_PROMPT = `STREET SWEEP DESK RESEARCH PROTOCOL v3
+
+You are doing desk research only — owner name, phone, and booking-link lookups for businesses I supply. You do NOT have Street View, Google Maps browsing, or any visual/image capability. Never attempt a visual block-by-block pass. If I haven't given you a list of businesses, ask for one — do not try to discover businesses on a street yourself.
+
+INPUT: I will paste a list, one per line: Business Name | Address | (optional) niche.
+
+FOR EACH BUSINESS, in order, stop as soon as resolved:
+1. Search "who is the owner of [Business Name] in [City, State]"
+2. If unresolved: city business license/tax database, Yelp owner-info fields, USPTO/DBA filings
+3. If still unresolved: mark "Research Pending" — never guess
+
+ALSO CHECK per resolved business:
+- Direct phone if findable, labeled "owner direct" vs "front desk"
+- Public booking link — note personal calendar vs general/front-desk system
+
+OUTPUT: one copy-pasteable block per batch (not a file):
+Business | Owner | Phone (label) | Booking Link (type) | Status
+
+BATCHING: max 10-15 businesses per session. If given more, process the first batch only and tell me you're splitting it.
+
+If any step would require seeing the storefront (signage, open/closed, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
 interface Route {
   id: string;
@@ -326,6 +348,15 @@ export default function BDRInPerson() {
     }
   };
 
+  const copyMasterPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(STREET_SWEEP_RESEARCH_PROMPT);
+      toast({ title: "Master prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+    } catch {
+      toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
+    }
+  };
+
   const saveResearch = async (v: Visit) => {
     if (!clientId) return;
     const draft = researchDraft[v.id] || {};
@@ -428,9 +459,14 @@ export default function BDRInPerson() {
               </Button>
             )}
             {isComplete && (
-              <Button variant="outline" onClick={exportForResearch} className="gap-2">
-                <Copy className="h-4 w-4" /> Export for Research
-              </Button>
+              <>
+                <Button variant="outline" onClick={exportForResearch} className="gap-2">
+                  <Copy className="h-4 w-4" /> Export for Research
+                </Button>
+                <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Master Prompt
+                </Button>
+              </>
             )}
             {activeRoute.block_range && (
               <span className="text-xs text-muted-foreground">Block range: {activeRoute.block_range}</span>

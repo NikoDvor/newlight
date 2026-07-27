@@ -1670,7 +1670,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   };
 
   const proTips = [
-    "Run the master research prompt in a separate Claude chat with web search ON to find owner names and phone numbers before importing",
+    "Use the Copy Master Prompt button on the In-Person page to get the current desk-research protocol, then paste it into a fresh Claude chat with web search ON",
     "Paste the raw SEC output directly into the Master Prompt — Business Name | City | CRD is all it needs to start Phase 0",
     "For firms missing public contact info, the Master Prompt's tiered phone research (Phase 3, Tier 0 government databases plus the full route waterfall) will locate the best number",
     "If phone research only turns up a front-desk number, check data broker sites (RocketReach, Seamless.AI) for a partially-masked personal mobile — it won't give you the full number for free, but confirms whether a direct line exists at all before you spend on a paid lookup. No browser tool needed for this, only search.",
