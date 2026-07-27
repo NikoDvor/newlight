@@ -134,6 +134,12 @@ export default function BDRInPerson() {
   const [savingVisit, setSavingVisit] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkLocating, setBulkLocating] = useState(false);
+  const [bulkLocation, setBulkLocation] = useState<{ address: string; lat: number | null; lng: number | null } | null>(null);
+
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [researchDraft, setResearchDraft] = useState<Record<string, Partial<Visit>>>({});
@@ -251,6 +257,93 @@ export default function BDRInPerson() {
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
+
+  /* ---------------- bulk add ---------------- */
+
+  const parseBulkLines = (raw: string) =>
+    raw
+      .split(/\r?\n/)
+      .map((line) => {
+        const idx = line.indexOf(",");
+        const business_name = (idx === -1 ? line : line.slice(0, idx)).trim();
+        const address = idx === -1 ? "" : line.slice(idx + 1).trim();
+        return { business_name, address };
+      })
+      .filter((r) => r.business_name.length > 0);
+
+  const parsedBulk = useMemo(() => parseBulkLines(bulkText), [bulkText]);
+
+  const captureBulkLocation = () => {
+    if (bulkLocation) { setBulkLocation(null); return; }
+    if (!navigator.geolocation) {
+      toast({ title: "Location unavailable", description: "Add addresses inline instead.", variant: "destructive" });
+      return;
+    }
+    setBulkLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        let label = "";
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            { headers: { Accept: "application/json" } },
+          );
+          const json = await res.json();
+          label = (json?.display_name as string) || "";
+        } catch { /* fall through to coords-only */ }
+        setBulkLocation({ address: label, lat: latitude, lng: longitude });
+        setBulkLocating(false);
+        toast({
+          title: label ? "Location applied to all" : "Coordinates captured",
+          description: label || "Address lookup failed — add addresses inline.",
+        });
+      },
+      () => {
+        setBulkLocating(false);
+        toast({ title: "Location denied", description: "Add addresses inline instead.", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const saveBulk = async () => {
+    if (!clientId || !userId || !activeRouteId) return;
+    const rows = parsedBulk;
+    if (!rows.length) {
+      toast({ title: "Nothing to add", description: "Enter at least one business name.", variant: "destructive" });
+      return;
+    }
+    setBulkSaving(true);
+    const payload = rows.map((r) => ({
+      route_id: activeRouteId,
+      client_id: clientId,
+      visited_by: userId,
+      business_name: r.business_name,
+      address: r.address || bulkLocation?.address || "",
+      unit_suite: null,
+      lat: r.address ? null : bulkLocation?.lat ?? null,
+      lng: r.address ? null : bulkLocation?.lng ?? null,
+      storefront_status: "open",
+      has_signage: true,
+      has_booking_qr: false,
+      niche_guess: null,
+      notes: null,
+      photo_url: null,
+    }));
+    const { data, error } = await (supabase as any)
+      .from("street_sweep_visits").insert(payload).select();
+    setBulkSaving(false);
+    if (error) { toast({ title: "Bulk add failed", description: error.message, variant: "destructive" }); return; }
+    const added = (data || []) as Visit[];
+    setVisits((p) => [...added].reverse().concat(p));
+    setSessionCount((c) => c + added.length);
+    setBulkText("");
+    setBulkLocation(null);
+    setBulkOpen(false);
+    toast({ title: `${added.length} ${added.length === 1 ? "business" : "businesses"} logged` });
+  };
+
 
   const onPhoto = async (file: File) => {
     if (!clientId) return;
@@ -469,10 +562,16 @@ export default function BDRInPerson() {
         <>
           <div className="flex flex-wrap items-center gap-3">
             {!isComplete && (
-              <Button size="lg" onClick={openNewVisit} className="gap-2">
-                <Plus className="h-5 w-5" /> Add Business
-              </Button>
+              <>
+                <Button size="lg" onClick={openNewVisit} className="gap-2">
+                  <Plus className="h-5 w-5" /> Add Business
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
+                  <ClipboardList className="h-5 w-5" /> Bulk Add
+                </Button>
+              </>
             )}
+
             {isComplete && (
               <>
                 <Button variant="outline" onClick={exportForResearch} className="gap-2">
@@ -660,6 +759,48 @@ export default function BDRInPerson() {
 
         </DialogContent>
       </Dialog>
+
+      {/* Bulk add modal */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Bulk Add Businesses</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
+              <div>
+                <Label className="text-sm">Use My Location for All</Label>
+                <p className="text-xs text-muted-foreground">
+                  {bulkLocation
+                    ? bulkLocation.address || "Coordinates captured"
+                    : "Applies to lines without their own address"}
+                </p>
+              </div>
+              <Button variant={bulkLocation ? "default" : "outline"} size="sm" className="gap-1.5"
+                onClick={captureBulkLocation} disabled={bulkLocating}>
+                {bulkLocating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
+                {bulkLocation ? "Clear" : "Capture"}
+              </Button>
+            </div>
+
+            <Textarea
+              rows={10}
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder={"One business per line. Optionally add an address after a comma:\nJoe's Coffee\nSunset Nails, 1215 State St\nAnother Shop"}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              {parsedBulk.length} valid {parsedBulk.length === 1 ? "line" : "lines"} detected
+            </p>
+          </div>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button variant="ghost" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button onClick={saveBulk} disabled={bulkSaving || !parsedBulk.length} className="gap-2">
+              {bulkSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : `Add ${parsedBulk.length || ""}`.trim()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
