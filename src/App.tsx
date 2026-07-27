@@ -182,6 +182,9 @@ import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
+import InPersonSweep from "./pages/employee/InPersonSweep";
+import InPersonStreetWalk from "./pages/employee/InPersonStreetWalk";
+
 import BDRCalendar from "./pages/employee/BDRCalendar";
 import ClosePrep from "./pages/employee/ClosePrep";
 import EmployeePaySign from "./pages/employee/EmployeePaySign";
