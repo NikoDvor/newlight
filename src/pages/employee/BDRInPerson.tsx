@@ -459,9 +459,14 @@ export default function BDRInPerson() {
               </Button>
             )}
             {isComplete && (
-              <Button variant="outline" onClick={exportForResearch} className="gap-2">
-                <Copy className="h-4 w-4" /> Export for Research
-              </Button>
+              <>
+                <Button variant="outline" onClick={exportForResearch} className="gap-2">
+                  <Copy className="h-4 w-4" /> Export for Research
+                </Button>
+                <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Master Prompt
+                </Button>
+              </>
             )}
             {activeRoute.block_range && (
               <span className="text-xs text-muted-foreground">Block range: {activeRoute.block_range}</span>
