@@ -759,6 +759,48 @@ export default function BDRInPerson() {
 
         </DialogContent>
       </Dialog>
+
+      {/* Bulk add modal */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Bulk Add Businesses</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
+              <div>
+                <Label className="text-sm">Use My Location for All</Label>
+                <p className="text-xs text-muted-foreground">
+                  {bulkLocation
+                    ? bulkLocation.address || "Coordinates captured"
+                    : "Applies to lines without their own address"}
+                </p>
+              </div>
+              <Button variant={bulkLocation ? "default" : "outline"} size="sm" className="gap-1.5"
+                onClick={captureBulkLocation} disabled={bulkLocating}>
+                {bulkLocating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LocateFixed className="h-3.5 w-3.5" />}
+                {bulkLocation ? "Clear" : "Capture"}
+              </Button>
+            </div>
+
+            <Textarea
+              rows={10}
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder={"One business per line. Optionally add an address after a comma:\nJoe's Coffee\nSunset Nails, 1215 State St\nAnother Shop"}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              {parsedBulk.length} valid {parsedBulk.length === 1 ? "line" : "lines"} detected
+            </p>
+          </div>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button variant="ghost" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button onClick={saveBulk} disabled={bulkSaving || !parsedBulk.length} className="gap-2">
+              {bulkSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : `Add ${parsedBulk.length || ""}`.trim()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
