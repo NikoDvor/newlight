@@ -7818,6 +7818,166 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_inperson_leads: {
+        Row: {
+          added_mid_walk: boolean
+          address: string | null
+          business_name: string
+          created_at: string
+          has_booking_page: boolean | null
+          id: string
+          niche: string | null
+          notes: string | null
+          outcome: string | null
+          owner_name: string | null
+          sells_online: boolean | null
+          status: string
+          street_id: string
+          updated_at: string
+          walk_sequence: number
+          website: string | null
+        }
+        Insert: {
+          added_mid_walk?: boolean
+          address?: string | null
+          business_name: string
+          created_at?: string
+          has_booking_page?: boolean | null
+          id?: string
+          niche?: string | null
+          notes?: string | null
+          outcome?: string | null
+          owner_name?: string | null
+          sells_online?: boolean | null
+          status?: string
+          street_id: string
+          updated_at?: string
+          walk_sequence: number
+          website?: string | null
+        }
+        Update: {
+          added_mid_walk?: boolean
+          address?: string | null
+          business_name?: string
+          created_at?: string
+          has_booking_page?: boolean | null
+          id?: string
+          niche?: string | null
+          notes?: string | null
+          outcome?: string | null
+          owner_name?: string | null
+          sells_online?: boolean | null
+          status?: string
+          street_id?: string
+          updated_at?: string
+          walk_sequence?: number
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_inperson_leads_street_id_fkey"
+            columns: ["street_id"]
+            isOneToOne: false
+            referencedRelation: "nl_inperson_streets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_inperson_master_prompt: {
+        Row: {
+          content: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      nl_inperson_outcomes: {
+        Row: {
+          id: string
+          lead_id: string
+          logged_at: string
+          notes: string | null
+          outcome: string
+          rep_user_id: string
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          logged_at?: string
+          notes?: string | null
+          outcome: string
+          rep_user_id: string
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          logged_at?: string
+          notes?: string | null
+          outcome?: string
+          rep_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_inperson_outcomes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_inperson_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_inperson_streets: {
+        Row: {
+          city: string
+          created_at: string
+          current_position: number
+          id: string
+          rep_user_id: string
+          starting_cross_street: string | null
+          state: string
+          status: string
+          street_name: string
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          current_position?: number
+          id?: string
+          rep_user_id: string
+          starting_cross_street?: string | null
+          state?: string
+          status?: string
+          street_name: string
+          total_count?: number
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          current_position?: number
+          id?: string
+          rep_user_id?: string
+          starting_cross_street?: string | null
+          state?: string
+          status?: string
+          street_name?: string
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nl_module_completion: {
         Row: {
           completed_at: string
