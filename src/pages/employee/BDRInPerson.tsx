@@ -587,6 +587,60 @@ export default function BDRInPerson() {
             </Button>
           </div>
 
+          {researchBatches.length > 0 && (
+            <Card className="border-border/60 bg-card/60 backdrop-blur">
+              <CardContent className="p-4 space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Research Batches</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {researchBatches.map((batch, i) => {
+                    const full = batch.length === BATCH_SIZE;
+                    const remaining = BATCH_SIZE - batch.length;
+                    return (
+                      <div key={i} className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium">
+                            Batch {i + 1} — {full ? `${batch.length} businesses` : `${batch.length} of ${BATCH_SIZE} logged`}
+                          </span>
+                          {full && <Badge className="bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)] border-0">Ready</Badge>}
+                        </div>
+                        {!full && (
+                          <p className="text-xs text-muted-foreground">
+                            {remaining} more to complete this batch.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={copyMasterPrompt} className="gap-1.5">
+                            <ClipboardList className="h-3.5 w-3.5" /> Copy Master Prompt
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!full}
+                            onClick={() => copyVisits(batch, `Batch ${i + 1}`)}
+                            className="gap-1.5"
+                          >
+                            <Copy className="h-3.5 w-3.5" /> Export Batch
+                          </Button>
+                          {!full && (
+                            <button
+                              type="button"
+                              onClick={() => copyVisits(batch, `Batch ${i + 1} (partial)`)}
+                              className="text-xs underline text-muted-foreground hover:text-foreground"
+                            >
+                              Export Partial Batch Anyway
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
+
           <div className="space-y-3">
             {visits.length === 0 && (
               <Card className="border-dashed border-border/60 bg-card/40">
