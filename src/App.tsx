@@ -184,6 +184,8 @@ import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import InPersonSweep from "./pages/employee/InPersonSweep";
 import InPersonStreetWalk from "./pages/employee/InPersonStreetWalk";
+import BDRInPerson from "./pages/employee/BDRInPerson";
+
 
 import BDRCalendar from "./pages/employee/BDRCalendar";
 import ClosePrep from "./pages/employee/ClosePrep";
