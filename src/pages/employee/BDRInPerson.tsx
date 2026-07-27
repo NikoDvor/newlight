@@ -38,7 +38,7 @@ ALSO CHECK per resolved business:
 OUTPUT: one copy-pasteable block per batch (not a file):
 Business | Owner | Phone (label) | Booking Link (type) | Status
 
-BATCHING: max 5 businesses per session. If given more, process the first 5 only and tell me you're splitting the rest into additional batches.
+BATCHING: process 5 businesses at a time. If given more than 5, output the results for the first 5, then immediately continue to the next 5 automatically — do not wait for me to say 'next' or 'continue.' Keep working straight through batch after batch until the entire list is done. Label each batch's output clearly (Batch 1, Batch 2, etc.) so I can tell which businesses each result set belongs to.
 
 If any step would require seeing the storefront (signage, open/closed, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
