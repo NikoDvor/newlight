@@ -583,6 +583,17 @@ export default function BDRInPerson() {
       <Dialog open={visitOpen} onOpenChange={setVisitOpen}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingVisitId ? "Edit Business" : "Add Business"}</DialogTitle></DialogHeader>
+          {!editingVisitId && (
+            <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+              <span className="text-xs text-muted-foreground">{sessionCount} logged this session</span>
+              {justSaved && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-[hsl(142,72%,42%)]">
+                  <CheckCircle2 className="h-4 w-4" /> Saved
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
             <div><Label>Business name *</Label><Input value={visitForm.business_name} onChange={(e) => setVisitForm({ ...visitForm, business_name: e.target.value })} /></div>
             <div>
