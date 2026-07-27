@@ -638,12 +638,15 @@ export default function BDRInPerson() {
               {visitForm.photo_url && <div className="mt-2"><PhotoThumb path={visitForm.photo_url} /></div>}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setVisitOpen(false)}>Cancel</Button>
-            <Button onClick={saveVisit} disabled={savingVisit}>
-              {savingVisit ? <Loader2 className="h-4 w-4 animate-spin" /> : editingVisitId ? "Save Changes" : "Log Visit"}
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button variant="ghost" onClick={() => { setVisitOpen(false); setEditingVisitId(null); }}>
+              {editingVisitId ? "Cancel" : "Done for Now"}
+            </Button>
+            <Button onClick={saveVisit} disabled={savingVisit} className="gap-2">
+              {savingVisit ? <Loader2 className="h-4 w-4 animate-spin" /> : editingVisitId ? "Save Changes" : "Save & Next"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
