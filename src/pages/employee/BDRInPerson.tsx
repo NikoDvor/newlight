@@ -258,6 +258,93 @@ export default function BDRInPerson() {
     );
   };
 
+  /* ---------------- bulk add ---------------- */
+
+  const parseBulkLines = (raw: string) =>
+    raw
+      .split(/\r?\n/)
+      .map((line) => {
+        const idx = line.indexOf(",");
+        const business_name = (idx === -1 ? line : line.slice(0, idx)).trim();
+        const address = idx === -1 ? "" : line.slice(idx + 1).trim();
+        return { business_name, address };
+      })
+      .filter((r) => r.business_name.length > 0);
+
+  const parsedBulk = useMemo(() => parseBulkLines(bulkText), [bulkText]);
+
+  const captureBulkLocation = () => {
+    if (bulkLocation) { setBulkLocation(null); return; }
+    if (!navigator.geolocation) {
+      toast({ title: "Location unavailable", description: "Add addresses inline instead.", variant: "destructive" });
+      return;
+    }
+    setBulkLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        let label = "";
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            { headers: { Accept: "application/json" } },
+          );
+          const json = await res.json();
+          label = (json?.display_name as string) || "";
+        } catch { /* fall through to coords-only */ }
+        setBulkLocation({ address: label, lat: latitude, lng: longitude });
+        setBulkLocating(false);
+        toast({
+          title: label ? "Location applied to all" : "Coordinates captured",
+          description: label || "Address lookup failed — add addresses inline.",
+        });
+      },
+      () => {
+        setBulkLocating(false);
+        toast({ title: "Location denied", description: "Add addresses inline instead.", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const saveBulk = async () => {
+    if (!clientId || !userId || !activeRouteId) return;
+    const rows = parsedBulk;
+    if (!rows.length) {
+      toast({ title: "Nothing to add", description: "Enter at least one business name.", variant: "destructive" });
+      return;
+    }
+    setBulkSaving(true);
+    const payload = rows.map((r) => ({
+      route_id: activeRouteId,
+      client_id: clientId,
+      visited_by: userId,
+      business_name: r.business_name,
+      address: r.address || bulkLocation?.address || "",
+      unit_suite: null,
+      lat: r.address ? null : bulkLocation?.lat ?? null,
+      lng: r.address ? null : bulkLocation?.lng ?? null,
+      storefront_status: "open",
+      has_signage: true,
+      has_booking_qr: false,
+      niche_guess: null,
+      notes: null,
+      photo_url: null,
+    }));
+    const { data, error } = await (supabase as any)
+      .from("street_sweep_visits").insert(payload).select();
+    setBulkSaving(false);
+    if (error) { toast({ title: "Bulk add failed", description: error.message, variant: "destructive" }); return; }
+    const added = (data || []) as Visit[];
+    setVisits((p) => [...added].reverse().concat(p));
+    setSessionCount((c) => c + added.length);
+    setBulkText("");
+    setBulkLocation(null);
+    setBulkOpen(false);
+    toast({ title: `${added.length} ${added.length === 1 ? "business" : "businesses"} logged` });
+  };
+
+
   const onPhoto = async (file: File) => {
     if (!clientId) return;
     setUploading(true);
