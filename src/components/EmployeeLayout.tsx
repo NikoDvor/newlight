@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, GraduationCap, Lock, LogOut, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
+import { Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, GraduationCap, Lock, LogOut, MapPin, Phone, Search, Target, UserCircle, Users, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
