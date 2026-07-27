@@ -12088,6 +12088,144 @@ export type Database = {
           },
         ]
       }
+      street_sweep_routes: {
+        Row: {
+          assigned_to: string | null
+          block_range: string | null
+          city: string
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          route_name: string
+          state: string
+          status: string
+          street_name: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          block_range?: string | null
+          city: string
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          route_name: string
+          state?: string
+          status?: string
+          street_name: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          block_range?: string | null
+          city?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          route_name?: string
+          state?: string
+          status?: string
+          street_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      street_sweep_visits: {
+        Row: {
+          address: string
+          booking_link_type: string | null
+          business_name: string
+          client_id: string
+          created_at: string
+          has_booking_qr: boolean | null
+          has_signage: boolean | null
+          id: string
+          lat: number | null
+          lead_id: string | null
+          lng: number | null
+          niche_guess: string | null
+          notes: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          photo_url: string | null
+          research_status: string
+          route_id: string
+          storefront_status: string
+          unit_suite: string | null
+          updated_at: string
+          visited_by: string
+          website: string | null
+        }
+        Insert: {
+          address: string
+          booking_link_type?: string | null
+          business_name: string
+          client_id: string
+          created_at?: string
+          has_booking_qr?: boolean | null
+          has_signage?: boolean | null
+          id?: string
+          lat?: number | null
+          lead_id?: string | null
+          lng?: number | null
+          niche_guess?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          research_status?: string
+          route_id: string
+          storefront_status?: string
+          unit_suite?: string | null
+          updated_at?: string
+          visited_by: string
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          booking_link_type?: string | null
+          business_name?: string
+          client_id?: string
+          created_at?: string
+          has_booking_qr?: boolean | null
+          has_signage?: boolean | null
+          id?: string
+          lat?: number | null
+          lead_id?: string | null
+          lng?: number | null
+          niche_guess?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          research_status?: string
+          route_id?: string
+          storefront_status?: string
+          unit_suite?: string | null
+          updated_at?: string
+          visited_by?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "street_sweep_visits_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "street_sweep_visits_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "street_sweep_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           ad_spend_commitment_amount: number | null
