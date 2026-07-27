@@ -320,18 +320,26 @@ export default function BDRInPerson() {
       setSavingVisit(false);
       if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
       setVisits((p) => p.map((v) => (v.id === editingVisitId ? (data as Visit) : v)));
-    } else {
-      const { data, error } = await (supabase as any)
-        .from("street_sweep_visits").insert(payload).select().single();
-      setSavingVisit(false);
-      if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
       setVisits((p) => [data as Visit, ...p]);
+      // rapid-entry: keep the dialog open and reset for the next storefront
+      setVisitForm({
+        ...emptyVisitForm,
+        unit_suite: "",
+        has_signage: visitForm.has_signage,
+        has_booking_qr: false,
+      });
+      setSessionCount((c) => c + 1);
+      setJustSaved(true);
+      window.setTimeout(() => setJustSaved(false), 1600);
+      toast({ title: "Saved — next business" });
+      return;
     }
     setVisitOpen(false);
     setEditingVisitId(null);
     setVisitForm({ ...emptyVisitForm });
-    toast({ title: "Visit logged" });
+    toast({ title: "Visit updated" });
   };
+
 
   const deleteVisit = async (id: string) => {
     const { error } = await (supabase as any).from("street_sweep_visits").delete().eq("id", id);
