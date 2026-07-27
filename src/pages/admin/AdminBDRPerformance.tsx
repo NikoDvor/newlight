@@ -256,6 +256,62 @@ export default function AdminBDRPerformance() {
     return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 50);
   }, [filteredLeads, profiles]);
 
+  /* ─── Street Sweep (date-range filtered, all reps) ─── */
+  const filteredSweepRoutes = useMemo(
+    () => sweepRoutes.filter(r => filterByDate(r.created_at, dateRange)), [sweepRoutes, dateRange]);
+  const filteredSweepVisits = useMemo(
+    () => sweepVisits.filter(v => filterByDate(v.created_at, dateRange)), [sweepVisits, dateRange]);
+
+  const sweepTeamStats = useMemo(() => ({
+    routes: filteredSweepRoutes.length,
+    completed: filteredSweepRoutes.filter(r => r.status === "completed").length,
+    visits: filteredSweepVisits.length,
+    researched: filteredSweepVisits.filter(v => v.research_status === "researched").length,
+  }), [filteredSweepRoutes, filteredSweepVisits]);
+
+  const sweepRepRows = useMemo(() => {
+    const uids = [...new Set([
+      ...filteredSweepRoutes.map(r => r.created_by),
+      ...filteredSweepVisits.map(v => v.visited_by),
+    ].filter(Boolean))] as string[];
+    return uids.map(uid => {
+      const routes = filteredSweepRoutes.filter(r => r.created_by === uid).length;
+      const rv = filteredSweepVisits.filter(v => v.visited_by === uid);
+      const researched = rv.filter(v => v.research_status === "researched").length;
+      return {
+        uid,
+        name: profiles[uid] || uid.slice(0, 8),
+        routes,
+        visits: rv.length,
+        researched,
+        pct: rv.length ? Math.round((researched / rv.length) * 100) : 0,
+      };
+    }).sort((a, b) => b.visits - a.visits);
+  }, [filteredSweepRoutes, filteredSweepVisits, profiles]);
+
+  const sweepFeed = useMemo(
+    () => [...filteredSweepVisits]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 20), [filteredSweepVisits]);
+
+  const exportSweepCSV = () => {
+    const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const rows = [["Rep", "Business", "Address", "Storefront Status", "Research Status", "Owner Name", "Owner Phone", "Created"].join(",")];
+    sweepVisits.forEach(v => {
+      rows.push([
+        esc(profiles[v.visited_by] || v.visited_by),
+        esc(v.business_name), esc(v.address), esc(v.storefront_status),
+        esc(v.research_status), esc(v.owner_name), esc(v.owner_phone),
+        esc(new Date(v.created_at).toLocaleString()),
+      ].join(","));
+    });
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `street-sweep-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // CSV export
   const exportCSV = () => {
     const rows = [["BDR", "Business", "Owner", "Phone", "Status", "Objection", "Created", "Outcome History"].join(",")];
