@@ -394,6 +394,9 @@ const App = () => {
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
+                <Route path="in-person" element={<InPersonSweep />} />
+                <Route path="in-person/:streetId" element={<InPersonStreetWalk />} />
+
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="close-prep/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><ClosePrep /></ClientFlagGate>} />
