@@ -264,8 +264,11 @@ export default function BDRInPerson() {
   const openNewVisit = () => {
     setEditingVisitId(null);
     setVisitForm({ ...emptyVisitForm });
+    setSessionCount(0);
+    setJustSaved(false);
     setVisitOpen(true);
   };
+
 
   const openEditVisit = (v: Visit) => {
     setEditingVisitId(v.id);
