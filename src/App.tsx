@@ -182,6 +182,9 @@ import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
+import InPersonSweep from "./pages/employee/InPersonSweep";
+import InPersonStreetWalk from "./pages/employee/InPersonStreetWalk";
+
 import BDRCalendar from "./pages/employee/BDRCalendar";
 import ClosePrep from "./pages/employee/ClosePrep";
 import EmployeePaySign from "./pages/employee/EmployeePaySign";
@@ -394,6 +397,9 @@ const App = () => {
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
+                <Route path="in-person" element={<InPersonSweep />} />
+                <Route path="in-person/:streetId" element={<InPersonStreetWalk />} />
+
                 <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
                 <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="close-prep/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><ClosePrep /></ClientFlagGate>} />
