@@ -126,6 +126,9 @@ export default function BDRInPerson() {
   const [savingRoute, setSavingRoute] = useState(false);
 
   const [visitOpen, setVisitOpen] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+  const [justSaved, setJustSaved] = useState(false);
+
   const [visitForm, setVisitForm] = useState({ ...emptyVisitForm });
   const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
   const [savingVisit, setSavingVisit] = useState(false);
@@ -264,8 +267,11 @@ export default function BDRInPerson() {
   const openNewVisit = () => {
     setEditingVisitId(null);
     setVisitForm({ ...emptyVisitForm });
+    setSessionCount(0);
+    setJustSaved(false);
     setVisitOpen(true);
   };
+
 
   const openEditVisit = (v: Visit) => {
     setEditingVisitId(v.id);
@@ -314,18 +320,27 @@ export default function BDRInPerson() {
       setSavingVisit(false);
       if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
       setVisits((p) => p.map((v) => (v.id === editingVisitId ? (data as Visit) : v)));
-    } else {
-      const { data, error } = await (supabase as any)
-        .from("street_sweep_visits").insert(payload).select().single();
-      setSavingVisit(false);
-      if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
-      setVisits((p) => [data as Visit, ...p]);
+      setVisitOpen(false);
+      setEditingVisitId(null);
+      setVisitForm({ ...emptyVisitForm });
+      toast({ title: "Visit updated" });
+      return;
     }
-    setVisitOpen(false);
-    setEditingVisitId(null);
-    setVisitForm({ ...emptyVisitForm });
-    toast({ title: "Visit logged" });
+
+    const { data, error } = await (supabase as any)
+      .from("street_sweep_visits").insert(payload).select().single();
+    setSavingVisit(false);
+    if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
+    setVisits((p) => [data as Visit, ...p]);
+    // rapid-entry: keep the dialog open, reset for the next storefront
+    setVisitForm({ ...emptyVisitForm, has_signage: visitForm.has_signage });
+    setSessionCount((c) => c + 1);
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 1600);
+    toast({ title: "Saved — next business" });
   };
+
+
 
   const deleteVisit = async (id: string) => {
     const { error } = await (supabase as any).from("street_sweep_visits").delete().eq("id", id);
@@ -568,6 +583,17 @@ export default function BDRInPerson() {
       <Dialog open={visitOpen} onOpenChange={setVisitOpen}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingVisitId ? "Edit Business" : "Add Business"}</DialogTitle></DialogHeader>
+          {!editingVisitId && (
+            <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+              <span className="text-xs text-muted-foreground">{sessionCount} logged this session</span>
+              {justSaved && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-[hsl(142,72%,42%)]">
+                  <CheckCircle2 className="h-4 w-4" /> Saved
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
             <div><Label>Business name *</Label><Input value={visitForm.business_name} onChange={(e) => setVisitForm({ ...visitForm, business_name: e.target.value })} /></div>
             <div>
@@ -623,12 +649,15 @@ export default function BDRInPerson() {
               {visitForm.photo_url && <div className="mt-2"><PhotoThumb path={visitForm.photo_url} /></div>}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setVisitOpen(false)}>Cancel</Button>
-            <Button onClick={saveVisit} disabled={savingVisit}>
-              {savingVisit ? <Loader2 className="h-4 w-4 animate-spin" /> : editingVisitId ? "Save Changes" : "Log Visit"}
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <Button variant="ghost" onClick={() => { setVisitOpen(false); setEditingVisitId(null); }}>
+              {editingVisitId ? "Cancel" : "Done for Now"}
+            </Button>
+            <Button onClick={saveVisit} disabled={savingVisit} className="gap-2">
+              {savingVisit ? <Loader2 className="h-4 w-4 animate-spin" /> : editingVisitId ? "Save Changes" : "Save & Next"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
