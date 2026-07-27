@@ -126,6 +126,9 @@ export default function BDRInPerson() {
   const [savingRoute, setSavingRoute] = useState(false);
 
   const [visitOpen, setVisitOpen] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+  const [justSaved, setJustSaved] = useState(false);
+
   const [visitForm, setVisitForm] = useState({ ...emptyVisitForm });
   const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
   const [savingVisit, setSavingVisit] = useState(false);
