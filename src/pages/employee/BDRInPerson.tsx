@@ -348,6 +348,15 @@ export default function BDRInPerson() {
     }
   };
 
+  const copyMasterPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(STREET_SWEEP_RESEARCH_PROMPT);
+      toast({ title: "Master prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+    } catch {
+      toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
+    }
+  };
+
   const saveResearch = async (v: Visit) => {
     if (!clientId) return;
     const draft = researchDraft[v.id] || {};
