@@ -134,6 +134,12 @@ export default function BDRInPerson() {
   const [savingVisit, setSavingVisit] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkLocating, setBulkLocating] = useState(false);
+  const [bulkLocation, setBulkLocation] = useState<{ address: string; lat: number | null; lng: number | null } | null>(null);
+
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [researchDraft, setResearchDraft] = useState<Record<string, Partial<Visit>>>({});
