@@ -122,7 +122,7 @@ export default function BDRInPerson() {
   const [visits, setVisits] = useState<Visit[]>([]);
 
   const [routeOpen, setRouteOpen] = useState(false);
-  const [routeForm, setRouteForm] = useState({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA", block_range: "" });
+  const [routeForm, setRouteForm] = useState({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA" });
   const [savingRoute, setSavingRoute] = useState(false);
 
   const [visitOpen, setVisitOpen] = useState(false);
@@ -146,6 +146,14 @@ export default function BDRInPerson() {
   const [savingResearch, setSavingResearch] = useState<string | null>(null);
 
   const activeRoute = useMemo(() => routes.find((r) => r.id === activeRouteId) || null, [routes, activeRouteId]);
+
+  const BATCH_SIZE = 5;
+  const researchBatches = useMemo(() => {
+    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const out: Visit[][] = [];
+    for (let i = 0; i < ordered.length; i += BATCH_SIZE) out.push(ordered.slice(i, i + BATCH_SIZE));
+    return out;
+  }, [visits]);
 
   const loadRoutes = useCallback(async (cid: string) => {
     const { data } = await (supabase as any)
@@ -201,7 +209,6 @@ export default function BDRInPerson() {
         street_name: routeForm.street_name.trim(),
         city: routeForm.city.trim(),
         state: routeForm.state.trim(),
-        block_range: routeForm.block_range.trim() || null,
       })
       .select()
       .single();
@@ -210,7 +217,7 @@ export default function BDRInPerson() {
     setRoutes((p) => [data as Route, ...p]);
     setActiveRouteId((data as Route).id);
     setRouteOpen(false);
-    setRouteForm({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA", block_range: "" });
+    setRouteForm({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA" });
     toast({ title: "Route created" });
   };
 
@@ -443,17 +450,22 @@ export default function BDRInPerson() {
 
   /* ---------------- export + research ---------------- */
 
-  const exportForResearch = async () => {
-    const text = [...visits]
-      .sort((a, b) => a.created_at.localeCompare(b.created_at))
-      .map((v) => `${v.business_name} | ${v.address}${v.unit_suite ? ` ${v.unit_suite}` : ""} | ${v.niche_guess || "Unknown"}`)
-      .join("\n");
+  const visitLine = (v: Visit) =>
+    `${v.business_name} | ${v.address}${v.unit_suite ? ` ${v.unit_suite}` : ""} | ${v.niche_guess || "Unknown"}`;
+
+  const copyVisits = async (rows: Visit[], label: string) => {
+    if (!rows.length) return;
     try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: "Copied", description: `${visits.length} businesses copied to clipboard.` });
+      await navigator.clipboard.writeText(rows.map(visitLine).join("\n"));
+      toast({ title: "Copied", description: `${label}: ${rows.length} businesses copied to clipboard.` });
     } catch {
       toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
     }
+  };
+
+  const exportForResearch = async () => {
+    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    await copyVisits(ordered, "All visits");
   };
 
   const copyMasterPrompt = async () => {
@@ -561,30 +573,18 @@ export default function BDRInPerson() {
       {activeRoute && (
         <>
           <div className="flex flex-wrap items-center gap-3">
-            {!isComplete && (
-              <>
-                <Button size="lg" onClick={openNewVisit} className="gap-2">
-                  <Plus className="h-5 w-5" /> Add Business
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
-                  <ClipboardList className="h-5 w-5" /> Bulk Add
-                </Button>
-              </>
-            )}
-
-            {isComplete && (
-              <>
-                <Button variant="outline" onClick={exportForResearch} className="gap-2">
-                  <Copy className="h-4 w-4" /> Export for Research
-                </Button>
-                <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
-                  <ClipboardList className="h-4 w-4" /> Copy Master Prompt
-                </Button>
-              </>
-            )}
-            {activeRoute.block_range && (
-              <span className="text-xs text-muted-foreground">Block range: {activeRoute.block_range}</span>
-            )}
+            <Button size="lg" onClick={openNewVisit} className="gap-2">
+              <Plus className="h-5 w-5" /> Add Business
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
+              <ClipboardList className="h-5 w-5" /> Bulk Add
+            </Button>
+            <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Copy Master Prompt
+            </Button>
+            <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
+              <Copy className="h-4 w-4" /> Export All
+            </Button>
           </div>
 
           <div className="space-y-3">
@@ -667,7 +667,6 @@ export default function BDRInPerson() {
               <div><Label>City *</Label><Input value={routeForm.city} onChange={(e) => setRouteForm({ ...routeForm, city: e.target.value })} /></div>
               <div><Label>State *</Label><Input value={routeForm.state} onChange={(e) => setRouteForm({ ...routeForm, state: e.target.value })} /></div>
             </div>
-            <div><Label>Block range</Label><Input value={routeForm.block_range} onChange={(e) => setRouteForm({ ...routeForm, block_range: e.target.value })} placeholder="1200–1400" /></div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setRouteOpen(false)}>Cancel</Button>
