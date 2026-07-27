@@ -562,10 +562,16 @@ export default function BDRInPerson() {
         <>
           <div className="flex flex-wrap items-center gap-3">
             {!isComplete && (
-              <Button size="lg" onClick={openNewVisit} className="gap-2">
-                <Plus className="h-5 w-5" /> Add Business
-              </Button>
+              <>
+                <Button size="lg" onClick={openNewVisit} className="gap-2">
+                  <Plus className="h-5 w-5" /> Add Business
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
+                  <ClipboardList className="h-5 w-5" /> Bulk Add
+                </Button>
+              </>
             )}
+
             {isComplete && (
               <>
                 <Button variant="outline" onClick={exportForResearch} className="gap-2">
