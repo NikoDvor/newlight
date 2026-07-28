@@ -586,6 +586,39 @@ export default function BDRInPerson() {
         </Button>
       </PageHeader>
 
+      {/* How It Works guide */}
+      <Collapsible open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
+        <Card className="border-border/60 bg-card/60 backdrop-blur">
+          <CollapsibleTrigger asChild>
+            <CardContent className="p-4 cursor-pointer flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <ClipboardList className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">How This Works</p>
+                  <p className="text-xs text-muted-foreground">7-step workflow: discover → bulk add → research → log results</p>
+                </div>
+              </div>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${howItWorksOpen ? "rotate-180" : ""}`} />
+            </CardContent>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="px-4 pb-4 pt-0">
+              <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                <li>Tap <strong className="text-foreground">Copy Discovery Prompt</strong> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</li>
+                <li>Claude gives you 5 real businesses. Copy that output and paste it directly into <strong className="text-foreground">Bulk Add</strong> here.</li>
+                <li>Say <strong className="text-foreground">"next 5"</strong> in that same chat to keep going — paste each new batch into Bulk Add until you've covered the street.</li>
+                <li>Back here, batches of 5 form automatically in <strong className="text-foreground">Research Batches</strong> as you log businesses — no need to finish the whole street first.</li>
+                <li>On a Ready batch, tap <strong className="text-foreground">Copy Research Prompt</strong> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <strong className="text-foreground">Export Batch</strong> and paste those 5 businesses right after the prompt.</li>
+                <li>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</li>
+                <li>Type the results into <strong className="text-foreground">Log Research Results</strong> on each business here. Saving an owner name auto-creates the lead in My Leads.</li>
+              </ol>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Route selector */}
       <Card className="border-border/60 bg-card/60 backdrop-blur">
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
