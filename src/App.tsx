@@ -48,7 +48,6 @@ import ClientReport from "./pages/ClientReport";
 import Notifications from "./pages/Notifications";
 import AgencyDashboard from "./pages/AgencyDashboard";
 import NotFound from "./pages/NotFound";
-import DialogProbe from "./pages/__DialogProbe";
 import BusinessHealth from "./pages/BusinessHealth";
 import RevenueOpportunities from "./pages/RevenueOpportunities";
 import PriorityActions from "./pages/PriorityActions";
@@ -512,7 +511,6 @@ const App = () => {
                 <Route path="/message-templates" element={<PermissionGuard moduleKey="messaging"><MessageTemplates /></PermissionGuard>} />
               </Route>
 
-              <Route path="/__dialog-probe" element={<DialogProbe />} />
               <Route path="*" element={<NotFound />} />
               </Routes>
             </PWAInstallProvider>
