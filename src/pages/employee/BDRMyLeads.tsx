@@ -1456,11 +1456,20 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           dialer_bookable: dbIdx >= 0 ? parseYesNoNA(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
-          city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
+          city: cityIdx >= 0 ? (unquote(r[cityIdx]) || null) : null,
+          niche: nicheIdx >= 0 ? unquote(r[nicheIdx]) : "",
+          notes: notesIdx >= 0 ? unquote(r[notesIdx]) : "",
+          list_name: lnIdx >= 0 ? unquote(r[lnIdx]) : "",
           rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
+    // Auto-fill the List Name input from the pasted list_name column when the
+    // rep hasn't typed one themselves.
+    if (lnIdx >= 0 && !listName.trim()) {
+      const fromCsv = result.find(r => r.list_name)?.list_name;
+      if (fromCsv) { setListMode("new"); setListName(fromCsv); }
+    }
   };
 
   const flagsFor = (ownerName: string): string[] => parseLeadFlags(ownerName);
