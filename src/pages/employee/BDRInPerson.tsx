@@ -662,23 +662,34 @@ export default function BDRInPerson() {
 
       {activeRoute && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={openNewVisit} className="gap-2">
-              <Plus className="h-5 w-5" /> Add Business
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
-              <ClipboardList className="h-5 w-5" /> Bulk Add
-            </Button>
-            <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Research Prompt
-            </Button>
-            <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
-            </Button>
-            <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
-              <Copy className="h-4 w-4" /> Export All
-            </Button>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Discover &amp; Log</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
+                </Button>
+                <Button onClick={openNewVisit} className="gap-2">
+                  <Plus className="h-4 w-4" /> Add Business
+                </Button>
+                <Button variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Bulk Add
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Research</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Research Prompt
+                </Button>
+                <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
+                  <Copy className="h-4 w-4" /> Export All
+                </Button>
+              </div>
+            </div>
           </div>
+
 
           {researchBatches.length > 0 && (
             <Card className="border-border/60 bg-card/60 backdrop-blur">
