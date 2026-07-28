@@ -42,6 +42,18 @@ BATCHING: process 5 businesses at a time. If given more than 5, output the resul
 
 If any step would require seeing the storefront (signage, open/closed, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v1
+
+You are finding real businesses on a specific street so I can log them for a street sweep. If you have access to Google Maps/Places search tools in this chat, use them. If you do NOT have that capability here, say so plainly instead of guessing or inventing businesses — never fabricate a business name or address.
+
+INPUT: I will give you a street, city, and state, and may tell you which businesses I've already logged so you skip them.
+
+OUTPUT: Find exactly 5 real businesses on that street I haven't already logged. For each, give the exact business name and full street address as returned by your search. Output in this exact copy-pasteable format, nothing else, so I can paste it straight into Bulk Add:
+
+BusinessName, Full Address
+
+Give exactly 5 at a time. When I say 'next 5' or name the street again, give the next 5 different businesses further down the street — never repeat ones already given. If you run out of verifiable businesses on the street, say so instead of inventing more.`;
+
 interface Route {
   id: string;
   route_name: string;
@@ -468,10 +480,19 @@ export default function BDRInPerson() {
     await copyVisits(ordered, "All visits");
   };
 
-  const copyMasterPrompt = async () => {
+  const copyResearchPrompt = async () => {
     try {
       await navigator.clipboard.writeText(STREET_SWEEP_RESEARCH_PROMPT);
-      toast({ title: "Master prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+      toast({ title: "Research prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+    } catch {
+      toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
+    }
+  };
+
+  const copyDiscoveryPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(STREET_DISCOVERY_PROMPT);
+      toast({ title: "Discovery prompt copied", description: "Paste it into a chat with Google Maps/Places search tools." });
     } catch {
       toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
     }
@@ -533,7 +554,7 @@ export default function BDRInPerson() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="In-Person" description="Walk a street, log every storefront, research it later.">
+      <PageHeader title="In-Person" description="Discover businesses by street, log them, then research owner info — all in batches of 5.">
         <Button onClick={() => setRouteOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> New Route
         </Button>
@@ -579,8 +600,11 @@ export default function BDRInPerson() {
             <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
               <ClipboardList className="h-5 w-5" /> Bulk Add
             </Button>
-            <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Master Prompt
+            <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Copy Research Prompt
+            </Button>
+            <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
             </Button>
             <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
               <Copy className="h-4 w-4" /> Export All
@@ -609,8 +633,8 @@ export default function BDRInPerson() {
                           </p>
                         )}
                         <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={copyMasterPrompt} className="gap-1.5">
-                            <ClipboardList className="h-3.5 w-3.5" /> Copy Master Prompt
+                          <Button size="sm" variant="outline" onClick={copyResearchPrompt} className="gap-1.5">
+                            <ClipboardList className="h-3.5 w-3.5" /> Copy Research Prompt
                           </Button>
                           <Button
                             size="sm"
