@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, MapPin, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -171,6 +171,7 @@ export default function BDRMyLeads() {
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showStreetSweepGuide, setShowStreetSweepGuide] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -388,7 +389,11 @@ export default function BDRMyLeads() {
         meeting_booked: row.meeting_booked || null,
         crd: row.crd || null,
         city: row.city || null,
-        notes: row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
+        niche: row.niche || null,
+        notes: [
+          row.notes || null,
+          row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
+        ].filter(Boolean).join("\n") || null,
         list_name: cleanList,
       }).select("id").single();
       // Safety net: unique index race
@@ -554,6 +559,7 @@ export default function BDRMyLeads() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
           <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
           <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
         </div>
@@ -962,6 +968,7 @@ export default function BDRMyLeads() {
       {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={existingListsByRecency} />
       <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
+      <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
       <CustomerProfilePanel
@@ -1299,7 +1306,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         occIdx = -1,    // V16 "Owner's Calendar Confirmed"
         oblIdx = -1,    // legacy V13 "Owner Booking Link"
         oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
-        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
+        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1,
+        nicheIdx = -1, notesIdx = -1, lnIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1328,6 +1336,9 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd\s*(number|#|no\.?)/.test(c)) crdIdx = i;
         else if (/^city$|city\s*\/?\s*state|location/.test(c)) cityIdx = i;
+        else if (/niche|category|industry/.test(c)) nicheIdx = i;
+        else if (/list[\s_-]*name|^list$/.test(c)) lnIdx = i;
+        else if (/note/.test(c)) notesIdx = i;
       });
       dataRows = allRows.slice(headerIdx + 1);
       // Drop separator rows like "---|---|---"
@@ -1362,6 +1373,10 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (/front|desk|reception|main/.test(s)) return "front_desk";
       return "front_desk";
     };
+    // CSV cells may arrive wrapped in quotes ("Main St, Suite 2")
+    const unquote = (v: string): string =>
+      (v || "").trim().replace(/^"(.*)"$/s, "$1").replace(/""/g, '"').trim();
+
     // Legacy path: "Booking System" column held the platform name OR "No"
     const parseLegacyBookingSystem = (v: string): { platform: string | null; has: boolean } => {
       const s = (v || "").trim();
@@ -1449,11 +1464,20 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           dialer_bookable: dbIdx >= 0 ? parseYesNoNA(r[dbIdx] || "") : null,
           meeting_booked: mbIdx >= 0 ? (r[mbIdx]?.trim() || null) : null,
           crd: crdIdx >= 0 ? (r[crdIdx]?.trim().replace(/[^0-9]/g, "") || null) : null,
-          city: cityIdx >= 0 ? (r[cityIdx]?.trim() || null) : null,
+          city: cityIdx >= 0 ? (unquote(r[cityIdx]) || null) : null,
+          niche: nicheIdx >= 0 ? unquote(r[nicheIdx]) : "",
+          notes: notesIdx >= 0 ? unquote(r[notesIdx]) : "",
+          list_name: lnIdx >= 0 ? unquote(r[lnIdx]) : "",
           rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
+    // Auto-fill the List Name input from the pasted list_name column when the
+    // rep hasn't typed one themselves.
+    if (lnIdx >= 0 && !listName.trim()) {
+      const fromCsv = result.find(r => r.list_name)?.list_name;
+      if (fromCsv) { setListMode("new"); setListName(fromCsv); }
+    }
   };
 
   const flagsFor = (ownerName: string): string[] => parseLeadFlags(ownerName);
@@ -1790,6 +1814,166 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
               </div>
             </div>
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ──────────────────────────────────────────────── */
+/* In-Person Street Sweep Guide Modal                */
+/* ──────────────────────────────────────────────── */
+const STREET_SOURCING_PROMPT = `# ROLE
+You are a meticulous local-commerce field researcher compiling a storefront census for one street. Accuracy and COMPLETE COVERAGE matter more than speed. Do not oversell your results as "perfect," "complete," or "guaranteed" — report realistic confidence and flag every uncertainty. Use web search for every verification step.
+
+# INPUT
+Street: [STREET NAME]
+City: [CITY]
+State: [STATE]
+Side(s): [both / odd side only / even side only]
+Block range (optional): [e.g., 400–1300; if blank, establish it in STEP 0]
+
+# STEP 0 — ESTABLISH THE FULL ADDRESS RANGE BEFORE LISTING ANY BUSINESS
+1. Determine the full commercial address range of this street using, in priority order: (a) city/county GIS parcel situs data or assessor parcel lookup, (b) Google Maps scrolled end to end, (c) OpenStreetMap/Overpass.
+2. State the established range explicitly with your source.
+3. Build a MASTER CHECKLIST of every plausible street number in the range, ascending, unchecked.
+
+# STEP 1 — STRICT ASCENDING ORDER, 5 BUSINESSES PER BATCH
+Process addresses from lowest number upward. Output EXACTLY 5 businesses per batch. Vacant/closed/no-address entries are logged inline but don't count toward the 5.
+
+# PER-BUSINESS VERIFICATION — 7 NAMED METHODS
+For each address, attempt all 7 and record which succeeded:
+1. Google Maps/Business Profile — name, category, phone, website, open/closed status banner.
+2. City business license/tax data.
+3. GIS parcel situs data.
+4. OpenStreetMap/Overpass.
+5. Chamber/BID/downtown business directory.
+6. Recent Google/Yelp reviews and photos (closure/new-tenant signals).
+7. Local news/trade press + state business-entity status as corroboration.
+
+# STEP 2 — FLAG, DON'T OMIT
+Every address resolves to: FOUND / VACANT-FOR-LEASE / CLOSED / NOT FOUND / MULTI-TENANT (list each suite).
+
+# OUTPUT FORMAT
+Start every batch with: "BATCH n | addresses [x]–[y] of range [lo]–[hi] | businesses so far: [count] | remaining: [y+1]–[hi]"
+Then per entry: [number] [name or —] | STATUS | category | phone | website | owner if found | methods confirmed | confidence High/Med/Low | notes
+
+# CONTINUATION RULES
+After each batch, continue automatically to the next. Do not ask to continue. Do not start mid-range. Do not stop early. If running low on room, end cleanly with "PAUSE — resume at address [N]."
+
+# FINAL SELF-CHECK
+Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short.
+
+# CLOSING DISCLAIMER (REQUIRED)
+State an honest coverage confidence estimate and known limitations. Do not claim the list is perfect or complete.`;
+
+const LEADS_ENRICHMENT_PROMPT = `# ROLE
+You enrich a storefront census into CRM-ready lead records. Work in the SAME strict batches of 5. Be honest about missing/low-confidence fields — never invent an owner name or phone. Use web search for every verification step.
+
+# INPUT
+Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
+
+# TASK
+For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, notes (address incl. suite, closure/verification flags, confidence, which sources confirmed), list_name.
+
+# BATCH & CONTINUATION RULES
+Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
+
+# OUTPUT FORMAT
+Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
+business_name,owner_name,phone,website,niche,city,notes,list_name
+One row per record, quoted fields.
+
+# CLOSING (REQUIRED)
+After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
+
+function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
+
+  const copy = async (key: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      toast({ title: "Copied!", description: `${text.length.toLocaleString()} characters copied to clipboard.` });
+      setTimeout(() => setCopiedKey(k => (k === key ? null : k)), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
+
+  const steps = [
+    'Open this Claude project. Tap + (or the slider icon) and confirm "Web search" is toggled ON — it must be blue/on.',
+    "Copy the STREET SOURCING PROMPT below. Paste it into the Claude chat, filling in the street, city, and state at the top.",
+    'Let it run through every batch of 5 until it reaches the top of the address range on its own — don\'t say "continue," it should keep going automatically.',
+    'In the SAME chat, right after it finishes, copy and paste the LEADS ENRICHMENT PROMPT below. Add this line above it: "Run this on the full business list you just compiled above." Do not open a new chat — it needs Prompt 1\'s output already in view.',
+    "Let it run through every batch until finished.",
+    "Copy ONLY the CSV code block(s) from the final output — not the human-readable table above it.",
+    "Come back here, tap Import, and paste the CSV in.",
+    "Review the preview before confirming. Anything flagged vacant, not-found, multi-tenant, or low-confidence needs your judgment call — don't import those blind.",
+  ];
+
+  const proTips = [
+    "A fresh Claude chat resets the Web search toggle — check it's on again each time you start a new street.",
+    'If Prompt 1 pauses mid-street with "PAUSE — resume at address N," just reply "resume at N" — don\'t restart from the beginning.',
+    "This is a real research pass, not a database lookup — expect it to take a few minutes per batch, and expect it to miss a small percentage of businesses (upstairs offices, unlisted shops, brand-new openings).",
+    "The in-person walk is what catches what the prompts can't see remotely — treat flagged/uncertain addresses as things to verify on foot, not errors.",
+  ];
+
+  const promptCard = (key: string, badge: string, title: string, text: string) => (
+    <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>{badge}</span>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        </div>
+        <Button size="sm" onClick={() => copy(key, text)}>
+          <Copy className="h-3.5 w-3.5 mr-1" />{copiedKey === key ? "Copied ✓" : "Copy"}
+        </Button>
+      </div>
+      <pre className="max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-[11px] leading-relaxed font-mono text-foreground/80"
+           style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.15)" }}>{text}</pre>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>In-Person Street Sweep Guide</DialogTitle>
+          <DialogDescription>Turn any street into an ordered, research-backed lead list.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-xl p-4" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Steps</span>
+              <h3 className="text-sm font-semibold text-foreground">How This Works</h3>
+            </div>
+            <ol className="space-y-1.5 text-xs leading-relaxed text-foreground/85 list-decimal list-inside">
+              {steps.map((s, i) => <li key={i}>{s}</li>)}
+            </ol>
+          </div>
+
+          <div className="rounded-xl p-4" style={{ background: "hsla(38,92%,55%,.08)", border: "1px solid hsla(38,92%,55%,.25)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    style={{ background: "hsla(38,92%,55%,.2)", color: "hsl(38,95%,70%)" }}>Pro Tips</span>
+              <h3 className="text-sm font-semibold text-foreground">Keep It Accurate</h3>
+            </div>
+            <ul className="space-y-2">
+              {proTips.map((t, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-foreground/85">
+                  <span style={{ color: "hsl(38,95%,65%)" }}>•</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {promptCard("p1", "Prompt 1 of 2", "Street Sourcing Prompt — tap to copy", STREET_SOURCING_PROMPT)}
+          {promptCard("p2", "Prompt 2 of 2", "Leads Enrichment Prompt — tap to copy", LEADS_ENRICHMENT_PROMPT)}
         </div>
       </DialogContent>
     </Dialog>
