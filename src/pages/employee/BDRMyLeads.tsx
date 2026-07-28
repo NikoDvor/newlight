@@ -285,6 +285,12 @@ export default function BDRMyLeads() {
     [listScopedLeads],
   );
 
+  const canWalkList = useMemo(
+    () => activeList !== "__all__" && listScopedLeads.some(l => l.sequence_order != null),
+    [activeList, listScopedLeads],
+  );
+
+
   const runGeocode = async () => {
     if (geocoding || geocodeTargets.length === 0) return;
     setGeocoding(true); setGeoProgress(0);
@@ -763,6 +769,11 @@ export default function BDRMyLeads() {
                   </>
                 ) : (
                   <>
+                    {canWalkList && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/employee/street-walk?list=${encodeURIComponent(activeList)}`)}>
+                        <MapPin className="h-3 w-3 mr-1" /> Walk this list
+                      </Button>
+                    )}
                     {geocodeTargets.length > 0 && (
                       <Button size="sm" variant="outline" className="h-7 text-xs" disabled={geocoding} onClick={runGeocode}>
                         <MapPin className="h-3 w-3 mr-1" />
