@@ -10,6 +10,8 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
+import { OUTCOMES } from "@/lib/bdrOutcomes";
+
 
 interface Lead {
   id: string;
@@ -54,25 +56,8 @@ interface DialLogRow {
 
 
 
-// Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
-const OUTCOMES: { label: string; objection: string | null }[] = [
-  { label: "Won", objection: null },
-  { label: "Lost", objection: null },
-  { label: "Said They Would Reach Out", objection: "We Will Reach Out" },
-  { label: "Didn't Answer", objection: null },
-  { label: "Gatekeeper", objection: "Gatekeeper" },
-  { label: "Not Interested", objection: "Not Interested" },
-  { label: "Don't See the Value", objection: "Don't See the Value" },
-  { label: "Need to Think", objection: "Need to Think" },
-  { label: "Need to Talk to Someone", objection: "Need to Talk to Someone" },
-  { label: "Too Expensive", objection: "Too Expensive" },
-  { label: "What's Your Pricing", objection: "What's Your Pricing" },
-  { label: "Bad Experience", objection: "Bad Experience" },
-  { label: "Already Have Someone", objection: "Already Have Someone" },
-  { label: "In-House Team", objection: "In-House Team" },
-  { label: "Stacked Objections", objection: "Stacked Objections" },
-  { label: "Schedule Callback", objection: null },
-];
+// Outcome list lives in @/lib/bdrOutcomes so the Street Walk page logs the same set.
+
 
 const STAT_KEYS = OUTCOMES.map(o => o.label);
 

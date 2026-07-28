@@ -182,6 +182,8 @@ import EmployeeTrainingCenter from "./pages/employee/EmployeeTrainingCenter";
 import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
+import BDRStreetWalk from "./pages/employee/BDRStreetWalk";
+
 import InPersonSweep from "./pages/employee/InPersonSweep";
 import InPersonStreetWalk from "./pages/employee/InPersonStreetWalk";
 import BDRInPerson from "./pages/employee/BDRInPerson";
@@ -399,6 +401,8 @@ const App = () => {
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
+                <Route path="street-walk" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRStreetWalk /></ClientFlagGate>} />
+
                 <Route path="in-person" element={<BDRInPerson />} />
                 <Route path="in-person/sweep" element={<InPersonSweep />} />
                 <Route path="in-person/:streetId" element={<InPersonStreetWalk />} />
