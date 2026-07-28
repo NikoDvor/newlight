@@ -186,6 +186,8 @@ export default function BDRMyLeads() {
   const [activeList, setActiveList] = useState<string>("__all__");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoProgress, setGeoProgress] = useState(0);
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
