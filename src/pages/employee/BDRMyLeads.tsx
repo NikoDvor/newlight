@@ -44,6 +44,12 @@ interface BdrLead {
   owner_booking_link: string | null;
   owner_booking_link_send_ready: string | null;
   dialer_bookable: boolean | null;
+  street_address?: string | null;
+  street_number?: number | null;
+  side_of_street?: string | null;
+  sequence_order?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   created_at: string;
 }
 
