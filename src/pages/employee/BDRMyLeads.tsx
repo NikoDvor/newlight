@@ -1469,7 +1469,13 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           niche: nicheIdx >= 0 ? unquote(r[nicheIdx]) : "",
           notes: notesIdx >= 0 ? unquote(r[notesIdx]) : "",
           list_name: lnIdx >= 0 ? unquote(r[lnIdx]) : "",
-          rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
+          ...(() => {
+            const street_address = saIdx >= 0 ? (unquote(r[saIdx]) || "") : "";
+            const m = street_address.match(/^\s*(\d+)/);
+            const street_number = m ? parseInt(m[1], 10) : null;
+            const side_of_street = street_number == null ? null : (street_number % 2 === 0 ? "even" : "odd");
+            return { street_address, street_number, side_of_street };
+          })(),
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
