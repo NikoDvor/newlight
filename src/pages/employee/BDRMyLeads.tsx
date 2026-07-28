@@ -2004,6 +2004,21 @@ One row per record, quoted fields.
 # CLOSING (REQUIRED)
 After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
 
+const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once. It contains everything needed, including the full text of both prompts below, so it works standalone even if the person only pastes this one block.
+
+${BEHAVIORAL_RULES}
+
+======================
+FULL TEXT: STREET SOURCING PROMPT (run this first when asked to sweep a street)
+======================
+${STREET_SOURCING_PROMPT}
+
+======================
+FULL TEXT: LEADS ENRICHMENT PROMPT (run this second, on the list the sourcing prompt just compiled)
+======================
+${LEADS_ENRICHMENT_PROMPT}
+`;
+
 function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
 
