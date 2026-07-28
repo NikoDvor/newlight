@@ -1945,7 +1945,7 @@ Street: [STREET NAME]
 City: [CITY]
 State: [STATE]
 Side(s): [both / odd side only / even side only]
-Block range (optional): [e.g., 400–1300; if blank, establish it in STEP 0]
+Block range (REQUIRED): a specific bounded stretch, e.g. "400–800" or "the 500 and 600 blocks." This must be a range walkable in one sweep — roughly 3–10 blocks / 20–60 addresses. Do NOT accept a request to sweep an entire street end-to-end in one pass.
 
 # STEP 0 — ESTABLISH THE FULL ADDRESS RANGE BEFORE LISTING ANY BUSINESS
 1. Determine the full commercial address range of this street using, in priority order: (a) city/county GIS parcel situs data or assessor parcel lookup, (b) Google Maps scrolled end to end, (c) OpenStreetMap/Overpass.
