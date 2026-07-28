@@ -726,6 +726,12 @@ export default function BDRMyLeads() {
                   </>
                 ) : (
                   <>
+                    {geocodeTargets.length > 0 && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={geocoding} onClick={runGeocode}>
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {geocoding ? `Geocoding ${geoProgress}/${geocodeTargets.length}…` : `Geocode this list (${geocodeTargets.length})`}
+                      </Button>
+                    )}
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
                       <Trash2 className="h-3 w-3 mr-1" /> Delete All
