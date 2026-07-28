@@ -367,6 +367,17 @@ export default function BDRInPerson() {
     );
   };
 
+  /** Highest sequence currently stored for a route (0 if none). */
+  const maxSequenceFor = async (routeId: string): Promise<number> => {
+    const { data } = await (supabase as any)
+      .from("street_sweep_visits")
+      .select("sequence")
+      .eq("route_id", routeId)
+      .order("sequence", { ascending: false, nullsFirst: false })
+      .limit(1);
+    return (data?.[0]?.sequence as number | null) ?? 0;
+  };
+
   const saveBulk = async () => {
     if (!clientId || !userId || !activeRouteId) return;
     const rows = parsedBulk;
@@ -375,7 +386,8 @@ export default function BDRInPerson() {
       return;
     }
     setBulkSaving(true);
-    const payload = rows.map((r) => ({
+    const base = await maxSequenceFor(activeRouteId);
+    const payload = rows.map((r, i) => ({
       route_id: activeRouteId,
       client_id: clientId,
       visited_by: userId,
@@ -390,7 +402,9 @@ export default function BDRInPerson() {
       niche_guess: null,
       notes: null,
       photo_url: null,
+      sequence: base + i + 1,
     }));
+
     const { data, error } = await (supabase as any)
       .from("street_sweep_visits").insert(payload).select();
     setBulkSaving(false);
