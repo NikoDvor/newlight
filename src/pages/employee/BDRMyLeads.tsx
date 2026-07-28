@@ -1302,7 +1302,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         occIdx = -1,    // V16 "Owner's Calendar Confirmed"
         oblIdx = -1,    // legacy V13 "Owner Booking Link"
         oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
-        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1;
+        swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1,
+        nicheIdx = -1, notesIdx = -1, lnIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1331,6 +1332,9 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd\s*(number|#|no\.?)/.test(c)) crdIdx = i;
         else if (/^city$|city\s*\/?\s*state|location/.test(c)) cityIdx = i;
+        else if (/niche|category|industry/.test(c)) nicheIdx = i;
+        else if (/list[\s_-]*name|^list$/.test(c)) lnIdx = i;
+        else if (/note/.test(c)) notesIdx = i;
       });
       dataRows = allRows.slice(headerIdx + 1);
       // Drop separator rows like "---|---|---"
