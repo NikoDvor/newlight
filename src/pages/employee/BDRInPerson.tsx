@@ -554,7 +554,7 @@ export default function BDRInPerson() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="In-Person" description="Walk a street, log every storefront, research it later.">
+      <PageHeader title="In-Person" description="Discover businesses by street, log them, then research owner info — all in batches of 5.">
         <Button onClick={() => setRouteOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> New Route
         </Button>
