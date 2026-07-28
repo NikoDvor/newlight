@@ -349,6 +349,7 @@ export default function BDRMyLeads() {
     let count = 0;
     let skipped = 0;
     let claimedByOther = 0;
+    const inserted: { id: string; street_number: number | null; side_of_street: string | null }[] = [];
     for (const row of rows) {
       const key = (row.business_name || "").trim().toLowerCase();
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
