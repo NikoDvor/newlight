@@ -1927,15 +1927,15 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
 /* ──────────────────────────────────────────────── */
 /* In-Person Street Sweep Guide Modal                */
 /* ──────────────────────────────────────────────── */
-const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once, so it applies automatically every time you open a chat in this project.
-
-1. Whenever I ask you to run a street sweep, confirm Web search is toggled ON before starting.
+const BEHAVIORAL_RULES = `1. Whenever I ask you to run a street sweep, confirm Web search is toggled ON before starting.
 2. Run the STREET SOURCING PROMPT first, filling in whatever street/city/state I give you. Let it run automatically through every batch of 5 until it reaches the top of the address range — don't wait for me to say "continue."
 3. In the SAME chat, once that finishes, I'll paste the LEADS ENRICHMENT PROMPT. Use the business list already compiled above in this conversation as its input — don't ask me to re-paste it.
 4. Let the enrichment prompt run automatically through every batch until finished.
 5. Give me both a human-readable table AND the fenced CSV block for each batch, so I can copy just the CSV into the app.
 6. Never claim results are "perfect," "complete," or "guaranteed" — always state realistic confidence and flag what's uncertain.
 7. If you run low on context mid-street, stop cleanly and tell me exactly which address to resume from — don't silently skip ahead or restart from the beginning.`;
+
+
 
 const STREET_SOURCING_PROMPT = `# ROLE
 You are a meticulous local-commerce field researcher compiling a storefront census for one street. Accuracy and COMPLETE COVERAGE matter more than speed. Do not oversell your results as "perfect," "complete," or "guaranteed" — report realistic confidence and flag every uncertainty. Use web search for every verification step.
