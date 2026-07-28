@@ -192,7 +192,8 @@ export default function BDRInPerson() {
 
   const BATCH_SIZE = 5;
   const researchBatches = useMemo(() => {
-    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const ordered = [...visits].sort(orderVisits);
+
     const out: Visit[][] = [];
     for (let i = 0; i < ordered.length; i += BATCH_SIZE) out.push(ordered.slice(i, i + BATCH_SIZE));
     return out;
