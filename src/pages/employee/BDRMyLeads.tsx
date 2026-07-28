@@ -1369,6 +1369,10 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (/front|desk|reception|main/.test(s)) return "front_desk";
       return "front_desk";
     };
+    // CSV cells may arrive wrapped in quotes ("Main St, Suite 2")
+    const unquote = (v: string): string =>
+      (v || "").trim().replace(/^"(.*)"$/s, "$1").replace(/""/g, '"').trim();
+
     // Legacy path: "Booking System" column held the platform name OR "No"
     const parseLegacyBookingSystem = (v: string): { platform: string | null; has: boolean } => {
       const s = (v || "").trim();
