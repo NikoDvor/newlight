@@ -12153,6 +12153,7 @@ export type Database = {
           photo_url: string | null
           research_status: string
           route_id: string
+          sequence: number | null
           storefront_status: string
           unit_suite: string | null
           updated_at: string
@@ -12178,6 +12179,7 @@ export type Database = {
           photo_url?: string | null
           research_status?: string
           route_id: string
+          sequence?: number | null
           storefront_status?: string
           unit_suite?: string | null
           updated_at?: string
@@ -12203,6 +12205,7 @@ export type Database = {
           photo_url?: string | null
           research_status?: string
           route_id?: string
+          sequence?: number | null
           storefront_status?: string
           unit_suite?: string | null
           updated_at?: string

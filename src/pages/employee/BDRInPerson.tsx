@@ -59,7 +59,7 @@ Business | Owner | Phone (label) | Booking Link (type) | Status
 
 If any step would require seeing the physical storefront (signage, open/closed status, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
-export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v3
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v4
 
 ROLE: You are finding every real business on a specific street so I can log them for a street sweep. Never fabricate a business name or address — every entry must come from a real search result.
 
@@ -71,13 +71,16 @@ DISCOVERY ROUTES — use whichever are available to you, in this priority order:
 3. Also check Yelp's category/street browse results and any local "best of [street]" blog roundups as a secondary cross-check — never treat these alone as sufficient without a primary source.
 4. If a business's exact address isn't confirmed by at least one source, still include it but flag it "address unconfirmed."
 
-If you have NO usable method to find real businesses on this street, say so plainly instead of guessing — never fabricate a business name or address to fill out the list.
+WORK IN INCREMENTS OF 5: search and verify 5 businesses at a time, moving down the street in address order (low numbers to high, or however the street naturally orders). The moment you finish verifying 5, immediately continue searching for the next 5 further down the street — do not stop, do not wait for me to say 'next' or 'continue.' Keep going automatically until you've covered the entire street or run out of usable context.
 
-OUTPUT: Find as many real businesses on that street as you can in one pass — do not artificially limit yourself to a small number. List every one you find, in this exact copy-pasteable format, one per line, nothing else, so I can paste the whole thing straight into Bulk Add:
+OUTPUT FORMAT: Output ONE single continuous list, not separate labeled batches — do not print 'Batch 1' / 'Batch 2' headers or any dividers, since I'm going to copy this whole block and paste it directly into a bulk-add tool that reads one business per line. Just keep appending lines to the same list as you go:
 
 BusinessName, Full Address
 
-If the street is long and you run out of context or need to split your search, tell me clearly how far you got (e.g. "covered the 100-600 block, continue with 700+?") so I know to ask you to keep going — but always output everything you've already found rather than trickling it out a few at a time.`;
+If you run out of context or need to stop before finishing the whole street, end with a plain note (not part of the list) telling me exactly how far you got by address range, so I know where to pick up.
+
+If you have NO usable method to find real businesses on this street at all, say so plainly instead of guessing — never fabricate a business name or address to fill out the list.`;
+
 
 interface Route {
   id: string;
@@ -112,6 +115,17 @@ interface Visit {
   lead_id: string | null;
   visited_by: string;
   created_at: string;
+  sequence: number | null;
+
+}
+
+/** Order visits by explicit sequence (paste/log order), falling back to created_at for legacy rows. */
+export function orderVisits(a: Visit, b: Visit) {
+  const as = a.sequence, bs = b.sequence;
+  if (as != null && bs != null) return as - bs;
+  if (as != null) return -1;
+  if (bs != null) return 1;
+  return a.created_at.localeCompare(b.created_at);
 }
 
 const STOREFRONT = ["open", "closed", "vacant", "unclear"] as const;
@@ -187,7 +201,8 @@ export default function BDRInPerson() {
 
   const BATCH_SIZE = 5;
   const researchBatches = useMemo(() => {
-    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const ordered = [...visits].sort(orderVisits);
+
     const out: Visit[][] = [];
     for (let i = 0; i < ordered.length; i += BATCH_SIZE) out.push(ordered.slice(i, i + BATCH_SIZE));
     return out;
@@ -352,6 +367,17 @@ export default function BDRInPerson() {
     );
   };
 
+  /** Highest sequence currently stored for a route (0 if none). */
+  const maxSequenceFor = async (routeId: string): Promise<number> => {
+    const { data } = await (supabase as any)
+      .from("street_sweep_visits")
+      .select("sequence")
+      .eq("route_id", routeId)
+      .order("sequence", { ascending: false, nullsFirst: false })
+      .limit(1);
+    return (data?.[0]?.sequence as number | null) ?? 0;
+  };
+
   const saveBulk = async () => {
     if (!clientId || !userId || !activeRouteId) return;
     const rows = parsedBulk;
@@ -360,7 +386,8 @@ export default function BDRInPerson() {
       return;
     }
     setBulkSaving(true);
-    const payload = rows.map((r) => ({
+    const base = await maxSequenceFor(activeRouteId);
+    const payload = rows.map((r, i) => ({
       route_id: activeRouteId,
       client_id: clientId,
       visited_by: userId,
@@ -375,7 +402,9 @@ export default function BDRInPerson() {
       niche_guess: null,
       notes: null,
       photo_url: null,
+      sequence: base + i + 1,
     }));
+
     const { data, error } = await (supabase as any)
       .from("street_sweep_visits").insert(payload).select();
     setBulkSaving(false);
@@ -465,8 +494,10 @@ export default function BDRInPerson() {
       return;
     }
 
+    const nextSeq = (await maxSequenceFor(activeRouteId)) + 1;
     const { data, error } = await (supabase as any)
-      .from("street_sweep_visits").insert(payload).select().single();
+      .from("street_sweep_visits").insert({ ...payload, sequence: nextSeq }).select().single();
+
     setSavingVisit(false);
     if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
     setVisits((p) => [data as Visit, ...p]);
@@ -502,7 +533,7 @@ export default function BDRInPerson() {
   };
 
   const exportForResearch = async () => {
-    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const ordered = [...visits].sort(orderVisits);
     await copyVisits(ordered, "All visits");
   };
 
@@ -608,8 +639,9 @@ export default function BDRInPerson() {
               <ol className="space-y-4 text-sm text-muted-foreground">
                 {[
                   <>Tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Discovery Prompt</Badge> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</>,
-                  <>Claude finds every real business it can on the street in one pass. Copy that whole list and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here — all at once, not 5 at a time.</>,
-                  <>If Claude says it only covered part of a long street, ask it to continue with the next section, then paste that in too.</>,
+                  <>Claude works down the street in automatic passes of 5 and returns one continuous list. Copy that whole list and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here — all at once, not 5 at a time.</>,
+                  <>If Claude notes it only covered part of a long street (it'll tell you the address range it reached), ask it to continue from there, then paste that in too.</>,
+
                   <>Back here, batches of 5 form automatically in <Badge variant="outline" className="mx-0.5 font-normal">Research Batches</Badge> as you log businesses — no need to finish the whole street first.</>,
                   <>On a Ready batch, tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Research Prompt</Badge> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <Badge variant="outline" className="mx-0.5 font-normal">Export Batch</Badge> and paste those 5 businesses right after the prompt.</>,
                   <>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</>,
