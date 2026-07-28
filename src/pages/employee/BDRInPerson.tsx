@@ -600,8 +600,11 @@ export default function BDRInPerson() {
             <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
               <ClipboardList className="h-5 w-5" /> Bulk Add
             </Button>
-            <Button variant="outline" onClick={copyMasterPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Master Prompt
+            <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Copy Research Prompt
+            </Button>
+            <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
             </Button>
             <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
               <Copy className="h-4 w-4" /> Export All
