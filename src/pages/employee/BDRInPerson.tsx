@@ -59,11 +59,11 @@ Business | Owner | Phone (label) | Booking Link (type) | Status
 
 If any step would require seeing the physical storefront (signage, open/closed status, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
-export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v2
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v3
 
-ROLE: You are finding real businesses on a specific street so I can log them for a street sweep. Never fabricate a business name or address — every entry must come from a real search result.
+ROLE: You are finding every real business on a specific street so I can log them for a street sweep. Never fabricate a business name or address — every entry must come from a real search result.
 
-INPUT: I will give you a street, city, and state, and may tell you which businesses I've already logged so you skip them.
+INPUT: I will give you a street, city, and state.
 
 DISCOVERY ROUTES — use whichever are available to you, in this priority order:
 1. If you have a Google Maps/Places search tool in this chat, use it directly to pull real businesses and addresses on the given street — this is the most accurate method, prefer it whenever available.
@@ -71,13 +71,13 @@ DISCOVERY ROUTES — use whichever are available to you, in this priority order:
 3. Also check Yelp's category/street browse results and any local "best of [street]" blog roundups as a secondary cross-check — never treat these alone as sufficient without a primary source.
 4. If a business's exact address isn't confirmed by at least one source, still include it but flag it "address unconfirmed."
 
-If you have NO usable method to find real businesses on this street, say so plainly instead of guessing — never fabricate a business name or address just to fill the batch.
+If you have NO usable method to find real businesses on this street, say so plainly instead of guessing — never fabricate a business name or address to fill out the list.
 
-OUTPUT: Find exactly 5 real businesses on that street I haven't already logged. For each, give the exact business name and full street address as returned by your search. Output in this exact copy-pasteable format, nothing else, so I can paste it straight into Bulk Add:
+OUTPUT: Find as many real businesses on that street as you can in one pass — do not artificially limit yourself to a small number. List every one you find, in this exact copy-pasteable format, one per line, nothing else, so I can paste the whole thing straight into Bulk Add:
 
 BusinessName, Full Address
 
-Give exactly 5 at a time. When I say 'next 5' or name the street again, give the next 5 different businesses further down the street — never repeat ones already given. If you run out of verifiable businesses on the street, say so instead of inventing more.`;
+If the street is long and you run out of context or need to split your search, tell me clearly how far you got (e.g. "covered the 100-600 block, continue with 700+?") so I know to ask you to keep going — but always output everything you've already found rather than trickling it out a few at a time.`;
 
 interface Route {
   id: string;
@@ -608,8 +608,8 @@ export default function BDRInPerson() {
               <ol className="space-y-4 text-sm text-muted-foreground">
                 {[
                   <>Tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Discovery Prompt</Badge> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</>,
-                  <>Claude gives you 5 real businesses. Copy that output and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here.</>,
-                  <>Say <Badge variant="outline" className="mx-0.5 font-normal">next 5</Badge> in that same chat to keep going — paste each new batch into Bulk Add until you've covered the street.</>,
+                  <>Claude finds every real business it can on the street in one pass. Copy that whole list and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here — all at once, not 5 at a time.</>,
+                  <>If Claude says it only covered part of a long street, ask it to continue with the next section, then paste that in too.</>,
                   <>Back here, batches of 5 form automatically in <Badge variant="outline" className="mx-0.5 font-normal">Research Batches</Badge> as you log businesses — no need to finish the whole street first.</>,
                   <>On a Ready batch, tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Research Prompt</Badge> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <Badge variant="outline" className="mx-0.5 font-normal">Export Batch</Badge> and paste those 5 businesses right after the prompt.</>,
                   <>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</>,
