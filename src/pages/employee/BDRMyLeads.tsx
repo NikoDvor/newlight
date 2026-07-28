@@ -1979,7 +1979,7 @@ Then per entry: [number] [name or —] | STATUS | category | phone | website | o
 After each batch, continue automatically to the next. Do not ask to continue. Do not start mid-range. Do not stop early. If running low on room, end cleanly with "PAUSE — resume at address [N]."
 
 # FINAL SELF-CHECK
-Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short.
+Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short. If the person originally asked for more than this bounded range, remind them at the end that additional ranges need their own separate sweep.
 
 # CLOSING DISCLAIMER (REQUIRED)
 State an honest coverage confidence estimate and known limitations. Do not claim the list is perfect or complete.`;
