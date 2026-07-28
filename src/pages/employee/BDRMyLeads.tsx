@@ -390,6 +390,10 @@ export default function BDRMyLeads() {
         crd: row.crd || null,
         city: row.city || null,
         niche: row.niche || null,
+        street_address: row.street_address || null,
+        street_number: row.street_number ?? null,
+        side_of_street: row.side_of_street ?? null,
+        source_type: row.street_address ? "street_sweep" : null,
         notes: [
           row.notes || null,
           row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
@@ -398,8 +402,27 @@ export default function BDRMyLeads() {
       }).select("id").single();
       // Safety net: unique index race
       if (error && (error as any).code === "23505") { claimedByOther++; continue; }
-      if (data) { await createCRMRecords({ ...row, phone: primaryPhone }, data.id); count++; }
+      if (data) {
+        await createCRMRecords({ ...row, phone: primaryPhone }, data.id);
+        inserted.push({ id: data.id, street_number: row.street_number ?? null, side_of_street: row.side_of_street ?? null });
+        count++;
+      }
     }
+
+    // Walk order: only for this import's rows, keyed on the ids we just got back
+    // (never re-queried by list name, so unrelated leads are untouched).
+    const withStreet = inserted.filter(r => r.street_number != null);
+    if (withStreet.length > 0) {
+      withStreet.sort((a, b) => {
+        const sa = a.side_of_street || "zz", sb = b.side_of_street || "zz";
+        if (sa !== sb) return sa.localeCompare(sb);
+        return (a.street_number || 0) - (b.street_number || 0);
+      });
+      await Promise.all(withStreet.map((r, i) =>
+        (supabase as any).from("nl_bdr_leads").update({ sequence_order: i + 1 }).eq("id", r.id)
+      ));
+    }
+
     const parts: string[] = [];
     if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
     if (claimedByOther > 0) parts.push(`${claimedByOther} already claimed by another rep`);
