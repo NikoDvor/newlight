@@ -700,18 +700,31 @@ export default function BDRInPerson() {
                     const full = batch.length === BATCH_SIZE;
                     const remaining = BATCH_SIZE - batch.length;
                     return (
-                      <div key={i} className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-2">
+                      <div key={i} className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-medium">
                             Batch {i + 1} — {full ? `${batch.length} businesses` : `${batch.length} of ${BATCH_SIZE} logged`}
                           </span>
                           {full && <Badge className="bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)] border-0">Ready</Badge>}
                         </div>
+                        <div className="flex gap-1">
+                          {Array.from({ length: BATCH_SIZE }).map((_, s) => (
+                            <div
+                              key={s}
+                              className={`h-1.5 flex-1 rounded-full ${
+                                s < batch.length
+                                  ? full ? "bg-[hsl(142,72%,42%)]" : "bg-primary"
+                                  : "bg-border/60"
+                              }`}
+                            />
+                          ))}
+                        </div>
                         {!full && (
                           <p className="text-xs text-muted-foreground">
                             {remaining} more to complete this batch.
                           </p>
                         )}
+
                         <div className="flex flex-wrap items-center gap-2">
                           <Button size="sm" variant="outline" onClick={copyResearchPrompt} className="gap-1.5">
                             <ClipboardList className="h-3.5 w-3.5" /> Copy Research Prompt
