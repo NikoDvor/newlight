@@ -112,8 +112,6 @@ export default function AdminBDRPerformance() {
   const [calls, setCalls] = useState<any[]>([]);
   const [dialEvents, setDialEvents] = useState<{ user_id: string; starts_at: string }[]>([]);
   const [dialLog, setDialLog] = useState<{ bdr_user_id: string; dialed_at: string }[]>([]);
-  const [sweepRoutes, setSweepRoutes] = useState<any[]>([]);
-  const [sweepVisits, setSweepVisits] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
@@ -151,27 +149,8 @@ export default function AdminBDRPerformance() {
     })();
   }, []);
 
-  // Street Sweep data (admin sees all reps)
-  useEffect(() => {
-    (async () => {
-      const [{ data: r }, { data: v }] = await Promise.all([
-        (supabase as any).from("street_sweep_routes").select("*").order("created_at", { ascending: false }),
-        (supabase as any).from("street_sweep_visits").select("*").order("created_at", { ascending: false }),
-      ]);
-      setSweepRoutes(r || []);
-      setSweepVisits(v || []);
-      const uids = [...new Set([
-        ...(r || []).map((x: any) => x.created_by),
-        ...(v || []).map((x: any) => x.visited_by),
-      ].filter(Boolean))] as string[];
-      if (uids.length) {
-        const { data: p } = await supabase.from("workspace_users").select("user_id, display_name").in("user_id", uids);
-        const map: Record<string, string> = {};
-        (p || []).forEach((u: any) => { if (u.display_name) map[u.user_id] = u.display_name; });
-        setProfiles(prev => ({ ...map, ...prev }));
-      }
-    })();
-  }, []);
+
+
 
   const filteredLeads = useMemo(() => leads.filter(l => filterByDate(l.created_at, dateRange)), [leads, dateRange]);
   const filteredObjections = useMemo(() => objections.filter(o => filterByDate(o.created_at, dateRange)), [objections, dateRange]);
@@ -256,53 +235,54 @@ export default function AdminBDRPerformance() {
     return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 50);
   }, [filteredLeads, profiles]);
 
-  /* ─── Street Sweep (date-range filtered, all reps) ─── */
-  const filteredSweepRoutes = useMemo(
-    () => sweepRoutes.filter(r => filterByDate(r.created_at, dateRange)), [sweepRoutes, dateRange]);
-  const filteredSweepVisits = useMemo(
-    () => sweepVisits.filter(v => filterByDate(v.created_at, dateRange)), [sweepVisits, dateRange]);
+  /* ─── Street Sweep (derived from nl_bdr_leads, source_type = 'street_sweep') ─── */
+  const sweepLeads = useMemo(
+    () => leads.filter(l => l.source_type === "street_sweep" && filterByDate(l.created_at, dateRange)),
+    [leads, dateRange]);
+
+  const sweepListRows = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    sweepLeads.forEach(l => {
+      const key = `${l.user_id || "unknown"}|${l.list_name || "(no list)"}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(l);
+    });
+    return [...groups.entries()].map(([key, rows]) => {
+      const uid = rows[0]?.user_id as string | undefined;
+      const lastActivity = rows
+        .map(r => r.updated_at || r.created_at)
+        .filter(Boolean)
+        .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())[0] || null;
+      return {
+        key,
+        listName: rows[0]?.list_name || "(no list)",
+        repName: uid ? (profiles[uid] || uid.slice(0, 8)) : "Unassigned",
+        total: rows.length,
+        visited: rows.filter(r => r.visit_status === "visited").length,
+        skipped: rows.filter(r => r.visit_status === "skipped").length,
+        pending: rows.filter(r => !r.visit_status || r.visit_status === "pending").length,
+        lastActivity,
+      };
+    }).sort((a, b) => new Date(b.lastActivity || 0).getTime() - new Date(a.lastActivity || 0).getTime());
+  }, [sweepLeads, profiles]);
 
   const sweepTeamStats = useMemo(() => ({
-    routes: filteredSweepRoutes.length,
-    completed: filteredSweepRoutes.filter(r => r.status === "completed").length,
-    visits: filteredSweepVisits.length,
-    researched: filteredSweepVisits.filter(v => v.research_status === "researched").length,
-  }), [filteredSweepRoutes, filteredSweepVisits]);
-
-  const sweepRepRows = useMemo(() => {
-    const uids = [...new Set([
-      ...filteredSweepRoutes.map(r => r.created_by),
-      ...filteredSweepVisits.map(v => v.visited_by),
-    ].filter(Boolean))] as string[];
-    return uids.map(uid => {
-      const routes = filteredSweepRoutes.filter(r => r.created_by === uid).length;
-      const rv = filteredSweepVisits.filter(v => v.visited_by === uid);
-      const researched = rv.filter(v => v.research_status === "researched").length;
-      return {
-        uid,
-        name: profiles[uid] || uid.slice(0, 8),
-        routes,
-        visits: rv.length,
-        researched,
-        pct: rv.length ? Math.round((researched / rv.length) * 100) : 0,
-      };
-    }).sort((a, b) => b.visits - a.visits);
-  }, [filteredSweepRoutes, filteredSweepVisits, profiles]);
-
-  const sweepFeed = useMemo(
-    () => [...filteredSweepVisits]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 20), [filteredSweepVisits]);
+    sweeps: sweepListRows.length,
+    total: sweepLeads.length,
+    visited: sweepLeads.filter(l => l.visit_status === "visited").length,
+    pending: sweepLeads.filter(l => !l.visit_status || l.visit_status === "pending").length,
+  }), [sweepListRows, sweepLeads]);
 
   const exportSweepCSV = () => {
     const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
-    const rows = [["Rep", "Business", "Address", "Storefront Status", "Research Status", "Owner Name", "Owner Phone", "Created"].join(",")];
-    sweepVisits.forEach(v => {
+    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Created"].join(",")];
+    sweepLeads.forEach(l => {
       rows.push([
-        esc(profiles[v.visited_by] || v.visited_by),
-        esc(v.business_name), esc(v.address), esc(v.storefront_status),
-        esc(v.research_status), esc(v.owner_name), esc(v.owner_phone),
-        esc(new Date(v.created_at).toLocaleString()),
+        esc(profiles[l.user_id] || l.user_id),
+        esc(l.list_name), esc(l.business_name), esc(l.street_address || l.address),
+        esc(l.visit_status || "pending"), esc(l.owner_name),
+        esc(l.owner_direct_phone || l.phone),
+        esc(new Date(l.created_at).toLocaleString()),
       ].join(","));
     });
     const blob = new Blob([rows.join("\n")], { type: "text/csv" });
@@ -311,6 +291,7 @@ export default function AdminBDRPerformance() {
     a.href = url; a.download = `street-sweep-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
+
 
   // CSV export
   const exportCSV = () => {
@@ -499,10 +480,10 @@ export default function AdminBDRPerformance() {
         <h2 className="text-sm font-bold text-foreground mb-3">Street Sweep Activity</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Total Routes", value: sweepTeamStats.routes },
-            { label: "Routes Completed", value: sweepTeamStats.completed },
-            { label: "Total Visits Logged", value: sweepTeamStats.visits },
-            { label: "Visits Researched", value: sweepTeamStats.researched },
+            { label: "Total Sweeps", value: sweepTeamStats.sweeps },
+            { label: "Total Leads", value: sweepTeamStats.total },
+            { label: "Visited", value: sweepTeamStats.visited },
+            { label: "Pending", value: sweepTeamStats.pending },
           ].map(s => (
             <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
               <p className="text-lg font-bold text-foreground">{s.value}</p>
@@ -511,50 +492,33 @@ export default function AdminBDRPerformance() {
           ))}
         </div>
 
-        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Per-Rep Sweep Breakdown</h3>
-        {sweepRepRows.length === 0 ? (
+        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Sweeps by List</h3>
+        {sweepListRows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No street sweep activity yet.</p>
         ) : (
           <div className="space-y-1.5">
-            <div className="hidden sm:grid grid-cols-6 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
-              <span className="col-span-2">Rep</span><span>Routes</span><span>Visits</span><span>Researched</span><span>Research %</span>
+            <div className="hidden sm:grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+              <span className="col-span-2">List / Owner</span><span>Leads</span><span>Visited</span><span>Skipped</span><span>Pending</span><span>Last Activity</span>
             </div>
-            {sweepRepRows.map(row => (
-              <div key={row.uid} className="rounded-xl px-4 py-3 sm:grid sm:grid-cols-6 sm:gap-2 sm:items-center flex flex-col gap-1" style={cardStyle}>
-                <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                <span className="text-sm text-foreground">{row.routes}</span>
-                <span className="text-sm text-foreground">{row.visits}</span>
-                <span className="text-sm text-foreground">{row.researched}</span>
-                <span className="text-sm text-foreground">{row.pct}%</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Recent Visits</h3>
-        {sweepFeed.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No visits logged yet.</p>
-        ) : (
-          <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-            {sweepFeed.map(v => (
-              <div key={v.id} className="rounded-xl px-4 py-3 flex items-start gap-3" style={cardStyle}>
-                <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: v.research_status === "researched" ? "hsl(142,72%,42%)" : "hsl(38,92%,50%)" }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-foreground">
-                    <span className="font-medium">{profiles[v.visited_by] || v.visited_by?.slice(0, 8)}</span>
-                    {" logged "}{v.business_name}
-                    <span className="text-muted-foreground"> — {v.address}</span>
-                  </p>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                    <span className="uppercase tracking-wide">{v.storefront_status}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" />{timeAgo(v.created_at)}</span>
-                  </p>
+            {sweepListRows.map(row => (
+              <div key={row.key} className="rounded-xl px-4 py-3 sm:grid sm:grid-cols-7 sm:gap-2 sm:items-center flex flex-col gap-1" style={cardStyle}>
+                <div className="col-span-2 min-w-0">
+                  <p className="font-medium text-foreground truncate">{row.listName}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{row.repName}</p>
                 </div>
+                <span className="text-sm text-foreground">{row.total}</span>
+                <span className="text-sm text-foreground">{row.visited}</span>
+                <span className="text-sm text-foreground">{row.skipped}</span>
+                <span className="text-sm text-foreground">{row.pending}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" />{row.lastActivity ? timeAgo(row.lastActivity) : "—"}
+                </span>
               </div>
             ))}
           </div>
         )}
       </div>
+
 
       {/* Objection leaderboard */}
       <div>
