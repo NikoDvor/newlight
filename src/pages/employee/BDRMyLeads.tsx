@@ -276,6 +276,41 @@ export default function BDRMyLeads() {
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
   }, [listScopedLeads]);
 
+
+  /* ─── Nominatim geocoding (manual, rate-limited to ~1 req/sec) ─── */
+  const geocodeTargets = useMemo(
+    () => listScopedLeads.filter(l => l.street_address && l.latitude == null && l.longitude == null),
+    [listScopedLeads],
+  );
+
+  const runGeocode = async () => {
+    if (geocoding || geocodeTargets.length === 0) return;
+    setGeocoding(true); setGeoProgress(0);
+    let ok = 0, fail = 0;
+    for (let i = 0; i < geocodeTargets.length; i++) {
+      const lead = geocodeTargets[i];
+      setGeoProgress(i + 1);
+      const q = [lead.street_address, lead.city].filter(Boolean).join(", ");
+      try {
+        // NOTE: Nominatim asks for a descriptive User-Agent, but browsers forbid
+        // setting that header on fetch, so we can't send one from the client.
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+        const json = await res.json();
+        const hit = Array.isArray(json) ? json[0] : null;
+        if (hit?.lat && hit?.lon) {
+          const latitude = parseFloat(hit.lat), longitude = parseFloat(hit.lon);
+          await (supabase as any).from("nl_bdr_leads").update({ latitude, longitude }).eq("id", lead.id);
+          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, latitude, longitude } : l));
+          ok++;
+        } else fail++;
+      } catch { fail++; }
+      // Nominatim free-tier usage policy: max 1 request/second.
+      if (i < geocodeTargets.length - 1) await new Promise(r => setTimeout(r, 1100));
+    }
+    setGeocoding(false);
+    toast({ title: "Geocoding complete", description: `${ok} located${fail ? ` · ${fail} failed` : ""}` });
+  };
+
   const handleChangeStage = async (lead: BdrLead, stage: PipelineStageKey) => {
     if (!user?.id) return;
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: stage } : l));
