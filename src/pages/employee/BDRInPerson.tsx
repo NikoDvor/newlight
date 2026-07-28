@@ -119,6 +119,15 @@ interface Visit {
 
 }
 
+/** Order visits by explicit sequence (paste/log order), falling back to created_at for legacy rows. */
+export function orderVisits(a: Visit, b: Visit) {
+  const as = a.sequence, bs = b.sequence;
+  if (as != null && bs != null) return as - bs;
+  if (as != null) return -1;
+  if (bs != null) return 1;
+  return a.created_at.localeCompare(b.created_at);
+}
+
 const STOREFRONT = ["open", "closed", "vacant", "unclear"] as const;
 
 const emptyVisitForm = {
