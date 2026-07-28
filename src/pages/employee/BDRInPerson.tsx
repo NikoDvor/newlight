@@ -115,6 +115,8 @@ interface Visit {
   lead_id: string | null;
   visited_by: string;
   created_at: string;
+  sequence: number | null;
+
 }
 
 const STOREFRONT = ["open", "closed", "vacant", "unclear"] as const;
