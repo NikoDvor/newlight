@@ -42,6 +42,18 @@ BATCHING: process 5 businesses at a time. If given more than 5, output the resul
 
 If any step would require seeing the storefront (signage, open/closed, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v1
+
+You are finding real businesses on a specific street so I can log them for a street sweep. If you have access to Google Maps/Places search tools in this chat, use them. If you do NOT have that capability here, say so plainly instead of guessing or inventing businesses — never fabricate a business name or address.
+
+INPUT: I will give you a street, city, and state, and may tell you which businesses I've already logged so you skip them.
+
+OUTPUT: Find exactly 5 real businesses on that street I haven't already logged. For each, give the exact business name and full street address as returned by your search. Output in this exact copy-pasteable format, nothing else, so I can paste it straight into Bulk Add:
+
+BusinessName, Full Address
+
+Give exactly 5 at a time. When I say 'next 5' or name the street again, give the next 5 different businesses further down the street — never repeat ones already given. If you run out of verifiable businesses on the street, say so instead of inventing more.`;
+
 interface Route {
   id: string;
   route_name: string;
