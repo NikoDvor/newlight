@@ -1807,14 +1807,14 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-2xl max-h-[85dvh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader className="text-left pr-8">
           <DialogTitle>How to Import Leads</DialogTitle>
           <DialogDescription>Use the SEC IAPD Sourcing Tool to pull registered financial advisor leads, then enrich them with the Master Prompt before importing. Chrome / browser tools are only needed for the booking-system verification piece (the flow-walk in the booking-verification section) — owner name and phone research are pure search and work without any browser connector.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="rounded-xl p-4" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
+        <div className="space-y-4 min-w-0">
+          <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                     style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Recommended</span>
@@ -2042,14 +2042,14 @@ function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () =
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-2xl max-h-[85dvh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader className="text-left pr-8">
           <DialogTitle>In-Person Street Sweep Guide</DialogTitle>
           <DialogDescription>Turn any street into an ordered, research-backed lead list.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="rounded-xl p-4" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
+        <div className="space-y-4 min-w-0">
+          <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                     style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Steps</span>
