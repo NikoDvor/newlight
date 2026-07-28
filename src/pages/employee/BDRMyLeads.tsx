@@ -1874,14 +1874,14 @@ You enrich a storefront census into CRM-ready lead records. Work in the SAME str
 Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
 
 # TASK
-For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, notes (address incl. suite, closure/verification flags, confidence, which sources confirmed), list_name.
+For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), notes (closure/verification flags, confidence, which sources confirmed), list_name.
 
 # BATCH & CONTINUATION RULES
 Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
 
 # OUTPUT FORMAT
 Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
-business_name,owner_name,phone,website,niche,city,notes,list_name
+business_name,owner_name,phone,website,niche,city,street_address,notes,list_name
 One row per record, quoted fields.
 
 # CLOSING (REQUIRED)
