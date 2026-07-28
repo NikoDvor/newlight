@@ -639,8 +639,9 @@ export default function BDRInPerson() {
               <ol className="space-y-4 text-sm text-muted-foreground">
                 {[
                   <>Tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Discovery Prompt</Badge> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</>,
-                  <>Claude finds every real business it can on the street in one pass. Copy that whole list and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here — all at once, not 5 at a time.</>,
-                  <>If Claude says it only covered part of a long street, ask it to continue with the next section, then paste that in too.</>,
+                  <>Claude works down the street in automatic passes of 5 and returns one continuous list. Copy that whole list and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here — all at once, not 5 at a time.</>,
+                  <>If Claude notes it only covered part of a long street (it'll tell you the address range it reached), ask it to continue from there, then paste that in too.</>,
+
                   <>Back here, batches of 5 form automatically in <Badge variant="outline" className="mx-0.5 font-normal">Research Batches</Badge> as you log businesses — no need to finish the whole street first.</>,
                   <>On a Ready batch, tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Research Prompt</Badge> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <Badge variant="outline" className="mx-0.5 font-normal">Export Batch</Badge> and paste those 5 businesses right after the prompt.</>,
                   <>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</>,
