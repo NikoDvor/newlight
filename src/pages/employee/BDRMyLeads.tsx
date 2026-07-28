@@ -1952,6 +1952,9 @@ Block range (REQUIRED): a specific bounded stretch, e.g. "400–800" or "the 500
 2. State the established range explicitly with your source.
 3. Build a MASTER CHECKLIST of every plausible street number in the range, ascending, unchecked.
 
+# SCOPE CHECK (do this before anything else)
+If no block range was given, or the requested range spans more than roughly 10 blocks / 60 addresses, STOP and ask the person to pick a specific, narrower block range instead of proceeding. Do not attempt a full-street sweep and do not silently substitute a broad research summary in its place — a bounded range is a hard requirement of this protocol, not a suggestion.
+
 # STEP 1 — STRICT ASCENDING ORDER, 5 BUSINESSES PER BATCH
 Process addresses from lowest number upward. Output EXACTLY 5 businesses per batch. Vacant/closed/no-address entries are logged inline but don't count toward the 5.
 
