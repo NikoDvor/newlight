@@ -389,7 +389,11 @@ export default function BDRMyLeads() {
         meeting_booked: row.meeting_booked || null,
         crd: row.crd || null,
         city: row.city || null,
-        notes: row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
+        niche: row.niche || null,
+        notes: [
+          row.notes || null,
+          row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
+        ].filter(Boolean).join("\n") || null,
         list_name: cleanList,
       }).select("id").single();
       // Safety net: unique index race
