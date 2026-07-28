@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, MapPin, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -171,6 +171,7 @@ export default function BDRMyLeads() {
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showStreetSweepGuide, setShowStreetSweepGuide] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -554,6 +555,7 @@ export default function BDRMyLeads() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
           <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
           <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
         </div>
