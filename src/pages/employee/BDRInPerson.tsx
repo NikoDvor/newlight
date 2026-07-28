@@ -633,8 +633,8 @@ export default function BDRInPerson() {
                           </p>
                         )}
                         <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={copyMasterPrompt} className="gap-1.5">
-                            <ClipboardList className="h-3.5 w-3.5" /> Copy Master Prompt
+                          <Button size="sm" variant="outline" onClick={copyResearchPrompt} className="gap-1.5">
+                            <ClipboardList className="h-3.5 w-3.5" /> Copy Research Prompt
                           </Button>
                           <Button
                             size="sm"
