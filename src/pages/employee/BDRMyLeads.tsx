@@ -1476,6 +1476,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
             const side_of_street = street_number == null ? null : (street_number % 2 === 0 ? "even" : "odd");
             return { street_address, street_number, side_of_street };
           })(),
+          rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
     setParsed(result); setChecked(result.map(() => true)); setSkippedCount(malformedSkipped);
