@@ -494,8 +494,10 @@ export default function BDRInPerson() {
       return;
     }
 
+    const nextSeq = (await maxSequenceFor(activeRouteId)) + 1;
     const { data, error } = await (supabase as any)
-      .from("street_sweep_visits").insert(payload).select().single();
+      .from("street_sweep_visits").insert({ ...payload, sequence: nextSeq }).select().single();
+
     setSavingVisit(false);
     if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
     setVisits((p) => [data as Visit, ...p]);
