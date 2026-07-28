@@ -1307,7 +1307,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         oblIdx = -1,    // legacy V13 "Owner Booking Link"
         oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
         swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1,
-        nicheIdx = -1, notesIdx = -1, lnIdx = -1;
+        nicheIdx = -1, notesIdx = -1, lnIdx = -1, saIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
