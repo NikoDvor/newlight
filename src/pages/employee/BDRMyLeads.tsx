@@ -2034,6 +2034,7 @@ function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () =
   };
 
   const steps = [
+    'Pick ONE bounded block range first — e.g. "400–800 State St," not the whole street. 3–10 blocks per sweep is the sweet spot; a full corridor has to be swept in multiple separate passes.',
     'Open this Claude project. Tap + (or the slider icon) and confirm "Web search" is toggled ON — it must be blue/on.',
     "Copy the STREET SOURCING PROMPT below. Paste it into the Claude chat, filling in the street, city, and state at the top.",
     'Let it run through every batch of 5 until it reaches the top of the address range on its own — don\'t say "continue," it should keep going automatically.',
