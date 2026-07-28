@@ -605,17 +605,27 @@ export default function BDRInPerson() {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="px-4 pb-4 pt-0">
-              <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                <li>Tap <strong className="text-foreground">Copy Discovery Prompt</strong> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</li>
-                <li>Claude gives you 5 real businesses. Copy that output and paste it directly into <strong className="text-foreground">Bulk Add</strong> here.</li>
-                <li>Say <strong className="text-foreground">"next 5"</strong> in that same chat to keep going — paste each new batch into Bulk Add until you've covered the street.</li>
-                <li>Back here, batches of 5 form automatically in <strong className="text-foreground">Research Batches</strong> as you log businesses — no need to finish the whole street first.</li>
-                <li>On a Ready batch, tap <strong className="text-foreground">Copy Research Prompt</strong> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <strong className="text-foreground">Export Batch</strong> and paste those 5 businesses right after the prompt.</li>
-                <li>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</li>
-                <li>Type the results into <strong className="text-foreground">Log Research Results</strong> on each business here. Saving an owner name auto-creates the lead in My Leads.</li>
+              <ol className="space-y-4 text-sm text-muted-foreground">
+                {[
+                  <>Tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Discovery Prompt</Badge> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</>,
+                  <>Claude gives you 5 real businesses. Copy that output and paste it directly into <Badge variant="outline" className="mx-0.5 font-normal">Bulk Add</Badge> here.</>,
+                  <>Say <Badge variant="outline" className="mx-0.5 font-normal">next 5</Badge> in that same chat to keep going — paste each new batch into Bulk Add until you've covered the street.</>,
+                  <>Back here, batches of 5 form automatically in <Badge variant="outline" className="mx-0.5 font-normal">Research Batches</Badge> as you log businesses — no need to finish the whole street first.</>,
+                  <>On a Ready batch, tap <Badge variant="outline" className="mx-0.5 font-normal">Copy Research Prompt</Badge> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <Badge variant="outline" className="mx-0.5 font-normal">Export Batch</Badge> and paste those 5 businesses right after the prompt.</>,
+                  <>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</>,
+                  <>Type the results into <Badge variant="outline" className="mx-0.5 font-normal">Log Research Results</Badge> on each business here. Saving an owner name auto-creates the lead in My Leads.</>,
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="leading-relaxed">{step}</span>
+                  </li>
+                ))}
               </ol>
             </CardContent>
           </CollapsibleContent>
+
         </Card>
       </Collapsible>
 
@@ -652,23 +662,34 @@ export default function BDRInPerson() {
 
       {activeRoute && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={openNewVisit} className="gap-2">
-              <Plus className="h-5 w-5" /> Add Business
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
-              <ClipboardList className="h-5 w-5" /> Bulk Add
-            </Button>
-            <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Research Prompt
-            </Button>
-            <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
-              <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
-            </Button>
-            <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
-              <Copy className="h-4 w-4" /> Export All
-            </Button>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Discover &amp; Log</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={copyDiscoveryPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Discovery Prompt
+                </Button>
+                <Button onClick={openNewVisit} className="gap-2">
+                  <Plus className="h-4 w-4" /> Add Business
+                </Button>
+                <Button variant="outline" onClick={() => setBulkOpen(true)} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Bulk Add
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Research</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={copyResearchPrompt} className="gap-2">
+                  <ClipboardList className="h-4 w-4" /> Copy Research Prompt
+                </Button>
+                <Button variant="outline" onClick={exportForResearch} className="gap-2" disabled={visits.length === 0}>
+                  <Copy className="h-4 w-4" /> Export All
+                </Button>
+              </div>
+            </div>
           </div>
+
 
           {researchBatches.length > 0 && (
             <Card className="border-border/60 bg-card/60 backdrop-blur">
@@ -679,18 +700,31 @@ export default function BDRInPerson() {
                     const full = batch.length === BATCH_SIZE;
                     const remaining = BATCH_SIZE - batch.length;
                     return (
-                      <div key={i} className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-2">
+                      <div key={i} className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-medium">
                             Batch {i + 1} — {full ? `${batch.length} businesses` : `${batch.length} of ${BATCH_SIZE} logged`}
                           </span>
                           {full && <Badge className="bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)] border-0">Ready</Badge>}
                         </div>
+                        <div className="flex gap-1">
+                          {Array.from({ length: BATCH_SIZE }).map((_, s) => (
+                            <div
+                              key={s}
+                              className={`h-1.5 flex-1 rounded-full ${
+                                s < batch.length
+                                  ? full ? "bg-[hsl(142,72%,42%)]" : "bg-primary"
+                                  : "bg-border/60"
+                              }`}
+                            />
+                          ))}
+                        </div>
                         {!full && (
                           <p className="text-xs text-muted-foreground">
                             {remaining} more to complete this batch.
                           </p>
                         )}
+
                         <div className="flex flex-wrap items-center gap-2">
                           <Button size="sm" variant="outline" onClick={copyResearchPrompt} className="gap-1.5">
                             <ClipboardList className="h-3.5 w-3.5" /> Copy Research Prompt
