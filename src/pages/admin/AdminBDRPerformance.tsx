@@ -499,10 +499,10 @@ export default function AdminBDRPerformance() {
         <h2 className="text-sm font-bold text-foreground mb-3">Street Sweep Activity</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Total Routes", value: sweepTeamStats.routes },
-            { label: "Routes Completed", value: sweepTeamStats.completed },
-            { label: "Total Visits Logged", value: sweepTeamStats.visits },
-            { label: "Visits Researched", value: sweepTeamStats.researched },
+            { label: "Total Sweeps", value: sweepTeamStats.sweeps },
+            { label: "Total Leads", value: sweepTeamStats.total },
+            { label: "Visited", value: sweepTeamStats.visited },
+            { label: "Pending", value: sweepTeamStats.pending },
           ].map(s => (
             <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
               <p className="text-lg font-bold text-foreground">{s.value}</p>
@@ -511,50 +511,33 @@ export default function AdminBDRPerformance() {
           ))}
         </div>
 
-        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Per-Rep Sweep Breakdown</h3>
-        {sweepRepRows.length === 0 ? (
+        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Sweeps by List</h3>
+        {sweepListRows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No street sweep activity yet.</p>
         ) : (
           <div className="space-y-1.5">
-            <div className="hidden sm:grid grid-cols-6 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
-              <span className="col-span-2">Rep</span><span>Routes</span><span>Visits</span><span>Researched</span><span>Research %</span>
+            <div className="hidden sm:grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
+              <span className="col-span-2">List / Owner</span><span>Leads</span><span>Visited</span><span>Skipped</span><span>Pending</span><span>Last Activity</span>
             </div>
-            {sweepRepRows.map(row => (
-              <div key={row.uid} className="rounded-xl px-4 py-3 sm:grid sm:grid-cols-6 sm:gap-2 sm:items-center flex flex-col gap-1" style={cardStyle}>
-                <span className="col-span-2 font-medium text-foreground truncate">{row.name}</span>
-                <span className="text-sm text-foreground">{row.routes}</span>
-                <span className="text-sm text-foreground">{row.visits}</span>
-                <span className="text-sm text-foreground">{row.researched}</span>
-                <span className="text-sm text-foreground">{row.pct}%</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Recent Visits</h3>
-        {sweepFeed.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No visits logged yet.</p>
-        ) : (
-          <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-            {sweepFeed.map(v => (
-              <div key={v.id} className="rounded-xl px-4 py-3 flex items-start gap-3" style={cardStyle}>
-                <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: v.research_status === "researched" ? "hsl(142,72%,42%)" : "hsl(38,92%,50%)" }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-foreground">
-                    <span className="font-medium">{profiles[v.visited_by] || v.visited_by?.slice(0, 8)}</span>
-                    {" logged "}{v.business_name}
-                    <span className="text-muted-foreground"> — {v.address}</span>
-                  </p>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                    <span className="uppercase tracking-wide">{v.storefront_status}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" />{timeAgo(v.created_at)}</span>
-                  </p>
+            {sweepListRows.map(row => (
+              <div key={row.key} className="rounded-xl px-4 py-3 sm:grid sm:grid-cols-7 sm:gap-2 sm:items-center flex flex-col gap-1" style={cardStyle}>
+                <div className="col-span-2 min-w-0">
+                  <p className="font-medium text-foreground truncate">{row.listName}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{row.repName}</p>
                 </div>
+                <span className="text-sm text-foreground">{row.total}</span>
+                <span className="text-sm text-foreground">{row.visited}</span>
+                <span className="text-sm text-foreground">{row.skipped}</span>
+                <span className="text-sm text-foreground">{row.pending}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" />{row.lastActivity ? timeAgo(row.lastActivity) : "—"}
+                </span>
               </div>
             ))}
           </div>
         )}
       </div>
+
 
       {/* Objection leaderboard */}
       <div>
