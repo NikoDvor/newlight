@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Loader2, MapPin, Plus, Trash2, Camera, Copy, CheckCircle2, LocateFixed, Pencil, X, ClipboardList,
+  Loader2, MapPin, Plus, Trash2, Camera, Copy, CheckCircle2, LocateFixed, Pencil, X, ClipboardList, ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,33 +21,57 @@ import { toast } from "@/hooks/use-toast";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { PageHeader } from "@/components/PageHeader";
 
-export const STREET_SWEEP_RESEARCH_PROMPT = `STREET SWEEP DESK RESEARCH PROTOCOL v3
+export const STREET_SWEEP_RESEARCH_PROMPT = `STREET SWEEP DESK RESEARCH PROTOCOL v4
 
-You are doing desk research only — owner name, phone, and booking-link lookups for businesses I supply. You do NOT have Street View, Google Maps browsing, or any visual/image capability. Never attempt a visual block-by-block pass. If I haven't given you a list of businesses, ask for one — do not try to discover businesses on a street yourself.
+ROLE: You are doing desk research only — finding the owner name, phone number, and booking link for a list of businesses I supply. You do NOT have Street View or physical visual access. Never attempt a visual block-by-block pass, and never fabricate or guess any name, number, or link — if you cannot verify something through a real search, mark it "Research Pending" or "Not Found" instead.
 
 INPUT: I will paste a list, one per line: Business Name | Address | (optional) niche.
 
-FOR EACH BUSINESS, in order, stop as soon as resolved:
+BATCHING: process 5 businesses at a time. If given more than 5, output the results for the first 5, then immediately continue to the next 5 automatically — do not wait for me to say 'next' or 'continue.' Keep working straight through batch after batch until the entire list is done. Label each batch's output clearly (Batch 1, Batch 2, etc.).
+
+For EACH business, work through these routes in order for EACH column, stopping a given column as soon as it's confidently resolved — but keep working the other columns even if one resolves early:
+
+COLUMN 1 — OWNER NAME (try in order until resolved):
 1. Search "who is the owner of [Business Name] in [City, State]"
-2. If unresolved: city business license/tax database, Yelp owner-info fields, USPTO/DBA filings
-3. If still unresolved: mark "Research Pending" — never guess
+2. Search "[Business Name] founder OR owner LinkedIn"
+3. Check the city or county business license / fictitious business name (DBA) database for the address
+4. Check Yelp's business page for an "owner response" or "About the Business" owner field
+5. Search "[Business Name] [City] Secretary of State business entity search" for the registered agent/officer name
+6. Search local press: "[Business Name] [City] news OR profile OR interview"
+7. Check the local Chamber of Commerce member directory for the business
+8. Check the Better Business Bureau listing for a listed owner/principal
+If none of these resolve it, mark "Research Pending — owner not found" and move on. Never guess a name from a generic pattern.
 
-ALSO CHECK per resolved business:
-- Direct phone if findable, labeled "owner direct" vs "front desk"
-- Public booking link — note personal calendar vs general/front-desk system
+COLUMN 2 — PHONE (try in order until resolved):
+1. Use the primary number from the business's Google/Yelp listing
+2. Check the business's own website contact/about page for a direct line
+3. If multiple numbers exist, look for context clues distinguishing an owner's direct/cell line from a general front-desk or reception line
+4. Label clearly: "owner direct" only if there's real evidence it reaches the owner personally — otherwise label "front desk / general," even if a single-location shop only has one number.
 
-OUTPUT: one copy-pasteable block per batch (not a file):
+COLUMN 3 — BOOKING LINK (try in order until resolved):
+1. Check the business website for a "Book Now" / "Schedule" / "Contact" link
+2. Search "[Business Name] Vagaro OR Fresha OR Square OR Calendly OR Acuity"
+3. If a booking system is found, determine whether it routes to one specific staff member's personal calendar (note their name) or a general/multi-staff booking page — label accordingly.
+If no booking system is found, note "No online booking found."
+
+OUTPUT FORMAT — one copy-pasteable block per batch (not a file), plain text table:
 Business | Owner | Phone (label) | Booking Link (type) | Status
 
-BATCHING: process 5 businesses at a time. If given more than 5, output the results for the first 5, then immediately continue to the next 5 automatically — do not wait for me to say 'next' or 'continue.' Keep working straight through batch after batch until the entire list is done. Label each batch's output clearly (Batch 1, Batch 2, etc.) so I can tell which businesses each result set belongs to.
+If any step would require seeing the physical storefront (signage, open/closed status, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
-If any step would require seeing the storefront (signage, open/closed, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v2
 
-export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v1
-
-You are finding real businesses on a specific street so I can log them for a street sweep. If you have access to Google Maps/Places search tools in this chat, use them. If you do NOT have that capability here, say so plainly instead of guessing or inventing businesses — never fabricate a business name or address.
+ROLE: You are finding real businesses on a specific street so I can log them for a street sweep. Never fabricate a business name or address — every entry must come from a real search result.
 
 INPUT: I will give you a street, city, and state, and may tell you which businesses I've already logged so you skip them.
+
+DISCOVERY ROUTES — use whichever are available to you, in this priority order:
+1. If you have a Google Maps/Places search tool in this chat, use it directly to pull real businesses and addresses on the given street — this is the most accurate method, prefer it whenever available.
+2. If you do NOT have Places/Maps access, fall back to web search: search "[Street Name] [City] businesses" and "[Street Name] [City] shops OR restaurants OR services," and cross-reference the local Chamber of Commerce directory and city business license database for the same street.
+3. Also check Yelp's category/street browse results and any local "best of [street]" blog roundups as a secondary cross-check — never treat these alone as sufficient without a primary source.
+4. If a business's exact address isn't confirmed by at least one source, still include it but flag it "address unconfirmed."
+
+If you have NO usable method to find real businesses on this street, say so plainly instead of guessing — never fabricate a business name or address just to fill the batch.
 
 OUTPUT: Find exactly 5 real businesses on that street I haven't already logged. For each, give the exact business name and full street address as returned by your search. Output in this exact copy-pasteable format, nothing else, so I can paste it straight into Bulk Add:
 
@@ -132,6 +157,7 @@ export default function BDRInPerson() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [activeRouteId, setActiveRouteId] = useState<string>("");
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const [routeOpen, setRouteOpen] = useState(false);
   const [routeForm, setRouteForm] = useState({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA" });
@@ -559,6 +585,39 @@ export default function BDRInPerson() {
           <Plus className="h-4 w-4" /> New Route
         </Button>
       </PageHeader>
+
+      {/* How It Works guide */}
+      <Collapsible open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
+        <Card className="border-border/60 bg-card/60 backdrop-blur">
+          <CollapsibleTrigger asChild>
+            <CardContent className="p-4 cursor-pointer flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <ClipboardList className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">How This Works</p>
+                  <p className="text-xs text-muted-foreground">7-step workflow: discover → bulk add → research → log results</p>
+                </div>
+              </div>
+              <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${howItWorksOpen ? "rotate-180" : ""}`} />
+            </CardContent>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="px-4 pb-4 pt-0">
+              <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                <li>Tap <strong className="text-foreground">Copy Discovery Prompt</strong> below. Paste it into a fresh Claude chat, then tell it the street, city, and state.</li>
+                <li>Claude gives you 5 real businesses. Copy that output and paste it directly into <strong className="text-foreground">Bulk Add</strong> here.</li>
+                <li>Say <strong className="text-foreground">"next 5"</strong> in that same chat to keep going — paste each new batch into Bulk Add until you've covered the street.</li>
+                <li>Back here, batches of 5 form automatically in <strong className="text-foreground">Research Batches</strong> as you log businesses — no need to finish the whole street first.</li>
+                <li>On a Ready batch, tap <strong className="text-foreground">Copy Research Prompt</strong> and paste it into a <strong className="text-foreground">NEW, separate</strong> Claude chat (not the discovery one), then tap <strong className="text-foreground">Export Batch</strong> and paste those 5 businesses right after the prompt.</li>
+                <li>Claude returns owner name, phone, and booking link for all 5 — and keeps working through additional batches automatically if you paste more than one batch's worth.</li>
+                <li>Type the results into <strong className="text-foreground">Log Research Results</strong> on each business here. Saving an owner name auto-creates the lead in My Leads.</li>
+              </ol>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Route selector */}
       <Card className="border-border/60 bg-card/60 backdrop-blur">
