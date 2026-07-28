@@ -533,7 +533,7 @@ export default function BDRInPerson() {
   };
 
   const exportForResearch = async () => {
-    const ordered = [...visits].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const ordered = [...visits].sort(orderVisits);
     await copyVisits(ordered, "All visits");
   };
 
