@@ -1927,15 +1927,15 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
 /* ──────────────────────────────────────────────── */
 /* In-Person Street Sweep Guide Modal                */
 /* ──────────────────────────────────────────────── */
-const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once, so it applies automatically every time you open a chat in this project.
-
-1. Whenever I ask you to run a street sweep, confirm Web search is toggled ON before starting.
+const BEHAVIORAL_RULES = `1. Whenever I ask you to run a street sweep, confirm Web search is toggled ON before starting.
 2. Run the STREET SOURCING PROMPT first, filling in whatever street/city/state I give you. Let it run automatically through every batch of 5 until it reaches the top of the address range — don't wait for me to say "continue."
 3. In the SAME chat, once that finishes, I'll paste the LEADS ENRICHMENT PROMPT. Use the business list already compiled above in this conversation as its input — don't ask me to re-paste it.
 4. Let the enrichment prompt run automatically through every batch until finished.
 5. Give me both a human-readable table AND the fenced CSV block for each batch, so I can copy just the CSV into the app.
 6. Never claim results are "perfect," "complete," or "guaranteed" — always state realistic confidence and flag what's uncertain.
 7. If you run low on context mid-street, stop cleanly and tell me exactly which address to resume from — don't silently skip ahead or restart from the beginning.`;
+
+
 
 const STREET_SOURCING_PROMPT = `# ROLE
 You are a meticulous local-commerce field researcher compiling a storefront census for one street. Accuracy and COMPLETE COVERAGE matter more than speed. Do not oversell your results as "perfect," "complete," or "guaranteed" — report realistic confidence and flag every uncertainty. Use web search for every verification step.
@@ -1945,12 +1945,15 @@ Street: [STREET NAME]
 City: [CITY]
 State: [STATE]
 Side(s): [both / odd side only / even side only]
-Block range (optional): [e.g., 400–1300; if blank, establish it in STEP 0]
+Block range (REQUIRED): a specific bounded stretch, e.g. "400–800" or "the 500 and 600 blocks." This must be a range walkable in one sweep — roughly 3–10 blocks / 20–60 addresses. Do NOT accept a request to sweep an entire street end-to-end in one pass.
 
 # STEP 0 — ESTABLISH THE FULL ADDRESS RANGE BEFORE LISTING ANY BUSINESS
 1. Determine the full commercial address range of this street using, in priority order: (a) city/county GIS parcel situs data or assessor parcel lookup, (b) Google Maps scrolled end to end, (c) OpenStreetMap/Overpass.
 2. State the established range explicitly with your source.
 3. Build a MASTER CHECKLIST of every plausible street number in the range, ascending, unchecked.
+
+# SCOPE CHECK (do this before anything else)
+If no block range was given, or the requested range spans more than roughly 10 blocks / 60 addresses, STOP and ask the person to pick a specific, narrower block range instead of proceeding. Do not attempt a full-street sweep and do not silently substitute a broad research summary in its place — a bounded range is a hard requirement of this protocol, not a suggestion.
 
 # STEP 1 — STRICT ASCENDING ORDER, 5 BUSINESSES PER BATCH
 Process addresses from lowest number upward. Output EXACTLY 5 businesses per batch. Vacant/closed/no-address entries are logged inline but don't count toward the 5.
@@ -1976,7 +1979,7 @@ Then per entry: [number] [name or —] | STATUS | category | phone | website | o
 After each batch, continue automatically to the next. Do not ask to continue. Do not start mid-range. Do not stop early. If running low on room, end cleanly with "PAUSE — resume at address [N]."
 
 # FINAL SELF-CHECK
-Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short.
+Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short. If the person originally asked for more than this bounded range, remind them at the end that additional ranges need their own separate sweep.
 
 # CLOSING DISCLAIMER (REQUIRED)
 State an honest coverage confidence estimate and known limitations. Do not claim the list is perfect or complete.`;
@@ -2001,6 +2004,21 @@ One row per record, quoted fields.
 # CLOSING (REQUIRED)
 After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
 
+const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once. It contains everything needed, including the full text of both prompts below, so it works standalone even if the person only pastes this one block.
+
+${BEHAVIORAL_RULES}
+
+======================
+FULL TEXT: STREET SOURCING PROMPT (run this first when asked to sweep a street)
+======================
+${STREET_SOURCING_PROMPT}
+
+======================
+FULL TEXT: LEADS ENRICHMENT PROMPT (run this second, on the list the sourcing prompt just compiled)
+======================
+${LEADS_ENRICHMENT_PROMPT}
+`;
+
 function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
 
@@ -2016,6 +2034,7 @@ function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () =
   };
 
   const steps = [
+    'Pick ONE bounded block range first — e.g. "400–800 State St," not the whole street. 3–10 blocks per sweep is the sweet spot; a full corridor has to be swept in multiple separate passes.',
     'Open this Claude project. Tap + (or the slider icon) and confirm "Web search" is toggled ON — it must be blue/on.',
     "Copy the STREET SOURCING PROMPT below. Paste it into the Claude chat, filling in the street, city, and state at the top.",
     'Let it run through every batch of 5 until it reaches the top of the address range on its own — don\'t say "continue," it should keep going automatically.',
