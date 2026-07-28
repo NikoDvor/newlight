@@ -157,6 +157,7 @@ export default function BDRInPerson() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [activeRouteId, setActiveRouteId] = useState<string>("");
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const [routeOpen, setRouteOpen] = useState(false);
   const [routeForm, setRouteForm] = useState({ route_name: "", street_name: "", city: "Santa Barbara", state: "CA" });
