@@ -1335,6 +1335,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/booking\s*system/.test(c)) bkIdx = i;
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd\s*(number|#|no\.?)/.test(c)) crdIdx = i;
+        else if (/street[\s_-]*address|^address$/.test(c)) saIdx = i;
         else if (/^city$|city\s*\/?\s*state|location/.test(c)) cityIdx = i;
         else if (/niche|category|industry/.test(c)) nicheIdx = i;
         else if (/list[\s_-]*name|^list$/.test(c)) lnIdx = i;
