@@ -59,7 +59,7 @@ Business | Owner | Phone (label) | Booking Link (type) | Status
 
 If any step would require seeing the physical storefront (signage, open/closed status, "check in person"), say so explicitly and mark it "needs in-person check" — never fake visual confidence.`;
 
-export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v3
+export const STREET_DISCOVERY_PROMPT = `STREET DISCOVERY PROTOCOL v4
 
 ROLE: You are finding every real business on a specific street so I can log them for a street sweep. Never fabricate a business name or address — every entry must come from a real search result.
 
@@ -71,13 +71,16 @@ DISCOVERY ROUTES — use whichever are available to you, in this priority order:
 3. Also check Yelp's category/street browse results and any local "best of [street]" blog roundups as a secondary cross-check — never treat these alone as sufficient without a primary source.
 4. If a business's exact address isn't confirmed by at least one source, still include it but flag it "address unconfirmed."
 
-If you have NO usable method to find real businesses on this street, say so plainly instead of guessing — never fabricate a business name or address to fill out the list.
+WORK IN INCREMENTS OF 5: search and verify 5 businesses at a time, moving down the street in address order (low numbers to high, or however the street naturally orders). The moment you finish verifying 5, immediately continue searching for the next 5 further down the street — do not stop, do not wait for me to say 'next' or 'continue.' Keep going automatically until you've covered the entire street or run out of usable context.
 
-OUTPUT: Find as many real businesses on that street as you can in one pass — do not artificially limit yourself to a small number. List every one you find, in this exact copy-pasteable format, one per line, nothing else, so I can paste the whole thing straight into Bulk Add:
+OUTPUT FORMAT: Output ONE single continuous list, not separate labeled batches — do not print 'Batch 1' / 'Batch 2' headers or any dividers, since I'm going to copy this whole block and paste it directly into a bulk-add tool that reads one business per line. Just keep appending lines to the same list as you go:
 
 BusinessName, Full Address
 
-If the street is long and you run out of context or need to split your search, tell me clearly how far you got (e.g. "covered the 100-600 block, continue with 700+?") so I know to ask you to keep going — but always output everything you've already found rather than trickling it out a few at a time.`;
+If you run out of context or need to stop before finishing the whole street, end with a plain note (not part of the list) telling me exactly how far you got by address range, so I know where to pick up.
+
+If you have NO usable method to find real businesses on this street at all, say so plainly instead of guessing — never fabricate a business name or address to fill out the list.`;
+
 
 interface Route {
   id: string;
