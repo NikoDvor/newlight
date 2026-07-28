@@ -480,10 +480,19 @@ export default function BDRInPerson() {
     await copyVisits(ordered, "All visits");
   };
 
-  const copyMasterPrompt = async () => {
+  const copyResearchPrompt = async () => {
     try {
       await navigator.clipboard.writeText(STREET_SWEEP_RESEARCH_PROMPT);
-      toast({ title: "Master prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+      toast({ title: "Research prompt copied", description: "Paste it into a fresh Claude chat with web search ON." });
+    } catch {
+      toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
+    }
+  };
+
+  const copyDiscoveryPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(STREET_DISCOVERY_PROMPT);
+      toast({ title: "Discovery prompt copied", description: "Paste it into a chat with Google Maps/Places search tools." });
     } catch {
       toast({ title: "Copy failed", description: "Clipboard unavailable in this browser.", variant: "destructive" });
     }
