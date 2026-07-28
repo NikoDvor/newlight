@@ -253,6 +253,11 @@ export default function BDRMyLeads() {
       const q = search.toLowerCase();
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
+    // Street-sweep lists carry sequence_order — show them in walk order instead
+    // of the default created_at ordering.
+    if (list.some(l => l.sequence_order != null)) {
+      list = [...list].sort((a, b) => (a.sequence_order ?? 1e9) - (b.sequence_order ?? 1e9));
+    }
     return list;
   }, [listScopedLeads, filter, search, todayStart, tomorrowStart]);
 
