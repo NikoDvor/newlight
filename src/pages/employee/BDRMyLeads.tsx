@@ -44,6 +44,12 @@ interface BdrLead {
   owner_booking_link: string | null;
   owner_booking_link_send_ready: string | null;
   dialer_bookable: boolean | null;
+  street_address?: string | null;
+  street_number?: number | null;
+  side_of_street?: string | null;
+  sequence_order?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   created_at: string;
 }
 
@@ -180,6 +186,8 @@ export default function BDRMyLeads() {
   const [activeList, setActiveList] = useState<string>("__all__");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoProgress, setGeoProgress] = useState(0);
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
@@ -247,6 +255,11 @@ export default function BDRMyLeads() {
       const q = search.toLowerCase();
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
+    // Street-sweep lists carry sequence_order — show them in walk order instead
+    // of the default created_at ordering.
+    if (list.some(l => l.sequence_order != null)) {
+      list = [...list].sort((a, b) => (a.sequence_order ?? 1e9) - (b.sequence_order ?? 1e9));
+    }
     return list;
   }, [listScopedLeads, filter, search, todayStart, tomorrowStart]);
 
@@ -264,6 +277,41 @@ export default function BDRMyLeads() {
     const won = scope.filter(l => l.status === "closed_won").length;
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
   }, [listScopedLeads]);
+
+
+  /* ─── Nominatim geocoding (manual, rate-limited to ~1 req/sec) ─── */
+  const geocodeTargets = useMemo(
+    () => listScopedLeads.filter(l => l.street_address && l.latitude == null && l.longitude == null),
+    [listScopedLeads],
+  );
+
+  const runGeocode = async () => {
+    if (geocoding || geocodeTargets.length === 0) return;
+    setGeocoding(true); setGeoProgress(0);
+    let ok = 0, fail = 0;
+    for (let i = 0; i < geocodeTargets.length; i++) {
+      const lead = geocodeTargets[i];
+      setGeoProgress(i + 1);
+      const q = [lead.street_address, lead.city].filter(Boolean).join(", ");
+      try {
+        // NOTE: Nominatim asks for a descriptive User-Agent, but browsers forbid
+        // setting that header on fetch, so we can't send one from the client.
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
+        const json = await res.json();
+        const hit = Array.isArray(json) ? json[0] : null;
+        if (hit?.lat && hit?.lon) {
+          const latitude = parseFloat(hit.lat), longitude = parseFloat(hit.lon);
+          await (supabase as any).from("nl_bdr_leads").update({ latitude, longitude }).eq("id", lead.id);
+          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, latitude, longitude } : l));
+          ok++;
+        } else fail++;
+      } catch { fail++; }
+      // Nominatim free-tier usage policy: max 1 request/second.
+      if (i < geocodeTargets.length - 1) await new Promise(r => setTimeout(r, 1100));
+    }
+    setGeocoding(false);
+    toast({ title: "Geocoding complete", description: `${ok} located${fail ? ` · ${fail} failed` : ""}` });
+  };
 
   const handleChangeStage = async (lead: BdrLead, stage: PipelineStageKey) => {
     if (!user?.id) return;
@@ -349,6 +397,7 @@ export default function BDRMyLeads() {
     let count = 0;
     let skipped = 0;
     let claimedByOther = 0;
+    const inserted: { id: string; street_number: number | null; side_of_street: string | null }[] = [];
     for (const row of rows) {
       const key = (row.business_name || "").trim().toLowerCase();
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
@@ -390,6 +439,10 @@ export default function BDRMyLeads() {
         crd: row.crd || null,
         city: row.city || null,
         niche: row.niche || null,
+        street_address: row.street_address || null,
+        street_number: row.street_number ?? null,
+        side_of_street: row.side_of_street ?? null,
+        source_type: row.street_address ? "street_sweep" : null,
         notes: [
           row.notes || null,
           row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
@@ -398,8 +451,27 @@ export default function BDRMyLeads() {
       }).select("id").single();
       // Safety net: unique index race
       if (error && (error as any).code === "23505") { claimedByOther++; continue; }
-      if (data) { await createCRMRecords({ ...row, phone: primaryPhone }, data.id); count++; }
+      if (data) {
+        await createCRMRecords({ ...row, phone: primaryPhone }, data.id);
+        inserted.push({ id: data.id, street_number: row.street_number ?? null, side_of_street: row.side_of_street ?? null });
+        count++;
+      }
     }
+
+    // Walk order: only for this import's rows, keyed on the ids we just got back
+    // (never re-queried by list name, so unrelated leads are untouched).
+    const withStreet = inserted.filter(r => r.street_number != null);
+    if (withStreet.length > 0) {
+      withStreet.sort((a, b) => {
+        const sa = a.side_of_street || "zz", sb = b.side_of_street || "zz";
+        if (sa !== sb) return sa.localeCompare(sb);
+        return (a.street_number || 0) - (b.street_number || 0);
+      });
+      await Promise.all(withStreet.map((r, i) =>
+        (supabase as any).from("nl_bdr_leads").update({ sequence_order: i + 1 }).eq("id", r.id)
+      ));
+    }
+
     const parts: string[] = [];
     if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped`);
     if (claimedByOther > 0) parts.push(`${claimedByOther} already claimed by another rep`);
@@ -691,6 +763,12 @@ export default function BDRMyLeads() {
                   </>
                 ) : (
                   <>
+                    {geocodeTargets.length > 0 && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={geocoding} onClick={runGeocode}>
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {geocoding ? `Geocoding ${geoProgress}/${geocodeTargets.length}…` : `Geocode this list (${geocodeTargets.length})`}
+                      </Button>
+                    )}
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
                       <Trash2 className="h-3 w-3 mr-1" /> Delete All
@@ -755,6 +833,13 @@ export default function BDRMyLeads() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
+                          {lead.street_number != null && (
+                            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                              style={{ background: "hsla(211,96%,60%,.10)", color: "hsl(211,96%,66%)" }}
+                              title={lead.street_address || undefined}>
+                              {lead.street_address || lead.street_number}{lead.side_of_street ? ` (${lead.side_of_street})` : ""}
+                            </span>
+                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -1307,7 +1392,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         oblIdx = -1,    // legacy V13 "Owner Booking Link"
         oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
         swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1,
-        nicheIdx = -1, notesIdx = -1, lnIdx = -1;
+        nicheIdx = -1, notesIdx = -1, lnIdx = -1, saIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1335,6 +1420,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/booking\s*system/.test(c)) bkIdx = i;
         else if (/meeting\s*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd\s*(number|#|no\.?)/.test(c)) crdIdx = i;
+        else if (/street[\s_-]*address|^address$/.test(c)) saIdx = i;
         else if (/^city$|city\s*\/?\s*state|location/.test(c)) cityIdx = i;
         else if (/niche|category|industry/.test(c)) nicheIdx = i;
         else if (/list[\s_-]*name|^list$/.test(c)) lnIdx = i;
@@ -1468,6 +1554,13 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           niche: nicheIdx >= 0 ? unquote(r[nicheIdx]) : "",
           notes: notesIdx >= 0 ? unquote(r[notesIdx]) : "",
           list_name: lnIdx >= 0 ? unquote(r[lnIdx]) : "",
+          ...(() => {
+            const street_address = saIdx >= 0 ? (unquote(r[saIdx]) || "") : "";
+            const m = street_address.match(/^\s*(\d+)/);
+            const street_number = m ? parseInt(m[1], 10) : null;
+            const side_of_street = street_number == null ? null : (street_number % 2 === 0 ? "even" : "odd");
+            return { street_address, street_number, side_of_street };
+          })(),
           rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
@@ -1874,14 +1967,14 @@ You enrich a storefront census into CRM-ready lead records. Work in the SAME str
 Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
 
 # TASK
-For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, notes (address incl. suite, closure/verification flags, confidence, which sources confirmed), list_name.
+For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), notes (closure/verification flags, confidence, which sources confirmed), list_name.
 
 # BATCH & CONTINUATION RULES
 Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
 
 # OUTPUT FORMAT
 Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
-business_name,owner_name,phone,website,niche,city,notes,list_name
+business_name,owner_name,phone,website,niche,city,street_address,notes,list_name
 One row per record, quoted fields.
 
 # CLOSING (REQUIRED)

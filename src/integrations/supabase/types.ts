@@ -7546,9 +7546,11 @@ export type Database = {
           has_booking_system: boolean | null
           has_sales_team: boolean | null
           id: string
+          latitude: number | null
           lead_source: string
           list_name: string | null
           logo_url: string | null
+          longitude: number | null
           meeting_booked: string | null
           modules_of_interest: string[] | null
           name_normalized: string | null
@@ -7569,9 +7571,15 @@ export type Database = {
           released_at: string | null
           sales_team_size: string | null
           self_booking_widget_non_owner: boolean | null
+          sequence_order: number | null
+          side_of_street: string | null
+          source_type: string | null
           status: string
+          street_address: string | null
+          street_number: number | null
           updated_at: string
           user_id: string
+          visit_status: string | null
           website: string | null
           website_host: string | null
         }
@@ -7599,9 +7607,11 @@ export type Database = {
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
+          latitude?: number | null
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
+          longitude?: number | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
           name_normalized?: string | null
@@ -7622,9 +7632,15 @@ export type Database = {
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
+          sequence_order?: number | null
+          side_of_street?: string | null
+          source_type?: string | null
           status?: string
+          street_address?: string | null
+          street_number?: number | null
           updated_at?: string
           user_id: string
+          visit_status?: string | null
           website?: string | null
           website_host?: string | null
         }
@@ -7652,9 +7668,11 @@ export type Database = {
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
+          latitude?: number | null
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
+          longitude?: number | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
           name_normalized?: string | null
@@ -7675,9 +7693,15 @@ export type Database = {
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
+          sequence_order?: number | null
+          side_of_street?: string | null
+          source_type?: string | null
           status?: string
+          street_address?: string | null
+          street_number?: number | null
           updated_at?: string
           user_id?: string
+          visit_status?: string | null
           website?: string | null
           website_host?: string | null
         }
