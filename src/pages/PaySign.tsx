@@ -472,6 +472,57 @@ export default function PaySign() {
           </Card>
         )}
 
+        {/* Schedule onboarding */}
+        {!allDone && (
+          <Card className={cn("p-6 mb-6 transition-opacity", !bothDone && "opacity-50 pointer-events-none")}>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", scheduled ? "bg-emerald-500/15 text-emerald-500" : "bg-primary/15 text-primary")}>
+                  {scheduled ? <CheckCircle2 className="h-5 w-5" /> : <CalendarClock className="h-5 w-5" />}
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold">Step 4 · Schedule onboarding meeting</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {scheduled
+                      ? "Your onboarding meeting is booked."
+                      : bothDone
+                      ? `45 minutes with ${ctx.rep?.name || "your NewLight rep"}.`
+                      : "Unlocks once payment and signature are complete."}
+                  </p>
+                </div>
+              </div>
+              {scheduled && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Scheduled</span>}
+            </div>
+
+            {!scheduled && (
+              slots.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                  No times are currently published. Your NewLight rep will reach out to schedule.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <select
+                    value={selectedSlot}
+                    onChange={(e) => setSelectedSlot(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">— Select a time —</option>
+                    {slots.map((s) => (
+                      <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>
+                    ))}
+                  </select>
+                  <Button onClick={handleSchedule} disabled={scheduleBusy || !selectedSlot} className="w-full sm:w-auto">
+                    {scheduleBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarClock className="h-4 w-4 mr-2" />}
+                    Confirm onboarding time
+                  </Button>
+                </div>
+              )
+            )}
+          </Card>
+        )}
+
+
+
         <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5" />
           Secured with a cryptographic audit trail. IP address, timestamp, and user agent are recorded on signature.
