@@ -127,7 +127,15 @@ Deno.serve(async (req) => {
             }
           }
 
-          const paySignUrl = envelopeId ? undefined : undefined;
+          // Resolve envelope state + a public Pay & Sign link for the emails.
+          let envStatus: string | null = null;
+          let paySignUrl: string | undefined;
+          if (envelopeId) {
+            const { data: env } = await supabase
+              .from("document_envelopes").select("status, share_token").eq("id", envelopeId).maybeSingle();
+            envStatus = env?.status ?? null;
+            if (env?.share_token) paySignUrl = `${APP_BASE_URL}/pay-sign/${env.share_token}`;
+          }
 
           // Idempotent notifications (guarded by invoices.payment_confirmation_sent).
           if (dealId) {
@@ -138,14 +146,8 @@ Deno.serve(async (req) => {
             });
 
             // If the agreement is already signed, transition + notify (guarded).
-            let signed = false;
-            if (envelopeId) {
-              const { data: env } = await supabase
-                .from("document_envelopes").select("status").eq("id", envelopeId).maybeSingle();
-              signed = env?.status === "signed";
-            }
-            if (signed) {
-              await notifyPaidSignedIfTransition(supabase, dealId, { envelopeId });
+            if (envStatus === "signed") {
+              await notifyPaidSignedIfTransition(supabase, dealId, { envelopeId, paySignUrl });
             } else {
               await supabase.from("crm_deals")
                 .update({ pay_sign_status: "paid" })
