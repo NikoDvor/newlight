@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
   const audit = async (status: "success" | "error", message: string, extra: Record<string, unknown> = {}) => {
     try {
       await admin.from("audit_logs").insert({
-        client_id: UUID_RE.test(clientId) ? clientId : null,
+        client_id: resolvedClientId,
         action: "external_revenue_webhook_received",
         module: "billing",
         status,
