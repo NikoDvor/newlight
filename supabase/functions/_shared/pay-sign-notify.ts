@@ -338,6 +338,7 @@ export async function sendWelcomeDocument(
         <tr><td style="color:#6b7280;">Agreement</td><td>Signed and retained with a verified audit trail</td></tr>
       </table>
 
+      ${signedPdfUrl ? `<div style="margin:0 0 24px;"><a href="${esc(signedPdfUrl)}" style="display:inline-block;background:#0369a1;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">Download your signed agreement (PDF)</a></div>` : ""}
       ${opts.paySignUrl ? `<div style="margin:0 0 24px;"><a href="${esc(opts.paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">View your signed documents</a></div>` : ""}
 
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
