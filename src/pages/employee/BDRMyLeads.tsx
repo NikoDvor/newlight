@@ -1413,7 +1413,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     let headerIdx = -1;
     for (let i = 0; i < Math.min(3, allRows.length); i++) {
       const joined = allRows[i].join(" ").toLowerCase();
-      if (/business\s*name/.test(joined)) { headerIdx = i; break; }
+      if (/business[\s_-]*name/.test(joined)) { headerIdx = i; break; }
     }
 
     // Column indices — -1 means "not present in this header"
