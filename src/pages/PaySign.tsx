@@ -13,6 +13,7 @@ import {
   Sparkles,
   FileText,
   Eye,
+  CalendarClock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,16 +25,48 @@ type Ctx = {
   invoice: any;
   client: any;
   items: any[];
+  proposal?: any;
+  rep?: any;
+  rep_availability?: any;
+  rep_timezone?: string | null;
+  onboarding_meeting?: any;
 };
 
-type StepKey = "review" | "pay" | "sign" | "done";
+type StepKey = "review" | "pay" | "sign" | "schedule" | "done";
 
-function StepIndicator({ current, paid, signed }: { current: StepKey; paid: boolean; signed: boolean }) {
+function buildSlots(availability: any): { date: Date; label: string }[] {
+  const slots: { date: Date; label: string }[] = [];
+  if (!availability) return slots;
+  const now = new Date();
+  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    const cfg = availability?.[days[d.getDay()]];
+    if (!cfg?.enabled) continue;
+    const [sh, sm] = String(cfg.start || "09:00").split(":").map(Number);
+    const [eh, em] = String(cfg.end || "17:00").split(":").map(Number);
+    const startMin = sh * 60 + (sm || 0);
+    const endMin = eh * 60 + (em || 0);
+    for (let m = startMin; m + 45 <= endMin; m += 30) {
+      const s = new Date(d);
+      s.setHours(Math.floor(m / 60), m % 60, 0, 0);
+      slots.push({
+        date: s,
+        label: s.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+      });
+    }
+  }
+  return slots;
+}
+
+function StepIndicator({ current, paid, signed, scheduled }: { current: StepKey; paid: boolean; signed: boolean; scheduled: boolean }) {
   const steps: { key: StepKey; label: string; done: boolean }[] = [
     { key: "review", label: "Review", done: current !== "review" },
     { key: "pay", label: "Pay", done: paid },
     { key: "sign", label: "Sign", done: signed },
-    { key: "done", label: "Done", done: paid && signed },
+    { key: "schedule", label: "Schedule", done: scheduled },
+    { key: "done", label: "Done", done: paid && signed && scheduled },
   ];
   return (
     <div className="flex items-center justify-between gap-2 mb-6 px-1">
@@ -84,6 +117,8 @@ export default function PaySign() {
   const [drawn, setDrawn] = useState(false);
   const [signed, setSigned] = useState(false);
   const [reviewed, setReviewed] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
@@ -137,9 +172,14 @@ export default function PaySign() {
   }, [ctx]);
 
   const isPaid = ctx?.invoice?.invoice_status === "paid";
+  const scheduledAt: string | null = ctx?.onboarding_meeting?.starts_at || null;
+  const scheduled = !!scheduledAt;
   const bothDone = isPaid && signed;
+  const allDone = bothDone && scheduled;
 
-  const currentStep: StepKey = bothDone
+  const slots = useMemo(() => buildSlots(ctx?.rep_availability), [ctx?.rep_availability]);
+
+  const currentStep: StepKey = allDone
     ? "done"
     : !reviewed
     ? "review"
@@ -147,7 +187,7 @@ export default function PaySign() {
     ? "pay"
     : !signed
     ? "sign"
-    : "done";
+    : "schedule";
 
   const handlePay = async () => {
     if (!token) return;
@@ -203,6 +243,21 @@ export default function PaySign() {
     load();
   };
 
+  const handleSchedule = async () => {
+    if (!token || !selectedSlot) return;
+    setScheduleBusy(true);
+    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot },
+    });
+    setScheduleBusy(false);
+    if (error || data?.error) {
+      toast.error(error?.message || data?.error || "Couldn't schedule onboarding");
+      return;
+    }
+    toast.success("Onboarding meeting scheduled.");
+    load();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -240,7 +295,7 @@ export default function PaySign() {
           </div>
         </div>
 
-        <StepIndicator current={currentStep} paid={isPaid} signed={signed} />
+        <StepIndicator current={currentStep} paid={isPaid} signed={signed} scheduled={scheduled} />
 
         {/* Terms summary */}
         <Card className="p-6 mb-6">
@@ -250,20 +305,24 @@ export default function PaySign() {
         </Card>
 
         {/* Done state */}
-        {bothDone && (
+        {allDone && (
           <Card className="p-8 mb-6 bg-emerald-500/10 border-emerald-500/40">
             <div className="flex items-start gap-4">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 shrink-0" />
               <div>
                 <h2 className="text-lg font-semibold text-emerald-500 mb-1">You're all set.</h2>
                 <p className="text-sm text-muted-foreground">
-                  Payment received and service agreement signed. A confirmation email with your signed copy will arrive shortly.
-                  Your NewLight team will reach out within one business day to kick off onboarding.
+                  Payment received, service agreement signed, and your onboarding meeting is booked for{" "}
+                  <span className="text-foreground font-medium">
+                    {new Date(scheduledAt!).toLocaleString([], { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                  . A welcome email with your signed copy and meeting details is on its way.
                 </p>
               </div>
             </div>
           </Card>
         )}
+
 
         {/* Review agreement */}
         {!bothDone && (
@@ -282,6 +341,27 @@ export default function PaySign() {
               </div>
               {reviewed && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Reviewed</span>}
             </div>
+
+            {ctx.proposal && (
+              <div className="mb-4 rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">
+                  What your rep locked in
+                </p>
+                {ctx.proposal.offer_summary && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap mb-3">{ctx.proposal.offer_summary}</p>
+                )}
+                <div className="flex flex-wrap gap-6 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs block">Setup fee</span>
+                    <span className="font-medium">${Number(ctx.proposal.setup_fee ?? 0).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs block">Monthly</span>
+                    <span className="font-medium">${Number(ctx.proposal.monthly_fee ?? 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {agreementDoc?.document_url ? (
               <div className="rounded-lg border border-border overflow-hidden bg-white">
@@ -392,6 +472,57 @@ export default function PaySign() {
             )}
           </Card>
         )}
+
+        {/* Schedule onboarding */}
+        {!allDone && (
+          <Card className={cn("p-6 mb-6 transition-opacity", !bothDone && "opacity-50 pointer-events-none")}>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", scheduled ? "bg-emerald-500/15 text-emerald-500" : "bg-primary/15 text-primary")}>
+                  {scheduled ? <CheckCircle2 className="h-5 w-5" /> : <CalendarClock className="h-5 w-5" />}
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold">Step 4 · Schedule onboarding meeting</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {scheduled
+                      ? "Your onboarding meeting is booked."
+                      : bothDone
+                      ? `45 minutes with ${ctx.rep?.name || "your NewLight rep"}.`
+                      : "Unlocks once payment and signature are complete."}
+                  </p>
+                </div>
+              </div>
+              {scheduled && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Scheduled</span>}
+            </div>
+
+            {!scheduled && (
+              slots.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                  No times are currently published. Your NewLight rep will reach out to schedule.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <select
+                    value={selectedSlot}
+                    onChange={(e) => setSelectedSlot(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">— Select a time —</option>
+                    {slots.map((s) => (
+                      <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>
+                    ))}
+                  </select>
+                  <Button onClick={handleSchedule} disabled={scheduleBusy || !selectedSlot} className="w-full sm:w-auto">
+                    {scheduleBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarClock className="h-4 w-4 mr-2" />}
+                    Confirm onboarding time
+                  </Button>
+                </div>
+              )
+            )}
+          </Card>
+        )}
+
+
 
         <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5" />
