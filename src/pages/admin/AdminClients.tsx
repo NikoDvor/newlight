@@ -863,7 +863,11 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setWebhookClient({ id: c.id, business_name: c.business_name })} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Link2 className="h-3.5 w-3.5" /> Revenue Webhook
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/10" />
+
                           <DropdownMenuItem onClick={() => handleSuspend(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-yellow-400 cursor-pointer">
                             {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-yellow-400" />}
                             {c.status === "suspended" ? "Reactivate" : "Suspend"}
