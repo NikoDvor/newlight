@@ -111,6 +111,18 @@ serve(async (req) => {
 
       await emitOnboardingEvent("onboarding_bundle_signed", "Onboarding Bundle Signed", { signer: signer_name, signer_email, ip });
 
+      // Durable PDF snapshot of the signed agreement (idempotent per envelope).
+      let signed_pdf_url: string | null = null;
+      if (envelope.envelope_type === "service_agreement") {
+        signed_pdf_url = await generateSignedAgreementPdf(supabase, envelope.id, {
+          signerName: signer_name,
+          signerEmail: signer_email,
+          signedAt: sig?.created_at || new Date().toISOString(),
+          ip,
+          title: envelope.title,
+        });
+      }
+
       // If this is a service_agreement whose linked deal already has its initial invoice paid,
       // atomically transition to paid_signed and notify ops.
       let notify: any = null;
@@ -137,7 +149,7 @@ serve(async (req) => {
         }
       }
 
-      return json({ success: true, status: "signed", signature: sig, notify });
+      return json({ success: true, status: "signed", signature: sig, notify, signed_pdf_url });
     }
 
     if (action === "decline") {
