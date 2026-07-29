@@ -116,6 +116,8 @@ export default function PaySign() {
   const [drawn, setDrawn] = useState(false);
   const [signed, setSigned] = useState(false);
   const [reviewed, setReviewed] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
