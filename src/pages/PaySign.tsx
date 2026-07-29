@@ -341,6 +341,27 @@ export default function PaySign() {
               {reviewed && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Reviewed</span>}
             </div>
 
+            {ctx.proposal && (
+              <div className="mb-4 rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">
+                  What your rep locked in
+                </p>
+                {ctx.proposal.offer_summary && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap mb-3">{ctx.proposal.offer_summary}</p>
+                )}
+                <div className="flex flex-wrap gap-6 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs block">Setup fee</span>
+                    <span className="font-medium">${Number(ctx.proposal.setup_fee ?? 0).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs block">Monthly</span>
+                    <span className="font-medium">${Number(ctx.proposal.monthly_fee ?? 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {agreementDoc?.document_url ? (
               <div className="rounded-lg border border-border overflow-hidden bg-white">
                 <iframe
