@@ -12,6 +12,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.newlight-app.com";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
