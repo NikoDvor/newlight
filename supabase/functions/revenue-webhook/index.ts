@@ -82,9 +82,11 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (clientErr) return await fail(500, "Could not verify client.", { db_error: clientErr.message });
+  if (client) resolvedClientId = client.id;
   if (!client || client.revenue_webhook_token !== token) {
     return await fail(401, "Invalid webhook token for this client_id.");
   }
+
 
   const { data: inserted, error: insertErr } = await admin
     .from("financial_adjustments")
