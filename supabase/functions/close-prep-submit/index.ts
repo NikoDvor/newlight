@@ -515,6 +515,15 @@ function buildServiceAgreementHtml(args: {
     <li>promptly notifying Agency of any operational, inventory, staffing, or fulfillment issue that affects conversion.</li>
   </ul>
   <p>If tracking, analytics, or ad-account access is revoked, suspended, or degraded, the Guarantee Period is automatically tolled (paused) until access is restored. Repeated or material breach of these conditions terminates the guarantee remedy.</p>
+  <p><strong>1.6.1 Client-Caused Exclusions.</strong> Without limiting the foregoing, the guarantee remedy in Sections 1.2–1.4 is tolled for the duration of, and voided by material or repeated occurrence of, any of the following:</p>
+  <ul>
+    <li>(a) Client changes to pricing, product, offer, website, or landing pages that materially reduce conversion, made without prior consultation with Agency;</li>
+    <li>(b) Client's failure to follow up on leads delivered by Agency within a commercially reasonable time;</li>
+    <li>(c) Client reducing paid-media spend below the agreed minimum specified at kickoff;</li>
+    <li>(d) Client rejecting Agency's material recommendations without offering a reasonable alternative;</li>
+    <li>(e) Client's own legal, licensing, regulatory, or compliance issues that prevent Agency from executing agreed campaigns; and</li>
+    <li>(f) Client-supplied assets, claims, testimonials, or representations that violate platform policy or applicable law.</li>
+  </ul>
   <p><strong>1.7 No Guarantee of Specific Results.</strong> Except for the recoupment mechanism expressly stated in Sections 1.2–1.5, Agency makes <strong>no guarantee</strong> of any specific ranking, traffic volume, lead volume, conversion rate, customer count, revenue amount, ROAS, or profitability. Performance in any channel depends on factors outside Agency's control including market conditions, competition, Client's product and pricing, seasonality, and third-party platform behavior.</p>
 
   <h2>2. Ongoing Fees</h2>
