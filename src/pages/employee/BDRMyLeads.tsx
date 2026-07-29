@@ -1331,6 +1331,30 @@ function ObjectionDashboard({ userId }: { userId?: string }) {
 /* ═══════════════════════════════════════════════ */
 /* Import Modal                                    */
 /* ═══════════════════════════════════════════════ */
+function parseDelimitedLine(line: string, delim: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++; // skip the escaped quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delim && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
 function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean; onClose: () => void; onImport: (rows: any[], listName: string) => void; existingLists: string[] }) {
   const [raw, setRaw] = useState("");
   const [listName, setListName] = useState("");
@@ -1380,8 +1404,10 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     const first = linesRaw[0];
     const delim = first.includes("|") ? "|" : first.includes("\t") ? "\t" : ",";
 
-    // Split all lines
-    const allRows = linesRaw.map(l => l.split(delim).map(c => c.trim()));
+    // Split all lines with RFC 4180-style quote awareness so delimiters inside
+    // double-quoted fields (e.g. "502 State St, Santa Barbara, CA") do not
+    // break the row. Escaped "" inside a quoted field becomes a single ".
+    const allRows = linesRaw.map(l => parseDelimitedLine(l, delim));
 
     // Locate a header row (any of the first 3 rows containing "business name")
     let headerIdx = -1;
