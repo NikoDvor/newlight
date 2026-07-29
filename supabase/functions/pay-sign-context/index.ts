@@ -303,8 +303,7 @@ Deno.serve(async (req) => {
       await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
     }
 
-
-    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify });
+    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify, payment_notify: paymentNotify });
   }
 
   return json({ error: "Unknown action" }, 400);
