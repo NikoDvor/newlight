@@ -1,4 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
+import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
+import { sendPaymentConfirmation } from "../_shared/pay-sign-notify.ts";
+import {
+  ensureStripeCustomer,
+  savePaymentMethodFromSession,
+  createRetainerSubscription,
+} from "../_shared/stripe-billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
