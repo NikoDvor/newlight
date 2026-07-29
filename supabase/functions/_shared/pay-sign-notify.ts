@@ -135,6 +135,7 @@ export async function sendPaymentConfirmation(
     if (client?.name) businessName = client.name;
   }
   const rep = await resolveRep(supabase, deal?.assigned_user ?? null);
+  const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);
 
   const amount = money(inv.amount_paid ?? inv.total_amount);
   const terms = termsLine(deal);
