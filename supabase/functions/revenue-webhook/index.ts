@@ -38,7 +38,11 @@ Deno.serve(async (req) => {
   const description = typeof body?.description === "string" ? body.description.trim() : "";
   const occurredAt = typeof body?.occurred_at === "string" ? body.occurred_at : "";
 
+  // Only set on the audit row once we know the client row actually exists (FK).
+  let resolvedClientId: string | null = null;
+
   const audit = async (status: "success" | "error", message: string, extra: Record<string, unknown> = {}) => {
+
     try {
       await admin.from("audit_logs").insert({
         client_id: resolvedClientId,
