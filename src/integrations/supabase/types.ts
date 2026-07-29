@@ -4384,6 +4384,7 @@ export type Database = {
           lead_source: string | null
           meeting_id_latest: string | null
           notes_summary: string | null
+          onboarding_meeting_id: string | null
           pay_sign_status: string
           payment_invoice_id: string | null
           pipeline_stage: string
@@ -4396,6 +4397,7 @@ export type Database = {
           status: string
           updated_at: string
           urgency_level: string | null
+          welcome_email_sent: boolean
         }
         Insert: {
           assigned_operator_user_id?: string | null
@@ -4420,6 +4422,7 @@ export type Database = {
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
+          onboarding_meeting_id?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
           pipeline_stage?: string
@@ -4432,6 +4435,7 @@ export type Database = {
           status?: string
           updated_at?: string
           urgency_level?: string | null
+          welcome_email_sent?: boolean
         }
         Update: {
           assigned_operator_user_id?: string | null
@@ -4456,6 +4460,7 @@ export type Database = {
           lead_source?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
+          onboarding_meeting_id?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
           pipeline_stage?: string
@@ -4468,6 +4473,7 @@ export type Database = {
           status?: string
           updated_at?: string
           urgency_level?: string | null
+          welcome_email_sent?: boolean
         }
         Relationships: [
           {
@@ -6545,6 +6551,7 @@ export type Database = {
           invoice_type: string
           issued_at: string | null
           paid_at: string | null
+          payment_confirmation_sent: boolean
           payment_link_url: string | null
           payment_method: string | null
           payment_notes: string | null
@@ -6570,6 +6577,7 @@ export type Database = {
           invoice_type?: string
           issued_at?: string | null
           paid_at?: string | null
+          payment_confirmation_sent?: boolean
           payment_link_url?: string | null
           payment_method?: string | null
           payment_notes?: string | null
@@ -6595,6 +6603,7 @@ export type Database = {
           invoice_type?: string
           issued_at?: string | null
           paid_at?: string | null
+          payment_confirmation_sent?: boolean
           payment_link_url?: string | null
           payment_method?: string | null
           payment_notes?: string | null
