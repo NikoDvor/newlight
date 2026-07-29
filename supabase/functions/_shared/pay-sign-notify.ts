@@ -182,8 +182,9 @@ export async function sendPaymentConfirmation(
     `Amount paid: ${amount}`,
     `Payment method: Card via Stripe`,
     ``,
+    signedPdfUrl ? `Signed service agreement (PDF): ${signedPdfUrl}` : ``,
     `Thank you. Questions: ${OPS_EMAIL_TO} · ${OPS_PHONE_DISPLAY}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
   const receiptHtml = `<!DOCTYPE html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:600px;margin:0 auto;padding:40px 32px;">
     <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
