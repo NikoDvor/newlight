@@ -903,6 +903,13 @@ export default function AdminClients() {
         onSent={fetchClients}
       />
 
+      <RevenueWebhookDialog
+        client={webhookClient}
+        open={!!webhookClient}
+        onOpenChange={(open) => { if (!open) setWebhookClient(null); }}
+      />
+
+
     </div>
   );
 }
