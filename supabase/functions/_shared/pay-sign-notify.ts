@@ -3,6 +3,8 @@
 //  - sendWelcomeDocument: warm client welcome, only once paid + signed + scheduled
 // Both are idempotent via boolean flags on invoices / crm_deals.
 
+import { getSignedAgreementUrlForDeal } from "./agreement-pdf.ts";
+
 const OPS_SMS_TO = "+18058363557";
 const OPS_PHONE_DISPLAY = "(805) 836-3557";
 const OPS_EMAIL_TO = "team@newlightgen.com";
