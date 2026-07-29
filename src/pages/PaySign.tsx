@@ -294,7 +294,7 @@ export default function PaySign() {
           </div>
         </div>
 
-        <StepIndicator current={currentStep} paid={isPaid} signed={signed} />
+        <StepIndicator current={currentStep} paid={isPaid} signed={signed} scheduled={scheduled} />
 
         {/* Terms summary */}
         <Card className="p-6 mb-6">
@@ -304,20 +304,24 @@ export default function PaySign() {
         </Card>
 
         {/* Done state */}
-        {bothDone && (
+        {allDone && (
           <Card className="p-8 mb-6 bg-emerald-500/10 border-emerald-500/40">
             <div className="flex items-start gap-4">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 shrink-0" />
               <div>
                 <h2 className="text-lg font-semibold text-emerald-500 mb-1">You're all set.</h2>
                 <p className="text-sm text-muted-foreground">
-                  Payment received and service agreement signed. A confirmation email with your signed copy will arrive shortly.
-                  Your NewLight team will reach out within one business day to kick off onboarding.
+                  Payment received, service agreement signed, and your onboarding meeting is booked for{" "}
+                  <span className="text-foreground font-medium">
+                    {new Date(scheduledAt!).toLocaleString([], { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                  . A welcome email with your signed copy and meeting details is on its way.
                 </p>
               </div>
             </div>
           </Card>
         )}
+
 
         {/* Review agreement */}
         {!bothDone && (
