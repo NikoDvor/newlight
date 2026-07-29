@@ -298,6 +298,7 @@ export async function sendWelcomeDocument(
       })
     : null;
   const terms = termsLine(check);
+  const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);
 
   const subject = `Welcome to NewLight, ${businessName}`;
   const text = [
@@ -309,6 +310,7 @@ export async function sendWelcomeDocument(
     `Terms: ${terms}`,
     ``,
     `Anything at all: ${OPS_EMAIL_TO} · ${OPS_PHONE_DISPLAY}`,
+    signedPdfUrl ? `Signed service agreement (PDF): ${signedPdfUrl}` : ``,
     opts.paySignUrl ? `Your signed documents: ${opts.paySignUrl}` : ``,
   ].filter(Boolean).join("\n");
 
