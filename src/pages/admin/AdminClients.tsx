@@ -66,6 +66,8 @@ export default function AdminClients() {
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   const [appLinkClient, setAppLinkClient] = useState<Client | null>(null);
+  const [webhookClient, setWebhookClient] = useState<{ id: string; business_name: string } | null>(null);
+
   
   const [form, setForm] = useState({
     business_name: "",
