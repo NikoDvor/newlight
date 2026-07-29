@@ -282,18 +282,27 @@ Deno.serve(async (req) => {
       payment_method: "stripe",
     }).eq("id", deal.payment_invoice_id);
 
+    const originHdr = req.headers.get("origin") || req.headers.get("referer") || "";
+    let base = ""; try { base = originHdr ? new URL(originHdr).origin : ""; } catch { base = ""; }
+    const paySignLink = base ? `${base}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
+
+    // Payment confirmations (idempotent per invoice)
+    const paymentNotify = await sendPaymentConfirmation(supabase, deal.id, {
+      invoiceId: deal.payment_invoice_id,
+      payerEmail: sess.customer_details?.email || envelope.recipient_email || null,
+      paySignUrl: paySignLink,
+    });
+
     // If envelope also signed, transition deal to paid_signed and notify ops; else just mark paid.
     let newStatus = "paid";
     let notify: any = null;
     if (envelope.status === "signed") {
-      const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-      let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
-      const paySignUrl = originBase ? `${originBase}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
-      notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl, envelopeId: envelope.id });
+      notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl: paySignLink, envelopeId: envelope.id });
       newStatus = "paid_signed";
     } else {
       await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
     }
+
 
     return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify });
   }
