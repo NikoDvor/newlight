@@ -169,9 +169,14 @@ export default function PaySign() {
   }, [ctx]);
 
   const isPaid = ctx?.invoice?.invoice_status === "paid";
+  const scheduledAt: string | null = ctx?.onboarding_meeting?.starts_at || null;
+  const scheduled = !!scheduledAt;
   const bothDone = isPaid && signed;
+  const allDone = bothDone && scheduled;
 
-  const currentStep: StepKey = bothDone
+  const slots = useMemo(() => buildSlots(ctx?.rep_availability), [ctx?.rep_availability]);
+
+  const currentStep: StepKey = allDone
     ? "done"
     : !reviewed
     ? "review"
@@ -179,7 +184,7 @@ export default function PaySign() {
     ? "pay"
     : !signed
     ? "sign"
-    : "done";
+    : "schedule";
 
   const handlePay = async () => {
     if (!token) return;
