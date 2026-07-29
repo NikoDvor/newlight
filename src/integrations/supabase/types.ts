@@ -3482,6 +3482,7 @@ export type Database = {
           primary_location: string | null
           proposal_status: string
           provisional_profile: string | null
+          revenue_webhook_token: string
           secondary_contact_email: string | null
           secondary_contact_name: string | null
           secondary_contact_phone: string | null
@@ -3533,6 +3534,7 @@ export type Database = {
           primary_location?: string | null
           proposal_status?: string
           provisional_profile?: string | null
+          revenue_webhook_token?: string
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
@@ -3584,6 +3586,7 @@ export type Database = {
           primary_location?: string | null
           proposal_status?: string
           provisional_profile?: string | null
+          revenue_webhook_token?: string
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
           secondary_contact_phone?: string | null
@@ -4396,6 +4399,7 @@ export type Database = {
           proposal_id_current: string | null
           qualification_status: string | null
           recurring_fee: number | null
+          revenue_auto_logged: boolean
           service_agreement_envelope_id: string | null
           status: string
           stripe_subscription_id: string | null
@@ -4435,6 +4439,7 @@ export type Database = {
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
           status?: string
           stripe_subscription_id?: string | null
@@ -4474,6 +4479,7 @@ export type Database = {
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
           status?: string
           stripe_subscription_id?: string | null

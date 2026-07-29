@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
+import { RevenueWebhookDialog } from "@/components/admin/RevenueWebhookDialog";
+
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import { seedDemoSopShell } from "@/lib/clientSopShell";
@@ -66,6 +68,8 @@ export default function AdminClients() {
   const [inviteResult, setInviteResult] = useState<{ email: string; sent: boolean; link: string | null } | null>(null);
   const [deleteClient, setDeleteClient] = useState<{ id: string; business_name: string } | null>(null);
   const [appLinkClient, setAppLinkClient] = useState<Client | null>(null);
+  const [webhookClient, setWebhookClient] = useState<{ id: string; business_name: string } | null>(null);
+
   
   const [form, setForm] = useState({
     business_name: "",
@@ -859,7 +863,11 @@ export default function AdminClients() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}/handoff`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Handoff Checklist
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setWebhookClient({ id: c.id, business_name: c.business_name })} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Link2 className="h-3.5 w-3.5" /> Revenue Webhook
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/10" />
+
                           <DropdownMenuItem onClick={() => handleSuspend(c)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-yellow-400 cursor-pointer">
                             {c.status === "suspended" ? <Play className="h-3.5 w-3.5 text-emerald-400" /> : <Pause className="h-3.5 w-3.5 text-yellow-400" />}
                             {c.status === "suspended" ? "Reactivate" : "Suspend"}
@@ -894,6 +902,13 @@ export default function AdminClients() {
         onOpenChange={(open) => { if (!open) setAppLinkClient(null); }}
         onSent={fetchClients}
       />
+
+      <RevenueWebhookDialog
+        client={webhookClient}
+        open={!!webhookClient}
+        onOpenChange={(open) => { if (!open) setWebhookClient(null); }}
+      />
+
 
     </div>
   );
