@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { LogoUploader } from "@/components/LogoUploader";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
+import { RevenueWebhookDialog } from "@/components/admin/RevenueWebhookDialog";
+
 import { provisionWorkspaceDefaults, computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/workspaceProvisioner";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import { seedDemoSopShell } from "@/lib/clientSopShell";
