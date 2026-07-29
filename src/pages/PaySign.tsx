@@ -242,6 +242,21 @@ export default function PaySign() {
     load();
   };
 
+  const handleSchedule = async () => {
+    if (!token || !selectedSlot) return;
+    setScheduleBusy(true);
+    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot },
+    });
+    setScheduleBusy(false);
+    if (error || data?.error) {
+      toast.error(error?.message || data?.error || "Couldn't schedule onboarding");
+      return;
+    }
+    toast.success("Onboarding meeting scheduled.");
+    load();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
