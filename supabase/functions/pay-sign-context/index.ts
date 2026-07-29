@@ -234,8 +234,16 @@ Deno.serve(async (req) => {
     const successUrl = `${originBase}/pay-sign/${share_token}?payment=success&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${originBase}/pay-sign/${share_token}?payment=cancelled`;
 
-    const { Stripe } = await import("https://esm.sh/stripe@14.21.0?target=deno");
-    const stripe = new Stripe(stripeSecret, { apiVersion: "2024-04-10" });
+    const stripe = await getStripe();
+    if (!stripe) return json({ error: "Stripe not configured" }, 503);
+
+    // Always create/reuse a Stripe Customer so the card can be reused later
+    // (retainer subscription or monthly off-session commission charges).
+    const customerId = await ensureStripeCustomer(stripe, supabase, {
+      clientId: deal.client_id,
+      email: envelope.recipient_email,
+      name: client?.name || deal.deal_name,
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -248,7 +256,8 @@ Deno.serve(async (req) => {
         },
         quantity: 1,
       }],
-      customer_email: envelope.recipient_email || undefined,
+      ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
+      payment_intent_data: { setup_future_usage: "off_session" },
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: { invoice_id: invId!, deal_id: deal.id, envelope_id: envelope.id },
