@@ -3491,6 +3491,7 @@ export type Database = {
           source_appointment_id: string | null
           status: string
           stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           stripe_status: string | null
           stripe_subscription_id: string | null
           timezone: string | null
@@ -3541,6 +3542,7 @@ export type Database = {
           source_appointment_id?: string | null
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_status?: string | null
           stripe_subscription_id?: string | null
           timezone?: string | null
@@ -3591,6 +3593,7 @@ export type Database = {
           source_appointment_id?: string | null
           status?: string
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           stripe_status?: string | null
           stripe_subscription_id?: string | null
           timezone?: string | null
@@ -4395,6 +4398,7 @@ export type Database = {
           recurring_fee: number | null
           service_agreement_envelope_id: string | null
           status: string
+          stripe_subscription_id: string | null
           updated_at: string
           urgency_level: string | null
           welcome_email_sent: boolean
@@ -4433,6 +4437,7 @@ export type Database = {
           recurring_fee?: number | null
           service_agreement_envelope_id?: string | null
           status?: string
+          stripe_subscription_id?: string | null
           updated_at?: string
           urgency_level?: string | null
           welcome_email_sent?: boolean
@@ -4471,6 +4476,7 @@ export type Database = {
           recurring_fee?: number | null
           service_agreement_envelope_id?: string | null
           status?: string
+          stripe_subscription_id?: string | null
           updated_at?: string
           urgency_level?: string | null
           welcome_email_sent?: boolean
@@ -6543,8 +6549,11 @@ export type Database = {
           billing_account_id: string
           client_id: string
           created_at: string
+          deal_id: string | null
           due_date: string | null
           failed_at: string | null
+          failure_notification_sent: boolean
+          failure_reason: string | null
           id: string
           invoice_number: string
           invoice_status: string
@@ -6555,9 +6564,12 @@ export type Database = {
           payment_link_url: string | null
           payment_method: string | null
           payment_notes: string | null
+          period_end: string | null
+          period_start: string | null
           proposal_id: string | null
           sent_at: string | null
           stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           subscription_id: string | null
           subtotal_amount: number | null
           tax_amount: number | null
@@ -6569,8 +6581,11 @@ export type Database = {
           billing_account_id: string
           client_id: string
           created_at?: string
+          deal_id?: string | null
           due_date?: string | null
           failed_at?: string | null
+          failure_notification_sent?: boolean
+          failure_reason?: string | null
           id?: string
           invoice_number: string
           invoice_status?: string
@@ -6581,9 +6596,12 @@ export type Database = {
           payment_link_url?: string | null
           payment_method?: string | null
           payment_notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
           proposal_id?: string | null
           sent_at?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -6595,8 +6613,11 @@ export type Database = {
           billing_account_id?: string
           client_id?: string
           created_at?: string
+          deal_id?: string | null
           due_date?: string | null
           failed_at?: string | null
+          failure_notification_sent?: boolean
+          failure_reason?: string | null
           id?: string
           invoice_number?: string
           invoice_status?: string
@@ -6607,9 +6628,12 @@ export type Database = {
           payment_link_url?: string | null
           payment_method?: string | null
           payment_notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
           proposal_id?: string | null
           sent_at?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subscription_id?: string | null
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -6629,6 +6653,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
             referencedColumns: ["id"]
           },
           {
@@ -12280,6 +12311,9 @@ export type Database = {
           proposal_id: string | null
           service_package_type: string | null
           setup_fee_amount: number | null
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           subscription_name: string
           subscription_status: string
           updated_at: string
@@ -12301,6 +12335,9 @@ export type Database = {
           proposal_id?: string | null
           service_package_type?: string | null
           setup_fee_amount?: number | null
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_name: string
           subscription_status?: string
           updated_at?: string
@@ -12322,6 +12359,9 @@ export type Database = {
           proposal_id?: string | null
           service_package_type?: string | null
           setup_fee_amount?: number | null
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_name?: string
           subscription_status?: string
           updated_at?: string

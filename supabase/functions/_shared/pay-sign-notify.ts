@@ -3,6 +3,8 @@
 //  - sendWelcomeDocument: warm client welcome, only once paid + signed + scheduled
 // Both are idempotent via boolean flags on invoices / crm_deals.
 
+import { getSignedAgreementUrlForDeal } from "./agreement-pdf.ts";
+
 const OPS_SMS_TO = "+18058363557";
 const OPS_PHONE_DISPLAY = "(805) 836-3557";
 const OPS_EMAIL_TO = "team@newlightgen.com";
@@ -133,6 +135,7 @@ export async function sendPaymentConfirmation(
     if (client?.name) businessName = client.name;
   }
   const rep = await resolveRep(supabase, deal?.assigned_user ?? null);
+  const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);
 
   const amount = money(inv.amount_paid ?? inv.total_amount);
   const terms = termsLine(deal);
@@ -179,8 +182,9 @@ export async function sendPaymentConfirmation(
     `Amount paid: ${amount}`,
     `Payment method: Card via Stripe`,
     ``,
+    signedPdfUrl ? `Signed service agreement (PDF): ${signedPdfUrl}` : ``,
     `Thank you. Questions: ${OPS_EMAIL_TO} · ${OPS_PHONE_DISPLAY}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
   const receiptHtml = `<!DOCTYPE html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:600px;margin:0 auto;padding:40px 32px;">
     <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
@@ -207,6 +211,7 @@ export async function sendPaymentConfirmation(
         <td style="padding:10px 0;text-align:right;font-weight:700;border-top:1px solid #e5e7eb;">${amount}</td>
       </tr>
     </table>
+    ${signedPdfUrl ? `<div style="margin-top:24px;"><a href="${esc(signedPdfUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">Download signed service agreement (PDF)</a></div>` : ""}
     <p style="font-size:13px;color:#6b7280;line-height:1.7;margin-top:28px;">
       Ongoing terms: ${esc(terms)}.<br>
       Questions about this receipt? Contact ${OPS_EMAIL_TO} or ${OPS_PHONE_DISPLAY}.
@@ -293,6 +298,7 @@ export async function sendWelcomeDocument(
       })
     : null;
   const terms = termsLine(check);
+  const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);
 
   const subject = `Welcome to NewLight, ${businessName}`;
   const text = [
@@ -304,6 +310,7 @@ export async function sendWelcomeDocument(
     `Terms: ${terms}`,
     ``,
     `Anything at all: ${OPS_EMAIL_TO} · ${OPS_PHONE_DISPLAY}`,
+    signedPdfUrl ? `Signed service agreement (PDF): ${signedPdfUrl}` : ``,
     opts.paySignUrl ? `Your signed documents: ${opts.paySignUrl}` : ``,
   ].filter(Boolean).join("\n");
 
@@ -331,6 +338,7 @@ export async function sendWelcomeDocument(
         <tr><td style="color:#6b7280;">Agreement</td><td>Signed and retained with a verified audit trail</td></tr>
       </table>
 
+      ${signedPdfUrl ? `<div style="margin:0 0 24px;"><a href="${esc(signedPdfUrl)}" style="display:inline-block;background:#0369a1;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">Download your signed agreement (PDF)</a></div>` : ""}
       ${opts.paySignUrl ? `<div style="margin:0 0 24px;"><a href="${esc(opts.paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">View your signed documents</a></div>` : ""}
 
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
