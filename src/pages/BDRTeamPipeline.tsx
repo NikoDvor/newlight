@@ -25,7 +25,14 @@ interface RawLead {
   outcome_history: any;
   list_name: string | null;
   created_at: string;
+  has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
+  booking_platform: string | null;
+  booking_system_platform: string | null;
+  booking_system_methods: string[] | null;
+  booking_system_checked_at: string | null;
 }
+
 
 interface RepRow {
   user_id: string;
