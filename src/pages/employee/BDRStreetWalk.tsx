@@ -368,25 +368,36 @@ export default function BDRStreetWalk() {
               const tone = statusTone(lead.visit_status);
               const isCurrent = currentStop?.id === lead.id;
               return (
-                <button key={lead.id}
+                <div key={lead.id}
+                  role="button" tabIndex={0}
                   onClick={() => setOutcomeLead(lead)}
-                  className="w-full text-left px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors flex items-center gap-3">
-                  <span className="text-[11px] text-white/40 w-6 shrink-0">{lead.sequence_order}</span>
-                  <span className="min-w-0 flex-1">
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOutcomeLead(lead); } }}
+                  className="w-full text-left px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors flex items-start gap-3 cursor-pointer">
+                  <span className="text-[11px] text-white/40 w-6 shrink-0 pt-0.5">{lead.sequence_order}</span>
+                  <div className="min-w-0 flex-1 space-y-1">
                     <span className={`block text-sm break-words leading-snug ${isCurrent ? "text-white font-semibold" : "text-white/80"}`}>
                       {lead.business_name}
                     </span>
                     {lead.street_address && (
                       <span className="block text-[11px] text-white/45 break-words">{lead.street_address}</span>
                     )}
-                    <span className="mt-1 flex flex-wrap items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <LeadMetaTags lead={lead} />
                       <BookingSystemBadge lead={lead} showPlatform={false} />
-                    </span>
-                  </span>
+                    </div>
+                    <div className="text-[11px]">
+                      <span className="text-white/40 mr-1">Owner:</span>
+                      <LeadOwner lead={lead} className="inline-flex" />
+                    </div>
+                    <LeadPhones lead={lead} />
+                    <LeadWebsite lead={lead} />
+                    <LeadNotes lead={lead} clamp />
+                  </div>
 
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
                     style={{ background: tone.bg, color: tone.color }}>{tone.label}</span>
-                </button>
+                </div>
+
               );
             })}
           </div>
