@@ -169,6 +169,7 @@ const FILTER_TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "today", label: "Today" },
   ...PIPELINE_STAGES.map(s => ({ key: `stage:${s.key}`, label: s.label })),
+  { key: "no_booking", label: "No booking system" },
 ];
 
 /* ─── page ─── */
@@ -255,6 +256,9 @@ export default function BDRMyLeads() {
   const filtered = useMemo(() => {
     let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
+    else if (filter === "no_booking") {
+      list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
+    }
     else if (filter.startsWith("stage:")) {
       const target = filter.slice(6) as PipelineStageKey;
       list = list.filter(l => derivePipelineStage(l) === target);
