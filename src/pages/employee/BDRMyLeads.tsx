@@ -439,8 +439,12 @@ export default function BDRMyLeads() {
         phone_type: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone_type ?? null) : null,
         website: row.website || null,
         booking_platform: row.booking_platform ?? null,
+        booking_system_platform: (row as any).booking_system_platform ?? row.booking_platform ?? null,
+        booking_system_methods: (row as any).booking_system_methods ?? [],
+        booking_system_checked_at: (row as any).booking_system_methods?.length ? new Date().toISOString() : null,
         has_booking_system: row.has_booking_system,
         booking_system_exists: row.booking_system_exists ?? row.has_booking_system ?? null,
+
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? row.owner_calendar_confirmed ?? null,
         owner_calendar_confirmed: row.owner_calendar_confirmed ?? row.booking_link_is_owner ?? null,
