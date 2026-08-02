@@ -331,14 +331,18 @@ export default function AdminBDRPerformance() {
       </div>
 
       {/* Team stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {[
           { label: "Total Leads", value: teamStats.total },
           { label: "Booked", value: teamStats.booked },
           { label: "Won", value: teamStats.won },
           { label: "Conv %", value: `${teamStats.rate}%` },
           { label: "Objections", value: teamStats.objections },
+          { label: "Booking Sys: Yes", value: teamStats.bookingYes },
+          { label: "Booking Sys: No", value: teamStats.bookingNo },
+          { label: "Booking Unchecked", value: teamStats.bookingUnknown },
         ].map(s => (
+
           <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
             <p className="text-lg font-bold text-foreground">{s.value}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
