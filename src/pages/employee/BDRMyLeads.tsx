@@ -1582,8 +1582,13 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           phone_type: hasNewCols ? null : legacyPhoneType,
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
+          booking_system_platform: booking_platform,
+          booking_system_methods: bmIdx >= 0
+            ? (r[bmIdx] || "").split(/[|,;]/).map(s => s.trim().toLowerCase().replace(/\s+/g, "_")).filter(Boolean)
+            : [],
           has_booking_system,
           booking_system_exists,
+
           booking_link: blIdx >= 0 ? cleanLink(r[blIdx] || "") : null,
           booking_link_is_owner: owner_calendar_confirmed, // kept in sync w/ V16
           owner_calendar_confirmed,
