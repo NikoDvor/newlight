@@ -35,6 +35,11 @@ interface BdrLead {
   objection_category: string | null;
   has_booking_system: boolean | null;
   booking_system_exists: boolean | null;
+  booking_platform?: string | null;
+  booking_system_platform?: string | null;
+  booking_system_methods?: string[] | null;
+  booking_system_checked_at?: string | null;
+
   list_name: string | null;
   pipeline_stage: string | null;
   phone_type: string | null;
