@@ -612,6 +612,28 @@ export default function BDRMyLeads() {
     await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
   };
 
+  const bookingCheckTargets = useMemo(
+    () => listScopedLeads.filter(l => (l as any).website && !(l as any).booking_system_checked_at).map(l => l.id),
+    [listScopedLeads],
+  );
+
+  const runBookingCheck = async () => {
+    const ids = bookingCheckTargets.slice(0, 100);
+    if (ids.length === 0) return;
+    setBookingChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-booking-system", { body: { lead_ids: ids } });
+      if (error) throw error;
+      toast({ title: "Booking check complete", description: `Checked ${ids.length} site${ids.length !== 1 ? "s" : ""}.` });
+      await loadLeads();
+    } catch (e: any) {
+      toast({ title: "Booking check failed", description: e.message, variant: "destructive" });
+    } finally {
+      setBookingChecking(false);
+    }
+  };
+
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
