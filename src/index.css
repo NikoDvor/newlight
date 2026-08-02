@@ -164,7 +164,7 @@
       hsl(222 40% 5%) 60%,
       hsl(218 36% 4%) 100%
     );
-  overflow: hidden;
+  overflow-x: hidden;
   color: hsl(210 40% 90%);
 }
 .nl-dark-bg > * { position: relative; z-index: 1; }
