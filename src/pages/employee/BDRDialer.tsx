@@ -11,6 +11,8 @@ import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+
 
 
 interface Lead {
