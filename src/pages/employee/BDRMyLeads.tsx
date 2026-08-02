@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -197,6 +198,16 @@ export default function BDRMyLeads() {
   const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
+  const [confirmState, setConfirmState] = useState<
+    { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
+  >(null);
+  // window.confirm() is blocked in the installed PWA / embedded app shell, which
+  // silently cancelled every destructive action. Use a real dialog instead.
+  const askConfirm = useCallback(
+    (title: string, description: string, confirmLabel = "Delete") =>
+      new Promise<boolean>(resolve => setConfirmState({ title, description, confirmLabel, resolve })),
+    [],
+  );
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) return;
@@ -549,7 +560,7 @@ export default function BDRMyLeads() {
 
   const handleDeleteLead = async (lead: BdrLead) => {
     if (!user?.id) return;
-    if (!window.confirm(`Delete "${lead.business_name}" permanently? This cannot be undone.`)) return;
+    if (!(await askConfirm("Delete lead", `Delete "${lead.business_name}" permanently? This cannot be undone.`))) return;
     setLeads(prev => prev.filter(l => l.id !== lead.id));
     const { error } = await (supabase as any).from("nl_bdr_leads").delete().eq("id", lead.id).eq("user_id", user.id);
     if (error) {
@@ -605,16 +616,22 @@ export default function BDRMyLeads() {
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    if (!window.confirm(`Delete ${ids.length} selected lead${ids.length !== 1 ? "s" : ""} permanently? This cannot be undone.`)) return;
+    if (!(await askConfirm("Delete selected leads", `Delete ${ids.length} selected lead${ids.length !== 1 ? "s" : ""} permanently? This cannot be undone.`))) return;
     await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
   };
 
   const handleDeleteAllInList = async () => {
     const ids = listScopedLeads.map(l => l.id);
     if (ids.length === 0) return;
-    const label = activeList === "__all__" ? "all leads" : `all leads in "${activeList}"`;
-    if (!window.confirm(`Delete ${label} (${ids.length} lead${ids.length !== 1 ? "s" : ""}) permanently? This cannot be undone.`)) return;
-    await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
+    const isList = activeList !== "__all__";
+    const label = isList ? `the list "${activeList}"` : "all leads";
+    if (!(await askConfirm(
+      isList ? `Delete list "${activeList}"` : "Delete all leads",
+      `This permanently deletes ${label} and its ${ids.length} lead${ids.length !== 1 ? "s" : ""}. This cannot be undone.`,
+      isList ? "Delete list" : "Delete all",
+    ))) return;
+    await deleteLeadsByIds(ids, isList ? `List "${activeList}" deleted` : `${ids.length} leads deleted`);
+    if (isList) setActiveList("__all__");
   };
 
   const bookingCheckTargets = useMemo(
@@ -827,7 +844,8 @@ export default function BDRMyLeads() {
 
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete All
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      {activeList === "__all__" ? "Delete All" : `Delete list (${listScopedLeads.length})`}
                     </Button>
                   </>
                 )}
