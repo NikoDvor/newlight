@@ -272,6 +272,14 @@ function Td({ children, className = "", style }: { children: React.ReactNode; cl
 }
 
 function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBack: () => void }) {
+  const booking = leads.reduce(
+    (acc, l) => {
+      const s = bookingSystemState(l);
+      acc[s] += 1;
+      return acc;
+    },
+    { yes: 0, no: 0, unknown: 0 } as Record<"yes" | "no" | "unknown", number>,
+  );
   return (
     <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -283,8 +291,12 @@ function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBa
           <p className="text-xs text-muted-foreground">
             {rep.total} leads · {rep.convRate}% conversion · {rep.won} won
           </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Booking system — {booking.yes} yes · {booking.no} no · {booking.unknown} unchecked
+          </p>
         </div>
       </CardHeader>
+
       <CardContent>
         <StageBar counts={rep} total={rep.total} />
         <div className="mt-4 space-y-2">
