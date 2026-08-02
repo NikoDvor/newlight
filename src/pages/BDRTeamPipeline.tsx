@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { pipelineStageFromOutcome } from "@/pages/employee/BDRMyLeads";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+
 
 type Stage = "cold" | "warm" | "hot" | "won";
 
