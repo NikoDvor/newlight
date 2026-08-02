@@ -309,43 +309,34 @@ export default function BDRStreetWalk() {
                   You've arrived at {currentStop.business_name}
                 </div>
               )}
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
+              <div className="min-w-0 space-y-2.5">
+                <div>
                   <p className="text-[10px] uppercase tracking-wider text-white/45">Current stop #{currentStop.sequence_order}</p>
                   <h2 className="text-lg font-bold text-white break-words leading-snug">{currentStop.business_name}</h2>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    {currentStop.street_address && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,70%)" }}>
-                        <MapPin className="h-3 w-3 inline mr-1" />{currentStop.street_address}
-                      </span>
-                    )}
-                    {currentStop.side_of_street && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)" }}>
-                        {currentStop.side_of_street} side
-                      </span>
-                    )}
-                    {distanceToCurrent != null && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
-                        ~{Math.round(distanceToCurrent)} m away
-                      </span>
-                    )}
-                  </div>
-                  {stripLeadFlags(currentStop.owner_name) && (
-                    <p className="text-xs text-white/60 mt-2">Owner: {stripLeadFlags(currentStop.owner_name)}</p>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {getLeadPhones(currentStop).map(p => (
-                      <a key={p.kind + p.number} href={`tel:${p.number}`}
-                        className="font-mono text-xs hover:underline" style={{ color: "hsl(211,96%,68%)" }}>
-                        {p.number}
-                      </a>
-                    ))}
-                  </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <LeadMetaTags lead={currentStop} />
+                  {distanceToCurrent != null && (
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
+                      ~{Math.round(distanceToCurrent)} m away
+                    </span>
+                  )}
+                  <BookingSystemBadge lead={currentStop} />
+                </div>
+
+                <div className="text-xs">
+                  <span className="text-white/40 mr-1">Owner:</span>
+                  <LeadOwner lead={currentStop} className="inline-flex" />
+                </div>
+
+                <LeadPhones lead={currentStop} />
+                <LeadWebsite lead={currentStop} />
+                <LeadBookingLinks lead={currentStop} />
+                <LeadNotes lead={currentStop} clamp />
               </div>
+
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <Button size="sm" onClick={() => setOutcomeLead(currentStop)} disabled={savingId === currentStop.id}>
