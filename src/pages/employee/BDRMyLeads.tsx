@@ -2019,18 +2019,32 @@ You enrich a storefront census into CRM-ready lead records. Work in the SAME str
 Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
 
 # TASK
-For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), notes (closure/verification flags, confidence, which sources confirmed), list_name.
+For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), booking_system_exists, booking_platform, booking_methods, notes (closure/verification flags, confidence, which sources confirmed), list_name.
+
+# BOOKING SYSTEM CHECK (REQUIRED — run on the website you already found; do NOT go hunting for a different site)
+For every business that has a website, run all 5 detection routes against that site before you decide. Stop early only when a route confirms Yes.
+1. URL / path — look for /book, /book-now, /booking, /schedule, /appointments, /reservations, or a booking. / schedule. subdomain.
+2. Embedded widget or script — Calendly, Square Appointments, Acuity/Squarespace Scheduling, Vagaro, Booksy, Fresha, Mindbody, Setmore, Schedulicity, SimplyBook, OpenTable, Resy, Tock, Housecall Pro, Jobber, Zocdoc, GoHighLevel, HubSpot Meetings, Microsoft Bookings, Google Appointment Schedules.
+3. CTA text — a visible "Book Now", "Book Online", "Schedule an Appointment", "Reserve a Table", "Request an Appointment" button or link.
+4. Structured data / meta — schema.org Reservation / ReserveAction / potentialAction markup, or booking-specific meta tags.
+5. Footer / contact-page link-out — an outbound link to any third-party booking domain from the footer, contact page, or social profile links.
+
+Record the result honestly:
+- booking_system_exists = Yes only if at least one route confirmed it; No only if you actually checked the site and all 5 routes came back empty; Unknown if there is no website or the site would not load. Never write No for a business you could not check.
+- booking_platform = the platform name (e.g. "Calendly", "Square Appointments") or "custom/native" when it is the business's own booking page; blank when Unknown or No.
+- booking_methods = the routes that confirmed it, pipe-separated, using these exact codes: url_path | embed_script | cta_text | structured_data | footer_linkout. Blank when No or Unknown.
 
 # BATCH & CONTINUATION RULES
 Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
 
 # OUTPUT FORMAT
 Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
-business_name,owner_name,phone,website,niche,city,street_address,notes,list_name
+business_name,owner_name,phone,website,niche,city,street_address,booking_system_exists,booking_platform,booking_methods,notes,list_name
 One row per record, quoted fields.
 
 # CLOSING (REQUIRED)
-After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
+After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, # with a booking system (Yes / No / Unknown split), and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
+
 
 const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once. It contains everything needed, including the full text of both prompts below, so it works standalone even if the person only pastes this one block.
 
