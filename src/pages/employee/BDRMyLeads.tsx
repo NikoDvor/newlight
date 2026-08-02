@@ -809,12 +809,12 @@ export default function BDRMyLeads() {
 
           {/* Bulk action toolbar */}
           {listScopedLeads.length > 0 && (
-            <div className="flex items-center justify-between gap-2 flex-wrap rounded-xl px-3 py-2"
+            <div className="flex items-center justify-between gap-2 flex-wrap rounded-xl px-3 py-2 overflow-hidden"
               style={{ background: selectMode ? "hsla(211,96%,56%,.08)" : "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.12)" }}>
               <p className="text-xs text-muted-foreground">
                 {selectMode ? `${selectedIds.size} selected` : `${listScopedLeads.length} lead${listScopedLeads.length !== 1 ? "s" : ""} in ${activeList === "__all__" ? "all lists" : `"${activeList}"`}`}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto min-w-0 overflow-x-auto scrollbar-none [&>button]:shrink-0 -mx-1 px-1 py-0.5" style={{ WebkitOverflowScrolling: "touch" }}>
                 {selectMode ? (
                   <>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}>Cancel</Button>
