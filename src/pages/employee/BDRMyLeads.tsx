@@ -194,6 +194,7 @@ export default function BDRMyLeads() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [geocoding, setGeocoding] = useState(false);
+  const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
 
   const fetchLeads = useCallback(async () => {
@@ -625,7 +626,7 @@ export default function BDRMyLeads() {
       const { data, error } = await supabase.functions.invoke("check-booking-system", { body: { lead_ids: ids } });
       if (error) throw error;
       toast({ title: "Booking check complete", description: `Checked ${ids.length} site${ids.length !== 1 ? "s" : ""}.` });
-      await loadLeads();
+      await fetchLeads();
     } catch (e: any) {
       toast({ title: "Booking check failed", description: e.message, variant: "destructive" });
     } finally {
