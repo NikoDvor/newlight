@@ -286,13 +286,16 @@ export default function AdminBDRPerformance() {
 
   const exportSweepCSV = () => {
     const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
-    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Created"].join(",")];
+    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Booking System", "Booking Platform", "Detection Methods", "Created"].join(",")];
     sweepLeads.forEach(l => {
       rows.push([
         esc(profiles[l.user_id] || l.user_id),
         esc(l.list_name), esc(l.business_name), esc(l.street_address || l.address),
         esc(l.visit_status || "pending"), esc(l.owner_name),
         esc(l.owner_direct_phone || l.phone),
+        esc(bookingSystemState(l) === "unknown" ? "Unknown" : bookingSystemState(l) === "yes" ? "Yes" : "No"),
+        esc(bookingSystemPlatform(l) || ""),
+        esc((l.booking_system_methods || []).join(" | ")),
         esc(new Date(l.created_at).toLocaleString()),
       ].join(","));
     });
@@ -306,11 +309,21 @@ export default function AdminBDRPerformance() {
 
   // CSV export
   const exportCSV = () => {
-    const rows = [["BDR", "Business", "Owner", "Phone", "Status", "Objection", "Created", "Outcome History"].join(",")];
+    const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const rows = [["BDR", "Business", "Owner", "Phone", "Status", "Objection", "Booking System", "Booking Platform", "Detection Methods", "Created", "Outcome History"].join(",")];
     filteredLeads.forEach(l => {
       const history = (l.outcome_history || []).map((h: any) => `${h.label} (${new Date(h.timestamp).toLocaleDateString()})`).join("; ");
-      rows.push([profiles[l.user_id] || l.user_id, l.business_name, l.owner_name || "", l.phone || "", l.status, l.objection_category || "", new Date(l.created_at).toLocaleDateString(), `"${history}"`].join(","));
+      const state = bookingSystemState(l);
+      rows.push([
+        esc(profiles[l.user_id] || l.user_id), esc(l.business_name), esc(l.owner_name || ""), esc(l.phone || ""),
+        esc(l.status), esc(l.objection_category || ""),
+        esc(state === "unknown" ? "Unknown" : state === "yes" ? "Yes" : "No"),
+        esc(bookingSystemPlatform(l) || ""),
+        esc((l.booking_system_methods || []).join(" | ")),
+        esc(new Date(l.created_at).toLocaleDateString()), esc(history),
+      ].join(","));
     });
+
     const blob = new Blob([rows.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `bdr-report-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
