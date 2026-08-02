@@ -379,7 +379,11 @@ export default function BDRStreetWalk() {
                     {lead.street_address && (
                       <span className="block text-[11px] text-white/45 break-words">{lead.street_address}</span>
                     )}
+                    <span className="mt-1 flex flex-wrap items-center gap-1">
+                      <BookingSystemBadge lead={lead} showPlatform={false} />
+                    </span>
                   </span>
+
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
                     style={{ background: tone.bg, color: tone.color }}>{tone.label}</span>
                 </button>
