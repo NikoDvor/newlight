@@ -79,7 +79,7 @@ export default function BDRTeamPipeline() {
       // RLS-scoped by tenant_select_leads: any workspace member sees all leads for their client_id.
       const { data: leadRows } = await (supabase as any)
         .from("nl_bdr_leads")
-        .select("id,user_id,client_id,business_name,owner_name,phone,website,city,status,pipeline_stage,outcome_history,list_name,created_at")
+        .select("id,user_id,client_id,business_name,owner_name,phone,website,city,status,pipeline_stage,outcome_history,list_name,created_at,has_booking_system,booking_system_exists,booking_platform,booking_system_platform,booking_system_methods,booking_system_checked_at")
         .eq("client_id", activeClientId)
         .order("created_at", { ascending: false });
       const rows: RawLead[] = leadRows || [];
