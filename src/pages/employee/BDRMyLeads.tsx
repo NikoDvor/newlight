@@ -814,6 +814,13 @@ export default function BDRMyLeads() {
                         {geocoding ? `Geocoding ${geoProgress}/${geocodeTargets.length}…` : `Geocode this list (${geocodeTargets.length})`}
                       </Button>
                     )}
+                    {bookingCheckTargets.length > 0 && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={bookingChecking} onClick={runBookingCheck}>
+                        <CalendarCheck className="h-3 w-3 mr-1" />
+                        {bookingChecking ? "Checking booking systems…" : `Verify booking systems (${Math.min(bookingCheckTargets.length, 100)})`}
+                      </Button>
+                    )}
+
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
                       <Trash2 className="h-3 w-3 mr-1" /> Delete All
