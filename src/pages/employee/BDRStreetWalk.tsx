@@ -94,7 +94,7 @@ export default function BDRStreetWalk() {
       setClientId(await resolveEmployeeClientId(user.id));
       const { data } = await (supabase as any)
         .from("nl_bdr_leads")
-        .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, list_name, notes, called, pipeline_stage, street_address, street_number, side_of_street, sequence_order, latitude, longitude, visit_status")
+        .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, website, list_name, notes, called, pipeline_stage, street_address, street_number, side_of_street, sequence_order, latitude, longitude, visit_status, source_type, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable")
         .eq("user_id", user.id)
         .not("sequence_order", "is", null)
         .order("sequence_order", { ascending: true });
