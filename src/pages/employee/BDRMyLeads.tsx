@@ -15,6 +15,8 @@ import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
