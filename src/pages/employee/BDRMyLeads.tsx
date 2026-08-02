@@ -1131,7 +1131,29 @@ export default function BDRMyLeads() {
         leadId={profileLeadId}
         onUpdated={fetchLeads}
       />
+
+      <AlertDialog
+        open={!!confirmState}
+        onOpenChange={(o) => { if (!o) { confirmState?.resolve(false); setConfirmState(null); } }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { confirmState?.resolve(false); setConfirmState(null); }}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { confirmState?.resolve(true); setConfirmState(null); }}
+            >
+              {confirmState?.confirmLabel || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
 
