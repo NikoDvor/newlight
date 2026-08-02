@@ -7572,7 +7572,10 @@ export type Database = {
           booking_link: string | null
           booking_link_is_owner: boolean | null
           booking_platform: string | null
+          booking_system_checked_at: string | null
           booking_system_exists: boolean | null
+          booking_system_methods: string[]
+          booking_system_platform: string | null
           business_name: string
           callback_at: string | null
           callback_set_at: string | null
@@ -7633,7 +7636,10 @@ export type Database = {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
           booking_platform?: string | null
+          booking_system_checked_at?: string | null
           booking_system_exists?: boolean | null
+          booking_system_methods?: string[]
+          booking_system_platform?: string | null
           business_name: string
           callback_at?: string | null
           callback_set_at?: string | null
@@ -7694,7 +7700,10 @@ export type Database = {
           booking_link?: string | null
           booking_link_is_owner?: boolean | null
           booking_platform?: string | null
+          booking_system_checked_at?: string | null
           booking_system_exists?: boolean | null
+          booking_system_methods?: string[]
+          booking_system_platform?: string | null
           business_name?: string
           callback_at?: string | null
           callback_set_at?: string | null
