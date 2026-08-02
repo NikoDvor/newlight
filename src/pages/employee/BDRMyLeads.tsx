@@ -960,13 +960,8 @@ export default function BDRMyLeads() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                           {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
-                          {lead.has_booking_system === true ? (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Yes</span>
-                          ) : lead.has_booking_system === false ? (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                          <BookingSystemBadge lead={lead} />
+
                           {!selectMode && (
                             calledLeadIds.has(lead.id) ? (
                               <button
