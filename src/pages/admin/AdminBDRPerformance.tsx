@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import SystemHealthPanel from "@/components/training/SystemHealthPanel";
 import { DAILY_DIAL_GOAL } from "@/lib/bdrCalendar";
+import { bookingSystemState, bookingSystemPlatform } from "@/lib/bookingSystem";
+
 
 /** Group dial-event timestamps by local YYYY-MM-DD and split hit vs missed against DAILY_DIAL_GOAL. */
 function computeDaysHitMissed(timestamps: string[]) {
