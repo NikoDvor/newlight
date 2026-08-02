@@ -10,6 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
+import { LeadOwner, LeadPhones, LeadWebsite, LeadMetaTags, LeadNotes, LeadBookingLinks, BookingSystemBadge } from "@/components/employee/LeadFields";
 
 interface WalkLead {
   id: string;
@@ -19,18 +20,35 @@ interface WalkLead {
   front_desk_phone: string | null;
   owner_direct_phone: string | null;
   city: string | null;
+  niche: string | null;
+  website: string | null;
   list_name: string | null;
   notes: string | null;
   called: boolean | null;
   pipeline_stage: string | null;
   street_address: string | null;
-  street_number: string | null;
+  street_number: number | null;
   side_of_street: string | null;
   sequence_order: number | null;
   latitude: number | null;
   longitude: number | null;
   visit_status: string | null;
+  source_type: string | null;
+  has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
+  booking_platform: string | null;
+  booking_system_platform: string | null;
+  booking_system_methods: string[] | null;
+  booking_system_checked_at: string | null;
+  booking_link: string | null;
+  booking_link_is_owner: boolean | null;
+  owner_calendar_confirmed: boolean | null;
+  owner_booking_link: string | null;
+  owner_booking_link_send_ready: string | null;
+  self_booking_widget_non_owner: boolean | null;
+  dialer_bookable: boolean | null;
 }
+
 
 const ARRIVAL_METERS = 40;
 
