@@ -295,8 +295,10 @@ function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBa
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-foreground truncate">{l.business_name}</span>
                     <Badge variant="outline" style={{ background: stage.bg, color: stage.text, borderColor: "transparent" }}>{stage.label}</Badge>
+                    <BookingSystemBadge lead={l} />
                     {l.list_name && <span className="text-[10px] text-muted-foreground">· {l.list_name}</span>}
                   </div>
+
                   <div className="text-xs text-muted-foreground truncate">
                     {[l.owner_name, l.phone, l.city].filter(Boolean).join(" · ")}
                   </div>
