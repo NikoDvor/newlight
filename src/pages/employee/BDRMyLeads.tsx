@@ -1454,9 +1454,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/self.?booking[\s_-]*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
         else if (/booking[\s_-]*link/.test(c)) blIdx = i;
+        else if (/booking[\s_-]*(system[\s_-]*)?methods?|detection[\s_-]*methods?/.test(c)) bmIdx = i;
         else if (/booking[\s_-]*system[\s_-]*exists/.test(c)) bseIdx = i;
         else if (/booking[\s_-]*platform/.test(c)) bpIdx = i;
         else if (/booking[\s_-]*system/.test(c)) bkIdx = i;
+
         else if (/meeting[\s_-]*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd[\s_-]*(number|#|no\.?)/.test(c)) crdIdx = i;
         else if (/street[\s_-]*address|^address$/.test(c)) saIdx = i;
