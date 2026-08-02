@@ -1424,6 +1424,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         odpIdx = -1,    // NEW V17.1 "Owner Direct Phone"
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // "Booking System Exists" (Yes/No)
+        bmIdx = -1,     // "Booking Methods" (pipe-separated detection route codes)
+
         bpIdx = -1,     // "Booking Platform" (name)
         blIdx = -1,
         bloIdx = -1,    // legacy V13 "Booking Link is Owner"
