@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { pipelineStageFromOutcome } from "@/pages/employee/BDRMyLeads";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import { bookingSystemState } from "@/lib/bookingSystem";
+
 
 
 type Stage = "cold" | "warm" | "hot" | "won";
