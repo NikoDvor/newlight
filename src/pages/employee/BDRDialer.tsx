@@ -32,7 +32,11 @@ interface Lead {
   has_booking_system: boolean | null;
   booking_system_exists: boolean | null;
   booking_platform: string | null;
+  booking_system_platform?: string | null;
+  booking_system_methods?: string[] | null;
+  booking_system_checked_at?: string | null;
   phone_type: string | null;
+
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
   owner_calendar_confirmed: boolean | null;
