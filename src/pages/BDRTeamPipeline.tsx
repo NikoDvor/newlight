@@ -8,6 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { pipelineStageFromOutcome } from "@/pages/employee/BDRMyLeads";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import { bookingSystemState } from "@/lib/bookingSystem";
+
+
 
 type Stage = "cold" | "warm" | "hot" | "won";
 
@@ -25,7 +29,14 @@ interface RawLead {
   outcome_history: any;
   list_name: string | null;
   created_at: string;
+  has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
+  booking_platform: string | null;
+  booking_system_platform: string | null;
+  booking_system_methods: string[] | null;
+  booking_system_checked_at: string | null;
 }
+
 
 interface RepRow {
   user_id: string;
@@ -72,7 +83,7 @@ export default function BDRTeamPipeline() {
       // RLS-scoped by tenant_select_leads: any workspace member sees all leads for their client_id.
       const { data: leadRows } = await (supabase as any)
         .from("nl_bdr_leads")
-        .select("id,user_id,client_id,business_name,owner_name,phone,website,city,status,pipeline_stage,outcome_history,list_name,created_at")
+        .select("id,user_id,client_id,business_name,owner_name,phone,website,city,status,pipeline_stage,outcome_history,list_name,created_at,has_booking_system,booking_system_exists,booking_platform,booking_system_platform,booking_system_methods,booking_system_checked_at")
         .eq("client_id", activeClientId)
         .order("created_at", { ascending: false });
       const rows: RawLead[] = leadRows || [];
@@ -263,6 +274,14 @@ function Td({ children, className = "", style }: { children: React.ReactNode; cl
 }
 
 function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBack: () => void }) {
+  const booking = leads.reduce(
+    (acc, l) => {
+      const s = bookingSystemState(l);
+      acc[s] += 1;
+      return acc;
+    },
+    { yes: 0, no: 0, unknown: 0 } as Record<"yes" | "no" | "unknown", number>,
+  );
   return (
     <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -274,8 +293,12 @@ function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBa
           <p className="text-xs text-muted-foreground">
             {rep.total} leads · {rep.convRate}% conversion · {rep.won} won
           </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Booking system — {booking.yes} yes · {booking.no} no · {booking.unknown} unchecked
+          </p>
         </div>
       </CardHeader>
+
       <CardContent>
         <StageBar counts={rep} total={rep.total} />
         <div className="mt-4 space-y-2">
@@ -288,8 +311,10 @@ function RepDetail({ rep, leads, onBack }: { rep: RepRow; leads: RawLead[]; onBa
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-foreground truncate">{l.business_name}</span>
                     <Badge variant="outline" style={{ background: stage.bg, color: stage.text, borderColor: "transparent" }}>{stage.label}</Badge>
+                    <BookingSystemBadge lead={l} />
                     {l.list_name && <span className="text-[10px] text-muted-foreground">· {l.list_name}</span>}
                   </div>
+
                   <div className="text-xs text-muted-foreground truncate">
                     {[l.owner_name, l.phone, l.city].filter(Boolean).join(" · ")}
                   </div>

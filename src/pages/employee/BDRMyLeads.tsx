@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, MapPin, Copy } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, CalendarCheck, MapPin, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -15,6 +15,8 @@ import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+
 
 /* ─── types ─── */
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
@@ -35,6 +37,11 @@ interface BdrLead {
   objection_category: string | null;
   has_booking_system: boolean | null;
   booking_system_exists: boolean | null;
+  booking_platform?: string | null;
+  booking_system_platform?: string | null;
+  booking_system_methods?: string[] | null;
+  booking_system_checked_at?: string | null;
+
   list_name: string | null;
   pipeline_stage: string | null;
   phone_type: string | null;
@@ -187,6 +194,7 @@ export default function BDRMyLeads() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [geocoding, setGeocoding] = useState(false);
+  const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
 
   const fetchLeads = useCallback(async () => {
@@ -432,8 +440,12 @@ export default function BDRMyLeads() {
         phone_type: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone_type ?? null) : null,
         website: row.website || null,
         booking_platform: row.booking_platform ?? null,
+        booking_system_platform: (row as any).booking_system_platform ?? row.booking_platform ?? null,
+        booking_system_methods: (row as any).booking_system_methods ?? [],
+        booking_system_checked_at: (row as any).booking_system_methods?.length ? new Date().toISOString() : null,
         has_booking_system: row.has_booking_system,
         booking_system_exists: row.booking_system_exists ?? row.has_booking_system ?? null,
+
         booking_link: row.booking_link || null,
         booking_link_is_owner: row.booking_link_is_owner ?? row.owner_calendar_confirmed ?? null,
         owner_calendar_confirmed: row.owner_calendar_confirmed ?? row.booking_link_is_owner ?? null,
@@ -600,6 +612,28 @@ export default function BDRMyLeads() {
     if (!window.confirm(`Delete ${label} (${ids.length} lead${ids.length !== 1 ? "s" : ""}) permanently? This cannot be undone.`)) return;
     await deleteLeadsByIds(ids, `${ids.length} lead${ids.length !== 1 ? "s" : ""} deleted`);
   };
+
+  const bookingCheckTargets = useMemo(
+    () => listScopedLeads.filter(l => (l as any).website && !(l as any).booking_system_checked_at).map(l => l.id),
+    [listScopedLeads],
+  );
+
+  const runBookingCheck = async () => {
+    const ids = bookingCheckTargets.slice(0, 100);
+    if (ids.length === 0) return;
+    setBookingChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-booking-system", { body: { lead_ids: ids } });
+      if (error) throw error;
+      toast({ title: "Booking check complete", description: `Checked ${ids.length} site${ids.length !== 1 ? "s" : ""}.` });
+      await fetchLeads();
+    } catch (e: any) {
+      toast({ title: "Booking check failed", description: e.message, variant: "destructive" });
+    } finally {
+      setBookingChecking(false);
+    }
+  };
+
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -780,6 +814,13 @@ export default function BDRMyLeads() {
                         {geocoding ? `Geocoding ${geoProgress}/${geocodeTargets.length}…` : `Geocode this list (${geocodeTargets.length})`}
                       </Button>
                     )}
+                    {bookingCheckTargets.length > 0 && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={bookingChecking} onClick={runBookingCheck}>
+                        <CalendarCheck className="h-3 w-3 mr-1" />
+                        {bookingChecking ? "Checking booking systems…" : `Verify booking systems (${Math.min(bookingCheckTargets.length, 100)})`}
+                      </Button>
+                    )}
+
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectMode(true)}>Select</Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" onClick={handleDeleteAllInList}>
                       <Trash2 className="h-3 w-3 mr-1" /> Delete All
@@ -955,13 +996,8 @@ export default function BDRMyLeads() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                           {lead.city && <span className="text-xs text-muted-foreground">{lead.city}</span>}
-                          {lead.has_booking_system === true ? (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)" }}>Yes</span>
-                          ) : lead.has_booking_system === false ? (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,65%)" }}>No</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                          <BookingSystemBadge lead={lead} />
+
                           {!selectMode && (
                             calledLeadIds.has(lead.id) ? (
                               <button
@@ -1422,6 +1458,8 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         odpIdx = -1,    // NEW V17.1 "Owner Direct Phone"
         bkIdx = -1,     // legacy "Booking System" (platform name in old prompt)
         bseIdx = -1,    // "Booking System Exists" (Yes/No)
+        bmIdx = -1,     // "Booking Methods" (pipe-separated detection route codes)
+
         bpIdx = -1,     // "Booking Platform" (name)
         blIdx = -1,
         bloIdx = -1,    // legacy V13 "Booking Link is Owner"
@@ -1452,9 +1490,11 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         else if (/self.?booking[\s_-]*widget/.test(c)) swIdx = i;
         else if (/dialer.?bookable/.test(c)) dbIdx = i;
         else if (/booking[\s_-]*link/.test(c)) blIdx = i;
+        else if (/booking[\s_-]*(system[\s_-]*)?methods?|detection[\s_-]*methods?/.test(c)) bmIdx = i;
         else if (/booking[\s_-]*system[\s_-]*exists/.test(c)) bseIdx = i;
         else if (/booking[\s_-]*platform/.test(c)) bpIdx = i;
         else if (/booking[\s_-]*system/.test(c)) bkIdx = i;
+
         else if (/meeting[\s_-]*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd[\s_-]*(number|#|no\.?)/.test(c)) crdIdx = i;
         else if (/street[\s_-]*address|^address$/.test(c)) saIdx = i;
@@ -1576,8 +1616,13 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           phone_type: hasNewCols ? null : legacyPhoneType,
           website: webIdx >= 0 ? (r[webIdx]?.trim() || "") : "",
           booking_platform,
+          booking_system_platform: booking_platform,
+          booking_system_methods: bmIdx >= 0
+            ? (r[bmIdx] || "").split(/[|,;]/).map(s => s.trim().toLowerCase().replace(/\s+/g, "_")).filter(Boolean)
+            : [],
           has_booking_system,
           booking_system_exists,
+
           booking_link: blIdx >= 0 ? cleanLink(r[blIdx] || "") : null,
           booking_link_is_owner: owner_calendar_confirmed, // kept in sync w/ V16
           owner_calendar_confirmed,
@@ -2017,18 +2062,32 @@ You enrich a storefront census into CRM-ready lead records. Work in the SAME str
 Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
 
 # TASK
-For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), notes (closure/verification flags, confidence, which sources confirmed), list_name.
+For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), booking_system_exists, booking_platform, booking_methods, notes (closure/verification flags, confidence, which sources confirmed), list_name.
+
+# BOOKING SYSTEM CHECK (REQUIRED — run on the website you already found; do NOT go hunting for a different site)
+For every business that has a website, run all 5 detection routes against that site before you decide. Stop early only when a route confirms Yes.
+1. URL / path — look for /book, /book-now, /booking, /schedule, /appointments, /reservations, or a booking. / schedule. subdomain.
+2. Embedded widget or script — Calendly, Square Appointments, Acuity/Squarespace Scheduling, Vagaro, Booksy, Fresha, Mindbody, Setmore, Schedulicity, SimplyBook, OpenTable, Resy, Tock, Housecall Pro, Jobber, Zocdoc, GoHighLevel, HubSpot Meetings, Microsoft Bookings, Google Appointment Schedules.
+3. CTA text — a visible "Book Now", "Book Online", "Schedule an Appointment", "Reserve a Table", "Request an Appointment" button or link.
+4. Structured data / meta — schema.org Reservation / ReserveAction / potentialAction markup, or booking-specific meta tags.
+5. Footer / contact-page link-out — an outbound link to any third-party booking domain from the footer, contact page, or social profile links.
+
+Record the result honestly:
+- booking_system_exists = Yes only if at least one route confirmed it; No only if you actually checked the site and all 5 routes came back empty; Unknown if there is no website or the site would not load. Never write No for a business you could not check.
+- booking_platform = the platform name (e.g. "Calendly", "Square Appointments") or "custom/native" when it is the business's own booking page; blank when Unknown or No.
+- booking_methods = the routes that confirmed it, pipe-separated, using these exact codes: url_path | embed_script | cta_text | structured_data | footer_linkout. Blank when No or Unknown.
 
 # BATCH & CONTINUATION RULES
 Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
 
 # OUTPUT FORMAT
 Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
-business_name,owner_name,phone,website,niche,city,street_address,notes,list_name
+business_name,owner_name,phone,website,niche,city,street_address,booking_system_exists,booking_platform,booking_methods,notes,list_name
 One row per record, quoted fields.
 
 # CLOSING (REQUIRED)
-After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
+After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, # with a booking system (Yes / No / Unknown split), and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
+
 
 const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once. It contains everything needed, including the full text of both prompts below, so it works standalone even if the person only pastes this one block.
 

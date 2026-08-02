@@ -10,6 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
+import { LeadOwner, LeadPhones, LeadWebsite, LeadMetaTags, LeadNotes, LeadBookingLinks, BookingSystemBadge } from "@/components/employee/LeadFields";
 
 interface WalkLead {
   id: string;
@@ -19,18 +20,35 @@ interface WalkLead {
   front_desk_phone: string | null;
   owner_direct_phone: string | null;
   city: string | null;
+  niche: string | null;
+  website: string | null;
   list_name: string | null;
   notes: string | null;
   called: boolean | null;
   pipeline_stage: string | null;
   street_address: string | null;
-  street_number: string | null;
+  street_number: number | null;
   side_of_street: string | null;
   sequence_order: number | null;
   latitude: number | null;
   longitude: number | null;
   visit_status: string | null;
+  source_type: string | null;
+  has_booking_system: boolean | null;
+  booking_system_exists: boolean | null;
+  booking_platform: string | null;
+  booking_system_platform: string | null;
+  booking_system_methods: string[] | null;
+  booking_system_checked_at: string | null;
+  booking_link: string | null;
+  booking_link_is_owner: boolean | null;
+  owner_calendar_confirmed: boolean | null;
+  owner_booking_link: string | null;
+  owner_booking_link_send_ready: string | null;
+  self_booking_widget_non_owner: boolean | null;
+  dialer_bookable: boolean | null;
 }
+
 
 const ARRIVAL_METERS = 40;
 
@@ -76,7 +94,7 @@ export default function BDRStreetWalk() {
       setClientId(await resolveEmployeeClientId(user.id));
       const { data } = await (supabase as any)
         .from("nl_bdr_leads")
-        .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, list_name, notes, called, pipeline_stage, street_address, street_number, side_of_street, sequence_order, latitude, longitude, visit_status")
+        .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, website, list_name, notes, called, pipeline_stage, street_address, street_number, side_of_street, sequence_order, latitude, longitude, visit_status, source_type, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable")
         .eq("user_id", user.id)
         .not("sequence_order", "is", null)
         .order("sequence_order", { ascending: true });
@@ -291,43 +309,34 @@ export default function BDRStreetWalk() {
                   You've arrived at {currentStop.business_name}
                 </div>
               )}
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
+              <div className="min-w-0 space-y-2.5">
+                <div>
                   <p className="text-[10px] uppercase tracking-wider text-white/45">Current stop #{currentStop.sequence_order}</p>
                   <h2 className="text-lg font-bold text-white break-words leading-snug">{currentStop.business_name}</h2>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    {currentStop.street_address && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,70%)" }}>
-                        <MapPin className="h-3 w-3 inline mr-1" />{currentStop.street_address}
-                      </span>
-                    )}
-                    {currentStop.side_of_street && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)" }}>
-                        {currentStop.side_of_street} side
-                      </span>
-                    )}
-                    {distanceToCurrent != null && (
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
-                        ~{Math.round(distanceToCurrent)} m away
-                      </span>
-                    )}
-                  </div>
-                  {stripLeadFlags(currentStop.owner_name) && (
-                    <p className="text-xs text-white/60 mt-2">Owner: {stripLeadFlags(currentStop.owner_name)}</p>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {getLeadPhones(currentStop).map(p => (
-                      <a key={p.kind + p.number} href={`tel:${p.number}`}
-                        className="font-mono text-xs hover:underline" style={{ color: "hsl(211,96%,68%)" }}>
-                        {p.number}
-                      </a>
-                    ))}
-                  </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <LeadMetaTags lead={currentStop} />
+                  {distanceToCurrent != null && (
+                    <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
+                      ~{Math.round(distanceToCurrent)} m away
+                    </span>
+                  )}
+                  <BookingSystemBadge lead={currentStop} />
+                </div>
+
+                <div className="text-xs">
+                  <span className="text-white/40 mr-1">Owner:</span>
+                  <LeadOwner lead={currentStop} className="inline-flex" />
+                </div>
+
+                <LeadPhones lead={currentStop} />
+                <LeadWebsite lead={currentStop} />
+                <LeadBookingLinks lead={currentStop} />
+                <LeadNotes lead={currentStop} clamp />
               </div>
+
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <Button size="sm" onClick={() => setOutcomeLead(currentStop)} disabled={savingId === currentStop.id}>
@@ -370,7 +379,11 @@ export default function BDRStreetWalk() {
                     {lead.street_address && (
                       <span className="block text-[11px] text-white/45 break-words">{lead.street_address}</span>
                     )}
+                    <span className="mt-1 flex flex-wrap items-center gap-1">
+                      <BookingSystemBadge lead={lead} showPlatform={false} />
+                    </span>
                   </span>
+
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
                     style={{ background: tone.bg, color: tone.color }}>{tone.label}</span>
                 </button>

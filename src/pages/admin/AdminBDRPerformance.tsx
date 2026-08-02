@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import SystemHealthPanel from "@/components/training/SystemHealthPanel";
 import { DAILY_DIAL_GOAL } from "@/lib/bdrCalendar";
+import { bookingSystemState, bookingSystemPlatform } from "@/lib/bookingSystem";
+
 
 /** Group dial-event timestamps by local YYYY-MM-DD and split hit vs missed against DAILY_DIAL_GOAL. */
 function computeDaysHitMissed(timestamps: string[]) {
@@ -161,8 +163,17 @@ export default function AdminBDRPerformance() {
     const total = filteredLeads.length;
     const booked = filteredLeads.filter(l => l.status === "appointment_booked").length;
     const won = filteredLeads.filter(l => l.status === "closed_won").length;
-    return { total, booked, won, rate: total ? Math.round((booked / total) * 100) : 0, objections: filteredObjections.length };
+    const bookingYes = filteredLeads.filter(l => bookingSystemState(l) === "yes").length;
+    const bookingNo = filteredLeads.filter(l => bookingSystemState(l) === "no").length;
+    const bookingUnknown = total - bookingYes - bookingNo;
+    return {
+      total, booked, won,
+      rate: total ? Math.round((booked / total) * 100) : 0,
+      objections: filteredObjections.length,
+      bookingYes, bookingNo, bookingUnknown,
+    };
   }, [filteredLeads, filteredObjections]);
+
 
   const bdrRows = useMemo(() => bdrIds.map(uid => {
     const bl = filteredLeads.filter(l => l.user_id === uid);
@@ -275,13 +286,16 @@ export default function AdminBDRPerformance() {
 
   const exportSweepCSV = () => {
     const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
-    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Created"].join(",")];
+    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Booking System", "Booking Platform", "Detection Methods", "Created"].join(",")];
     sweepLeads.forEach(l => {
       rows.push([
         esc(profiles[l.user_id] || l.user_id),
         esc(l.list_name), esc(l.business_name), esc(l.street_address || l.address),
         esc(l.visit_status || "pending"), esc(l.owner_name),
         esc(l.owner_direct_phone || l.phone),
+        esc(bookingSystemState(l) === "unknown" ? "Unknown" : bookingSystemState(l) === "yes" ? "Yes" : "No"),
+        esc(bookingSystemPlatform(l) || ""),
+        esc((l.booking_system_methods || []).join(" | ")),
         esc(new Date(l.created_at).toLocaleString()),
       ].join(","));
     });
@@ -295,11 +309,21 @@ export default function AdminBDRPerformance() {
 
   // CSV export
   const exportCSV = () => {
-    const rows = [["BDR", "Business", "Owner", "Phone", "Status", "Objection", "Created", "Outcome History"].join(",")];
+    const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const rows = [["BDR", "Business", "Owner", "Phone", "Status", "Objection", "Booking System", "Booking Platform", "Detection Methods", "Created", "Outcome History"].join(",")];
     filteredLeads.forEach(l => {
       const history = (l.outcome_history || []).map((h: any) => `${h.label} (${new Date(h.timestamp).toLocaleDateString()})`).join("; ");
-      rows.push([profiles[l.user_id] || l.user_id, l.business_name, l.owner_name || "", l.phone || "", l.status, l.objection_category || "", new Date(l.created_at).toLocaleDateString(), `"${history}"`].join(","));
+      const state = bookingSystemState(l);
+      rows.push([
+        esc(profiles[l.user_id] || l.user_id), esc(l.business_name), esc(l.owner_name || ""), esc(l.phone || ""),
+        esc(l.status), esc(l.objection_category || ""),
+        esc(state === "unknown" ? "Unknown" : state === "yes" ? "Yes" : "No"),
+        esc(bookingSystemPlatform(l) || ""),
+        esc((l.booking_system_methods || []).join(" | ")),
+        esc(new Date(l.created_at).toLocaleDateString()), esc(history),
+      ].join(","));
     });
+
     const blob = new Blob([rows.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `bdr-report-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
@@ -331,14 +355,18 @@ export default function AdminBDRPerformance() {
       </div>
 
       {/* Team stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {[
           { label: "Total Leads", value: teamStats.total },
           { label: "Booked", value: teamStats.booked },
           { label: "Won", value: teamStats.won },
           { label: "Conv %", value: `${teamStats.rate}%` },
           { label: "Objections", value: teamStats.objections },
+          { label: "Booking Sys: Yes", value: teamStats.bookingYes },
+          { label: "Booking Sys: No", value: teamStats.bookingNo },
+          { label: "Booking Unchecked", value: teamStats.bookingUnknown },
         ].map(s => (
+
           <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
             <p className="text-lg font-bold text-foreground">{s.value}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>

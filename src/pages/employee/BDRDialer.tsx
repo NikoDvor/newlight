@@ -11,6 +11,8 @@ import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
+import { BookingSystemBadge } from "@/components/employee/LeadFields";
+
 
 
 interface Lead {
@@ -30,7 +32,11 @@ interface Lead {
   has_booking_system: boolean | null;
   booking_system_exists: boolean | null;
   booking_platform: string | null;
+  booking_system_platform?: string | null;
+  booking_system_methods?: string[] | null;
+  booking_system_checked_at?: string | null;
   phone_type: string | null;
+
   booking_link: string | null;
   booking_link_is_owner: boolean | null;
   owner_calendar_confirmed: boolean | null;
@@ -125,7 +131,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -680,15 +686,7 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        {(() => {
-                          const exists = lead.booking_system_exists ?? lead.has_booking_system;
-                          if (lead.booking_platform) return (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold inline-block break-words" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)", border: "1px solid hsla(142,72%,42%,.35)" }}>{lead.booking_platform}</span>
-                          );
-                          if (exists === true) return <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,42%)", border: "1px solid hsla(142,72%,42%,.35)" }}>Yes</span>;
-                          if (exists === false) return <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)", border: "1px solid hsla(0,0%,50%,.3)" }}>No</span>;
-                          return <span className="text-white/30">—</span>;
-                        })()}
+                        <BookingSystemBadge lead={lead} />
                         {lead.dialer_bookable === true && (
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide" title="Platform supports embedded booking from the dialer" style={{ background: "hsla(142,80%,45%,.22)", color: "hsl(142,85%,68%)", border: "1px solid hsla(142,80%,50%,.55)" }}>Dialer-Bookable</span>
                         )}
@@ -698,6 +696,7 @@ export default function BDRDialer() {
 
                       </div>
                     </td>
+
                     <td className="px-3 py-3 border-b border-white/5 text-center">
                       <input
                         type="checkbox"
