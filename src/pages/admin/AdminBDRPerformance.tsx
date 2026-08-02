@@ -161,8 +161,17 @@ export default function AdminBDRPerformance() {
     const total = filteredLeads.length;
     const booked = filteredLeads.filter(l => l.status === "appointment_booked").length;
     const won = filteredLeads.filter(l => l.status === "closed_won").length;
-    return { total, booked, won, rate: total ? Math.round((booked / total) * 100) : 0, objections: filteredObjections.length };
+    const bookingYes = filteredLeads.filter(l => bookingSystemState(l) === "yes").length;
+    const bookingNo = filteredLeads.filter(l => bookingSystemState(l) === "no").length;
+    const bookingUnknown = total - bookingYes - bookingNo;
+    return {
+      total, booked, won,
+      rate: total ? Math.round((booked / total) * 100) : 0,
+      objections: filteredObjections.length,
+      bookingYes, bookingNo, bookingUnknown,
+    };
   }, [filteredLeads, filteredObjections]);
+
 
   const bdrRows = useMemo(() => bdrIds.map(uid => {
     const bl = filteredLeads.filter(l => l.user_id === uid);
