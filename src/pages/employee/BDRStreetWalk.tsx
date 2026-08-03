@@ -313,28 +313,14 @@ export default function BDRStreetWalk() {
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-white/45">Current stop #{currentStop.sequence_order}</p>
                   <h2 className="text-lg font-bold text-white break-words leading-snug">{currentStop.business_name}</h2>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <LeadMetaTags lead={currentStop} />
                   {distanceToCurrent != null && (
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
                       style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
                       ~{Math.round(distanceToCurrent)} m away
                     </span>
                   )}
-                  <BookingSystemBadge lead={currentStop} />
                 </div>
-
-                <div className="text-xs">
-                  <span className="text-white/40 mr-1">Owner:</span>
-                  <LeadOwner lead={currentStop} className="inline-flex" />
-                </div>
-
-                <LeadPhones lead={currentStop} />
-                <LeadWebsite lead={currentStop} />
-                <LeadBookingLinks lead={currentStop} />
-                <LeadNotes lead={currentStop} clamp />
+                <LeadDetailBlock lead={currentStop} />
               </div>
 
 
