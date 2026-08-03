@@ -220,3 +220,42 @@ export function LeadNotes({ lead, clamp = false }: { lead: LeadDisplayShape; cla
     </div>
   );
 }
+
+/* ─── Full labeled lead detail block ───────────────────────────────
+ * Mirrors the Dialer spreadsheet's columns (Business / Owner / Phone /
+ * Website / Booking Sys / Notes) as a stacked, labeled card so the Street
+ * Walk surface shows exactly the same data with the same tag conventions.
+ */
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <span className="text-[10px] uppercase tracking-wider text-white/40 w-[74px] shrink-0 pt-0.5">{label}</span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+export function LeadDetailBlock({ lead, clampNotes = false }: { lead: LeadDisplayShape; clampNotes?: boolean }) {
+  return (
+    <div className="space-y-1.5">
+      {lead.street_address && (
+        <FieldRow label="Address">
+          <span className="text-xs text-white/70 break-words">{lead.street_address}{lead.city ? `, ${lead.city}` : ""}</span>
+        </FieldRow>
+      )}
+      <FieldRow label="Owner"><LeadOwner lead={lead} /></FieldRow>
+      <FieldRow label="Phone"><LeadPhones lead={lead} /></FieldRow>
+      <FieldRow label="Website"><LeadWebsite lead={lead} /></FieldRow>
+      <FieldRow label="Booking">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BookingSystemBadge lead={lead} />
+          <LeadBookingLinks lead={lead} />
+        </div>
+      </FieldRow>
+      <FieldRow label="Tags"><LeadMetaTags lead={lead} /></FieldRow>
+      {lead.notes && (
+        <FieldRow label="Notes"><LeadNotes lead={lead} clamp={clampNotes} /></FieldRow>
+      )}
+    </div>
+  );
+}
