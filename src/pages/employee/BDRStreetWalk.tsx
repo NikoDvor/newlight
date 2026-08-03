@@ -10,7 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
-import { LeadOwner, LeadPhones, LeadWebsite, LeadMetaTags, LeadNotes, LeadBookingLinks, BookingSystemBadge } from "@/components/employee/LeadFields";
+import { LeadDetailBlock } from "@/components/employee/LeadFields";
 
 interface WalkLead {
   id: string;
