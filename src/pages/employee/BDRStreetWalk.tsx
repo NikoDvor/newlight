@@ -10,7 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
-import { LeadOwner, LeadPhones, LeadWebsite, LeadMetaTags, LeadNotes, LeadBookingLinks, BookingSystemBadge } from "@/components/employee/LeadFields";
+import { LeadDetailBlock } from "@/components/employee/LeadFields";
 
 interface WalkLead {
   id: string;
@@ -313,28 +313,14 @@ export default function BDRStreetWalk() {
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-white/45">Current stop #{currentStop.sequence_order}</p>
                   <h2 className="text-lg font-bold text-white break-words leading-snug">{currentStop.business_name}</h2>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <LeadMetaTags lead={currentStop} />
                   {distanceToCurrent != null && (
-                    <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
                       style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
                       ~{Math.round(distanceToCurrent)} m away
                     </span>
                   )}
-                  <BookingSystemBadge lead={currentStop} />
                 </div>
-
-                <div className="text-xs">
-                  <span className="text-white/40 mr-1">Owner:</span>
-                  <LeadOwner lead={currentStop} className="inline-flex" />
-                </div>
-
-                <LeadPhones lead={currentStop} />
-                <LeadWebsite lead={currentStop} />
-                <LeadBookingLinks lead={currentStop} />
-                <LeadNotes lead={currentStop} clamp />
+                <LeadDetailBlock lead={currentStop} />
               </div>
 
 
@@ -374,24 +360,11 @@ export default function BDRStreetWalk() {
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOutcomeLead(lead); } }}
                   className="w-full text-left px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors flex items-start gap-3 cursor-pointer">
                   <span className="text-[11px] text-white/40 w-6 shrink-0 pt-0.5">{lead.sequence_order}</span>
-                  <div className="min-w-0 flex-1 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <span className={`block text-sm break-words leading-snug ${isCurrent ? "text-white font-semibold" : "text-white/80"}`}>
                       {lead.business_name}
                     </span>
-                    {lead.street_address && (
-                      <span className="block text-[11px] text-white/45 break-words">{lead.street_address}</span>
-                    )}
-                    <div className="flex flex-wrap items-center gap-1">
-                      <LeadMetaTags lead={lead} />
-                      <BookingSystemBadge lead={lead} showPlatform={false} />
-                    </div>
-                    <div className="text-[11px]">
-                      <span className="text-white/40 mr-1">Owner:</span>
-                      <LeadOwner lead={lead} className="inline-flex" />
-                    </div>
-                    <LeadPhones lead={lead} />
-                    <LeadWebsite lead={lead} />
-                    <LeadNotes lead={lead} clamp />
+                    <LeadDetailBlock lead={lead} clampNotes />
                   </div>
 
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"

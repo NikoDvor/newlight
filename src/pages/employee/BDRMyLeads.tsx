@@ -1699,6 +1699,18 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
     }
   };
 
+  // Routing preview: which parsed rows will be sequenced into Street Walk vs
+  // land in Dialer / My Leads only (and which have an unparseable address).
+  const routing = useMemo(() => {
+    const walk: any[] = [], dialerOnly: any[] = [], unparsed: any[] = [];
+    parsed.forEach(r => {
+      if (r.street_number != null) walk.push(r);
+      else if ((r.street_address || "").trim()) unparsed.push(r);
+      else dialerOnly.push(r);
+    });
+    return { walk, dialerOnly: [...dialerOnly, ...unparsed], unparsed };
+  }, [parsed]);
+
   const flagsFor = (ownerName: string): string[] => parseLeadFlags(ownerName);
 
   const toggle = (i: number) => setChecked(prev => { const n = [...prev]; n[i] = !n[i]; return n; });
@@ -1747,12 +1759,50 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                 {listMode === "existing" ? "Adds these leads to the selected list; duplicates by business name within the list are skipped." : "Name this batch so you can switch between lists later."}
               </p>
             </div>
+            <div className="rounded-lg px-3 py-2 space-y-1"
+              style={{ background: "hsla(211,96%,56%,.08)", border: "1px solid hsla(211,96%,60%,.25)" }}>
+              <p className="text-[11px] font-semibold" style={{ color: "hsl(211,96%,75%)" }}>Where will these leads land?</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Rows with a <span className="text-foreground font-medium">Street Address</span> column that starts with a house
+                number (e.g. <span className="font-mono">502 State St</span>) are automatically sequenced into{" "}
+                <span className="text-foreground font-medium">Street Walk</span> in walking order (odd side ascending, then even side).
+                Rows without a parseable street address appear in{" "}
+                <span className="text-foreground font-medium">Dialer / My Leads</span> only — they will not show up on a walk.
+                You'll see an exact breakdown before anything is imported.
+              </p>
+            </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
               placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Front Desk Phone | Owner Direct Phone | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
             <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
           </div>
         ) : (
           <div className="space-y-3">
+
+            {/* Routing breakdown: Street Walk vs Dialer-only */}
+            <div className="rounded-lg px-3 py-2 space-y-1.5"
+              style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,60%,.2)" }}>
+              <p className="text-[11px] font-semibold" style={{ color: "hsl(211,96%,75%)" }}>Before you import — where these leads will land</p>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(190,90%,55%,.14)", color: "hsl(190,90%,72%)", border: "1px solid hsla(190,90%,55%,.35)" }}>
+                  {routing.walk.length} → Street Walk (sequenced)
+                </span>
+                <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(0,0%,60%,.12)", color: "hsl(0,0%,75%)", border: "1px solid hsla(0,0%,60%,.28)" }}>
+                  {routing.dialerOnly.length} → Dialer / My Leads only
+                </span>
+                {routing.unparsed.length > 0 && (
+                  <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(38,92%,55%,.16)", color: "hsl(38,95%,70%)", border: "1px solid hsla(38,92%,55%,.45)" }}>
+                    ⚠ {routing.unparsed.length} address not parseable
+                  </span>
+                )}
+              </div>
+              {routing.unparsed.length > 0 && (
+                <p className="text-[11px] leading-relaxed" style={{ color: "hsl(38,95%,72%)" }}>
+                  These rows have a Street Address but no leading house number, so they would silently fall back to Dialer / My Leads:
+                  {" "}<span className="text-foreground font-medium">{routing.unparsed.map(r => `${r.business_name} ("${r.street_address}")`).join(", ")}</span>.
+                  Go Back and fix the address (start it with the house number) if they belong on a walk.
+                </p>
+              )}
+            </div>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <p className="text-sm text-muted-foreground">{parsed.length} leads found → <span className="text-foreground font-medium">"{finalListName}"</span></p>
               {skippedCount > 0 && (
@@ -1780,6 +1830,13 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                   )}
                   {r.front_desk_phone && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(211,50%,55%,.15)", color: "hsl(211,60%,72%)" }}>Front Desk</span>
+                  )}
+                  {r.street_number != null ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(190,90%,55%,.14)", color: "hsl(190,90%,72%)" }}>Street Walk</span>
+                  ) : (r.street_address || "").trim() ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "hsla(38,92%,55%,.16)", color: "hsl(38,95%,70%)", border: "1px solid hsla(38,92%,55%,.45)" }}>⚠ Address unparsed → Dialer only</span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(0,0%,60%,.12)", color: "hsl(0,0%,72%)" }}>Dialer only</span>
                   )}
                 </label>
                 );
