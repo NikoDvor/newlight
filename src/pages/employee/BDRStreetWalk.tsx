@@ -360,24 +360,11 @@ export default function BDRStreetWalk() {
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOutcomeLead(lead); } }}
                   className="w-full text-left px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors flex items-start gap-3 cursor-pointer">
                   <span className="text-[11px] text-white/40 w-6 shrink-0 pt-0.5">{lead.sequence_order}</span>
-                  <div className="min-w-0 flex-1 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <span className={`block text-sm break-words leading-snug ${isCurrent ? "text-white font-semibold" : "text-white/80"}`}>
                       {lead.business_name}
                     </span>
-                    {lead.street_address && (
-                      <span className="block text-[11px] text-white/45 break-words">{lead.street_address}</span>
-                    )}
-                    <div className="flex flex-wrap items-center gap-1">
-                      <LeadMetaTags lead={lead} />
-                      <BookingSystemBadge lead={lead} showPlatform={false} />
-                    </div>
-                    <div className="text-[11px]">
-                      <span className="text-white/40 mr-1">Owner:</span>
-                      <LeadOwner lead={lead} className="inline-flex" />
-                    </div>
-                    <LeadPhones lead={lead} />
-                    <LeadWebsite lead={lead} />
-                    <LeadNotes lead={lead} clamp />
+                    <LeadDetailBlock lead={lead} clampNotes />
                   </div>
 
                   <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
