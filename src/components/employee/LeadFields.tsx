@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Phone, Calendar, CalendarClock, ExternalLink, MapPin, CalendarCheck2 } from "lucide-react";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones, type LeadPhoneShape } from "@/lib/leadFlags";
 import {
@@ -226,7 +227,7 @@ export function LeadNotes({ lead, clamp = false }: { lead: LeadDisplayShape; cla
  * Website / Booking Sys / Notes) as a stacked, labeled card so the Street
  * Walk surface shows exactly the same data with the same tag conventions.
  */
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex gap-2">
       <span className="text-[10px] uppercase tracking-wider text-white/40 w-[74px] shrink-0 pt-0.5">{label}</span>
