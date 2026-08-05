@@ -428,6 +428,7 @@ export default function BDRStreetWalk() {
                 </table>
               </div>
             </div>
+            </>
           )}
 
           {!currentStop && walkLeads.length > 0 && (
