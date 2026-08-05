@@ -78,6 +78,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const signOut = async () => {
     await endSession();
