@@ -69,6 +69,28 @@ function statusTone(status: string | null) {
   return { bg: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,70%)", label: "Pending" };
 }
 
+/* Same save-on-blur-if-changed pattern as the Dialer's NotesCell, sized for a dense table row. */
+function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
+  const [value, setValue] = useState(initial);
+  const [baseline, setBaseline] = useState(initial);
+  useEffect(() => { setValue(initial); setBaseline(initial); }, [initial]);
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={async () => {
+        if (value === baseline) return;
+        await onSave(value);
+        setBaseline(value);
+      }}
+      placeholder="Add notes…"
+      rows={2}
+      className="w-[220px] bg-transparent text-white text-[11px] px-1.5 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[38px] leading-snug"
+      style={{ background: value ? "hsla(211,96%,56%,.06)" : "hsla(0,0%,100%,.02)" }}
+    />
+  );
+}
+
 export default function BDRStreetWalk() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
