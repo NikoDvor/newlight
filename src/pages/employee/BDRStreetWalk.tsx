@@ -255,6 +255,73 @@ export default function BDRStreetWalk() {
     }
   }, [userId, clientId]);
 
+  const saveNotes = useCallback(async (lead: WalkLead, value: string) => {
+    if (!userId) return;
+    if ((lead.notes || "") === value) return;
+    const prev = lead.notes;
+    setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: value } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ notes: value }).eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: prev } : l));
+      toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" });
+    }
+  }, [userId]);
+
+  /* Shared by "Call Back" and "Come Back" — only the label differs. */
+  const openCallbackDialog = useCallback((lead: WalkLead, label: string) => {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    setCallbackLabel(label);
+    setCallbackLead(lead);
+    setCallbackDate(now.toISOString().slice(0, 10));
+    setCallbackTime("10:00");
+    setOutcomeLead(null);
+  }, []);
+
+  const confirmCallback = useCallback(async () => {
+    if (!userId || !callbackLead || !callbackDate || !callbackTime) return;
+    const lead = callbackLead;
+    const label = callbackLabel;
+    const callbackAt = new Date(`${callbackDate}T${callbackTime}`).toISOString();
+    setCallbackLead(null);
+    setSavingId(lead.id);
+    try {
+      const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
+        bdr_user_id: userId,
+        client_id: clientId,
+        lead_id: lead.id,
+        outcome: label,
+        objection_type: null,
+      });
+      if (error) throw error;
+      setLeads(p => p.map(l => l.id === lead.id
+        ? { ...l, visit_status: "visited", called: true, pipeline_stage: "hot" }
+        : l));
+      await (supabase as any).from("nl_bdr_leads").update({
+        pipeline_stage: "hot",
+        callback_at: callbackAt,
+        callback_set_at: new Date().toISOString(),
+        visit_status: "visited",
+      }).eq("id", lead.id).eq("user_id", userId);
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        outcome: label,
+        stage: "hot",
+        notes: lead.notes,
+      }).catch(() => {});
+      toast({ title: `${label} scheduled`, description: new Date(callbackAt).toLocaleString() });
+    } catch (e: any) {
+      toast({ title: "Failed to schedule", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  }, [userId, clientId, callbackLead, callbackLabel, callbackDate, callbackTime]);
+
+
+
   /* ─── Render ─── */
   if (loading) {
     return (
