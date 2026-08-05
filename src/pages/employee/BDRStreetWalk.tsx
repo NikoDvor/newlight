@@ -11,6 +11,57 @@ import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
 
+/* ── Turn-by-turn directions: Apple Maps first, Google Maps fallback ── */
+let directionsCleanup: (() => void) | null = null;
+
+function openDirections(address: string | null | undefined) {
+  if (!address || !address.trim()) {
+    toast({ title: "No address", description: "This lead has no street address to navigate to.", variant: "destructive" });
+    return;
+  }
+  const dest = encodeURIComponent(address.trim());
+  // Cancel any pending fallback from a previous tap.
+  directionsCleanup?.();
+  directionsCleanup = null;
+
+  try {
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+      if (directionsCleanup === cleanup) directionsCleanup = null;
+    };
+    const onHide = () => {
+      // Page went to the background → Apple Maps opened. Cancel fallback.
+      cleanup();
+    };
+
+    const timer = window.setTimeout(() => {
+      if (done) return;
+      cleanup();
+      if (document.visibilityState !== "visible") return;
+      try {
+        const win = window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, "_blank");
+        if (!win) throw new Error("blocked");
+      } catch {
+        toast({ title: "No maps app found", description: "Couldn't open Apple Maps or Google Maps on this device.", variant: "destructive" });
+      }
+    }, 1200);
+
+    directionsCleanup = cleanup;
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    window.location.href = `maps://?daddr=${dest}&dirflg=d`;
+  } catch {
+    directionsCleanup?.();
+    directionsCleanup = null;
+    toast({ title: "No maps app found", description: "Couldn't open Apple Maps or Google Maps on this device.", variant: "destructive" });
+  }
+}
+
 
 interface WalkLead {
   id: string;
@@ -441,10 +492,17 @@ export default function BDRStreetWalk() {
                         <tr key={lead.id} style={{ background: rowBg }} className="hover:brightness-125 transition-[filter]">
                           <td className={`${cell} font-mono tabular-nums text-white/45`} style={cellStyle}>{lead.sequence_order}</td>
                           <td className={`${cell} text-white/70`} style={cellStyle}>
-                            <span className="block max-w-[180px] truncate" title={lead.street_address || undefined}>
-                              {lead.street_address || "—"}
-                            </span>
+                            <button type="button"
+                              onClick={(e) => { e.stopPropagation(); openDirections(lead.street_address); }}
+                              className="flex max-w-[180px] items-center gap-1 truncate text-left hover:underline disabled:opacity-50"
+                              style={{ color: "hsl(211,96%,68%)" }}
+                              disabled={!lead.street_address}
+                              title={lead.street_address ? `Directions to ${lead.street_address}` : undefined}>
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{lead.street_address || "—"}</span>
+                            </button>
                           </td>
+
                           <td className={cell} style={cellStyle}>
                             <span className={`block max-w-[200px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
                               title={lead.business_name}>
