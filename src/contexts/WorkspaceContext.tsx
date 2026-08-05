@@ -50,6 +50,7 @@ interface WorkspaceContextType {
   userRole: string | null;
   employeeProfile: EmployeeProfile | null;
   isSessionLoading: boolean;
+  sessionExpired: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -65,6 +66,7 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   userRole: null,
   employeeProfile: null,
   isSessionLoading: true,
+  sessionExpired: false,
   signOut: async () => {},
 });
 
@@ -78,6 +80,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const signOut = async () => {
     await endSession();
@@ -87,15 +90,54 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setUserRole(null);
     setEmployeeProfile(null);
     setActiveClientId(null);
+    setSessionExpired(false);
+  };
+
+  // Detect auth/JWT failures (stale tokens — common in installed PWAs)
+  const isAuthError = (err: any): boolean => {
+    if (!err) return false;
+    const status = (err as any).status ?? (err as any).statusCode;
+    if (status === 401 || status === 403) return true;
+    const blob = `${err.code ?? ""} ${err.message ?? ""}`.toLowerCase();
+    return (
+      blob.includes("bad_jwt") ||
+      blob.includes("invalid claim") ||
+      blob.includes("missing sub claim") ||
+      blob.includes("jwt expired") ||
+      blob.includes("invalid jwt") ||
+      blob.includes("pgrst301")
+    );
   };
 
   // Fetch user role from user_roles table — supports multi-workspace users
-  const fetchUserRole = async (userId: string) => {
+  // `attempt` guards against infinite retry loops: one refresh + retry max.
+  const fetchUserRole = async (userId: string, attempt = 0): Promise<void> => {
     // Fetch ALL roles for this user (multi-workspace support)
-    const { data: roles } = await supabase
+    const { data: roles, error: rolesError } = await supabase
       .from("user_roles")
       .select("role, client_id")
       .eq("user_id", userId);
+
+    if (rolesError) {
+      if (isAuthError(rolesError) && attempt === 0) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshed?.session?.user) {
+          (window as any).__nl_token__ = refreshed.session.access_token;
+          return fetchUserRole(refreshed.session.user.id, 1);
+        }
+        setSessionExpired(true);
+        return;
+      }
+      if (isAuthError(rolesError)) {
+        setSessionExpired(true);
+        return;
+      }
+      // Non-auth failure (network/RLS): don't fake a role, surface nothing.
+      console.error("[WorkspaceContext] user_roles query failed:", rolesError);
+      return;
+    }
+
+    setSessionExpired(false);
 
     if (roles && roles.length > 0) {
       const adminRoles = ["admin", "operator"];
@@ -112,11 +154,28 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
         setViewMode("employee");
         setActiveClientId(null);
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("employee_profiles")
           .select("full_name, email, department, job_title, employee_role")
           .eq("user_id", userId)
           .maybeSingle();
+        if (profileError) {
+          if (isAuthError(profileError) && attempt === 0) {
+            const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+            if (!refreshError && refreshed?.session?.user) {
+              (window as any).__nl_token__ = refreshed.session.access_token;
+              return fetchUserRole(refreshed.session.user.id, 1);
+            }
+            setSessionExpired(true);
+            return;
+          }
+          if (isAuthError(profileError)) {
+            setSessionExpired(true);
+            return;
+          }
+          console.error("[WorkspaceContext] employee_profiles query failed:", profileError);
+          return;
+        }
         setEmployeeProfile(profile ?? null);
       } else {
         // Client user — prefer a role row that carries an explicit client_id
@@ -133,11 +192,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         }
       }
     } else {
-      // No role found — keep as non-admin, wait for role assignment
+      // Genuinely empty result (no error) — real "no workspace assigned" case.
       setUserRole("client_team");
       setIsAdmin(false);
     }
   };
+
 
   const initialCheckDone = useRef(false);
 
@@ -238,7 +298,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, signOut,
+      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, sessionExpired, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
