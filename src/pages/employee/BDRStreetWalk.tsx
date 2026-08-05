@@ -309,8 +309,8 @@ export default function BDRStreetWalk() {
             <div className="relative rounded-lg overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.16)" }}>
               <div className="pointer-events-none absolute inset-y-0 right-0 w-8 z-20"
                 style={{ background: "linear-gradient(to left, hsla(215,40%,6%,.95), transparent)" }} />
-              <div className="max-h-[70vh] overflow-auto" style={{ WebkitOverflowScrolling: "touch" }}>
-                <table className="w-full min-w-[1100px] border-collapse text-left text-xs">
+              <div className="max-h-[70vh] overflow-auto" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y", overscrollBehaviorX: "contain" }}>
+                <table className="nl-native-table w-full min-w-[1100px] border-collapse text-left text-xs">
                   <thead className="sticky top-0 z-20">
                     <tr>
                       {["#", "Address", "Business", "Owner", "Phone", "Website", "Niche", "Notes", "Status", "Action"].map((h, i) => (
