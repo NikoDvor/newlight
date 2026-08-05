@@ -315,14 +315,11 @@ export default function BDRStreetWalk() {
                     <tr>
                       {["#", "Address", "Business", "Owner", "Phone", "Website", "Niche", "Notes", "Status", "Action"].map((h, i) => (
                         <th key={h}
-                          className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/55 whitespace-nowrap ${i === 0 ? "w-10" : ""} ${h === "Business" ? "sticky left-0 z-30" : ""}`}
+                          className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/55 whitespace-nowrap ${i === 0 ? "w-10" : ""}`}
                           style={{
                             background: "hsl(215,35%,12%)",
                             borderBottom: "1px solid hsla(211,96%,60%,.25)",
-                            borderRight: h === "Business"
-                              ? "1px solid hsla(211,96%,60%,.45)"
-                              : i < 9 ? "1px solid hsla(211,96%,60%,.10)" : undefined,
-                            boxShadow: h === "Business" ? "2px 0 6px hsla(215,40%,4%,.65)" : undefined,
+                            borderRight: i < 9 ? "1px solid hsla(211,96%,60%,.10)" : undefined,
                           }}>
                           {h}
                         </th>
@@ -347,13 +344,7 @@ export default function BDRStreetWalk() {
                               {lead.street_address || "—"}
                             </span>
                           </td>
-                          <td className={`${cell} sticky left-0 z-10`}
-                            style={{
-                              ...cellStyle,
-                              background: rowBg,
-                              borderRight: "1px solid hsla(211,96%,60%,.45)",
-                              boxShadow: "2px 0 6px hsla(215,40%,4%,.65)",
-                            }}>
+                          <td className={cell} style={cellStyle}>
                             <span className={`block max-w-[200px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
                               title={lead.business_name}>
                               {lead.business_name}
