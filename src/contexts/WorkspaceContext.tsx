@@ -50,6 +50,7 @@ interface WorkspaceContextType {
   userRole: string | null;
   employeeProfile: EmployeeProfile | null;
   isSessionLoading: boolean;
+  sessionExpired: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -65,6 +66,7 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   userRole: null,
   employeeProfile: null,
   isSessionLoading: true,
+  sessionExpired: false,
   signOut: async () => {},
 });
 
@@ -88,6 +90,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setUserRole(null);
     setEmployeeProfile(null);
     setActiveClientId(null);
+    setSessionExpired(false);
   };
 
   // Detect auth/JWT failures (stale tokens — common in installed PWAs)
@@ -295,7 +298,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, signOut,
+      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, sessionExpired, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
