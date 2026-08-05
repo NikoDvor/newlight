@@ -469,9 +469,11 @@ export default function BDRStreetWalk() {
                             </span>
                           </td>
                           <td className={`${cell} text-white/60`} style={cellStyle}>
-                            <span className="block max-w-[220px] truncate" title={lead.notes || undefined}>
-                              {lead.notes || "—"}
-                            </span>
+                            <NotesCell
+                              key={lead.id + ":" + (lead.notes || "")}
+                              initial={lead.notes || ""}
+                              onSave={(v) => saveNotes(lead, v)}
+                            />
                           </td>
                           <td className={cell} style={cellStyle}>
                             <span className="inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap"
