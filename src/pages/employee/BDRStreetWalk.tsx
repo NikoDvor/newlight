@@ -344,13 +344,7 @@ export default function BDRStreetWalk() {
                               {lead.street_address || "—"}
                             </span>
                           </td>
-                          <td className={`${cell} sticky left-0 z-10`}
-                            style={{
-                              ...cellStyle,
-                              background: rowBg,
-                              borderRight: "1px solid hsla(211,96%,60%,.45)",
-                              boxShadow: "2px 0 6px hsla(215,40%,4%,.65)",
-                            }}>
+                          <td className={cell} style={cellStyle}>
                             <span className={`block max-w-[200px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
                               title={lead.business_name}>
                               {lead.business_name}
