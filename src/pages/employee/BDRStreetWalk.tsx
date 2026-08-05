@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, MapPin, Navigation, SkipForward, Check, ChevronRight } from "lucide-react";
+import { Loader2, MapPin, Navigation, SkipForward, Check, ChevronRight, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
@@ -52,6 +52,13 @@ interface WalkLead {
 
 const ARRIVAL_METERS = 40;
 
+/* Street Walk replaces the shared "Schedule Callback" option with "Call Back" / "Come Back".
+   The shared OUTCOMES array is untouched, so the Dialer still renders "Schedule Callback". */
+const WALK_OUTCOMES = OUTCOMES.filter(o => o.label !== "Schedule Callback");
+const CALLBACK_LABELS = ["Call Back", "Come Back"] as const;
+
+
+
 function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number) {
   const R = 6371000;
   const toRad = (v: number) => (v * Math.PI) / 180;
@@ -69,6 +76,28 @@ function statusTone(status: string | null) {
   return { bg: "hsla(211,96%,56%,.12)", color: "hsl(211,96%,70%)", label: "Pending" };
 }
 
+/* Same save-on-blur-if-changed pattern as the Dialer's NotesCell, sized for a dense table row. */
+function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) => void | Promise<void> }) {
+  const [value, setValue] = useState(initial);
+  const [baseline, setBaseline] = useState(initial);
+  useEffect(() => { setValue(initial); setBaseline(initial); }, [initial]);
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={async () => {
+        if (value === baseline) return;
+        await onSave(value);
+        setBaseline(value);
+      }}
+      placeholder="Add notes…"
+      rows={2}
+      className="w-[220px] bg-transparent text-white text-[11px] px-1.5 py-1 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y min-h-[38px] leading-snug"
+      style={{ background: value ? "hsla(211,96%,56%,.06)" : "hsla(0,0%,100%,.02)" }}
+    />
+  );
+}
+
 export default function BDRStreetWalk() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,6 +110,10 @@ export default function BDRStreetWalk() {
   const [activeList, setActiveList] = useState<string | null>(listParam);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [outcomeLead, setOutcomeLead] = useState<WalkLead | null>(null);
+  const [callbackLead, setCallbackLead] = useState<WalkLead | null>(null);
+  const [callbackLabel, setCallbackLabel] = useState<string>("Call Back");
+  const [callbackDate, setCallbackDate] = useState<string>("");
+  const [callbackTime, setCallbackTime] = useState<string>("");
   const [position, setPosition] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoState, setGeoState] = useState<"idle" | "watching" | "denied" | "unavailable">("idle");
   const watchIdRef = useRef<number | null>(null);
@@ -229,6 +262,73 @@ export default function BDRStreetWalk() {
     }
   }, [userId, clientId]);
 
+  const saveNotes = useCallback(async (lead: WalkLead, value: string) => {
+    if (!userId) return;
+    if ((lead.notes || "") === value) return;
+    const prev = lead.notes;
+    setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: value } : l));
+    const { error } = await (supabase as any).from("nl_bdr_leads")
+      .update({ notes: value }).eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      setLeads(p => p.map(l => l.id === lead.id ? { ...l, notes: prev } : l));
+      toast({ title: "Couldn't save notes", description: error.message, variant: "destructive" });
+    }
+  }, [userId]);
+
+  /* Shared by "Call Back" and "Come Back" — only the label differs. */
+  const openCallbackDialog = useCallback((lead: WalkLead, label: string) => {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    setCallbackLabel(label);
+    setCallbackLead(lead);
+    setCallbackDate(now.toISOString().slice(0, 10));
+    setCallbackTime("10:00");
+    setOutcomeLead(null);
+  }, []);
+
+  const confirmCallback = useCallback(async () => {
+    if (!userId || !callbackLead || !callbackDate || !callbackTime) return;
+    const lead = callbackLead;
+    const label = callbackLabel;
+    const callbackAt = new Date(`${callbackDate}T${callbackTime}`).toISOString();
+    setCallbackLead(null);
+    setSavingId(lead.id);
+    try {
+      const { error } = await (supabase as any).from("bdr_call_outcomes").insert({
+        bdr_user_id: userId,
+        client_id: clientId,
+        lead_id: lead.id,
+        outcome: label,
+        objection_type: null,
+      });
+      if (error) throw error;
+      setLeads(p => p.map(l => l.id === lead.id
+        ? { ...l, visit_status: "visited", called: true, pipeline_stage: "hot" }
+        : l));
+      await (supabase as any).from("nl_bdr_leads").update({
+        pipeline_stage: "hot",
+        callback_at: callbackAt,
+        callback_set_at: new Date().toISOString(),
+        visit_status: "visited",
+      }).eq("id", lead.id).eq("user_id", userId);
+      logDialerEvent({
+        leadId: lead.id,
+        businessName: lead.business_name,
+        ownerName: lead.owner_name,
+        outcome: label,
+        stage: "hot",
+        notes: lead.notes,
+      }).catch(() => {});
+      toast({ title: `${label} scheduled`, description: new Date(callbackAt).toLocaleString() });
+    } catch (e: any) {
+      toast({ title: "Failed to schedule", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  }, [userId, clientId, callbackLead, callbackLabel, callbackDate, callbackTime]);
+
+
+
   /* ─── Render ─── */
   if (loading) {
     return (
@@ -376,9 +476,11 @@ export default function BDRStreetWalk() {
                             </span>
                           </td>
                           <td className={`${cell} text-white/60`} style={cellStyle}>
-                            <span className="block max-w-[220px] truncate" title={lead.notes || undefined}>
-                              {lead.notes || "—"}
-                            </span>
+                            <NotesCell
+                              key={lead.id + ":" + (lead.notes || "")}
+                              initial={lead.notes || ""}
+                              onSave={(v) => saveNotes(lead, v)}
+                            />
                           </td>
                           <td className={cell} style={cellStyle}>
                             <span className="inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap"
@@ -443,12 +545,20 @@ export default function BDRStreetWalk() {
             <DialogTitle className="text-base">{outcomeLead?.business_name}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 max-h-[55vh] overflow-y-auto">
-            {OUTCOMES.map(o => (
+            {WALK_OUTCOMES.map(o => (
               <Button key={o.label} variant="outline" size="sm"
                 className="justify-start text-xs h-auto py-2 whitespace-normal text-left"
                 disabled={!!savingId}
                 onClick={() => outcomeLead && logOutcome(outcomeLead, o.label)}>
                 {o.label}
+              </Button>
+            ))}
+            {CALLBACK_LABELS.map(label => (
+              <Button key={label} variant="outline" size="sm"
+                className="justify-start text-xs h-auto py-2 whitespace-normal text-left"
+                disabled={!!savingId}
+                onClick={() => outcomeLead && openCallbackDialog(outcomeLead, label)}>
+                <CalendarClock className="h-3.5 w-3.5 mr-1.5 shrink-0" /> {label}
               </Button>
             ))}
           </div>
@@ -458,6 +568,39 @@ export default function BDRStreetWalk() {
               <SkipForward className="h-3.5 w-3.5 mr-1" /> Skip this stop instead
             </Button>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Callback / revisit scheduler */}
+      <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CalendarClock className="h-4 w-4" /> {callbackLabel}</DialogTitle>
+          </DialogHeader>
+          {callbackLead && (
+            <div className="space-y-3">
+              <div className="text-sm text-white/70">
+                <p className="font-semibold text-white">{callbackLead.business_name}</p>
+                {callbackLead.owner_name && <p className="text-xs">{callbackLead.owner_name}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Date</label>
+                  <input type="date" value={callbackDate} onChange={(e) => setCallbackDate(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Time</label>
+                  <input type="time" value={callbackTime} onChange={(e) => setCallbackTime(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCallbackLead(null)}>Cancel</Button>
+            <Button onClick={confirmCallback} disabled={!callbackDate || !callbackTime}>Save {callbackLabel}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
