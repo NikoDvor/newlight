@@ -538,12 +538,20 @@ export default function BDRStreetWalk() {
             <DialogTitle className="text-base">{outcomeLead?.business_name}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 max-h-[55vh] overflow-y-auto">
-            {OUTCOMES.map(o => (
+            {WALK_OUTCOMES.map(o => (
               <Button key={o.label} variant="outline" size="sm"
                 className="justify-start text-xs h-auto py-2 whitespace-normal text-left"
                 disabled={!!savingId}
                 onClick={() => outcomeLead && logOutcome(outcomeLead, o.label)}>
                 {o.label}
+              </Button>
+            ))}
+            {CALLBACK_LABELS.map(label => (
+              <Button key={label} variant="outline" size="sm"
+                className="justify-start text-xs h-auto py-2 whitespace-normal text-left"
+                disabled={!!savingId}
+                onClick={() => outcomeLead && openCallbackDialog(outcomeLead, label)}>
+                <CalendarClock className="h-3.5 w-3.5 mr-1.5 shrink-0" /> {label}
               </Button>
             ))}
           </div>
@@ -553,6 +561,39 @@ export default function BDRStreetWalk() {
               <SkipForward className="h-3.5 w-3.5 mr-1" /> Skip this stop instead
             </Button>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Callback / revisit scheduler */}
+      <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CalendarClock className="h-4 w-4" /> {callbackLabel}</DialogTitle>
+          </DialogHeader>
+          {callbackLead && (
+            <div className="space-y-3">
+              <div className="text-sm text-white/70">
+                <p className="font-semibold text-white">{callbackLead.business_name}</p>
+                {callbackLead.owner_name && <p className="text-xs">{callbackLead.owner_name}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Date</label>
+                  <input type="date" value={callbackDate} onChange={(e) => setCallbackDate(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50">Time</label>
+                  <input type="time" value={callbackTime} onChange={(e) => setCallbackTime(e.target.value)}
+                    className="w-full mt-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[hsl(211,96%,56%)]" />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCallbackLead(null)}>Cancel</Button>
+            <Button onClick={confirmCallback} disabled={!callbackDate || !callbackTime}>Save {callbackLabel}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
