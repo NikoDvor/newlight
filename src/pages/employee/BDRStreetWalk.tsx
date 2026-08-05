@@ -11,6 +11,56 @@ import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
 
+/* ── Turn-by-turn directions: Apple Maps first, Google Maps fallback ── */
+let directionsCleanup: (() => void) | null = null;
+
+function openDirections(address: string | null | undefined) {
+  if (!address || !address.trim()) {
+    toast({ title: "No address", description: "This lead has no street address to navigate to.", variant: "destructive" });
+    return;
+  }
+  const dest = encodeURIComponent(address.trim());
+  // Cancel any pending fallback from a previous tap.
+  directionsCleanup?.();
+  directionsCleanup = null;
+
+  try {
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+      if (directionsCleanup === cleanup) directionsCleanup = null;
+    };
+    const onHide = () => {
+      // Page went to the background → Apple Maps opened. Cancel fallback.
+      if (document.visibilityState === "hidden" || true) cleanup();
+    };
+    const timer = window.setTimeout(() => {
+      if (done) return;
+      cleanup();
+      if (document.visibilityState !== "visible") return;
+      try {
+        const win = window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, "_blank");
+        if (!win) throw new Error("blocked");
+      } catch {
+        toast({ title: "No maps app found", description: "Couldn't open Apple Maps or Google Maps on this device.", variant: "destructive" });
+      }
+    }, 1200);
+
+    directionsCleanup = cleanup;
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    window.location.href = `maps://?daddr=${dest}&dirflg=d`;
+  } catch {
+    directionsCleanup?.();
+    directionsCleanup = null;
+    toast({ title: "No maps app found", description: "Couldn't open Apple Maps or Google Maps on this device.", variant: "destructive" });
+  }
+}
+
 
 interface WalkLead {
   id: string;
