@@ -43,13 +43,10 @@ function openDirections(address: string | null | undefined) {
       if (done) return;
       cleanup();
       if (document.visibilityState !== "visible") return;
-      try {
-        const win = window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, "_blank");
-        if (!win) throw new Error("blocked");
-      } catch {
-        toast({ title: "No maps app found", description: "Couldn't open Apple Maps or Google Maps on this device.", variant: "destructive" });
-      }
-    }, 1200);
+      // Use location.href (not window.open) — iOS Safari blocks popups from timers.
+      window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+    }, 2000);
+
 
     directionsCleanup = cleanup;
     document.addEventListener("visibilitychange", onHide);
