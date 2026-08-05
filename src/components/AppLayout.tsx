@@ -36,7 +36,7 @@ function CursorGlow() {
 
 export function AppLayout() {
   const location = useLocation();
-  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, employeeProfile, setViewMode, setActiveClientId, isSessionLoading } = useWorkspace();
+  const { activeClientName, isAdmin, branding, activeClientId, signOut, user, userRole, employeeProfile, setViewMode, setActiveClientId, isSessionLoading, sessionExpired } = useWorkspace();
   const navigate = useNavigate();
   useClientManifest();
 
@@ -64,6 +64,29 @@ export function AppLayout() {
   // Block unverified email users
   if (!user.email_confirmed_at) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Stale/expired token: the role query failed with an auth error even after
+  // one refresh attempt. Distinct from "no workspace assigned".
+  if (sessionExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{
+        background: "linear-gradient(135deg, hsl(218 35% 10%) 0%, hsl(220 40% 16%) 50%, hsl(218 35% 10%) 100%)",
+      }}>
+        <div className="text-center max-w-md">
+          <img src={newlightLogo} alt="NewLight" className="h-14 w-auto mx-auto mb-4 object-contain" />
+          <h1 className="text-xl font-bold text-white mb-2">Your session expired</h1>
+          <p className="text-white/50 text-sm mb-6">Please sign in again to continue.</p>
+          <button
+            onClick={async () => { await signOut(); navigate("/auth", { replace: true }); }}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white"
+            style={{ background: "hsl(211 96% 55%)" }}
+          >
+            Sign In Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Employees (marketing_staff / support_staff) live under /employee/*.
