@@ -103,6 +103,10 @@ export default function BDRStreetWalk() {
   const [activeList, setActiveList] = useState<string | null>(listParam);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [outcomeLead, setOutcomeLead] = useState<WalkLead | null>(null);
+  const [callbackLead, setCallbackLead] = useState<WalkLead | null>(null);
+  const [callbackLabel, setCallbackLabel] = useState<string>("Call Back");
+  const [callbackDate, setCallbackDate] = useState<string>("");
+  const [callbackTime, setCallbackTime] = useState<string>("");
   const [position, setPosition] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoState, setGeoState] = useState<"idle" | "watching" | "denied" | "unavailable">("idle");
   const watchIdRef = useRef<number | null>(null);
