@@ -10,7 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
-import { LeadDetailBlock } from "@/components/employee/LeadFields";
+
 
 interface WalkLead {
   id: string;
@@ -253,7 +253,7 @@ export default function BDRStreetWalk() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-white">Street Walk</h1>
@@ -283,99 +283,118 @@ export default function BDRStreetWalk() {
         ))}
       </div>
 
-      {/* GPS honesty note */}
-      <p className="text-[11px] text-white/40 flex items-center gap-1.5">
-        <Navigation className="h-3 w-3 shrink-0" />
-        GPS shows an estimate only — always trust what you see in person.
-        {geoState === "denied" && " Location is off, so manual controls only."}
-      </p>
-
       {!activeList ? (
         <Card className="border-0 bg-white/[0.04]">
           <CardContent className="p-8 text-center text-sm text-white/50">Select a list above to begin.</CardContent>
         </Card>
       ) : (
         <>
-          {/* Current stop */}
-          {currentStop ? (
-            <div className="rounded-xl p-4"
-              style={{
-                background: arrived ? "hsla(142,72%,42%,.10)" : "hsla(215,35%,10%,.8)",
-                border: `1px solid ${arrived ? "hsla(142,72%,42%,.55)" : "hsla(211,96%,60%,.25)"}`,
-              }}>
-              {arrived && (
-                <div className="mb-3 rounded-lg px-3 py-2 text-sm font-semibold"
-                  style={{ background: "hsla(142,72%,42%,.18)", color: "hsl(142,72%,62%)", border: "1px solid hsla(142,72%,42%,.45)" }}>
-                  You've arrived at {currentStop.business_name}
-                </div>
-              )}
-              <div className="min-w-0 space-y-2.5">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/45">Current stop #{currentStop.sequence_order}</p>
-                  <h2 className="text-lg font-bold text-white break-words leading-snug">{currentStop.business_name}</h2>
-                  {distanceToCurrent != null && (
-                    <span className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
-                      style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)" }}>
-                      ~{Math.round(distanceToCurrent)} m away
-                    </span>
-                  )}
-                </div>
-                <LeadDetailBlock lead={currentStop} />
-              </div>
-
-
-              <div className="flex flex-wrap gap-2 mt-4">
-                <Button size="sm" onClick={() => setOutcomeLead(currentStop)} disabled={savingId === currentStop.id}>
-                  Log outcome
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setVisitStatus(currentStop, "visited")}>
-                  <Check className="h-3.5 w-3.5 mr-1" /> Mark visited
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setVisitStatus(currentStop, "skipped")}>
-                  <SkipForward className="h-3.5 w-3.5 mr-1" /> Skip
-                </Button>
-              </div>
+          {/* Slim arrival banner */}
+          {arrived && currentStop && (
+            <div className="rounded-md px-3 py-1.5 text-xs font-semibold flex items-center gap-2"
+              style={{ background: "hsla(142,72%,42%,.16)", color: "hsl(142,72%,62%)", border: "1px solid hsla(142,72%,42%,.45)" }}>
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              You've arrived at {currentStop.business_name}
             </div>
-          ) : walkLeads.length > 0 ? (
-            <Card className="border-0 bg-white/[0.04]">
-              <CardContent className="p-6 text-center text-sm text-white/60">
-                Every stop on "{activeList}" is done. Nice work.
-              </CardContent>
-            </Card>
-          ) : (
+          )}
+
+          {/* Spreadsheet */}
+          {walkLeads.length === 0 ? (
             <Card className="border-0 bg-white/[0.04]">
               <CardContent className="p-6 text-center text-sm text-white/50">No sequenced leads in this list.</CardContent>
             </Card>
+          ) : (
+            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.16)" }}>
+              <div className="max-h-[70vh] overflow-auto" style={{ WebkitOverflowScrolling: "touch" }}>
+                <table className="w-full min-w-[620px] border-collapse text-left text-xs">
+                  <thead className="sticky top-0 z-10">
+                    <tr style={{ background: "hsl(215,35%,12%)" }}>
+                      {["#", "Address", "Business", "Status", "Action"].map((h, i) => (
+                        <th key={h}
+                          className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/55 whitespace-nowrap ${i === 0 ? "w-10" : ""}`}
+                          style={{ borderBottom: "1px solid hsla(211,96%,60%,.25)", borderRight: i < 4 ? "1px solid hsla(211,96%,60%,.10)" : undefined }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {walkLeads.map((lead, idx) => {
+                      const tone = statusTone(lead.visit_status);
+                      const isCurrent = currentStop?.id === lead.id;
+                      const rowBg = isCurrent
+                        ? "hsla(211,96%,56%,.16)"
+                        : idx % 2 === 0 ? "hsla(215,35%,8%,.85)" : "hsla(215,35%,11%,.85)";
+                      const cell = "px-2 py-1.5 align-middle";
+                      const cellStyle = { borderBottom: "1px solid hsla(211,96%,60%,.10)", borderRight: "1px solid hsla(211,96%,60%,.08)" };
+                      return (
+                        <tr key={lead.id} style={{ background: rowBg }} className="hover:brightness-125 transition-[filter]">
+                          <td className={`${cell} font-mono tabular-nums text-white/45`} style={cellStyle}>{lead.sequence_order}</td>
+                          <td className={`${cell} text-white/70`} style={cellStyle}>
+                            <span className="block max-w-[180px] truncate" title={lead.street_address || undefined}>
+                              {lead.street_address || "—"}
+                            </span>
+                          </td>
+                          <td className={cell} style={cellStyle}>
+                            <span className={`block max-w-[220px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
+                              title={lead.business_name}>
+                              {lead.business_name}
+                            </span>
+                          </td>
+                          <td className={cell} style={cellStyle}>
+                            <span className="inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap"
+                              style={{ background: tone.bg, color: tone.color }}>
+                              <span className="h-1.5 w-1.5 rounded-full" style={{ background: tone.color }} />
+                              {tone.label}
+                            </span>
+                            {isCurrent && distanceToCurrent != null && (
+                              <span className="ml-1.5 text-[10px] font-medium whitespace-nowrap" style={{ color: "hsl(190,90%,70%)" }}>
+                                ~{Math.round(distanceToCurrent)} m
+                              </span>
+                            )}
+                          </td>
+                          <td className={`${cell} whitespace-nowrap`} style={{ borderBottom: "1px solid hsla(211,96%,60%,.10)" }}>
+                            <div className="flex items-center gap-1">
+                              <button type="button" title="Log outcome" aria-label="Log outcome"
+                                disabled={savingId === lead.id}
+                                onClick={() => setOutcomeLead(lead)}
+                                className="h-6 px-1.5 rounded text-[10px] font-semibold text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40">
+                                Log
+                              </button>
+                              <button type="button" title="Mark visited" aria-label="Mark visited"
+                                onClick={() => setVisitStatus(lead, "visited")}
+                                className="h-6 w-6 grid place-items-center rounded text-white/60 hover:text-white hover:bg-white/10">
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button type="button" title="Skip stop" aria-label="Skip stop"
+                                onClick={() => setVisitStatus(lead, "skipped")}
+                                className="h-6 w-6 grid place-items-center rounded text-white/60 hover:text-white hover:bg-white/10">
+                                <SkipForward className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
-          {/* Full sequence */}
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
-            {walkLeads.map(lead => {
-              const tone = statusTone(lead.visit_status);
-              const isCurrent = currentStop?.id === lead.id;
-              return (
-                <div key={lead.id}
-                  role="button" tabIndex={0}
-                  onClick={() => setOutcomeLead(lead)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOutcomeLead(lead); } }}
-                  className="w-full text-left px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors flex items-start gap-3 cursor-pointer">
-                  <span className="text-[11px] text-white/40 w-6 shrink-0 pt-0.5">{lead.sequence_order}</span>
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <span className={`block text-sm break-words leading-snug ${isCurrent ? "text-white font-semibold" : "text-white/80"}`}>
-                      {lead.business_name}
-                    </span>
-                    <LeadDetailBlock lead={lead} clampNotes />
-                  </div>
+          {!currentStop && walkLeads.length > 0 && (
+            <p className="text-xs text-white/55">Every stop on "{activeList}" is done. Nice work.</p>
+          )}
 
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
-                    style={{ background: tone.bg, color: tone.color }}>{tone.label}</span>
-                </div>
-
-              );
-            })}
-          </div>
+          {/* GPS honesty note */}
+          <p className="text-[11px] text-white/40 flex items-center gap-1.5">
+            <Navigation className="h-3 w-3 shrink-0" />
+            GPS shows an estimate only — always trust what you see in person.
+            {geoState === "denied" && " Location is off, so manual controls only."}
+          </p>
         </>
       )}
+
 
       {/* Outcome sheet */}
       <Dialog open={!!outcomeLead} onOpenChange={(o) => !o && setOutcomeLead(null)}>
