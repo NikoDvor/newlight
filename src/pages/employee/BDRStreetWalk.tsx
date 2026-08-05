@@ -36,8 +36,9 @@ function openDirections(address: string | null | undefined) {
     };
     const onHide = () => {
       // Page went to the background → Apple Maps opened. Cancel fallback.
-      if (document.visibilityState === "hidden" || true) cleanup();
+      cleanup();
     };
+
     const timer = window.setTimeout(() => {
       if (done) return;
       cleanup();
