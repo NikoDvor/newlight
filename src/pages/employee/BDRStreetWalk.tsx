@@ -492,10 +492,17 @@ export default function BDRStreetWalk() {
                         <tr key={lead.id} style={{ background: rowBg }} className="hover:brightness-125 transition-[filter]">
                           <td className={`${cell} font-mono tabular-nums text-white/45`} style={cellStyle}>{lead.sequence_order}</td>
                           <td className={`${cell} text-white/70`} style={cellStyle}>
-                            <span className="block max-w-[180px] truncate" title={lead.street_address || undefined}>
-                              {lead.street_address || "—"}
-                            </span>
+                            <button type="button"
+                              onClick={(e) => { e.stopPropagation(); openDirections(lead.street_address); }}
+                              className="flex max-w-[180px] items-center gap-1 truncate text-left hover:underline disabled:opacity-50"
+                              style={{ color: "hsl(211,96%,68%)" }}
+                              disabled={!lead.street_address}
+                              title={lead.street_address ? `Directions to ${lead.street_address}` : undefined}>
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{lead.street_address || "—"}</span>
+                            </button>
                           </td>
+
                           <td className={cell} style={cellStyle}>
                             <span className={`block max-w-[200px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
                               title={lead.business_name}>
