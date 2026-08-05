@@ -262,13 +262,23 @@
   }
 
   @media (max-width: 767px) {
-    table {
+    table:not(.nl-native-table) {
       display: block;
       width: 100%;
       min-width: 640px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
+  }
+
+  /* Tables that manage their own horizontal scroll via a parent overflow-auto
+     wrapper (needed for position: sticky columns to work on mobile). */
+  .nl-native-table {
+    display: table;
+    overflow: visible;
+  }
+
+  @media (max-width: 767px) {
 
     .grid.grid-cols-2:not(.grid-preserve),
     .grid.grid-cols-3:not(.grid-preserve),
