@@ -22,7 +22,7 @@ export const OUTCOMES: { label: string; objection: string | null }[] = [
 export function stageForOutcome(label: string, fallback?: string | null): "cold" | "warm" | "hot" | "won" {
   if (label === "Won") return "won";
   if (label === "Lost") return "cold";
-  if (label === "Schedule Callback") return "hot";
+  if (label === "Schedule Callback" || label === "Call Back" || label === "Come Back") return "hot";
   if (label === "Didn't Answer") return ((fallback as any) || "cold");
   return "warm";
 }
