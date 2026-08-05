@@ -52,6 +52,13 @@ interface WalkLead {
 
 const ARRIVAL_METERS = 40;
 
+/* Street Walk replaces the shared "Schedule Callback" option with "Call Back" / "Come Back".
+   The shared OUTCOMES array is untouched, so the Dialer still renders "Schedule Callback". */
+const WALK_OUTCOMES = OUTCOMES.filter(o => o.label !== "Schedule Callback");
+const CALLBACK_LABELS = ["Call Back", "Come Back"] as const;
+
+
+
 function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number) {
   const R = 6371000;
   const toRad = (v: number) => (v * Math.PI) / 180;
