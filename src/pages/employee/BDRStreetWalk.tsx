@@ -291,6 +291,7 @@ export default function BDRStreetWalk() {
     const lead = callbackLead;
     const label = callbackLabel;
     const callbackAt = new Date(`${callbackDate}T${callbackTime}`).toISOString();
+    const nextStage = stageForOutcome(label);
     setCallbackLead(null);
     setSavingId(lead.id);
     try {
@@ -303,10 +304,10 @@ export default function BDRStreetWalk() {
       });
       if (error) throw error;
       setLeads(p => p.map(l => l.id === lead.id
-        ? { ...l, visit_status: "visited", called: true, pipeline_stage: "hot" }
+        ? { ...l, visit_status: "visited", called: true, pipeline_stage: nextStage }
         : l));
       await (supabase as any).from("nl_bdr_leads").update({
-        pipeline_stage: "hot",
+        pipeline_stage: nextStage,
         callback_at: callbackAt,
         callback_set_at: new Date().toISOString(),
         visit_status: "visited",
@@ -316,7 +317,7 @@ export default function BDRStreetWalk() {
         businessName: lead.business_name,
         ownerName: lead.owner_name,
         outcome: label,
-        stage: "hot",
+        stage: nextStage,
         notes: lead.notes,
       }).catch(() => {});
       toast({ title: `${label} scheduled`, description: new Date(callbackAt).toLocaleString() });
