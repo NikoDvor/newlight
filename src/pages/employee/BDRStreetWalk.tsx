@@ -304,15 +304,26 @@ export default function BDRStreetWalk() {
               <CardContent className="p-6 text-center text-sm text-white/50">No sequenced leads in this list.</CardContent>
             </Card>
           ) : (
-            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.16)" }}>
+            <>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Scroll for more →</p>
+            <div className="relative rounded-lg overflow-hidden" style={{ border: "1px solid hsla(211,96%,60%,.16)" }}>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 z-20"
+                style={{ background: "linear-gradient(to left, hsla(215,40%,6%,.95), transparent)" }} />
               <div className="max-h-[70vh] overflow-auto" style={{ WebkitOverflowScrolling: "touch" }}>
-                <table className="w-full min-w-[620px] border-collapse text-left text-xs">
-                  <thead className="sticky top-0 z-10">
-                    <tr style={{ background: "hsl(215,35%,12%)" }}>
-                      {["#", "Address", "Business", "Status", "Action"].map((h, i) => (
+                <table className="w-full min-w-[1100px] border-collapse text-left text-xs">
+                  <thead className="sticky top-0 z-20">
+                    <tr>
+                      {["#", "Address", "Business", "Owner", "Phone", "Website", "Niche", "Notes", "Status", "Action"].map((h, i) => (
                         <th key={h}
-                          className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/55 whitespace-nowrap ${i === 0 ? "w-10" : ""}`}
-                          style={{ borderBottom: "1px solid hsla(211,96%,60%,.25)", borderRight: i < 4 ? "1px solid hsla(211,96%,60%,.10)" : undefined }}>
+                          className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/55 whitespace-nowrap ${i === 0 ? "w-10" : ""} ${h === "Business" ? "sticky left-0 z-30" : ""}`}
+                          style={{
+                            background: "hsl(215,35%,12%)",
+                            borderBottom: "1px solid hsla(211,96%,60%,.25)",
+                            borderRight: h === "Business"
+                              ? "1px solid hsla(211,96%,60%,.45)"
+                              : i < 9 ? "1px solid hsla(211,96%,60%,.10)" : undefined,
+                            boxShadow: h === "Business" ? "2px 0 6px hsla(215,40%,4%,.65)" : undefined,
+                          }}>
                           {h}
                         </th>
                       ))}
@@ -323,10 +334,11 @@ export default function BDRStreetWalk() {
                       const tone = statusTone(lead.visit_status);
                       const isCurrent = currentStop?.id === lead.id;
                       const rowBg = isCurrent
-                        ? "hsla(211,96%,56%,.16)"
-                        : idx % 2 === 0 ? "hsla(215,35%,8%,.85)" : "hsla(215,35%,11%,.85)";
+                        ? "hsl(213,42%,18%)"
+                        : idx % 2 === 0 ? "hsl(215,35%,8%)" : "hsl(215,35%,11%)";
                       const cell = "px-2 py-1.5 align-middle";
                       const cellStyle = { borderBottom: "1px solid hsla(211,96%,60%,.10)", borderRight: "1px solid hsla(211,96%,60%,.08)" };
+                      const phone = lead.front_desk_phone || lead.phone || lead.owner_direct_phone || null;
                       return (
                         <tr key={lead.id} style={{ background: rowBg }} className="hover:brightness-125 transition-[filter]">
                           <td className={`${cell} font-mono tabular-nums text-white/45`} style={cellStyle}>{lead.sequence_order}</td>
@@ -335,10 +347,46 @@ export default function BDRStreetWalk() {
                               {lead.street_address || "—"}
                             </span>
                           </td>
-                          <td className={cell} style={cellStyle}>
-                            <span className={`block max-w-[220px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
+                          <td className={`${cell} sticky left-0 z-10`}
+                            style={{
+                              ...cellStyle,
+                              background: rowBg,
+                              borderRight: "1px solid hsla(211,96%,60%,.45)",
+                              boxShadow: "2px 0 6px hsla(215,40%,4%,.65)",
+                            }}>
+                            <span className={`block max-w-[200px] truncate ${isCurrent ? "text-white font-semibold" : "text-white/85"}`}
                               title={lead.business_name}>
                               {lead.business_name}
+                            </span>
+                          </td>
+                          <td className={`${cell} text-white/70`} style={cellStyle}>
+                            <span className="block max-w-[140px] truncate" title={lead.owner_name || undefined}>
+                              {lead.owner_name || "—"}
+                            </span>
+                          </td>
+                          <td className={`${cell} text-white/70 whitespace-nowrap`} style={cellStyle}>
+                            {phone ? (
+                              <a href={`tel:${phone}`} className="tabular-nums hover:underline" title={phone}>{phone}</a>
+                            ) : "—"}
+                          </td>
+                          <td className={`${cell} text-white/70`} style={cellStyle}>
+                            {lead.website ? (
+                              <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                                target="_blank" rel="noopener noreferrer"
+                                className="block max-w-[150px] truncate hover:underline" title={lead.website}
+                                style={{ color: "hsl(211,96%,72%)" }}>
+                                {lead.website.replace(/^https?:\/\//, "")}
+                              </a>
+                            ) : "—"}
+                          </td>
+                          <td className={`${cell} text-white/70`} style={cellStyle}>
+                            <span className="block max-w-[120px] truncate" title={lead.niche || undefined}>
+                              {lead.niche || "—"}
+                            </span>
+                          </td>
+                          <td className={`${cell} text-white/60`} style={cellStyle}>
+                            <span className="block max-w-[220px] truncate" title={lead.notes || undefined}>
+                              {lead.notes || "—"}
                             </span>
                           </td>
                           <td className={cell} style={cellStyle}>
