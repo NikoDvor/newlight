@@ -183,6 +183,7 @@ import BDRCertificationExam from "./pages/employee/BDRCertificationExam";
 import BDRMyLeads from "./pages/employee/BDRMyLeads";
 import BDRDialer from "./pages/employee/BDRDialer";
 import BDRStreetWalk from "./pages/employee/BDRStreetWalk";
+import StreetSweepDiscover from "./pages/employee/StreetSweepDiscover";
 
 
 
@@ -400,6 +401,7 @@ const App = () => {
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
                 <Route path="street-walk" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRStreetWalk /></ClientFlagGate>} />
+                <Route path="street-sweep" element={<ClientFlagGate flag="has_sales_team" source="employee"><StreetSweepDiscover /></ClientFlagGate>} />
 
 
 
