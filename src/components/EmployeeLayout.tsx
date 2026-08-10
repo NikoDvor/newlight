@@ -25,6 +25,8 @@ const navItems = [
   { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
   { title: "Dialer", url: "/employee/dialer", icon: Phone },
   { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
+  { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
+
 
   { title: "Training Center", url: "/employee/training", icon: GraduationCap },
   { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
