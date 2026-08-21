@@ -690,11 +690,13 @@ export default function BDRMyLeads() {
           <h1 className="text-2xl font-bold text-foreground">My Leads</h1>
           <p className="text-sm text-muted-foreground">{dateLabel} · {todayCount} leads today · {leads.length} total</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
-          <Button variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
-          <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
-          <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
+        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-2">
+            <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
+            <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
+            <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
+            <Button className="flex-shrink-0" size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
+          </div>
         </div>
       </div>
 
