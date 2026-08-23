@@ -35,6 +35,8 @@ const CRM_PROVIDERS = [
   { value: "other", label: "Other CRM" },
 ];
 
+import { MarkLostDialog } from "@/components/pipeline/MarkLostDialog";
+
 const PIPELINE_STAGES = [
   "new_lead", "contacted", "qualified", "appointment_booked",
   "proposal_sent", "negotiation", "closed_won", "closed_lost"
@@ -85,6 +87,7 @@ export default function CRM() {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
+  const [lostDeal, setLostDeal] = useState<{ id: string; name: string | null } | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
@@ -1231,6 +1234,15 @@ export default function CRM() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <MarkLostDialog
+        open={!!lostDeal}
+        onOpenChange={(v) => !v && setLostDeal(null)}
+        dealId={lostDeal?.id ?? null}
+        dealName={lostDeal?.name}
+        onDone={() => { setLostDeal(null); fetchData(); }}
+      />
+
     </div>
   );
 }
