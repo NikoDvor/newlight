@@ -4,6 +4,7 @@ import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
+import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
@@ -1270,6 +1271,9 @@ export default function Dashboard() {
 
           {/* ══════ PIPELINE REVENUE OPPORTUNITY — headline metric ══════ */}
           <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
+
+          {/* ══════ REVENUE BY PERIOD — same closed-won source ══════ */}
+          <RevenueByPeriod clientId={activeClientId} />
 
 
           {/* ══════ REFERRAL — ABOVE THE FOLD (3s light blue → 3s neon green → 3s back) ══════ */}

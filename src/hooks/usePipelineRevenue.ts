@@ -68,7 +68,8 @@ export function usePipelineRevenue(
           .maybeSingle(),
         (supabase as any)
           .from("workspace_users")
-          .select("user_id,full_name,email")
+          .select("id,user_id,full_name,email")
+
           .eq("client_id", clientId),
       ]);
 
@@ -85,8 +86,12 @@ export function usePipelineRevenue(
 
       const names: Record<string, string> = {};
       for (const m of memberRes?.data ?? []) {
-        if (m.user_id) names[m.user_id] = m.full_name || m.email || "Team member";
+        const label = m.full_name || m.email || "Team member";
+        // Deals may reference either the auth user id or the workspace_users row id.
+        if (m.user_id) names[m.user_id] = label;
+        if (m.id) names[m.id] = label;
       }
+
       setRepNames(names);
 
       if (withBenchmark && vert) {
