@@ -116,19 +116,29 @@ Deno.serve(async (req) => {
       ? phoneDigits.slice(1)
       : phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
 
+    // The phone uniqueness indexes on nl_bdr_leads are GLOBAL (not per-rep), so a
+    // rep-scoped dedupe lookup is not enough: a phone already claimed by another
+    // BDR would blow up the insert with 23505. Look up globally, prefer this rep's
+    // own row, and fall back to reusing the claimed lead rather than failing.
     let existingLead: any = null;
     if (emailNorm || phoneNorm) {
       const orClauses: string[] = [];
       if (emailNorm) orClauses.push(`email.ilike.${emailNorm}`);
-      if (phoneNorm) orClauses.push(`phone_normalized.eq.${phoneNorm}`);
+      if (phoneNorm) {
+        orClauses.push(`phone_normalized.eq.${phoneNorm}`);
+        orClauses.push(`owner_direct_phone_normalized.eq.${phoneNorm}`);
+        orClauses.push(`front_desk_phone_normalized.eq.${phoneNorm}`);
+      }
       const { data: matches } = await supabase
         .from("nl_bdr_leads")
-        .select("id, business_name, owner_name, phone, email")
-        .eq("user_id", assignedCal.user_id)
+        .select("id, user_id, business_name, owner_name, phone, email")
         .or(orClauses.join(","))
         .order("created_at", { ascending: true })
-        .limit(1);
-      if (matches && matches.length) existingLead = matches[0];
+        .limit(25);
+      if (matches && matches.length) {
+        existingLead =
+          matches.find((m: any) => m.user_id === assignedCal.user_id) || matches[0];
+      }
     }
 
     let lead: { id: string };
@@ -142,32 +152,55 @@ Deno.serve(async (req) => {
         await supabase.from("nl_bdr_leads").update(patch).eq("id", existingLead.id);
       }
       lead = { id: existingLead.id };
-      console.log(`[bdr-book] reused existing lead ${lead.id}`);
+      console.log(
+        `[bdr-book] reused existing lead ${lead.id}` +
+          (existingLead.user_id !== assignedCal.user_id ? " (claimed by another rep)" : "")
+      );
     } else {
-      const { data: newLead, error: leadErr } = await supabase
+      const baseLead: Record<string, any> = {
+        user_id: assignedCal.user_id,
+        client_id: assignedCal.client_id,
+        business_name: business_name || customer_name,
+        owner_name: customer_name,
+        phone: phone || null,
+        email: email || null,
+        lead_source: "booking_form",
+        status: "follow_up",
+        pipeline_stage: "hot",
+        notes: noteParts.join("\n") || null,
+        list_name: "Booking Form",
+        modules_of_interest: modulesClean,
+        logo_url: logoClean,
+        has_sales_team: hasSalesTeamClean,
+        sales_team_size: salesTeamSizeClean,
+      };
+
+      let { data: newLead, error: leadErr } = await supabase
         .from("nl_bdr_leads")
-        .insert({
-          user_id: assignedCal.user_id,
-          client_id: assignedCal.client_id,
-          business_name: business_name || customer_name,
-          owner_name: customer_name,
-          phone: phone || null,
-          email: email || null,
-          lead_source: "booking_form",
-          status: "follow_up",
-          pipeline_stage: "hot",
-          notes: noteParts.join("\n") || null,
-          list_name: "Booking Form",
-          modules_of_interest: modulesClean,
-          logo_url: logoClean,
-          has_sales_team: hasSalesTeamClean,
-          sales_team_size: salesTeamSizeClean,
-        })
+        .insert(baseLead)
         .select("id")
         .single();
+
+      // Last-resort guard: a concurrent/dirty phone collision must never lose a
+      // real booking. Retry without the phone and preserve it in the notes.
+      if (leadErr && (leadErr as any).code === "23505") {
+        console.warn("[bdr-book] phone collision on insert, retrying without phone", leadErr.message);
+        const retryNotes = [noteParts.join("\n"), phone ? `Phone provided at booking: ${phone}` : ""]
+          .filter(Boolean)
+          .join("\n");
+        const retry = await supabase
+          .from("nl_bdr_leads")
+          .insert({ ...baseLead, phone: null, notes: retryNotes || null })
+          .select("id")
+          .single();
+        newLead = retry.data;
+        leadErr = retry.error;
+      }
+
       if (leadErr) throw leadErr;
-      lead = newLead;
+      lead = newLead!;
     }
+
 
 
     // 4. Create event on assigned BDR's calendar
