@@ -318,7 +318,7 @@ export function PipelineRevenueOpportunity({
       </div>
 
       {/* ── lost breakdown ── */}
-      <div className="px-5 sm:px-6 pb-5">
+      <motion.div {...block(3, !!reduced)} className="px-5 sm:px-6 pb-5">
         <div className="rounded-xl p-3.5" style={SUBPANEL}>
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: STAGE_COLOR.lost }}>
@@ -370,7 +370,7 @@ export function PipelineRevenueOpportunity({
       </div>
 
       {/* ── interactive close-rate model ── */}
-      <div className="px-5 sm:px-6 pb-5">
+      <motion.div {...block(4, !!reduced)} className="px-5 sm:px-6 pb-5">
         <div className="rounded-xl p-4" style={SUBPANEL}>
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <span className="text-[10px] uppercase tracking-wider text-white/45 font-semibold flex items-center gap-1.5">
@@ -482,7 +482,7 @@ export function PipelineRevenueOpportunity({
       </div>
 
       {/* ── show-up rate ── */}
-      <div className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
+      <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
         {model.showUp.map((s) => (
           <div key={s.label} className="rounded-xl p-3.5 flex items-center gap-3.5" style={SUBPANEL}>
             <CalendarCheck className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--nl-cyan))" }} />
