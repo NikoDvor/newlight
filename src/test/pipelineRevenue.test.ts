@@ -33,7 +33,7 @@ describe("pipeline revenue", () => {
     ], revenueTarget: 50000, now });
 
     // cold->warm = 35/75 reached warm+ (20+10+5) out of 75 cold-reached
-    expect(m.stageRates[0].sampleSize).toBe(76); // incl. lost (cold-only)
+    expect(m.stageRates[0].sampleSize).toBe(75); // 200-day-old lost deal is outside the 90d window
     expect(m.stageRates.length).toBe(3);
     expect(m.wonValueAllTime).toBe(10000);
     expect(m.wonCountAllTime).toBe(5);
