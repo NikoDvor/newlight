@@ -142,15 +142,29 @@ export default function Auth() {
               <label className="text-[11px] font-semibold tracking-wider uppercase text-white/45 mb-1.5 block">
                 Password
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full h-11 px-3 rounded-md text-sm outline-none transition-colors placeholder:text-white/30 focus:border-[hsl(211,96%,60%)]"
-                style={inputStyle}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-11 px-3 pr-10 rounded-md text-sm outline-none transition-colors placeholder:text-white/30 focus:border-[hsl(211,96%,60%)]"
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white/50 hover:text-white/90 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(211,96%,60%)]"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
