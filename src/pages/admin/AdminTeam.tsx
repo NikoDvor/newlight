@@ -208,6 +208,69 @@ export default function AdminTeam() {
 
   useEffect(() => { fetchData(); fetchStaffCalendars(); }, []);
 
+  // --- Edge function invocation diagnostics -------------------------------
+  // Returns null when a valid session exists, otherwise a user-facing message.
+  const checkSession = async (): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("[AdminTeam] getSession error:", error);
+        return "Your session expired — please refresh and sign in again";
+      }
+      const session = data?.session;
+      if (!session?.access_token) return "Your session expired — please refresh and sign in again";
+      if (session.expires_at && session.expires_at * 1000 <= Date.now()) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.error || !refreshed.data?.session?.access_token) {
+          return "Your session expired — please refresh and sign in again";
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error("[AdminTeam] session check threw:", e);
+      return "Your session expired — please refresh and sign in again";
+    }
+  };
+
+  // Extracts the most specific error text available from a functions.invoke result.
+  const describeInvokeError = async (res: any, fallback: string): Promise<string> => {
+    console.error("[AdminTeam] edge function failure — full response:", res);
+    if (res?.data?.error) return String(res.data.error);
+
+    const err: any = res?.error;
+    const ctx: any = err?.context;
+    if (ctx) {
+      console.error("[AdminTeam] error context:", ctx, "status:", ctx?.status);
+      // ctx is often a Response object from the functions client
+      if (typeof ctx?.json === "function" || typeof ctx?.text === "function") {
+        try {
+          const cloned = typeof ctx.clone === "function" ? ctx.clone() : ctx;
+          const text = await cloned.text();
+          console.error("[AdminTeam] error body:", text);
+          try {
+            const parsed = JSON.parse(text);
+            const msg = parsed?.error || parsed?.message;
+            if (msg) return `${msg}${ctx.status ? ` (HTTP ${ctx.status})` : ""}`;
+          } catch {
+            if (text) return `${text.slice(0, 300)}${ctx.status ? ` (HTTP ${ctx.status})` : ""}`;
+          }
+        } catch (e) {
+          console.error("[AdminTeam] failed reading error body:", e);
+        }
+      }
+      const ctxMsg = ctx?.error || ctx?.message;
+      if (ctxMsg) return `${ctxMsg}${ctx?.status ? ` (HTTP ${ctx.status})` : ""}`;
+      if (ctx?.status) return `${fallback} (HTTP ${ctx.status})`;
+    }
+
+    const name = err?.name;
+    if (name === "FunctionsFetchError") {
+      return "Could not reach the server — check your connection and try again";
+    }
+    if (err?.message) return `${fallback}: ${err.message}`;
+    return fallback;
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail) { toast.error("Email is required"); return; }
     setLoading(true);
