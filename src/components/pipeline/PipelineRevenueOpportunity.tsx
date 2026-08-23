@@ -12,7 +12,6 @@ import {
   LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue,
   type CanonStage,
 } from "@/lib/pipelineRevenue";
-import { useCountUp } from "@/hooks/useCountUp";
 
 /**
  * ONE widget, two surfaces. `variant="admin"` renders NewLight's own pipeline
@@ -63,7 +62,6 @@ export function PipelineRevenueOpportunity({
     () => (rates.length ? projectRevenue(openDeals as any, rates) : 0),
     [openDeals, rates],
   );
-  const animatedProjection = useCountUp(Math.round(projected), 500);
 
   if (!clientId) return null;
 
@@ -297,7 +295,7 @@ export function PipelineRevenueOpportunity({
                   animate={{ scale: dirty ? [1, 1.04, 1] : 1 }}
                   transition={{ duration: 0.25 }}
                 >
-                  {fmtMoney(animatedProjection)}
+                  {fmtMoney(projected)}
                 </motion.p>
               </div>
               {dirty && (
