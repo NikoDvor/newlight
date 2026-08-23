@@ -316,6 +316,8 @@ export default function AdminSalesPipeline() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showIntake, setShowIntake] = useState(false);
+  const [lostDeal, setLostDeal] = useState<{ id: string; name: string | null } | null>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("pipeline");
   const [searchQuery, setSearchQuery] = useState("");
