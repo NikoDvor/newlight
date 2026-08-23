@@ -282,14 +282,23 @@ Deno.serve(async (req) => {
     await supabase.from("crm_deals").update(dealPatch as any).eq("id", dealId);
 
     // 6. Link back to lead + create close_prep_links row
-    await supabase.from("nl_bdr_leads").update({
+    const { error: linkErr } = await supabase.from("nl_bdr_leads").update({
       crm_contact_id: contactId,
       crm_deal_id: dealId,
     }).eq("id", lead.id);
+    if (linkErr) {
+      // Hard-fail: without this link the BDR pipeline revenue reads $0.
+      console.error("[close-prep-submit] failed to link deal to lead", {
+        lead_id: lead.id, deal_id: dealId, error: linkErr.message,
+      });
+      throw linkErr;
+    }
 
-    await supabase.from("close_prep_links").insert({
+    const { error: cplErr } = await supabase.from("close_prep_links").insert({
       lead_id: lead.id, deal_id: dealId, user_id: userId,
     } as any);
+    if (cplErr) console.error("[close-prep-submit] close_prep_links insert failed", cplErr.message);
+
 
     // Construct the client-facing Pay & Sign URL
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
