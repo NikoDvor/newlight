@@ -928,6 +928,14 @@ Deno.serve(async (req) => {
           } else {
             linkedUserId = linkData.user.id;
             setupLink = linkData.properties?.action_link || null;
+            // Only treat as brand-new if the account was actually created just
+            // now and has never signed in.
+            const createdAt = Date.parse((linkData.user as any).created_at || "");
+            isNewUser =
+              !(linkData.user as any).last_sign_in_at &&
+              Number.isFinite(createdAt) &&
+              Date.now() - createdAt < 5 * 60 * 1000;
+            existingUser = !isNewUser;
             await adminClient.from("user_roles").insert({
               user_id: linkedUserId,
               role: "client_owner",
@@ -938,6 +946,12 @@ Deno.serve(async (req) => {
       } else if (inviteData?.user?.id) {
         linkedUserId = inviteData.user.id;
         inviteSent = true;
+        const createdAt = Date.parse((inviteData.user as any).created_at || "");
+        isNewUser =
+          !(inviteData.user as any).last_sign_in_at &&
+          Number.isFinite(createdAt) &&
+          Date.now() - createdAt < 5 * 60 * 1000;
+        existingUser = !isNewUser;
         await adminClient.from("user_roles").insert({
           user_id: linkedUserId,
           role: "client_owner",
