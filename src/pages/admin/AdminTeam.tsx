@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, AlertTriangle, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +47,7 @@ export default function AdminTeam() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [groups, setGroups] = useState<WorkspaceGroupData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [missingRoleProfiles, setMissingRoleProfiles] = useState<{ user_id: string; full_name: string; email: string }[]>([]);
 
   // Invite dialog
   const [showInvite, setShowInvite] = useState(false);
@@ -187,6 +188,20 @@ export default function AdminTeam() {
         status: w.status === "suspended" ? "suspended" : "active",
       });
     });
+
+    // Employee profiles whose user has zero rows in user_roles (needs a manual decision)
+    const usersWithRoles = new Set(roleRows.map((r) => r.user_id));
+    const missing = new Map<string, { user_id: string; full_name: string; email: string }>();
+    empRows.forEach((e) => {
+      if (!e?.user_id || usersWithRoles.has(e.user_id)) return;
+      if (missing.has(e.user_id)) return;
+      missing.set(e.user_id, {
+        user_id: e.user_id,
+        full_name: e.full_name || identity.get(e.user_id)?.full_name || "",
+        email: e.email || identity.get(e.user_id)?.email || "",
+      });
+    });
+    setMissingRoleProfiles(Array.from(missing.values()));
 
     const result = Array.from(buckets.values()).filter((g) => g.users.length > 0);
     console.log("[AdminTeam] groups:", result.map((g) => ({ name: g.name, count: g.users.length })));
@@ -468,6 +483,33 @@ export default function AdminTeam() {
         </TabsList>
 
         <TabsContent value="users">
+      {missingRoleProfiles.length > 0 && (
+        <Card className="p-4 bg-amber-500/[0.07] border border-amber-500/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-amber-200">
+                {missingRoleProfiles.length} account{missingRoleProfiles.length === 1 ? "" : "s"} missing a role assignment
+              </h3>
+              <p className="text-xs text-white/60 mt-1">
+                These employee profiles have no row in user_roles, so they have no permissions. Assign a role manually — the correct
+                role is a decision, not a default.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {missingRoleProfiles.map((m) => (
+                  <li key={m.user_id} className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-white/90">{m.full_name || "(no name)"}</span>
+                    <span className="text-white/50 break-all">{m.email || "(no email)"}</span>
+                    <span className="text-white/30 font-mono">{m.user_id.slice(0, 8)}</span>
+                    <Badge className="bg-amber-500/15 text-amber-300 border-0">no role</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Team & Users</h1>
