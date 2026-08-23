@@ -7,6 +7,8 @@ import {
 import { ResponsiveContainer, AreaChart, Area, Tooltip as RTooltip } from "recharts";
 import { Slider } from "@/components/ui/slider";
 import { usePipelineRevenue } from "@/hooks/usePipelineRevenue";
+import { useBdrPipelineRevenue } from "@/hooks/useBdrPipelineRevenue";
+
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
