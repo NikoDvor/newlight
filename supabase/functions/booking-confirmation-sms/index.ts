@@ -343,15 +343,19 @@ async function runNotifications(
       console.warn("No BDR email available for user", bdrUserId);
     }
 
-    // --- 3. Provision client workspace + temp password -----------------------
+    // --- 3. Provision client workspace ---------------------------------------
+    // SECURITY: a temp password may ONLY ever be issued for an auth account that
+    // was created by this very provisioning call (is_new_user === true). A public
+    // booking form must never reset or disclose credentials for a pre-existing
+    // account — the booker is unauthenticated and the phone/email they typed is
+    // attacker-controlled.
     let tempPassword: string | null = null;
     let provisionOk = false;
     let workspaceUrl: string | null = null;
+    let isNewUser = false;
+    let magicLink: string | null = null;
     if (clientEmail) {
       try {
-        const rand = crypto.getRandomValues(new Uint8Array(9));
-        tempPassword = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
-
         const industry = meta.improvement_area || meta.industry || null;
         const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
         const logoUrl = clientLogoUrl || meta.logo_url || null;
@@ -386,20 +390,42 @@ async function runNotifications(
         provisionOk = Boolean(provResp?.success);
         workspaceUrl = provResp?.workspace_url || null;
         const linkedUserId: string | null = provResp?.linked_user_id || null;
-        console.log(`[provision-from-booking] success=${provisionOk} user_id=${linkedUserId} workspace=${workspaceUrl}`);
+        // Explicit, positive check — never infer "new" from absence of an error.
+        isNewUser = provResp?.is_new_user === true && provResp?.existing_user !== true;
+        console.log(`[provision-from-booking] success=${provisionOk} user_id=${linkedUserId} workspace=${workspaceUrl} is_new_user=${isNewUser}`);
 
-        if (linkedUserId && tempPassword) {
+        if (linkedUserId && isNewUser) {
+          const rand = crypto.getRandomValues(new Uint8Array(9));
+          const candidate = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
           const { error: updErr } = await supabase.auth.admin.updateUserById(linkedUserId, {
-            password: tempPassword,
+            password: candidate,
             email_confirm: true,
             user_metadata: { must_change_password: true },
           });
           if (updErr) {
             console.error("[provision-from-booking] set temp password failed:", updErr);
-            tempPassword = null;
+          } else {
+            tempPassword = candidate;
           }
-        } else {
-          tempPassword = null;
+        } else if (linkedUserId) {
+          // Pre-existing account: issue a magic-link sign-in to the account's own
+          // email only. No password change, no SMS, no fallback on failure.
+          try {
+            const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+              type: "magiclink",
+              email: clientEmail,
+              options: { redirectTo: "https://newlight-app.com/auth" },
+            });
+            if (linkErr) {
+              console.error("[magiclink] generate failed (sending nothing):", linkErr);
+            } else {
+              magicLink = (linkData as any)?.properties?.action_link || null;
+              if (!magicLink) console.error("[magiclink] no action_link returned (sending nothing)");
+            }
+          } catch (e) {
+            console.error("[magiclink] generate threw (sending nothing):", e);
+          }
+          console.log(`[provision-from-booking] existing account — no password issued, magic_link=${Boolean(magicLink)}`);
         }
       } catch (e) {
         console.error("[provision-from-booking] error:", e);
