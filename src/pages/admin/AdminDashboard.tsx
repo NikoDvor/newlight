@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
+import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 
 
@@ -97,6 +98,9 @@ export default function AdminDashboard() {
 
       {/* Headline metric — NewLight's own pipeline (same component as sub-accounts) */}
       <PipelineRevenueOpportunity clientId={NEWLIGHT_INTERNAL_CLIENT_ID} variant="admin" />
+
+      {/* Won revenue by period — same closed-won source as the widget above */}
+      <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />
 
 
 

@@ -15,6 +15,8 @@ import { QuickActionCard } from "@/components/employee/QuickActionCard";
 import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
 import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
+import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 
 const today = new Date();
 const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -190,6 +192,12 @@ export function BDRDashboard() {
       <MotivationCarousel />
       <BDRCallbackCountdown userId={user?.id} />
       <ObjectionMasteryCard />
+      <RevenueByPeriod
+        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
+        repUserId={user?.id}
+        title="My Revenue by Period"
+        subtitle="Your own closed-won revenue — today through all-time."
+      />
       <CertificationStatusBlock />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Today's Dials" value={dialsToday} icon={PhoneCall} />
@@ -255,7 +263,14 @@ export function SDRDashboard() {
       <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
       <MotivationCarousel />
       <ObjectionMasteryCard />
+      <RevenueByPeriod
+        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
+        repUserId={user?.id}
+        title="My Revenue by Period"
+        subtitle="Your own closed-won revenue — today through all-time."
+      />
       <CertificationStatusBlock />
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Meetings This Week" value={meetings.length} icon={CalendarClock} />
         <StatCard label="Proposals Sent This Week" value={sentWeek} icon={Target} />
