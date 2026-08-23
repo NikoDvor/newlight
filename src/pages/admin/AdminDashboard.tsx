@@ -97,7 +97,7 @@ export default function AdminDashboard() {
       </NewLightHero>
 
       {/* Headline metric — NewLight's own pipeline (same component as sub-accounts) */}
-      <PipelineRevenueOpportunity clientId={NEWLIGHT_INTERNAL_CLIENT_ID} variant="admin" />
+      <PipelineRevenueOpportunity clientId={NEWLIGHT_INTERNAL_CLIENT_ID} variant="admin" source="bdr" />
 
       {/* Won revenue by period — same closed-won source as the widget above */}
       <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />

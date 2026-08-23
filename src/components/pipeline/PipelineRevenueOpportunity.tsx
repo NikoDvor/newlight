@@ -7,6 +7,8 @@ import {
 import { ResponsiveContainer, AreaChart, Area, Tooltip as RTooltip } from "recharts";
 import { Slider } from "@/components/ui/slider";
 import { usePipelineRevenue } from "@/hooks/usePipelineRevenue";
+import { useBdrPipelineRevenue } from "@/hooks/useBdrPipelineRevenue";
+
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,8 +26,14 @@ import {
 export interface PipelineRevenueOpportunityProps {
   clientId: string | null | undefined;
   variant?: "admin" | "client";
+  /**
+   * Where the pipeline comes from. "crm" = client-scoped crm_deals (every
+   * sub-account). "bdr" = NewLight's own nl_bdr_leads pipeline (admin only).
+   */
+  source?: "crm" | "bdr";
   className?: string;
 }
+
 
 const PANEL: React.CSSProperties = {
   background:
@@ -70,16 +78,21 @@ function CountUp({ value, className, style }: { value: number; className?: strin
 export function PipelineRevenueOpportunity({
   clientId,
   variant = "client",
+  source = "crm",
   className = "",
 }: PipelineRevenueOpportunityProps) {
   const { isAdmin } = useWorkspace();
   const reduced = useReducedMotion();
   const [targetDraft, setTargetDraft] = useState("");
   const [editingTarget, setEditingTarget] = useState(false);
-  const { loading, model, openDeals, repNames, vertical, refresh } = usePipelineRevenue(clientId, {
+  const crmData = usePipelineRevenue(source === "crm" ? clientId : null, {
     withBenchmark: variant === "client",
     emitRisk: true,
   });
+  const bdrData = useBdrPipelineRevenue(source === "bdr" ? clientId : null);
+  const { loading, model, openDeals, repNames, vertical, refresh } =
+    source === "bdr" ? bdrData : crmData;
+
 
   const baseRates = useMemo(() => (model?.stageRates ?? []).map((s) => s.rate), [model]);
   const [rates, setRates] = useState<number[]>([]);
