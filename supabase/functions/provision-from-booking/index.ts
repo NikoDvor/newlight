@@ -873,6 +873,9 @@ Deno.serve(async (req) => {
     let inviteError: string | null = null;
     let existingUser = false;
     let linkedUserId: string | null = null;
+    // SECURITY: only true when THIS call created a brand-new auth user. Callers
+    // must never issue/reset a password for a pre-existing account.
+    let isNewUser = false;
 
     try {
       const { data: inviteData, error: invErr } = await adminClient.auth.admin.inviteUserByEmail(contact_email, {
@@ -895,6 +898,7 @@ Deno.serve(async (req) => {
           if (linkData?.user?.id) {
             linkedUserId = linkData.user.id;
             existingUser = true;
+            isNewUser = false;
             const { data: existingRole } = await adminClient
               .from("user_roles")
               .select("id")
