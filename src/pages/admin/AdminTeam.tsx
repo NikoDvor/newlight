@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, AlertTriangle, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +47,7 @@ export default function AdminTeam() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [groups, setGroups] = useState<WorkspaceGroupData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [missingRoleProfiles, setMissingRoleProfiles] = useState<{ user_id: string; full_name: string; email: string }[]>([]);
 
   // Invite dialog
   const [showInvite, setShowInvite] = useState(false);
@@ -188,6 +189,20 @@ export default function AdminTeam() {
       });
     });
 
+    // Employee profiles whose user has zero rows in user_roles (needs a manual decision)
+    const usersWithRoles = new Set(roleRows.map((r) => r.user_id));
+    const missing = new Map<string, { user_id: string; full_name: string; email: string }>();
+    empRows.forEach((e) => {
+      if (!e?.user_id || usersWithRoles.has(e.user_id)) return;
+      if (missing.has(e.user_id)) return;
+      missing.set(e.user_id, {
+        user_id: e.user_id,
+        full_name: e.full_name || identity.get(e.user_id)?.full_name || "",
+        email: e.email || identity.get(e.user_id)?.email || "",
+      });
+    });
+    setMissingRoleProfiles(Array.from(missing.values()));
+
     const result = Array.from(buckets.values()).filter((g) => g.users.length > 0);
     console.log("[AdminTeam] groups:", result.map((g) => ({ name: g.name, count: g.users.length })));
     setClients(clientList);
@@ -208,10 +223,75 @@ export default function AdminTeam() {
 
   useEffect(() => { fetchData(); fetchStaffCalendars(); }, []);
 
+  // --- Edge function invocation diagnostics -------------------------------
+  // Returns null when a valid session exists, otherwise a user-facing message.
+  const checkSession = async (): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("[AdminTeam] getSession error:", error);
+        return "Your session expired — please refresh and sign in again";
+      }
+      const session = data?.session;
+      if (!session?.access_token) return "Your session expired — please refresh and sign in again";
+      if (session.expires_at && session.expires_at * 1000 <= Date.now()) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.error || !refreshed.data?.session?.access_token) {
+          return "Your session expired — please refresh and sign in again";
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error("[AdminTeam] session check threw:", e);
+      return "Your session expired — please refresh and sign in again";
+    }
+  };
+
+  // Extracts the most specific error text available from a functions.invoke result.
+  const describeInvokeError = async (res: any, fallback: string): Promise<string> => {
+    console.error("[AdminTeam] edge function failure — full response:", res);
+    if (res?.data?.error) return String(res.data.error);
+
+    const err: any = res?.error;
+    const ctx: any = err?.context;
+    if (ctx) {
+      console.error("[AdminTeam] error context:", ctx, "status:", ctx?.status);
+      // ctx is often a Response object from the functions client
+      if (typeof ctx?.json === "function" || typeof ctx?.text === "function") {
+        try {
+          const cloned = typeof ctx.clone === "function" ? ctx.clone() : ctx;
+          const text = await cloned.text();
+          console.error("[AdminTeam] error body:", text);
+          try {
+            const parsed = JSON.parse(text);
+            const msg = parsed?.error || parsed?.message;
+            if (msg) return `${msg}${ctx.status ? ` (HTTP ${ctx.status})` : ""}`;
+          } catch {
+            if (text) return `${text.slice(0, 300)}${ctx.status ? ` (HTTP ${ctx.status})` : ""}`;
+          }
+        } catch (e) {
+          console.error("[AdminTeam] failed reading error body:", e);
+        }
+      }
+      const ctxMsg = ctx?.error || ctx?.message;
+      if (ctxMsg) return `${ctxMsg}${ctx?.status ? ` (HTTP ${ctx.status})` : ""}`;
+      if (ctx?.status) return `${fallback} (HTTP ${ctx.status})`;
+    }
+
+    const name = err?.name;
+    if (name === "FunctionsFetchError") {
+      return "Could not reach the server — check your connection and try again";
+    }
+    if (err?.message) return `${fallback}: ${err.message}`;
+    return fallback;
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail) { toast.error("Email is required"); return; }
     setLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("invite-user", {
         body: {
           email: inviteEmail,
@@ -220,7 +300,7 @@ export default function AdminTeam() {
         },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to invite user");
+        toast.error(await describeInvokeError(res, "Failed to invite user"));
       } else {
         toast.success("Invitation sent to " + inviteEmail);
         setShowInvite(false);
@@ -228,7 +308,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to invite user");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to invite user");
     }
     setLoading(false);
   };
@@ -262,11 +343,13 @@ export default function AdminTeam() {
     }
     setEditEmailLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("update-user-email", {
         body: { user_id: editEmailFor.user_id, new_email: newEmail },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to update email");
+        toast.error(await describeInvokeError(res, "Failed to update email"));
       } else {
         toast.success("Email updated");
         setEditEmailFor(null);
@@ -274,7 +357,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to update email");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to update email");
     }
     setEditEmailLoading(false);
   };
@@ -300,18 +384,21 @@ export default function AdminTeam() {
     }
     setEditPhoneLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("update-user-phone", {
         body: { user_id: editPhoneFor.user_id, new_phone: newPhone },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to update phone");
+        toast.error(await describeInvokeError(res, "Failed to update phone"));
       } else {
         toast.success("Phone updated");
         setEditPhoneFor(null);
         setEditPhoneValue("");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to update phone");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to update phone");
     }
     setEditPhoneLoading(false);
   };
@@ -339,6 +426,8 @@ export default function AdminTeam() {
     }
     setManualLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("create-user-manual", {
         body: {
           full_name: manualFullName.trim(),
@@ -352,7 +441,7 @@ export default function AdminTeam() {
         },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to create account");
+        toast.error(await describeInvokeError(res, "Failed to create account"));
       } else {
         toast.success("Account created successfully");
         setShowManualAdd(false);
@@ -360,7 +449,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to create account");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to create account");
     }
     setManualLoading(false);
   };
@@ -393,6 +483,33 @@ export default function AdminTeam() {
         </TabsList>
 
         <TabsContent value="users">
+      {missingRoleProfiles.length > 0 && (
+        <Card className="p-4 bg-amber-500/[0.07] border border-amber-500/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-amber-200">
+                {missingRoleProfiles.length} account{missingRoleProfiles.length === 1 ? "" : "s"} missing a role assignment
+              </h3>
+              <p className="text-xs text-white/60 mt-1">
+                These employee profiles have no row in user_roles, so they have no permissions. Assign a role manually — the correct
+                role is a decision, not a default.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {missingRoleProfiles.map((m) => (
+                  <li key={m.user_id} className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-white/90">{m.full_name || "(no name)"}</span>
+                    <span className="text-white/50 break-all">{m.email || "(no email)"}</span>
+                    <span className="text-white/30 font-mono">{m.user_id.slice(0, 8)}</span>
+                    <Badge className="bg-amber-500/15 text-amber-300 border-0">no role</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Team & Users</h1>
