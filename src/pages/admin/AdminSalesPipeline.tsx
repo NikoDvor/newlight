@@ -460,10 +460,20 @@ export default function AdminSalesPipeline() {
                                 {deal.workspace_users?.full_name || "Unassigned"}
                               </p>
                             </div>
-                            <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                title="Mark lost"
+                                onClick={(e) => { e.stopPropagation(); setLostDeal({ id: deal.id, name: deal.deal_name || deal.crm_companies?.company_name || null }); }}
+                                className="opacity-40 hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-3 w-3" style={{ color: "hsl(0 68% 58%)" }} />
+                              </button>
+                              <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
+                            </div>
                           </div>
                         </motion.div>
                       ))}
+
                       {stageDeals.length === 0 && (
                         <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground/25">No deals</div>
                       )}
