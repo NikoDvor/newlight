@@ -439,10 +439,11 @@ async function runNotifications(
       const greeting = clientName ? `Hi ${clientName},` : "Hi there,";
       const appUrl = "https://newlight-app.com";
       const loginUrl = "https://newlight-app.com/auth";
-      const credsBlockText = tempPassword
+      const showCreds = Boolean(tempPassword) && isNewUser;
+      const credsBlockText = showCreds
         ? `\n\nYour NewLight workspace is ready.\nLogin: ${loginUrl}\nEmail: ${clientEmail}\nTemporary password: ${tempPassword}\n(You'll be asked to change it on first login.)\n`
         : "";
-      const credsBlockHtml = tempPassword
+      const credsBlockHtml = showCreds
         ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
              <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your NewLight workspace is ready</p>
              <p style="margin:0 0 4px;font-size:14px;color:#334155;"><strong>Email:</strong> ${clientEmail}</p>
@@ -451,6 +452,20 @@ async function runNotifications(
                <a href="${loginUrl}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Login to NewLight</a>
              </div>
              <p style="margin:12px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
+           </div>`
+        : "";
+      // Existing account: sign-in link only, never a password.
+      const magicBlockText = !showCreds && magicLink
+        ? `\n\nYour existing NewLight account now has access to this workspace.\nSign in here (link expires shortly): ${magicLink}\nYour password is unchanged.\n`
+        : "";
+      const magicBlockHtml = !showCreds && magicLink
+        ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
+             <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your workspace access is ready</p>
+             <p style="margin:0 0 14px;font-size:14px;color:#334155;">We've added this workspace to your existing NewLight account. Your password is unchanged.</p>
+             <div style="text-align:center;">
+               <a href="${magicLink}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
+             </div>
+             <p style="margin:12px 0 0;font-size:12px;color:#64748B;">This sign-in link expires shortly and can only be used from this email.</p>
            </div>`
         : "";
       const zoomBlockText = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
