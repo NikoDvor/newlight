@@ -24,8 +24,14 @@ import {
 export interface PipelineRevenueOpportunityProps {
   clientId: string | null | undefined;
   variant?: "admin" | "client";
+  /**
+   * Where the pipeline comes from. "crm" = client-scoped crm_deals (every
+   * sub-account). "bdr" = NewLight's own nl_bdr_leads pipeline (admin only).
+   */
+  source?: "crm" | "bdr";
   className?: string;
 }
+
 
 const PANEL: React.CSSProperties = {
   background:
