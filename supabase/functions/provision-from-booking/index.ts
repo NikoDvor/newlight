@@ -561,6 +561,8 @@ Deno.serve(async (req) => {
             workspace_url: `/w/${existingByOwner.workspace_slug}`,
             workspace_slug: existingByOwner.workspace_slug,
             invite_sent: false,
+            is_new_user: false,
+            existing_user: true,
             invite_error: null,
             contact_id: null,
             lead_id: null,
@@ -873,6 +875,9 @@ Deno.serve(async (req) => {
     let inviteError: string | null = null;
     let existingUser = false;
     let linkedUserId: string | null = null;
+    // SECURITY: only true when THIS call created a brand-new auth user. Callers
+    // must never issue/reset a password for a pre-existing account.
+    let isNewUser = false;
 
     try {
       const { data: inviteData, error: invErr } = await adminClient.auth.admin.inviteUserByEmail(contact_email, {
@@ -895,6 +900,7 @@ Deno.serve(async (req) => {
           if (linkData?.user?.id) {
             linkedUserId = linkData.user.id;
             existingUser = true;
+            isNewUser = false;
             const { data: existingRole } = await adminClient
               .from("user_roles")
               .select("id")
@@ -924,6 +930,14 @@ Deno.serve(async (req) => {
           } else {
             linkedUserId = linkData.user.id;
             setupLink = linkData.properties?.action_link || null;
+            // Only treat as brand-new if the account was actually created just
+            // now and has never signed in.
+            const createdAt = Date.parse((linkData.user as any).created_at || "");
+            isNewUser =
+              !(linkData.user as any).last_sign_in_at &&
+              Number.isFinite(createdAt) &&
+              Date.now() - createdAt < 5 * 60 * 1000;
+            existingUser = !isNewUser;
             await adminClient.from("user_roles").insert({
               user_id: linkedUserId,
               role: "client_owner",
@@ -934,6 +948,12 @@ Deno.serve(async (req) => {
       } else if (inviteData?.user?.id) {
         linkedUserId = inviteData.user.id;
         inviteSent = true;
+        const createdAt = Date.parse((inviteData.user as any).created_at || "");
+        isNewUser =
+          !(inviteData.user as any).last_sign_in_at &&
+          Number.isFinite(createdAt) &&
+          Date.now() - createdAt < 5 * 60 * 1000;
+        existingUser = !isNewUser;
         await adminClient.from("user_roles").insert({
           user_id: linkedUserId,
           role: "client_owner",
@@ -1007,6 +1027,7 @@ Deno.serve(async (req) => {
           invite_error: inviteError,
           invite_status: finalInviteStatus,
           existing_user: existingUser,
+          is_new_user: isNewUser,
           lead_action: leadAction,
           deal_action: dealAction,
           deal_id: dealId,
@@ -1061,6 +1082,7 @@ Deno.serve(async (req) => {
         setup_link: setupLink,
         invite_sent: inviteSent,
         existing_user: existingUser,
+        is_new_user: isNewUser,
         invite_error: inviteError,
         linked_user_id: linkedUserId,
         email_delivery_status: handoffResult.email_status || "not_attempted",

@@ -343,15 +343,19 @@ async function runNotifications(
       console.warn("No BDR email available for user", bdrUserId);
     }
 
-    // --- 3. Provision client workspace + temp password -----------------------
+    // --- 3. Provision client workspace ---------------------------------------
+    // SECURITY: a temp password may ONLY ever be issued for an auth account that
+    // was created by this very provisioning call (is_new_user === true). A public
+    // booking form must never reset or disclose credentials for a pre-existing
+    // account — the booker is unauthenticated and the phone/email they typed is
+    // attacker-controlled.
     let tempPassword: string | null = null;
     let provisionOk = false;
     let workspaceUrl: string | null = null;
+    let isNewUser = false;
+    let magicLink: string | null = null;
     if (clientEmail) {
       try {
-        const rand = crypto.getRandomValues(new Uint8Array(9));
-        tempPassword = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
-
         const industry = meta.improvement_area || meta.industry || null;
         const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
         const logoUrl = clientLogoUrl || meta.logo_url || null;
@@ -386,20 +390,42 @@ async function runNotifications(
         provisionOk = Boolean(provResp?.success);
         workspaceUrl = provResp?.workspace_url || null;
         const linkedUserId: string | null = provResp?.linked_user_id || null;
-        console.log(`[provision-from-booking] success=${provisionOk} user_id=${linkedUserId} workspace=${workspaceUrl}`);
+        // Explicit, positive check — never infer "new" from absence of an error.
+        isNewUser = provResp?.is_new_user === true && provResp?.existing_user !== true;
+        console.log(`[provision-from-booking] success=${provisionOk} user_id=${linkedUserId} workspace=${workspaceUrl} is_new_user=${isNewUser}`);
 
-        if (linkedUserId && tempPassword) {
+        if (linkedUserId && isNewUser) {
+          const rand = crypto.getRandomValues(new Uint8Array(9));
+          const candidate = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
           const { error: updErr } = await supabase.auth.admin.updateUserById(linkedUserId, {
-            password: tempPassword,
+            password: candidate,
             email_confirm: true,
             user_metadata: { must_change_password: true },
           });
           if (updErr) {
             console.error("[provision-from-booking] set temp password failed:", updErr);
-            tempPassword = null;
+          } else {
+            tempPassword = candidate;
           }
-        } else {
-          tempPassword = null;
+        } else if (linkedUserId) {
+          // Pre-existing account: issue a magic-link sign-in to the account's own
+          // email only. No password change, no SMS, no fallback on failure.
+          try {
+            const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+              type: "magiclink",
+              email: clientEmail,
+              options: { redirectTo: "https://newlight-app.com/auth" },
+            });
+            if (linkErr) {
+              console.error("[magiclink] generate failed (sending nothing):", linkErr);
+            } else {
+              magicLink = (linkData as any)?.properties?.action_link || null;
+              if (!magicLink) console.error("[magiclink] no action_link returned (sending nothing)");
+            }
+          } catch (e) {
+            console.error("[magiclink] generate threw (sending nothing):", e);
+          }
+          console.log(`[provision-from-booking] existing account — no password issued, magic_link=${Boolean(magicLink)}`);
         }
       } catch (e) {
         console.error("[provision-from-booking] error:", e);
@@ -413,10 +439,11 @@ async function runNotifications(
       const greeting = clientName ? `Hi ${clientName},` : "Hi there,";
       const appUrl = "https://newlight-app.com";
       const loginUrl = "https://newlight-app.com/auth";
-      const credsBlockText = tempPassword
+      const showCreds = Boolean(tempPassword) && isNewUser;
+      const credsBlockText = showCreds
         ? `\n\nYour NewLight workspace is ready.\nLogin: ${loginUrl}\nEmail: ${clientEmail}\nTemporary password: ${tempPassword}\n(You'll be asked to change it on first login.)\n`
         : "";
-      const credsBlockHtml = tempPassword
+      const credsBlockHtml = showCreds
         ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
              <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your NewLight workspace is ready</p>
              <p style="margin:0 0 4px;font-size:14px;color:#334155;"><strong>Email:</strong> ${clientEmail}</p>
@@ -427,6 +454,20 @@ async function runNotifications(
              <p style="margin:12px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
            </div>`
         : "";
+      // Existing account: sign-in link only, never a password.
+      const magicBlockText = !showCreds && magicLink
+        ? `\n\nYour existing NewLight account now has access to this workspace.\nSign in here (link expires shortly): ${magicLink}\nYour password is unchanged.\n`
+        : "";
+      const magicBlockHtml = !showCreds && magicLink
+        ? `<div style="margin:24px 0;padding:20px;background:#F1F5F9;border-radius:12px;border:1px solid #E2E8F0;">
+             <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#0F172A;">Your workspace access is ready</p>
+             <p style="margin:0 0 14px;font-size:14px;color:#334155;">We've added this workspace to your existing NewLight account. Your password is unchanged.</p>
+             <div style="text-align:center;">
+               <a href="${magicLink}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
+             </div>
+             <p style="margin:12px 0 0;font-size:12px;color:#64748B;">This sign-in link expires shortly and can only be used from this email.</p>
+           </div>`
+        : "";
       const zoomBlockText = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
       const zoomBlockHtml = zoomJoinUrl
         ? `<div style="margin:24px 0;padding:20px;background:#EFF6FF;border-radius:12px;border:1px solid #BFDBFE;text-align:center;">
@@ -435,7 +476,7 @@ async function runNotifications(
              <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${zoomJoinUrl}</p>
            </div>`
         : "";
-      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}${magicBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
@@ -443,6 +484,7 @@ async function runNotifications(
     <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
     ${zoomBlockHtml}
     ${credsBlockHtml}
+    ${magicBlockHtml}
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Questions? Call (805) 836-3557.</p>
     <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">— The NewLight Team</p>
   </div>
@@ -458,12 +500,16 @@ async function runNotifications(
       console.warn("No client email available for booking", recordId);
     }
 
-    // --- 5. Follow-up SMS to client with credentials -------------------------
-    if (clientPhone && tempPassword) {
+    // --- 5. Follow-up SMS with credentials — brand-new accounts ONLY.
+    // Never for a pre-existing account: the phone number comes from a public,
+    // unauthenticated form and is attacker-controlled.
+    if (clientPhone && tempPassword && isNewUser) {
       const credsSms = `Your NewLight workspace is ready. Login at https://newlight-app.com/auth — Email: ${clientEmail} Temporary password: ${tempPassword} — Change your password on first login.`;
       const credsSent = await sendSms(clientPhone, credsSms);
       console.log(`[SMS→client creds] to=${clientPhone} success=${credsSent}`);
     }
+
+
 
     console.log(`[booking-confirmation-sms] background chain complete for booking=${recordId} client_sms=${clientSent} bdr_sms=${bdrSent} bdr_email=${bdrEmailSent} provisioned=${provisionOk} client_email=${clientEmailSent} temp_password=${Boolean(tempPassword)}`);
   } catch (err) {
