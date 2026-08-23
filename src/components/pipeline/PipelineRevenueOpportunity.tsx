@@ -76,16 +76,21 @@ function CountUp({ value, className, style }: { value: number; className?: strin
 export function PipelineRevenueOpportunity({
   clientId,
   variant = "client",
+  source = "crm",
   className = "",
 }: PipelineRevenueOpportunityProps) {
   const { isAdmin } = useWorkspace();
   const reduced = useReducedMotion();
   const [targetDraft, setTargetDraft] = useState("");
   const [editingTarget, setEditingTarget] = useState(false);
-  const { loading, model, openDeals, repNames, vertical, refresh } = usePipelineRevenue(clientId, {
+  const crmData = usePipelineRevenue(source === "crm" ? clientId : null, {
     withBenchmark: variant === "client",
     emitRisk: true,
   });
+  const bdrData = useBdrPipelineRevenue(source === "bdr" ? clientId : null);
+  const { loading, model, openDeals, repNames, vertical, refresh } =
+    source === "bdr" ? bdrData : crmData;
+
 
   const baseRates = useMemo(() => (model?.stageRates ?? []).map((s) => s.rate), [model]);
   const [rates, setRates] = useState<number[]>([]);
