@@ -500,12 +500,16 @@ async function runNotifications(
       console.warn("No client email available for booking", recordId);
     }
 
-    // --- 5. Follow-up SMS to client with credentials -------------------------
-    if (clientPhone && tempPassword) {
+    // --- 5. Follow-up SMS with credentials — brand-new accounts ONLY.
+    // Never for a pre-existing account: the phone number comes from a public,
+    // unauthenticated form and is attacker-controlled.
+    if (clientPhone && tempPassword && isNewUser) {
       const credsSms = `Your NewLight workspace is ready. Login at https://newlight-app.com/auth — Email: ${clientEmail} Temporary password: ${tempPassword} — Change your password on first login.`;
       const credsSent = await sendSms(clientPhone, credsSms);
       console.log(`[SMS→client creds] to=${clientPhone} success=${credsSent}`);
     }
+
+
 
     console.log(`[booking-confirmation-sms] background chain complete for booking=${recordId} client_sms=${clientSent} bdr_sms=${bdrSent} bdr_email=${bdrEmailSent} provisioned=${provisionOk} client_email=${clientEmailSent} temp_password=${Boolean(tempPassword)}`);
   } catch (err) {
