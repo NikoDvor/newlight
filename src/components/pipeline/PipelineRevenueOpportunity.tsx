@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, animate as fmAnimate } from "framer-motion";
 import {
   TrendingUp, TrendingDown, Minus, Gauge, AlertTriangle, UserRound,
   Layers, ChevronDown, RotateCcw, Sparkles, CalendarCheck, Info,
@@ -31,15 +31,41 @@ const PANEL: React.CSSProperties = {
   background:
     "linear-gradient(155deg, hsla(215,40%,11%,.92) 0%, hsla(222,42%,7%,.94) 58%, hsla(211,60%,10%,.9) 100%)",
   border: "1px solid hsla(211,96%,60%,.16)",
-  boxShadow: "0 24px 60px -32px hsla(211,96%,50%,.55), inset 0 1px 0 hsla(211,96%,80%,.06)",
+  boxShadow:
+    "0 24px 60px -32px hsla(211,96%,50%,.55), inset 0 1px 0 hsla(211,96%,80%,.07), inset 0 -30px 60px -50px hsla(211,96%,70%,.35)",
 };
 
 const SUBPANEL: React.CSSProperties = {
   background: "hsla(215,38%,10%,.62)",
   border: "1px solid hsla(211,96%,60%,.10)",
+  boxShadow: "inset 0 1px 0 hsla(211,96%,85%,.05), inset 0 -18px 30px -30px hsla(211,96%,70%,.4)",
 };
 
 const ease = [0.22, 1, 0.36, 1] as any;
+
+/** One deliberate top-to-bottom cascade instead of scattered arrivals. */
+const CASCADE = 0.07;
+const block = (i: number, reduced: boolean) => ({
+  initial: reduced ? { opacity: 0 } : { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay: 0.1 + i * CASCADE, duration: 0.5, ease },
+});
+
+/** Count-up for stage numbers; instant when reduced motion is requested. */
+function CountUp({ value, className, style }: { value: number; className?: string; style?: React.CSSProperties }) {
+  const reduced = useReducedMotion();
+  const [n, setN] = useState(reduced ? value : 0);
+  useEffect(() => {
+    if (reduced) { setN(value); return; }
+    const controls = fmAnimate(0, value, {
+      duration: 0.9,
+      ease,
+      onUpdate: (v) => setN(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [value, reduced]);
+  return <span className={className} style={style}>{n}</span>;
+}
 
 export function PipelineRevenueOpportunity({
   clientId,
@@ -47,6 +73,7 @@ export function PipelineRevenueOpportunity({
   className = "",
 }: PipelineRevenueOpportunityProps) {
   const { isAdmin } = useWorkspace();
+  const reduced = useReducedMotion();
   const [targetDraft, setTargetDraft] = useState("");
   const [editingTarget, setEditingTarget] = useState(false);
   const { loading, model, openDeals, repNames, vertical, refresh } = usePipelineRevenue(clientId, {
@@ -96,7 +123,7 @@ export function PipelineRevenueOpportunity({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease }}
-      className={`rounded-2xl overflow-hidden ${className}`}
+      className={`rounded-2xl overflow-hidden relative prv-grain ${className}`}
       style={PANEL}
     >
       {/* ── headline ── */}
@@ -111,23 +138,46 @@ export function PipelineRevenueOpportunity({
               <Sparkles className="h-3 w-3" style={{ color: "hsl(var(--nl-sky))" }} />
               Pipeline Revenue Opportunity
             </p>
-            <div className="flex items-baseline gap-2 mt-2 flex-wrap">
-              <motion.span
-                key={Math.round(weighted.point)}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease }}
-                className="text-[2rem] sm:text-[2.6rem] leading-none font-bold tabular-nums"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(120deg, hsl(var(--nl-ice)), hsl(var(--nl-sky)) 55%, hsl(var(--nl-electric)))",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                {fmtMoney(weighted.low)}–{fmtMoney(weighted.high)}
-              </motion.span>
+            <div className="relative mt-2">
+              {!reduced && <span className="prv-halo" aria-hidden />}
+              <div className="relative overflow-hidden">
+                {!reduced && <span className="prv-scan" aria-hidden />}
+                <div
+                  className="relative flex items-baseline gap-1.5 flex-wrap text-[2rem] sm:text-[2.6rem] leading-none font-bold tabular-nums"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(120deg, hsl(var(--nl-ice)), hsl(var(--nl-sky)) 55%, hsl(var(--nl-electric)))",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                    filter: "drop-shadow(0 2px 18px hsla(211,96%,60%,.35))",
+                  }}
+                >
+                  <motion.span
+                    key={`lo-${Math.round(weighted.low)}`}
+                    initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease, delay: 0.15 }}
+                  >
+                    {fmtMoney(weighted.low)}
+                  </motion.span>
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.55 }}
+                    transition={{ duration: 0.4, delay: 0.38 }}
+                  >
+                    –
+                  </motion.span>
+                  <motion.span
+                    key={`hi-${Math.round(weighted.high)}`}
+                    initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease, delay: 0.5 }}
+                  >
+                    {fmtMoney(weighted.high)}
+                  </motion.span>
+                </div>
+              </div>
             </div>
             <p className="text-[11px] text-white/45 mt-1.5">
               Weighted pipeline value · {fmtMoney(model.openValue)} open across{" "}
@@ -194,7 +244,7 @@ export function PipelineRevenueOpportunity({
 
         {/* 8-week sparkline */}
         {model.trend.some((t) => t.cold + t.warm + t.hot + t.won + t.lost > 0) && (
-          <div className="h-14 mt-4 -mx-1">
+          <div className="h-14 mt-4 -mx-1 prv-spark">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={model.trend} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                 <defs>
@@ -235,10 +285,8 @@ export function PipelineRevenueOpportunity({
           return (
             <motion.div
               key={s}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.45, ease }}
-              className="rounded-xl p-3.5 relative overflow-hidden"
+              {...block(1 + i * 0.5, !!reduced)}
+              className="rounded-xl p-3.5 relative overflow-hidden prv-grain"
               style={SUBPANEL}
               title={STAGE_DESCRIPTION[s]}
             >
@@ -254,7 +302,7 @@ export function PipelineRevenueOpportunity({
                   <span className="text-[9px] text-white/35 uppercase tracking-wide">all-time</span>
                 )}
               </div>
-              <p className="text-2xl font-bold text-white/90 tabular-nums mt-1.5">{b.count}</p>
+              <CountUp value={b.count} className="block text-2xl font-bold text-white/90 tabular-nums mt-1.5" />
               <p className="text-[11px] text-white/45 tabular-nums">{fmtMoney(b.value)}</p>
               <div className="mt-2 h-1 rounded-full overflow-hidden bg-white/[0.05]">
                 <motion.div
@@ -270,7 +318,7 @@ export function PipelineRevenueOpportunity({
       </div>
 
       {/* ── lost breakdown ── */}
-      <div className="px-5 sm:px-6 pb-5">
+      <motion.div {...block(3, !!reduced)} className="px-5 sm:px-6 pb-5">
         <div className="rounded-xl p-3.5" style={SUBPANEL}>
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: STAGE_COLOR.lost }}>
@@ -319,10 +367,10 @@ export function PipelineRevenueOpportunity({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* ── interactive close-rate model ── */}
-      <div className="px-5 sm:px-6 pb-5">
+      <motion.div {...block(4, !!reduced)} className="px-5 sm:px-6 pb-5">
         <div className="rounded-xl p-4" style={SUBPANEL}>
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <span className="text-[10px] uppercase tracking-wider text-white/45 font-semibold flex items-center gap-1.5">
@@ -380,7 +428,7 @@ export function PipelineRevenueOpportunity({
                   </div>
                 </div>
                 <Slider
-                  className="mt-2"
+                  className="mt-2 prv-slider"
                   value={[Math.round((rates[i] ?? sr.rate) * 100)]}
                   min={0}
                   max={100}
@@ -398,7 +446,7 @@ export function PipelineRevenueOpportunity({
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 flex items-start gap-2 rounded-lg px-2.5 py-1.5"
+                    className={`mt-2 flex items-start gap-2 rounded-lg px-2.5 py-1.5 ${sr.signal.kind === "systemic" ? "prv-systemic" : ""}`}
                     style={{
                       background:
                         sr.signal.kind === "systemic" ? "hsla(0,68%,58%,.10)" : "hsla(38,92%,55%,.10)",
@@ -431,10 +479,10 @@ export function PipelineRevenueOpportunity({
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── show-up rate ── */}
-      <div className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
+      <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
         {model.showUp.map((s) => (
           <div key={s.label} className="rounded-xl p-3.5 flex items-center gap-3.5" style={SUBPANEL}>
             <CalendarCheck className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--nl-cyan))" }} />
@@ -456,7 +504,7 @@ export function PipelineRevenueOpportunity({
             </div>
           </div>
         ))}
-      </div>
+      </motion.div>
 
       {/* ── admin: leaderboard + capacity ── */}
       {variant === "admin" && model.reps.length > 0 && (
@@ -577,14 +625,15 @@ export function PipelineRevenueOpportunity({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease }}
+                transition={reduced ? { duration: 0.2 } : { type: "spring", stiffness: 260, damping: 26, mass: 0.7 }}
                 className="overflow-hidden"
               >
                 <div className="mt-2 space-y-1.5 max-h-60 overflow-y-auto pr-1">
                   {model.winBacks.slice(0, 25).map((w) => (
-                    <div
+                    <motion.div
                       key={w.id}
-                      className="rounded-lg px-3 py-2 flex items-center gap-3 text-[11px]"
+                      whileHover={reduced ? undefined : { y: -2, transition: { type: "spring", stiffness: 400, damping: 24 } }}
+                      className="rounded-lg px-3 py-2 flex items-center gap-3 text-[11px] hover:border-white/10"
                       style={SUBPANEL}
                     >
                       <span className="text-white/80 truncate flex-1">{w.name}</span>
@@ -593,7 +642,7 @@ export function PipelineRevenueOpportunity({
                       <span className="tabular-nums font-semibold" style={{ color: "hsl(var(--nl-gold))" }}>
                         {fmtMoney(w.value)}
                       </span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>

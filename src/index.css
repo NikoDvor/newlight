@@ -1251,3 +1251,93 @@
     z-index: 0;
   }
 }
+
+/* ── Pipeline Revenue Opportunity widget polish ───────────────────────── */
+@keyframes prv-sweep {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  12%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateX(220%); opacity: 0; }
+}
+@keyframes prv-halo {
+  0%, 100% { opacity: .35; }
+  50%      { opacity: .7; }
+}
+@keyframes prv-systemic {
+  0%, 100% { box-shadow: 0 0 0 0 hsla(0,68%,58%,.28); }
+  50%      { box-shadow: 0 0 0 4px hsla(0,68%,58%,0); }
+}
+@keyframes prv-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.prv-scan {
+  position: absolute;
+  inset: -18% -10%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    hsla(197,92%,68%,.10) 38%,
+    hsla(205,100%,96%,.30) 50%,
+    hsla(197,92%,68%,.10) 62%,
+    transparent 100%
+  );
+  filter: blur(10px);
+  animation: prv-sweep 4.6s cubic-bezier(.4,0,.2,1) 0.25s 2 both;
+}
+
+.prv-halo {
+  position: absolute;
+  left: -6%;
+  top: 4%;
+  width: 62%;
+  height: 92%;
+  pointer-events: none;
+  border-radius: 999px;
+  background: radial-gradient(60% 100% at 30% 50%, hsla(211,96%,60%,.30), transparent 72%);
+  filter: blur(22px);
+  animation: prv-halo 6s ease-in-out infinite;
+}
+
+.prv-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.prv-systemic { animation: prv-systemic 2.8s ease-in-out infinite; }
+
+.prv-slider [role="slider"] {
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease;
+}
+.prv-slider [role="slider"]:hover { transform: scale(1.08); }
+.prv-slider [role="slider"]:active,
+.prv-slider [role="slider"]:focus-visible {
+  transform: scale(1.22);
+  box-shadow: 0 0 0 6px hsla(211,96%,60%,.14), 0 0 18px hsla(197,92%,68%,.55);
+}
+
+.prv-spark path.recharts-curve.recharts-area-curve {
+  filter: drop-shadow(0 0 6px hsla(197,92%,68%,.55));
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: prv-draw 1.4s cubic-bezier(.22,1,.36,1) .15s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prv-scan,
+  .prv-halo,
+  .prv-systemic { animation: none; }
+  .prv-scan { opacity: 0; }
+  .prv-spark path.recharts-curve.recharts-area-curve {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .prv-slider [role="slider"] { transition: none; }
+}
