@@ -275,6 +275,8 @@ export default function AdminTeam() {
     if (!inviteEmail) { toast.error("Email is required"); return; }
     setLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("invite-user", {
         body: {
           email: inviteEmail,
@@ -283,7 +285,7 @@ export default function AdminTeam() {
         },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to invite user");
+        toast.error(await describeInvokeError(res, "Failed to invite user"));
       } else {
         toast.success("Invitation sent to " + inviteEmail);
         setShowInvite(false);
@@ -291,7 +293,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to invite user");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to invite user");
     }
     setLoading(false);
   };
@@ -325,11 +328,13 @@ export default function AdminTeam() {
     }
     setEditEmailLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("update-user-email", {
         body: { user_id: editEmailFor.user_id, new_email: newEmail },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to update email");
+        toast.error(await describeInvokeError(res, "Failed to update email"));
       } else {
         toast.success("Email updated");
         setEditEmailFor(null);
@@ -337,7 +342,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to update email");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to update email");
     }
     setEditEmailLoading(false);
   };
@@ -363,18 +369,21 @@ export default function AdminTeam() {
     }
     setEditPhoneLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("update-user-phone", {
         body: { user_id: editPhoneFor.user_id, new_phone: newPhone },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to update phone");
+        toast.error(await describeInvokeError(res, "Failed to update phone"));
       } else {
         toast.success("Phone updated");
         setEditPhoneFor(null);
         setEditPhoneValue("");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to update phone");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to update phone");
     }
     setEditPhoneLoading(false);
   };
@@ -402,6 +411,8 @@ export default function AdminTeam() {
     }
     setManualLoading(true);
     try {
+      const sessionIssue = await checkSession();
+      if (sessionIssue) { toast.error(sessionIssue); throw new Error("__handled__"); }
       const res = await supabase.functions.invoke("create-user-manual", {
         body: {
           full_name: manualFullName.trim(),
@@ -415,7 +426,7 @@ export default function AdminTeam() {
         },
       });
       if (res.error || res.data?.error) {
-        toast.error(res.data?.error || res.error?.message || "Failed to create account");
+        toast.error(await describeInvokeError(res, "Failed to create account"));
       } else {
         toast.success("Account created successfully");
         setShowManualAdd(false);
@@ -423,7 +434,8 @@ export default function AdminTeam() {
         fetchData();
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to create account");
+      if (err?.message === "__handled__") { /* already surfaced */ }
+      else toast.error(err.message || "Failed to create account");
     }
     setManualLoading(false);
   };
