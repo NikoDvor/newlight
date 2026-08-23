@@ -367,7 +367,7 @@ export function PipelineRevenueOpportunity({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* ── interactive close-rate model ── */}
       <motion.div {...block(4, !!reduced)} className="px-5 sm:px-6 pb-5">
@@ -479,7 +479,7 @@ export function PipelineRevenueOpportunity({
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── show-up rate ── */}
       <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
@@ -504,7 +504,7 @@ export function PipelineRevenueOpportunity({
             </div>
           </div>
         ))}
-      </div>
+      </motion.div>
 
       {/* ── admin: leaderboard + capacity ── */}
       {variant === "admin" && model.reps.length > 0 && (
