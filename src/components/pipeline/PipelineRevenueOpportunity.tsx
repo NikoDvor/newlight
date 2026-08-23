@@ -7,6 +7,9 @@ import {
 import { ResponsiveContainer, AreaChart, Area, Tooltip as RTooltip } from "recharts";
 import { Slider } from "@/components/ui/slider";
 import { usePipelineRevenue } from "@/hooks/usePipelineRevenue";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   FUNNEL_STAGES, STAGE_COLOR, STAGE_LABEL, STAGE_DESCRIPTION,
   LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue,
@@ -43,7 +46,10 @@ export function PipelineRevenueOpportunity({
   variant = "client",
   className = "",
 }: PipelineRevenueOpportunityProps) {
-  const { loading, model, openDeals, repNames, vertical } = usePipelineRevenue(clientId, {
+  const { isAdmin } = useWorkspace();
+  const [targetDraft, setTargetDraft] = useState("");
+  const [editingTarget, setEditingTarget] = useState(false);
+  const { loading, model, openDeals, repNames, vertical, refresh } = usePipelineRevenue(clientId, {
     withBenchmark: variant === "client",
     emitRisk: true,
   });
@@ -139,6 +145,42 @@ export function PipelineRevenueOpportunity({
                 sub={`vs ${fmtMoney(revenueTarget!)} target`}
                 tone={coverageRatio >= 3 ? "good" : coverageRatio >= 1.5 ? "warn" : "bad"}
               />
+            )}
+            {coverageRatio == null && isAdmin && (
+              <div className="rounded-xl px-3.5 py-2.5 min-w-[150px]" style={SUBPANEL}>
+                <p className="text-[9px] uppercase tracking-wider text-white/35 font-semibold flex items-center gap-1">
+                  <Gauge className="h-3 w-3" /> Revenue target
+                </p>
+                {editingTarget ? (
+                  <div className="flex items-center gap-1 mt-1">
+                    <input
+                      autoFocus
+                      value={targetDraft}
+                      onChange={(e) => setTargetDraft(e.target.value.replace(/[^0-9.]/g, ""))}
+                      placeholder="250000"
+                      className="w-full bg-transparent border-b border-white/20 text-sm text-white/90 outline-none tabular-nums"
+                    />
+                    <button
+                      className="text-[10px] text-white/60 hover:text-white"
+                      onClick={async () => {
+                        const v = Number(targetDraft);
+                        if (!(v > 0)) { setEditingTarget(false); return; }
+                        const { error } = await (supabase as any)
+                          .from("clients").update({ revenue_target: v }).eq("id", clientId);
+                        if (error) toast.error(error.message);
+                        else { toast.success("Revenue target set"); refresh(); }
+                        setEditingTarget(false);
+                      }}
+                    >Save</button>
+                  </div>
+                ) : (
+                  <button
+                    className="text-[13px] text-white/55 hover:text-white/90 mt-1 underline decoration-dotted underline-offset-4"
+                    onClick={() => setEditingTarget(true)}
+                  >Set a target</button>
+                )}
+                <p className="text-[10px] text-white/30 mt-0.5">unlocks coverage ratio</p>
+              </div>
             )}
             <StatTile
               icon={trendDelta > 0.005 ? TrendingUp : trendDelta < -0.005 ? TrendingDown : Minus}
