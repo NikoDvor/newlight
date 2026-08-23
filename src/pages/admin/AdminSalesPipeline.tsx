@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { executeSalesIntake } from "@/lib/salesAutomation";
 import { WORKFLOW_STEPS, PROPOSAL_STATUSES, type WorkflowStepKey, type ProposalStatusKey } from "@/contexts/ActiveSalesContext";
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
+import { MarkLostDialog } from "@/components/pipeline/MarkLostDialog";
 import { resolveOperationType } from "@/lib/businessOperationTypes";
 import { DEFAULT_WORKSPACE_PROFILE } from "@/lib/workspaceProfileTypes";
 import {
@@ -658,6 +659,15 @@ export default function AdminSalesPipeline() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <MarkLostDialog
+        open={!!lostDeal}
+        onOpenChange={(v) => !v && setLostDeal(null)}
+        dealId={lostDeal?.id ?? null}
+        dealName={lostDeal?.name}
+        onDone={fetchData}
+      />
+
     </div>
   );
 }
