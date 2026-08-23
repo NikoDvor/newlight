@@ -35,6 +35,8 @@ const CRM_PROVIDERS = [
   { value: "other", label: "Other CRM" },
 ];
 
+import { MarkLostDialog } from "@/components/pipeline/MarkLostDialog";
+
 const PIPELINE_STAGES = [
   "new_lead", "contacted", "qualified", "appointment_booked",
   "proposal_sent", "negotiation", "closed_won", "closed_lost"
@@ -85,6 +87,7 @@ export default function CRM() {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
+  const [lostDeal, setLostDeal] = useState<{ id: string; name: string | null } | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [newContact, setNewContact] = useState({
     full_name: "", email: "", phone: "", address: "", tags: "",
@@ -655,12 +658,19 @@ export default function CRM() {
                                 <td className="py-3 pr-3"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
                                 <td className="text-[10px] text-muted-foreground py-3 pr-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : "—"}</td>
                                <td className="py-3">
-                                 {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && (
-                                   <Select onValueChange={v => moveDealStage(d.id, v)}>
-                                     <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
-                                     <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
-                                   </Select>
+                                 {d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost" && d.pipeline_stage !== "lost" && (
+                                   <div className="flex items-center gap-1.5">
+                                     <Select onValueChange={v => moveDealStage(d.id, v)}>
+                                       <SelectTrigger className="w-[120px] h-7 text-[10px]"><SelectValue placeholder="Move…" /></SelectTrigger>
+                                       <SelectContent>{PIPELINE_STAGES.map(s => <SelectItem key={s} value={s} className="text-xs">{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                                     </Select>
+                                     <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px]" style={{ color: "hsl(0 68% 58%)" }}
+                                       onClick={() => setLostDeal({ id: d.id, name: d.deal_name })}>
+                                       Mark Lost
+                                     </Button>
+                                   </div>
                                  )}
+
                                </td>
                              </tr>
                           ))}
@@ -1224,6 +1234,15 @@ export default function CRM() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <MarkLostDialog
+        open={!!lostDeal}
+        onOpenChange={(v) => !v && setLostDeal(null)}
+        dealId={lostDeal?.id ?? null}
+        dealName={lostDeal?.name}
+        onDone={() => { setLostDeal(null); fetchData(); }}
+      />
+
     </div>
   );
 }

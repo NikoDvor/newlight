@@ -3482,6 +3482,7 @@ export type Database = {
           primary_location: string | null
           proposal_status: string
           provisional_profile: string | null
+          revenue_target: number | null
           revenue_webhook_token: string
           secondary_contact_email: string | null
           secondary_contact_name: string | null
@@ -3534,6 +3535,7 @@ export type Database = {
           primary_location?: string | null
           proposal_status?: string
           provisional_profile?: string | null
+          revenue_target?: number | null
           revenue_webhook_token?: string
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
@@ -3586,6 +3588,7 @@ export type Database = {
           primary_location?: string | null
           proposal_status?: string
           provisional_profile?: string | null
+          revenue_target?: number | null
           revenue_webhook_token?: string
           secondary_contact_email?: string | null
           secondary_contact_name?: string | null
@@ -4388,6 +4391,8 @@ export type Database = {
           initial_fee: number | null
           interest_type: string | null
           lead_source: string | null
+          lost_at: string | null
+          lost_reason: string | null
           meeting_id_latest: string | null
           notes_summary: string | null
           onboarding_meeting_id: string | null
@@ -4428,6 +4433,8 @@ export type Database = {
           initial_fee?: number | null
           interest_type?: string | null
           lead_source?: string | null
+          lost_at?: string | null
+          lost_reason?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
@@ -4468,6 +4475,8 @@ export type Database = {
           initial_fee?: number | null
           interest_type?: string | null
           lead_source?: string | null
+          lost_at?: string | null
+          lost_reason?: string | null
           meeting_id_latest?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null

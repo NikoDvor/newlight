@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
+
+
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
@@ -90,6 +94,11 @@ export default function AdminDashboard() {
           <Plus className="h-4 w-4 mr-1" /> New Client
         </Button>
       </NewLightHero>
+
+      {/* Headline metric — NewLight's own pipeline (same component as sub-accounts) */}
+      <PipelineRevenueOpportunity clientId={NEWLIGHT_INTERNAL_CLIENT_ID} variant="admin" />
+
+
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {stats.map((s, i) => (

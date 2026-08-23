@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { executeSalesIntake } from "@/lib/salesAutomation";
 import { WORKFLOW_STEPS, PROPOSAL_STATUSES, type WorkflowStepKey, type ProposalStatusKey } from "@/contexts/ActiveSalesContext";
 import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
+import { MarkLostDialog } from "@/components/pipeline/MarkLostDialog";
 import { resolveOperationType } from "@/lib/businessOperationTypes";
 import { DEFAULT_WORKSPACE_PROFILE } from "@/lib/workspaceProfileTypes";
 import {
@@ -316,6 +317,8 @@ export default function AdminSalesPipeline() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showIntake, setShowIntake] = useState(false);
+  const [lostDeal, setLostDeal] = useState<{ id: string; name: string | null } | null>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("pipeline");
   const [searchQuery, setSearchQuery] = useState("");
@@ -460,10 +463,20 @@ export default function AdminSalesPipeline() {
                                 {deal.workspace_users?.full_name || "Unassigned"}
                               </p>
                             </div>
-                            <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                title="Mark lost"
+                                onClick={(e) => { e.stopPropagation(); setLostDeal({ id: deal.id, name: deal.deal_name || deal.crm_companies?.company_name || null }); }}
+                                className="opacity-40 hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-3 w-3" style={{ color: "hsl(0 68% 58%)" }} />
+                              </button>
+                              <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
+                            </div>
                           </div>
                         </motion.div>
                       ))}
+
                       {stageDeals.length === 0 && (
                         <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground/25">No deals</div>
                       )}
@@ -646,6 +659,15 @@ export default function AdminSalesPipeline() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <MarkLostDialog
+        open={!!lostDeal}
+        onOpenChange={(v) => !v && setLostDeal(null)}
+        dealId={lostDeal?.id ?? null}
+        dealName={lostDeal?.name}
+        onDone={fetchData}
+      />
+
     </div>
   );
 }
