@@ -3,6 +3,8 @@ import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
 import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
+import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
+
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
@@ -1265,6 +1267,10 @@ export default function Dashboard() {
               implementationStatus={clientStages.implementationStatus}
             />
           )}
+
+          {/* ══════ PIPELINE REVENUE OPPORTUNITY — headline metric ══════ */}
+          <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
+
 
           {/* ══════ REFERRAL — ABOVE THE FOLD (3s light blue → 3s neon green → 3s back) ══════ */}
           <motion.div
