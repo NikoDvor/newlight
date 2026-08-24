@@ -62,7 +62,7 @@ interface BdrLead {
 }
 
 /* ─── pipeline stages ─── */
-type PipelineStageKey = "cold" | "warm" | "hot" | "won";
+type PipelineStageKey = "cold" | "warm" | "hot" | "won" | "expired_no_close_prep";
 interface PipelineStageDef {
   key: PipelineStageKey;
   label: string;
