@@ -82,8 +82,14 @@ const PIPELINE_STAGES: PipelineStageDef[] = [
   { key: "won",  label: "Won",                   description: "Appointment booked or deal closed",
     bg: "hsla(142,72%,42%,.18)", text: "hsl(142,72%,55%)", border: "hsla(142,72%,42%,.5)", bar: "hsl(142,72%,42%)" },
 ];
+/** Terminal stage set by the hourly expiration job — rendered as a label but never offered as a column/target. */
+const EXPIRED_STAGE: PipelineStageDef = {
+  key: "expired_no_close_prep", label: "Expired — No Form 2",
+  description: "24h passed after discovery with no Close Prep",
+  bg: "hsla(215,15%,55%,.14)", text: "hsl(215,12%,68%)", border: "hsla(215,15%,55%,.35)", bar: "hsl(215,12%,55%)",
+};
 const STAGE_BY_KEY: Record<PipelineStageKey, PipelineStageDef> =
-  PIPELINE_STAGES.reduce((acc, s) => { acc[s.key] = s; return acc; }, {} as any);
+  [...PIPELINE_STAGES, EXPIRED_STAGE].reduce((acc, s) => { acc[s.key] = s; return acc; }, {} as any);
 
 export function pipelineStageFromOutcome(label: string | null | undefined): PipelineStageKey | null {
   if (!label) return null;
