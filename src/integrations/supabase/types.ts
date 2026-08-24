@@ -14441,6 +14441,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_stale_pipeline_leads: { Args: never; Returns: number }
       get_client_oauth_connection_status: {
         Args: { _client_id: string; _integration_type: string }
         Returns: {
