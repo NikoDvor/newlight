@@ -287,7 +287,7 @@ export default function BDRMyLeads() {
   }, [listScopedLeads, filter, search, todayStart, tomorrowStart]);
 
   const stageCounts = useMemo(() => {
-    const counts: Record<PipelineStageKey, number> = { cold: 0, warm: 0, hot: 0, won: 0 };
+    const counts: Record<PipelineStageKey, number> = { cold: 0, warm: 0, hot: 0, won: 0, expired_no_close_prep: 0 };
     listScopedLeads.forEach(l => { counts[derivePipelineStage(l)] += 1; });
     return counts;
   }, [listScopedLeads]);
