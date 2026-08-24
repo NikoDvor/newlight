@@ -13,7 +13,7 @@ import { bookingSystemState } from "@/lib/bookingSystem";
 
 
 
-type Stage = "cold" | "warm" | "hot" | "won";
+type Stage = "cold" | "warm" | "hot" | "won" | "expired_no_close_prep";
 
 interface RawLead {
   id: string;
@@ -47,6 +47,7 @@ interface RepRow {
   warm: number;
   hot: number;
   won: number;
+  expired_no_close_prep: number;
   booked: number;
   convRate: number; // booked / total
 }
@@ -56,6 +57,7 @@ const STAGE_META: Record<Stage, { label: string; bar: string; text: string; bg: 
   warm: { label: "Warm",  bar: "hsl(38,92%,55%)",   text: "hsl(38,95%,65%)",  bg: "hsla(38,92%,55%,.15)" },
   hot:  { label: "Hot",   bar: "hsl(14,90%,58%)",   text: "hsl(14,95%,68%)",  bg: "hsla(14,90%,58%,.15)" },
   won:  { label: "Won",   bar: "hsl(142,72%,42%)",  text: "hsl(142,72%,55%)", bg: "hsla(142,72%,42%,.18)" },
+  expired_no_close_prep: { label: "Expired — No Form 2", bar: "hsl(215,12%,55%)", text: "hsl(215,12%,68%)", bg: "hsla(215,15%,55%,.14)" },
 };
 
 function derivePipelineStage(lead: RawLead): Stage {
@@ -113,7 +115,7 @@ export default function BDRTeamPipeline() {
         user_id: lead.user_id,
         name: profiles[lead.user_id]?.name ?? "Loading…",
         email: profiles[lead.user_id]?.email ?? null,
-        total: 0, cold: 0, warm: 0, hot: 0, won: 0, booked: 0, convRate: 0,
+        total: 0, cold: 0, warm: 0, hot: 0, won: 0, expired_no_close_prep: 0, booked: 0, convRate: 0,
       };
       row.name = profiles[lead.user_id]?.name ?? row.name;
       row.email = profiles[lead.user_id]?.email ?? row.email;
@@ -128,10 +130,10 @@ export default function BDRTeamPipeline() {
   }, [leads, profiles]);
 
   const overall = useMemo(() => {
-    const totals: Record<Stage | "total" | "booked", number> = { cold: 0, warm: 0, hot: 0, won: 0, total: 0, booked: 0 };
+    const totals: Record<Stage | "total" | "booked", number> = { cold: 0, warm: 0, hot: 0, won: 0, expired_no_close_prep: 0, total: 0, booked: 0 };
     for (const r of reps) {
       totals.total += r.total; totals.cold += r.cold; totals.warm += r.warm;
-      totals.hot += r.hot; totals.won += r.won; totals.booked += r.booked;
+      totals.hot += r.hot; totals.won += r.won; totals.expired_no_close_prep += r.expired_no_close_prep; totals.booked += r.booked;
     }
     const conv = totals.total > 0 ? Math.round((totals.booked / totals.total) * 1000) / 10 : 0;
     return { ...totals, conv };
@@ -245,7 +247,7 @@ function StageBar({ counts, total, compact }: { counts: Record<Stage, number>; t
   return (
     <div>
       <div className={`flex w-full rounded-full overflow-hidden ${compact ? "h-1.5" : "h-2.5"}`} style={{ background: "hsla(0,0%,100%,.04)" }}>
-        {(["cold", "warm", "hot", "won"] as Stage[]).map((k) => {
+        {(["cold", "warm", "hot", "won", "expired_no_close_prep"] as Stage[]).map((k) => {
           const pct = (counts[k] / denom) * 100;
           if (pct === 0) return null;
           return <div key={k} title={`${STAGE_META[k].label}: ${counts[k]}`} style={{ width: `${pct}%`, background: STAGE_META[k].bar }} />;
@@ -253,7 +255,7 @@ function StageBar({ counts, total, compact }: { counts: Record<Stage, number>; t
       </div>
       {!compact && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px]">
-          {(["cold", "warm", "hot", "won"] as Stage[]).map((k) => (
+          {(["cold", "warm", "hot", "won", "expired_no_close_prep"] as Stage[]).map((k) => (
             <div key={k} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full shrink-0" style={{ background: STAGE_META[k].bar }} />
               <span className="text-muted-foreground uppercase tracking-wide">{STAGE_META[k].label}</span>
