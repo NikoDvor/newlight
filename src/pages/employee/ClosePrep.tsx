@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
+import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 interface Lead {
   id: string;
@@ -21,37 +22,12 @@ interface Lead {
   crm_deal_id: string | null;
 }
 
-function buildSlots(availability: any): { date: Date; label: string }[] {
-  const slots: { date: Date; label: string }[] = [];
-  const now = new Date();
-  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    const key = days[d.getDay()];
-    const cfg = availability?.[key];
-    if (!cfg?.enabled) continue;
-    const [sh, sm] = String(cfg.start || "09:00").split(":").map(Number);
-    const [eh, em] = String(cfg.end || "17:00").split(":").map(Number);
-    const startMin = sh * 60 + (sm || 0);
-    const endMin = eh * 60 + (em || 0);
-    for (let m = startMin; m + 45 <= endMin; m += 30) {
-      const s = new Date(d);
-      s.setHours(Math.floor(m / 60), m % 60, 0, 0);
-      slots.push({
-        date: s,
-        label: s.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
-      });
-    }
-  }
-  return slots;
-}
-
 export default function ClosePrep() {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [availability, setAvailability] = useState<any>(null);
+  const [calTimezone, setCalTimezone] = useState<string>("America/Los_Angeles");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -79,11 +55,24 @@ export default function ClosePrep() {
 
       const cal = await ensureBdrCalendar();
       setAvailability(cal?.availability || null);
+      setCalTimezone(cal?.timezone || "America/Los_Angeles");
       setLoading(false);
     })();
   }, [leadId]);
 
-  const slots = useMemo(() => (availability ? buildSlots(availability) : []), [availability]);
+  const slots = useMemo(() => {
+    if (!availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(availability), {
+      durationMinutes: 45,
+      slotIntervalMinutes: 30,
+      minNoticeMinutes: 0,
+      daysAhead: 14,
+      timeZone: calTimezone,
+    }).map((d) => ({
+      date: d,
+      label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    }));
+  }, [availability, calTimezone]);
 
   const canSubmit =
     !!lead && !!selectedSlot && !!initialFee.trim() &&
