@@ -11,6 +11,19 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 const GLASS =
   "border border-primary/20 bg-card/60 backdrop-blur-xl shadow-[0_0_0_1px_hsla(211,96%,60%,0.05),0_8px_32px_-12px_hsla(211,96%,40%,0.25),inset_0_1px_0_hsla(200,100%,80%,0.06)]";
 
+type DiscoveryEvent = {
+  id: string;
+  lead_id: string;
+  starts_at: string;
+};
+
+type LinkedLead = {
+  id: string;
+  business_name: string | null;
+  owner_name: string | null;
+  crm_deal_id: string | null;
+};
+
 type DiscoveryBooking = {
   eventId: string;
   leadId: string;
