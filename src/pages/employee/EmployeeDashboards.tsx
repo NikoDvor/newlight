@@ -164,24 +164,29 @@ export function BDRDashboard() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [dialOutcomes, setDialOutcomes] = useState<any[]>([]);
   const name = employeeProfile?.full_name || user?.user_metadata?.full_name || user?.email;
 
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
       const owner = employeeProfile?.email || user.email;
-      const [{ data: contactRows }, { data: activityRows }, { data: meetingRows }] = await Promise.all([
+      const [{ data: contactRows }, { data: activityRows }, { data: meetingRows }, { data: dialRows }] = await Promise.all([
         supabase.from("crm_contacts").select("id, full_name, phone, contact_status, contact_owner").or(`contact_owner.eq.${owner},contact_owner.eq.${name}`).limit(12),
         supabase.from("crm_activities").select("id, activity_type, created_at").eq("created_by", user.id).gte("created_at", iso(startOfWeek)),
         supabase.from("sales_meetings").select("id, title, start_time, status, meeting_type").eq("assigned_salesman_user_id", user.id).gte("created_at", iso(startOfWeek)).order("start_time", { ascending: false }).limit(8),
+        supabase.from("bdr_call_outcomes").select("logged_at, created_at").eq("bdr_user_id", user.id),
       ]);
       setContacts(contactRows || []);
       setActivities(activityRows || []);
       setAppointments(meetingRows || []);
+      setDialOutcomes(dialRows || []);
     })();
   }, [employeeProfile?.email, name, user?.email, user?.id]);
 
-  const dialsToday = activities.filter(a => a.activity_type?.toLowerCase().includes("call") && new Date(a.created_at) >= startOfToday).length;
+  const effectiveDialTs = (o: any) => new Date(o.logged_at || o.created_at);
+  const dialsToday = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfToday).length;
+  const dialsWeek = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfWeek).length;
   const conversationsWeek = activities.filter(a => ["conversation", "call", "qualified_call"].some(k => a.activity_type?.toLowerCase().includes(k))).length;
   const bookedToday = appointments.filter(a => a.start_time && new Date(a.start_time) >= startOfToday).length;
   const bookingRate = conversationsWeek ? Math.round((appointments.length / conversationsWeek) * 100) : 0;
@@ -215,7 +220,8 @@ export function BDRDashboard() {
         <TrainingProgress trackKey="bdr" />
         <SectionCard title="Daily Targets">
           <div className="space-y-5">
-            <div><div className="flex justify-between text-sm mb-2"><span>Dials</span><span>{dialsToday}/50</span></div><Progress value={Math.min((dialsToday / 50) * 100, 100)} /></div>
+            <div><div className="flex justify-between text-sm mb-2"><span>Dials</span><span>{dialsToday}/200</span></div><Progress value={Math.min((dialsToday / 200) * 100, 100)} /></div>
+            <div><div className="flex justify-between text-sm mb-2"><span>Dials This Week</span><span>{dialsWeek}/1000</span></div><Progress value={Math.min((dialsWeek / 1000) * 100, 100)} /></div>
             <div><div className="flex justify-between text-sm mb-2"><span>Bookings</span><span>{bookedToday}/8</span></div><Progress value={Math.min((bookedToday / 8) * 100, 100)} /></div>
           </div>
         </SectionCard>
