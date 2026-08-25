@@ -184,8 +184,9 @@ export function BDRDashboard() {
     })();
   }, [employeeProfile?.email, name, user?.email, user?.id]);
 
-  const dialsToday = activities.filter(a => a.activity_type?.toLowerCase().includes("call") && new Date(a.created_at) >= startOfToday).length;
-  const conversationsWeek = activities.filter(a => ["conversation", "call", "qualified_call"].some(k => a.activity_type?.toLowerCase().includes(k))).length;
+  const effectiveDialTs = (o: any) => new Date(o.logged_at || o.created_at);
+  const dialsToday = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfToday).length;
+  const dialsWeek = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfWeek).length;
   const bookedToday = appointments.filter(a => a.start_time && new Date(a.start_time) >= startOfToday).length;
   const bookingRate = conversationsWeek ? Math.round((appointments.length / conversationsWeek) * 100) : 0;
 
