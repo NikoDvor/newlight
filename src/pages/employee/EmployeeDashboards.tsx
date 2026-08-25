@@ -220,7 +220,8 @@ export function BDRDashboard() {
         <TrainingProgress trackKey="bdr" />
         <SectionCard title="Daily Targets">
           <div className="space-y-5">
-            <div><div className="flex justify-between text-sm mb-2"><span>Dials</span><span>{dialsToday}/50</span></div><Progress value={Math.min((dialsToday / 50) * 100, 100)} /></div>
+            <div><div className="flex justify-between text-sm mb-2"><span>Dials</span><span>{dialsToday}/200</span></div><Progress value={Math.min((dialsToday / 200) * 100, 100)} /></div>
+            <div><div className="flex justify-between text-sm mb-2"><span>Dials This Week</span><span>{dialsWeek}/1000</span></div><Progress value={Math.min((dialsWeek / 1000) * 100, 100)} /></div>
             <div><div className="flex justify-between text-sm mb-2"><span>Bookings</span><span>{bookedToday}/8</span></div><Progress value={Math.min((bookedToday / 8) * 100, 100)} /></div>
           </div>
         </SectionCard>
