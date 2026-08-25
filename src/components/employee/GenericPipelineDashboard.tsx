@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getTrainingStatsForUser, type TrainingStats } from "@/lib/trainingStatsService";
 import { YourForms } from "@/components/employee/YourForms";
+import { RecentDiscoveryBookings } from "@/components/employee/RecentDiscoveryBookings";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
 import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
 
