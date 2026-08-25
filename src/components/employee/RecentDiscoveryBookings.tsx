@@ -54,9 +54,8 @@ export function RecentDiscoveryBookings() {
 
       if (cancelled) return;
 
-      const leadIds = (events || [])
-        .map((e: any) => e.lead_id)
-        .filter(Boolean);
+      const typedEvents = (events || []) as DiscoveryEvent[];
+      const leadIds = typedEvents.map((e) => e.lead_id).filter(Boolean);
 
       if (leadIds.length === 0) {
         setBookings([]);
@@ -71,10 +70,10 @@ export function RecentDiscoveryBookings() {
 
       if (cancelled) return;
 
-      const leadMap = new Map((leads || []).map((l: any) => [l.id, l]));
+      const leadMap = new Map(((leads || []) as LinkedLead[]).map((l) => [l.id, l]));
 
-      const merged: DiscoveryBooking[] = (events || [])
-        .map((e: any) => {
+      const merged: DiscoveryBooking[] = typedEvents
+        .map((e) => {
           const lead = leadMap.get(e.lead_id);
           if (!lead || lead.crm_deal_id) return null;
           return {
