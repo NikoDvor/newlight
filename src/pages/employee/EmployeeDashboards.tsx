@@ -187,6 +187,7 @@ export function BDRDashboard() {
   const effectiveDialTs = (o: any) => new Date(o.logged_at || o.created_at);
   const dialsToday = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfToday).length;
   const dialsWeek = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfWeek).length;
+  const conversationsWeek = activities.filter(a => ["conversation", "call", "qualified_call"].some(k => a.activity_type?.toLowerCase().includes(k))).length;
   const bookedToday = appointments.filter(a => a.start_time && new Date(a.start_time) >= startOfToday).length;
   const bookingRate = conversationsWeek ? Math.round((appointments.length / conversationsWeek) * 100) : 0;
 
