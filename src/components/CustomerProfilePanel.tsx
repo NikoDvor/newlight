@@ -93,6 +93,18 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
   const [savingNotes, setSavingNotes] = useState(false);
   const [stage, setStage] = useState<string>("cold");
   const [showSchedule, setShowSchedule] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+
+  const copyLeadId = async () => {
+    if (!lead) return;
+    try {
+      await navigator.clipboard.writeText(lead.id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
 
   const load = async () => {
     if (!leadId) return;
