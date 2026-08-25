@@ -141,7 +141,7 @@ export async function sendPaymentConfirmation(
   const terms = termsLine(deal);
   const link = opts.paySignUrl || "";
   const paidDate = new Date(inv.paid_at || Date.now()).toLocaleDateString(undefined, {
-    year: "numeric", month: "long", day: "numeric",
+    year: "numeric", month: "long", day: "numeric", timeZone: "America/Los_Angeles",
   });
 
   // --- Internal / ops-style alert ---
@@ -295,7 +295,8 @@ export async function sendWelcomeDocument(
   const when = opts.onboardingMeetingStartsAt
     ? new Date(opts.onboardingMeetingStartsAt).toLocaleString(undefined, {
         weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit",
-      })
+        timeZone: "America/Los_Angeles",
+      }) + " (Pacific Time)"
     : null;
   const terms = termsLine(check);
   const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);

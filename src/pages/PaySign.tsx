@@ -153,7 +153,19 @@ export default function PaySign() {
   const bothDone = isPaid && signed;
   const allDone = bothDone && scheduled;
 
-  const slots = useMemo(() => buildSlots(ctx?.rep_availability), [ctx?.rep_availability]);
+  const slots = useMemo(() => {
+    if (!ctx?.rep_availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(ctx.rep_availability), {
+      durationMinutes: 45,
+      slotIntervalMinutes: 30,
+      minNoticeMinutes: 0,
+      daysAhead: 14,
+      timeZone: ctx?.rep_timezone || "America/Los_Angeles",
+    }).map((d) => ({
+      date: d,
+      label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    }));
+  }, [ctx?.rep_availability, ctx?.rep_timezone]);
 
   const currentStep: StepKey = allDone
     ? "done"

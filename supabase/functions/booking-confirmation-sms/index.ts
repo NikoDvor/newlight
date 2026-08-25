@@ -25,7 +25,7 @@ function formatDateTime(d: string) {
     minute: "2-digit",
     hour12: true,
     timeZone: "America/Los_Angeles",
-  });
+  }) + " PT";
 }
 
 async function sendSms(to: string, body: string): Promise<boolean> {
