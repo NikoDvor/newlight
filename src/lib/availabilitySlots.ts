@@ -1,6 +1,7 @@
 // Shared availability slot computation.
 // Generates concrete future booking slots given weekly availability windows,
 // existing bookings, blackout ranges, and a minimum notice window.
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export type WeeklyAvailabilityMap = Record<
   string,
