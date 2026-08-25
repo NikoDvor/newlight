@@ -164,6 +164,7 @@ export function BDRDashboard() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [dialOutcomes, setDialOutcomes] = useState<any[]>([]);
   const name = employeeProfile?.full_name || user?.user_metadata?.full_name || user?.email;
 
   useEffect(() => {
