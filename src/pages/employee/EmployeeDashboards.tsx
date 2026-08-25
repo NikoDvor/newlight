@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarClock, CheckCircle2, Clock3, CreditCard, DollarSign, FileText, GraduationCap, Link2, PhoneCall, Target, TrendingUp, Users } from "lucide-react";
+import { CalendarClock, Clock3, DollarSign, GraduationCap, Target, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MotivationCarousel } from "@/components/training/MotivationCarousel";
 import { CertificationStatusBlock } from "@/components/training/CertificationStatusBlock";
@@ -9,11 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { BDRCallbackCountdown } from "@/components/BDRCallbackCountdown";
-import { BookingLinkCard } from "@/components/calendar/BookingLinkCard";
-import { QuickActionCard } from "@/components/employee/QuickActionCard";
-import { FormLeadPickerCard } from "@/components/employee/FormLeadPicker";
-import { ensureBdrCalendar, type BdrCalendar } from "@/lib/bdrCalendar";
 import { GenericPipelineDashboard } from "@/components/employee/GenericPipelineDashboard";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
@@ -37,7 +32,7 @@ function timeGreeting() {
   return "Good evening";
 }
 
-function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: typeof PhoneCall }) {
+function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: typeof CalendarClock }) {
   return (
     <Card className="border-border/60 bg-card/70 backdrop-blur-xl p-4">
       <div className="flex items-center justify-between gap-3">
@@ -65,46 +60,6 @@ function SectionCard({ title, children }: { title: string; children: React.React
 function EmptyLine({ label }: { label: string }) {
   return <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">{label}</div>;
 }
-
-
-function YourBookingLinks() {
-  const [cal, setCal] = useState<BdrCalendar | null>(null);
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://newlight-app.com";
-  useEffect(() => { (async () => { const c = await ensureBdrCalendar(); setCal(c); })(); }, []);
-  if (!cal) return null;
-  const discoveryUrl = cal.booking_slug ? `${origin}/bdr/book/${cal.booking_slug}` : "";
-  const discoveryActive = cal.booking_active !== false;
-  return (
-    <SectionCard title="Your Booking Links">
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="relative">
-          <BookingLinkCard name="Discovery Call" badge="Meeting 1" url={discoveryUrl} />
-          {!discoveryActive && (
-            <span className="absolute top-3 right-3 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-0.5 border border-amber-500/30">
-              Paused
-            </span>
-          )}
-        </div>
-        <FormLeadPickerCard
-          kind="close-prep"
-          name="Close Prep"
-          badge="Per Lead"
-          description="Jumps straight into Close Prep for your hot lead — or lets you pick if you have several."
-          icon={FileText}
-        />
-        <FormLeadPickerCard
-          kind="pay-sign"
-          name="Pay & Sign"
-          badge="Per Deal"
-          description="Opens Pay & Sign for your ready deal — or lets you pick if you have several."
-          icon={CreditCard}
-        />
-
-      </div>
-    </SectionCard>
-  );
-}
-
 
 function Header({ title }: { title: string }) {
   return (
@@ -161,79 +116,11 @@ function TrainingProgress({ trackKey }: { trackKey: "bdr" | "sdr" }) {
 
 export function BDRDashboard() {
   const { user, employeeProfile } = useWorkspace();
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [dialOutcomes, setDialOutcomes] = useState<any[]>([]);
   const name = employeeProfile?.full_name || user?.user_metadata?.full_name || user?.email;
-
-  useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      const owner = employeeProfile?.email || user.email;
-      const [{ data: contactRows }, { data: activityRows }, { data: meetingRows }, { data: dialRows }] = await Promise.all([
-        supabase.from("crm_contacts").select("id, full_name, phone, contact_status, contact_owner").or(`contact_owner.eq.${owner},contact_owner.eq.${name}`).limit(12),
-        supabase.from("crm_activities").select("id, activity_type, created_at").eq("created_by", user.id).gte("created_at", iso(startOfWeek)),
-        supabase.from("sales_meetings").select("id, title, start_time, status, meeting_type").eq("assigned_salesman_user_id", user.id).gte("created_at", iso(startOfWeek)).order("start_time", { ascending: false }).limit(8),
-        supabase.from("bdr_call_outcomes").select("logged_at, created_at").eq("bdr_user_id", user.id),
-      ]);
-      setContacts(contactRows || []);
-      setActivities(activityRows || []);
-      setAppointments(meetingRows || []);
-      setDialOutcomes(dialRows || []);
-    })();
-  }, [employeeProfile?.email, name, user?.email, user?.id]);
-
-  const effectiveDialTs = (o: any) => new Date(o.logged_at || o.created_at);
-  const dialsToday = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfToday).length;
-  const dialsWeek = dialOutcomes.filter(o => effectiveDialTs(o) >= startOfWeek).length;
-  const conversationsWeek = activities.filter(a => ["conversation", "call", "qualified_call"].some(k => a.activity_type?.toLowerCase().includes(k))).length;
-  const bookedToday = appointments.filter(a => a.start_time && new Date(a.start_time) >= startOfToday).length;
-  const bookingRate = conversationsWeek ? Math.round((appointments.length / conversationsWeek) * 100) : 0;
-
   return (
     <div className="space-y-6">
       <Header title={`${timeGreeting()}, ${firstName(name, user?.email)}`} />
-      <MotivationCarousel />
-      <BDRCallbackCountdown userId={user?.id} />
-      <ObjectionMasteryCard />
-      <RevenueByPeriod
-        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
-        repUserId={user?.id}
-        title="My Revenue by Period"
-        subtitle="Your own closed-won revenue — today through all-time."
-      />
-      <CertificationStatusBlock />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Today's Dials" value={dialsToday} icon={PhoneCall} />
-        <StatCard label="Appointments Booked Today" value={bookedToday} icon={CalendarClock} />
-        <StatCard label="Appointments Booked This Week" value={appointments.length} icon={CheckCircle2} />
-        <StatCard label="Booking Rate This Week" value={`${bookingRate}%`} icon={TrendingUp} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Assigned Leads" value={contacts.length} icon={Users} />
-        <StatCard label="Upcoming Meetings" value={appointments.filter(a => a.start_time && new Date(a.start_time) >= today).length} icon={CalendarClock} />
-        <StatCard label="Active Booking Links" value={1} icon={Link2} />
-      </div>
-      <YourBookingLinks />
-      <div className="grid gap-4 xl:grid-cols-2">
-        <TrainingProgress trackKey="bdr" />
-        <SectionCard title="Daily Targets">
-          <div className="space-y-5">
-            <div><div className="flex justify-between text-sm mb-2"><span>Dials</span><span>{dialsToday}/200</span></div><Progress value={Math.min((dialsToday / 200) * 100, 100)} /></div>
-            <div><div className="flex justify-between text-sm mb-2"><span>Dials This Week</span><span>{dialsWeek}/1000</span></div><Progress value={Math.min((dialsWeek / 1000) * 100, 100)} /></div>
-            <div><div className="flex justify-between text-sm mb-2"><span>Bookings</span><span>{bookedToday}/8</span></div><Progress value={Math.min((bookedToday / 8) * 100, 100)} /></div>
-          </div>
-        </SectionCard>
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <SectionCard title="Today's Lead List">
-          <div className="space-y-2">{contacts.length ? contacts.map(c => <div key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 p-3"><div><p className="text-sm font-medium">{c.full_name}</p><p className="text-xs text-muted-foreground">{c.phone || "No phone"} · {c.contact_status}</p></div><Button size="sm" variant="outline">Log Call</Button></div>) : <EmptyLine label="No assigned leads found." />}</div>
-        </SectionCard>
-        <SectionCard title="Appointments Booked">
-          <div className="space-y-2">{appointments.length ? appointments.map(a => <div key={a.id} className="rounded-lg border border-border/60 bg-muted/20 p-3"><p className="text-sm font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{a.start_time ? new Date(a.start_time).toLocaleString() : "Time pending"} · {a.status}</p></div>) : <EmptyLine label="No appointments booked yet." />}</div>
-        </SectionCard>
-      </div>
+      <GenericPipelineDashboard />
     </div>
   );
 }
