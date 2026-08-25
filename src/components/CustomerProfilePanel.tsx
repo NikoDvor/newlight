@@ -193,6 +193,14 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
           <div className="grid place-items-center py-20"><Loader2 className="h-5 w-5 animate-spin text-white/60" /></div>
         ) : (
           <div className="px-5 py-4 space-y-5">
+            {/* Lead ID copy */}
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-[10px] font-mono text-white/40">Lead ID: {lead.id.slice(0, 8)}…</span>
+              <Button size="sm" variant="ghost" onClick={copyLeadId} className="h-6 px-2 text-[10px] text-white/50 hover:text-white hover:bg-white/5">
+                <Copy className="h-3 w-3 mr-1" />{copiedId ? "Copied ✓" : "Copy ID"}
+              </Button>
+            </div>
+
             {/* Customer info */}
             <section className="space-y-2">
               <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white/50" /><span className="text-sm">{lead.owner_name || "Unknown"}</span></div>
