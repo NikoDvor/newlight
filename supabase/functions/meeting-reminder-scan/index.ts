@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
         const zoomLine = zoomUrl ? `\nZoom: ${zoomUrl}` : "";
         const message = `Upcoming meeting with ${who} at ${new Date(evt.starts_at as string).toLocaleString("en-US", {
           weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
-        })}.${zoomLine}`;
+        })} PT.${zoomLine}`;
         const { error: notifErr } = await supabase.from("notifications").insert({
           client_id: evt.client_id as string,
           recipient_user_id: evt.user_id as string,
