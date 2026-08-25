@@ -104,6 +104,9 @@ export function TimeSlotPicker({
         slotIntervalMinutes: duration,
         minNoticeMinutes: isToday ? minNoticeMinutes : 0,
         daysAhead: 1,
+        // availability_settings has no timezone column; preserve the previous
+        // behavior by using the runtime's local timezone explicitly.
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         booked: bookedSlots,
         now: isToday ? now : anchor,
       },
