@@ -34,6 +34,7 @@ export interface ComputeSlotOptions {
   bufferAfterMinutes?: number;
   minNoticeMinutes: number; // must be >= (now + this) to be bookable
   daysAhead: number; // scan this many days starting today
+  timeZone: string; // IANA timezone the availability windows are expressed in
   booked?: BookedRange[];
   blackouts?: BlackoutRange[];
   now?: Date;
