@@ -72,13 +72,14 @@ interface FormField {
 
 import { computeAvailableSlots, weeklyMapToRows, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
-function buildSlots(availability: any, minNoticeMinutes: number) {
+function buildSlots(availability: any, minNoticeMinutes: number, timeZone: string) {
   const rows = weeklyMapToRows(availability || {});
   const dates = computeAvailableSlots(rows, {
     durationMinutes: 30,
     slotIntervalMinutes: 30,
     minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
     daysAhead: 15,
+    timeZone,
   });
   return dates.map(s => ({
     date: s,
@@ -230,7 +231,7 @@ export default function BDRBookingPublic() {
     })();
   }, [slug]);
 
-  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES) : []), [cal]);
+  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles") : []), [cal]);
 
   // Prefill Step-2 contact fields from common form keys (name/email/phone/business) if present.
   useEffect(() => {

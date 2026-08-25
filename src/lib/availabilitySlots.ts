@@ -1,6 +1,7 @@
 // Shared availability slot computation.
 // Generates concrete future booking slots given weekly availability windows,
 // existing bookings, blackout ranges, and a minimum notice window.
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export type WeeklyAvailabilityMap = Record<
   string,
@@ -33,6 +34,7 @@ export interface ComputeSlotOptions {
   bufferAfterMinutes?: number;
   minNoticeMinutes: number; // must be >= (now + this) to be bookable
   daysAhead: number; // scan this many days starting today
+  timeZone: string; // IANA timezone the availability windows are expressed in
   booked?: BookedRange[];
   blackouts?: BlackoutRange[];
   now?: Date;
@@ -95,13 +97,18 @@ export function computeAvailableSlots(
   const booked = opts.booked || [];
   const blackouts = opts.blackouts || [];
   const daysAhead = Math.max(1, opts.daysAhead);
+  const timeZone = opts.timeZone;
 
   const enabledRows = rows.filter(r => r.enabled !== false && (r.is_active !== false));
   const byDow = new Map<number, DowAvailabilityRow>();
   for (const r of enabledRows) if (!byDow.has(r.day_of_week)) byDow.set(r.day_of_week, r);
 
   const out: Date[] = [];
-  const base = new Date(now);
+  // "Today" as wall-clock time in the target timezone. toZonedTime returns a
+  // Date whose local fields represent the wall time in `timeZone`, so all the
+  // calendar math below (midnight anchoring, day-of-week, date increments)
+  // happens in the configured timezone, not the runtime's local timezone.
+  const base = toZonedTime(now, timeZone);
   base.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < daysAhead; i++) {
@@ -110,7 +117,10 @@ export function computeAvailableSlots(
     const dow = day.getDay();
     const row = byDow.get(dow);
     if (!row) continue;
-    if (isInBlackout(new Date(day.getFullYear(), day.getMonth(), day.getDate(), 12), blackouts)) continue;
+    if (isInBlackout(
+      fromZonedTime(new Date(day.getFullYear(), day.getMonth(), day.getDate(), 12), timeZone),
+      blackouts,
+    )) continue;
 
     const [sh, sm] = parseHM(row.start_time, [9, 0]);
     const [eh, em] = parseHM(row.end_time, [17, 0]);
@@ -123,12 +133,15 @@ export function computeAvailableSlots(
 
     for (let m = startMin; m + duration + bufAfter <= endMin; m += stepMin) {
       if (m - bufBefore < startMin && bufBefore > 0) continue;
-      const slotStart = new Date(day);
+      const slotWall = new Date(day);
       // Cap slotStart's hour at 23 so we never roll to next day; final slot
       // (e.g. 23:30 with 30-min duration) still ends at 24:00 on slotEnd.
       const hh = Math.min(23, Math.floor(m / 60));
       const mm = Math.floor(m / 60) >= 24 ? 59 : (m % 60);
-      slotStart.setHours(hh, mm, 0, 0);
+      slotWall.setHours(hh, mm, 0, 0);
+      // Convert the wall-clock time in the configured timezone to the true
+      // UTC instant. Done per-date so DST transitions are handled correctly.
+      const slotStart = fromZonedTime(slotWall, timeZone);
       if (slotStart < cutoff) continue;
       const slotEnd = new Date(slotStart.getTime() + duration * 60_000);
       if (overlapsBooked(slotStart, slotEnd, booked)) continue;
