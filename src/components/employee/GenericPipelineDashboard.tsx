@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getTrainingStatsForUser, type TrainingStats } from "@/lib/trainingStatsService";
 import { YourForms } from "@/components/employee/YourForms";
+import { RecentDiscoveryBookings } from "@/components/employee/RecentDiscoveryBookings";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
 import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
 
@@ -253,6 +254,9 @@ export function GenericPipelineDashboard() {
 
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <Reveal><YourForms /></Reveal>
+
+      {/* 0a. RECENT DISCOVERY BOOKINGS — jump straight to Close Prep */}
+      <Reveal delay={0.03}><RecentDiscoveryBookings /></Reveal>
 
       {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
       <Reveal delay={0.05}>
