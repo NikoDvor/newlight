@@ -171,14 +171,16 @@ export function BDRDashboard() {
     if (!user?.id) return;
     (async () => {
       const owner = employeeProfile?.email || user.email;
-      const [{ data: contactRows }, { data: activityRows }, { data: meetingRows }] = await Promise.all([
+      const [{ data: contactRows }, { data: activityRows }, { data: meetingRows }, { data: dialRows }] = await Promise.all([
         supabase.from("crm_contacts").select("id, full_name, phone, contact_status, contact_owner").or(`contact_owner.eq.${owner},contact_owner.eq.${name}`).limit(12),
         supabase.from("crm_activities").select("id, activity_type, created_at").eq("created_by", user.id).gte("created_at", iso(startOfWeek)),
         supabase.from("sales_meetings").select("id, title, start_time, status, meeting_type").eq("assigned_salesman_user_id", user.id).gte("created_at", iso(startOfWeek)).order("start_time", { ascending: false }).limit(8),
+        supabase.from("bdr_call_outcomes").select("logged_at, created_at").eq("bdr_user_id", user.id),
       ]);
       setContacts(contactRows || []);
       setActivities(activityRows || []);
       setAppointments(meetingRows || []);
+      setDialOutcomes(dialRows || []);
     })();
   }, [employeeProfile?.email, name, user?.email, user?.id]);
 
