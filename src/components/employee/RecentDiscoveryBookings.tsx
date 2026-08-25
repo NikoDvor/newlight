@@ -84,7 +84,7 @@ export function RecentDiscoveryBookings() {
             startsAt: e.starts_at,
           };
         })
-        .filter(Boolean);
+        .filter((b): b is DiscoveryBooking => b !== null);
 
       setBookings(merged);
       setLoading(false);
