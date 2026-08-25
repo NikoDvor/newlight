@@ -35,31 +35,6 @@ type Ctx = {
 
 type StepKey = "review" | "pay" | "sign" | "schedule" | "done";
 
-function buildSlots(availability: any): { date: Date; label: string }[] {
-  const slots: { date: Date; label: string }[] = [];
-  if (!availability) return slots;
-  const now = new Date();
-  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    const cfg = availability?.[days[d.getDay()]];
-    if (!cfg?.enabled) continue;
-    const [sh, sm] = String(cfg.start || "09:00").split(":").map(Number);
-    const [eh, em] = String(cfg.end || "17:00").split(":").map(Number);
-    const startMin = sh * 60 + (sm || 0);
-    const endMin = eh * 60 + (em || 0);
-    for (let m = startMin; m + 45 <= endMin; m += 30) {
-      const s = new Date(d);
-      s.setHours(Math.floor(m / 60), m % 60, 0, 0);
-      slots.push({
-        date: s,
-        label: s.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
-      });
-    }
-  }
-  return slots;
-}
 
 function StepIndicator({ current, paid, signed, scheduled }: { current: StepKey; paid: boolean; signed: boolean; scheduled: boolean }) {
   const steps: { key: StepKey; label: string; done: boolean }[] = [
