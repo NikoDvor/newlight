@@ -36,6 +36,7 @@ export function CalendarSlotPicker({
   const [blackouts, setBlackouts] = useState<any[]>([]);
   const [bookedSlots, setBookedSlots] = useState<{ start: Date; end: Date }[]>([]);
   const [calMinNotice, setCalMinNotice] = useState<number>(DEFAULT_MIN_NOTICE_MINUTES);
+  const [calTimezone, setCalTimezone] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const effectiveMinNotice = minNoticeMinutes ?? calMinNotice;
@@ -61,12 +62,14 @@ export function CalendarSlotPicker({
     Promise.all([
       supabase.from("calendar_availability").select("*").eq("calendar_id", calendarId).eq("is_active", true),
       supabase.from("calendar_blackout_dates").select("start_datetime, end_datetime").eq("calendar_id", calendarId),
-      supabase.from("calendars").select("min_notice_minutes").eq("id", calendarId).maybeSingle(),
+      supabase.from("calendars").select("min_notice_minutes, timezone").eq("id", calendarId).maybeSingle(),
     ]).then(([avRes, blRes, calRes]) => {
       setAvailability(avRes.data || []);
       setBlackouts(blRes.data || []);
       const mn = (calRes.data as any)?.min_notice_minutes;
       if (typeof mn === "number") setCalMinNotice(mn);
+      const tz = (calRes.data as any)?.timezone;
+      if (typeof tz === "string" && tz) setCalTimezone(tz);
       setLoading(false);
     });
   }, [calendarId]);
@@ -122,11 +125,13 @@ export function CalendarSlotPicker({
       bufferAfterMinutes: bufferAfter,
       minNoticeMinutes: anchor.toDateString() === now.toDateString() ? effectiveMinNotice : 0,
       daysAhead: 1,
+      // Fall back to the runtime timezone for legacy calendars with no tz set.
+      timeZone: calTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
       booked: bookedSlots,
       now: useNow,
     });
     return dates.map(d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
-  }, [dayAvail, bookedSlots, duration, bufferBefore, bufferAfter, effectiveMinNotice, selectedDate]);
+  }, [dayAvail, bookedSlots, duration, bufferBefore, bufferAfter, effectiveMinNotice, selectedDate, calTimezone]);
 
   const availableDates = dateOptions.filter(d => {
     if (isBlackedOut(d.value)) return false;
