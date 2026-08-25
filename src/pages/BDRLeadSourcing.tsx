@@ -316,13 +316,13 @@ export default function BDRLeadSourcing() {
                     const claim = claimMap[rowKey(r)];
                     const isHard = claim?.match_type === "hard_crd";
                     const isSoft = claim?.match_type === "soft_name_city";
-                    const dim = isImported || isHard;
+                    const dim = isImported;
                     return (
                       <motion.tr key={r.crd + "-" + i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                         className="border-b border-white/[0.04] hover:bg-white/[0.03]"
                         style={dim ? { opacity: 0.55 } : undefined}>
                         <Td>
-                          <input type="checkbox" checked={selected.has(r.crd)} onChange={() => toggleOne(r.crd)} disabled={isImported || isHard}
+                          <input type="checkbox" checked={selected.has(r.crd)} onChange={() => toggleOne(r.crd)} disabled={isImported}
                             className="h-4 w-4 accent-primary" />
                         </Td>
                         <Td>
@@ -359,9 +359,9 @@ export default function BDRLeadSourcing() {
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
-                            {isImported || isHard ? (
+                            {isImported ? (
                               <span className="text-[11px] inline-flex items-center gap-1" style={{ color: "hsl(142,72%,55%)" }}>
-                                <CheckCircle2 className="h-3 w-3" /> {isImported ? "Sent" : "In book"}
+                                <CheckCircle2 className="h-3 w-3" /> Sent
                               </span>
                             ) : (
                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" disabled={importing}
