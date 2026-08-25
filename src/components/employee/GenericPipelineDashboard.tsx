@@ -255,6 +255,9 @@ export function GenericPipelineDashboard() {
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <Reveal><YourForms /></Reveal>
 
+      {/* 0a. RECENT DISCOVERY BOOKINGS — jump straight to Close Prep */}
+      <Reveal delay={0.03}><RecentDiscoveryBookings /></Reveal>
+
       {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
       <Reveal delay={0.05}>
       {(() => {
