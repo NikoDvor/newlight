@@ -84,6 +84,17 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
     return { transitioned: false, sms: null, email: null };
   }
 
+  // Close the BDR loop: if this deal originated from a lead, mark it won.
+  if (dealId) {
+    const { error: leadErr } = await supabase
+      .from("nl_bdr_leads")
+      .update({ pipeline_stage: "won" })
+      .eq("crm_deal_id", dealId);
+    if (leadErr) {
+      console.error("[paid-signed lead update error]", leadErr);
+    }
+  }
+
   // Resolve display bits
   let businessName = deal.deal_name || "Client";
   if (deal.client_id) {
