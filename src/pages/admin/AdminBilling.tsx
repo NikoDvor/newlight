@@ -184,7 +184,13 @@ export default function AdminBilling() {
         {/* INVOICES */}
         <TabsContent value="invoices">
           <Card className="border-0 bg-white/[0.04]">
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Invoices</CardTitle></CardHeader>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-sm text-white/80">Invoices</CardTitle>
+              <Button size="sm" onClick={() => setInvoiceDialogOpen(true)} className="h-8 text-xs gap-1">
+                <Plus className="h-3.5 w-3.5" /> Send Invoice
+              </Button>
+            </CardHeader>
+
             <CardContent className="overflow-auto">
               {invoices.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No invoices yet.</p>
