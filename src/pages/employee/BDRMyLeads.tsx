@@ -1018,7 +1018,36 @@ export default function BDRMyLeads() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                          {lead.unattended_since && (
+                            <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
+                              title="No-show — auto-reverts 72 hours after the missed meeting"
+                              style={{ background: "hsla(0,72%,50%,.16)", color: "hsl(0,72%,68%)", border: "1px solid hsla(0,72%,50%,.4)" }}>
+                              Unattended · {unattendedHoursLeft(lead.unattended_since)}h left
+                            </span>
+                          )}
                         </div>
+                        {(() => {
+                          const m = latestMeetingByLead[lead.id];
+                          const st = derivePipelineStage(lead);
+                          const needsAttendance = !!m && (st === "warm" || st === "hot")
+                            && m.attendance === "pending"
+                            && new Date(m.starts_at).getTime() < Date.now()
+                            && !lead.unattended_since;
+                          if (!needsAttendance) return null;
+                          return (
+                            <div onClick={(e) => e.stopPropagation()}
+                              className="mt-2 flex flex-wrap items-center gap-2 rounded-lg px-2.5 py-1.5"
+                              style={{ background: "hsla(43,96%,55%,.08)", border: "1px solid hsla(43,96%,55%,.3)" }}>
+                              <span className="text-[11px]" style={{ color: "hsl(43,96%,72%)" }}>
+                                Meeting on {new Date(m!.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} — did it happen?
+                              </span>
+                              <Button size="sm" className="h-6 text-[11px] px-2 bg-[hsl(142,72%,38%)] hover:bg-[hsl(142,72%,32%)]"
+                                onClick={() => markAttendance(lead, true)}>Attended</Button>
+                              <Button size="sm" variant="outline" className="h-6 text-[11px] px-2 text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => markAttendance(lead, false)}>No-Show</Button>
+                            </div>
+                          );
+                        })()}
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {getLeadPhones(lead).map((p) => {
