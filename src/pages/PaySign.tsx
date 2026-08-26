@@ -156,7 +156,7 @@ export default function PaySign() {
   const slots = useMemo(() => {
     if (!ctx?.rep_availability) return [];
     return computeAvailableSlots(weeklyMapToRows(ctx.rep_availability), {
-      durationMinutes: 45,
+      durationMinutes: 60,
       slotIntervalMinutes: 30,
       minNoticeMinutes: 0,
       daysAhead: 14,
@@ -475,7 +475,7 @@ export default function PaySign() {
                     {scheduled
                       ? "Your onboarding meeting is booked."
                       : bothDone
-                      ? `45 minutes with ${ctx.rep?.name || "your NewLight rep"}.`
+                      ? `1 hour with ${ctx.rep?.name || "your NewLight rep"}.`
                       : "Unlocks once payment and signature are complete."}
                   </p>
                 </div>

@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
     if (!calendar?.id) return json({ error: "Assigned rep has no calendar configured" }, 409);
 
     const start = new Date(starts_at);
-    const end = new Date(start.getTime() + 45 * 60 * 1000);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
     const { data: ev, error: evErr } = await supabase
       .from("bdr_calendar_events")
       .insert({
