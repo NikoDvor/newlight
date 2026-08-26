@@ -17,6 +17,8 @@ import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import { ensureBdrCalendar } from "@/lib/bdrCalendar";
+import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
 /* ─── types ─── */
