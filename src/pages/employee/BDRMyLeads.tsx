@@ -228,8 +228,57 @@ export default function BDRMyLeads() {
     const calledSet = new Set<string>((calls || []).map((c: any) => c.lead_id).filter(Boolean));
     (data || []).forEach((d: any) => { if (d.called) calledSet.add(d.id); });
     setCalledLeadIds(calledSet);
+
+    // Latest calendar event per lead (for attendance / unattended tracking)
+    const leadIds = (data || []).map((d: any) => d.id).filter(Boolean);
+    if (leadIds.length > 0) {
+      const meetingMap: Record<string, LatestMeeting> = {};
+      const CHUNK = 200;
+      for (let i = 0; i < leadIds.length; i += CHUNK) {
+        const { data: evts } = await (supabase as any).from("bdr_calendar_events")
+          .select("id, lead_id, starts_at, attendance")
+          .in("lead_id", leadIds.slice(i, i + CHUNK))
+          .order("starts_at", { ascending: false });
+        (evts || []).forEach((e: any) => {
+          if (!e.lead_id) return;
+          const prev = meetingMap[e.lead_id];
+          if (!prev || new Date(e.starts_at).getTime() > new Date(prev.starts_at).getTime()) {
+            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance };
+          }
+        });
+      }
+      setLatestMeetingByLead(meetingMap);
+    } else {
+      setLatestMeetingByLead({});
+    }
     setLoading(false);
   }, [user?.id]);
+
+  /* ─── Attendance / Unattended ─── */
+  const markAttendance = useCallback(async (lead: BdrLead, attended: boolean) => {
+    const meeting = latestMeetingByLead[lead.id];
+    if (!meeting) return;
+    const attendance = attended ? "attended" : "no_show";
+    const { error: evtErr } = await (supabase as any).from("bdr_calendar_events")
+      .update({ attendance }).eq("id", meeting.id);
+    if (evtErr) { toast({ title: "Could not save", description: evtErr.message, variant: "destructive" }); return; }
+    setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { ...meeting, attendance } }));
+
+    if (!attended) {
+      const nowIso = new Date().toISOString();
+      const returnStage = lead.pipeline_stage || derivePipelineStage(lead);
+      const { error: leadErr } = await (supabase as any).from("nl_bdr_leads")
+        .update({ unattended_since: nowIso, unattended_return_stage: returnStage })
+        .eq("id", lead.id).eq("user_id", user?.id);
+      if (leadErr) { toast({ title: "Could not flag lead", description: leadErr.message, variant: "destructive" }); return; }
+      setLeads(prev => prev.map(l => l.id === lead.id
+        ? { ...l, unattended_since: nowIso, unattended_return_stage: returnStage } : l));
+      toast({ title: "Marked No-Show", description: "Lead flagged Unattended for 72 hours." });
+    } else {
+      toast({ title: "Marked Attended" });
+    }
+  }, [latestMeetingByLead, user?.id]);
+
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
