@@ -157,12 +157,17 @@ export async function createRetainerSubscription(
     product_data: { name: `${args.clientName || deal.deal_name || "NewLight"} — Monthly Retainer` },
   });
 
+  const trialEnd = computeRetainerTrialEnd(new Date());
+  const billingCycleAnchor = computeBillingCycleAnchor(trialEnd);
+
   const sub = await stripe.subscriptions.create({
     customer: args.customerId,
     items: [{ price: price.id }],
     default_payment_method: args.paymentMethodId,
     off_session: true,
-    trial_end: computeRetainerTrialEnd(new Date()),
+    trial_end: trialEnd,
+    billing_cycle_anchor: billingCycleAnchor,
+    proration_behavior: "create_prorations",
     metadata: { deal_id: deal.id, client_id: deal.client_id ?? "" },
 
   });
