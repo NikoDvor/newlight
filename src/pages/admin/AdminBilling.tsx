@@ -47,18 +47,12 @@ export default function AdminBilling() {
         const mrr = active.reduce((sum: number, s: any) => sum + Number(s.monthly_amount || 0), 0);
         setMetrics(prev => ({ ...prev, mrr, activeSubs: active.length, pastDue: pastDue.length }));
       }),
-      supabase.from("invoices").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => {
-        const data = r.data ?? [];
-        setInvoices(data);
-        const totalInvoiced = data.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        const totalPaid = data.filter((i: any) => i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        const setupCollected = data.filter((i: any) => i.invoice_type === "initial_fee" && i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        setMetrics(prev => ({ ...prev, totalInvoiced, totalPaid, setupCollected }));
-      }),
+      loadInvoices(),
       supabase.from("payment_records").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setPayments(r.data ?? [])),
       supabase.from("contract_records").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setContracts(r.data ?? [])),
     ]);
   }, []);
+
 
   const stats = [
     { label: "Monthly Recurring", value: `$${metrics.mrr.toLocaleString()}`, icon: TrendingUp, color: "hsl(var(--nl-neon))" },
