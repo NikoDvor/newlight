@@ -2485,3 +2485,106 @@ function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () =
     </Dialog>
   );
 }
+
+/* ─── Reschedule / Cancel meeting modal ─── */
+function RescheduleModal({ lead, meeting, onClose, onConfirm, onCancelMeeting }: {
+  lead: BdrLead | null;
+  meeting?: LatestMeeting;
+  onClose: () => void;
+  onConfirm: (lead: BdrLead, startIso: string) => Promise<void>;
+  onCancelMeeting: (lead: BdrLead) => Promise<void>;
+}) {
+  const [availability, setAvailability] = useState<any>(null);
+  const [calTimezone, setCalTimezone] = useState("America/Los_Angeles");
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!lead) return;
+    setSelectedSlot("");
+    (async () => {
+      const cal = await ensureBdrCalendar();
+      setAvailability(cal?.availability || null);
+      setCalTimezone(cal?.timezone || "America/Los_Angeles");
+    })();
+  }, [lead?.id]);
+
+  const slots = useMemo(() => {
+    if (!availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(availability), {
+      durationMinutes: 45,
+      slotIntervalMinutes: 30,
+      minNoticeMinutes: 0,
+      daysAhead: 14,
+      timeZone: calTimezone,
+    }).map((d) => ({
+      date: d,
+      label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    }));
+  }, [availability, calTimezone]);
+
+  if (!lead) return null;
+
+  return (
+    <Dialog open={!!lead} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reschedule Meeting</DialogTitle>
+          <DialogDescription>{lead.business_name}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {meeting && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              <div className="text-xs">
+                <p className="text-muted-foreground">Current time</p>
+                <p className="text-foreground font-medium">
+                  {new Date(meeting.starts_at).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                className="text-xs h-7 text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                onClick={async () => { setBusy(true); await onCancelMeeting(lead); setBusy(false); }}
+              >
+                Cancel Meeting
+              </Button>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label className="text-xs">New time (45-minute block)</Label>
+            {slots.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No availability configured on your calendar yet. Set your availability first, then come back.
+              </p>
+            ) : (
+              <select
+                value={selectedSlot}
+                onChange={(e) => setSelectedSlot(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-foreground"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">— Select a time —</option>
+                {slots.map(s => (
+                  <option key={s.date.toISOString()} value={s.date.toISOString()} className="bg-[hsl(215,35%,12%)]">
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <Button
+            className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+            disabled={busy || !selectedSlot}
+            onClick={async () => { setBusy(true); await onConfirm(lead, selectedSlot); setBusy(false); }}
+          >
+            Confirm New Time
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
