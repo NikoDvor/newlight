@@ -292,6 +292,58 @@ export default function BDRMyLeads() {
     }
   }, [latestMeetingByLead, user?.id]);
 
+  /** Clears the Unattended overlay on a lead once it's genuinely rescheduled. */
+  const clearUnattended = useCallback(async (lead: BdrLead) => {
+    if (!lead.unattended_since) return;
+    await (supabase as any).from("nl_bdr_leads")
+      .update({ unattended_since: null, unattended_return_stage: null, unattended_warned_at: null })
+      .eq("id", lead.id).eq("user_id", user?.id);
+    setLeads(prev => prev.map(l => l.id === lead.id
+      ? { ...l, unattended_since: null, unattended_return_stage: null, unattended_warned_at: null } : l));
+  }, [user?.id]);
+
+  const handleReschedule = useCallback(async (lead: BdrLead, startIso: string) => {
+    const start = new Date(startIso);
+    const end = new Date(start.getTime() + 45 * 60_000);
+    const existing = latestMeetingByLead[lead.id];
+    if (existing) {
+      const { error } = await (supabase as any).from("bdr_calendar_events")
+        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending" })
+        .eq("id", existing.id);
+      if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending" } }));
+    } else {
+      const cal = await ensureBdrCalendar();
+      if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
+      const { data, error } = await (supabase as any).from("bdr_calendar_events").insert({
+        user_id: user?.id,
+        client_id: (lead as any).client_id || (cal as any).client_id,
+        calendar_id: cal.id,
+        lead_id: lead.id,
+        title: `Meeting: ${lead.business_name}`,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        source: "manual",
+        attendance: "pending",
+      }).select("id").single();
+      if (error) { toast({ title: "Could not schedule", description: error.message, variant: "destructive" }); return; }
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending" } }));
+    }
+    await clearUnattended(lead);
+    toast({ title: "Meeting rescheduled" });
+    setRescheduleLead(null);
+  }, [latestMeetingByLead, user?.id, clearUnattended]);
+
+  const handleCancelMeeting = useCallback(async (lead: BdrLead) => {
+    const existing = latestMeetingByLead[lead.id];
+    if (!existing) return;
+    const { error } = await (supabase as any).from("bdr_calendar_events").delete().eq("id", existing.id);
+    if (error) { toast({ title: "Could not cancel", description: error.message, variant: "destructive" }); return; }
+    setLatestMeetingByLead(prev => { const n = { ...prev }; delete n[lead.id]; return n; });
+    toast({ title: "Meeting cancelled" });
+    setRescheduleLead(null);
+  }, [latestMeetingByLead]);
+
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
