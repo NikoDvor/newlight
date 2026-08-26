@@ -336,17 +336,20 @@ export default function BDRMyLeads() {
 
   const filtered = useMemo(() => {
     let list = listScopedLeads;
-    if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
-    else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
-    else if (filter === "no_booking") {
-      list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
-    }
-    else if (filter.startsWith("stage:")) {
-      const target = filter.slice(6) as PipelineStageKey;
-      list = list.filter(l => derivePipelineStage(l) === target);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    // When searching, ignore the stage/unattended filter chip so results span
+    // every stage (still scoped to the active list).
+    if (!q) {
+      if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
+      else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
+      else if (filter === "no_booking") {
+        list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
+      }
+      else if (filter.startsWith("stage:")) {
+        const target = filter.slice(6) as PipelineStageKey;
+        list = list.filter(l => derivePipelineStage(l) === target);
+      }
+    } else {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     // Street-sweep lists carry sequence_order — show them in walk order instead
