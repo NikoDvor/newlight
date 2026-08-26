@@ -1300,6 +1300,13 @@ export default function BDRMyLeads() {
       <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+      <RescheduleModal
+        lead={rescheduleLead}
+        meeting={rescheduleLead ? latestMeetingByLead[rescheduleLead.id] : undefined}
+        onClose={() => setRescheduleLead(null)}
+        onConfirm={handleReschedule}
+        onCancelMeeting={handleCancelMeeting}
+      />
       <CustomerProfilePanel
         open={!!profileLeadId}
         onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
