@@ -132,6 +132,7 @@ export async function createRetainerSubscription(
     items: [{ price: price.id }],
     default_payment_method: args.paymentMethodId,
     off_session: true,
+    trial_end: Math.floor((Date.now() + 90 * 24 * 3600 * 1000) / 1000),
     metadata: { deal_id: deal.id, client_id: deal.client_id ?? "" },
   });
 
