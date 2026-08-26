@@ -99,9 +99,36 @@ export async function savePaymentMethodFromSession(
 }
 
 /**
+ * Computes the retainer subscription trial end. If 90 days from booking
+ * lands on a PST day-of-month of 29-31, snap to the 1st of the following
+ * month at 8:00 AM PST (16:00 UTC). Otherwise keep the 90-day candidate.
+ */
+function computeRetainerTrialEnd(bookedAt: Date): number {
+  const candidate = new Date(bookedAt.getTime() + 90 * 24 * 3600 * 1000);
+  const pstMs = candidate.getTime() - 8 * 3600 * 1000;
+  const pstDate = new Date(pstMs);
+  const pstDayOfMonth = pstDate.getUTCDate();
+
+  let final: Date;
+  if (pstDayOfMonth > 28) {
+    const y = candidate.getFullYear();
+    const m = candidate.getMonth();
+    const nextM = m + 1;
+    const nextY = y + Math.floor(nextM / 12);
+    const normM = ((nextM % 12) + 12) % 12;
+    final = new Date(Date.UTC(nextY, normM, 1, 16, 0, 0));
+  } else {
+    final = candidate;
+  }
+
+  return Math.floor(final.getTime() / 1000);
+}
+
+/**
  * Creates a real monthly Stripe subscription for a retainer deal and records it
  * on the deal + the subscriptions row. Idempotent per deal.
  */
+
 // deno-lint-ignore no-explicit-any
 export async function createRetainerSubscription(
   stripe: any,
