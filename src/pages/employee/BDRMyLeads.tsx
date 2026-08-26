@@ -175,6 +175,15 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
   closed_lost: { label: "Closed Lost", bg: "hsla(0,0%,50%,.15)",    text: "hsl(0,0%,60%)" },
 };
 
+/* Latest meeting per lead, used for attendance tracking */
+interface LatestMeeting { id: string; starts_at: string; attendance: string | null }
+
+/** Hours remaining before the 72h Unattended auto-revert. */
+function unattendedHoursLeft(since: string): number {
+  const ms = new Date(since).getTime() + 72 * 3600_000 - Date.now();
+  return Math.max(0, Math.ceil(ms / 3600_000));
+}
+
 const FILTER_TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "today", label: "Today" },
