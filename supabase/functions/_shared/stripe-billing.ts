@@ -159,11 +159,9 @@ export async function createRetainerSubscription(
     items: [{ price: price.id }],
     default_payment_method: args.paymentMethodId,
     off_session: true,
-    trial_end: (() => {
-      const now = new Date();
-      return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 3, 1, 0, 0, 0) / 1000);
-    })(),
+    trial_end: computeRetainerTrialEnd(new Date()),
     metadata: { deal_id: deal.id, client_id: deal.client_id ?? "" },
+
   });
 
   await supabase.from("crm_deals").update({ stripe_subscription_id: sub.id }).eq("id", deal.id);
