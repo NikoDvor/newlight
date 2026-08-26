@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, CreditCard, Receipt, FileText, ShieldCheck, TrendingUp, Plus } from "lucide-react";
+import { DollarSign, CreditCard, Receipt, FileText, ShieldCheck, TrendingUp, Plus, Copy, Check, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-500/20 text-emerald-400",
