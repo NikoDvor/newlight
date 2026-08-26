@@ -36,7 +36,18 @@ export default function AdminBilling() {
   const [contracts, setContracts] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({ mrr: 0, setupCollected: 0, activeSubs: 0, pastDue: 0, totalInvoiced: 0, totalPaid: 0 });
 
+  const loadInvoices = useCallback(async () => {
+    const r = await supabase.from("invoices").select("*, clients(business_name)").order("created_at", { ascending: false });
+    const data = r.data ?? [];
+    setInvoices(data);
+    const totalInvoiced = data.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    const totalPaid = data.filter((i: any) => i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    const setupCollected = data.filter((i: any) => i.invoice_type === "initial_fee" && i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    setMetrics(prev => ({ ...prev, totalInvoiced, totalPaid, setupCollected }));
+  }, []);
+
   useEffect(() => {
+
     Promise.all([
       supabase.from("billing_accounts").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setAccounts(r.data ?? [])),
       supabase.from("subscriptions").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => {
