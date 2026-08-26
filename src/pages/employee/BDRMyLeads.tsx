@@ -58,6 +58,9 @@ interface BdrLead {
   sequence_order?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  unattended_since?: string | null;
+  unattended_return_stage?: string | null;
+  unattended_warned_at?: string | null;
   created_at: string;
 }
 
