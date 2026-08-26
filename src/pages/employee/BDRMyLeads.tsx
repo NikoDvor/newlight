@@ -209,6 +209,7 @@ export default function BDRMyLeads() {
   const [showStreetSweepGuide, setShowStreetSweepGuide] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
+  const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
