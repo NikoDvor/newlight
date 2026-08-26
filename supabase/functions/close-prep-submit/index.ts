@@ -91,24 +91,20 @@ Deno.serve(async (req) => {
     const {
       lead_id,
       initial_fee,
-      pricing_model, // "retainer" | "commission"
       recurring_fee,
-      commission_rate,
+      retainer_kpi,
       closing_notes,
       meeting_starts_at,
       duration_minutes,
     } = body || {};
 
-    if (!lead_id || !meeting_starts_at || !pricing_model) {
-      return new Response(JSON.stringify({ error: "Missing required fields (lead_id, meeting_starts_at, pricing_model)" }), {
+    if (!lead_id || !meeting_starts_at) {
+      return new Response(JSON.stringify({ error: "Missing required fields (lead_id, meeting_starts_at)" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!["retainer", "commission"].includes(pricing_model)) {
-      return new Response(JSON.stringify({ error: "pricing_model must be 'retainer' or 'commission'" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const pricing_model = "retainer";
+    const kpi = typeof retainer_kpi === "string" && retainer_kpi.trim() ? retainer_kpi.trim() : null;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -204,9 +200,8 @@ Deno.serve(async (req) => {
 
     // 5a. Create Proposal row (Form 2 artifact #1)
     const priceLineForDoc =
-      pricing_model === "retainer"
-        ? `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month`
-        : `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of revenue`;
+      `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month` +
+      (kpi ? ` · KPI: ${kpi}` : "");
 
     const { data: proposal, error: propErr } = await supabase
       .from("proposals")
@@ -219,7 +214,7 @@ Deno.serve(async (req) => {
         proposal_status: "draft",
         pricing_model,
         setup_fee: initial_fee != null ? Number(initial_fee) : null,
-        monthly_fee: pricing_model === "retainer" && recurring_fee != null ? Number(recurring_fee) : null,
+        monthly_fee: recurring_fee != null ? Number(recurring_fee) : null,
         offer_summary: priceLineForDoc,
         internal_summary: closing_notes || null,
         created_by: userId,
@@ -234,10 +229,9 @@ Deno.serve(async (req) => {
     const summaryHtml = buildServiceAgreementHtml({
       businessName: lead.business_name,
       priceLine: priceLineForDoc,
-      pricingModel: pricing_model,
       initialFee: initial_fee != null ? Number(initial_fee) : 0,
       recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
-      commissionRate: commission_rate != null ? Number(commission_rate) : null,
+      retainerKpi: kpi,
       closingNotes: closing_notes || null,
     });
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
@@ -270,8 +264,8 @@ Deno.serve(async (req) => {
     const dealPatch: Record<string, unknown> = {
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       pricing_model,
-      recurring_fee: pricing_model === "retainer" && recurring_fee != null ? Number(recurring_fee) : null,
-      commission_rate: pricing_model === "commission" && commission_rate != null ? Number(commission_rate) : null,
+      recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
+      retainer_kpi: kpi,
       closing_notes: closing_notes || null,
       close_prep_completed_at: new Date().toISOString(),
       close_prep_meeting_id: evt.id,
@@ -315,7 +309,6 @@ Deno.serve(async (req) => {
       pricing_model,
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
-      commission_rate: commission_rate != null ? Number(commission_rate) : null,
       closing_notes: closing_notes || null,
       paySignUrl,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
@@ -350,11 +343,10 @@ async function sendClosePrepNotifications(supabase: any, args: {
   pricing_model: string;
   initial_fee: number | null;
   recurring_fee: number | null;
-  commission_rate: number | null;
   closing_notes: string | null;
   paySignUrl: string;
 }) {
-  const { userId, userEmail, lead, when, pricing_model, initial_fee, recurring_fee, commission_rate, closing_notes, paySignUrl } = args;
+  const { userId, userEmail, lead, when, initial_fee, recurring_fee, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
 
@@ -379,9 +371,7 @@ async function sendClosePrepNotifications(supabase: any, args: {
     }
   } catch (e) { console.error("[close-prep] rep lookup failed:", e); }
 
-  const priceLine = pricing_model === "retainer"
-    ? `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`
-    : `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${commission_rate ?? 0}% of revenue`;
+  const priceLine = `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
 
   // Universal SMS
   await sendSms(UNIVERSAL_SMS_TO, `NewLight close prep: ${repName || "BDR"} scheduled ${who} for ${whenLbl}. ${priceLine}.`);
@@ -465,18 +455,15 @@ function esc(s: string): string {
 function buildServiceAgreementHtml(args: {
   businessName: string;
   priceLine: string;
-  pricingModel: string;
   initialFee: number;
   recurringFee: number | null;
-  commissionRate: number | null;
+  retainerKpi?: string | null;
   closingNotes: string | null;
 }): string {
-  const { businessName, priceLine, pricingModel, initialFee, recurringFee, commissionRate, closingNotes } = args;
+  const { businessName, priceLine, initialFee, recurringFee, retainerKpi, closingNotes } = args;
   const bn = esc(businessName);
   const initFmt = `$${(initialFee || 0).toLocaleString()}`;
-  const recurringBlock = pricingModel === "retainer"
-    ? `<p>Following recoupment of the Initial Fee (or immediately if Client opts out of the guarantee mechanism in writing), Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong>, invoiced in advance, due on the same calendar day each month.</p>`
-    : `<p>Following recoupment of the Initial Fee (or immediately if Client opts out of the guarantee mechanism in writing), Client will pay Agency a performance commission equal to <strong>${commissionRate ?? 0}% of Attributable Revenue</strong>, invoiced monthly in arrears based on the agreed system of record.</p>`;
+  const recurringBlock = `<p>Following recoupment of the Initial Fee (or immediately if Client opts out of the guarantee mechanism in writing), Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong>, invoiced in advance, due on the same calendar day each month.${retainerKpi ? ` This retainer is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
   const notesBlock = closingNotes
     ? `<div class="notes"><h3>Deal-Specific Notes</h3><p>${esc(closingNotes).replace(/\n/g,"<br>")}</p></div>`
     : "";

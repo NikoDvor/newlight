@@ -4404,6 +4404,7 @@ export type Database = {
           proposal_id_current: string | null
           qualification_status: string | null
           recurring_fee: number | null
+          retainer_kpi: string | null
           revenue_auto_logged: boolean
           service_agreement_envelope_id: string | null
           status: string
@@ -4446,6 +4447,7 @@ export type Database = {
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          retainer_kpi?: string | null
           revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
           status?: string
@@ -4488,6 +4490,7 @@ export type Database = {
           proposal_id_current?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
+          retainer_kpi?: string | null
           revenue_auto_logged?: boolean
           service_agreement_envelope_id?: string | null
           status?: string

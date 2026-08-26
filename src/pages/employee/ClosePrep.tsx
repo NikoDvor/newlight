@@ -33,9 +33,8 @@ export default function ClosePrep() {
   const [done, setDone] = useState(false);
 
   const [initialFee, setInitialFee] = useState("");
-  const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
   const [recurringFee, setRecurringFee] = useState("");
-  const [commissionRate, setCommissionRate] = useState("");
+  const [kpiTarget, setKpiTarget] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
 
@@ -75,9 +74,7 @@ export default function ClosePrep() {
   }, [availability, calTimezone]);
 
   const canSubmit =
-    !!lead && !!selectedSlot && !!initialFee.trim() &&
-    ((pricingModel === "retainer" && !!recurringFee.trim()) ||
-     (pricingModel === "commission" && !!commissionRate.trim()));
+    !!lead && !!selectedSlot && !!initialFee.trim() && !!recurringFee.trim();
 
   const submit = async () => {
     if (!lead || !canSubmit) return;
@@ -86,9 +83,8 @@ export default function ClosePrep() {
       body: {
         lead_id: lead.id,
         initial_fee: Number(initialFee),
-        pricing_model: pricingModel,
-        recurring_fee: pricingModel === "retainer" ? Number(recurringFee) : null,
-        commission_rate: pricingModel === "commission" ? Number(commissionRate) : null,
+        recurring_fee: Number(recurringFee),
+        retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
         meeting_starts_at: selectedSlot,
         duration_minutes: 45,
@@ -167,50 +163,29 @@ export default function ClosePrep() {
         </div>
 
         <div>
-          <Label className="text-xs text-white/60">Pricing Model <span className="text-red-500">*</span></Label>
-          <div className="grid grid-cols-2 gap-2 mt-1">
-            {(["retainer", "commission"] as const).map(m => (
-              <button
-                type="button" key={m}
-                onClick={() => setPricingModel(m)}
-                className={`px-3 py-2 rounded-md text-sm border transition-colors ${
-                  pricingModel === m
-                    ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white"
-                    : "border-white/10 bg-white/5 text-white/70 hover:text-white"
-                }`}
-              >
-                {m === "retainer" ? "Retainer" : "Commission"}
-              </button>
-            ))}
-          </div>
+          <Label className="text-xs text-white/60">Recurring Fee (USD / month) <span className="text-red-500">*</span></Label>
+          <Input
+            type="number" min="0" step="0.01"
+            value={recurringFee}
+            onChange={e => setRecurringFee(e.target.value)}
+            placeholder="e.g. 1500"
+            className="bg-white/5 border-white/10 text-white mt-1"
+          />
         </div>
 
-        {pricingModel === "retainer" ? (
-          <div>
-            <Label className="text-xs text-white/60">Recurring Fee (USD / month) <span className="text-red-500">*</span></Label>
-            <Input
-              type="number" min="0" step="0.01"
-              value={recurringFee}
-              onChange={e => setRecurringFee(e.target.value)}
-              placeholder="e.g. 1500"
-              className="bg-white/5 border-white/10 text-white mt-1"
-            />
-          </div>
-        ) : (
-          <div>
-            <Label className="text-xs text-white/60">Commission Rate (%) <span className="text-red-500">*</span></Label>
-            <Input
-              type="number" min="0" step="0.01"
-              value={commissionRate}
-              onChange={e => setCommissionRate(e.target.value)}
-              placeholder="e.g. 15"
-              className="bg-white/5 border-white/10 text-white mt-1"
-            />
-            <p className="text-[11px] text-white/45 mt-1">
-              We'll track revenue generated and automatically calculate what's owed each cycle based on this rate.
-            </p>
-          </div>
-        )}
+        <div>
+          <Label className="text-xs text-white/60">KPI Target</Label>
+          <Textarea
+            value={kpiTarget}
+            onChange={e => setKpiTarget(e.target.value)}
+            rows={2}
+            placeholder="e.g. Generate $10,000/mo in attributable pipeline value"
+            className="bg-white/5 border-white/10 text-white mt-1"
+          />
+          <p className="text-[11px] text-white/45 mt-1">
+            Optional but recommended — the performance target this retainer is evaluated against.
+          </p>
+        </div>
 
         <div>
           <Label className="text-xs text-white/60">Internal Closing Notes</Label>
