@@ -1245,6 +1245,15 @@ export default function BDRMyLeads() {
                         )}
                         {!selectMode && (
                           <button
+                            onClick={(e) => { e.stopPropagation(); setRescheduleLead(lead); }}
+                            aria-label={`Reschedule ${lead.business_name}`}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-[hsl(211,96%,68%)] hover:bg-[hsl(211,96%,56%)]/10"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {!selectMode && (
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
                             aria-label={`Delete ${lead.business_name}`}
                             className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
