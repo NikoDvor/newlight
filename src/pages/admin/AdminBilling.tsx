@@ -285,6 +285,13 @@ export default function AdminBilling() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AdhocInvoiceDialog
+        open={invoiceDialogOpen}
+        onOpenChange={setInvoiceDialogOpen}
+        onCreated={loadInvoices}
+      />
     </div>
+
   );
 }
