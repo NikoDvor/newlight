@@ -21,6 +21,27 @@ function json(data: unknown, status = 200) {
   });
 }
 
+async function sendAdhocEmail(to: (string | null | undefined)[], subject: string, html: string) {
+  const key = Deno.env.get("RESEND_API_KEY");
+  const recipients = to.filter((e): e is string => !!e);
+  if (!recipients.length) return;
+  if (!key) {
+    console.log(`[stripe-webhook adhoc EMAIL QUEUED - no RESEND_API_KEY] to=${recipients.join(",")} subject="${subject}"`);
+    return;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "NewLight <team@newlightgen.com>", to: recipients, subject, html }),
+    });
+    if (!res.ok) console.error("[stripe-webhook adhoc email] failed", await res.text());
+  } catch (e) {
+    console.error("[stripe-webhook adhoc email] error", e);
+  }
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -62,6 +83,56 @@ Deno.serve(async (req) => {
         const subscriptionId = session.subscription;
         const clientEmail = session.customer_details?.email || session.customer_email;
         const paySignInvoiceId = session.metadata?.invoice_id as string | undefined;
+
+        // ---- Ad-hoc invoice payment (standalone one-off charge) ----
+        if (session.metadata?.adhoc === "true") {
+          const adhocInvoiceId = session.metadata?.invoice_id as string | undefined;
+          if (adhocInvoiceId) {
+            const amountPaid = (session.amount_total ?? 0) / 100;
+            const { data: inv } = await supabase
+              .from("invoices")
+              .select("id, invoice_status, client_id, payment_notes, total_amount")
+              .eq("id", adhocInvoiceId)
+              .maybeSingle();
+
+            if (inv && inv.invoice_status !== "paid") {
+              await supabase.from("invoices").update({
+                invoice_status: "paid",
+                amount_paid: amountPaid,
+                paid_at: new Date().toISOString(),
+                payment_method: "stripe",
+                stripe_checkout_session_id: session.id,
+              }).eq("id", adhocInvoiceId);
+
+              let clientName: string | null = null;
+              let ownerEmail: string | null = null;
+              if (inv.client_id) {
+                const { data: c } = await supabase
+                  .from("clients").select("business_name, owner_email").eq("id", inv.client_id).maybeSingle();
+                clientName = c?.business_name ?? null;
+                ownerEmail = c?.owner_email ?? null;
+              }
+
+              const desc = inv.payment_notes || "Ad-hoc invoice";
+              const amountStr = `$${amountPaid.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              await sendAdhocEmail(
+                [ownerEmail || clientEmail, "team@newlightgen.com"],
+                `Payment received — ${desc}`,
+                `<p>Payment received.</p><p><strong>${desc}</strong><br/>Amount: ${amountStr}${clientName ? `<br/>Client: ${clientName}` : ""}</p><p>Thank you.<br/>NewLight</p>`,
+              );
+            }
+
+            await supabase.from("audit_logs").insert({
+              client_id: inv?.client_id ?? null,
+              action: "adhoc_invoice_paid",
+              module: "billing",
+              status: "success",
+              metadata: { session_id: session.id, invoice_id: adhocInvoiceId },
+            });
+          }
+          break;
+        }
+
 
         // ---- Pay & Sign (Form 3) initial-fee payment: authoritative confirmation ----
         if (paySignInvoiceId) {

@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, CreditCard, Receipt, FileText, ShieldCheck, TrendingUp, Plus } from "lucide-react";
+import { DollarSign, CreditCard, Receipt, FileText, ShieldCheck, TrendingUp, Plus, Copy, Check, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const statusColor: Record<string, string> = {
   Active: "bg-emerald-500/20 text-emerald-400",
@@ -34,9 +40,22 @@ export default function AdminBilling() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+
   const [metrics, setMetrics] = useState({ mrr: 0, setupCollected: 0, activeSubs: 0, pastDue: 0, totalInvoiced: 0, totalPaid: 0 });
 
+  const loadInvoices = useCallback(async () => {
+    const r = await supabase.from("invoices").select("*, clients(business_name)").order("created_at", { ascending: false });
+    const data = r.data ?? [];
+    setInvoices(data);
+    const totalInvoiced = data.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    const totalPaid = data.filter((i: any) => i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    const setupCollected = data.filter((i: any) => i.invoice_type === "initial_fee" && i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
+    setMetrics(prev => ({ ...prev, totalInvoiced, totalPaid, setupCollected }));
+  }, []);
+
   useEffect(() => {
+
     Promise.all([
       supabase.from("billing_accounts").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setAccounts(r.data ?? [])),
       supabase.from("subscriptions").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => {
@@ -47,18 +66,12 @@ export default function AdminBilling() {
         const mrr = active.reduce((sum: number, s: any) => sum + Number(s.monthly_amount || 0), 0);
         setMetrics(prev => ({ ...prev, mrr, activeSubs: active.length, pastDue: pastDue.length }));
       }),
-      supabase.from("invoices").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => {
-        const data = r.data ?? [];
-        setInvoices(data);
-        const totalInvoiced = data.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        const totalPaid = data.filter((i: any) => i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        const setupCollected = data.filter((i: any) => i.invoice_type === "Setup Fee" && i.invoice_status === "Paid").reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
-        setMetrics(prev => ({ ...prev, totalInvoiced, totalPaid, setupCollected }));
-      }),
+      loadInvoices(),
       supabase.from("payment_records").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setPayments(r.data ?? [])),
       supabase.from("contract_records").select("*, clients(business_name)").order("created_at", { ascending: false }).then(r => setContracts(r.data ?? [])),
     ]);
   }, []);
+
 
   const stats = [
     { label: "Monthly Recurring", value: `$${metrics.mrr.toLocaleString()}`, icon: TrendingUp, color: "hsl(var(--nl-neon))" },
@@ -173,7 +186,13 @@ export default function AdminBilling() {
         {/* INVOICES */}
         <TabsContent value="invoices">
           <Card className="border-0 bg-white/[0.04]">
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Invoices</CardTitle></CardHeader>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-sm text-white/80">Invoices</CardTitle>
+              <Button size="sm" onClick={() => setInvoiceDialogOpen(true)} className="h-8 text-xs gap-1">
+                <Plus className="h-3.5 w-3.5" /> Send Invoice
+              </Button>
+            </CardHeader>
+
             <CardContent className="overflow-auto">
               {invoices.length === 0 ? (
                 <p className="text-xs text-white/30 text-center py-8">No invoices yet.</p>
@@ -268,6 +287,118 @@ export default function AdminBilling() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AdhocInvoiceDialog
+        open={invoiceDialogOpen}
+        onOpenChange={setInvoiceDialogOpen}
+        onCreated={loadInvoices}
+      />
     </div>
+
+  );
+}
+
+function AdhocInvoiceDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenChange: (v: boolean) => void; onCreated: () => void }) {
+  const [clients, setClients] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [link, setLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setLink(null); setCopied(false);
+    supabase.from("clients").select("id, business_name").order("business_name").limit(500)
+      .then(r => setClients(r.data ?? []));
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = q ? clients.filter((c: any) => (c.business_name || "").toLowerCase().includes(q)) : clients;
+    return list.slice(0, 50);
+  }, [clients, search]);
+
+  const selected = clients.find((c: any) => c.id === clientId);
+
+  const submit = async () => {
+    const amt = Number(amount);
+    if (!clientId) return toast.error("Select a client");
+    if (!(amt > 0)) return toast.error("Enter a valid amount");
+    if (!description.trim()) return toast.error("Enter a description");
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-adhoc-invoice", {
+        body: { client_id: clientId, amount: amt, description: description.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setLink((data as any)?.payment_link_url ?? null);
+      toast.success("Invoice created");
+      onCreated();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to create invoice");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Send Invoice</DialogTitle></DialogHeader>
+        {link ? (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Payment link created. Share it with the client.</p>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={link} className="text-xs" />
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => { navigator.clipboard.writeText(link); setCopied(true); toast.success("Link copied"); }}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <Button className="w-full" onClick={() => onOpenChange(false)}>Done</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Client</Label>
+              <Input placeholder="Search clients…" value={search} onChange={e => setSearch(e.target.value)} />
+              <div className="max-h-40 overflow-y-auto rounded-md border border-border">
+                {filtered.length === 0 ? (
+                  <p className="p-3 text-xs text-muted-foreground">No clients found.</p>
+                ) : filtered.map((c: any) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setClientId(c.id)}
+                    className={`w-full px-3 py-2 text-left text-xs hover:bg-muted ${clientId === c.id ? "bg-muted font-medium" : ""}`}
+                  >
+                    {c.business_name}
+                  </button>
+                ))}
+              </div>
+              {selected && <p className="text-[11px] text-muted-foreground">Selected: {selected.business_name}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Amount (USD)</Label>
+              <Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="500.00" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Description</Label>
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this charge for?" rows={3} />
+            </div>
+            <Button className="w-full" onClick={submit} disabled={submitting}>
+              {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</> : "Create & Send"}
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
