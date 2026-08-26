@@ -934,6 +934,14 @@ export default function BDRMyLeads() {
                   {t.label}
                 </button>
               ))}
+              <button
+                onClick={() => setFilter(filter === "unattended" ? "all" : "unattended")}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={filter === "unattended"
+                  ? { background: "hsl(0,72%,50%)", color: "#fff" }
+                  : { background: "hsla(0,72%,50%,.10)", color: "hsl(0,72%,66%)", border: "1px solid hsla(0,72%,50%,.35)" }}>
+                Unattended{leads.filter(l => !!l.unattended_since).length > 0 ? ` (${leads.filter(l => !!l.unattended_since).length})` : ""}
+              </button>
             </div>
             <div className="relative flex-1 min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
