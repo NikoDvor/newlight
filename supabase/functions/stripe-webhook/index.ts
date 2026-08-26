@@ -63,6 +63,56 @@ Deno.serve(async (req) => {
         const clientEmail = session.customer_details?.email || session.customer_email;
         const paySignInvoiceId = session.metadata?.invoice_id as string | undefined;
 
+        // ---- Ad-hoc invoice payment (standalone one-off charge) ----
+        if (session.metadata?.adhoc === "true") {
+          const adhocInvoiceId = session.metadata?.invoice_id as string | undefined;
+          if (adhocInvoiceId) {
+            const amountPaid = (session.amount_total ?? 0) / 100;
+            const { data: inv } = await supabase
+              .from("invoices")
+              .select("id, invoice_status, client_id, payment_notes, total_amount")
+              .eq("id", adhocInvoiceId)
+              .maybeSingle();
+
+            if (inv && inv.invoice_status !== "paid") {
+              await supabase.from("invoices").update({
+                invoice_status: "paid",
+                amount_paid: amountPaid,
+                paid_at: new Date().toISOString(),
+                payment_method: "stripe",
+                stripe_checkout_session_id: session.id,
+              }).eq("id", adhocInvoiceId);
+
+              let clientName: string | null = null;
+              let ownerEmail: string | null = null;
+              if (inv.client_id) {
+                const { data: c } = await supabase
+                  .from("clients").select("business_name, owner_email").eq("id", inv.client_id).maybeSingle();
+                clientName = c?.business_name ?? null;
+                ownerEmail = c?.owner_email ?? null;
+              }
+
+              const desc = inv.payment_notes || "Ad-hoc invoice";
+              const amountStr = `$${amountPaid.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              await sendAdhocEmail(
+                [ownerEmail || clientEmail, "team@newlightgen.com"],
+                `Payment received — ${desc}`,
+                `<p>Payment received.</p><p><strong>${desc}</strong><br/>Amount: ${amountStr}${clientName ? `<br/>Client: ${clientName}` : ""}</p><p>Thank you.<br/>NewLight</p>`,
+              );
+            }
+
+            await supabase.from("audit_logs").insert({
+              client_id: inv?.client_id ?? null,
+              action: "adhoc_invoice_paid",
+              module: "billing",
+              status: "success",
+              metadata: { session_id: session.id, invoice_id: adhocInvoiceId },
+            });
+          }
+          break;
+        }
+
+
         // ---- Pay & Sign (Form 3) initial-fee payment: authoritative confirmation ----
         if (paySignInvoiceId) {
           const dealId = session.metadata?.deal_id as string | undefined;
