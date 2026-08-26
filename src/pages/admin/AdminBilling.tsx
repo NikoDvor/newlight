@@ -40,6 +40,8 @@ export default function AdminBilling() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [contracts, setContracts] = useState<any[]>([]);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+
   const [metrics, setMetrics] = useState({ mrr: 0, setupCollected: 0, activeSubs: 0, pastDue: 0, totalInvoiced: 0, totalPaid: 0 });
 
   const loadInvoices = useCallback(async () => {
