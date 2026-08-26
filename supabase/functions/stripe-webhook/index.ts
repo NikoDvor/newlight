@@ -21,6 +21,27 @@ function json(data: unknown, status = 200) {
   });
 }
 
+async function sendAdhocEmail(to: (string | null | undefined)[], subject: string, html: string) {
+  const key = Deno.env.get("RESEND_API_KEY");
+  const recipients = to.filter((e): e is string => !!e);
+  if (!recipients.length) return;
+  if (!key) {
+    console.log(`[stripe-webhook adhoc EMAIL QUEUED - no RESEND_API_KEY] to=${recipients.join(",")} subject="${subject}"`);
+    return;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "NewLight <team@newlightgen.com>", to: recipients, subject, html }),
+    });
+    if (!res.ok) console.error("[stripe-webhook adhoc email] failed", await res.text());
+  } catch (e) {
+    console.error("[stripe-webhook adhoc email] error", e);
+  }
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
