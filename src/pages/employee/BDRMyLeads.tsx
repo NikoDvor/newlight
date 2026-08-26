@@ -17,6 +17,8 @@ import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import { ensureBdrCalendar } from "@/lib/bdrCalendar";
+import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
 /* ─── types ─── */
@@ -207,6 +209,7 @@ export default function BDRMyLeads() {
   const [showStreetSweepGuide, setShowStreetSweepGuide] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
+  const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
@@ -289,6 +292,58 @@ export default function BDRMyLeads() {
     }
   }, [latestMeetingByLead, user?.id]);
 
+  /** Clears the Unattended overlay on a lead once it's genuinely rescheduled. */
+  const clearUnattended = useCallback(async (lead: BdrLead) => {
+    if (!lead.unattended_since) return;
+    await (supabase as any).from("nl_bdr_leads")
+      .update({ unattended_since: null, unattended_return_stage: null, unattended_warned_at: null })
+      .eq("id", lead.id).eq("user_id", user?.id);
+    setLeads(prev => prev.map(l => l.id === lead.id
+      ? { ...l, unattended_since: null, unattended_return_stage: null, unattended_warned_at: null } : l));
+  }, [user?.id]);
+
+  const handleReschedule = useCallback(async (lead: BdrLead, startIso: string) => {
+    const start = new Date(startIso);
+    const end = new Date(start.getTime() + 45 * 60_000);
+    const existing = latestMeetingByLead[lead.id];
+    if (existing) {
+      const { error } = await (supabase as any).from("bdr_calendar_events")
+        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending" })
+        .eq("id", existing.id);
+      if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending" } }));
+    } else {
+      const cal = await ensureBdrCalendar();
+      if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
+      const { data, error } = await (supabase as any).from("bdr_calendar_events").insert({
+        user_id: user?.id,
+        client_id: (lead as any).client_id || (cal as any).client_id,
+        calendar_id: cal.id,
+        lead_id: lead.id,
+        title: `Meeting: ${lead.business_name}`,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        source: "manual",
+        attendance: "pending",
+      }).select("id").single();
+      if (error) { toast({ title: "Could not schedule", description: error.message, variant: "destructive" }); return; }
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending" } }));
+    }
+    await clearUnattended(lead);
+    toast({ title: "Meeting rescheduled" });
+    setRescheduleLead(null);
+  }, [latestMeetingByLead, user?.id, clearUnattended]);
+
+  const handleCancelMeeting = useCallback(async (lead: BdrLead) => {
+    const existing = latestMeetingByLead[lead.id];
+    if (!existing) return;
+    const { error } = await (supabase as any).from("bdr_calendar_events").delete().eq("id", existing.id);
+    if (error) { toast({ title: "Could not cancel", description: error.message, variant: "destructive" }); return; }
+    setLatestMeetingByLead(prev => { const n = { ...prev }; delete n[lead.id]; return n; });
+    toast({ title: "Meeting cancelled" });
+    setRescheduleLead(null);
+  }, [latestMeetingByLead]);
+
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
@@ -334,17 +389,20 @@ export default function BDRMyLeads() {
 
   const filtered = useMemo(() => {
     let list = listScopedLeads;
-    if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
-    else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
-    else if (filter === "no_booking") {
-      list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
-    }
-    else if (filter.startsWith("stage:")) {
-      const target = filter.slice(6) as PipelineStageKey;
-      list = list.filter(l => derivePipelineStage(l) === target);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    // When searching, ignore the stage/unattended filter chip so results span
+    // every stage (still scoped to the active list).
+    if (!q) {
+      if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
+      else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
+      else if (filter === "no_booking") {
+        list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
+      }
+      else if (filter.startsWith("stage:")) {
+        const target = filter.slice(6) as PipelineStageKey;
+        list = list.filter(l => derivePipelineStage(l) === target);
+      }
+    } else {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
     // Street-sweep lists carry sequence_order — show them in walk order instead
@@ -1187,6 +1245,15 @@ export default function BDRMyLeads() {
                         )}
                         {!selectMode && (
                           <button
+                            onClick={(e) => { e.stopPropagation(); setRescheduleLead(lead); }}
+                            aria-label={`Reschedule ${lead.business_name}`}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-[hsl(211,96%,68%)] hover:bg-[hsl(211,96%,56%)]/10"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {!selectMode && (
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
                             aria-label={`Delete ${lead.business_name}`}
                             className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
@@ -1233,6 +1300,13 @@ export default function BDRMyLeads() {
       <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+      <RescheduleModal
+        lead={rescheduleLead}
+        meeting={rescheduleLead ? latestMeetingByLead[rescheduleLead.id] : undefined}
+        onClose={() => setRescheduleLead(null)}
+        onConfirm={handleReschedule}
+        onCancelMeeting={handleCancelMeeting}
+      />
       <CustomerProfilePanel
         open={!!profileLeadId}
         onOpenChange={(v) => { if (!v) setProfileLeadId(null); }}
@@ -2406,6 +2480,109 @@ function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () =
           {promptCard("p0", "Paste Once", "Claude Project Instructions — tap to copy", PROJECT_INSTRUCTIONS)}
           {promptCard("p1", "Prompt 1 of 2", "Street Sourcing Prompt — tap to copy", STREET_SOURCING_PROMPT)}
           {promptCard("p2", "Prompt 2 of 2", "Leads Enrichment Prompt — tap to copy", LEADS_ENRICHMENT_PROMPT)}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Reschedule / Cancel meeting modal ─── */
+function RescheduleModal({ lead, meeting, onClose, onConfirm, onCancelMeeting }: {
+  lead: BdrLead | null;
+  meeting?: LatestMeeting;
+  onClose: () => void;
+  onConfirm: (lead: BdrLead, startIso: string) => Promise<void>;
+  onCancelMeeting: (lead: BdrLead) => Promise<void>;
+}) {
+  const [availability, setAvailability] = useState<any>(null);
+  const [calTimezone, setCalTimezone] = useState("America/Los_Angeles");
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!lead) return;
+    setSelectedSlot("");
+    (async () => {
+      const cal = await ensureBdrCalendar();
+      setAvailability(cal?.availability || null);
+      setCalTimezone(cal?.timezone || "America/Los_Angeles");
+    })();
+  }, [lead?.id]);
+
+  const slots = useMemo(() => {
+    if (!availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(availability), {
+      durationMinutes: 45,
+      slotIntervalMinutes: 30,
+      minNoticeMinutes: 0,
+      daysAhead: 14,
+      timeZone: calTimezone,
+    }).map((d) => ({
+      date: d,
+      label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    }));
+  }, [availability, calTimezone]);
+
+  if (!lead) return null;
+
+  return (
+    <Dialog open={!!lead} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reschedule Meeting</DialogTitle>
+          <DialogDescription>{lead.business_name}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {meeting && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              <div className="text-xs">
+                <p className="text-muted-foreground">Current time</p>
+                <p className="text-foreground font-medium">
+                  {new Date(meeting.starts_at).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                className="text-xs h-7 text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                onClick={async () => { setBusy(true); await onCancelMeeting(lead); setBusy(false); }}
+              >
+                Cancel Meeting
+              </Button>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label className="text-xs">New time (45-minute block)</Label>
+            {slots.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No availability configured on your calendar yet. Set your availability first, then come back.
+              </p>
+            ) : (
+              <select
+                value={selectedSlot}
+                onChange={(e) => setSelectedSlot(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-foreground"
+              >
+                <option value="" className="bg-[hsl(215,35%,12%)]">— Select a time —</option>
+                {slots.map(s => (
+                  <option key={s.date.toISOString()} value={s.date.toISOString()} className="bg-[hsl(215,35%,12%)]">
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <Button
+            className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+            disabled={busy || !selectedSlot}
+            onClick={async () => { setBusy(true); await onConfirm(lead, selectedSlot); setBusy(false); }}
+          >
+            Confirm New Time
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
