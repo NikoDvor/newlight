@@ -204,6 +204,7 @@ export default function BDRMyLeads() {
   const [activeList, setActiveList] = useState<string>("__all__");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [latestMeetingByLead, setLatestMeetingByLead] = useState<Record<string, LatestMeeting>>({});
   const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
