@@ -58,6 +58,9 @@ interface BdrLead {
   sequence_order?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  unattended_since?: string | null;
+  unattended_return_stage?: string | null;
+  unattended_warned_at?: string | null;
   created_at: string;
 }
 
@@ -172,6 +175,15 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
   closed_lost: { label: "Closed Lost", bg: "hsla(0,0%,50%,.15)",    text: "hsl(0,0%,60%)" },
 };
 
+/* Latest meeting per lead, used for attendance tracking */
+interface LatestMeeting { id: string; starts_at: string; attendance: string | null }
+
+/** Hours remaining before the 72h Unattended auto-revert. */
+function unattendedHoursLeft(since: string): number {
+  const ms = new Date(since).getTime() + 72 * 3600_000 - Date.now();
+  return Math.max(0, Math.ceil(ms / 3600_000));
+}
+
 const FILTER_TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "today", label: "Today" },
@@ -201,6 +213,7 @@ export default function BDRMyLeads() {
   const [activeList, setActiveList] = useState<string>("__all__");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [latestMeetingByLead, setLatestMeetingByLead] = useState<Record<string, LatestMeeting>>({});
   const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
@@ -225,8 +238,57 @@ export default function BDRMyLeads() {
     const calledSet = new Set<string>((calls || []).map((c: any) => c.lead_id).filter(Boolean));
     (data || []).forEach((d: any) => { if (d.called) calledSet.add(d.id); });
     setCalledLeadIds(calledSet);
+
+    // Latest calendar event per lead (for attendance / unattended tracking)
+    const leadIds = (data || []).map((d: any) => d.id).filter(Boolean);
+    if (leadIds.length > 0) {
+      const meetingMap: Record<string, LatestMeeting> = {};
+      const CHUNK = 200;
+      for (let i = 0; i < leadIds.length; i += CHUNK) {
+        const { data: evts } = await (supabase as any).from("bdr_calendar_events")
+          .select("id, lead_id, starts_at, attendance")
+          .in("lead_id", leadIds.slice(i, i + CHUNK))
+          .order("starts_at", { ascending: false });
+        (evts || []).forEach((e: any) => {
+          if (!e.lead_id) return;
+          const prev = meetingMap[e.lead_id];
+          if (!prev || new Date(e.starts_at).getTime() > new Date(prev.starts_at).getTime()) {
+            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance };
+          }
+        });
+      }
+      setLatestMeetingByLead(meetingMap);
+    } else {
+      setLatestMeetingByLead({});
+    }
     setLoading(false);
   }, [user?.id]);
+
+  /* ─── Attendance / Unattended ─── */
+  const markAttendance = useCallback(async (lead: BdrLead, attended: boolean) => {
+    const meeting = latestMeetingByLead[lead.id];
+    if (!meeting) return;
+    const attendance = attended ? "attended" : "no_show";
+    const { error: evtErr } = await (supabase as any).from("bdr_calendar_events")
+      .update({ attendance }).eq("id", meeting.id);
+    if (evtErr) { toast({ title: "Could not save", description: evtErr.message, variant: "destructive" }); return; }
+    setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { ...meeting, attendance } }));
+
+    if (!attended) {
+      const nowIso = new Date().toISOString();
+      const returnStage = lead.pipeline_stage || derivePipelineStage(lead);
+      const { error: leadErr } = await (supabase as any).from("nl_bdr_leads")
+        .update({ unattended_since: nowIso, unattended_return_stage: returnStage })
+        .eq("id", lead.id).eq("user_id", user?.id);
+      if (leadErr) { toast({ title: "Could not flag lead", description: leadErr.message, variant: "destructive" }); return; }
+      setLeads(prev => prev.map(l => l.id === lead.id
+        ? { ...l, unattended_since: nowIso, unattended_return_stage: returnStage } : l));
+      toast({ title: "Marked No-Show", description: "Lead flagged Unattended for 72 hours." });
+    } else {
+      toast({ title: "Marked Attended" });
+    }
+  }, [latestMeetingByLead, user?.id]);
+
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
@@ -273,6 +335,7 @@ export default function BDRMyLeads() {
   const filtered = useMemo(() => {
     let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
+    else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
     else if (filter === "no_booking") {
       list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
     }
@@ -871,6 +934,14 @@ export default function BDRMyLeads() {
                   {t.label}
                 </button>
               ))}
+              <button
+                onClick={() => setFilter(filter === "unattended" ? "all" : "unattended")}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+                style={filter === "unattended"
+                  ? { background: "hsl(0,72%,50%)", color: "#fff" }
+                  : { background: "hsla(0,72%,50%,.10)", color: "hsl(0,72%,66%)", border: "1px solid hsla(0,72%,50%,.35)" }}>
+                Unattended{leads.filter(l => !!l.unattended_since).length > 0 ? ` (${leads.filter(l => !!l.unattended_since).length})` : ""}
+              </button>
             </div>
             <div className="relative flex-1 min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -947,7 +1018,36 @@ export default function BDRMyLeads() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
+                          {lead.unattended_since && (
+                            <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
+                              title="No-show — auto-reverts 72 hours after the missed meeting"
+                              style={{ background: "hsla(0,72%,50%,.16)", color: "hsl(0,72%,68%)", border: "1px solid hsla(0,72%,50%,.4)" }}>
+                              Unattended · {unattendedHoursLeft(lead.unattended_since)}h left
+                            </span>
+                          )}
                         </div>
+                        {(() => {
+                          const m = latestMeetingByLead[lead.id];
+                          const st = derivePipelineStage(lead);
+                          const needsAttendance = !!m && (st === "warm" || st === "hot")
+                            && m.attendance === "pending"
+                            && new Date(m.starts_at).getTime() < Date.now()
+                            && !lead.unattended_since;
+                          if (!needsAttendance) return null;
+                          return (
+                            <div onClick={(e) => e.stopPropagation()}
+                              className="mt-2 flex flex-wrap items-center gap-2 rounded-lg px-2.5 py-1.5"
+                              style={{ background: "hsla(43,96%,55%,.08)", border: "1px solid hsla(43,96%,55%,.3)" }}>
+                              <span className="text-[11px]" style={{ color: "hsl(43,96%,72%)" }}>
+                                Meeting on {new Date(m!.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} — did it happen?
+                              </span>
+                              <Button size="sm" className="h-6 text-[11px] px-2 bg-[hsl(142,72%,38%)] hover:bg-[hsl(142,72%,32%)]"
+                                onClick={() => markAttendance(lead, true)}>Attended</Button>
+                              <Button size="sm" variant="outline" className="h-6 text-[11px] px-2 text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => markAttendance(lead, false)}>No-Show</Button>
+                            </div>
+                          );
+                        })()}
                         {lead.owner_name && <p className="text-sm text-muted-foreground">{lead.owner_name}</p>}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {getLeadPhones(lead).map((p) => {
