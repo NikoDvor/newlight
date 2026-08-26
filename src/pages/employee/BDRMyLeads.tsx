@@ -335,6 +335,7 @@ export default function BDRMyLeads() {
   const filtered = useMemo(() => {
     let list = listScopedLeads;
     if (filter === "today") list = list.filter(l => isCreatedToday(l.created_at));
+    else if (filter === "unattended") list = list.filter(l => !!l.unattended_since);
     else if (filter === "no_booking") {
       list = list.filter(l => ((l as any).booking_system_exists ?? (l as any).has_booking_system) === false);
     }
