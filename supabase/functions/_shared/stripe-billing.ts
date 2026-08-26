@@ -99,29 +99,32 @@ export async function savePaymentMethodFromSession(
 }
 
 /**
- * Computes the retainer subscription trial end. If 90 days from booking
- * lands on a PST day-of-month of 29-31, snap to the 1st of the following
- * month at 8:00 AM PST (16:00 UTC). Otherwise keep the 90-day candidate.
+ * Computes the retainer subscription trial end: exactly 90 days from booking.
  */
 function computeRetainerTrialEnd(bookedAt: Date): number {
-  const candidate = new Date(bookedAt.getTime() + 90 * 24 * 3600 * 1000);
-  const pstMs = candidate.getTime() - 8 * 3600 * 1000;
+  return Math.floor((bookedAt.getTime() + 90 * 24 * 3600 * 1000) / 1000);
+}
+
+/**
+ * Given a trial_end timestamp, returns the 1st of the FOLLOWING calendar month
+ * (in PST/UTC-8) at 8:00 AM PST (16:00 UTC) as the billing-cycle anchor.
+ * This guarantees a real partial period between trial_end and the anchor.
+ */
+function computeBillingCycleAnchor(trialEndUnix: number): number {
+  const trialEndDate = new Date(trialEndUnix * 1000);
+  // Convert to PST by subtracting 8 hours.
+  const pstMs = trialEndDate.getTime() - 8 * 3600 * 1000;
   const pstDate = new Date(pstMs);
-  const pstDayOfMonth = pstDate.getUTCDate();
 
-  let final: Date;
-  if (pstDayOfMonth > 28) {
-    const y = candidate.getFullYear();
-    const m = candidate.getMonth();
-    const nextM = m + 1;
-    const nextY = y + Math.floor(nextM / 12);
-    const normM = ((nextM % 12) + 12) % 12;
-    final = new Date(Date.UTC(nextY, normM, 1, 16, 0, 0));
-  } else {
-    final = candidate;
-  }
+  const pstYear = pstDate.getUTCFullYear();
+  const pstMonth = pstDate.getUTCMonth();
 
-  return Math.floor(final.getTime() / 1000);
+  // Following month, always next month relative to trial_end's PST month.
+  const anchorYear = pstYear + Math.floor((pstMonth + 1) / 12);
+  const anchorMonth = (pstMonth + 1) % 12;
+
+  const anchor = new Date(Date.UTC(anchorYear, anchorMonth, 1, 16, 0, 0));
+  return Math.floor(anchor.getTime() / 1000);
 }
 
 /**
@@ -154,12 +157,17 @@ export async function createRetainerSubscription(
     product_data: { name: `${args.clientName || deal.deal_name || "NewLight"} — Monthly Retainer` },
   });
 
+  const trialEnd = computeRetainerTrialEnd(new Date());
+  const billingCycleAnchor = computeBillingCycleAnchor(trialEnd);
+
   const sub = await stripe.subscriptions.create({
     customer: args.customerId,
     items: [{ price: price.id }],
     default_payment_method: args.paymentMethodId,
     off_session: true,
-    trial_end: computeRetainerTrialEnd(new Date()),
+    trial_end: trialEnd,
+    billing_cycle_anchor: billingCycleAnchor,
+    proration_behavior: "create_prorations",
     metadata: { deal_id: deal.id, client_id: deal.client_id ?? "" },
 
   });
