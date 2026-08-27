@@ -679,6 +679,20 @@ export default function AdminClients() {
             ({clients.filter(c => c.has_compliance_requirements).length})
           </span>
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setSignedOnly(v => !v)}
+          className={`h-10 border-white/10 gap-1.5 ${signedOnly ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] border-[hsla(152,60%,44%,.35)]" : "bg-white/[0.04] text-white/60"}`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Signed clients only
+          <span className="ml-1 text-[10px] opacity-70">
+            ({clients.filter(c => signedClientIds.has(c.id)).length})
+          </span>
+        </Button>
+
       </div>
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
