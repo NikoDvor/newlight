@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Search, Calendar, User } from "lucide-react";
+import { Loader2, Search, Calendar, User, FileText } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const STAGES = [
   { key: "Fully Activated", color: "#10b981", bg: "rgba(16,185,129,.12)" },
@@ -37,6 +38,35 @@ export default function AdminClientActivation() {
   const [stageFilter, setStageFilter] = useState("All Stages");
   const [repMap, setRepMap] = useState<Record<string, string>>({});
   const [clientMap, setClientMap] = useState<Record<string, string>>({});
+  const [agreementLoadingId, setAgreementLoadingId] = useState<string | null>(null);
+
+  async function viewAgreement(dealId: string) {
+    setAgreementLoadingId(dealId);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-signed-agreement", {
+        body: { deal_id: dealId },
+      });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        toast({
+          title: status === 404 ? "No agreement found" : "Could not load agreement",
+          description: status === 404 ? "This deal doesn't have a signed agreement on file yet." : "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const url = (data as any)?.url;
+      if (!url) {
+        toast({ title: "No agreement found", description: "This deal doesn't have a signed agreement on file yet.", variant: "destructive" });
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast({ title: "Could not load agreement", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setAgreementLoadingId(null);
+    }
+  }
 
   useEffect(() => {
     (async () => {
