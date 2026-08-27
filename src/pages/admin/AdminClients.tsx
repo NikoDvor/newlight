@@ -95,7 +95,7 @@ export default function AdminClients() {
     const results: Record<string, WorkspaceReadinessResult> = {};
     const clientIds = list.map(c => c.id);
 
-    const [, activationRes, billingRes] = await Promise.all([
+    const [, activationRes, billingRes, signedRes] = await Promise.all([
       Promise.all(list.map(async (c) => {
         results[c.id] = await computeWorkspaceReadiness(c.id);
       })),
@@ -104,6 +104,9 @@ export default function AdminClients() {
         : Promise.resolve({ data: [] }),
       clientIds.length > 0
         ? supabase.from("billing_accounts").select("client_id, billing_status").in("client_id", clientIds)
+        : Promise.resolve({ data: [] }),
+      clientIds.length > 0
+        ? supabase.from("crm_deals").select("client_id, pay_sign_status").in("client_id", clientIds).eq("pay_sign_status", "paid_signed")
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -122,6 +125,10 @@ export default function AdminClients() {
       if (!bMap[row.client_id]) bMap[row.client_id] = row.billing_status;
     }
     setBillingMap(bMap);
+
+    // Build signed-clients set
+    setSignedClientIds(new Set(((signedRes?.data || []) as { client_id: string }[]).map(r => r.client_id)));
+
   };
 
   useEffect(() => { fetchClients(); }, []);
