@@ -75,7 +75,7 @@ import { computeAvailableSlots, weeklyMapToRows, DEFAULT_MIN_NOTICE_MINUTES } fr
 function buildSlots(availability: any, minNoticeMinutes: number, timeZone: string) {
   const rows = weeklyMapToRows(availability || {});
   const dates = computeAvailableSlots(rows, {
-    durationMinutes: 30,
+    durationMinutes: 60,
     slotIntervalMinutes: 30,
     minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
     daysAhead: 15,
@@ -310,7 +310,7 @@ export default function BDRBookingPublic() {
         meeting_kind: "discovery",
         ...contact,
         starts_at: selectedSlot,
-        duration_minutes: 30,
+        duration_minutes: 60,
         form_submission_id: savedSubmissionId,
         modules_of_interest: mergedModules,
         has_sales_team,

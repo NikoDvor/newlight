@@ -304,7 +304,7 @@ export default function BDRMyLeads() {
 
   const handleReschedule = useCallback(async (lead: BdrLead, startIso: string) => {
     const start = new Date(startIso);
-    const end = new Date(start.getTime() + 45 * 60_000);
+    const end = new Date(start.getTime() + 60 * 60_000);
     const existing = latestMeetingByLead[lead.id];
     if (existing) {
       const { error } = await (supabase as any).from("bdr_calendar_events")
@@ -2512,7 +2512,7 @@ function RescheduleModal({ lead, meeting, onClose, onConfirm, onCancelMeeting }:
   const slots = useMemo(() => {
     if (!availability) return [];
     return computeAvailableSlots(weeklyMapToRows(availability), {
-      durationMinutes: 45,
+      durationMinutes: 60,
       slotIntervalMinutes: 30,
       minNoticeMinutes: 0,
       daysAhead: 14,
@@ -2555,7 +2555,7 @@ function RescheduleModal({ lead, meeting, onClose, onConfirm, onCancelMeeting }:
           )}
 
           <div className="space-y-2">
-            <Label className="text-xs">New time (45-minute block)</Label>
+            <Label className="text-xs">New time (1-hour block)</Label>
             {slots.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 No availability configured on your calendar yet. Set your availability first, then come back.

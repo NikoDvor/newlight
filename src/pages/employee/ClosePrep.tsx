@@ -62,7 +62,7 @@ export default function ClosePrep() {
   const slots = useMemo(() => {
     if (!availability) return [];
     return computeAvailableSlots(weeklyMapToRows(availability), {
-      durationMinutes: 45,
+      durationMinutes: 60,
       slotIntervalMinutes: 30,
       minNoticeMinutes: 0,
       daysAhead: 14,
@@ -87,7 +87,7 @@ export default function ClosePrep() {
         retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
         meeting_starts_at: selectedSlot,
-        duration_minutes: 45,
+        duration_minutes: 60,
       },
     });
     setSubmitting(false);
@@ -202,7 +202,7 @@ export default function ClosePrep() {
       <section className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
         <div>
           <h2 className="text-sm font-semibold text-white">Schedule Closing Meeting</h2>
-          <p className="text-xs text-white/50 mt-0.5">On your own calendar. 45-minute block.</p>
+          <p className="text-xs text-white/50 mt-0.5">On your own calendar. 1-hour block.</p>
         </div>
         {slots.length === 0 ? (
           <div className="text-sm text-white/60 p-3 rounded-md bg-white/5 border border-white/10">
