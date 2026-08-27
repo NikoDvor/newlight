@@ -427,7 +427,9 @@ export default function AdminClients() {
 
   const filtered = clients.filter(c =>
     c.business_name.toLowerCase().includes(search.toLowerCase()) &&
-    (!complianceOnly || c.has_compliance_requirements === true)
+    (!complianceOnly || c.has_compliance_requirements === true) &&
+    (!signedOnly || signedClientIds.has(c.id))
+
   );
 
   const onboardingStageColor = (stage: string) => {
