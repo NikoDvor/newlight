@@ -62,6 +62,9 @@ export default function AdminClients() {
   const [billingMap, setBillingMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [complianceOnly, setComplianceOnly] = useState(false);
+  const [signedOnly, setSignedOnly] = useState(false);
+  const [signedClientIds, setSignedClientIds] = useState<Set<string>>(new Set());
+
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [provisioning, setProvisioning] = useState<string | null>(null);
