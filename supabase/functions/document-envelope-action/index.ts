@@ -8,6 +8,51 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - no RESEND_API_KEY] to=${to} subject="${subject}"`);
+    return false;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "NewLight <team@newlightgen.com>", to: [to], subject, text, html }),
+    });
+    if (!res.ok) { console.error("Resend error:", res.status, await res.text().catch(() => "")); return false; }
+    return true;
+  } catch (e) { console.error("Email send error:", e); return false; }
+}
+
+function fmtWhen(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    weekday: "short", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+    timeZone: "America/Los_Angeles",
+  });
+}
+
+function esc(s: string): string {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function signingReceiptHtml(args: { title: string; signerName: string; signedAt: string; signedPdfUrl: string }): string {
+  const { title, signerName, signedAt, signedPdfUrl } = args;
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your signed agreement</h1>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 12px;">Hi ${esc(signerName)},</p>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 20px;">Your agreement <strong>${esc(title)}</strong> was signed on <strong>${esc(signedAt)}</strong>.</p>
+    <div style="margin:20px 0;">
+      <a href="${esc(signedPdfUrl)}" style="display:inline-block;padding:12px 20px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">View / download your signed agreement</a>
+    </div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Please keep this copy for your records.</p>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:8px 0 0;">— NewLight</p>
+  </div>
+</body></html>`;
+}
+
 const json = (body: any, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
