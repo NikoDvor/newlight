@@ -71,6 +71,8 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCombinedDashboard from "./pages/admin/AdminCombinedDashboard";
 import AdminClients from "./pages/admin/AdminClients";
+import AdminClientProfile from "./pages/admin/AdminClientProfile";
+
 import AdminClientAcquisitionAnalytics from "./pages/admin/AdminClientAcquisitionAnalytics";
 import AdminProspects from "./pages/admin/AdminProspects";
 import AdminProvision from "./pages/admin/AdminProvision";
