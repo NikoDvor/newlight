@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         // IMPORTANT: do NOT include `html` here. Precached HTML is served
         // cache-first, which pins returning users to a stale index.html
         // (pointing to old hashed JS chunks) until they manually clear data.
