@@ -237,6 +237,39 @@ export type Database = {
           },
         ]
       }
+      agency_settings: {
+        Row: {
+          entity_type: string
+          governing_state: string
+          id: string
+          legal_entity_name: string
+          notice_address: string
+          notice_email: string
+          updated_at: string
+          venue_county: string
+        }
+        Insert: {
+          entity_type?: string
+          governing_state?: string
+          id?: string
+          legal_entity_name?: string
+          notice_address?: string
+          notice_email?: string
+          updated_at?: string
+          venue_county?: string
+        }
+        Update: {
+          entity_type?: string
+          governing_state?: string
+          id?: string
+          legal_entity_name?: string
+          notice_address?: string
+          notice_email?: string
+          updated_at?: string
+          venue_county?: string
+        }
+        Relationships: []
+      }
       ai_business_insights: {
         Row: {
           category: string | null
@@ -4374,6 +4407,7 @@ export type Database = {
           assigned_operator_user_id: string | null
           assigned_user: string | null
           client_id: string
+          client_is_finra_member: boolean
           close_date: string | null
           close_prep_completed_at: string | null
           close_prep_meeting_id: string | null
@@ -4383,6 +4417,7 @@ export type Database = {
           company_id: string | null
           contact_id: string | null
           created_at: string
+          data_retention_days: number
           deal_name: string
           deal_value: number | null
           expected_close_date: string | null
@@ -4417,6 +4452,7 @@ export type Database = {
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
           client_id: string
+          client_is_finra_member?: boolean
           close_date?: string | null
           close_prep_completed_at?: string | null
           close_prep_meeting_id?: string | null
@@ -4426,6 +4462,7 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          data_retention_days?: number
           deal_name: string
           deal_value?: number | null
           expected_close_date?: string | null
@@ -4460,6 +4497,7 @@ export type Database = {
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
           client_id?: string
+          client_is_finra_member?: boolean
           close_date?: string | null
           close_prep_completed_at?: string | null
           close_prep_meeting_id?: string | null
@@ -4469,6 +4507,7 @@ export type Database = {
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
+          data_retention_days?: number
           deal_name?: string
           deal_value?: number | null
           expected_close_date?: string | null
