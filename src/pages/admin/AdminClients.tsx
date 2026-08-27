@@ -717,7 +717,14 @@ export default function AdminClients() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
-                      <span className="text-white font-medium">{c.business_name}</span>
+                      <button
+                        onClick={() => navigate(`/admin/clients/${c.id}`)}
+                        className="text-white font-medium hover:text-[hsl(var(--nl-sky))] hover:underline text-left transition-colors"
+                        title="View full profile"
+                      >
+                        {c.business_name}
+                      </button>
+
                       {c.has_compliance_requirements && (
                         <Badge className="bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] border-[hsla(40,96%,60%,.35)] text-[9px] font-medium gap-1 h-5 px-1.5">
                           <Shield className="h-2.5 w-2.5" /> Compliance
