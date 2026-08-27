@@ -304,7 +304,7 @@ export default function BDRMyLeads() {
 
   const handleReschedule = useCallback(async (lead: BdrLead, startIso: string) => {
     const start = new Date(startIso);
-    const end = new Date(start.getTime() + 45 * 60_000);
+    const end = new Date(start.getTime() + 60 * 60_000);
     const existing = latestMeetingByLead[lead.id];
     if (existing) {
       const { error } = await (supabase as any).from("bdr_calendar_events")

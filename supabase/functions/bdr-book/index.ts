@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     }
 
     const start = new Date(starts_at);
-    const end = new Date(start.getTime() + (Number(duration_minutes) || 30) * 60_000);
+    const end = new Date(start.getTime() + (Number(duration_minutes) || 60) * 60_000);
 
     // Enforce per-calendar minimum notice server-side (defense in depth; the
     // DB trigger also enforces this on insert).
