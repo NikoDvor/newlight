@@ -184,6 +184,7 @@ export async function generateSignedAgreementPdf(
       envelope_id: envelopeId,
       document_name: SIGNED_PDF_ITEM_NAME,
       document_url: signed.signedUrl,
+      storage_path: path,
       display_order: 90,
     } as any);
 

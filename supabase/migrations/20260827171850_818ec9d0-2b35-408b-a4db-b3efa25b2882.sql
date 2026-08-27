@@ -1,0 +1,1 @@
+ALTER TABLE public.document_envelope_items ADD COLUMN IF NOT EXISTS storage_path text;
