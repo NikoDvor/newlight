@@ -233,6 +233,22 @@ export default function AdminClientActivation() {
                 <div className="text-right min-w-[140px]">
                   <p className="text-xs text-muted-foreground capitalize">{deal.pricing_model || "—"}</p>
                   <p className="text-sm font-semibold text-foreground">{pricingText}</p>
+                  {["Fully Activated", "Onboarding Scheduled", "Paid & Signed — Awaiting Onboarding"].includes(stage) && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); if (!agreementLoadingId) viewAgreement(deal.id); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); viewAgreement(deal.id); } }}
+                      className="inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-md text-[11px] font-medium text-primary border border-primary/30 hover:bg-primary/10 cursor-pointer transition-colors"
+                    >
+                      {agreementLoadingId === deal.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileText className="h-3 w-3" />
+                      )}
+                      View Agreement
+                    </span>
+                  )}
                 </div>
               </div>
             </button>
