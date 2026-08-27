@@ -71,6 +71,8 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCombinedDashboard from "./pages/admin/AdminCombinedDashboard";
 import AdminClients from "./pages/admin/AdminClients";
+import AdminClientProfile from "./pages/admin/AdminClientProfile";
+
 import AdminClientAcquisitionAnalytics from "./pages/admin/AdminClientAcquisitionAnalytics";
 import AdminProspects from "./pages/admin/AdminProspects";
 import AdminProvision from "./pages/admin/AdminProvision";
@@ -257,6 +259,8 @@ const App = () => {
                 <Route path="dashboard" element={<AdminCombinedDashboard />} />
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="clients/acquisition-analytics" element={<AdminClientAcquisitionAnalytics />} />
+                <Route path="clients/:clientId" element={<AdminClientProfile />} />
+
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="training-center" element={<AdminTrainingCenter />} />

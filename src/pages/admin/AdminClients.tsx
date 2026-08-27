@@ -62,6 +62,9 @@ export default function AdminClients() {
   const [billingMap, setBillingMap] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [complianceOnly, setComplianceOnly] = useState(false);
+  const [signedOnly, setSignedOnly] = useState(false);
+  const [signedClientIds, setSignedClientIds] = useState<Set<string>>(new Set());
+
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [provisioning, setProvisioning] = useState<string | null>(null);
@@ -92,7 +95,7 @@ export default function AdminClients() {
     const results: Record<string, WorkspaceReadinessResult> = {};
     const clientIds = list.map(c => c.id);
 
-    const [, activationRes, billingRes] = await Promise.all([
+    const [, activationRes, billingRes, signedRes] = await Promise.all([
       Promise.all(list.map(async (c) => {
         results[c.id] = await computeWorkspaceReadiness(c.id);
       })),
@@ -101,6 +104,9 @@ export default function AdminClients() {
         : Promise.resolve({ data: [] }),
       clientIds.length > 0
         ? supabase.from("billing_accounts").select("client_id, billing_status").in("client_id", clientIds)
+        : Promise.resolve({ data: [] }),
+      clientIds.length > 0
+        ? supabase.from("crm_deals").select("client_id, pay_sign_status").in("client_id", clientIds).eq("pay_sign_status", "paid_signed")
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -119,6 +125,10 @@ export default function AdminClients() {
       if (!bMap[row.client_id]) bMap[row.client_id] = row.billing_status;
     }
     setBillingMap(bMap);
+
+    // Build signed-clients set
+    setSignedClientIds(new Set(((signedRes?.data || []) as { client_id: string }[]).map(r => r.client_id)));
+
   };
 
   useEffect(() => { fetchClients(); }, []);
@@ -417,7 +427,9 @@ export default function AdminClients() {
 
   const filtered = clients.filter(c =>
     c.business_name.toLowerCase().includes(search.toLowerCase()) &&
-    (!complianceOnly || c.has_compliance_requirements === true)
+    (!complianceOnly || c.has_compliance_requirements === true) &&
+    (!signedOnly || signedClientIds.has(c.id))
+
   );
 
   const onboardingStageColor = (stage: string) => {
@@ -667,6 +679,20 @@ export default function AdminClients() {
             ({clients.filter(c => c.has_compliance_requirements).length})
           </span>
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setSignedOnly(v => !v)}
+          className={`h-10 border-white/10 gap-1.5 ${signedOnly ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)] border-[hsla(152,60%,44%,.35)]" : "bg-white/[0.04] text-white/60"}`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Signed clients only
+          <span className="ml-1 text-[10px] opacity-70">
+            ({clients.filter(c => signedClientIds.has(c.id)).length})
+          </span>
+        </Button>
+
       </div>
 
       <Card className="border-0 bg-white/[0.04] backdrop-blur-sm overflow-hidden" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
@@ -691,7 +717,14 @@ export default function AdminClients() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
-                      <span className="text-white font-medium">{c.business_name}</span>
+                      <button
+                        onClick={() => navigate(`/admin/clients/${c.id}`)}
+                        className="text-white font-medium hover:text-[hsl(var(--nl-sky))] hover:underline text-left transition-colors"
+                        title="View full profile"
+                      >
+                        {c.business_name}
+                      </button>
+
                       {c.has_compliance_requirements && (
                         <Badge className="bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)] border-[hsla(40,96%,60%,.35)] text-[9px] font-medium gap-1 h-5 px-1.5">
                           <Shield className="h-2.5 w-2.5" /> Compliance
@@ -817,6 +850,10 @@ export default function AdminClients() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-[hsl(218,35%,12%)] border-white/10 text-white min-w-[180px]">
+                          <DropdownMenuItem onClick={() => navigate(`/admin/clients/${c.id}`)} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
+                            <Building2 className="h-3.5 w-3.5" /> View Full Profile
+                          </DropdownMenuItem>
+
                           <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/w/${c.workspace_slug}`); toast.success("Workspace link copied!"); }} className="text-xs gap-2 focus:bg-white/[0.06] focus:text-white cursor-pointer">
                             <Copy className="h-3.5 w-3.5" /> Copy Workspace Link
                           </DropdownMenuItem>
