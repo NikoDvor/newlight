@@ -226,6 +226,11 @@ Deno.serve(async (req) => {
     const proposalId = proposal!.id as string;
 
     // 5b. Create service_agreement envelope + items (Form 2 artifact #2)
+    const { data: agencySettings } = await supabase
+      .from("agency_settings")
+      .select("legal_entity_name, entity_type, governing_state, venue_county, notice_address, notice_email")
+      .limit(1)
+      .maybeSingle();
     const summaryHtml = buildServiceAgreementHtml({
       businessName: lead.business_name,
       priceLine: priceLineForDoc,
@@ -233,6 +238,11 @@ Deno.serve(async (req) => {
       recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
       retainerKpi: kpi,
       closingNotes: closing_notes || null,
+      agencyLegalName: agencySettings?.legal_entity_name || "NewLight Marketing, LLC",
+      agencyEntityType: agencySettings?.entity_type || "a California limited liability company",
+      governingState: agencySettings?.governing_state || "California",
+      venueCounty: agencySettings?.venue_county || "Santa Barbara County",
+      dataRetentionDays: 365,
     });
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
 
