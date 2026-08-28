@@ -480,6 +480,7 @@ export type Database = {
           location: string | null
           meeting_ended_at: string | null
           meeting_started_at: string | null
+          reschedule_count: number
           reschedule_reason: string | null
           start_time: string
           status: string
@@ -507,6 +508,7 @@ export type Database = {
           location?: string | null
           meeting_ended_at?: string | null
           meeting_started_at?: string | null
+          reschedule_count?: number
           reschedule_reason?: string | null
           start_time: string
           status?: string
@@ -534,6 +536,7 @@ export type Database = {
           location?: string | null
           meeting_ended_at?: string | null
           meeting_started_at?: string | null
+          reschedule_count?: number
           reschedule_reason?: string | null
           start_time?: string
           status?: string
@@ -2525,6 +2528,7 @@ export type Database = {
           id: string
           logged_at: string
           notes: string | null
+          objection_category: string | null
           outcome: string
           user_id: string
         }
@@ -2535,6 +2539,7 @@ export type Database = {
           id?: string
           logged_at?: string
           notes?: string | null
+          objection_category?: string | null
           outcome: string
           user_id: string
         }
@@ -2545,6 +2550,7 @@ export type Database = {
           id?: string
           logged_at?: string
           notes?: string | null
+          objection_category?: string | null
           outcome?: string
           user_id?: string
         }
