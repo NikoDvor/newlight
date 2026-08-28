@@ -100,6 +100,7 @@ const navStructure: NavEntry[] = [
       { title: "Billing", url: "/billing", icon: CreditCard },
       { title: "Documents", url: "/documents", icon: FileText },
       { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
+      { title: "Pipeline Insights", url: "/pipeline-insights", icon: FileText, moduleKey: "reports" },
       { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
     ],
   },

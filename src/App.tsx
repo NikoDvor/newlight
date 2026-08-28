@@ -25,6 +25,7 @@ import PaidAds from "./pages/PaidAds";
 import Reviews from "./pages/Reviews";
 import Meetings from "./pages/Meetings";
 import Reports from "./pages/Reports";
+import SalesPipelineInsights from "./pages/SalesPipelineInsights";
 import Intelligence from "./pages/Intelligence";
 import AIInsights from "./pages/AIInsights";
 import Training from "./pages/Training";
@@ -90,6 +91,7 @@ import AdminQuestionReassignment from "./pages/admin/AdminQuestionReassignment";
 import AdminTrainingHealth from "./pages/admin/AdminTrainingHealth";
 import AdminBDRCertification from "./pages/admin/AdminBDRCertification";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminPipelineInsights from "./pages/admin/AdminPipelineInsights";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
 import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
@@ -280,6 +282,7 @@ const App = () => {
                 <Route path="packages/:id" element={<AdminPackageDetail />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="reports" element={<AdminReports />} />
+                <Route path="pipeline-insights" element={<AdminPipelineInsights />} />
                 <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
                 <Route path="activation" element={<AdminActivation />} />
                 <Route path="master-activation" element={<AdminMasterActivation />} />
@@ -445,6 +448,7 @@ const App = () => {
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
+                <Route path="/pipeline-insights" element={<PermissionGuard moduleKey="reports"><SalesPipelineInsights /></PermissionGuard>} />
                 <Route path="/inbox" element={<Navigate to="/conversations" replace />} />
                 <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
                 
