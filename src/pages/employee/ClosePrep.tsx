@@ -79,7 +79,9 @@ export default function ClosePrep() {
 
   const canSubmit =
     !!lead && !!selectedSlot && !!initialFee.trim() &&
-    (pricingModel === "retainer" ? !!recurringFee.trim() : !!commissionRate.trim());
+    (pricingModel === "retainer"
+      ? !!recurringFee.trim()
+      : (!!commissionRate.trim() && !!commissionRateOngoing.trim()));
 
   const submit = async () => {
     if (!lead || !canSubmit) return;
