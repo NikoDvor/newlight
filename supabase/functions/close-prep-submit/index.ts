@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
       lead_id,
       initial_fee,
       recurring_fee,
+      commission_rate,
+      pricing_model: pricing_model_in,
       retainer_kpi,
       closing_notes,
       meeting_starts_at,
@@ -103,7 +105,8 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const pricing_model = "retainer";
+    const pricing_model = pricing_model_in === "commission" ? "commission" : "retainer";
+    const isCommission = pricing_model === "commission";
     const kpi = typeof retainer_kpi === "string" && retainer_kpi.trim() ? retainer_kpi.trim() : null;
 
     const supabase = createClient(
@@ -200,7 +203,9 @@ Deno.serve(async (req) => {
 
     // 5a. Create Proposal row (Form 2 artifact #1)
     const priceLineForDoc =
-      `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month` +
+      (isCommission
+        ? `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of Attributable Revenue`
+        : `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month`) +
       (kpi ? ` · KPI: ${kpi}` : "");
 
     const { data: proposal, error: propErr } = await supabase
@@ -214,7 +219,7 @@ Deno.serve(async (req) => {
         proposal_status: "draft",
         pricing_model,
         setup_fee: initial_fee != null ? Number(initial_fee) : null,
-        monthly_fee: recurring_fee != null ? Number(recurring_fee) : null,
+        monthly_fee: !isCommission && recurring_fee != null ? Number(recurring_fee) : null,
         offer_summary: priceLineForDoc,
         internal_summary: closing_notes || null,
         created_by: userId,
@@ -236,6 +241,8 @@ Deno.serve(async (req) => {
       priceLine: priceLineForDoc,
       initialFee: initial_fee != null ? Number(initial_fee) : 0,
       recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
+      pricingModel: pricing_model as "retainer" | "commission",
+      commissionRate: commission_rate != null ? Number(commission_rate) : null,
       retainerKpi: kpi,
       closingNotes: closing_notes || null,
       agencyLegalName: agencySettings?.legal_entity_name || "NewLight Marketing, LLC",
@@ -274,7 +281,8 @@ Deno.serve(async (req) => {
     const dealPatch: Record<string, unknown> = {
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       pricing_model,
-      recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
+      recurring_fee: isCommission ? null : (recurring_fee != null ? Number(recurring_fee) : null),
+      commission_rate: isCommission ? Number(commission_rate ?? 0) : null,
       retainer_kpi: kpi,
       closing_notes: closing_notes || null,
       close_prep_completed_at: new Date().toISOString(),
@@ -317,6 +325,7 @@ Deno.serve(async (req) => {
       lead,
       when: start.toISOString(),
       pricing_model,
+      commission_rate: commission_rate != null ? Number(commission_rate) : null,
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
       closing_notes: closing_notes || null,
@@ -351,12 +360,13 @@ async function sendClosePrepNotifications(supabase: any, args: {
   lead: any;
   when: string;
   pricing_model: string;
+  commission_rate: number | null;
   initial_fee: number | null;
   recurring_fee: number | null;
   closing_notes: string | null;
   paySignUrl: string;
 }) {
-  const { userId, userEmail, lead, when, initial_fee, recurring_fee, closing_notes, paySignUrl } = args;
+  const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, pricing_model, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
 
@@ -381,7 +391,9 @@ async function sendClosePrepNotifications(supabase: any, args: {
     }
   } catch (e) { console.error("[close-prep] rep lookup failed:", e); }
 
-  const priceLine = `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
+  const priceLine = pricing_model === "commission"
+    ? `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of Attributable Revenue`
+    : `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
 
   // Universal SMS
   await sendSms(UNIVERSAL_SMS_TO, `NewLight close prep: ${repName || "BDR"} scheduled ${who} for ${whenLbl}. ${priceLine}.`);
@@ -467,6 +479,8 @@ function buildServiceAgreementHtml(args: {
   priceLine: string;
   initialFee: number;
   recurringFee: number | null;
+  pricingModel: "retainer" | "commission";
+  commissionRate: number | null;
   retainerKpi?: string | null;
   closingNotes: string | null;
   agencyLegalName: string;
@@ -476,7 +490,7 @@ function buildServiceAgreementHtml(args: {
   dataRetentionDays: number;
 }): string {
   const {
-    businessName, priceLine, initialFee, recurringFee, retainerKpi, closingNotes,
+    businessName, priceLine, initialFee, recurringFee, pricingModel, commissionRate, retainerKpi, closingNotes,
     agencyLegalName, agencyEntityType, governingState, venueCounty, dataRetentionDays,
   } = args;
   const bn = esc(businessName);
@@ -485,7 +499,14 @@ function buildServiceAgreementHtml(args: {
   const govState = esc(governingState);
   const venue = esc(venueCounty);
   const initFmt = `$${(initialFee || 0).toLocaleString()}`;
-  const recurringBlock = `<p>Beginning upon Recoupment or ninety (90) days after the Initial Fee payment, whichever is earlier, subject to Section 3, Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong> (the "Recurring Fee"), invoiced in advance, due on the same calendar day each month. The Recurring Fee is a fixed dollar amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.${retainerKpi ? ` This retainer is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
+  const isCommissionDeal = pricingModel === "commission";
+  const retainerBlock = `<p>Beginning upon Recoupment or ninety (90) days after the Initial Fee payment, whichever is earlier, subject to Section 3, Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong> (the "Recurring Fee"), invoiced in advance, due on the same calendar day each month. The Recurring Fee is a fixed dollar amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.${retainerKpi ? ` This retainer is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
+  const commissionBlock = `<p>Beginning upon execution of this Agreement, Agency will invoice Client monthly in arrears an amount equal to <strong>${commissionRate ?? 0}% of Attributable Revenue</strong> recognized by Client during that month (the "Commission"), as determined from the System of Record. This is a results-based compensation arrangement: the Commission is calculated solely on Attributable Revenue that Agency's own Services are shown to have generated for Client, as defined in Section 1, and is expressly NOT calculated on Client's overall advisory fee revenue, assets under management, or any revenue not attributable to the Services. If Attributable Revenue in a given month is zero, no Commission is due for that month.${retainerKpi ? ` This arrangement is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
+  const recurringBlock = isCommissionDeal ? commissionBlock : retainerBlock;
+  const sectionFourHeading = isCommissionDeal ? "4. Commission" : "4. Recurring Fee";
+  const compensationDisclosure = isCommissionDeal
+    ? `The compensation to be disclosed under this arrangement is the Initial Fee described in Section 3, and the Commission described in Section 4, which is calculated as a percentage of Attributable Revenue that Agency's own Services generate for Client. Because this compensation is results-based, Client acknowledges this creates a conflict of interest requiring specific disclosure to prospective clients under Rule 206(4)-1(b)(1)(iii), given Agency's financial incentive tied to the volume and value of business referred.`
+    : `The compensation to be disclosed under this arrangement is the Initial Fee and the Recurring Fee described in Sections 3 and 4.`;
   const notesBlock = closingNotes
     ? `<div class="notes"><h3>Deal-Specific Notes</h3><p>${esc(closingNotes).replace(/\n/g,"<br>")}</p></div>`
     : "";
@@ -564,7 +585,7 @@ function buildServiceAgreementHtml(args: {
   </ul>
   <p><strong>3.6 Tolling.</strong> If tracking, analytics, or ad-account access is revoked, suspended, or degraded, the Guarantee Period is automatically tolled (paused) until access is restored.</p>
 
-  <h2>4. Recurring Fee</h2>
+  <h2>${sectionFourHeading}</h2>
   ${recurringBlock}
   <p>Invoices are due upon receipt. Amounts more than ten (10) days past due accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is lower. Agency may suspend services for any invoice more than fifteen (15) days past due.</p>
 
@@ -572,7 +593,7 @@ function buildServiceAgreementHtml(args: {
   <p><strong>5.1 Promoter Acknowledgment.</strong> Client acknowledges that Agency may act as a "promoter" of Client within the meaning of Rule 206(4)-1(e)(5) under the Investment Advisers Act of 1940, and that outreach performed under this Agreement may constitute an "endorsement" and an "Advertisement" under Rule 206(4)-1.</p>
   <p><strong>5.2 Client Responsibilities.</strong> Client is solely responsible for: (a) ensuring that all Advertisements comply with Rule 206(4)-1; (b) making all required disclosures at the time of dissemination, including that Agency is not a client of Client, that Agency is compensated, and a brief statement of any material conflicts of interest; (c) making all required Form ADV disclosures of the promoter arrangement; and (d) confirming that Agency is not an "ineligible person" under Rule 206(4)-1.</p>
   <p><strong>5.3 Agency Cooperation.</strong> Agency will cooperate by providing information reasonably needed for Client's disclosures, will not disseminate content that Client has not approved under Section 7, represents that it is not subject to a disqualifying event described in Rule 206(4)-1(e)(1)(i)–(ii), and will promptly notify Client if that representation changes.</p>
-  <p><strong>5.4 Compensation Disclosure.</strong> The compensation to be disclosed under this arrangement is the Initial Fee and the Recurring Fee described in Sections 3 and 4.</p>
+  <p><strong>5.4 Compensation Disclosure.</strong> ${compensationDisclosure}</p>
 
   <h2>6. FINRA Communications Rider</h2>
   <p>This Section 6 applies only to the extent Client, or any registered representative for whom Agency performs Services, is a member of, or an associated person of a member of, the Financial Industry Regulatory Authority ("FINRA"). Where applicable: (a) no retail communication under FINRA Rule 2210 will be used without the prior written approval of a registered principal of Client's member firm, in addition to the approval required under Section 7; (b) content prepared on behalf of an individual registered representative will disclose that it was prepared by or on behalf of the representative, consistent with FINRA Regulatory Notice 08-27, unless the representative reviewed and adopted it as their own; and (c) Client's member firm remains solely responsible for supervision, recordkeeping, and FINRA filing obligations, and Agency will reasonably cooperate by providing content and distribution records on request.</p>
