@@ -84,6 +84,17 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
     return { transitioned: false, sms: null, email: null };
   }
 
+  // Anchor the commission tier schedule the first time this deal goes paid+signed.
+  if (deal.pricing_model === "commission") {
+    const { error: startErr } = await supabase
+      .from("crm_deals")
+      .update({ commission_start_at: new Date().toISOString() })
+      .eq("id", dealId)
+      .is("commission_start_at", null);
+    if (startErr) console.error("[paid-signed commission_start_at error]", startErr);
+  }
+
+
   // Close the BDR loop: if this deal originated from a lead, mark it won.
   if (dealId) {
     const { error: leadErr } = await supabase
