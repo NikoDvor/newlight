@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const { data: deal, error: dealErr } = await supabase
       .from("crm_deals")
-      .select("id, client_id, deal_name, assigned_user, pay_sign_status, closing_notes, service_agreement_envelope_id")
+      .select("id, client_id, deal_name, assigned_user, pay_sign_status, closing_notes, service_agreement_envelope_id, data_retention_days")
       .eq("id", deal_id)
       .maybeSingle();
     if (dealErr) throw dealErr;
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
         agencyEntityType: agencySettings?.entity_type || "a California limited liability company",
         governingState: agencySettings?.governing_state || "California",
         venueCounty: agencySettings?.venue_county || "Santa Barbara County",
-        dataRetentionDays: 365,
+        dataRetentionDays: deal.data_retention_days ?? 365,
       });
       const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
 
