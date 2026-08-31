@@ -115,7 +115,7 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
   const initFmt = `$${Number(deal.initial_fee || 0).toLocaleString()}`;
   const priceLine = deal.pricing_model === "retainer"
     ? `Retainer — Initial ${initFmt} + $${Number(deal.recurring_fee || 0).toLocaleString()}/mo`
-    : `Commission — Initial ${initFmt} + ${Number(deal.commission_rate || 0)}% of revenue`;
+    : `Commission — Initial ${initFmt} + ${Number(deal.commission_rate || 0)}% (yr 1) / ${Number(deal.commission_rate_ongoing || 0)}% (ongoing)`;
 
   const link = opts.paySignUrl || "";
   const subj = `PAID & SIGNED: ${businessName} · ${initFmt}`;
