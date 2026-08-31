@@ -170,15 +170,51 @@ export default function ClosePrep() {
         </div>
 
         <div>
-          <Label className="text-xs text-white/60">Recurring Fee (USD / month) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number" min="0" step="0.01"
-            value={recurringFee}
-            onChange={e => setRecurringFee(e.target.value)}
-            placeholder="e.g. 1500"
-            className="bg-white/5 border-white/10 text-white mt-1"
-          />
+          <Label className="text-xs text-white/60">Pricing Model</Label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            {(["retainer", "commission"] as const).map(m => (
+              <Button
+                key={m}
+                type="button"
+                variant="outline"
+                onClick={() => setPricingModel(m)}
+                className={pricingModel === m
+                  ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white"
+                  : "border-white/10 bg-white/5 text-white/60"}
+              >
+                {m === "retainer" ? "Retainer" : "Commission"}
+              </Button>
+            ))}
+          </div>
         </div>
+
+        {pricingModel === "retainer" ? (
+          <div>
+            <Label className="text-xs text-white/60">Recurring Fee (USD / month) <span className="text-red-500">*</span></Label>
+            <Input
+              type="number" min="0" step="0.01"
+              value={recurringFee}
+              onChange={e => setRecurringFee(e.target.value)}
+              placeholder="e.g. 1500"
+              className="bg-white/5 border-white/10 text-white mt-1"
+            />
+          </div>
+        ) : (
+          <div>
+            <Label className="text-xs text-white/60">Commission Rate (%) <span className="text-red-500">*</span></Label>
+            <Input
+              type="number" min="0" max="100" step="0.1"
+              value={commissionRate}
+              onChange={e => setCommissionRate(e.target.value)}
+              placeholder="e.g. 15"
+              className="bg-white/5 border-white/10 text-white mt-1"
+            />
+            <p className="text-[11px] text-white/45 mt-1">
+              Calculated on Attributable Revenue Agency's own Services generate for Client — not Client's AUM or advisory fee revenue.
+            </p>
+          </div>
+        )}
+
 
         <div>
           <Label className="text-xs text-white/60">KPI Target</Label>
