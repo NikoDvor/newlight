@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
       initial_fee,
       recurring_fee,
       commission_rate,
+      commission_rate_ongoing,
       pricing_model: pricing_model_in,
       retainer_kpi,
       closing_notes,
@@ -204,7 +205,7 @@ Deno.serve(async (req) => {
     // 5a. Create Proposal row (Form 2 artifact #1)
     const priceLineForDoc =
       (isCommission
-        ? `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of Attributable Revenue`
+        ? `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
         : `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month`) +
       (kpi ? ` · KPI: ${kpi}` : "");
 
@@ -243,6 +244,7 @@ Deno.serve(async (req) => {
       recurringFee: recurring_fee != null ? Number(recurring_fee) : null,
       pricingModel: pricing_model as "retainer" | "commission",
       commissionRate: commission_rate != null ? Number(commission_rate) : null,
+      commissionRateOngoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : null,
       retainerKpi: kpi,
       closingNotes: closing_notes || null,
       agencyLegalName: agencySettings?.legal_entity_name || "NewLight Marketing, LLC",
@@ -283,6 +285,7 @@ Deno.serve(async (req) => {
       pricing_model,
       recurring_fee: isCommission ? null : (recurring_fee != null ? Number(recurring_fee) : null),
       commission_rate: isCommission ? Number(commission_rate ?? 0) : null,
+      commission_rate_ongoing: isCommission ? Number(commission_rate_ongoing ?? 10) : null,
       retainer_kpi: kpi,
       closing_notes: closing_notes || null,
       close_prep_completed_at: new Date().toISOString(),
@@ -326,6 +329,7 @@ Deno.serve(async (req) => {
       when: start.toISOString(),
       pricing_model,
       commission_rate: commission_rate != null ? Number(commission_rate) : null,
+      commission_rate_ongoing: commission_rate_ongoing != null ? Number(commission_rate_ongoing) : null,
       initial_fee: initial_fee != null ? Number(initial_fee) : null,
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
       closing_notes: closing_notes || null,
@@ -361,12 +365,13 @@ async function sendClosePrepNotifications(supabase: any, args: {
   when: string;
   pricing_model: string;
   commission_rate: number | null;
+  commission_rate_ongoing: number | null;
   initial_fee: number | null;
   recurring_fee: number | null;
   closing_notes: string | null;
   paySignUrl: string;
 }) {
-  const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, pricing_model, closing_notes, paySignUrl } = args;
+  const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, pricing_model, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
 
@@ -392,7 +397,7 @@ async function sendClosePrepNotifications(supabase: any, args: {
   } catch (e) { console.error("[close-prep] rep lookup failed:", e); }
 
   const priceLine = pricing_model === "commission"
-    ? `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% of Attributable Revenue`
+    ? `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
     : `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
 
   // Universal SMS
@@ -481,6 +486,7 @@ function buildServiceAgreementHtml(args: {
   recurringFee: number | null;
   pricingModel: "retainer" | "commission";
   commissionRate: number | null;
+  commissionRateOngoing: number | null;
   retainerKpi?: string | null;
   closingNotes: string | null;
   agencyLegalName: string;
@@ -490,7 +496,7 @@ function buildServiceAgreementHtml(args: {
   dataRetentionDays: number;
 }): string {
   const {
-    businessName, priceLine, initialFee, recurringFee, pricingModel, commissionRate, retainerKpi, closingNotes,
+    businessName, priceLine, initialFee, recurringFee, pricingModel, commissionRate, commissionRateOngoing, retainerKpi, closingNotes,
     agencyLegalName, agencyEntityType, governingState, venueCounty, dataRetentionDays,
   } = args;
   const bn = esc(businessName);
@@ -501,7 +507,7 @@ function buildServiceAgreementHtml(args: {
   const initFmt = `$${(initialFee || 0).toLocaleString()}`;
   const isCommissionDeal = pricingModel === "commission";
   const retainerBlock = `<p>Beginning upon Recoupment or ninety (90) days after the Initial Fee payment, whichever is earlier, subject to Section 3, Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong> (the "Recurring Fee"), invoiced in advance, due on the same calendar day each month. The Recurring Fee is a fixed dollar amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.${retainerKpi ? ` This retainer is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
-  const commissionBlock = `<p>Beginning upon execution of this Agreement, Agency will invoice Client monthly in arrears an amount equal to <strong>${commissionRate ?? 0}% of Attributable Revenue</strong> recognized by Client during that month (the "Commission"), as determined from the System of Record. This is a results-based compensation arrangement: the Commission is calculated solely on Attributable Revenue that Agency's own Services are shown to have generated for Client, as defined in Section 1, and is expressly NOT calculated on Client's overall advisory fee revenue, assets under management, or any revenue not attributable to the Services. If Attributable Revenue in a given month is zero, no Commission is due for that month.${retainerKpi ? ` This arrangement is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
+  const commissionBlock = `<p>Beginning upon execution of this Agreement, Agency will invoice Client monthly in arrears an amount equal to a percentage of Attributable Revenue recognized by Client during that month (the "Commission"), as determined from the System of Record. For the first twelve (12) months following the Effective Date, the Commission rate is <strong>${commissionRate ?? 0}%</strong>. Beginning with the thirteenth (13th) month following the Effective Date and continuing thereafter, the Commission rate is <strong>${commissionRateOngoing ?? 0}%</strong>. This is a results-based compensation arrangement: the Commission is calculated solely on Attributable Revenue that Agency's own Services are shown to have generated for Client, as defined in Section 1, and is expressly NOT calculated on Client's overall advisory fee revenue, assets under management, or any revenue not attributable to the Services. If Attributable Revenue in a given month is zero, no Commission is due for that month.${retainerKpi ? ` This arrangement is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
   const recurringBlock = isCommissionDeal ? commissionBlock : retainerBlock;
   const sectionFourHeading = isCommissionDeal ? "4. Commission" : "4. Recurring Fee";
   const compensationDisclosure = isCommissionDeal
