@@ -58,6 +58,15 @@ export default function AdminDealDetail() {
     ]).then(async ([dRes, mRes, pRes, tRes, aRes]) => {
       setDeal(dRes.data);
       setNotesSummary(dRes.data?.notes_summary || "");
+      const d: any = dRes.data;
+      if (d) {
+        setPricingModel(d.pricing_model === "commission" ? "commission" : "retainer");
+        setInitialFee(d.initial_fee != null ? String(d.initial_fee) : "");
+        setRecurringFee(d.recurring_fee != null ? String(d.recurring_fee) : "");
+        setCommissionRate(d.commission_rate != null ? String(d.commission_rate) : "25");
+        setCommissionRateOngoing(d.commission_rate_ongoing != null ? String(d.commission_rate_ongoing) : "10");
+        setKpiTarget(d.retainer_kpi || "");
+      }
       setMeetings(mRes.data || []);
       setProposals(pRes.data || []);
       setTasks(tRes.data || []);
