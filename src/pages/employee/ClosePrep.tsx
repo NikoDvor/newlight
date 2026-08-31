@@ -93,6 +93,7 @@ export default function ClosePrep() {
         pricing_model: pricingModel,
         recurring_fee: pricingModel === "retainer" ? Number(recurringFee) : null,
         commission_rate: pricingModel === "commission" ? Number(commissionRate) : null,
+        commission_rate_ongoing: pricingModel === "commission" ? Number(commissionRateOngoing) : null,
         retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
         meeting_starts_at: selectedSlot,
