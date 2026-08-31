@@ -4420,6 +4420,8 @@ export type Database = {
           close_probability: number | null
           closing_notes: string | null
           commission_rate: number | null
+          commission_rate_ongoing: number | null
+          commission_start_at: string | null
           company_id: string | null
           contact_id: string | null
           created_at: string
@@ -4465,6 +4467,8 @@ export type Database = {
           close_probability?: number | null
           closing_notes?: string | null
           commission_rate?: number | null
+          commission_rate_ongoing?: number | null
+          commission_start_at?: string | null
           company_id?: string | null
           contact_id?: string | null
           created_at?: string
@@ -4510,6 +4514,8 @@ export type Database = {
           close_probability?: number | null
           closing_notes?: string | null
           commission_rate?: number | null
+          commission_rate_ongoing?: number | null
+          commission_start_at?: string | null
           company_id?: string | null
           contact_id?: string | null
           created_at?: string

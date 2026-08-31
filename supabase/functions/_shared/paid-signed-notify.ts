@@ -73,7 +73,7 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
     .update({ pay_sign_status: "paid_signed" })
     .eq("id", dealId)
     .neq("pay_sign_status", "paid_signed")
-    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, client_id, contact_id")
+    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, commission_rate_ongoing, client_id, contact_id")
     .maybeSingle();
 
   if (error) {
@@ -83,6 +83,17 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
   if (!deal) {
     return { transitioned: false, sms: null, email: null };
   }
+
+  // Anchor the commission tier schedule the first time this deal goes paid+signed.
+  if (deal.pricing_model === "commission") {
+    const { error: startErr } = await supabase
+      .from("crm_deals")
+      .update({ commission_start_at: new Date().toISOString() })
+      .eq("id", dealId)
+      .is("commission_start_at", null);
+    if (startErr) console.error("[paid-signed commission_start_at error]", startErr);
+  }
+
 
   // Close the BDR loop: if this deal originated from a lead, mark it won.
   if (dealId) {
@@ -104,7 +115,7 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
   const initFmt = `$${Number(deal.initial_fee || 0).toLocaleString()}`;
   const priceLine = deal.pricing_model === "retainer"
     ? `Retainer — Initial ${initFmt} + $${Number(deal.recurring_fee || 0).toLocaleString()}/mo`
-    : `Commission — Initial ${initFmt} + ${Number(deal.commission_rate || 0)}% of revenue`;
+    : `Commission — Initial ${initFmt} + ${Number(deal.commission_rate || 0)}% (yr 1) / ${Number(deal.commission_rate_ongoing || 0)}% (ongoing)`;
 
   const link = opts.paySignUrl || "";
   const subj = `PAID & SIGNED: ${businessName} · ${initFmt}`;
