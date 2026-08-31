@@ -33,10 +33,13 @@ export default function ClosePrep() {
   const [done, setDone] = useState(false);
 
   const [initialFee, setInitialFee] = useState("");
+  const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
   const [recurringFee, setRecurringFee] = useState("");
+  const [commissionRate, setCommissionRate] = useState("");
   const [kpiTarget, setKpiTarget] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
+
 
   useEffect(() => {
     (async () => {
