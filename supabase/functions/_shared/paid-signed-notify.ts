@@ -73,7 +73,7 @@ export async function notifyPaidSignedIfTransition(supabase: any, dealId: string
     .update({ pay_sign_status: "paid_signed" })
     .eq("id", dealId)
     .neq("pay_sign_status", "paid_signed")
-    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, client_id, contact_id")
+    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, commission_rate_ongoing, client_id, contact_id")
     .maybeSingle();
 
   if (error) {
