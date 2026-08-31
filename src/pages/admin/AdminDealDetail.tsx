@@ -237,6 +237,119 @@ export default function AdminDealDetail() {
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
+        {/* Deal Terms */}
+        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Deal Terms</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {deal.pay_sign_status === "paid_signed" ? (
+              <>
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-[11px] text-amber-200">
+                  Signed — terms are locked. Editing here would not update the client's signed copy or any live billing.
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-white/40 text-xs uppercase">Pricing Model</span><span className="text-white">{deal.pricing_model === "commission" ? "Commission" : "Retainer"}</span></div>
+                  <div className="flex justify-between"><span className="text-white/40 text-xs uppercase">Initial Fee</span><span className="text-white">${Number(deal.initial_fee || 0).toLocaleString()}</span></div>
+                  {deal.pricing_model === "commission" ? (
+                    <>
+                      <div className="flex justify-between"><span className="text-white/40 text-xs uppercase">Commission — Year 1</span><span className="text-white">{Number(deal.commission_rate || 0)}%</span></div>
+                      <div className="flex justify-between"><span className="text-white/40 text-xs uppercase">Commission — After Yr 1</span><span className="text-white">{Number(deal.commission_rate_ongoing || 0)}%</span></div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between"><span className="text-white/40 text-xs uppercase">Recurring Fee</span><span className="text-white">${Number(deal.recurring_fee || 0).toLocaleString()}/mo</span></div>
+                  )}
+                  <div>
+                    <p className="text-white/40 text-xs uppercase mb-1">KPI Target</p>
+                    <p className="text-white/80 text-xs whitespace-pre-wrap">{deal.retainer_kpi || "—"}</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-xs text-white/60">Pricing Model</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {(["retainer", "commission"] as const).map(m => (
+                      <Button
+                        key={m}
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPricingModel(m)}
+                        className={pricingModel === m
+                          ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white"
+                          : "border-white/10 bg-white/5 text-white/60"}
+                      >
+                        {m === "retainer" ? "Retainer" : "Commission"}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-white/60">Initial Fee (USD)</Label>
+                  <Input
+                    type="number" min="0" step="0.01"
+                    value={initialFee}
+                    onChange={e => setInitialFee(e.target.value)}
+                    placeholder="e.g. 5000"
+                    className="bg-white/5 border-white/10 text-white mt-1"
+                  />
+                </div>
+
+                {!isCommission ? (
+                  <div>
+                    <Label className="text-xs text-white/60">Recurring Fee (USD / month)</Label>
+                    <Input
+                      type="number" min="0" step="0.01"
+                      value={recurringFee}
+                      onChange={e => setRecurringFee(e.target.value)}
+                      placeholder="e.g. 1500"
+                      className="bg-white/5 border-white/10 text-white mt-1"
+                    />
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-white/60">Commission Rate — Year 1 (%)</Label>
+                      <Input
+                        type="number" min="0" max="100" step="0.1"
+                        value={commissionRate}
+                        onChange={e => setCommissionRate(e.target.value)}
+                        placeholder="e.g. 25"
+                        className="bg-white/5 border-white/10 text-white mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-white/60">Commission Rate — After Year 1 (%)</Label>
+                      <Input
+                        type="number" min="0" max="100" step="0.1"
+                        value={commissionRateOngoing}
+                        onChange={e => setCommissionRateOngoing(e.target.value)}
+                        placeholder="e.g. 10"
+                        className="bg-white/5 border-white/10 text-white mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-xs text-white/60">KPI Target</Label>
+                  <Textarea
+                    value={kpiTarget}
+                    onChange={e => setKpiTarget(e.target.value)}
+                    rows={3}
+                    placeholder="e.g. 12 qualified appointments per month"
+                    className="bg-white/5 border-white/10 text-white mt-1"
+                  />
+                </div>
+
+                <Button size="sm" onClick={saveTerms} disabled={termsSaving} className="w-full">
+                  {termsSaving ? "Saving…" : "Save Changes"}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Contact & Company */}
         <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Contact & Company</CardTitle></CardHeader>
