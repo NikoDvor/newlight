@@ -118,6 +118,33 @@ export default function AdminDealDetail() {
     }
   };
 
+  const isCommission = pricingModel === "commission";
+  const saveTerms = async () => {
+    if (!deal?.id) return;
+    setTermsSaving(true);
+    try {
+      const payload = {
+        deal_id: deal.id,
+        pricing_model: pricingModel,
+        initial_fee: initialFee === "" ? null : Number(initialFee),
+        recurring_fee: isCommission || recurringFee === "" ? null : Number(recurringFee),
+        commission_rate: isCommission ? Number(commissionRate || 0) : null,
+        commission_rate_ongoing: isCommission ? Number(commissionRateOngoing || 0) : null,
+        retainer_kpi: kpiTarget || null,
+      };
+      const { data, error } = await supabase.functions.invoke("update-deal-terms", { body: payload });
+      if (error) throw new Error((data as any)?.error || error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDeal({ ...deal, ...payload, id: deal.id });
+      toast.success("Deal terms updated — agreement regenerated");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not update deal terms");
+    } finally {
+      setTermsSaving(false);
+    }
+  };
+
+
   const saveNotes = async () => {
     if (!deal?.id) return;
     setNotesSaving(true);
