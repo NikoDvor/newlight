@@ -25,6 +25,7 @@ import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots"
 interface OutcomeEntry { label: string; note?: string; timestamp: string }
 interface BdrLead {
   id: string;
+  client_id: string | null;
   business_name: string;
   owner_name: string | null;
   phone: string | null;
@@ -306,6 +307,7 @@ export default function BDRMyLeads() {
     const start = new Date(startIso);
     const end = new Date(start.getTime() + 60 * 60_000);
     const existing = latestMeetingByLead[lead.id];
+    const previousStartsAt = existing?.starts_at ?? null;
     if (existing) {
       const { error } = await (supabase as any).from("bdr_calendar_events")
         .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending" })
@@ -317,7 +319,7 @@ export default function BDRMyLeads() {
       if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
       const { data, error } = await (supabase as any).from("bdr_calendar_events").insert({
         user_id: user?.id,
-        client_id: (lead as any).client_id || (cal as any).client_id,
+        client_id: lead.client_id || (cal as any).client_id,
         calendar_id: cal.id,
         lead_id: lead.id,
         title: `Meeting: ${lead.business_name}`,
@@ -329,6 +331,22 @@ export default function BDRMyLeads() {
       if (error) { toast({ title: "Could not schedule", description: error.message, variant: "destructive" }); return; }
       setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending" } }));
     }
+
+    // Log the reschedule to the client's activity timeline
+    if (lead.client_id) {
+      await (supabase as any).from("audit_logs").insert({
+        client_id: lead.client_id,
+        module: "bdr_pipeline",
+        action: "meeting_rescheduled",
+        metadata: {
+          lead_id: lead.id,
+          business_name: lead.business_name,
+          previous_starts_at: previousStartsAt,
+          new_starts_at: start.toISOString(),
+        },
+      });
+    }
+
     await clearUnattended(lead);
     toast({ title: "Meeting rescheduled" });
     setRescheduleLead(null);
@@ -1087,7 +1105,7 @@ export default function BDRMyLeads() {
                         {(() => {
                           const m = latestMeetingByLead[lead.id];
                           const st = derivePipelineStage(lead);
-                          const needsAttendance = !!m && (st === "warm" || st === "hot")
+                          const needsAttendance = !!m && (st === "warm" || st === "hot" || st === "won")
                             && m.attendance === "pending"
                             && new Date(m.starts_at).getTime() < Date.now()
                             && !lead.unattended_since;
