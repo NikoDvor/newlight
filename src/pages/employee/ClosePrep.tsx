@@ -201,16 +201,30 @@ export default function ClosePrep() {
           </div>
         ) : (
           <div>
-            <Label className="text-xs text-white/60">Commission Rate (%) <span className="text-red-500">*</span></Label>
-            <Input
-              type="number" min="0" max="100" step="0.1"
-              value={commissionRate}
-              onChange={e => setCommissionRate(e.target.value)}
-              placeholder="e.g. 15"
-              className="bg-white/5 border-white/10 text-white mt-1"
-            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs text-white/60">Commission Rate — Year 1 (%) <span className="text-red-500">*</span></Label>
+                <Input
+                  type="number" min="0" max="100" step="0.1"
+                  value={commissionRate}
+                  onChange={e => setCommissionRate(e.target.value)}
+                  placeholder="e.g. 25"
+                  className="bg-white/5 border-white/10 text-white mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-white/60">Commission Rate — After Year 1 (%) <span className="text-red-500">*</span></Label>
+                <Input
+                  type="number" min="0" max="100" step="0.1"
+                  value={commissionRateOngoing}
+                  onChange={e => setCommissionRateOngoing(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="bg-white/5 border-white/10 text-white mt-1"
+                />
+              </div>
+            </div>
             <p className="text-[11px] text-white/45 mt-1">
-              Calculated on Attributable Revenue Agency's own Services generate for Client — not Client's AUM or advisory fee revenue.
+              Calculated on Attributable Revenue Agency's own Services generate for Client — not Client's AUM or advisory fee revenue. Defaults to 25% for the first 12 months, 10% ongoing — adjust per deal if needed.
             </p>
           </div>
         )}
