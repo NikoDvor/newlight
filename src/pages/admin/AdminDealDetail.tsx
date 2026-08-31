@@ -38,6 +38,13 @@ export default function AdminDealDetail() {
   const [referral, setReferral] = useState<{ promoter_id: string; full_name: string } | null>(null);
   const [notesSummary, setNotesSummary] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
+  const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
+  const [initialFee, setInitialFee] = useState("");
+  const [recurringFee, setRecurringFee] = useState("");
+  const [commissionRate, setCommissionRate] = useState("25");
+  const [commissionRateOngoing, setCommissionRateOngoing] = useState("10");
+  const [kpiTarget, setKpiTarget] = useState("");
+  const [termsSaving, setTermsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
