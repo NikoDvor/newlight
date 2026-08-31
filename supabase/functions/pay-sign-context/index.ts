@@ -159,6 +159,12 @@ Deno.serve(async (req) => {
     const { rep, calendar } = await resolveRepAndCalendar();
     if (!calendar?.id) return json({ error: "Assigned rep has no calendar configured" }, 409);
 
+    const { data: originatingLead } = await supabase
+      .from("nl_bdr_leads")
+      .select("id")
+      .eq("crm_deal_id", deal.id)
+      .maybeSingle();
+
     const start = new Date(starts_at);
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     const { data: ev, error: evErr } = await supabase
@@ -168,6 +174,7 @@ Deno.serve(async (req) => {
         user_id: rep?.id || calendar.user_id,
         client_id: deal.client_id,
         contact_id: deal.contact_id,
+        lead_id: originatingLead?.id || null,
         title: `Onboarding: ${client?.name || deal.deal_name || "Client"}`,
         source: "onboarding_meeting",
         starts_at: start.toISOString(),

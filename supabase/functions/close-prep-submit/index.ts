@@ -288,6 +288,7 @@ Deno.serve(async (req) => {
       commission_rate: isCommission ? Number(commission_rate ?? 0) : null,
       commission_rate_ongoing: isCommission ? Number(commission_rate_ongoing ?? 10) : null,
       retainer_kpi: kpi,
+      data_retention_days: 365,
       closing_notes: closing_notes || null,
       close_prep_completed_at: new Date().toISOString(),
       close_prep_meeting_id: evt.id,
