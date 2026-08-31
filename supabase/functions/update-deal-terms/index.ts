@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const { data: deal, error: dealErr } = await supabase
       .from("crm_deals")
-      .select("id, client_id, deal_name, assigned_user_id, pay_sign_status, closing_notes, service_agreement_envelope_id")
+      .select("id, client_id, deal_name, assigned_user, pay_sign_status, closing_notes, service_agreement_envelope_id")
       .eq("id", deal_id)
       .maybeSingle();
     if (dealErr) throw dealErr;
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Authorization: admin/operator OR the deal's assigned user
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     const isAdmin = (roles || []).some((r: any) => r.role === "admin" || r.role === "operator");
-    if (!isAdmin && deal.assigned_user_id !== user.id) {
+    if (!isAdmin && deal.assigned_user !== user.id) {
       return json({ error: "Forbidden" }, 403);
     }
 
