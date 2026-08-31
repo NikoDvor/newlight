@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
 
   const { data: deals, error: dealsErr } = await supabase
     .from("crm_deals")
-    .select("id, client_id, deal_name, commission_rate, pricing_model, pay_sign_status, assigned_user")
+    .select("id, client_id, deal_name, commission_rate, commission_rate_ongoing, commission_start_at, pricing_model, pay_sign_status, assigned_user")
     .eq("pricing_model", "commission")
     .eq("pay_sign_status", "paid_signed");
   if (dealsErr) return json({ error: dealsErr.message }, 500);
@@ -108,7 +108,10 @@ Deno.serve(async (req) => {
     try {
       if (!deal.client_id) { results.push({ deal_id: deal.id, skipped: "no_client" }); continue; }
 
-      const rate = Number(deal.commission_rate || 0);
+      if (!deal.commission_start_at) { results.push({ deal_id: deal.id, skipped: "no_commission_start_at" }); continue; }
+      const monthsElapsed = (Date.now() - new Date(deal.commission_start_at).getTime()) / (30 * 24 * 3600 * 1000);
+      const rate = monthsElapsed < 12 ? Number(deal.commission_rate || 0) : Number(deal.commission_rate_ongoing || 0);
+      const tierLabel = monthsElapsed < 12 ? "yr 1 rate" : "ongoing rate";
       if (!(rate > 0)) { results.push({ deal_id: deal.id, skipped: "no_rate" }); continue; }
 
       const { data: adjustments } = await supabase
@@ -144,7 +147,7 @@ Deno.serve(async (req) => {
           amount_paid: 0,
           period_start: period.start,
           period_end: period.end,
-          payment_notes: `Commission ${rate}% on ${period.label} revenue of $${revenue.toLocaleString()}`,
+          payment_notes: `Commission ${rate}% on ${period.label} revenue of $${revenue.toLocaleString()} (${tierLabel})`,
           issued_at: new Date().toISOString(),
         } as any)
         .select("id, invoice_number")
@@ -209,7 +212,7 @@ Deno.serve(async (req) => {
         customerId: client.stripe_customer_id,
         paymentMethodId: client.stripe_payment_method_id,
         amount,
-        description: `Commission — ${period.label} (${rate}% of $${revenue.toLocaleString()})`,
+        description: `Commission — ${period.label} (${rate}% of $${revenue.toLocaleString()}, ${tierLabel})`,
         metadata: { client_id: deal.client_id, deal_id: deal.id, invoice_id: invoice.id, period: period.label },
       });
 
