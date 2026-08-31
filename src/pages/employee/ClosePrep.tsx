@@ -77,7 +77,8 @@ export default function ClosePrep() {
   }, [availability, calTimezone]);
 
   const canSubmit =
-    !!lead && !!selectedSlot && !!initialFee.trim() && !!recurringFee.trim();
+    !!lead && !!selectedSlot && !!initialFee.trim() &&
+    (pricingModel === "retainer" ? !!recurringFee.trim() : !!commissionRate.trim());
 
   const submit = async () => {
     if (!lead || !canSubmit) return;
@@ -86,13 +87,16 @@ export default function ClosePrep() {
       body: {
         lead_id: lead.id,
         initial_fee: Number(initialFee),
-        recurring_fee: Number(recurringFee),
+        pricing_model: pricingModel,
+        recurring_fee: pricingModel === "retainer" ? Number(recurringFee) : null,
+        commission_rate: pricingModel === "commission" ? Number(commissionRate) : null,
         retainer_kpi: kpiTarget || null,
         closing_notes: notes || null,
         meeting_starts_at: selectedSlot,
         duration_minutes: 60,
       },
     });
+
     setSubmitting(false);
     if (error) {
       toast({ title: "Couldn't complete close prep", description: (error as any).message || "Try again.", variant: "destructive" });
