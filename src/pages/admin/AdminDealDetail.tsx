@@ -133,7 +133,11 @@ export default function AdminDealDetail() {
         retainer_kpi: kpiTarget || null,
       };
       const { data, error } = await supabase.functions.invoke("update-deal-terms", { body: payload });
-      if (error) throw new Error((data as any)?.error || error.message);
+      if (error) {
+        let msg = error.message;
+        try { const j = await (error as any).context?.json?.(); if (j?.error) msg = j.error; } catch { /* ignore */ }
+        throw new Error(msg);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       setDeal({ ...deal, ...payload, id: deal.id });
       toast.success("Deal terms updated — agreement regenerated");
