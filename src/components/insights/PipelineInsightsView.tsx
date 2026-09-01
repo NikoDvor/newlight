@@ -131,6 +131,55 @@ const chartTooltip = {
   contentStyle: { background: "hsl(220 30% 12%)", border: "1px solid hsla(211,96%,60%,.2)", borderRadius: 8, fontSize: 11, color: "white" },
 };
 
+export interface FunnelStage {
+  key?: string;
+  name: string;
+  count: number;
+  conversionPct: number | null;
+}
+
+export function computeStageFunnel(deals: any[]): FunnelStage[] {
+  const funnel: FunnelStage[] = STAGE_ORDER.map((s, i) => {
+    const count = deals.filter(d => d.pipeline_stage === s.key).length;
+    let conversionPct: number | null = null;
+    if (i > 0) {
+      const prev = deals.filter(d => d.pipeline_stage === STAGE_ORDER[i - 1].key).length;
+      conversionPct = prev > 0 ? Math.round((count / prev) * 100) : null;
+    }
+    return { key: s.key, name: s.label, count, conversionPct };
+  });
+  return funnel;
+}
+
+export interface Bottleneck {
+  fromLabel: string;
+  toLabel: string;
+  conversionPct: number;
+}
+
+export function computeBottleneck(deals: any[]): Bottleneck | null {
+  const funnel = computeStageFunnel(deals);
+  const withConv = funnel.filter((f, i) => i > 0 && f.conversionPct !== null);
+  if (funnel.filter(f => f.count > 0).length < 2 || withConv.length === 0) return null;
+  const lowest = withConv.reduce((a, b) => (b.conversionPct! < a.conversionPct! ? b : a));
+  const idx = funnel.indexOf(lowest);
+  return { fromLabel: funnel[idx - 1].name, toLabel: lowest.name, conversionPct: lowest.conversionPct! };
+}
+
+function FunnelTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload as FunnelStage;
+  return (
+    <div style={chartTooltip.contentStyle} className="px-3 py-2">
+      <p className="font-semibold">{d.name}</p>
+      <p>{d.count} deal{d.count === 1 ? "" : "s"}</p>
+      {d.conversionPct !== null && d.conversionPct !== undefined && (
+        <p className="text-white/70">{d.conversionPct}% from previous stage</p>
+      )}
+    </div>
+  );
+}
+
 export function PipelineInsightsView({ data, loading }: { data: InsightsData; loading: boolean }) {
   const { deals, appts, outcomes, names } = data;
 
