@@ -65,7 +65,50 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
-async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+// Minimal RFC 5545 calendar invite so recipients can add the meeting to
+// Google / Outlook / Apple Calendar.
+function icsEscape(v: string) {
+  return v.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function icsStamp(d: Date) {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+function buildIcs(args: {
+  uid: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  description?: string;
+  location?: string;
+}): string {
+  const start = new Date(args.startsAt);
+  const end = new Date(args.endsAt);
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//NewLight//Booking//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${args.uid}`,
+    `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${icsStamp(start)}`,
+    `DTEND:${icsStamp(end)}`,
+    `SUMMARY:${icsEscape(args.title)}`,
+  ];
+  if (args.description) lines.push(`DESCRIPTION:${icsEscape(args.description)}`);
+  if (args.location) lines.push(`LOCATION:${icsEscape(args.location)}`);
+  lines.push("END:VEVENT", "END:VCALENDAR");
+  return lines.join("\r\n") + "\r\n";
+}
+
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  attachments?: Array<{ filename: string; content: string }>,
+): Promise<boolean> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY) {
     console.log(`[EMAIL QUEUED - no RESEND_API_KEY] To: ${to} | Subject: ${subject}`);
@@ -84,6 +127,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
         subject,
         text,
         html,
+        ...(attachments && attachments.length ? { attachments } : {}),
       }),
     });
     if (!response.ok) {
@@ -354,7 +398,13 @@ async function runNotifications(
     let workspaceUrl: string | null = null;
     let isNewUser = false;
     let magicLink: string | null = null;
-    if (clientEmail) {
+    // Manually-created internal events (source: "manual") must NEVER provision a
+    // client workspace/login — they're internal follow-up calls & reminders.
+    const isManualEvent = (record as any)?.source === "manual";
+    if (isManualEvent) {
+      console.log(`[provision-from-booking] skipped — manual event ${recordId}`);
+    }
+    if (!isManualEvent && clientEmail) {
       try {
         const industry = meta.improvement_area || meta.industry || null;
         const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
@@ -489,11 +539,31 @@ async function runNotifications(
     <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">— The NewLight Team</p>
   </div>
 </body></html>`;
+      let icsAttachments: Array<{ filename: string; content: string }> | undefined;
+      try {
+        const endsAtStr = ((record as any)?.ends_at as string | undefined) ||
+          new Date(new Date(startsAt).getTime() + 30 * 60000).toISOString();
+        const ics = buildIcs({
+          uid: `${recordId || crypto.randomUUID()}@newlight-app.com`,
+          title: (record as any)?.title || "Meeting with NewLight",
+          startsAt,
+          endsAt: endsAtStr,
+          description: meta.notes || undefined,
+          location: zoomJoinUrl || undefined,
+        });
+        icsAttachments = [{
+          filename: "meeting.ics",
+          content: btoa(unescape(encodeURIComponent(ics))),
+        }];
+      } catch (e) {
+        console.error("[ics] build failed (sending without attachment):", e);
+      }
       clientEmailSent = await sendEmail(
         clientEmail,
         "Your NewLight appointment is confirmed",
         emailHtml,
         emailText,
+        icsAttachments,
       );
       console.log(`[EMAIL→client] to=${clientEmail} success=${clientEmailSent}`);
     } else {

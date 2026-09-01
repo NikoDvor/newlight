@@ -448,9 +448,15 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   open: boolean; onOpenChange: (v: boolean) => void; prefill: Date | null; calendar: BdrCalendar; onCreated: () => void;
 }) {
   const [title, setTitle] = useState("");
+  const [business, setBusiness] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("09:30");
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<"weekly" | "biweekly">("weekly");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -463,40 +469,95 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
       const endBase = new Date(base.getTime() + 30 * 60_000);
       setEndTime(`${pad(endBase.getHours())}:${pad(endBase.getMinutes())}`);
       setTitle(""); setNotes("");
+      setBusiness(""); setName(""); setPhone(""); setEmail("");
+      setRecurring(false); setFrequency("weekly");
     }
   }, [open, prefill]);
 
   const save = async () => {
-    if (!title.trim() || !date || !startTime || !endTime) return;
+    if (!date || !startTime || !endTime) return;
+    const finalTitle = title.trim() || name.trim() || business.trim() || "Meeting";
     setSaving(true);
     const startDate = new Date(`${date}T${startTime}`);
     let endDate = new Date(`${date}T${endTime}`);
     if (endDate <= startDate) endDate = new Date(startDate.getTime() + 30 * 60_000);
-    const { error } = await (supabase as any).from("bdr_calendar_events").insert({
+
+    const metadata: Record<string, string> = {};
+    if (name.trim()) metadata.customer_name = name.trim();
+    if (phone.trim()) metadata.phone = phone.trim();
+    if (business.trim()) metadata.business_name = business.trim();
+    if (email.trim()) metadata.email = email.trim();
+
+    const baseRow = {
       user_id: calendar.user_id,
       client_id: (calendar as any).client_id,
       calendar_id: calendar.id,
-      title: title.trim(),
-      starts_at: startDate.toISOString(),
-      ends_at: endDate.toISOString(),
+      title: finalTitle,
       notes: notes || null,
       description: notes || null,
+      metadata,
       source: "manual",
-    });
+    };
+
+    let error: any = null;
+    if (!recurring) {
+      ({ error } = await (supabase as any).from("bdr_calendar_events").insert({
+        ...baseRow,
+        starts_at: startDate.toISOString(),
+        ends_at: endDate.toISOString(),
+      }));
+    } else {
+      const seriesId = crypto.randomUUID();
+      const stepDays = frequency === "biweekly" ? 14 : 7;
+      const durationMs = endDate.getTime() - startDate.getTime();
+      const occurrences = Array.from({ length: 12 }, (_, i) => {
+        const s = new Date(startDate);
+        s.setDate(s.getDate() + stepDays * i);
+        return { starts_at: s.toISOString(), ends_at: new Date(s.getTime() + durationMs).toISOString() };
+      });
+      const recurrenceEnd = occurrences[occurrences.length - 1].starts_at;
+      ({ error } = await (supabase as any).from("bdr_calendar_events").insert(
+        occurrences.map(o => ({
+          ...baseRow,
+          starts_at: o.starts_at,
+          ends_at: o.ends_at,
+          recurrence_frequency: frequency,
+          recurrence_series_id: seriesId,
+          recurrence_end_date: recurrenceEnd,
+        })),
+      ));
+    }
+
     setSaving(false);
     if (error) { toast({ title: "Couldn't save event", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Event added" });
+    toast({ title: recurring ? "12 recurring events added" : "Event added" });
     onCreated();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white rounded-2xl">
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white rounded-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="text-lg">Add Event</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Title</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Follow-up call, block, reminder…" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Business</Label>
+            <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Business name" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Name</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Attendee name" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Phone</Label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(805) 555-0123" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Email</Label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com" className="bg-white/5 border-white/10 text-white h-11" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Date</Label>
@@ -513,6 +574,46 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
             </div>
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Recurring</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([["One-time", false], ["Recurring", true]] as const).map(([label, val]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setRecurring(val)}
+                  className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                    recurring === val
+                      ? "bg-[hsl(211,96%,56%)] border-[hsl(211,96%,56%)] text-white"
+                      : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {recurring && (
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {([["Weekly", "weekly"], ["Bi-weekly", "biweekly"]] as const).map(([label, val]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFrequency(val)}
+                    className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                      frequency === val
+                        ? "bg-[hsl(211,96%,56%)] border-[hsl(211,96%,56%)] text-white"
+                        : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {recurring && (
+              <p className="text-[11px] text-white/45 pt-1">Creates 12 occurrences starting from the selected date.</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Notes</Label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
               placeholder="Optional details…"
@@ -521,7 +622,7 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/70">Cancel</Button>
-          <Button onClick={save} disabled={saving || !title.trim() || !date} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] rounded-full px-5">
+          <Button onClick={save} disabled={saving || !date} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] rounded-full px-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Event"}
           </Button>
         </DialogFooter>

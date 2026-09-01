@@ -972,6 +972,9 @@ export type Database = {
           metadata: Json
           notes: string | null
           outcome: string | null
+          recurrence_end_date: string | null
+          recurrence_frequency: string | null
+          recurrence_series_id: string | null
           reminder_15m_sent_at: string | null
           reminder_24h_sent_at: string | null
           reminder_3h_sent_at: string | null
@@ -1001,6 +1004,9 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           outcome?: string | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_series_id?: string | null
           reminder_15m_sent_at?: string | null
           reminder_24h_sent_at?: string | null
           reminder_3h_sent_at?: string | null
@@ -1030,6 +1036,9 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           outcome?: string | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_series_id?: string | null
           reminder_15m_sent_at?: string | null
           reminder_24h_sent_at?: string | null
           reminder_3h_sent_at?: string | null
