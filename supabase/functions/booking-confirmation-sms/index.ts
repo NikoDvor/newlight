@@ -354,7 +354,13 @@ async function runNotifications(
     let workspaceUrl: string | null = null;
     let isNewUser = false;
     let magicLink: string | null = null;
-    if (clientEmail) {
+    // Manually-created internal events (source: "manual") must NEVER provision a
+    // client workspace/login — they're internal follow-up calls & reminders.
+    const isManualEvent = (record as any)?.source === "manual";
+    if (isManualEvent) {
+      console.log(`[provision-from-booking] skipped — manual event ${recordId}`);
+    }
+    if (!isManualEvent && clientEmail) {
       try {
         const industry = meta.improvement_area || meta.industry || null;
         const businessName = clientBusinessName || meta.business_name || meta.company_name || clientName || clientEmail.split("@")[0];
