@@ -165,6 +165,14 @@ Deno.serve(async (req) => {
       platformRole = "marketing_staff";
       effectiveClientId = null; // user_roles stays platform-wide
       effectiveJobTitle = jobTitle || "BDR";
+    } else if (rolePreset === "marketing_staff") {
+      platformRole = "marketing_staff";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "Salesman";
+    } else if (rolePreset === "service_poc") {
+      platformRole = "service_poc";
+      effectiveClientId = null;
+      effectiveJobTitle = jobTitle || "Service POC";
     } else if (rolePreset === "sdr") {
       platformRole = "marketing_staff";
       effectiveClientId = null;
@@ -175,7 +183,7 @@ Deno.serve(async (req) => {
 
     // Tenant assignment for employee_profiles (BDR/SDR/Admin/Operator share the platform-wide user_roles row,
     // but their *data* is scoped to a client workspace — default to NewLight Internal).
-    const employeeClientId = ["bdr", "sdr", "service_manager", "admin"].includes(rolePreset)
+    const employeeClientId = ["bdr", "sdr", "service_manager", "admin", "marketing_staff", "service_poc"].includes(rolePreset)
       ? (clientId || NEWLIGHT_INTERNAL_CLIENT_ID)
       : null;
 
@@ -191,7 +199,7 @@ Deno.serve(async (req) => {
     }
 
     if (!effectiveClientId) {
-      if (["marketing_staff", "support_staff"].includes(platformRole)) {
+      if (["marketing_staff", "support_staff", "service_poc"].includes(platformRole)) {
         const { error: employeeError } = await adminClient.from("employee_profiles").insert({
           user_id: userId,
           full_name: fullName,

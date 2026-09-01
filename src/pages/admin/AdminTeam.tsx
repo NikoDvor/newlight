@@ -61,7 +61,7 @@ export default function AdminTeam() {
   const [manualEmail, setManualEmail] = useState("");
   const [manualPhone, setManualPhone] = useState("");
   const [manualPassword, setManualPassword] = useState("");
-  const [manualRolePreset, setManualRolePreset] = useState("bdr");
+  const [manualRolePreset, setManualRolePreset] = useState("marketing_staff");
   const [manualDepartment, setManualDepartment] = useState("");
   const [manualJobTitle, setManualJobTitle] = useState("");
   const [manualClientId, setManualClientId] = useState("");
@@ -405,7 +405,7 @@ export default function AdminTeam() {
 
   const resetManualForm = () => {
     setManualFullName(""); setManualEmail(""); setManualPhone(""); setManualPassword("");
-    setManualRolePreset("bdr"); setManualDepartment(""); setManualJobTitle("");
+    setManualRolePreset("marketing_staff"); setManualDepartment(""); setManualJobTitle("");
     setManualClientId(""); setShowManualPassword(false);
   };
 
@@ -602,7 +602,7 @@ export default function AdminTeam() {
                     {manualRoleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
                   </select>
                 </div>
-                {["bdr", "sdr", "project_manager", "service_manager"].includes(manualRolePreset) ? (
+                {["marketing_staff", "service_poc"].includes(manualRolePreset) ? (
                   <div>
                     <label className="text-xs text-white/50 mb-1 block">Assign to Client</label>
                     <select value={manualClientId} onChange={e => setManualClientId(e.target.value)} className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
