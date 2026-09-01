@@ -229,6 +229,17 @@ export default function CallTracking() {
                 </SelectContent>
               </Select>
             </div>
+            {needsObjection && (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Objection Category</label>
+                <Select value={objectionCategory} onValueChange={setObjectionCategory}>
+                  <SelectTrigger><SelectValue placeholder="Select objection" /></SelectTrigger>
+                  <SelectContent>
+                    {OBJECTION_CATEGORIES.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
