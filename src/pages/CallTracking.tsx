@@ -116,12 +116,17 @@ export default function CallTracking() {
       toast({ title: "Choose an outcome", variant: "destructive" });
       return;
     }
+    if (needsObjection && !objectionCategory) {
+      toast({ title: "Choose an objection category", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("client_call_outcomes").insert({
       client_id: activeClientId,
       user_id: user.id,
       contact_id: contactId || null,
       outcome,
+      objection_category: objectionCategory || null,
       notes: notes.trim() || null,
     });
     setSaving(false);
@@ -131,6 +136,7 @@ export default function CallTracking() {
     }
     toast({ title: "Call logged" });
     setOutcome("");
+    setObjectionCategory("");
     setNotes("");
     setContactId("");
     fetchAll();
