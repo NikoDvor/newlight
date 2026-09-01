@@ -200,7 +200,10 @@ export default function AdminAllCalendars() {
           const type = c.calendar_type || "other";
           return {
             key: `cal-${c.id}`,
+            id: c.id,
+            source: "generic" as const,
             ownerName: (c.owner_user_id && nameMap[c.owner_user_id]) || "Unassigned",
+
             calendarName: c.calendar_name,
             typeLabel: typeLabelFor(type),
             typeClass: TYPE_STYLES[type] || "bg-white/10 border-white/20 text-white/70",
