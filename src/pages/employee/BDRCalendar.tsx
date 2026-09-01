@@ -536,12 +536,28 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white rounded-2xl">
+      <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white rounded-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="text-lg">Add Event</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Title</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Follow-up call, block, reminder…" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Business</Label>
+            <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Business name" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Name</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Attendee name" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Phone</Label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(805) 555-0123" className="bg-white/5 border-white/10 text-white h-11" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Email</Label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com" className="bg-white/5 border-white/10 text-white h-11" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Date</Label>
@@ -558,6 +574,46 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
             </div>
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs text-white/60">Recurring</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([["One-time", false], ["Recurring", true]] as const).map(([label, val]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setRecurring(val)}
+                  className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                    recurring === val
+                      ? "bg-[hsl(211,96%,56%)] border-[hsl(211,96%,56%)] text-white"
+                      : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {recurring && (
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {([["Weekly", "weekly"], ["Bi-weekly", "biweekly"]] as const).map(([label, val]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFrequency(val)}
+                    className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                      frequency === val
+                        ? "bg-[hsl(211,96%,56%)] border-[hsl(211,96%,56%)] text-white"
+                        : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {recurring && (
+              <p className="text-[11px] text-white/45 pt-1">Creates 12 occurrences starting from the selected date.</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs text-white/60">Notes</Label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
               placeholder="Optional details…"
@@ -566,7 +622,7 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/70">Cancel</Button>
-          <Button onClick={save} disabled={saving || !title.trim() || !date} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] rounded-full px-5">
+          <Button onClick={save} disabled={saving || !date} className="bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)] rounded-full px-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Event"}
           </Button>
         </DialogFooter>
