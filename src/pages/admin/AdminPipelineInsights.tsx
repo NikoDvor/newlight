@@ -47,6 +47,7 @@ export default function AdminPipelineInsights() {
       const stages: Record<string, number> = {};
       STAGES.forEach(s => { stages[s.key] = deals.filter((d: any) => d.pipeline_stage === s.key).length; });
       const stuck = STAGES.reduce((s, st) => s + stages[st.key], 0);
+      const bn = computeBottleneck(deals);
       return {
         id,
         name: clientName(id),
@@ -55,10 +56,17 @@ export default function AdminPipelineInsights() {
         rescheduleRate: appts.length ? Math.round((resch / appts.length) * 100) : null,
         stages,
         stuck,
+        weakestPct: bn ? bn.conversionPct : null,
       };
     }).sort((a, b) => {
       const dir = sortAsc ? 1 : -1;
       if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
+      if (sortKey === "weakestPct") {
+        // Ascending = worst bottleneck first regardless of direction default
+        const av = a.weakestPct ?? 999;
+        const bv = b.weakestPct ?? 999;
+        return (av - bv) * (sortAsc ? 1 : -1);
+      }
       const av = (a as any)[sortKey] ?? -1;
       const bv = (b as any)[sortKey] ?? -1;
       return (av - bv) * dir;
