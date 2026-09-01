@@ -121,16 +121,18 @@ Deno.serve(async (req) => {
     const meta = (evt.metadata || {}) as Record<string, any>;
     let customerName: string = meta.customer_name || "";
     let customerPhone: string = meta.phone || "";
+    let customerEmail: string = meta.email || "";
     let businessName: string = meta.business_name || "";
-    if (evt.lead_id && (!customerPhone || !customerName)) {
+    if (evt.lead_id && (!customerPhone || !customerName || !customerEmail)) {
       const { data: lead } = await supabase
         .from("nl_bdr_leads")
-        .select("owner_name, business_name, phone")
+        .select("owner_name, business_name, phone, email")
         .eq("id", evt.lead_id as string)
         .maybeSingle();
       if (lead) {
         if (!customerName) customerName = (lead.owner_name || lead.business_name || "") as string;
         if (!customerPhone) customerPhone = (lead.phone || "") as string;
+        if (!customerEmail) customerEmail = ((lead as any).email || "") as string;
         if (!businessName) businessName = (lead.business_name || "") as string;
       }
     }
