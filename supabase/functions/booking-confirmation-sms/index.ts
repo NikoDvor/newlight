@@ -65,7 +65,50 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
-async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+// Minimal RFC 5545 calendar invite so recipients can add the meeting to
+// Google / Outlook / Apple Calendar.
+function icsEscape(v: string) {
+  return v.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function icsStamp(d: Date) {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+function buildIcs(args: {
+  uid: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  description?: string;
+  location?: string;
+}): string {
+  const start = new Date(args.startsAt);
+  const end = new Date(args.endsAt);
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//NewLight//Booking//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${args.uid}`,
+    `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${icsStamp(start)}`,
+    `DTEND:${icsStamp(end)}`,
+    `SUMMARY:${icsEscape(args.title)}`,
+  ];
+  if (args.description) lines.push(`DESCRIPTION:${icsEscape(args.description)}`);
+  if (args.location) lines.push(`LOCATION:${icsEscape(args.location)}`);
+  lines.push("END:VEVENT", "END:VCALENDAR");
+  return lines.join("\r\n") + "\r\n";
+}
+
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  attachments?: Array<{ filename: string; content: string }>,
+): Promise<boolean> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY) {
     console.log(`[EMAIL QUEUED - no RESEND_API_KEY] To: ${to} | Subject: ${subject}`);
@@ -84,6 +127,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
         subject,
         text,
         html,
+        ...(attachments && attachments.length ? { attachments } : {}),
       }),
     });
     if (!response.ok) {
