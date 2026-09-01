@@ -291,9 +291,31 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnel}>
-                  <XAxis dataKey="name" tick={{ fill: "hsla(0,0%,100%,.5)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={(props: any) => {
+                      const { x, y, payload } = props;
+                      const stage = funnel[payload.index];
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <text x={0} y={0} dy={12} textAnchor="middle" fill="hsla(0,0%,100%,.5)" fontSize={11}>
+                            {payload.value}
+                          </text>
+                          {stage?.conversionPct != null && (
+                            <text x={0} y={0} dy={26} textAnchor="middle" fill="hsla(41,96%,60%,.9)" fontSize={10}>
+                              {stage.conversionPct}%
+                            </text>
+                          )}
+                        </g>
+                      );
+                    }}
+                    interval={0}
+                    height={44}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <YAxis allowDecimals={false} tick={{ fill: "hsla(0,0%,100%,.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...chartTooltip} cursor={{ fill: "hsla(211,96%,60%,.06)" }} />
+                  <Tooltip content={<FunnelTooltip />} cursor={{ fill: "hsla(211,96%,60%,.06)" }} />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                     {funnel.map((f, i) => (
                       <Cell key={f.name} fill={f.name === "Lost" ? RED : f.name === "Won" ? GREEN : NEON} fillOpacity={0.55 + i * 0.08} />
