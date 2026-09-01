@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend,
 } from "recharts";
-import { Trophy, XCircle, UserX, CalendarClock, Percent } from "lucide-react";
+import { Trophy, XCircle, UserX, UserCheck, CalendarClock, Percent, AlertTriangle, TrendingDown } from "lucide-react";
 
 export type RangeKey = "30" | "90" | "365" | "all";
 
@@ -131,6 +131,55 @@ const chartTooltip = {
   contentStyle: { background: "hsl(220 30% 12%)", border: "1px solid hsla(211,96%,60%,.2)", borderRadius: 8, fontSize: 11, color: "white" },
 };
 
+export interface FunnelStage {
+  key?: string;
+  name: string;
+  count: number;
+  conversionPct: number | null;
+}
+
+export function computeStageFunnel(deals: any[]): FunnelStage[] {
+  const funnel: FunnelStage[] = STAGE_ORDER.map((s, i) => {
+    const count = deals.filter(d => d.pipeline_stage === s.key).length;
+    let conversionPct: number | null = null;
+    if (i > 0) {
+      const prev = deals.filter(d => d.pipeline_stage === STAGE_ORDER[i - 1].key).length;
+      conversionPct = prev > 0 ? Math.round((count / prev) * 100) : null;
+    }
+    return { key: s.key, name: s.label, count, conversionPct };
+  });
+  return funnel;
+}
+
+export interface Bottleneck {
+  fromLabel: string;
+  toLabel: string;
+  conversionPct: number;
+}
+
+export function computeBottleneck(deals: any[]): Bottleneck | null {
+  const funnel = computeStageFunnel(deals);
+  const withConv = funnel.filter((f, i) => i > 0 && f.conversionPct !== null);
+  if (funnel.filter(f => f.count > 0).length < 2 || withConv.length === 0) return null;
+  const lowest = withConv.reduce((a, b) => (b.conversionPct! < a.conversionPct! ? b : a));
+  const idx = funnel.indexOf(lowest);
+  return { fromLabel: funnel[idx - 1].name, toLabel: lowest.name, conversionPct: lowest.conversionPct! };
+}
+
+function FunnelTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload as FunnelStage;
+  return (
+    <div style={chartTooltip.contentStyle} className="px-3 py-2">
+      <p className="font-semibold">{d.name}</p>
+      <p>{d.count} deal{d.count === 1 ? "" : "s"}</p>
+      {d.conversionPct !== null && d.conversionPct !== undefined && (
+        <p className="text-white/70">{d.conversionPct}% from previous stage</p>
+      )}
+    </div>
+  );
+}
+
 export function PipelineInsightsView({ data, loading }: { data: InsightsData; loading: boolean }) {
   const { deals, appts, outcomes, names } = data;
 
@@ -141,8 +190,10 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
   const rescheduled = appts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0);
   const closeRate = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0;
 
-  const funnel = STAGE_ORDER.map(s => ({ name: s.label, count: deals.filter(d => d.pipeline_stage === s.key).length }));
-  funnel.push({ name: "Lost", count: lost.length });
+  const funnel = computeStageFunnel(deals);
+  funnel.push({ name: "Lost", count: lost.length, conversionPct: null });
+  const bottleneck = computeBottleneck(deals);
+  const attendRate = appts.length ? Math.round(100 - (noShows.length / appts.length) * 100) : null;
 
   const wonLost = [
     { name: "Won", value: won.length },
@@ -183,10 +234,50 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {bottleneck === null ? (
+        <Card className="border border-white/10 bg-white/[0.04]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Percent className="h-4 w-4 text-white/30 shrink-0" />
+            <p className="text-sm text-white/50">Not enough pipeline data yet to identify a bottleneck.</p>
+          </CardContent>
+        </Card>
+      ) : bottleneck.conversionPct > 75 ? (
+        <Card className="border border-emerald-400/20 bg-emerald-400/[0.06]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Trophy className="h-4 w-4 text-emerald-400 shrink-0" />
+            <p className="text-sm text-emerald-300">
+              No major bottlenecks — your weakest stage still converts at {bottleneck.conversionPct}% ({bottleneck.fromLabel} → {bottleneck.toLabel}).
+            </p>
+          </CardContent>
+        </Card>
+      ) : bottleneck.conversionPct < 50 ? (
+        <Card className="border border-amber-400/30 bg-amber-400/[0.07]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-300">
+                Biggest Bottleneck: {bottleneck.fromLabel} → {bottleneck.toLabel} ({bottleneck.conversionPct}% conversion)
+              </p>
+              <p className="text-[11px] text-amber-200/60 mt-0.5">This stage transition is losing the most deals — focus coaching and follow-up here.</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border border-white/10 bg-white/[0.04]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <TrendingDown className="h-4 w-4 text-white/40 shrink-0" />
+            <p className="text-sm text-white/70">
+              Weakest transition: {bottleneck.fromLabel} → {bottleneck.toLabel} ({bottleneck.conversionPct}% conversion).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Stat label="Won" value={String(won.length)} sub={`$${wonValue.toLocaleString()}`} icon={Trophy} tone="good" />
         <Stat label="Lost" value={String(lost.length)} icon={XCircle} tone={lost.length ? "bad" : undefined} />
         <Stat label="No-Shows" value={String(noShows.length)} sub={`${appts.length} meetings`} icon={UserX} />
+        <Stat label="Attend Rate" value={attendRate === null ? "—" : `${attendRate}%`} icon={UserCheck} tone={attendRate !== null && attendRate >= 75 ? "good" : undefined} />
         <Stat label="Rescheduled" value={String(rescheduled)} icon={CalendarClock} />
         <Stat label="Close Rate" value={`${closeRate}%`} icon={Percent} tone={closeRate >= 50 ? "good" : undefined} />
       </div>
@@ -200,9 +291,31 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnel}>
-                  <XAxis dataKey="name" tick={{ fill: "hsla(0,0%,100%,.5)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={(props: any) => {
+                      const { x, y, payload } = props;
+                      const stage = funnel[payload.index];
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <text x={0} y={0} dy={12} textAnchor="middle" fill="hsla(0,0%,100%,.5)" fontSize={11}>
+                            {payload.value}
+                          </text>
+                          {stage?.conversionPct != null && (
+                            <text x={0} y={0} dy={26} textAnchor="middle" fill="hsla(41,96%,60%,.9)" fontSize={10}>
+                              {stage.conversionPct}%
+                            </text>
+                          )}
+                        </g>
+                      );
+                    }}
+                    interval={0}
+                    height={44}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <YAxis allowDecimals={false} tick={{ fill: "hsla(0,0%,100%,.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...chartTooltip} cursor={{ fill: "hsla(211,96%,60%,.06)" }} />
+                  <Tooltip content={<FunnelTooltip />} cursor={{ fill: "hsla(211,96%,60%,.06)" }} />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                     {funnel.map((f, i) => (
                       <Cell key={f.name} fill={f.name === "Lost" ? RED : f.name === "Won" ? GREEN : NEON} fillOpacity={0.55 + i * 0.08} />

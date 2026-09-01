@@ -4,10 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpDown } from "lucide-react";
 import {
-  PipelineInsightsView, RangeFilter, usePipelineInsights, isNoShow, type RangeKey,
+  PipelineInsightsView, RangeFilter, usePipelineInsights, isNoShow, computeBottleneck, type RangeKey,
 } from "@/components/insights/PipelineInsightsView";
 
-type SortKey = "name" | "closeRate" | "noShowRate" | "rescheduleRate" | "stuck";
+type SortKey = "name" | "closeRate" | "noShowRate" | "rescheduleRate" | "stuck" | "weakestPct";
 
 const STAGES = [
   { key: "new_lead", label: "New" },
@@ -47,6 +47,7 @@ export default function AdminPipelineInsights() {
       const stages: Record<string, number> = {};
       STAGES.forEach(s => { stages[s.key] = deals.filter((d: any) => d.pipeline_stage === s.key).length; });
       const stuck = STAGES.reduce((s, st) => s + stages[st.key], 0);
+      const bn = computeBottleneck(deals);
       return {
         id,
         name: clientName(id),
@@ -55,10 +56,17 @@ export default function AdminPipelineInsights() {
         rescheduleRate: appts.length ? Math.round((resch / appts.length) * 100) : null,
         stages,
         stuck,
+        weakestPct: bn ? bn.conversionPct : null,
       };
     }).sort((a, b) => {
       const dir = sortAsc ? 1 : -1;
       if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
+      if (sortKey === "weakestPct") {
+        // Ascending = worst bottleneck first regardless of direction default
+        const av = a.weakestPct ?? 999;
+        const bv = b.weakestPct ?? 999;
+        return (av - bv) * (sortAsc ? 1 : -1);
+      }
       const av = (a as any)[sortKey] ?? -1;
       const bv = (b as any)[sortKey] ?? -1;
       return (av - bv) * dir;
@@ -124,6 +132,7 @@ export default function AdminPipelineInsights() {
                     <Th k="closeRate" label="Close Rate" />
                     <Th k="noShowRate" label="No-Show" />
                     <Th k="rescheduleRate" label="Reschedule" />
+                    <Th k="weakestPct" label="Weakest Stage %" />
                     {STAGES.map(s => (
                       <th key={s.key} className="py-2 text-right text-[10px] uppercase tracking-wider font-semibold text-white/40">{s.label}</th>
                     ))}
@@ -139,6 +148,7 @@ export default function AdminPipelineInsights() {
                       <td className="py-2 text-right text-white">{r.closeRate === null ? "—" : `${r.closeRate}%`}</td>
                       <td className={`py-2 text-right ${(r.noShowRate ?? 0) > 25 ? "text-red-400" : "text-white/70"}`}>{r.noShowRate === null ? "—" : `${r.noShowRate}%`}</td>
                       <td className="py-2 text-right text-white/70">{r.rescheduleRate === null ? "—" : `${r.rescheduleRate}%`}</td>
+                      <td className={`py-2 text-right ${r.weakestPct !== null && r.weakestPct < 50 ? "text-amber-400" : "text-white/70"}`}>{r.weakestPct === null ? "—" : `${r.weakestPct}%`}</td>
                       {STAGES.map(s => (
                         <td key={s.key} className="py-2 text-right text-white/60">{r.stages[s.key]}</td>
                       ))}
