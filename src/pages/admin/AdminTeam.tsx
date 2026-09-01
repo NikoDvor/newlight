@@ -312,15 +312,21 @@ export default function AdminTeam() {
     setLoading(false);
   };
 
-  const handleRemove = async (row: UserRow) => {
-    if (!row.role_id) {
-      toast.error("This member is managed via workspace_users / employee_profiles, not a removable role row.");
+  const deleteAccount = async (userId: string) => {
+    if (!window.confirm("Permanently delete this account? This removes their login, profile, and all role assignments. This cannot be undone.")) return;
+    const res = await supabase.functions.invoke("delete-employee-account", { body: { user_id: userId } });
+    if (res.error || res.data?.error) {
+      toast.error(await describeInvokeError(res, "Failed to delete account"));
       return;
     }
-    if (!window.confirm("Remove this user's role assignment?")) return;
-    const { error } = await supabase.from("user_roles").delete().eq("id", row.role_id);
-    if (error) toast.error(error.message);
-    else { toast.success("Removed"); fetchData(); }
+    if (res.data?.warning) toast.warning(res.data.warning);
+    else toast.success("Account permanently deleted");
+    fetchData();
+  };
+
+  const handleRemove = async (row: UserRow) => {
+    if (!row.user_id) { toast.error("No user account found for this row"); return; }
+    await deleteAccount(row.user_id);
   };
 
   const openEditEmail = (row: UserRow) => {
@@ -507,6 +513,13 @@ export default function AdminTeam() {
                     <span className="text-white/50 break-all">{m.email || "(no email)"}</span>
                     <span className="text-white/30 font-mono">{m.user_id.slice(0, 8)}</span>
                     <Badge className="bg-amber-500/15 text-amber-300 border-0">no role</Badge>
+                    <button
+                      onClick={() => deleteAccount(m.user_id)}
+                      className="text-white/30 hover:text-red-400 transition-colors"
+                      title="Delete account"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -947,15 +960,13 @@ function WorkspaceGroupCard({
                         >
                           <Phone className="h-3.5 w-3.5" />
                         </button>
-                        {u.role_id && (
-                          <button
-                            onClick={() => onRemove(u)}
-                            className="text-white/30 hover:text-red-400 transition-colors"
-                            title="Remove role"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => onRemove(u)}
+                          className="text-white/30 hover:text-red-400 transition-colors"
+                          title="Delete account"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   </motion.tr>
