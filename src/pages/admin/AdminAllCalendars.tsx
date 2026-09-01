@@ -51,6 +51,19 @@ function typeLabelFor(t: string) {
     .join(" ");
 }
 
+function groupByDay(rows: BookingRow[]): [string, BookingRow[]][] {
+  const map = new Map<string, BookingRow[]>();
+  rows.forEach((r) => {
+    const day = new Date(r.start).toLocaleDateString(undefined, {
+      weekday: "short", month: "short", day: "numeric",
+    });
+    map.set(day, [...(map.get(day) || []), r]);
+  });
+  return [...map.entries()];
+}
+
+
+
 export default function AdminAllCalendars() {
   const [items, setItems] = useState<UnifiedCalendar[]>([]);
   const [loading, setLoading] = useState(true);
