@@ -14,6 +14,8 @@ interface BookingLink {
 
 interface UnifiedCalendar {
   key: string;
+  id: string;
+  source: "bdr" | "generic";
   ownerName: string;
   calendarName: string;
   typeLabel: string;
@@ -25,6 +27,13 @@ interface UnifiedCalendar {
   links: BookingLink[];
   note?: string;
 }
+
+interface BookingRow {
+  id: string;
+  start: string;
+  name: string;
+}
+
 
 const TYPE_STYLES: Record<string, string> = {
   bdr: "bg-[hsl(211,96%,56%)]/15 border-[hsl(211,96%,60%)]/30 text-[hsl(211,96%,80%)]",
