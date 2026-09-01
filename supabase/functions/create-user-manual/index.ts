@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ROLE_PRESETS = new Set(["bdr", "sdr", "project_manager", "service_manager", "admin"]);
+const ROLE_PRESETS = new Set(["bdr", "sdr", "project_manager", "service_manager", "admin", "marketing_staff", "service_poc"]);
 const PLATFORM_WIDE_VALUES = new Set(["", "platform", "platform-wide", "__platform__"]);
 const NEWLIGHT_INTERNAL_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 
