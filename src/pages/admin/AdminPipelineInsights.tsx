@@ -132,6 +132,7 @@ export default function AdminPipelineInsights() {
                     <Th k="closeRate" label="Close Rate" />
                     <Th k="noShowRate" label="No-Show" />
                     <Th k="rescheduleRate" label="Reschedule" />
+                    <Th k="weakestPct" label="Weakest Stage %" />
                     {STAGES.map(s => (
                       <th key={s.key} className="py-2 text-right text-[10px] uppercase tracking-wider font-semibold text-white/40">{s.label}</th>
                     ))}
