@@ -50,6 +50,38 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
+async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - missing key] to=${to} subject="${subject}"`);
+    return false;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "NewLight <team@newlightgen.com>",
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    });
+    if (!res.ok) {
+      console.error("Resend error", res.status, await res.text().catch(() => ""));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Email send error", e);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
