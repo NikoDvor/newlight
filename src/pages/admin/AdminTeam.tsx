@@ -92,11 +92,9 @@ export default function AdminTeam() {
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 
   const manualRoleOptions = [
-    { value: "bdr", label: "BDR" },
-    { value: "sdr", label: "SDR" },
-    { value: "project_manager", label: "Project Manager" },
-    { value: "service_manager", label: "Service Manager" },
     { value: "admin", label: "Admin" },
+    { value: "service_poc", label: "Service POC" },
+    { value: "marketing_staff", label: "Salesmen" },
   ];
 
   const fetchData = async () => {
@@ -456,7 +454,14 @@ export default function AdminTeam() {
   };
 
 
+  const ROLE_LABELS: Record<string, string> = {
+    marketing_staff: "Salesmen",
+    service_poc: "Service POC",
+  };
+  const roleLabel = (r: string) => ROLE_LABELS[r] || r.replace(/_/g, " ");
+
   const roleColor = (r: string) => {
+    if (r === "service_poc") return "bg-teal-500/15 text-teal-300";
     if (r === "admin") return "bg-[hsla(211,96%,60%,.15)] text-[hsl(var(--nl-electric))]";
     if (r === "operator" || r === "service_manager") return "bg-[hsla(197,92%,68%,.15)] text-[hsl(var(--nl-sky))]";
     if (r === "project_manager") return "bg-purple-500/15 text-purple-300";
@@ -535,11 +540,9 @@ export default function AdminTeam() {
                   <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
                     className="w-full h-10 rounded-md bg-white/[0.06] border border-white/10 text-white text-sm px-3">
                     <option value="admin">Admin</option>
-                    <option value="operator">Operator</option>
-                    <option value="project_manager">Project Manager (sub-account owner)</option>
+                    <option value="service_poc">Service POC</option>
+                    <option value="marketing_staff">Salesmen</option>
                     <option value="client_owner">Client Owner</option>
-                    <option value="client_team">Client Team Member</option>
-                    <option value="read_only">Read Only</option>
                   </select>
                 </div>
                 {["client_owner", "client_team", "read_only", "project_manager"].includes(inviteRole) && (
@@ -656,6 +659,7 @@ export default function AdminTeam() {
               group={g}
               defaultOpen={g.id === PLATFORM_KEY}
               roleColor={roleColor}
+              roleLabel={roleLabel}
               onStats={setStatsFor}
               onRemove={handleRemove}
               onEditEmail={openEditEmail}
@@ -864,11 +868,12 @@ export default function AdminTeam() {
 }
 
 function WorkspaceGroupCard({
-  group, defaultOpen, roleColor, onStats, onRemove, onEditEmail, onEditPhone,
+  group, defaultOpen, roleColor, roleLabel, onStats, onRemove, onEditEmail, onEditPhone,
 }: {
   group: WorkspaceGroupData;
   defaultOpen?: boolean;
   roleColor: (r: string) => string;
+  roleLabel: (r: string) => string;
   onStats: (r: UserRow) => void;
   onRemove: (r: UserRow) => void;
   onEditEmail: (r: UserRow) => void;
@@ -909,7 +914,7 @@ function WorkspaceGroupCard({
                     <td className="px-4 py-3 text-white/60 text-xs">{u.email || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${roleColor(u.role)}`}>
-                        {u.role.replace(/_/g, " ")}
+                        {roleLabel(u.role)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
