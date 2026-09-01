@@ -539,11 +539,31 @@ async function runNotifications(
     <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;">— The NewLight Team</p>
   </div>
 </body></html>`;
+      let icsAttachments: Array<{ filename: string; content: string }> | undefined;
+      try {
+        const endsAtStr = ((record as any)?.ends_at as string | undefined) ||
+          new Date(new Date(startsAt).getTime() + 30 * 60000).toISOString();
+        const ics = buildIcs({
+          uid: `${recordId || crypto.randomUUID()}@newlight-app.com`,
+          title: (record as any)?.title || "Meeting with NewLight",
+          startsAt,
+          endsAt: endsAtStr,
+          description: meta.notes || undefined,
+          location: zoomJoinUrl || undefined,
+        });
+        icsAttachments = [{
+          filename: "meeting.ics",
+          content: btoa(unescape(encodeURIComponent(ics))),
+        }];
+      } catch (e) {
+        console.error("[ics] build failed (sending without attachment):", e);
+      }
       clientEmailSent = await sendEmail(
         clientEmail,
         "Your NewLight appointment is confirmed",
         emailHtml,
         emailText,
+        icsAttachments,
       );
       console.log(`[EMAIL→client] to=${clientEmail} success=${clientEmailSent}`);
     } else {
