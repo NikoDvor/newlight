@@ -406,6 +406,11 @@ export default function AdminClientProfile() {
           </div>
         </TabsContent>
 
+        {/* RECURRING MEETINGS */}
+        <TabsContent value="recurring" className="mt-4">
+          <RecurringMeetingsTab clientId={clientId!} client={client} />
+        </TabsContent>
+
         {/* ACTIVITY LOG */}
         <TabsContent value="activity" className="mt-4">
           <div className="rounded-xl p-5" style={cardStyle}>
