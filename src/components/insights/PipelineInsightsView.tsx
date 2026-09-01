@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend,
 } from "recharts";
-import { Trophy, XCircle, UserX, CalendarClock, Percent } from "lucide-react";
+import { Trophy, XCircle, UserX, UserCheck, CalendarClock, Percent, AlertTriangle, TrendingDown } from "lucide-react";
 
 export type RangeKey = "30" | "90" | "365" | "all";
 
