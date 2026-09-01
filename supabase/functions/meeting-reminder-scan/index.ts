@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
       results.push({
         event_id: evt.id, window: w.key,
         minutes_until: Math.round(minutesUntil),
-        sms: smsOk, notification: notifOk,
+        sms: smsOk, email: emailOk, notification: notifOk,
       });
     }
   }
