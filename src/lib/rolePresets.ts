@@ -98,7 +98,7 @@ export const ROLE_PRESETS: Record<string, { label: string; description: string; 
     },
   },
   marketing_staff: {
-    label: "Marketing Staff",
+    label: "Salesmen",
     description: "Website, SEO, ads, social, content planner, reporting",
     defaults: {
       crm: "view", calendar: "none", booking: "none", forms: "edit",

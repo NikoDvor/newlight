@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
+import { ensureServicePocCalendar, listServicePocs } from "../_shared/service-poc-calendar.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -203,6 +204,161 @@ Deno.serve(async (req) => {
     return json({ ok: true, event_id: ev.id, starts_at: ev.starts_at, welcome });
   }
 
+
+
+  // ---------------------------------------------------------------------------
+  // Ongoing Service Meetings (independent of the onboarding/bdr_calendar flow)
+  // ---------------------------------------------------------------------------
+  if (action === "list_service_pocs") {
+    try {
+      const pocs = await listServicePocs(supabase);
+      return json({ pocs });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to list Service POCs" }, 500);
+    }
+  }
+
+  if (action === "service_poc_availability") {
+    const pocId = body.service_poc_user_id;
+    if (!pocId || typeof pocId !== "string") return json({ error: "service_poc_user_id is required" }, 400);
+    try {
+      const cal = await ensureServicePocCalendar(supabase, pocId);
+      const { data: availability } = await supabase
+        .from("calendar_availability")
+        .select("day_of_week, start_time, end_time, slot_interval_minutes, is_active, timezone")
+        .eq("calendar_id", cal.id)
+        .eq("is_active", true)
+        .order("day_of_week");
+      const { data: apptTypes } = await supabase
+        .from("calendar_appointment_types")
+        .select("duration_minutes")
+        .eq("calendar_id", cal.id)
+        .eq("is_active", true)
+        .limit(1);
+      return json({
+        calendar_id: cal.id,
+        timezone: cal.timezone || "America/Los_Angeles",
+        availability: availability || [],
+        default_duration_minutes: apptTypes?.[0]?.duration_minutes ?? 30,
+      });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to load availability" }, 500);
+    }
+  }
+
+  if (action === "schedule_recurring_service_meeting") {
+    if (!deal) return json({ error: "No deal linked to envelope" }, 400);
+    const pocId = body.service_poc_user_id;
+    const frequency = body.frequency;
+    const dayOfWeek = Number(body.day_of_week);
+    const time = String(body.time || "");
+    const notes = typeof body.notes === "string" ? body.notes : null;
+
+    if (!pocId || typeof pocId !== "string") return json({ error: "service_poc_user_id is required" }, 400);
+    if (frequency !== "weekly" && frequency !== "biweekly") return json({ error: "frequency must be weekly or biweekly" }, 400);
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) return json({ error: "day_of_week must be 0-6" }, 400);
+    if (!/^\d{1,2}:\d{2}$/.test(time)) return json({ error: "time must be HH:MM" }, 400);
+
+    try {
+      const cal = await ensureServicePocCalendar(supabase, pocId);
+      const tz = cal.timezone || "America/Los_Angeles";
+
+      const { data: apptTypes } = await supabase
+        .from("calendar_appointment_types")
+        .select("duration_minutes")
+        .eq("calendar_id", cal.id)
+        .eq("is_active", true)
+        .limit(1);
+      const durationMinutes = Number(apptTypes?.[0]?.duration_minutes ?? 30) || 30;
+
+      // Contact details already captured earlier in the Pay & Sign flow
+      let contactPhone: string | null = null;
+      if (deal.contact_id) {
+        const { data: contact } = await supabase
+          .from("crm_contacts").select("phone").eq("id", deal.contact_id).maybeSingle();
+        contactPhone = contact?.phone ?? null;
+      }
+
+      // Resolve the first occurrence in the calendar's timezone.
+      const zonedOffsetMs = (d: Date) => {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz, hour12: false,
+          year: "numeric", month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+        }).formatToParts(d).reduce((acc: any, p) => { acc[p.type] = p.value; return acc; }, {});
+        const asUtc = Date.UTC(
+          Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+          Number(parts.hour) % 24, Number(parts.minute), Number(parts.second),
+        );
+        return asUtc - d.getTime();
+      };
+      const localToUtc = (y: number, m: number, d: number, h: number, mi: number) => {
+        const naive = Date.UTC(y, m, d, h, mi, 0);
+        let guess = new Date(naive - zonedOffsetMs(new Date(naive)));
+        guess = new Date(naive - zonedOffsetMs(guess));
+        return guess;
+      };
+
+      const [hh, mm] = time.split(":").map(Number);
+      const now = new Date();
+      const nowParts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(now).reduce((acc: any, p) => { acc[p.type] = p.value; return acc; }, {});
+      const todayLocal = new Date(Date.UTC(Number(nowParts.year), Number(nowParts.month) - 1, Number(nowParts.day)));
+      let deltaDays = (dayOfWeek - todayLocal.getUTCDay() + 7) % 7;
+      let first = localToUtc(
+        todayLocal.getUTCFullYear(), todayLocal.getUTCMonth(), todayLocal.getUTCDate() + deltaDays, hh, mm,
+      );
+      if (first.getTime() <= now.getTime()) {
+        deltaDays += 7;
+        first = localToUtc(
+          todayLocal.getUTCFullYear(), todayLocal.getUTCMonth(), todayLocal.getUTCDate() + deltaDays, hh, mm,
+        );
+      }
+
+      const stepDays = frequency === "weekly" ? 7 : 14;
+      const seriesId = crypto.randomUUID();
+      const occurrences: Date[] = [];
+      for (let i = 0; i < 12; i++) {
+        occurrences.push(localToUtc(
+          todayLocal.getUTCFullYear(), todayLocal.getUTCMonth(), todayLocal.getUTCDate() + deltaDays + i * stepDays, hh, mm,
+        ));
+      }
+      const lastOccurrence = occurrences[occurrences.length - 1];
+
+      const rows = occurrences.map((start) => ({
+        calendar_id: cal.id,
+        client_id: deal.client_id,
+        assigned_user: pocId,
+        title: `Service Check-in: ${client?.name || deal.deal_name || "Client"}`,
+        contact_id: deal.contact_id || null,
+        contact_name: envelope.recipient_name || null,
+        contact_email: envelope.recipient_email || null,
+        contact_phone: contactPhone,
+        company_name: client?.name || deal.deal_name || null,
+        notes,
+        timezone: tz,
+        start_time: start.toISOString(),
+        end_time: new Date(start.getTime() + durationMinutes * 60 * 1000).toISOString(),
+        recurrence_frequency: frequency,
+        recurrence_series_id: seriesId,
+        recurrence_end_date: lastOccurrence.toISOString(),
+        booking_source: "pay_sign_recurring",
+      }));
+
+      const { error: insErr } = await supabase.from("calendar_events").insert(rows as any);
+      if (insErr) return json({ error: insErr.message }, 500);
+
+      return json({
+        ok: true,
+        series_id: seriesId,
+        first_occurrence: occurrences[0].toISOString(),
+        count: 12,
+      });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to schedule recurring meetings" }, 500);
+    }
+  }
 
   if (action === "create_payment") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);

@@ -90,7 +90,7 @@ export const ROLE_PRESET_OPTIONS = [
   { value: "sales_rep", label: "Sales Rep" },
   { value: "service_provider", label: "Service Provider" },
   { value: "support_staff", label: "Support Staff" },
-  { value: "marketing_staff", label: "Marketing Staff" },
+  { value: "marketing_staff", label: "Salesmen" },
   { value: "custom", label: "Custom" },
 ];
 

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2,
   CreditCard,
@@ -14,6 +15,7 @@ import {
   FileText,
   Eye,
   CalendarClock,
+  Repeat,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +36,8 @@ type Ctx = {
 };
 
 type StepKey = "review" | "pay" | "sign" | "schedule" | "done";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 
 function StepIndicator({ current, paid, signed, scheduled }: { current: StepKey; paid: boolean; signed: boolean; scheduled: boolean }) {
@@ -95,6 +99,18 @@ export default function PaySign() {
   const [reviewed, setReviewed] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [scheduleBusy, setScheduleBusy] = useState(false);
+  // Ongoing service meetings (optional)
+  const [pocs, setPocs] = useState<{ user_id: string; full_name: string; email: string | null }[]>([]);
+  const [pocId, setPocId] = useState("");
+  const [pocAvailability, setPocAvailability] = useState<any[]>([]);
+  const [recurFrequency, setRecurFrequency] = useState<"weekly" | "biweekly">("weekly");
+  const [recurDay, setRecurDay] = useState("");
+  const [recurTime, setRecurTime] = useState("");
+  const [recurNotes, setRecurNotes] = useState("");
+  const [recurBusy, setRecurBusy] = useState(false);
+  const [recurDone, setRecurDone] = useState<{ first_occurrence: string; count: number } | null>(null);
+  const [recurSkipped, setRecurSkipped] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
@@ -116,6 +132,23 @@ export default function PaySign() {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    supabase.functions
+      .invoke("pay-sign-context", { body: { share_token: token, action: "list_service_pocs" } })
+      .then(({ data }) => { if (data?.pocs) setPocs(data.pocs); });
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !pocId) { setPocAvailability([]); return; }
+    setRecurDay(""); setRecurTime("");
+    supabase.functions
+      .invoke("pay-sign-context", {
+        body: { share_token: token, action: "service_poc_availability", service_poc_user_id: pocId },
+      })
+      .then(({ data }) => setPocAvailability(data?.availability || []));
+  }, [token, pocId]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -244,6 +277,29 @@ export default function PaySign() {
     }
     toast.success("Onboarding meeting scheduled.");
     load();
+  };
+
+  const handleRecurring = async () => {
+    if (!token || !pocId || recurDay === "" || !recurTime) return;
+    setRecurBusy(true);
+    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+      body: {
+        share_token: token,
+        action: "schedule_recurring_service_meeting",
+        service_poc_user_id: pocId,
+        frequency: recurFrequency,
+        day_of_week: Number(recurDay),
+        time: recurTime,
+        notes: recurNotes.trim() || null,
+      },
+    });
+    setRecurBusy(false);
+    if (error || data?.error) {
+      toast.error(error?.message || data?.error || "Couldn't set up recurring meetings");
+      return;
+    }
+    toast.success("Recurring service meetings scheduled.");
+    setRecurDone({ first_occurrence: data.first_occurrence, count: data.count });
   };
 
   if (loading) {
@@ -511,6 +567,137 @@ export default function PaySign() {
         )}
 
 
+
+
+        {/* Ongoing service meetings (optional) */}
+        {scheduled && !recurSkipped && (
+          <Card className="p-6 mb-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", recurDone ? "bg-emerald-500/15 text-emerald-500" : "bg-primary/15 text-primary")}>
+                  {recurDone ? <CheckCircle2 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold">Ongoing Service Meetings</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {recurDone
+                      ? `${recurDone.count} meetings scheduled, starting ${new Date(recurDone.first_occurrence).toLocaleString([], { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}.`
+                      : "Optional — set a recurring check-in with your service point of contact. You can skip this and arrange it later."}
+                  </p>
+                </div>
+              </div>
+              {recurDone && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Scheduled</span>}
+            </div>
+
+            {!recurDone && (
+              pocs.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                  No service contacts are published yet. Your NewLight team will arrange these meetings with you.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Service point of contact</label>
+                      <select
+                        value={pocId}
+                        onChange={(e) => setPocId(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="">— Select a person —</option>
+                        {pocs.map((p) => (
+                          <option key={p.user_id} value={p.user_id}>{p.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Frequency</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["weekly", "biweekly"] as const).map((f) => (
+                          <Button
+                            key={f}
+                            type="button"
+                            variant={recurFrequency === f ? "default" : "outline"}
+                            onClick={() => setRecurFrequency(f)}
+                          >
+                            {f === "weekly" ? "Weekly" : "Bi-Weekly"}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {pocId && (
+                    pocAvailability.length === 0 ? (
+                      <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                        This contact hasn't published availability yet. Add a note below and your team will confirm times.
+                      </div>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Day</label>
+                          <select
+                            value={recurDay}
+                            onChange={(e) => { setRecurDay(e.target.value); setRecurTime(""); }}
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                          >
+                            <option value="">— Select a day —</option>
+                            {pocAvailability.map((a: any) => (
+                              <option key={`${a.day_of_week}-${a.start_time}`} value={String(a.day_of_week)}>
+                                {DAY_NAMES[a.day_of_week]} ({a.start_time?.slice(0, 5)}–{a.end_time?.slice(0, 5)})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Time</label>
+                          <select
+                            value={recurTime}
+                            onChange={(e) => setRecurTime(e.target.value)}
+                            disabled={recurDay === ""}
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
+                          >
+                            <option value="">— Select a time —</option>
+                            {pocAvailability
+                              .filter((a: any) => String(a.day_of_week) === recurDay)
+                              .flatMap((a: any) => {
+                                const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+                                const step = Number(a.slot_interval_minutes) || 30;
+                                const out: string[] = [];
+                                for (let m = toMin(a.start_time); m + step <= toMin(a.end_time); m += step) {
+                                  out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+                                }
+                                return out;
+                              })
+                              .map((t: string) => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    )
+                  )}
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Notes for the service team</label>
+                    <Textarea
+                      value={recurNotes}
+                      onChange={(e) => setRecurNotes(e.target.value)}
+                      placeholder="Best days/times, who should attend, anything the service team should know."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button onClick={handleRecurring} disabled={recurBusy || !pocId || recurDay === "" || !recurTime}>
+                      {recurBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Repeat className="h-4 w-4 mr-2" />}
+                      Set Up Recurring Meetings
+                    </Button>
+                    <Button variant="ghost" onClick={() => setRecurSkipped(true)}>Skip for now</Button>
+                  </div>
+                </div>
+              )
+            )}
+          </Card>
+        )}
 
         <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5" />
