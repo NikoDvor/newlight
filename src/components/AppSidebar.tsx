@@ -5,7 +5,8 @@ import {
   Calendar, FileText, CreditCard, Star,
   ChevronLeft, ChevronDown, BookOpen, LifeBuoy,
   Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
-  Workflow, Shield, Gift, Phone, Video
+  Workflow, Shield, Gift, Phone, Video,
+  Settings2, RefreshCw, Briefcase, FileSignature
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -32,8 +33,15 @@ interface NavEntry {
 
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+  {
+    type: "group", label: "AI & Growth",
+    items: [
+      { title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+      { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+      { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
+      { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
+    ],
+  },
   {
     type: "group", label: "Client Acquisition",
     items: [
@@ -46,33 +54,33 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Client Management",
+    type: "group", label: "Sales & CRM",
     items: [
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Sales Team", url: "/sales-team", icon: TrendingUp, moduleKey: "crm" },
-      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
       { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
       { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
-      { title: "Tasks", url: "/tasks", icon: ListChecks },
       { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
+      { title: "Pipeline Insights", url: "/pipeline-insights", icon: FileText, moduleKey: "reports" },
+    ],
+  },
+  {
+    type: "group", label: "Calendar & Meetings",
+    items: [
+      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
+      { title: "Tasks", url: "/tasks", icon: ListChecks },
+      { title: "Calendar Management", url: "/calendar-management", icon: Settings2, moduleKey: "calendar" },
+      { title: "Calendar Sync", url: "/calendar-integrations", icon: RefreshCw, moduleKey: "calendar" },
     ],
   },
   {
     type: "group", label: "Communications",
     items: [
       { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Communications", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
       { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
       { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
-    ],
-  },
-  {
-    type: "group", label: "Growth Intelligence",
-    items: [
-      { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
-      { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
-      { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
     ],
   },
   {
@@ -85,13 +93,23 @@ const navStructure: NavEntry[] = [
     ],
   },
   {
-    type: "group", label: "Team",
+    type: "group", label: "Team & Training",
     items: [
       { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
       { title: "Employee Performance", url: "/employee-performance", icon: TrendingUp, moduleKey: "team" },
       { title: "Training Center", url: "/training-center", icon: GraduationCap, moduleKey: "training" },
       { title: "Onboarding", url: "/sops", icon: BookOpen, moduleKey: "training" },
+      { title: "Workforce", url: "/workforce", icon: Briefcase, moduleKey: "workforce" },
+    ],
+  },
+  {
+    type: "group", label: "Client Success & Support",
+    items: [
+      { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
+      { title: "Client Success", url: "/client-success", icon: Shield },
+      { title: "Support Tickets", url: "/support-tickets", icon: LifeBuoy, moduleKey: "support" },
+      { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen, moduleKey: "support" },
     ],
   },
   {
@@ -100,8 +118,8 @@ const navStructure: NavEntry[] = [
       { title: "Billing", url: "/billing", icon: CreditCard },
       { title: "Documents", url: "/documents", icon: FileText },
       { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
-      { title: "Pipeline Insights", url: "/pipeline-insights", icon: FileText, moduleKey: "reports" },
-      { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
+      { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
+      { title: "Proposals", url: "/proposals", icon: FileSignature, moduleKey: "proposals" },
     ],
   },
 ];
