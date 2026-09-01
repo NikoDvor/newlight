@@ -302,7 +302,11 @@ export default function AdminAllCalendars() {
                 </div>
 
                 <button
-                  onClick={() => setExpanded((p) => ({ ...p, [c.key]: !p[c.key] }))}
+                  onClick={() => {
+                    const next = !expanded[c.key];
+                    setExpanded((p) => ({ ...p, [c.key]: next }));
+                    if (next) loadBookings(c);
+                  }}
                   className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.06] text-white/70 hover:bg-white/[0.1] hover:text-white transition-colors shrink-0"
                 >
                   Forms & Links
@@ -334,8 +338,46 @@ export default function AdminAllCalendars() {
                     ))
                   )}
                   {c.note && <p className="text-[11px] text-white/40 pt-1">{c.note}</p>}
+
+                  <div className="pt-3 mt-2 border-t border-white/[0.06]">
+                    <div className="text-xs font-medium text-white/70 mb-2">
+                      Upcoming Bookings
+                      <span className="text-white/35 font-normal"> · next 30 days</span>
+                    </div>
+                    {bookingsLoading[c.key] ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                    ) : !bookings[c.key] || bookings[c.key].length === 0 ? (
+                      <p className="text-xs text-white/40">No upcoming bookings in the next 30 days.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {groupByDay(bookings[c.key]).map(([day, rows]) => (
+                          <div key={day}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] uppercase tracking-wide text-white/45">{day}</span>
+                              {rows.length > 1 && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300">
+                                  {rows.length} on this day
+                                </span>
+                              )}
+                            </div>
+                            <ul className="mt-1 space-y-0.5">
+                              {rows.map((r) => (
+                                <li key={r.id} className="text-xs text-white/70 flex gap-2">
+                                  <span className="text-white/45 w-20 shrink-0">
+                                    {new Date(r.start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  </span>
+                                  <span className="truncate">{r.name}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
             </div>
           );
         })}
