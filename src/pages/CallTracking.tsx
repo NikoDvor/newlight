@@ -22,6 +22,19 @@ const OUTCOMES = [
   "Lost",
 ];
 
+// Outcomes that indicate a loss/objection — objection category is required for these.
+const OBJECTION_OUTCOMES = new Set(["Not Interested", "Do Not Call", "Lost"]);
+
+const OBJECTION_CATEGORIES = [
+  "Price",
+  "Timing",
+  "Trust/Credibility",
+  "No Decision Maker",
+  "Competitor",
+  "No Need",
+  "Other",
+];
+
 type CallRow = {
   id: string;
   user_id: string;
@@ -66,7 +79,11 @@ export default function CallTracking() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactId, setContactId] = useState<string>("");
   const [outcome, setOutcome] = useState<string>("");
+  const [objectionCategory, setObjectionCategory] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+
+  const needsObjection = OBJECTION_OUTCOMES.has(outcome);
+
 
   const fetchAll = async () => {
     if (!user || !activeClientId) return;
@@ -99,12 +116,17 @@ export default function CallTracking() {
       toast({ title: "Choose an outcome", variant: "destructive" });
       return;
     }
+    if (needsObjection && !objectionCategory) {
+      toast({ title: "Choose an objection category", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("client_call_outcomes").insert({
       client_id: activeClientId,
       user_id: user.id,
       contact_id: contactId || null,
       outcome,
+      objection_category: objectionCategory || null,
       notes: notes.trim() || null,
     });
     setSaving(false);
@@ -114,6 +136,7 @@ export default function CallTracking() {
     }
     toast({ title: "Call logged" });
     setOutcome("");
+    setObjectionCategory("");
     setNotes("");
     setContactId("");
     fetchAll();
@@ -206,6 +229,17 @@ export default function CallTracking() {
                 </SelectContent>
               </Select>
             </div>
+            {needsObjection && (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Objection Category</label>
+                <Select value={objectionCategory} onValueChange={setObjectionCategory}>
+                  <SelectTrigger><SelectValue placeholder="Select objection" /></SelectTrigger>
+                  <SelectContent>
+                    {OBJECTION_CATEGORIES.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Notes</label>

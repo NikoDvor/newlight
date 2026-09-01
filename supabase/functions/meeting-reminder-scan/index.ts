@@ -50,6 +50,38 @@ async function sendSms(to: string, body: string): Promise<boolean> {
   }
 }
 
+async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - missing key] to=${to} subject="${subject}"`);
+    return false;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "NewLight <team@newlightgen.com>",
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    });
+    if (!res.ok) {
+      console.error("Resend error", res.status, await res.text().catch(() => ""));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Email send error", e);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -89,16 +121,18 @@ Deno.serve(async (req) => {
     const meta = (evt.metadata || {}) as Record<string, any>;
     let customerName: string = meta.customer_name || "";
     let customerPhone: string = meta.phone || "";
+    let customerEmail: string = meta.email || "";
     let businessName: string = meta.business_name || "";
-    if (evt.lead_id && (!customerPhone || !customerName)) {
+    if (evt.lead_id && (!customerPhone || !customerName || !customerEmail)) {
       const { data: lead } = await supabase
         .from("nl_bdr_leads")
-        .select("owner_name, business_name, phone")
+        .select("owner_name, business_name, phone, email")
         .eq("id", evt.lead_id as string)
         .maybeSingle();
       if (lead) {
         if (!customerName) customerName = (lead.owner_name || lead.business_name || "") as string;
         if (!customerPhone) customerPhone = (lead.phone || "") as string;
+        if (!customerEmail) customerEmail = ((lead as any).email || "") as string;
         if (!businessName) businessName = (lead.business_name || "") as string;
       }
     }
@@ -145,6 +179,25 @@ Deno.serve(async (req) => {
         smsOk = await sendSms(customerPhone, smsBody);
       }
 
+      // ---- Send customer email ----
+      let emailOk = false;
+      if (customerEmail) {
+        const whenText = `${new Date(evt.starts_at as string).toLocaleString("en-US", {
+          weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
+        })} PT`;
+        const subject = `Reminder: your NewLight meeting is in ${w.label}`;
+        const joinLineText = zoomUrl ? `\nJoin: ${zoomUrl}` : "\nCheck your email for the meeting link.";
+        const text = `Reminder: your NewLight meeting is in ${w.label}.\nWhen: ${whenText}${joinLineText}`;
+        const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#111">
+  <p>Reminder: your NewLight meeting is in <strong>${w.label}</strong>.</p>
+  <p><strong>When:</strong> ${whenText}</p>
+  ${zoomUrl ? `<p><a href="${zoomUrl}">Join the meeting</a><br/><span style="font-size:12px;color:#555">${zoomUrl}</span></p>` : `<p>Check your email for the meeting link.</p>`}
+  <p style="font-size:12px;color:#555">— NewLight</p>
+</div>`;
+        emailOk = await sendEmail(customerEmail, subject, html, text);
+      }
+
+
       // ---- Insert BDR in-app notification ----
       let notifOk = false;
       if (evt.user_id && evt.client_id) {
@@ -174,7 +227,7 @@ Deno.serve(async (req) => {
       results.push({
         event_id: evt.id, window: w.key,
         minutes_until: Math.round(minutesUntil),
-        sms: smsOk, notification: notifOk,
+        sms: smsOk, email: emailOk, notification: notifOk,
       });
     }
   }
