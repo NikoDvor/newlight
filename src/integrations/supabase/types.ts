@@ -1733,6 +1733,7 @@ export type Database = {
           cancellation_reason: string | null
           client_id: string
           company_id: string | null
+          company_name: string | null
           contact_email: string | null
           contact_id: string | null
           contact_name: string | null
@@ -1746,6 +1747,9 @@ export type Database = {
           location: string | null
           notes: string | null
           original_start_time: string | null
+          recurrence_end_date: string | null
+          recurrence_frequency: string | null
+          recurrence_series_id: string | null
           reminder_status: string | null
           reschedule_reason: string | null
           start_time: string
@@ -1762,6 +1766,7 @@ export type Database = {
           cancellation_reason?: string | null
           client_id: string
           company_id?: string | null
+          company_name?: string | null
           contact_email?: string | null
           contact_id?: string | null
           contact_name?: string | null
@@ -1775,6 +1780,9 @@ export type Database = {
           location?: string | null
           notes?: string | null
           original_start_time?: string | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_series_id?: string | null
           reminder_status?: string | null
           reschedule_reason?: string | null
           start_time: string
@@ -1791,6 +1799,7 @@ export type Database = {
           cancellation_reason?: string | null
           client_id?: string
           company_id?: string | null
+          company_name?: string | null
           contact_email?: string | null
           contact_id?: string | null
           contact_name?: string | null
@@ -1804,6 +1813,9 @@ export type Database = {
           location?: string | null
           notes?: string | null
           original_start_time?: string | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_series_id?: string | null
           reminder_status?: string | null
           reschedule_reason?: string | null
           start_time?: string
@@ -14634,6 +14646,7 @@ export type Database = {
         | "marketing_staff"
         | "support_staff"
         | "project_manager"
+        | "service_poc"
       envelope_status:
         | "draft"
         | "sent"
@@ -14829,6 +14842,7 @@ export const Constants = {
         "marketing_staff",
         "support_staff",
         "project_manager",
+        "service_poc",
       ],
       envelope_status: [
         "draft",
