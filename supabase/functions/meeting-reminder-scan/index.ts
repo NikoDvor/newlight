@@ -179,6 +179,25 @@ Deno.serve(async (req) => {
         smsOk = await sendSms(customerPhone, smsBody);
       }
 
+      // ---- Send customer email ----
+      let emailOk = false;
+      if (customerEmail) {
+        const whenText = `${new Date(evt.starts_at as string).toLocaleString("en-US", {
+          weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Los_Angeles",
+        })} PT`;
+        const subject = `Reminder: your NewLight meeting is in ${w.label}`;
+        const joinLineText = zoomUrl ? `\nJoin: ${zoomUrl}` : "\nCheck your email for the meeting link.";
+        const text = `Reminder: your NewLight meeting is in ${w.label}.\nWhen: ${whenText}${joinLineText}`;
+        const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#111">
+  <p>Reminder: your NewLight meeting is in <strong>${w.label}</strong>.</p>
+  <p><strong>When:</strong> ${whenText}</p>
+  ${zoomUrl ? `<p><a href="${zoomUrl}">Join the meeting</a><br/><span style="font-size:12px;color:#555">${zoomUrl}</span></p>` : `<p>Check your email for the meeting link.</p>`}
+  <p style="font-size:12px;color:#555">— NewLight</p>
+</div>`;
+        emailOk = await sendEmail(customerEmail, subject, html, text);
+      }
+
+
       // ---- Insert BDR in-app notification ----
       let notifOk = false;
       if (evt.user_id && evt.client_id) {
