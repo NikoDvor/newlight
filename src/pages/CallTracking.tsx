@@ -22,6 +22,19 @@ const OUTCOMES = [
   "Lost",
 ];
 
+// Outcomes that indicate a loss/objection — objection category is required for these.
+const OBJECTION_OUTCOMES = new Set(["Not Interested", "Do Not Call", "Lost"]);
+
+const OBJECTION_CATEGORIES = [
+  "Price",
+  "Timing",
+  "Trust/Credibility",
+  "No Decision Maker",
+  "Competitor",
+  "No Need",
+  "Other",
+];
+
 type CallRow = {
   id: string;
   user_id: string;
