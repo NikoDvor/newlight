@@ -207,6 +207,7 @@ export default function AdminClientProfile() {
           <TabsTrigger value="sales">Sales &amp; Deal</TabsTrigger>
           <TabsTrigger value="billing">Agreement &amp; Billing</TabsTrigger>
           <TabsTrigger value="workspace">Workspace &amp; Access</TabsTrigger>
+          <TabsTrigger value="recurring">Recurring Meetings</TabsTrigger>
           <TabsTrigger value="activity">Activity Log</TabsTrigger>
         </TabsList>
 
