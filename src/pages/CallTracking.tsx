@@ -79,7 +79,11 @@ export default function CallTracking() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactId, setContactId] = useState<string>("");
   const [outcome, setOutcome] = useState<string>("");
+  const [objectionCategory, setObjectionCategory] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+
+  const needsObjection = OBJECTION_OUTCOMES.has(outcome);
+
 
   const fetchAll = async () => {
     if (!user || !activeClientId) return;
