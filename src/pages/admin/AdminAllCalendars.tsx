@@ -14,6 +14,8 @@ interface BookingLink {
 
 interface UnifiedCalendar {
   key: string;
+  id: string;
+  source: "bdr" | "generic";
   ownerName: string;
   calendarName: string;
   typeLabel: string;
@@ -25,6 +27,13 @@ interface UnifiedCalendar {
   links: BookingLink[];
   note?: string;
 }
+
+interface BookingRow {
+  id: string;
+  start: string;
+  name: string;
+}
+
 
 const TYPE_STYLES: Record<string, string> = {
   bdr: "bg-[hsl(211,96%,56%)]/15 border-[hsl(211,96%,60%)]/30 text-[hsl(211,96%,80%)]",
@@ -42,12 +51,79 @@ function typeLabelFor(t: string) {
     .join(" ");
 }
 
+function groupByDay(rows: BookingRow[]): [string, BookingRow[]][] {
+  const map = new Map<string, BookingRow[]>();
+  rows.forEach((r) => {
+    const day = new Date(r.start).toLocaleDateString(undefined, {
+      weekday: "short", month: "short", day: "numeric",
+    });
+    map.set(day, [...(map.get(day) || []), r]);
+  });
+  return [...map.entries()];
+}
+
+
+
 export default function AdminAllCalendars() {
   const [items, setItems] = useState<UnifiedCalendar[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [bookings, setBookings] = useState<Record<string, BookingRow[]>>({});
+  const [bookingsLoading, setBookingsLoading] = useState<Record<string, boolean>>({});
+
+  const loadBookings = async (c: UnifiedCalendar) => {
+    if (bookings[c.key] || bookingsLoading[c.key]) return;
+    setBookingsLoading((p) => ({ ...p, [c.key]: true }));
+    const nowIso = new Date().toISOString();
+    const endIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    let rows: BookingRow[] = [];
+    try {
+      if (c.source === "bdr") {
+        const { data } = await (supabase as any)
+          .from("bdr_calendar_events")
+          .select("id, starts_at, title, lead_id")
+          .eq("calendar_id", c.id)
+          .gte("starts_at", nowIso)
+          .lte("starts_at", endIso)
+          .order("starts_at");
+        const evts = (data || []) as any[];
+        const leadIds = [...new Set(evts.map((e) => e.lead_id).filter(Boolean))];
+        const leadMap: Record<string, string> = {};
+        if (leadIds.length) {
+          const { data: leads } = await (supabase as any)
+            .from("nl_bdr_leads")
+            .select("id, business_name")
+            .in("id", leadIds);
+          (leads || []).forEach((l: any) => { if (l.business_name) leadMap[l.id] = l.business_name; });
+        }
+        rows = evts.map((e) => ({
+          id: e.id,
+          start: e.starts_at,
+          name: (e.lead_id && leadMap[e.lead_id]) || e.title || "Untitled booking",
+        }));
+      } else {
+        const { data } = await (supabase as any)
+          .from("calendar_events")
+          .select("id, start_time, title, contact_name")
+          .eq("calendar_id", c.id)
+          .gte("start_time", nowIso)
+          .lte("start_time", endIso)
+          .order("start_time");
+        rows = ((data || []) as any[]).map((e) => ({
+          id: e.id,
+          start: e.start_time,
+          name: e.contact_name || e.title || "Untitled booking",
+        }));
+      }
+    } catch {
+      rows = [];
+    }
+    setBookings((p) => ({ ...p, [c.key]: rows }));
+    setBookingsLoading((p) => ({ ...p, [c.key]: false }));
+  };
+
 
   useEffect(() => {
     const load = async () => {
@@ -116,9 +192,12 @@ export default function AdminAllCalendars() {
           const ct = bdrCounts[c.id] || { total: 0, upcoming: 0 };
           return {
             key: `bdr-${c.id}`,
+            id: c.id,
+            source: "bdr" as const,
             ownerName: nameMap[c.user_id] || "Unassigned",
             calendarName: c.name,
-            typeLabel: "BDR Pipeline",
+            typeLabel: "Salesmen Pipeline",
+
             typeClass: TYPE_STYLES.bdr,
             total: ct.total,
             upcoming: ct.upcoming,
@@ -134,7 +213,10 @@ export default function AdminAllCalendars() {
           const type = c.calendar_type || "other";
           return {
             key: `cal-${c.id}`,
+            id: c.id,
+            source: "generic" as const,
             ownerName: (c.owner_user_id && nameMap[c.owner_user_id]) || "Unassigned",
+
             calendarName: c.calendar_name,
             typeLabel: typeLabelFor(type),
             typeClass: TYPE_STYLES[type] || "bg-white/10 border-white/20 text-white/70",
@@ -233,7 +315,11 @@ export default function AdminAllCalendars() {
                 </div>
 
                 <button
-                  onClick={() => setExpanded((p) => ({ ...p, [c.key]: !p[c.key] }))}
+                  onClick={() => {
+                    const next = !expanded[c.key];
+                    setExpanded((p) => ({ ...p, [c.key]: next }));
+                    if (next) loadBookings(c);
+                  }}
                   className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.06] text-white/70 hover:bg-white/[0.1] hover:text-white transition-colors shrink-0"
                 >
                   Forms & Links
@@ -265,8 +351,46 @@ export default function AdminAllCalendars() {
                     ))
                   )}
                   {c.note && <p className="text-[11px] text-white/40 pt-1">{c.note}</p>}
+
+                  <div className="pt-3 mt-2 border-t border-white/[0.06]">
+                    <div className="text-xs font-medium text-white/70 mb-2">
+                      Upcoming Bookings
+                      <span className="text-white/35 font-normal"> · next 30 days</span>
+                    </div>
+                    {bookingsLoading[c.key] ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                    ) : !bookings[c.key] || bookings[c.key].length === 0 ? (
+                      <p className="text-xs text-white/40">No upcoming bookings in the next 30 days.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {groupByDay(bookings[c.key]).map(([day, rows]) => (
+                          <div key={day}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] uppercase tracking-wide text-white/45">{day}</span>
+                              {rows.length > 1 && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300">
+                                  {rows.length} on this day
+                                </span>
+                              )}
+                            </div>
+                            <ul className="mt-1 space-y-0.5">
+                              {rows.map((r) => (
+                                <li key={r.id} className="text-xs text-white/70 flex gap-2">
+                                  <span className="text-white/45 w-20 shrink-0">
+                                    {new Date(r.start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  </span>
+                                  <span className="truncate">{r.name}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
             </div>
           );
         })}
