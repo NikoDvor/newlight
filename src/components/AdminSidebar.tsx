@@ -122,6 +122,7 @@ const opsGroups: NavGroup[] = [
       { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
       { title: "Team & Users", url: "/admin/team", icon: Users },
       { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "All Calendars", url: "/admin/calendars", icon: CalendarCog },
       { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
       { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
       { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog },
