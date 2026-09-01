@@ -234,10 +234,50 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {bottleneck === null ? (
+        <Card className="border border-white/10 bg-white/[0.04]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Percent className="h-4 w-4 text-white/30 shrink-0" />
+            <p className="text-sm text-white/50">Not enough pipeline data yet to identify a bottleneck.</p>
+          </CardContent>
+        </Card>
+      ) : bottleneck.conversionPct > 75 ? (
+        <Card className="border border-emerald-400/20 bg-emerald-400/[0.06]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Trophy className="h-4 w-4 text-emerald-400 shrink-0" />
+            <p className="text-sm text-emerald-300">
+              No major bottlenecks — your weakest stage still converts at {bottleneck.conversionPct}% ({bottleneck.fromLabel} → {bottleneck.toLabel}).
+            </p>
+          </CardContent>
+        </Card>
+      ) : bottleneck.conversionPct < 50 ? (
+        <Card className="border border-amber-400/30 bg-amber-400/[0.07]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-300">
+                Biggest Bottleneck: {bottleneck.fromLabel} → {bottleneck.toLabel} ({bottleneck.conversionPct}% conversion)
+              </p>
+              <p className="text-[11px] text-amber-200/60 mt-0.5">This stage transition is losing the most deals — focus coaching and follow-up here.</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border border-white/10 bg-white/[0.04]">
+          <CardContent className="p-4 flex items-center gap-3">
+            <TrendingDown className="h-4 w-4 text-white/40 shrink-0" />
+            <p className="text-sm text-white/70">
+              Weakest transition: {bottleneck.fromLabel} → {bottleneck.toLabel} ({bottleneck.conversionPct}% conversion).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Stat label="Won" value={String(won.length)} sub={`$${wonValue.toLocaleString()}`} icon={Trophy} tone="good" />
         <Stat label="Lost" value={String(lost.length)} icon={XCircle} tone={lost.length ? "bad" : undefined} />
         <Stat label="No-Shows" value={String(noShows.length)} sub={`${appts.length} meetings`} icon={UserX} />
+        <Stat label="Attend Rate" value={attendRate === null ? "—" : `${attendRate}%`} icon={UserCheck} tone={attendRate !== null && attendRate >= 75 ? "good" : undefined} />
         <Stat label="Rescheduled" value={String(rescheduled)} icon={CalendarClock} />
         <Stat label="Close Rate" value={`${closeRate}%`} icon={Percent} tone={closeRate >= 50 ? "good" : undefined} />
       </div>
