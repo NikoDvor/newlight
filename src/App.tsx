@@ -198,6 +198,7 @@ import EmployeePaySign from "./pages/employee/EmployeePaySign";
 import BDRBookingPublic from "./pages/BDRBookingPublic";
 import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
+import AdminAllCalendars from "./pages/admin/AdminAllCalendars";
 import AdminClientActivation from "./pages/admin/AdminClientActivation";
 import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
@@ -325,6 +326,7 @@ const App = () => {
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="client-activation" element={<AdminClientActivation />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
+                <Route path="calendars" element={<AdminAllCalendars />} />
                 <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
                 <Route path="client-intelligence/health" element={<AdminClientHealth />} />
