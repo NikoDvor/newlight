@@ -448,9 +448,15 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
   open: boolean; onOpenChange: (v: boolean) => void; prefill: Date | null; calendar: BdrCalendar; onCreated: () => void;
 }) {
   const [title, setTitle] = useState("");
+  const [business, setBusiness] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("09:30");
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<"weekly" | "biweekly">("weekly");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -463,29 +469,68 @@ function QuickAddDialog({ open, onOpenChange, prefill, calendar, onCreated }: {
       const endBase = new Date(base.getTime() + 30 * 60_000);
       setEndTime(`${pad(endBase.getHours())}:${pad(endBase.getMinutes())}`);
       setTitle(""); setNotes("");
+      setBusiness(""); setName(""); setPhone(""); setEmail("");
+      setRecurring(false); setFrequency("weekly");
     }
   }, [open, prefill]);
 
   const save = async () => {
-    if (!title.trim() || !date || !startTime || !endTime) return;
+    if (!date || !startTime || !endTime) return;
+    const finalTitle = title.trim() || name.trim() || business.trim() || "Meeting";
     setSaving(true);
     const startDate = new Date(`${date}T${startTime}`);
     let endDate = new Date(`${date}T${endTime}`);
     if (endDate <= startDate) endDate = new Date(startDate.getTime() + 30 * 60_000);
-    const { error } = await (supabase as any).from("bdr_calendar_events").insert({
+
+    const metadata: Record<string, string> = {};
+    if (name.trim()) metadata.customer_name = name.trim();
+    if (phone.trim()) metadata.phone = phone.trim();
+    if (business.trim()) metadata.business_name = business.trim();
+    if (email.trim()) metadata.email = email.trim();
+
+    const baseRow = {
       user_id: calendar.user_id,
       client_id: (calendar as any).client_id,
       calendar_id: calendar.id,
-      title: title.trim(),
-      starts_at: startDate.toISOString(),
-      ends_at: endDate.toISOString(),
+      title: finalTitle,
       notes: notes || null,
       description: notes || null,
+      metadata,
       source: "manual",
-    });
+    };
+
+    let error: any = null;
+    if (!recurring) {
+      ({ error } = await (supabase as any).from("bdr_calendar_events").insert({
+        ...baseRow,
+        starts_at: startDate.toISOString(),
+        ends_at: endDate.toISOString(),
+      }));
+    } else {
+      const seriesId = crypto.randomUUID();
+      const stepDays = frequency === "biweekly" ? 14 : 7;
+      const durationMs = endDate.getTime() - startDate.getTime();
+      const occurrences = Array.from({ length: 12 }, (_, i) => {
+        const s = new Date(startDate);
+        s.setDate(s.getDate() + stepDays * i);
+        return { starts_at: s.toISOString(), ends_at: new Date(s.getTime() + durationMs).toISOString() };
+      });
+      const recurrenceEnd = occurrences[occurrences.length - 1].starts_at;
+      ({ error } = await (supabase as any).from("bdr_calendar_events").insert(
+        occurrences.map(o => ({
+          ...baseRow,
+          starts_at: o.starts_at,
+          ends_at: o.ends_at,
+          recurrence_frequency: frequency,
+          recurrence_series_id: seriesId,
+          recurrence_end_date: recurrenceEnd,
+        })),
+      ));
+    }
+
     setSaving(false);
     if (error) { toast({ title: "Couldn't save event", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Event added" });
+    toast({ title: recurring ? "12 recurring events added" : "Event added" });
     onCreated();
   };
 
