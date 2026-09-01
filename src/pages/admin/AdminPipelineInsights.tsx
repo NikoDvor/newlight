@@ -4,10 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpDown } from "lucide-react";
 import {
-  PipelineInsightsView, RangeFilter, usePipelineInsights, isNoShow, type RangeKey,
+  PipelineInsightsView, RangeFilter, usePipelineInsights, isNoShow, computeBottleneck, type RangeKey,
 } from "@/components/insights/PipelineInsightsView";
 
-type SortKey = "name" | "closeRate" | "noShowRate" | "rescheduleRate" | "stuck";
+type SortKey = "name" | "closeRate" | "noShowRate" | "rescheduleRate" | "stuck" | "weakestPct";
 
 const STAGES = [
   { key: "new_lead", label: "New" },
