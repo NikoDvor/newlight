@@ -9,6 +9,7 @@ import { computeWorkspaceReadiness, type WorkspaceReadinessResult } from "@/lib/
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonner } from "sonner";
+import RecurringMeetingsTab from "@/components/admin/RecurringMeetingsTab";
 import {
   Loader2, ExternalLink, Copy, FileText, Smartphone, ArrowLeft, Building2,
   Zap, ClipboardList, CreditCard, Wrench, CheckCircle2, ChevronRight,
