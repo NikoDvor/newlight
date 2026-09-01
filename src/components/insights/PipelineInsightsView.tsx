@@ -190,8 +190,10 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
   const rescheduled = appts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0);
   const closeRate = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0;
 
-  const funnel = STAGE_ORDER.map(s => ({ name: s.label, count: deals.filter(d => d.pipeline_stage === s.key).length }));
-  funnel.push({ name: "Lost", count: lost.length });
+  const funnel = computeStageFunnel(deals);
+  funnel.push({ name: "Lost", count: lost.length, conversionPct: null });
+  const bottleneck = computeBottleneck(deals);
+  const attendRate = appts.length ? Math.round(100 - (noShows.length / appts.length) * 100) : null;
 
   const wonLost = [
     { name: "Won", value: won.length },
