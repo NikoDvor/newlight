@@ -148,6 +148,7 @@ export default function AdminPipelineInsights() {
                       <td className="py-2 text-right text-white">{r.closeRate === null ? "—" : `${r.closeRate}%`}</td>
                       <td className={`py-2 text-right ${(r.noShowRate ?? 0) > 25 ? "text-red-400" : "text-white/70"}`}>{r.noShowRate === null ? "—" : `${r.noShowRate}%`}</td>
                       <td className="py-2 text-right text-white/70">{r.rescheduleRate === null ? "—" : `${r.rescheduleRate}%`}</td>
+                      <td className={`py-2 text-right ${r.weakestPct !== null && r.weakestPct < 50 ? "text-amber-400" : "text-white/70"}`}>{r.weakestPct === null ? "—" : `${r.weakestPct}%`}</td>
                       {STAGES.map(s => (
                         <td key={s.key} className="py-2 text-right text-white/60">{r.stages[s.key]}</td>
                       ))}
