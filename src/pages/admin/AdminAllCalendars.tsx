@@ -179,9 +179,12 @@ export default function AdminAllCalendars() {
           const ct = bdrCounts[c.id] || { total: 0, upcoming: 0 };
           return {
             key: `bdr-${c.id}`,
+            id: c.id,
+            source: "bdr" as const,
             ownerName: nameMap[c.user_id] || "Unassigned",
             calendarName: c.name,
-            typeLabel: "BDR Pipeline",
+            typeLabel: "Salesmen Pipeline",
+
             typeClass: TYPE_STYLES.bdr,
             total: ct.total,
             upcoming: ct.upcoming,
