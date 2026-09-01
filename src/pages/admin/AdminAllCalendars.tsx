@@ -57,6 +57,60 @@ export default function AdminAllCalendars() {
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [bookings, setBookings] = useState<Record<string, BookingRow[]>>({});
+  const [bookingsLoading, setBookingsLoading] = useState<Record<string, boolean>>({});
+
+  const loadBookings = async (c: UnifiedCalendar) => {
+    if (bookings[c.key] || bookingsLoading[c.key]) return;
+    setBookingsLoading((p) => ({ ...p, [c.key]: true }));
+    const nowIso = new Date().toISOString();
+    const endIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    let rows: BookingRow[] = [];
+    try {
+      if (c.source === "bdr") {
+        const { data } = await (supabase as any)
+          .from("bdr_calendar_events")
+          .select("id, starts_at, title, lead_id")
+          .eq("calendar_id", c.id)
+          .gte("starts_at", nowIso)
+          .lte("starts_at", endIso)
+          .order("starts_at");
+        const evts = (data || []) as any[];
+        const leadIds = [...new Set(evts.map((e) => e.lead_id).filter(Boolean))];
+        const leadMap: Record<string, string> = {};
+        if (leadIds.length) {
+          const { data: leads } = await (supabase as any)
+            .from("nl_bdr_leads")
+            .select("id, business_name")
+            .in("id", leadIds);
+          (leads || []).forEach((l: any) => { if (l.business_name) leadMap[l.id] = l.business_name; });
+        }
+        rows = evts.map((e) => ({
+          id: e.id,
+          start: e.starts_at,
+          name: (e.lead_id && leadMap[e.lead_id]) || e.title || "Untitled booking",
+        }));
+      } else {
+        const { data } = await (supabase as any)
+          .from("calendar_events")
+          .select("id, start_time, title, contact_name")
+          .eq("calendar_id", c.id)
+          .gte("start_time", nowIso)
+          .lte("start_time", endIso)
+          .order("start_time");
+        rows = ((data || []) as any[]).map((e) => ({
+          id: e.id,
+          start: e.start_time,
+          name: e.contact_name || e.title || "Untitled booking",
+        }));
+      }
+    } catch {
+      rows = [];
+    }
+    setBookings((p) => ({ ...p, [c.key]: rows }));
+    setBookingsLoading((p) => ({ ...p, [c.key]: false }));
+  };
+
 
   useEffect(() => {
     const load = async () => {
