@@ -194,6 +194,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    const platformEmployeeRoles = ["admin", "marketing_staff", "service_poc"];
+    if (platformEmployeeRoles.includes(role)) {
+      const { error: profileError } = await adminClient
+        .from("employee_profiles")
+        .upsert(
+          {
+            user_id: userId,
+            full_name: email.split("@")[0],
+            email,
+            employee_role: role,
+            status: "active",
+            client_id: "00000000-0000-0000-0000-0000000000ff",
+          },
+          { onConflict: "user_id" }
+        );
+      if (profileError) {
+        console.error("Employee profile upsert failed", { userId, email, role, message: profileError.message });
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
