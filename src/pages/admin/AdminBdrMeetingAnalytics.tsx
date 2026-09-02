@@ -153,6 +153,27 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+function RowGroup({ title, rows, noun }: { title: string; rows: { name: string; n: number }[]; noun: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-white/30 font-semibold mb-1.5">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-xs text-white/30 py-1.5">None logged.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {rows.map(o => (
+            <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
+              <span>{o.name}</span><span className="text-white/50">{o.n}</span>
+            </div>
+          ))}
+          <Sample n={rows.reduce((s, o) => s + o.n, 0)} noun={`logged ${noun}`} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 const chartTooltipStyle = {
   background: "hsl(220 30% 12%)", border: "1px solid hsla(211,96%,60%,.2)",
   borderRadius: 8, fontSize: 11, color: "white",
