@@ -678,7 +678,12 @@ export default function BDRMyLeads() {
   const handleSaveOutcome = async (outcome: OutcomeDef, note: string): Promise<{ promptObjection: boolean; lead: BdrLead; outcomeLabel: string }> => {
     if (!outcomeLead || !user?.id) return { promptObjection: false, lead: outcomeLead!, outcomeLabel: "" };
     const lead = outcomeLead;
-    const entry: OutcomeEntry = { label: outcome.label, timestamp: new Date().toISOString(), ...(note ? { note } : {}) };
+    const entry: OutcomeEntry = {
+      label: outcome.label,
+      timestamp: new Date().toISOString(),
+      meeting_kind: meetingKindFromSource(latestMeetingByLead[lead.id]?.source),
+      ...(note ? { note } : {}),
+    };
     const newHistory = [...(lead.outcome_history || []), entry];
 
     const newStage = pipelineStageFromOutcome(outcome.label) ?? derivePipelineStage({ ...lead, outcome_history: newHistory });
