@@ -352,45 +352,63 @@ export default function AdminBdrMeetingAnalytics() {
     };
   }, [wonLeads, events]);
 
-  /* 7. Objections + outcomes */
-  const objectionRows = useMemo(() => {
-    const m: Record<string, number> = {};
-    objections.forEach(o => {
-      const k = o.objection_category || "Uncategorized";
-      m[k] = (m[k] || 0) + 1;
+  /* 7. Objections + outcomes (split by meeting kind) */
+  const groupCounts = (items: { key: string; kind: string | null }[]) => {
+    const bucket = (k: string | null) => (k === "discovery" ? "discovery" : k === "closing" ? "closing" : "unlabeled");
+    const acc: Record<string, Record<string, number>> = { discovery: {}, closing: {}, unlabeled: {} };
+    items.forEach(i => {
+      const b = bucket(i.kind);
+      acc[b][i.key] = (acc[b][i.key] || 0) + 1;
     });
-    return Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
-  }, [objections]);
+    const toRows = (m: Record<string, number>) =>
+      Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
+    return {
+      discovery: toRows(acc.discovery),
+      closing: toRows(acc.closing),
+      unlabeled: toRows(acc.unlabeled),
+    };
+  };
 
-  const outcomeRows = useMemo(() => {
-    const m: Record<string, number> = {};
+  const objectionGroups = useMemo(
+    () => groupCounts(objections.map(o => ({ key: o.objection_category || "Uncategorized", kind: o.meeting_kind }))),
+    [objections],
+  );
+
+  const outcomeGroups = useMemo(() => {
+    const items: { key: string; kind: string | null }[] = [];
     leads.forEach(l => {
       const hist = Array.isArray(l.outcome_history) ? l.outcome_history : [];
       hist.forEach((h: any) => {
         const label = typeof h === "string" ? h : (h?.outcome || h?.label);
-        if (label) m[label] = (m[label] || 0) + 1;
+        if (label) items.push({ key: label, kind: typeof h === "string" ? null : (h?.meeting_kind ?? null) });
       });
     });
-    return Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
+    return groupCounts(items);
   }, [leads]);
 
   /* 8. Time to close */
   const timeToClose = useMemo(() => {
     const spans: number[] = [];
+    let usedFallback = false;
     wonLeads.forEach(l => {
       const deal = deals.find(d => d.id === l.crm_deal_id);
-      if (!deal?.updated_at) return;
+      const closedAt = deal?.paid_signed_at || deal?.updated_at;
+      if (!closedAt) return;
       const firstAttended = events
         .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
         .map(e => new Date(e.starts_at).getTime())
         .sort((a, b) => a - b)[0];
       if (!firstAttended) return;
-      const days = (new Date(deal.updated_at).getTime() - firstAttended) / 86400000;
-      if (days >= 0) spans.push(days);
+      const days = (new Date(closedAt).getTime() - firstAttended) / 86400000;
+      if (days >= 0) {
+        spans.push(days);
+        if (!deal?.paid_signed_at) usedFallback = true;
+      }
     });
     const avg = spans.length ? Math.round((spans.reduce((a, b) => a + b, 0) / spans.length) * 10) / 10 : null;
-    return { avg, n: spans.length };
+    return { avg, n: spans.length, usedFallback };
   }, [wonLeads, deals, events]);
+
 
   /* 9. Per-rep */
   const reps = useMemo(() => {
