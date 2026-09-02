@@ -836,6 +836,7 @@ export default function BDRMyLeads() {
       await (supabase as any).from("nl_bdr_objections").insert({
         user_id: user.id, lead_id: leadId, objection_category: category,
         outcome_logged: outcomeLabel, business_name: businessName,
+        meeting_kind: meetingKindFromSource(latestMeetingByLead[leadId]?.source),
       });
       await (supabase as any).from("nl_bdr_leads").update({ objection_category: category }).eq("id", leadId);
     }
