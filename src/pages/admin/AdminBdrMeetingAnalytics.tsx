@@ -410,7 +410,7 @@ export default function AdminBdrMeetingAnalytics() {
 
   const outcomeGroups = useMemo(() => {
     const items: { key: string; kind: string | null }[] = [];
-    leads.forEach(l => {
+    effectiveLeads.forEach(l => {
       const hist = Array.isArray(l.outcome_history) ? l.outcome_history : [];
       hist.forEach((h: any) => {
         const label = typeof h === "string" ? h : (h?.outcome || h?.label);
@@ -418,7 +418,7 @@ export default function AdminBdrMeetingAnalytics() {
       });
     });
     return groupCounts(items);
-  }, [leads]);
+  }, [effectiveLeads]);
 
   /* 8. Time to close */
   const timeToClose = useMemo(() => {
