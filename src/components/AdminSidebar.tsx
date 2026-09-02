@@ -111,6 +111,7 @@ const opsGroups: NavGroup[] = [
     items: [
       { title: "CRM", url: "/admin/ops/crm", icon: Contact },
       { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+      { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: ListChecks },
     ],
   },
   {
