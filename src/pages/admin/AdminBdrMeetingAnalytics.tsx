@@ -644,7 +644,7 @@ export default function AdminBdrMeetingAnalytics() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <Sample n={leads.length} noun="leads" />
+                  <Sample n={effectiveLeads.length} noun="leads" />
                 </>
               )}
             </CardContent>
