@@ -268,7 +268,23 @@ export default function AdminClientProfile() {
           </div>
 
           <div className="rounded-xl p-5" style={cardStyle}>
-            <p className="text-sm font-semibold text-white mb-3">Deal</p>
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <p className="text-sm font-semibold text-white">Deal</p>
+              {deal?.fully_activated_at ? (
+                <Pill className="bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]">Fully Activated</Pill>
+              ) : deal?.pay_sign_status === "paid_signed" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={activating}
+                  onClick={() => markFullyActivated(deal.id)}
+                  className="border-primary/30 text-primary hover:bg-primary/10"
+                >
+                  {activating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+                  Mark Fully Activated
+                </Button>
+              ) : null}
+            </div>
             {deal ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                 <Field label="Deal Name" value={deal.deal_name} />
@@ -278,6 +294,7 @@ export default function AdminClientProfile() {
                 <Field label="Retainer KPI" value={deal.retainer_kpi || "—"} />
                 <Field label="Pay & Sign Status" value={<Pill className={deal.pay_sign_status === "paid_signed" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-[hsla(40,96%,60%,.15)] text-[hsl(40,96%,68%)]"}>{String(deal.pay_sign_status || "—").replace(/_/g, " ")}</Pill>} />
                 <Field label="Close Prep Completed" value={dt(deal.close_prep_completed_at)} />
+                <Field label="Fully Activated" value={dt(deal.fully_activated_at)} />
                 <Field label="Assigned Rep" value={repName(deal.assigned_user)} />
                 <Field label="Created" value={d(deal.created_at)} />
               </div>
@@ -285,6 +302,7 @@ export default function AdminClientProfile() {
               <p className="text-sm text-white/40">No deal has been created for this client yet.</p>
             )}
           </div>
+
         </TabsContent>
 
         {/* AGREEMENT & BILLING */}
