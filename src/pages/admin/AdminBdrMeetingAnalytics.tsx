@@ -384,7 +384,7 @@ export default function AdminBdrMeetingAnalytics() {
         pct: counted ? Math.round((n / counted) * 100) : 0,
       })),
     };
-  }, [wonLeads, events]);
+  }, [wonLeads, effectiveEvents]);
 
   /* 7. Objections + outcomes (split by meeting kind) */
   const groupCounts = (items: { key: string; kind: string | null }[]) => {
