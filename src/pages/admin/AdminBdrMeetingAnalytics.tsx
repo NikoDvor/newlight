@@ -599,7 +599,7 @@ export default function AdminBdrMeetingAnalytics() {
           <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2"><CardTitle className="text-sm text-white">Full Sales Funnel</CardTitle></CardHeader>
             <CardContent>
-              {leads.length === 0 ? (
+              {effectiveLeads.length === 0 ? (
                 <EmptyState label="Leads and meetings will appear here as the sales pipeline runs." />
               ) : (
                 <>
