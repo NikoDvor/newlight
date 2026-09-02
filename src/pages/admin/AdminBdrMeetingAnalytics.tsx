@@ -312,26 +312,37 @@ export default function AdminBdrMeetingAnalytics() {
 
   const { events, leads, deals, objections, names } = data;
 
-  const discovery = useMemo(() => computeKind("discovery", events, leads, deals), [events, leads, deals]);
-  const closing = useMemo(() => computeKind("closing", events, leads, deals), [events, leads, deals]);
+  // Rep scoping: same logic as the per-rep table's myLeads/myEvents
+  const effectiveLeads = useMemo(
+    () => (repFilter === "all" ? leads : leads.filter(l => l.user_id === repFilter)),
+    [leads, repFilter],
+  );
+  const effectiveEvents = useMemo(() => {
+    if (repFilter === "all") return events;
+    const ids = new Set(effectiveLeads.map(l => l.id));
+    return events.filter(e => e.user_id === repFilter || (e.lead_id && ids.has(e.lead_id)));
+  }, [events, effectiveLeads, repFilter]);
+
+  const discovery = useMemo(() => computeKind("discovery", effectiveEvents, effectiveLeads, deals), [effectiveEvents, effectiveLeads, deals]);
+  const closing = useMemo(() => computeKind("closing", effectiveEvents, effectiveLeads, deals), [effectiveEvents, effectiveLeads, deals]);
 
   const wonDealIds = useMemo(
     () => new Set(deals.filter(d => d.pay_sign_status === "paid_signed").map(d => d.id)),
     [deals],
   );
   const wonLeads = useMemo(
-    () => leads.filter(l => l.crm_deal_id && wonDealIds.has(l.crm_deal_id)),
-    [leads, wonDealIds],
+    () => effectiveLeads.filter(l => l.crm_deal_id && wonDealIds.has(l.crm_deal_id)),
+    [effectiveLeads, wonDealIds],
   );
 
   /* 5. Funnel */
   const funnel = useMemo(() => {
-    const discoveryBooked = new Set(events.filter(e => kindOf(e) === "discovery" && e.lead_id).map(e => e.lead_id)).size;
-    const discoveryAttended = new Set(events.filter(e => kindOf(e) === "discovery" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
-    const closingBooked = new Set(events.filter(e => kindOf(e) === "closing" && e.lead_id).map(e => e.lead_id)).size;
-    const closingAttended = new Set(events.filter(e => kindOf(e) === "closing" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
+    const discoveryBooked = new Set(effectiveEvents.filter(e => kindOf(e) === "discovery" && e.lead_id).map(e => e.lead_id)).size;
+    const discoveryAttended = new Set(effectiveEvents.filter(e => kindOf(e) === "discovery" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
+    const closingBooked = new Set(effectiveEvents.filter(e => kindOf(e) === "closing" && e.lead_id).map(e => e.lead_id)).size;
+    const closingAttended = new Set(effectiveEvents.filter(e => kindOf(e) === "closing" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
     const stages = [
-      { name: "Leads Created", count: leads.length },
+      { name: "Leads Created", count: effectiveLeads.length },
       { name: "Discovery Booked", count: discoveryBooked },
       { name: "Discovery Attended", count: discoveryAttended },
       { name: "Closing Booked", count: closingBooked },
@@ -342,7 +353,8 @@ export default function AdminBdrMeetingAnalytics() {
       ...s,
       conversionPct: i === 0 ? null : (stages[i - 1].count > 0 ? Math.round((s.count / stages[i - 1].count) * 100) : null),
     }));
-  }, [events, leads, wonLeads]);
+  }, [effectiveEvents, effectiveLeads, wonLeads]);
+
 
   const bottleneck = useMemo(() => {
     const withConv = funnel.filter((f, i) => i > 0 && f.conversionPct !== null);
