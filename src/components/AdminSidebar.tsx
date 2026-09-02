@@ -79,11 +79,12 @@ const adminGroups: NavGroup[] = [
 // SECTION 2 — NewLight Operations (mirrors AppSidebar.tsx navStructure, minus Dashboard)
 const opsGroups: NavGroup[] = [
   {
-    label: "Ops Top",
+    label: "AI & Growth",
     ungrouped: true,
     items: [
       { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
       { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
+      { title: "Automation Workflows", url: "/admin/automations", icon: Zap },
     ],
   },
   {
@@ -96,38 +97,55 @@ const opsGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Growth Systems",
+    label: "Client Acquisition",
     items: [
       { title: "Website", url: "/admin/ops/website", icon: Globe },
       { title: "SEO", url: "/admin/ops/seo", icon: Search },
       { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
       { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
-      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
       { title: "AI Visibility", url: "/admin/ops/ai-visibility", icon: Eye },
-
+    ],
+  },
+  {
+    label: "Sales & CRM",
+    items: [
+      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
+      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Calendar & Meetings",
+    items: [
+      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
+      { title: "All Calendars", url: "/admin/calendars", icon: CalendarCog },
+      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
+      { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog },
+      { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Communications",
+    items: [
+      { title: "Email", url: "/admin/ops/email", icon: Mail },
+      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
+      { title: "Notifications", url: "/admin/ops/notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Retention & Compliance",
+    items: [
+      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
     ],
   },
   {
     label: "Enterprise Services",
     items: [
-      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
-      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
       { title: "Marketing Review", url: "/admin/marketing-review", icon: Megaphone },
       { title: "Content Templates", url: "/admin/marketing-templates", icon: FileText },
       { title: "Risk Profiles", url: "/admin/risk-profiles", icon: ShieldCheck },
       { title: "Promoters", url: "/admin/promoters", icon: Users },
       { title: "Households", url: "/admin/households", icon: Home },
       { title: "Webinars", url: "/admin/webinars", icon: Calendar },
-      
-      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-      { title: "Team & Users", url: "/admin/team", icon: Users },
-      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-      { title: "All Calendars", url: "/admin/calendars", icon: CalendarCog },
-      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
-      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
-      { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog },
-      { title: "Email", url: "/admin/ops/email", icon: Mail },
-      { title: "Notifications", url: "/admin/ops/notifications", icon: Bell },
     ],
   },
   {
@@ -135,9 +153,6 @@ const opsGroups: NavGroup[] = [
     items: [
       { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
       { title: "Competitor Tracking", url: "/admin/ops/competitor-tracking", icon: TrendingUp },
-      { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare },
-      { title: "Automation Workflows", url: "/admin/automations", icon: Zap },
-
     ],
   },
   {
@@ -152,18 +167,24 @@ const opsGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Training & Support",
+    label: "Team & Training",
+    items: [
+      { title: "Team & Users", url: "/admin/team", icon: Users },
+      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
+      { title: "Courses", url: "/admin/ops/training", icon: GraduationCap },
+    ],
+  },
+  {
+    label: "Client Success & Support",
     items: [
       { title: "Support Tickets", url: "/admin/ops/support-tickets", icon: LifeBuoy },
       { title: "Knowledge Base", url: "/admin/ops/knowledge-base", icon: BookOpen },
       { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
-      { title: "Courses", url: "/admin/ops/training", icon: GraduationCap },
       { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
     ],
   },
   {
-    label: "Ops Bottom",
-    ungrouped: true,
+    label: "Account",
     items: [
       { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
     ],
