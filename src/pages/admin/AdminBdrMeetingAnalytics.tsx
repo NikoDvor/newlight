@@ -448,12 +448,13 @@ export default function AdminBdrMeetingAnalytics() {
       const spans: number[] = [];
       myWon.forEach(l => {
         const deal = deals.find(x => x.id === l.crm_deal_id);
-        if (!deal?.updated_at) return;
+        const closedAt = deal?.paid_signed_at || deal?.updated_at;
+        if (!closedAt) return;
         const first = myEvents
           .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
           .map(e => new Date(e.starts_at).getTime()).sort((a, b) => a - b)[0];
         if (!first) return;
-        const days = (new Date(deal.updated_at).getTime() - first) / 86400000;
+        const days = (new Date(closedAt).getTime() - first) / 86400000;
         if (days >= 0) spans.push(days);
       });
 
