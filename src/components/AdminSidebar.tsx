@@ -44,6 +44,7 @@ const adminGroups: NavGroup[] = [
       { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Prospects", url: "/admin/prospects", icon: Contact },
       { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
+      { title: "BDR Meeting Analytics", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
       { title: "Client Activation", url: "/admin/client-activation", icon: Zap },
       { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
       { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
