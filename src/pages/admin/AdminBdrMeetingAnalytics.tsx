@@ -47,7 +47,7 @@ interface Deal {
   paid_signed_at: string | null;
 }
 
-interface Objection { id: string; objection_category: string | null; meeting_kind: string | null }
+interface Objection { id: string; objection_category: string | null; meeting_kind: string | null; user_id: string | null }
 
 interface Data {
   events: Evt[];
@@ -81,7 +81,7 @@ async function fetchData(range: RangeKey): Promise<Data> {
     .select("id, lead_id, user_id, starts_at, attendance, source, reschedule_count");
   let lq = supabase.from("nl_bdr_leads")
     .select("id, user_id, crm_deal_id, business_name, pipeline_stage, outcome_history, created_at");
-  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, meeting_kind, created_at");
+  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, meeting_kind, user_id, created_at");
 
   if (since) {
     eq = eq.gte("starts_at", since);
@@ -404,8 +404,12 @@ export default function AdminBdrMeetingAnalytics() {
   };
 
   const objectionGroups = useMemo(
-    () => groupCounts(objections.map(o => ({ key: o.objection_category || "Uncategorized", kind: o.meeting_kind }))),
-    [objections],
+    () => groupCounts(
+      objections
+        .filter(o => repFilter === "all" || o.user_id === repFilter)
+        .map(o => ({ key: o.objection_category || "Uncategorized", kind: o.meeting_kind }))
+    ),
+    [objections, repFilter],
   );
 
   const outcomeGroups = useMemo(() => {
