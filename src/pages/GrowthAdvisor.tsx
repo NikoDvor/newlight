@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket, RefreshCw, TrendingUp, DollarSign, Target, Compass,
   Sparkles, Trash2, Plus, Pencil, Check, X, ChevronDown,
-  Loader2, Layers, MapPin, Repeat, Tag, Users,
+  Loader2, Layers, MapPin, Repeat, Tag, Users, ArrowRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
