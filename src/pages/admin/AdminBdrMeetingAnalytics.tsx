@@ -514,14 +514,29 @@ export default function AdminBdrMeetingAnalytics() {
           <p className="text-xs text-white/40 mt-0.5">
             Sales-side pipeline only (leads, discovery & closing meetings) — separate from client-facing Pipeline Insights.
           </p>
+          {repFilter !== "all" && (
+            <p className="text-xs text-amber-300/80 mt-1">
+              Showing: {reps.find(r => r.id === repFilter)?.name || "selected rep"} only — the per-rep table below still shows all reps.
+            </p>
+          )}
         </div>
-        <Select value={range} onValueChange={v => setRange(v as RangeKey)}>
-          <SelectTrigger className="w-[170px] h-9 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {RANGE_OPTIONS.map(o => <SelectItem key={o.key} value={o.key} className="text-xs">{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={repFilter} onValueChange={setRepFilter}>
+            <SelectTrigger className="w-[180px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All Reps</SelectItem>
+              {reps.map(r => <SelectItem key={r.id} value={r.id} className="text-xs">{r.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={range} onValueChange={v => setRange(v as RangeKey)}>
+            <SelectTrigger className="w-[170px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {RANGE_OPTIONS.map(o => <SelectItem key={o.key} value={o.key} className="text-xs">{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
 
       {loading ? (
         <div className="py-16 text-center text-sm text-white/40">Loading meeting analytics…</div>
