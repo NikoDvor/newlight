@@ -303,7 +303,7 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Stat label="Won" value={String(won.length)} sub={`$${wonValue.toLocaleString()}`} icon={Trophy} tone="good" />
         <Stat label="Lost" value={String(lost.length)} icon={XCircle} tone={lost.length ? "bad" : undefined} />
-        <Stat label="No-Shows" value={String(noShows.length)} sub={`${appts.length} meetings`} icon={UserX} />
+        <Stat label="No-Shows" value={String(noShows.length)} sub={`${effectiveAppts.length} meetings`} icon={UserX} />
         <Stat label="Attend Rate" value={attendRate === null ? "—" : `${attendRate}%`} icon={UserCheck} tone={attendRate !== null && attendRate >= 75 ? "good" : undefined} />
         <Stat label="Rescheduled" value={String(rescheduled)} icon={CalendarClock} />
         <Stat label="Close Rate" value={`${closeRate}%`} icon={Percent} tone={closeRate >= 50 ? "good" : undefined} />
@@ -312,7 +312,7 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
       <Card className="border-0 bg-white/[0.04]">
         <CardHeader className="pb-2"><CardTitle className="text-sm text-white">Pipeline Funnel</CardTitle></CardHeader>
         <CardContent>
-          {deals.length === 0 ? (
+          {effectiveDeals.length === 0 ? (
             <EmptyState label="Deals will appear here as your pipeline fills up." />
           ) : (
             <div className="h-[260px]">
