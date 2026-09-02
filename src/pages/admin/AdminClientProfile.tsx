@@ -56,6 +56,7 @@ export default function AdminClientProfile() {
   const [readiness, setReadiness] = useState<WorkspaceReadinessResult | null>(null);
   const [bdrLead, setBdrLead] = useState<any>(null);
   const [deal, setDeal] = useState<any>(null);
+  const [activating, setActivating] = useState(false);
   const [repNames, setRepNames] = useState<Record<string, string>>({});
   const [subs, setSubs] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -114,6 +115,25 @@ export default function AdminClientProfile() {
     setActiveClientId(client.id);
     navigate("/dashboard");
   };
+
+  async function markFullyActivated(dealId: string) {
+    setActivating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mark-fully-activated", { body: { deal_id: dealId } });
+      if (error || !(data as any)?.ok) {
+        toast({ title: "Could not mark activated", description: "Please try again.", variant: "destructive" });
+        return;
+      }
+      const { data: fresh } = await (supabase as any).from("crm_deals").select("*").eq("id", dealId).maybeSingle();
+      if (fresh) setDeal(fresh);
+      else setDeal((prev: any) => (prev ? { ...prev, fully_activated_at: new Date().toISOString() } : prev));
+      toast({ title: "Client marked fully activated" });
+    } catch {
+      toast({ title: "Could not mark activated", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setActivating(false);
+    }
+  }
 
   async function viewAgreement(dealId: string) {
     setAgreementLoading(true);
