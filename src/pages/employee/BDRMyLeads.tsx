@@ -22,7 +22,14 @@ import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots"
 
 
 /* ─── types ─── */
-interface OutcomeEntry { label: string; note?: string; timestamp: string }
+interface OutcomeEntry { label: string; note?: string; timestamp: string; meeting_kind?: string | null }
+
+/** Map a meeting source string to the pipeline meeting kind it represents. */
+function meetingKindFromSource(source?: string | null): "discovery" | "closing" | null {
+  if (source === "booking_form" || source === "dialer") return "discovery";
+  if (source === "closing_meeting") return "closing";
+  return null;
+}
 interface BdrLead {
   id: string;
   client_id: string | null;
