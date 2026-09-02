@@ -44,9 +44,10 @@ interface Deal {
   id: string;
   pay_sign_status: string | null;
   updated_at: string | null;
+  paid_signed_at: string | null;
 }
 
-interface Objection { id: string; objection_category: string | null }
+interface Objection { id: string; objection_category: string | null; meeting_kind: string | null }
 
 interface Data {
   events: Evt[];
