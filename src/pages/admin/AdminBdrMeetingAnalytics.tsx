@@ -636,9 +636,11 @@ export default function AdminBdrMeetingAnalytics() {
                   icon={Clock}
                   sub={<Sample n={timeToClose.n} noun="closed deals" />}
                 />
-                <p className="text-[11px] text-white/35">
-                  Paid &amp; signed timing is approximated from the deal's last update, since no dedicated signature timestamp is stored.
-                </p>
+                {timeToClose.usedFallback && (
+                  <p className="text-[11px] text-white/35">
+                    Some pre-dates this fix and uses an approximate timestamp.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -646,47 +648,54 @@ export default function AdminBdrMeetingAnalytics() {
           {/* 7: objections + outcomes */}
           <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-white">Objections &amp; Outcomes (approximate)</CardTitle>
+              <CardTitle className="text-sm text-white">Objections &amp; Outcomes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-[11px] text-amber-200/60 bg-amber-400/[0.06] border border-amber-400/20 rounded-lg px-3 py-2">
-                Not tied to a specific meeting — shown as overall pipeline outcomes, approximated by pipeline stage at time of logging
-                (warm ≈ post-discovery, hot ≈ post-closing).
+            <CardContent className="space-y-5">
+              <p className="text-[11px] text-white/35">
+                Tagged to whichever meeting was most recent for that lead at the moment it was logged.
+                Entries from before this tracking existed show as Unlabeled.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Objection Categories</p>
-                  {objectionRows.length === 0 ? (
-                    <EmptyState label="Objections logged by reps will be grouped here." />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {objectionRows.map(o => (
-                        <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
-                          <span>{o.name}</span><span className="text-white/50">{o.n}</span>
-                        </div>
-                      ))}
-                      <Sample n={objectionRows.reduce((s, o) => s + o.n, 0)} noun="logged objections" />
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Objection Categories</p>
+                {objectionGroups.discovery.length === 0 && objectionGroups.closing.length === 0 && objectionGroups.unlabeled.length === 0 ? (
+                  <EmptyState label="Objections logged by reps will be grouped here." />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <RowGroup title="Discovery" rows={objectionGroups.discovery} noun="objections" />
+                      <RowGroup title="Closing" rows={objectionGroups.closing} noun="objections" />
                     </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead Outcome History</p>
-                  {outcomeRows.length === 0 ? (
-                    <EmptyState label="Outcomes logged on leads will be tallied here." />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {outcomeRows.map(o => (
-                        <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
-                          <span>{o.name}</span><span className="text-white/50">{o.n}</span>
-                        </div>
-                      ))}
-                      <Sample n={outcomeRows.reduce((s, o) => s + o.n, 0)} noun="logged outcomes" />
+                    {objectionGroups.unlabeled.length > 0 && (
+                      <p className="text-[11px] text-white/30 mt-2">
+                        Unlabeled (logged before this tracking existed): {objectionGroups.unlabeled.reduce((s, o) => s + o.n, 0)}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead Outcome History</p>
+                {outcomeGroups.discovery.length === 0 && outcomeGroups.closing.length === 0 && outcomeGroups.unlabeled.length === 0 ? (
+                  <EmptyState label="Outcomes logged on leads will be tallied here." />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <RowGroup title="Discovery" rows={outcomeGroups.discovery} noun="outcomes" />
+                      <RowGroup title="Closing" rows={outcomeGroups.closing} noun="outcomes" />
                     </div>
-                  )}
-                </div>
+                    {outcomeGroups.unlabeled.length > 0 && (
+                      <p className="text-[11px] text-white/30 mt-2">
+                        Unlabeled (logged before this tracking existed): {outcomeGroups.unlabeled.reduce((s, o) => s + o.n, 0)}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
+
 
           {/* 9: per-rep */}
           <Card className="border-0 bg-white/[0.04]">
