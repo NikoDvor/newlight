@@ -179,7 +179,7 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 /* Latest meeting per lead, used for attendance tracking */
-interface LatestMeeting { id: string; starts_at: string; attendance: string | null; source: string | null }
+interface LatestMeeting { id: string; starts_at: string; attendance: string | null; source: string | null; reschedule_count: number | null }
 
 /** Hours remaining before the 72h Unattended auto-revert. */
 function unattendedHoursLeft(since: string): number {
@@ -250,14 +250,14 @@ export default function BDRMyLeads() {
       const CHUNK = 200;
       for (let i = 0; i < leadIds.length; i += CHUNK) {
         const { data: evts } = await (supabase as any).from("bdr_calendar_events")
-          .select("id, lead_id, starts_at, attendance, source")
+          .select("id, lead_id, starts_at, attendance, source, reschedule_count")
           .in("lead_id", leadIds.slice(i, i + CHUNK))
           .order("starts_at", { ascending: false });
         (evts || []).forEach((e: any) => {
           if (!e.lead_id) return;
           const prev = meetingMap[e.lead_id];
           if (!prev || new Date(e.starts_at).getTime() > new Date(prev.starts_at).getTime()) {
-            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance, source: e.source ?? null };
+            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance, source: e.source ?? null, reschedule_count: e.reschedule_count ?? null };
           }
         });
       }
@@ -316,10 +316,10 @@ export default function BDRMyLeads() {
     const previousStartsAt = existing?.starts_at ?? null;
     if (existing) {
       const { error } = await (supabase as any).from("bdr_calendar_events")
-        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending" })
+        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending", reschedule_count: (existing as any).reschedule_count != null ? (existing as any).reschedule_count + 1 : 1 })
         .eq("id", existing.id);
       if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null } }));
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null, reschedule_count: (existing as any).reschedule_count != null ? (existing as any).reschedule_count + 1 : 1 } }));
     } else {
       const cal = await ensureBdrCalendar();
       if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
@@ -335,7 +335,7 @@ export default function BDRMyLeads() {
         attendance: "pending",
       }).select("id").single();
       if (error) { toast({ title: "Could not schedule", description: error.message, variant: "destructive" }); return; }
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending", source: null } }));
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending", source: null, reschedule_count: 0 } }));
     }
 
     // Log the reschedule to the client's activity timeline
