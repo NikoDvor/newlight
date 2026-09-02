@@ -101,7 +101,7 @@ async function fetchData(range: RangeKey): Promise<Data> {
     const chunks: string[][] = [];
     for (let i = 0; i < dealIds.length; i += 200) chunks.push(dealIds.slice(i, i + 200));
     const res = await Promise.all(chunks.map(c =>
-      supabase.from("crm_deals").select("id, pay_sign_status, updated_at").in("id", c)));
+      supabase.from("crm_deals").select("id, pay_sign_status, updated_at, paid_signed_at").in("id", c)));
     deals = res.flatMap(r => ((r.data as any[]) || [])) as Deal[];
   }
 
