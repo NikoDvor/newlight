@@ -182,18 +182,27 @@ function FunnelTooltip({ active, payload }: any) {
 
 export function PipelineInsightsView({ data, loading }: { data: InsightsData; loading: boolean }) {
   const { deals, appts, outcomes, names } = data;
+  const [repFilter, setRepFilter] = useState<string>("all");
 
-  const won = deals.filter(d => d.pipeline_stage === "closed_won");
-  const lost = deals.filter(d => d.pipeline_stage === "lost" || d.pipeline_stage === "closed_lost");
+  useEffect(() => {
+    setRepFilter("all");
+  }, [data]);
+
+  const effectiveDeals = useMemo(() => repFilter === "all" ? deals : deals.filter(d => d.assigned_user === repFilter), [deals, repFilter]);
+  const effectiveAppts = useMemo(() => repFilter === "all" ? appts : appts.filter(a => a.assigned_user_id === repFilter), [appts, repFilter]);
+  const effectiveOutcomes = useMemo(() => repFilter === "all" ? outcomes : outcomes.filter(o => o.user_id === repFilter), [outcomes, repFilter]);
+
+  const won = effectiveDeals.filter(d => d.pipeline_stage === "closed_won");
+  const lost = effectiveDeals.filter(d => d.pipeline_stage === "lost" || d.pipeline_stage === "closed_lost");
   const wonValue = won.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
-  const noShows = appts.filter(isNoShow);
-  const rescheduled = appts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0);
+  const noShows = effectiveAppts.filter(isNoShow);
+  const rescheduled = effectiveAppts.reduce((s, a) => s + (Number(a.reschedule_count) || 0), 0);
   const closeRate = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0;
 
-  const funnel = computeStageFunnel(deals);
+  const funnel = computeStageFunnel(effectiveDeals);
   funnel.push({ name: "Lost", count: lost.length, conversionPct: null });
-  const bottleneck = computeBottleneck(deals);
-  const attendRate = appts.length ? Math.round(100 - (noShows.length / appts.length) * 100) : null;
+  const bottleneck = computeBottleneck(effectiveDeals);
+  const attendRate = effectiveAppts.length ? Math.round(100 - (noShows.length / effectiveAppts.length) * 100) : null;
 
   const wonLost = [
     { name: "Won", value: won.length },
@@ -202,9 +211,9 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
 
   const objections = useMemo(() => {
     const m: Record<string, number> = {};
-    outcomes.forEach(o => { if (o.objection_category) m[o.objection_category] = (m[o.objection_category] || 0) + 1; });
+    effectiveOutcomes.forEach(o => { if (o.objection_category) m[o.objection_category] = (m[o.objection_category] || 0) + 1; });
     return Object.entries(m).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [outcomes]);
+  }, [effectiveOutcomes]);
 
   const reps = useMemo(() => {
     const ids = new Set<string>();
@@ -233,7 +242,25 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
   }
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <Select value={repFilter} onValueChange={(v) => setRepFilter(v)}>
+            <SelectTrigger className="w-[180px] bg-white/[0.04] border-white/10 text-white text-xs">
+              <SelectValue placeholder="All Reps" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Reps</SelectItem>
+              {reps.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {repFilter !== "all" && (
+            <span className="text-xs text-white/60">
+              Showing: {reps.find(r => r.id === repFilter)?.name || repFilter} only
+            </span>
+          )}
+        </div>
       {bottleneck === null ? (
         <Card className="border border-white/10 bg-white/[0.04]">
           <CardContent className="p-4 flex items-center gap-3">
@@ -391,16 +418,23 @@ export function PipelineInsightsView({ data, loading }: { data: InsightsData; lo
                   </tr>
                 </thead>
                 <tbody>
-                  {reps.map(r => (
-                    <tr key={r.id} className="border-t border-white/5">
-                      <td className="py-2 text-white/80">{r.name}</td>
-                      <td className="py-2 text-right text-emerald-400">{r.won}</td>
-                      <td className="py-2 text-right text-red-400">{r.lost}</td>
-                      <td className="py-2 text-right text-white">{r.closeRate === null ? "—" : `${r.closeRate}%`}</td>
-                      <td className="py-2 text-right text-white/70">{r.noShowRate === null ? "—" : `${r.noShowRate}%`}</td>
-                      <td className="py-2 text-right text-white/70">{r.reschedules}</td>
-                    </tr>
-                  ))}
+                  {reps.map(r => {
+                    const selected = repFilter === r.id;
+                    return (
+                      <tr
+                        key={r.id}
+                        onClick={() => setRepFilter(prev => prev === r.id ? "all" : r.id)}
+                        className={`border-t border-white/5 cursor-pointer transition-colors ${selected ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"}`}
+                      >
+                        <td className="py-2 text-white/80">{r.name}</td>
+                        <td className="py-2 text-right text-emerald-400">{r.won}</td>
+                        <td className="py-2 text-right text-red-400">{r.lost}</td>
+                        <td className="py-2 text-right text-white">{r.closeRate === null ? "—" : `${r.closeRate}%`}</td>
+                        <td className="py-2 text-right text-white/70">{r.noShowRate === null ? "—" : `${r.noShowRate}%`}</td>
+                        <td className="py-2 text-right text-white/70">{r.reschedules}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
