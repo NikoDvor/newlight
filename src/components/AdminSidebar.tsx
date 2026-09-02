@@ -84,7 +84,6 @@ const opsGroups: NavGroup[] = [
     items: [
       { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
       { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
-      { title: "Automation Workflows", url: "/admin/automations", icon: Zap },
     ],
   },
   {
