@@ -250,14 +250,14 @@ export default function BDRMyLeads() {
       const CHUNK = 200;
       for (let i = 0; i < leadIds.length; i += CHUNK) {
         const { data: evts } = await (supabase as any).from("bdr_calendar_events")
-          .select("id, lead_id, starts_at, attendance")
+          .select("id, lead_id, starts_at, attendance, source")
           .in("lead_id", leadIds.slice(i, i + CHUNK))
           .order("starts_at", { ascending: false });
         (evts || []).forEach((e: any) => {
           if (!e.lead_id) return;
           const prev = meetingMap[e.lead_id];
           if (!prev || new Date(e.starts_at).getTime() > new Date(prev.starts_at).getTime()) {
-            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance };
+            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance, source: e.source ?? null };
           }
         });
       }
@@ -290,6 +290,12 @@ export default function BDRMyLeads() {
       toast({ title: "Marked No-Show", description: "Lead flagged Unattended for 72 hours." });
     } else {
       toast({ title: "Marked Attended" });
+      if (meeting.source === "onboarding_meeting" && lead.crm_deal_id) {
+        supabase.functions
+          .invoke("mark-fully-activated", { body: { deal_id: lead.crm_deal_id } })
+          .then(({ error }) => { if (error) console.error("mark-fully-activated failed", error); })
+          .catch((e) => console.error("mark-fully-activated failed", e));
+      }
     }
   }, [latestMeetingByLead, user?.id]);
 
@@ -313,7 +319,7 @@ export default function BDRMyLeads() {
         .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending" })
         .eq("id", existing.id);
       if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending" } }));
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null } }));
     } else {
       const cal = await ensureBdrCalendar();
       if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
@@ -329,7 +335,7 @@ export default function BDRMyLeads() {
         attendance: "pending",
       }).select("id").single();
       if (error) { toast({ title: "Could not schedule", description: error.message, variant: "destructive" }); return; }
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending" } }));
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: data.id, starts_at: start.toISOString(), attendance: "pending", source: null } }));
     }
 
     // Log the reschedule to the client's activity timeline
