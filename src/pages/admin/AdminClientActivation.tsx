@@ -23,7 +23,7 @@ function formatCurrency(n: number | null | undefined) {
 }
 
 function computeStage(deal: any) {
-  if (deal.welcome_email_sent) return STAGES[0].key;
+  if (deal.fully_activated_at) return STAGES[0].key;
   if (deal.onboarding_meeting_id) return STAGES[1].key;
   if (deal.pay_sign_status === "paid_signed") return STAGES[2].key;
   if (deal.pay_sign_status === "paid") return STAGES[3].key;
@@ -73,7 +73,7 @@ export default function AdminClientActivation() {
       const { data: rows } = await (supabase as any)
         .from("crm_deals")
         .select(
-          "id, deal_name, client_id, pay_sign_status, onboarding_meeting_id, welcome_email_sent, initial_fee, pricing_model, recurring_fee, commission_rate, assigned_user, updated_at"
+          "id, deal_name, client_id, pay_sign_status, onboarding_meeting_id, welcome_email_sent, fully_activated_at, initial_fee, pricing_model, recurring_fee, commission_rate, assigned_user, updated_at"
         )
         .not("pay_sign_status", "is", null)
         .order("updated_at", { ascending: false });
