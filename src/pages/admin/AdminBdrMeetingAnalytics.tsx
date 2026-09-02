@@ -370,7 +370,7 @@ export default function AdminBdrMeetingAnalytics() {
     const buckets: Record<string, number> = { "1": 0, "2": 0, "3": 0, "4+": 0 };
     let counted = 0;
     wonLeads.forEach(l => {
-      const attended = events.filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended").length;
+      const attended = effectiveEvents.filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended").length;
       if (attended === 0) return;
       counted++;
       const key = attended >= 4 ? "4+" : String(attended);
