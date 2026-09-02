@@ -179,7 +179,7 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 /* Latest meeting per lead, used for attendance tracking */
-interface LatestMeeting { id: string; starts_at: string; attendance: string | null }
+interface LatestMeeting { id: string; starts_at: string; attendance: string | null; source: string | null }
 
 /** Hours remaining before the 72h Unattended auto-revert. */
 function unattendedHoursLeft(since: string): number {
