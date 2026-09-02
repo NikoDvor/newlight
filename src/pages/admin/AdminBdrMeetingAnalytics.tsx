@@ -295,6 +295,7 @@ function KindBlock({ title, stats, progressionLabel }: { title: string; stats: K
 /* ─── page ─── */
 export default function AdminBdrMeetingAnalytics() {
   const [range, setRange] = useState<RangeKey>("90");
+  const [repFilter, setRepFilter] = useState<string>("all");
   const [data, setData] = useState<Data>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<string>("discoveryShow");
@@ -312,26 +313,37 @@ export default function AdminBdrMeetingAnalytics() {
 
   const { events, leads, deals, objections, names } = data;
 
-  const discovery = useMemo(() => computeKind("discovery", events, leads, deals), [events, leads, deals]);
-  const closing = useMemo(() => computeKind("closing", events, leads, deals), [events, leads, deals]);
+  // Rep scoping: same logic as the per-rep table's myLeads/myEvents
+  const effectiveLeads = useMemo(
+    () => (repFilter === "all" ? leads : leads.filter(l => l.user_id === repFilter)),
+    [leads, repFilter],
+  );
+  const effectiveEvents = useMemo(() => {
+    if (repFilter === "all") return events;
+    const ids = new Set(effectiveLeads.map(l => l.id));
+    return events.filter(e => e.user_id === repFilter || (e.lead_id && ids.has(e.lead_id)));
+  }, [events, effectiveLeads, repFilter]);
+
+  const discovery = useMemo(() => computeKind("discovery", effectiveEvents, effectiveLeads, deals), [effectiveEvents, effectiveLeads, deals]);
+  const closing = useMemo(() => computeKind("closing", effectiveEvents, effectiveLeads, deals), [effectiveEvents, effectiveLeads, deals]);
 
   const wonDealIds = useMemo(
     () => new Set(deals.filter(d => d.pay_sign_status === "paid_signed").map(d => d.id)),
     [deals],
   );
   const wonLeads = useMemo(
-    () => leads.filter(l => l.crm_deal_id && wonDealIds.has(l.crm_deal_id)),
-    [leads, wonDealIds],
+    () => effectiveLeads.filter(l => l.crm_deal_id && wonDealIds.has(l.crm_deal_id)),
+    [effectiveLeads, wonDealIds],
   );
 
   /* 5. Funnel */
   const funnel = useMemo(() => {
-    const discoveryBooked = new Set(events.filter(e => kindOf(e) === "discovery" && e.lead_id).map(e => e.lead_id)).size;
-    const discoveryAttended = new Set(events.filter(e => kindOf(e) === "discovery" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
-    const closingBooked = new Set(events.filter(e => kindOf(e) === "closing" && e.lead_id).map(e => e.lead_id)).size;
-    const closingAttended = new Set(events.filter(e => kindOf(e) === "closing" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
+    const discoveryBooked = new Set(effectiveEvents.filter(e => kindOf(e) === "discovery" && e.lead_id).map(e => e.lead_id)).size;
+    const discoveryAttended = new Set(effectiveEvents.filter(e => kindOf(e) === "discovery" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
+    const closingBooked = new Set(effectiveEvents.filter(e => kindOf(e) === "closing" && e.lead_id).map(e => e.lead_id)).size;
+    const closingAttended = new Set(effectiveEvents.filter(e => kindOf(e) === "closing" && e.attendance === "attended" && e.lead_id).map(e => e.lead_id)).size;
     const stages = [
-      { name: "Leads Created", count: leads.length },
+      { name: "Leads Created", count: effectiveLeads.length },
       { name: "Discovery Booked", count: discoveryBooked },
       { name: "Discovery Attended", count: discoveryAttended },
       { name: "Closing Booked", count: closingBooked },
@@ -342,7 +354,8 @@ export default function AdminBdrMeetingAnalytics() {
       ...s,
       conversionPct: i === 0 ? null : (stages[i - 1].count > 0 ? Math.round((s.count / stages[i - 1].count) * 100) : null),
     }));
-  }, [events, leads, wonLeads]);
+  }, [effectiveEvents, effectiveLeads, wonLeads]);
+
 
   const bottleneck = useMemo(() => {
     const withConv = funnel.filter((f, i) => i > 0 && f.conversionPct !== null);
@@ -357,7 +370,7 @@ export default function AdminBdrMeetingAnalytics() {
     const buckets: Record<string, number> = { "1": 0, "2": 0, "3": 0, "4+": 0 };
     let counted = 0;
     wonLeads.forEach(l => {
-      const attended = events.filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended").length;
+      const attended = effectiveEvents.filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended").length;
       if (attended === 0) return;
       counted++;
       const key = attended >= 4 ? "4+" : String(attended);
@@ -371,7 +384,7 @@ export default function AdminBdrMeetingAnalytics() {
         pct: counted ? Math.round((n / counted) * 100) : 0,
       })),
     };
-  }, [wonLeads, events]);
+  }, [wonLeads, effectiveEvents]);
 
   /* 7. Objections + outcomes (split by meeting kind) */
   const groupCounts = (items: { key: string; kind: string | null }[]) => {
@@ -397,7 +410,7 @@ export default function AdminBdrMeetingAnalytics() {
 
   const outcomeGroups = useMemo(() => {
     const items: { key: string; kind: string | null }[] = [];
-    leads.forEach(l => {
+    effectiveLeads.forEach(l => {
       const hist = Array.isArray(l.outcome_history) ? l.outcome_history : [];
       hist.forEach((h: any) => {
         const label = typeof h === "string" ? h : (h?.outcome || h?.label);
@@ -405,7 +418,7 @@ export default function AdminBdrMeetingAnalytics() {
       });
     });
     return groupCounts(items);
-  }, [leads]);
+  }, [effectiveLeads]);
 
   /* 8. Time to close */
   const timeToClose = useMemo(() => {
@@ -415,7 +428,7 @@ export default function AdminBdrMeetingAnalytics() {
       const deal = deals.find(d => d.id === l.crm_deal_id);
       const closedAt = deal?.paid_signed_at || deal?.updated_at;
       if (!closedAt) return;
-      const firstAttended = events
+      const firstAttended = effectiveEvents
         .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
         .map(e => new Date(e.starts_at).getTime())
         .sort((a, b) => a - b)[0];
@@ -428,7 +441,7 @@ export default function AdminBdrMeetingAnalytics() {
     });
     const avg = spans.length ? Math.round((spans.reduce((a, b) => a + b, 0) / spans.length) * 10) / 10 : null;
     return { avg, n: spans.length, usedFallback };
-  }, [wonLeads, deals, events]);
+  }, [wonLeads, deals, effectiveEvents]);
 
 
   /* 9. Per-rep */
@@ -501,14 +514,29 @@ export default function AdminBdrMeetingAnalytics() {
           <p className="text-xs text-white/40 mt-0.5">
             Sales-side pipeline only (leads, discovery & closing meetings) — separate from client-facing Pipeline Insights.
           </p>
+          {repFilter !== "all" && (
+            <p className="text-xs text-amber-300/80 mt-1">
+              Showing: {reps.find(r => r.id === repFilter)?.name || "selected rep"} only — the per-rep table below still shows all reps.
+            </p>
+          )}
         </div>
-        <Select value={range} onValueChange={v => setRange(v as RangeKey)}>
-          <SelectTrigger className="w-[170px] h-9 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {RANGE_OPTIONS.map(o => <SelectItem key={o.key} value={o.key} className="text-xs">{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={repFilter} onValueChange={setRepFilter}>
+            <SelectTrigger className="w-[180px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">All Reps</SelectItem>
+              {reps.map(r => <SelectItem key={r.id} value={r.id} className="text-xs">{r.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={range} onValueChange={v => setRange(v as RangeKey)}>
+            <SelectTrigger className="w-[170px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {RANGE_OPTIONS.map(o => <SelectItem key={o.key} value={o.key} className="text-xs">{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
 
       {loading ? (
         <div className="py-16 text-center text-sm text-white/40">Loading meeting analytics…</div>
@@ -571,7 +599,7 @@ export default function AdminBdrMeetingAnalytics() {
           <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2"><CardTitle className="text-sm text-white">Full Sales Funnel</CardTitle></CardHeader>
             <CardContent>
-              {leads.length === 0 ? (
+              {effectiveLeads.length === 0 ? (
                 <EmptyState label="Leads and meetings will appear here as the sales pipeline runs." />
               ) : (
                 <>
@@ -616,7 +644,7 @@ export default function AdminBdrMeetingAnalytics() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <Sample n={leads.length} noun="leads" />
+                  <Sample n={effectiveLeads.length} noun="leads" />
                 </>
               )}
             </CardContent>
@@ -745,7 +773,11 @@ export default function AdminBdrMeetingAnalytics() {
                     </thead>
                     <tbody>
                       {reps.map(r => (
-                        <tr key={r.id} className="border-t border-white/[0.06] text-white/80">
+                        <tr
+                          key={r.id}
+                          onClick={() => setRepFilter(prev => (prev === r.id ? "all" : r.id))}
+                          className={`border-t border-white/[0.06] text-white/80 cursor-pointer transition-colors ${repFilter === r.id ? "bg-[hsla(211,96%,60%,.12)]" : "hover:bg-white/[0.04]"}`}
+                        >
                           <td className="py-2 text-left">{r.name}</td>
                           <td className="py-2 text-right">{fmtPct(r.discoveryShow)}</td>
                           <td className="py-2 text-right">{fmtPct(r.closingShow)}</td>
