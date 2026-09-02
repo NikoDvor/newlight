@@ -22,7 +22,14 @@ import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots"
 
 
 /* ─── types ─── */
-interface OutcomeEntry { label: string; note?: string; timestamp: string }
+interface OutcomeEntry { label: string; note?: string; timestamp: string; meeting_kind?: string | null }
+
+/** Map a meeting source string to the pipeline meeting kind it represents. */
+function meetingKindFromSource(source?: string | null): "discovery" | "closing" | null {
+  if (source === "booking_form" || source === "dialer") return "discovery";
+  if (source === "closing_meeting") return "closing";
+  return null;
+}
 interface BdrLead {
   id: string;
   client_id: string | null;
@@ -671,7 +678,12 @@ export default function BDRMyLeads() {
   const handleSaveOutcome = async (outcome: OutcomeDef, note: string): Promise<{ promptObjection: boolean; lead: BdrLead; outcomeLabel: string }> => {
     if (!outcomeLead || !user?.id) return { promptObjection: false, lead: outcomeLead!, outcomeLabel: "" };
     const lead = outcomeLead;
-    const entry: OutcomeEntry = { label: outcome.label, timestamp: new Date().toISOString(), ...(note ? { note } : {}) };
+    const entry: OutcomeEntry = {
+      label: outcome.label,
+      timestamp: new Date().toISOString(),
+      meeting_kind: meetingKindFromSource(latestMeetingByLead[lead.id]?.source),
+      ...(note ? { note } : {}),
+    };
     const newHistory = [...(lead.outcome_history || []), entry];
 
     const newStage = pipelineStageFromOutcome(outcome.label) ?? derivePipelineStage({ ...lead, outcome_history: newHistory });
@@ -824,6 +836,7 @@ export default function BDRMyLeads() {
       await (supabase as any).from("nl_bdr_objections").insert({
         user_id: user.id, lead_id: leadId, objection_category: category,
         outcome_logged: outcomeLabel, business_name: businessName,
+        meeting_kind: meetingKindFromSource(latestMeetingByLead[leadId]?.source),
       });
       await (supabase as any).from("nl_bdr_leads").update({ objection_category: category }).eq("id", leadId);
     }

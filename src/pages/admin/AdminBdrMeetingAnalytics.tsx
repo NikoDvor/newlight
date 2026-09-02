@@ -44,9 +44,10 @@ interface Deal {
   id: string;
   pay_sign_status: string | null;
   updated_at: string | null;
+  paid_signed_at: string | null;
 }
 
-interface Objection { id: string; objection_category: string | null }
+interface Objection { id: string; objection_category: string | null; meeting_kind: string | null }
 
 interface Data {
   events: Evt[];
@@ -80,7 +81,7 @@ async function fetchData(range: RangeKey): Promise<Data> {
     .select("id, lead_id, user_id, starts_at, attendance, source, reschedule_count");
   let lq = supabase.from("nl_bdr_leads")
     .select("id, user_id, crm_deal_id, business_name, pipeline_stage, outcome_history, created_at");
-  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, created_at");
+  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, meeting_kind, created_at");
 
   if (since) {
     eq = eq.gte("starts_at", since);
@@ -100,7 +101,7 @@ async function fetchData(range: RangeKey): Promise<Data> {
     const chunks: string[][] = [];
     for (let i = 0; i < dealIds.length; i += 200) chunks.push(dealIds.slice(i, i + 200));
     const res = await Promise.all(chunks.map(c =>
-      supabase.from("crm_deals").select("id, pay_sign_status, updated_at").in("id", c)));
+      supabase.from("crm_deals").select("id, pay_sign_status, updated_at, paid_signed_at").in("id", c)));
     deals = res.flatMap(r => ((r.data as any[]) || [])) as Deal[];
   }
 
@@ -151,6 +152,27 @@ function EmptyState({ label }: { label: string }) {
     </div>
   );
 }
+
+function RowGroup({ title, rows, noun }: { title: string; rows: { name: string; n: number }[]; noun: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-white/30 font-semibold mb-1.5">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-xs text-white/30 py-1.5">None logged.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {rows.map(o => (
+            <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
+              <span>{o.name}</span><span className="text-white/50">{o.n}</span>
+            </div>
+          ))}
+          <Sample n={rows.reduce((s, o) => s + o.n, 0)} noun={`logged ${noun}`} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 const chartTooltipStyle = {
   background: "hsl(220 30% 12%)", border: "1px solid hsla(211,96%,60%,.2)",
@@ -351,45 +373,63 @@ export default function AdminBdrMeetingAnalytics() {
     };
   }, [wonLeads, events]);
 
-  /* 7. Objections + outcomes */
-  const objectionRows = useMemo(() => {
-    const m: Record<string, number> = {};
-    objections.forEach(o => {
-      const k = o.objection_category || "Uncategorized";
-      m[k] = (m[k] || 0) + 1;
+  /* 7. Objections + outcomes (split by meeting kind) */
+  const groupCounts = (items: { key: string; kind: string | null }[]) => {
+    const bucket = (k: string | null) => (k === "discovery" ? "discovery" : k === "closing" ? "closing" : "unlabeled");
+    const acc: Record<string, Record<string, number>> = { discovery: {}, closing: {}, unlabeled: {} };
+    items.forEach(i => {
+      const b = bucket(i.kind);
+      acc[b][i.key] = (acc[b][i.key] || 0) + 1;
     });
-    return Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
-  }, [objections]);
+    const toRows = (m: Record<string, number>) =>
+      Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
+    return {
+      discovery: toRows(acc.discovery),
+      closing: toRows(acc.closing),
+      unlabeled: toRows(acc.unlabeled),
+    };
+  };
 
-  const outcomeRows = useMemo(() => {
-    const m: Record<string, number> = {};
+  const objectionGroups = useMemo(
+    () => groupCounts(objections.map(o => ({ key: o.objection_category || "Uncategorized", kind: o.meeting_kind }))),
+    [objections],
+  );
+
+  const outcomeGroups = useMemo(() => {
+    const items: { key: string; kind: string | null }[] = [];
     leads.forEach(l => {
       const hist = Array.isArray(l.outcome_history) ? l.outcome_history : [];
       hist.forEach((h: any) => {
         const label = typeof h === "string" ? h : (h?.outcome || h?.label);
-        if (label) m[label] = (m[label] || 0) + 1;
+        if (label) items.push({ key: label, kind: typeof h === "string" ? null : (h?.meeting_kind ?? null) });
       });
     });
-    return Object.entries(m).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n);
+    return groupCounts(items);
   }, [leads]);
 
   /* 8. Time to close */
   const timeToClose = useMemo(() => {
     const spans: number[] = [];
+    let usedFallback = false;
     wonLeads.forEach(l => {
       const deal = deals.find(d => d.id === l.crm_deal_id);
-      if (!deal?.updated_at) return;
+      const closedAt = deal?.paid_signed_at || deal?.updated_at;
+      if (!closedAt) return;
       const firstAttended = events
         .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
         .map(e => new Date(e.starts_at).getTime())
         .sort((a, b) => a - b)[0];
       if (!firstAttended) return;
-      const days = (new Date(deal.updated_at).getTime() - firstAttended) / 86400000;
-      if (days >= 0) spans.push(days);
+      const days = (new Date(closedAt).getTime() - firstAttended) / 86400000;
+      if (days >= 0) {
+        spans.push(days);
+        if (!deal?.paid_signed_at) usedFallback = true;
+      }
     });
     const avg = spans.length ? Math.round((spans.reduce((a, b) => a + b, 0) / spans.length) * 10) / 10 : null;
-    return { avg, n: spans.length };
+    return { avg, n: spans.length, usedFallback };
   }, [wonLeads, deals, events]);
+
 
   /* 9. Per-rep */
   const reps = useMemo(() => {
@@ -408,12 +448,13 @@ export default function AdminBdrMeetingAnalytics() {
       const spans: number[] = [];
       myWon.forEach(l => {
         const deal = deals.find(x => x.id === l.crm_deal_id);
-        if (!deal?.updated_at) return;
+        const closedAt = deal?.paid_signed_at || deal?.updated_at;
+        if (!closedAt) return;
         const first = myEvents
           .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
           .map(e => new Date(e.starts_at).getTime()).sort((a, b) => a - b)[0];
         if (!first) return;
-        const days = (new Date(deal.updated_at).getTime() - first) / 86400000;
+        const days = (new Date(closedAt).getTime() - first) / 86400000;
         if (days >= 0) spans.push(days);
       });
 
@@ -617,9 +658,11 @@ export default function AdminBdrMeetingAnalytics() {
                   icon={Clock}
                   sub={<Sample n={timeToClose.n} noun="closed deals" />}
                 />
-                <p className="text-[11px] text-white/35">
-                  Paid &amp; signed timing is approximated from the deal's last update, since no dedicated signature timestamp is stored.
-                </p>
+                {timeToClose.usedFallback && (
+                  <p className="text-[11px] text-white/35">
+                    Some pre-dates this fix and uses an approximate timestamp.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -627,47 +670,54 @@ export default function AdminBdrMeetingAnalytics() {
           {/* 7: objections + outcomes */}
           <Card className="border-0 bg-white/[0.04]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-white">Objections &amp; Outcomes (approximate)</CardTitle>
+              <CardTitle className="text-sm text-white">Objections &amp; Outcomes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-[11px] text-amber-200/60 bg-amber-400/[0.06] border border-amber-400/20 rounded-lg px-3 py-2">
-                Not tied to a specific meeting — shown as overall pipeline outcomes, approximated by pipeline stage at time of logging
-                (warm ≈ post-discovery, hot ≈ post-closing).
+            <CardContent className="space-y-5">
+              <p className="text-[11px] text-white/35">
+                Tagged to whichever meeting was most recent for that lead at the moment it was logged.
+                Entries from before this tracking existed show as Unlabeled.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Objection Categories</p>
-                  {objectionRows.length === 0 ? (
-                    <EmptyState label="Objections logged by reps will be grouped here." />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {objectionRows.map(o => (
-                        <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
-                          <span>{o.name}</span><span className="text-white/50">{o.n}</span>
-                        </div>
-                      ))}
-                      <Sample n={objectionRows.reduce((s, o) => s + o.n, 0)} noun="logged objections" />
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Objection Categories</p>
+                {objectionGroups.discovery.length === 0 && objectionGroups.closing.length === 0 && objectionGroups.unlabeled.length === 0 ? (
+                  <EmptyState label="Objections logged by reps will be grouped here." />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <RowGroup title="Discovery" rows={objectionGroups.discovery} noun="objections" />
+                      <RowGroup title="Closing" rows={objectionGroups.closing} noun="objections" />
                     </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead Outcome History</p>
-                  {outcomeRows.length === 0 ? (
-                    <EmptyState label="Outcomes logged on leads will be tallied here." />
-                  ) : (
-                    <div className="space-y-1.5">
-                      {outcomeRows.map(o => (
-                        <div key={o.name} className="flex items-center justify-between text-xs text-white/70 border-b border-white/[0.06] py-1.5">
-                          <span>{o.name}</span><span className="text-white/50">{o.n}</span>
-                        </div>
-                      ))}
-                      <Sample n={outcomeRows.reduce((s, o) => s + o.n, 0)} noun="logged outcomes" />
+                    {objectionGroups.unlabeled.length > 0 && (
+                      <p className="text-[11px] text-white/30 mt-2">
+                        Unlabeled (logged before this tracking existed): {objectionGroups.unlabeled.reduce((s, o) => s + o.n, 0)}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead Outcome History</p>
+                {outcomeGroups.discovery.length === 0 && outcomeGroups.closing.length === 0 && outcomeGroups.unlabeled.length === 0 ? (
+                  <EmptyState label="Outcomes logged on leads will be tallied here." />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <RowGroup title="Discovery" rows={outcomeGroups.discovery} noun="outcomes" />
+                      <RowGroup title="Closing" rows={outcomeGroups.closing} noun="outcomes" />
                     </div>
-                  )}
-                </div>
+                    {outcomeGroups.unlabeled.length > 0 && (
+                      <p className="text-[11px] text-white/30 mt-2">
+                        Unlabeled (logged before this tracking existed): {outcomeGroups.unlabeled.reduce((s, o) => s + o.n, 0)}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
+
 
           {/* 9: per-rep */}
           <Card className="border-0 bg-white/[0.04]">

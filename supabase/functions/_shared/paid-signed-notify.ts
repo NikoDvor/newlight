@@ -70,10 +70,10 @@ async function sendEmail(to: string, subject: string, html: string, text: string
 export async function notifyPaidSignedIfTransition(supabase: any, dealId: string, opts: { paySignUrl?: string; envelopeId?: string } = {}) {
   const { data: deal, error } = await supabase
     .from("crm_deals")
-    .update({ pay_sign_status: "paid_signed" })
+    .update({ pay_sign_status: "paid_signed", paid_signed_at: new Date().toISOString() })
     .eq("id", dealId)
     .neq("pay_sign_status", "paid_signed")
-    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, commission_rate_ongoing, client_id, contact_id")
+    .select("id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, commission_rate_ongoing, client_id, contact_id, paid_signed_at")
     .maybeSingle();
 
   if (error) {
