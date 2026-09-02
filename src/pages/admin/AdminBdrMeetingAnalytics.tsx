@@ -81,7 +81,7 @@ async function fetchData(range: RangeKey): Promise<Data> {
     .select("id, lead_id, user_id, starts_at, attendance, source, reschedule_count");
   let lq = supabase.from("nl_bdr_leads")
     .select("id, user_id, crm_deal_id, business_name, pipeline_stage, outcome_history, created_at");
-  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, created_at");
+  let oq = supabase.from("nl_bdr_objections").select("id, objection_category, meeting_kind, created_at");
 
   if (since) {
     eq = eq.gte("starts_at", since);
