@@ -773,7 +773,11 @@ export default function AdminBdrMeetingAnalytics() {
                     </thead>
                     <tbody>
                       {reps.map(r => (
-                        <tr key={r.id} className="border-t border-white/[0.06] text-white/80">
+                        <tr
+                          key={r.id}
+                          onClick={() => setRepFilter(prev => (prev === r.id ? "all" : r.id))}
+                          className={`border-t border-white/[0.06] text-white/80 cursor-pointer transition-colors ${repFilter === r.id ? "bg-[hsla(211,96%,60%,.12)]" : "hover:bg-white/[0.04]"}`}
+                        >
                           <td className="py-2 text-left">{r.name}</td>
                           <td className="py-2 text-right">{fmtPct(r.discoveryShow)}</td>
                           <td className="py-2 text-right">{fmtPct(r.closingShow)}</td>
