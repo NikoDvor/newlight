@@ -4451,6 +4451,7 @@ export type Database = {
           deal_value: number | null
           expected_close_date: string | null
           external_crm_deal_id: string | null
+          fully_activated_at: string | null
           id: string
           initial_fee: number | null
           interest_type: string | null
@@ -4498,6 +4499,7 @@ export type Database = {
           deal_value?: number | null
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
+          fully_activated_at?: string | null
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
@@ -4545,6 +4547,7 @@ export type Database = {
           deal_value?: number | null
           expected_close_date?: string | null
           external_crm_deal_id?: string | null
+          fully_activated_at?: string | null
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
