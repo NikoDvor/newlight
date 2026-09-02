@@ -295,6 +295,7 @@ function KindBlock({ title, stats, progressionLabel }: { title: string; stats: K
 /* ─── page ─── */
 export default function AdminBdrMeetingAnalytics() {
   const [range, setRange] = useState<RangeKey>("90");
+  const [repFilter, setRepFilter] = useState<string>("all");
   const [data, setData] = useState<Data>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<string>("discoveryShow");
