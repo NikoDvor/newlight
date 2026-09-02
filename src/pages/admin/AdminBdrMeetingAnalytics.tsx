@@ -428,7 +428,7 @@ export default function AdminBdrMeetingAnalytics() {
       const deal = deals.find(d => d.id === l.crm_deal_id);
       const closedAt = deal?.paid_signed_at || deal?.updated_at;
       if (!closedAt) return;
-      const firstAttended = events
+      const firstAttended = effectiveEvents
         .filter(e => e.lead_id === l.id && kindOf(e) !== null && e.attendance === "attended")
         .map(e => new Date(e.starts_at).getTime())
         .sort((a, b) => a - b)[0];
@@ -441,7 +441,7 @@ export default function AdminBdrMeetingAnalytics() {
     });
     const avg = spans.length ? Math.round((spans.reduce((a, b) => a + b, 0) / spans.length) * 10) / 10 : null;
     return { avg, n: spans.length, usedFallback };
-  }, [wonLeads, deals, events]);
+  }, [wonLeads, deals, effectiveEvents]);
 
 
   /* 9. Per-rep */
