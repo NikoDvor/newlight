@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket, RefreshCw, TrendingUp, DollarSign, Target, Compass,
   Sparkles, Trash2, Plus, Pencil, Check, X, ChevronDown,
-  Loader2, Layers, MapPin, Repeat, Tag, Users,
+  Loader2, Layers, MapPin, Repeat, Tag, Users, ArrowRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -59,7 +60,7 @@ const currency = (n: number) =>
   n >= 1000 ? `$${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `$${Math.round(n)}`;
 
 export default function GrowthAdvisor() {
-  const { activeClientId } = useWorkspace();
+  const { activeClientId, isAdmin } = useWorkspace();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -224,6 +225,29 @@ export default function GrowthAdvisor() {
           title="AI Growth Advisor"
           description="Executive-level strategic moves, sized in real dollars, grounded in your live data."
         />
+
+        {/* Revenue Expansion link card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <Link
+            to={isAdmin ? "/admin/revenue-expansion" : "/revenue-expansion"}
+            className="flex items-center justify-between rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm hover:shadow-lg hover:bg-card/80 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">See revenue expansion opportunities</h3>
+                <p className="text-sm text-muted-foreground">Explore sized revenue moves and expansion scenarios for this workspace.</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </Link>
+        </motion.div>
 
         {/* GROWTH THESIS HERO */}
         <motion.section

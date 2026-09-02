@@ -4,7 +4,7 @@ import {
   Globe, Search, Megaphone, Share2, Users,
   Calendar, FileText, CreditCard, Star,
   ChevronLeft, ChevronDown, BookOpen, LifeBuoy,
-  Zap, MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
+  MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
   Workflow, Shield, Gift, Phone, Video,
   Settings2, RefreshCw, Briefcase, FileSignature
 } from "lucide-react";
@@ -33,15 +33,8 @@ interface NavEntry {
 
 const navStructure: NavEntry[] = [
   { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  {
-    type: "group", label: "AI & Growth",
-    items: [
-      { title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-      { title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
-      { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
-      { title: "Automations", url: "/automations", icon: Zap, moduleKey: "intelligence" },
-    ],
-  },
+  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
   {
     type: "group", label: "Client Acquisition",
     items: [

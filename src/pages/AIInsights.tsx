@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
@@ -157,7 +158,7 @@ function effortStyle(level: string | null): { bg: string; text: string; label: s
 }
 
 export default function AIInsights() {
-  const { activeClientId, activeClientName } = useWorkspace();
+  const { activeClientId, activeClientName, isAdmin } = useWorkspace();
   const { toast } = useToast();
 
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -299,6 +300,30 @@ export default function AIInsights() {
           "Wins accumulate at the bottom as recommendations are completed",
         ]}
       />
+
+      {/* ── Automations link card ─────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="mt-6"
+      >
+        <Link
+          to={isAdmin ? "/admin/automations" : "/automations"}
+          className="flex items-center justify-between rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm hover:shadow-lg hover:bg-card/80 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Manage your automations</h3>
+              <p className="text-sm text-muted-foreground">Build workflows that execute your AI recommendations automatically.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+        </Link>
+      </motion.div>
 
       {/* ── HERO: Business Health Score ─────────────────────────── */}
       <motion.div
