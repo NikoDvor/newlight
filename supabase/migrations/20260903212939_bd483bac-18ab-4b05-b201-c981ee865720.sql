@@ -1,0 +1,2 @@
+ALTER TABLE public.bdr_calendar_events DROP CONSTRAINT IF EXISTS bdr_calendar_events_source_check;
+ALTER TABLE public.bdr_calendar_events ADD CONSTRAINT bdr_calendar_events_source_check CHECK (source = ANY (ARRAY['dialer','manual','booking_form','sdr_mirror','round_robin','closing_meeting','onboarding_meeting','admin_weekly_recurring','service_meeting']));

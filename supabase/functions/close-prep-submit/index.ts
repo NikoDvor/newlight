@@ -3,7 +3,7 @@
 // - Persists pricing/closing_notes/close_prep_completed_at on the deal.
 // - Creates a closing_meeting bdr_calendar_events row on the rep's own calendar.
 // - Fires universal + rep-focused notifications (SMS + email).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { esc, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
 
 const corsHeaders = {
@@ -81,12 +81,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await anonClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) {
+    const { data: authData, error: authErr } = await anonClient.auth.getUser(token);
+    if (authErr || !authData?.user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const userId = claims.claims.sub as string;
-    const userEmail = (claims.claims as any).email as string | undefined;
+    const userId = authData.user.id as string;
+    const userEmail = authData.user.email as string | undefined;
 
     const body = await req.json();
     const {
@@ -129,11 +129,13 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Not your lead" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // 2. Ensure calendar
+    // 2. Ensure calendar (reps may own several booking links — take the oldest)
     let { data: cal } = await supabase
       .from("bdr_calendars")
       .select("id, user_id, client_id")
       .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (!cal) {
       const { data: created, error: calErr } = await supabase
@@ -142,7 +144,7 @@ Deno.serve(async (req) => {
           user_id: userId,
           client_id: lead.client_id,
           name: "My Pipeline Calendar",
-          booking_slug: `bdr-${userId.slice(0, 8)}`,
+          booking_slug: `bdr-${userId.slice(0, 8)}-${Math.random().toString(36).slice(2, 6)}`,
         })
         .select("id, user_id, client_id")
         .single();
