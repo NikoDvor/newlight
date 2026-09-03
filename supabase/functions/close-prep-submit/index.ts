@@ -293,6 +293,7 @@ Deno.serve(async (req) => {
         recipient_name: lead.owner_name || null,
         recipient_email: lead.email || null,
         created_by: userId,
+        attorney_reviewed: false,
       } as any)
       .select("id, share_token")
       .single();
