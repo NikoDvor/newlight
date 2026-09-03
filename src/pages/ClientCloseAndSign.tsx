@@ -72,6 +72,7 @@ export default function ClientCloseAndSign() {
   const [reviewed, setReviewed] = useState(false);
   const [signed, setSigned] = useState(false);
   const [signBusy, setSignBusy] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
   const [sigMode, setSigMode] = useState<"type" | "draw">("type");
   const [typedSig, setTypedSig] = useState("");
   const [signerName, setSignerName] = useState("");
@@ -124,6 +125,23 @@ export default function ClientCloseAndSign() {
     const c = canvasRef.current; if (!c) return;
     c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
     setDrawn(false);
+  };
+
+  const handlePayNow = async () => {
+    if (!paymentRequest?.id || !token) return;
+    setPayBusy(true);
+    const { data, error } = await supabase.functions.invoke("create-client-checkout", {
+      body: {
+        share_token: token,
+        payment_request_id: paymentRequest.id,
+        return_url: window.location.href.split("?")[0],
+      },
+    });
+    setPayBusy(false);
+    if (error || data?.error || !data?.url) {
+      return toast.error(error?.message || data?.error || "Could not start checkout");
+    }
+    window.location.href = data.url;
   };
 
   const handleSign = async () => {
@@ -258,13 +276,17 @@ export default function ClientCloseAndSign() {
 
             {paymentRequest.method === "stripe" && (
               paymentSettings?.stripe_charges_enabled ? (
-                // TODO: Stripe Connect is not live yet. When it is, call a
-                // `create-client-payment-checkout` edge function here to create a
-                // Checkout Session on the client's connected account and redirect
-                // the payer to the returned URL. Deliberately no Pay button until then.
-                <p className="text-sm text-muted-foreground">
-                  Online card payment for this agreement is being finalized — you'll receive a secure payment link shortly.
-                </p>
+                <div className="space-y-2">
+                  <Button onClick={handlePayNow} disabled={payBusy}>
+                    {payBusy
+                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      : <CreditCard className="h-4 w-4 mr-2" />}
+                    Pay now
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    You'll be taken to a secure Stripe checkout page. Payment goes directly to the business.
+                  </p>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   Payment collection is being set up — you'll be contacted separately to complete payment.
