@@ -444,6 +444,100 @@ export default function AdminClientRevenue() {
           </CardContent>
         </Card>
       </section>
+
+      {/* SECTION 3 — Suggested Revenue Attribution (NewLight commission review) */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Suggested Revenue Attribution
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1 max-w-2xl">
+              Approving creates a real financial_adjustments entry that feeds commission billing. Review the match
+              before approving.
+            </p>
+          </div>
+          <Button size="sm" className="h-8 text-xs" onClick={runMatching} disabled={running}>
+            {running ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Play className="h-3.5 w-3.5 mr-1.5" />}
+            Run Matching Now
+          </Button>
+        </div>
+
+        <Card className="bg-card/60 border-border">
+          <CardContent className="p-4">
+            {sugLoading ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">Loading…</div>
+            ) : suggestions.length === 0 ? (
+              <EmptyState
+                title="No suggested matches yet"
+                description="No suggested matches yet — run matching, or check back after the daily job runs."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-muted-foreground border-b border-border">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium">Client</th>
+                      <th className="text-left px-3 py-2 font-medium">Deal</th>
+                      <th className="text-left px-3 py-2 font-medium">Channel</th>
+                      <th className="text-left px-3 py-2 font-medium">Matched Amount</th>
+                      <th className="text-left px-3 py-2 font-medium">Event Date</th>
+                      <th className="text-right px-3 py-2 font-medium">Review</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestions.map((s) => (
+                      <tr key={s.id} className="border-b border-border/50 hover:bg-white/[0.03]">
+                        <td className="px-3 py-2 text-foreground font-medium">{s.clients?.business_name || "—"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{s.crm_deals?.deal_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant="outline" className="border-0 text-[10px] bg-white/10 text-white/70 capitalize">
+                            {s.attribution_events?.channel || "unknown"}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2 text-foreground">{money(Number(s.matched_amount || 0))}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {s.attribution_events?.occurred_at
+                            ? new Date(s.attribution_events.occurred_at).toLocaleDateString("en-US", {
+                                timeZone: "America/Los_Angeles",
+                              })
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              disabled={actingId === s.id}
+                              onClick={() => approveSuggestion(s)}
+                            >
+                              {actingId === s.id
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[11px]"
+                              disabled={actingId === s.id}
+                              onClick={() => rejectSuggestion(s)}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </motion.div>
   );
 }
+
