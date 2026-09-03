@@ -409,6 +409,9 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Marketing Attribution ──────────────────────────────────── */}
+      <AttributionSummarySection clientId={activeClientId} />
+
       {/* ── Category Performance ─────────────────────────────────── */}
       <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
