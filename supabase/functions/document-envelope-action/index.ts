@@ -53,21 +53,8 @@ function signingReceiptHtml(args: { title: string; signerName: string; signedAt:
 </body></html>`;
 }
 
-/** Unbranded receipt for client-owned agreements (client_agreement envelopes). */
-function genericReceiptHtml(args: { title: string; signerName: string; signedAt: string; signedPdfUrl: string }): string {
-  const { title, signerName, signedAt, signedPdfUrl } = args;
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your signed agreement</h1>
-    <p style="font-size:14px;line-height:1.6;margin:0 0 12px;">Hi ${esc(signerName)},</p>
-    <p style="font-size:14px;line-height:1.6;margin:0 0 20px;">Your agreement <strong>${esc(title)}</strong> was signed on <strong>${esc(signedAt)}</strong>.</p>
-    <div style="margin:20px 0;">
-      <a href="${esc(signedPdfUrl)}" style="display:inline-block;padding:12px 20px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">View / download your signed agreement</a>
-    </div>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Please keep this copy for your records.</p>
-  </div>
-</body></html>`;
-}
+
+
 
 const json = (body: any, status = 200) =>
   new Response(JSON.stringify(body), {
