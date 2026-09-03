@@ -574,6 +574,7 @@ function AttributionSummarySection({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<AttributionEventRow[]>([]);
   const [conversions, setConversions] = useState<AdConversionRow[]>([]);
+  const [attributedRevenue, setAttributedRevenue] = useState<[string, number][]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -609,6 +610,27 @@ function AttributionSummarySection({ clientId }: { clientId: string }) {
       }
     }
     load();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  // Approved (confirmed) revenue attribution, grouped by channel — client-facing, never suggestions.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("attribution_revenue_links")
+        .select("matched_amount, attribution_events(channel)")
+        .eq("client_id", clientId)
+        .eq("status", "approved");
+      if (cancelled) return;
+      if (error) { console.error("attribution_revenue_links fetch failed:", error); return; }
+      const byChannel = new Map<string, number>();
+      (data ?? []).forEach((row: any) => {
+        const ch = row.attribution_events?.channel || "Unknown";
+        byChannel.set(ch, (byChannel.get(ch) ?? 0) + Number(row.matched_amount ?? 0));
+      });
+      setAttributedRevenue(Array.from(byChannel.entries()).sort((a, b) => b[1] - a[1]));
+    })();
     return () => { cancelled = true; };
   }, [clientId]);
 
@@ -771,6 +793,25 @@ function AttributionSummarySection({ clientId }: { clientId: string }) {
                   </div>
                 )}
               </div>
+            )}
+          </div>
+
+          {/* Revenue attributed to confirmed channels */}
+          <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+            <h4 className="text-sm font-semibold text-foreground mb-3">Revenue Attributed to Your Channels</h4>
+            {attributedRevenue.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No confirmed revenue attribution yet — this fills in once a channel is confirmed to have driven a closed deal.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {attributedRevenue.map(([channel, amount]) => (
+                  <li key={channel} className="flex items-center justify-between text-sm">
+                    <span className="capitalize text-foreground">{channel.replace(/_/g, " ")}</span>
+                    <span className="font-semibold tabular-nums">{formatCurrency(amount)}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -100,6 +101,7 @@ export default function AdminClientRevenue() {
   const [sugLoading, setSugLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [editedAmounts, setEditedAmounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     supabase
@@ -166,13 +168,14 @@ export default function AdminClientRevenue() {
         ? new Date(row.attribution_events.occurred_at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" })
         : "unknown date";
       const dealName = row.crm_deals?.deal_name || "deal";
+      const approvedAmount = Number(editedAmounts[row.id] ?? row.matched_amount ?? 0);
 
       const { data: adj, error: adjErr } = await supabase
         .from("financial_adjustments")
         .insert({
           client_id: row.client_id,
           type: "revenue",
-          amount: Number(row.matched_amount || 0),
+          amount: approvedAmount,
           reason: `Attribution match — ${channel} event on ${eventDate} → deal "${dealName}"`,
           created_by: uid,
         })
@@ -184,6 +187,7 @@ export default function AdminClientRevenue() {
         .from("attribution_revenue_links")
         .update({
           status: "approved",
+          matched_amount: approvedAmount,
           reviewed_by: uid,
           reviewed_at: new Date().toISOString(),
           financial_adjustment_id: adj.id,
@@ -495,7 +499,18 @@ export default function AdminClientRevenue() {
                             {s.attribution_events?.channel || "unknown"}
                           </Badge>
                         </td>
-                        <td className="px-3 py-2 text-foreground">{money(Number(s.matched_amount || 0))}</td>
+                        <td className="px-3 py-2 text-foreground">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="h-7 w-28 text-[12px]"
+                            value={String(editedAmounts[s.id] ?? Number(s.matched_amount || 0))}
+                            onChange={(e) =>
+                              setEditedAmounts((prev) => ({ ...prev, [s.id]: Number(e.target.value) }))
+                            }
+                          />
+                        </td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {s.attribution_events?.occurred_at
                             ? new Date(s.attribution_events.occurred_at).toLocaleDateString("en-US", {
