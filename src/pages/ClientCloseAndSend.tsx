@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BackArrow } from "@/components/BackArrow";
 import { AlertTriangle, Loader2, FileSignature, Copy, Check, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +12,12 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 
 interface MergeField { key: string; label: string; }
+
+interface PaymentSettings {
+  accepts_wire: boolean;
+  accepts_stripe: boolean;
+  stripe_charges_enabled: boolean;
+}
 
 export default function ClientCloseAndSend() {
   const { dealId } = useParams();
@@ -27,12 +35,19 @@ export default function ClientCloseAndSend() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Optional payment request (client's own collection — separate from NewLight billing)
+  const [paySettings, setPaySettings] = useState<PaymentSettings | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDueDate, setPayDueDate] = useState("");
+  const [payMethod, setPayMethod] = useState<"wire" | "stripe">("wire");
+
+
   useEffect(() => {
     if (!activeClientId || !dealId) { setLoading(false); return; }
     let active = true;
     (async () => {
       setLoading(true);
-      const [dealRes, tplRes] = await Promise.all([
+      const [dealRes, tplRes, payRes] = await Promise.all([
         supabase
           .from("crm_deals")
           .select("*, crm_contacts(full_name, email), crm_companies(company_name)")
@@ -45,7 +60,13 @@ export default function ClientCloseAndSend() {
           .eq("client_id", activeClientId)
           .eq("is_active", true)
           .maybeSingle(),
+        supabase
+          .from("client_payment_settings")
+          .select("accepts_wire, accepts_stripe, stripe_charges_enabled")
+          .eq("client_id", activeClientId)
+          .maybeSingle(),
       ]);
+
       if (!active) return;
 
       const d: any = dealRes.data;
@@ -68,14 +89,34 @@ export default function ClientCloseAndSend() {
             .filter((f) => f.key),
         });
       }
+
+      const p: any = payRes.data;
+      if (p && (p.accepts_wire || p.accepts_stripe)) {
+        setPaySettings({
+          accepts_wire: Boolean(p.accepts_wire),
+          accepts_stripe: Boolean(p.accepts_stripe),
+          stripe_charges_enabled: Boolean(p.stripe_charges_enabled),
+        });
+        setPayMethod(p.accepts_wire ? "wire" : "stripe");
+      }
       setLoading(false);
     })();
     return () => { active = false; };
   }, [activeClientId, dealId]);
 
+  const bothMethods = Boolean(paySettings?.accepts_wire && paySettings?.accepts_stripe);
+  const paymentFilledIn = Boolean(payAmount.trim() && payDueDate);
+
   const generate = async () => {
     if (!activeClientId) return toast.error("No active workspace");
     if (!recipientName.trim() || !recipientEmail.trim()) return toast.error("Recipient name and email are required");
+    if (paySettings && (payAmount.trim() || payDueDate) && !paymentFilledIn) {
+      return toast.error("Enter both an amount and a due date, or clear the payment section");
+    }
+    const amountNum = Number(payAmount);
+    if (paymentFilledIn && (!Number.isFinite(amountNum) || amountNum <= 0)) {
+      return toast.error("Enter a valid payment amount");
+    }
     setSending(true);
     const { data, error } = await supabase.functions.invoke("generate-client-envelope", {
       body: {
@@ -86,15 +127,39 @@ export default function ClientCloseAndSend() {
         field_values: values,
       },
     });
-    setSending(false);
     if (error || (data as any)?.error) {
+      setSending(false);
       return toast.error((data as any)?.error || error?.message || "Failed to generate agreement");
     }
     const token = (data as any)?.share_token;
-    if (!token) return toast.error("Agreement created but no share link was returned");
+    const envelopeId = (data as any)?.envelope_id;
+    if (!token) {
+      setSending(false);
+      return toast.error("Agreement created but no share link was returned");
+    }
+
+    if (paySettings && paymentFilledIn) {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error: payErr } = await supabase.from("client_payment_requests").insert({
+        client_id: activeClientId,
+        deal_id: dealId || null,
+        envelope_id: envelopeId || null,
+        amount: amountNum,
+        currency: "usd",
+        method: bothMethods ? payMethod : (paySettings.accepts_wire ? "wire" : "stripe"),
+        due_date: payDueDate,
+        payer_name: recipientName.trim(),
+        payer_email: recipientEmail.trim(),
+        created_by: auth?.user?.id || null,
+      });
+      if (payErr) toast.error(`Agreement sent, but the payment request failed: ${payErr.message}`);
+    }
+
+    setSending(false);
     setShareUrl(`https://newlight-app.com/close-and-sign/${token}`);
     toast.success("Agreement generated");
   };
+
 
   const copy = async () => {
     if (!shareUrl) return;
@@ -204,6 +269,67 @@ export default function ClientCloseAndSend() {
               </div>
             )}
           </Card>
+
+          {paySettings && (
+            <Card className="p-6 space-y-4">
+              <div>
+                <h2 className="text-base font-semibold">Request Payment <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
+                <p className="text-xs text-muted-foreground">
+                  Leave blank to send the agreement without a payment request.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Amount (USD)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    placeholder="2500.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Due date</label>
+                  <Input type="date" value={payDueDate} onChange={(e) => setPayDueDate(e.target.value)} />
+                </div>
+              </div>
+
+              {bothMethods ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Payment method</p>
+                  <RadioGroup value={payMethod} onValueChange={(v) => setPayMethod(v as "wire" | "stripe")} className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="wire" id="pay-wire" />
+                      <Label htmlFor="pay-wire" className="text-sm font-normal">Wire transfer</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="stripe" id="pay-stripe" />
+                      <Label htmlFor="pay-stripe" className="text-sm font-normal">Stripe</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Method: {paySettings.accepts_wire ? "Wire transfer" : "Stripe"}
+                </p>
+              )}
+
+              {((bothMethods && payMethod === "stripe") || (!bothMethods && paySettings.accepts_stripe)) &&
+                !paySettings.stripe_charges_enabled && (
+                <div className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground">
+                    Stripe collection isn't active yet — your recipient will be told they'll be contacted separately to pay.
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
+
+
 
           <div className="flex justify-end">
             <Button onClick={generate} disabled={sending}>

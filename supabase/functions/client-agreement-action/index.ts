@@ -108,7 +108,33 @@ serve(async (req) => {
         .select("*")
         .eq("envelope_id", envelope.id)
         .order("display_order");
-      return json({ envelope, items: items || [] });
+
+      // Optional payment request linked to this envelope (client-owned collection).
+      const { data: paymentRequest } = await supabase
+        .from("client_payment_requests")
+        .select("id, amount, currency, method, due_date, status")
+        .eq("envelope_id", envelope.id)
+        .maybeSingle();
+
+      let paymentSettings: { wire_instructions: string | null; stripe_charges_enabled: boolean } | null = null;
+      if (paymentRequest) {
+        const { data: ps } = await supabase
+          .from("client_payment_settings")
+          .select("wire_instructions, stripe_charges_enabled")
+          .eq("client_id", envelope.client_id)
+          .maybeSingle();
+        paymentSettings = {
+          wire_instructions: ps?.wire_instructions ?? null,
+          stripe_charges_enabled: Boolean(ps?.stripe_charges_enabled),
+        };
+      }
+
+      return json({
+        envelope,
+        items: items || [],
+        payment_request: paymentRequest || null,
+        payment_settings: paymentSettings,
+      });
     }
 
     if (terminalStates.includes(envelope.status)) {

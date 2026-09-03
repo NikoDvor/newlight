@@ -3159,6 +3159,128 @@ export type Database = {
           },
         ]
       }
+      client_payment_requests: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          due_date: string
+          envelope_id: string | null
+          id: string
+          marked_paid_by: string | null
+          method: string
+          paid_at: string | null
+          payer_email: string | null
+          payer_name: string | null
+          reminder_1d_sent_at: string | null
+          reminder_7d_sent_at: string | null
+          reminder_due_sent_at: string | null
+          status: string
+          stripe_checkout_url: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          due_date: string
+          envelope_id?: string | null
+          id?: string
+          marked_paid_by?: string | null
+          method: string
+          paid_at?: string | null
+          payer_email?: string | null
+          payer_name?: string | null
+          reminder_1d_sent_at?: string | null
+          reminder_7d_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          status?: string
+          stripe_checkout_url?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          due_date?: string
+          envelope_id?: string | null
+          id?: string
+          marked_paid_by?: string | null
+          method?: string
+          paid_at?: string | null
+          payer_email?: string | null
+          payer_name?: string | null
+          reminder_1d_sent_at?: string | null
+          reminder_7d_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          status?: string
+          stripe_checkout_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_payment_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_payment_requests_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: false
+            referencedRelation: "document_envelopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_payment_settings: {
+        Row: {
+          accepts_stripe: boolean
+          accepts_wire: boolean
+          client_id: string
+          id: string
+          stripe_charges_enabled: boolean
+          stripe_connect_account_id: string | null
+          updated_at: string
+          wire_instructions: string | null
+        }
+        Insert: {
+          accepts_stripe?: boolean
+          accepts_wire?: boolean
+          client_id: string
+          id?: string
+          stripe_charges_enabled?: boolean
+          stripe_connect_account_id?: string | null
+          updated_at?: string
+          wire_instructions?: string | null
+        }
+        Update: {
+          accepts_stripe?: boolean
+          accepts_wire?: boolean
+          client_id?: string
+          id?: string
+          stripe_charges_enabled?: boolean
+          stripe_connect_account_id?: string | null
+          updated_at?: string
+          wire_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_payment_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reports: {
         Row: {
           ai_summary: string | null
