@@ -237,6 +237,58 @@ serve(async (req) => {
         }
       }
 
+      // Client-owned agreements: unbranded receipt to the signer + whoever sent it. No NewLight ops copy.
+      if (signed_pdf_url && envelope.envelope_type === "client_agreement") {
+        try {
+          let senderEmail: string | null = null;
+          if (envelope.created_by) {
+            const { data: profile } = await supabase
+              .from("employee_profiles")
+              .select("email")
+              .eq("user_id", envelope.created_by)
+              .maybeSingle();
+            senderEmail = profile?.email || null;
+            if (!senderEmail) {
+              const { data: wsUser } = await supabase
+                .from("workspace_users")
+                .select("email")
+                .eq("user_id", envelope.created_by)
+                .maybeSingle();
+              senderEmail = wsUser?.email || null;
+            }
+            if (!senderEmail) {
+              const { data: user, error: userErr } = await supabase.auth.admin.getUserById(envelope.created_by);
+              if (!userErr && user?.user?.email) senderEmail = user.user.email;
+            }
+          }
+
+          const signedAtLabel = fmtWhen(sig?.created_at || new Date().toISOString());
+          const subject = `Your signed agreement — ${envelope.title}`;
+          const html = genericReceiptHtml({
+            title: envelope.title,
+            signerName: signer_name,
+            signedAt: signedAtLabel,
+            signedPdfUrl: signed_pdf_url,
+          });
+          const text = [
+            `Hi ${signer_name},`,
+            ``,
+            `Your agreement "${envelope.title}" was signed on ${signedAtLabel}.`,
+            ``,
+            `View your signed agreement: ${signed_pdf_url}`,
+            ``,
+            `Please keep this copy for your records.`,
+          ].join("\n");
+
+          await sendEmail(envelope.recipient_email, subject, html, text);
+          if (senderEmail && senderEmail !== envelope.recipient_email) {
+            await sendEmail(senderEmail, subject, html, text);
+          }
+        } catch (emailErr) {
+          console.error("Client agreement receipt email failed:", emailErr);
+        }
+      }
+
 
       // If this is a service_agreement whose linked deal already has its initial invoice paid,
       // atomically transition to paid_signed and notify ops.
