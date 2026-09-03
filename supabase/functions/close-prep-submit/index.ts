@@ -424,8 +424,8 @@ async function sendClosePrepNotifications(supabase: any, args: {
   } catch (e) { console.error("[close-prep] rep lookup failed:", e); }
 
   const priceLine = pricing_model === "commission"
-    ? `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
-    : `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
+    ? `Commission — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
+    : `Retainer — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${fmtMoney(Number(recurring_fee ?? 0))}/mo`;
 
   // Universal SMS
   await sendSms(UNIVERSAL_SMS_TO, `NewLight close prep: ${repName || "BDR"} scheduled ${who} for ${whenLbl}. ${priceLine}.`);
