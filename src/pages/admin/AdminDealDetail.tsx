@@ -36,6 +36,7 @@ export default function AdminDealDetail() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [referral, setReferral] = useState<{ promoter_id: string; full_name: string } | null>(null);
+  const [envelopeReview, setEnvelopeReview] = useState<{ attorney_reviewed: boolean; legal_review_note: string | null } | null>(null);
   const [notesSummary, setNotesSummary] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
@@ -80,6 +81,16 @@ export default function AdminDealDetail() {
       if (attr?.promoter_id) {
         setReferral({ promoter_id: attr.promoter_id, full_name: (attr as any).promoters?.full_name || "Promoter" });
       }
+      // Internal legal-review flag on the deal's service agreement envelope (admin-only visibility)
+      const { data: env } = await supabase
+        .from("document_envelopes")
+        .select("attorney_reviewed, legal_review_note")
+        .eq("related_type", "crm_deal")
+        .eq("related_id", dealId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (env) setEnvelopeReview(env as any);
       setLoading(false);
     });
   }, [dealId]);
