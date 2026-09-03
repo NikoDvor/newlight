@@ -744,6 +744,70 @@ export type Database = {
           },
         ]
       }
+      attribution_revenue_links: {
+        Row: {
+          attribution_event_id: string
+          client_id: string
+          created_at: string
+          deal_id: string
+          financial_adjustment_id: string | null
+          id: string
+          match_method: string
+          matched_amount: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          attribution_event_id: string
+          client_id: string
+          created_at?: string
+          deal_id: string
+          financial_adjustment_id?: string | null
+          id?: string
+          match_method?: string
+          matched_amount: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          attribution_event_id?: string
+          client_id?: string
+          created_at?: string
+          deal_id?: string
+          financial_adjustment_id?: string | null
+          id?: string
+          match_method?: string
+          matched_amount?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribution_revenue_links_attribution_event_id_fkey"
+            columns: ["attribution_event_id"]
+            isOneToOne: false
+            referencedRelation: "attribution_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attribution_revenue_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attribution_revenue_links_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: true
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

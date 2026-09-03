@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   DollarSign, AlertTriangle, CheckCircle2, Clock, Activity,
-  PhoneCall, ArrowUpDown, Inbox,
+  PhoneCall, ArrowUpDown, Inbox, Play, Loader2, X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 
 type PaymentRow = {
   id: string;
@@ -94,6 +96,11 @@ export default function AdminClientRevenue() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [attrSort, setAttrSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "count", dir: "desc" });
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [sugLoading, setSugLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [actingId, setActingId] = useState<string | null>(null);
+
   useEffect(() => {
     supabase
       .from("client_payment_requests")
@@ -118,6 +125,94 @@ export default function AdminClientRevenue() {
         setEventsLoading(false);
       });
   }, [rangeDays]);
+
+  // --- Suggested revenue attribution (NewLight commission review) ---
+  const loadSuggestions = useCallback(async () => {
+    setSugLoading(true);
+    const { data } = await supabase
+      .from("attribution_revenue_links")
+      .select(
+        "id, client_id, matched_amount, match_method, created_at, clients(business_name), crm_deals(deal_name, deal_value), attribution_events(channel, event_type, occurred_at)"
+      )
+      .eq("status", "suggested")
+      .order("created_at", { ascending: false });
+    setSuggestions((data as any[]) ?? []);
+    setSugLoading(false);
+  }, []);
+
+  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  const runMatching = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke("match-attribution-to-deals", { body: {} });
+    setRunning(false);
+    if (error) {
+      toast.error(error.message || "Matching failed");
+      return;
+    }
+    toast.success(
+      `Checked ${data?.deals_checked ?? 0} closed-won deals — ${data?.matches_created ?? 0} new suggestion(s).`
+    );
+    loadSuggestions();
+  };
+
+  const approveSuggestion = async (row: any) => {
+    setActingId(row.id);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id ?? null;
+      const channel = row.attribution_events?.channel || "unknown";
+      const eventDate = row.attribution_events?.occurred_at
+        ? new Date(row.attribution_events.occurred_at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" })
+        : "unknown date";
+      const dealName = row.crm_deals?.deal_name || "deal";
+
+      const { data: adj, error: adjErr } = await supabase
+        .from("financial_adjustments")
+        .insert({
+          client_id: row.client_id,
+          type: "attributed_revenue",
+          amount: Number(row.matched_amount || 0),
+          reason: `Attribution match — ${channel} event on ${eventDate} → deal "${dealName}"`,
+          created_by: uid,
+        })
+        .select("id")
+        .single();
+      if (adjErr) throw adjErr;
+
+      const { error: updErr } = await supabase
+        .from("attribution_revenue_links")
+        .update({
+          status: "approved",
+          reviewed_by: uid,
+          reviewed_at: new Date().toISOString(),
+          financial_adjustment_id: adj.id,
+        })
+        .eq("id", row.id);
+      if (updErr) throw updErr;
+
+      toast.success("Approved — financial adjustment created.");
+      setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
+    } catch (e: any) {
+      toast.error(e?.message || "Approve failed");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const rejectSuggestion = async (row: any) => {
+    setActingId(row.id);
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("attribution_revenue_links")
+      .update({ status: "rejected", reviewed_by: auth?.user?.id ?? null, reviewed_at: new Date().toISOString() })
+      .eq("id", row.id);
+    setActingId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Match rejected.");
+    setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
+  };
+
 
   const payStats = useMemo(() => {
     const sum = (s: string) =>
@@ -349,6 +444,100 @@ export default function AdminClientRevenue() {
           </CardContent>
         </Card>
       </section>
+
+      {/* SECTION 3 — Suggested Revenue Attribution (NewLight commission review) */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Suggested Revenue Attribution
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-1 max-w-2xl">
+              Approving creates a real financial_adjustments entry that feeds commission billing. Review the match
+              before approving.
+            </p>
+          </div>
+          <Button size="sm" className="h-8 text-xs" onClick={runMatching} disabled={running}>
+            {running ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Play className="h-3.5 w-3.5 mr-1.5" />}
+            Run Matching Now
+          </Button>
+        </div>
+
+        <Card className="bg-card/60 border-border">
+          <CardContent className="p-4">
+            {sugLoading ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">Loading…</div>
+            ) : suggestions.length === 0 ? (
+              <EmptyState
+                title="No suggested matches yet"
+                description="No suggested matches yet — run matching, or check back after the daily job runs."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-muted-foreground border-b border-border">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium">Client</th>
+                      <th className="text-left px-3 py-2 font-medium">Deal</th>
+                      <th className="text-left px-3 py-2 font-medium">Channel</th>
+                      <th className="text-left px-3 py-2 font-medium">Matched Amount</th>
+                      <th className="text-left px-3 py-2 font-medium">Event Date</th>
+                      <th className="text-right px-3 py-2 font-medium">Review</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestions.map((s) => (
+                      <tr key={s.id} className="border-b border-border/50 hover:bg-white/[0.03]">
+                        <td className="px-3 py-2 text-foreground font-medium">{s.clients?.business_name || "—"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{s.crm_deals?.deal_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant="outline" className="border-0 text-[10px] bg-white/10 text-white/70 capitalize">
+                            {s.attribution_events?.channel || "unknown"}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2 text-foreground">{money(Number(s.matched_amount || 0))}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {s.attribution_events?.occurred_at
+                            ? new Date(s.attribution_events.occurred_at).toLocaleDateString("en-US", {
+                                timeZone: "America/Los_Angeles",
+                              })
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              disabled={actingId === s.id}
+                              onClick={() => approveSuggestion(s)}
+                            >
+                              {actingId === s.id
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[11px]"
+                              disabled={actingId === s.id}
+                              onClick={() => rejectSuggestion(s)}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </motion.div>
   );
 }
+
