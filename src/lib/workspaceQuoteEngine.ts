@@ -18,7 +18,7 @@ const PLATFORM_PRICING: Record<BusinessOperationType, { setup: number; monthly: 
   custom_hybrid:       { setup: 9997,  monthly: 697 },
 };
 
-const FINANCIAL_FIRM_PRICING = { setup: 14997, monthly: 797 };
+const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 797 };
 
 // ═══════════════════════════════════════════════
 // Growth Module Pricing Tables (INTERNAL)
