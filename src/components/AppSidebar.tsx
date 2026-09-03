@@ -49,6 +49,7 @@ const navStructure: NavEntry[] = [
   {
     type: "group", label: "Sales & CRM",
     items: [
+      { title: "Onboarding Pipeline", url: "/onboarding-pipeline", icon: Workflow, moduleKey: "crm" },
       { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
       { title: "Sales Team", url: "/sales-team", icon: TrendingUp, moduleKey: "crm" },
       { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
