@@ -250,7 +250,20 @@ export default function AdminDealDetail() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Deal Terms */}
         <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-white/80">Deal Terms</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-sm text-white/80">Deal Terms</CardTitle>
+              {envelopeReview && (
+                <span
+                  className={`text-[10px] uppercase tracking-wide ${envelopeReview.attorney_reviewed ? "text-emerald-400/80" : "text-white/30"}`}
+                  title={envelopeReview.attorney_reviewed ? (envelopeReview.legal_review_note || "Reviewed") : "Service agreement envelope has not been attorney-reviewed"}
+                >
+                  Attorney reviewed: {envelopeReview.attorney_reviewed ? "Yes" : "No"}
+                  {envelopeReview.attorney_reviewed && envelopeReview.legal_review_note ? ` — ${envelopeReview.legal_review_note}` : ""}
+                </span>
+              )}
+            </div>
+          </CardHeader>
           <CardContent className="space-y-3">
             {deal.pay_sign_status === "paid_signed" ? (
               <>
