@@ -96,6 +96,11 @@ export default function AdminClientRevenue() {
   const [rangeDays, setRangeDays] = useState<number>(30);
   const [attrSort, setAttrSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "count", dir: "desc" });
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [sugLoading, setSugLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [actingId, setActingId] = useState<string | null>(null);
+
   useEffect(() => {
     supabase
       .from("client_payment_requests")
@@ -120,6 +125,94 @@ export default function AdminClientRevenue() {
         setEventsLoading(false);
       });
   }, [rangeDays]);
+
+  // --- Suggested revenue attribution (NewLight commission review) ---
+  const loadSuggestions = useCallback(async () => {
+    setSugLoading(true);
+    const { data } = await supabase
+      .from("attribution_revenue_links")
+      .select(
+        "id, client_id, matched_amount, match_method, created_at, clients(business_name), crm_deals(deal_name, deal_value), attribution_events(channel, event_type, occurred_at)"
+      )
+      .eq("status", "suggested")
+      .order("created_at", { ascending: false });
+    setSuggestions((data as any[]) ?? []);
+    setSugLoading(false);
+  }, []);
+
+  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  const runMatching = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke("match-attribution-to-deals", { body: {} });
+    setRunning(false);
+    if (error) {
+      toast.error(error.message || "Matching failed");
+      return;
+    }
+    toast.success(
+      `Checked ${data?.deals_checked ?? 0} closed-won deals — ${data?.matches_created ?? 0} new suggestion(s).`
+    );
+    loadSuggestions();
+  };
+
+  const approveSuggestion = async (row: any) => {
+    setActingId(row.id);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id ?? null;
+      const channel = row.attribution_events?.channel || "unknown";
+      const eventDate = row.attribution_events?.occurred_at
+        ? new Date(row.attribution_events.occurred_at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" })
+        : "unknown date";
+      const dealName = row.crm_deals?.deal_name || "deal";
+
+      const { data: adj, error: adjErr } = await supabase
+        .from("financial_adjustments")
+        .insert({
+          client_id: row.client_id,
+          type: "attributed_revenue",
+          amount: Number(row.matched_amount || 0),
+          reason: `Attribution match — ${channel} event on ${eventDate} → deal "${dealName}"`,
+          created_by: uid,
+        })
+        .select("id")
+        .single();
+      if (adjErr) throw adjErr;
+
+      const { error: updErr } = await supabase
+        .from("attribution_revenue_links")
+        .update({
+          status: "approved",
+          reviewed_by: uid,
+          reviewed_at: new Date().toISOString(),
+          financial_adjustment_id: adj.id,
+        })
+        .eq("id", row.id);
+      if (updErr) throw updErr;
+
+      toast.success("Approved — financial adjustment created.");
+      setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
+    } catch (e: any) {
+      toast.error(e?.message || "Approve failed");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const rejectSuggestion = async (row: any) => {
+    setActingId(row.id);
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("attribution_revenue_links")
+      .update({ status: "rejected", reviewed_by: auth?.user?.id ?? null, reviewed_at: new Date().toISOString() })
+      .eq("id", row.id);
+    setActingId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Match rejected.");
+    setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
+  };
+
 
   const payStats = useMemo(() => {
     const sum = (s: string) =>
