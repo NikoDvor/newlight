@@ -375,6 +375,7 @@ export default function AdminClientRevenue() {
                       <SortHead label="Due Date" active={paySort.key === "due_date"} dir={paySort.dir} onClick={() => togglePaySort("due_date")} />
                       <SortHead label="Status" active={paySort.key === "status"} dir={paySort.dir} onClick={() => togglePaySort("status")} />
                       <SortHead label="Payer" active={paySort.key === "payer"} dir={paySort.dir} onClick={() => togglePaySort("payer")} />
+                      <th className="text-left px-3 py-2 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -397,6 +398,25 @@ export default function AdminClientRevenue() {
                           </Badge>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{p.payer_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          {p.method === "wire" && p.status !== "paid" ? (
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              disabled={markingPaidId === p.id}
+                              onClick={() => markWirePaid(p)}
+                            >
+                              {markingPaidId === p.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              )}
+                              Mark as Paid
+                            </Button>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-[11px]">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
