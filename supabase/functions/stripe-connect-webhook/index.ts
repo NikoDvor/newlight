@@ -28,20 +28,49 @@ serve(async (req) => {
 
     const event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
 
-    if (event.type === "account.updated") {
-      const account: any = event.data.object;
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
-      const { error } = await supabase
-        .from("client_payment_settings")
-        .update({
-          stripe_charges_enabled: Boolean(account?.charges_enabled),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("stripe_connect_account_id", account?.id);
-      if (error) console.error("Failed to update client_payment_settings:", error);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    switch (event.type) {
+      case "account.updated": {
+        const account: any = event.data.object;
+        const { error } = await supabase
+          .from("client_payment_settings")
+          .update({
+            stripe_charges_enabled: Boolean(account?.charges_enabled),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_connect_account_id", account?.id);
+        if (error) console.error("Failed to update client_payment_settings:", error);
+        break;
+      }
+      case "checkout.session.completed": {
+        const session: any = event.data.object;
+        const paymentRequestId = session?.metadata?.payment_request_id;
+        if (!paymentRequestId) {
+          console.error("checkout.session.completed missing metadata.payment_request_id; session id:", session?.id);
+          break;
+        }
+        const { error } = await supabase
+          .from("client_payment_requests")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", paymentRequestId)
+          .eq("status", "pending");
+        if (error) {
+          console.error("Failed to update client_payment_requests for payment_request_id", paymentRequestId, error);
+        } else {
+          console.log("Marked client_payment_request as paid:", paymentRequestId);
+        }
+        break;
+      }
+      default:
+        console.log("Unhandled Stripe Connect event:", event.type);
     }
 
     return new Response(JSON.stringify({ received: true }), {
