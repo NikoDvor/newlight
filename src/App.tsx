@@ -169,6 +169,7 @@ import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import ClientCloseAndSign from "./pages/ClientCloseAndSign";
 import ClientAgreementTemplate from "./pages/ClientAgreementTemplate";
+import OnboardingPipelineSetup from "./pages/OnboardingPipelineSetup";
 import ClientCloseAndSend from "./pages/ClientCloseAndSend";
 import SetupCenter from "./pages/SetupCenter";
 import ServiceManager from "./pages/ServiceManager";
@@ -511,6 +512,7 @@ const App = () => {
                 <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
                 <Route path="/agreement-template" element={<PermissionGuard moduleKey="settings" minLevel="manage"><ClientAgreementTemplate /></PermissionGuard>} />
+                <Route path="/onboarding-pipeline" element={<PermissionGuard moduleKey="crm"><OnboardingPipelineSetup /></PermissionGuard>} />
                 <Route path="/close-and-send/:dealId" element={<PermissionGuard moduleKey="crm"><ClientCloseAndSend /></PermissionGuard>} />
                 <Route path="/documents" element={<ClientDocuments />} />
                 
