@@ -47,7 +47,7 @@ export default function ClientCloseAndSend() {
     let active = true;
     (async () => {
       setLoading(true);
-      const [dealRes, tplRes] = await Promise.all([
+      const [dealRes, tplRes, payRes] = await Promise.all([
         supabase
           .from("crm_deals")
           .select("*, crm_contacts(full_name, email), crm_companies(company_name)")
@@ -60,7 +60,13 @@ export default function ClientCloseAndSend() {
           .eq("client_id", activeClientId)
           .eq("is_active", true)
           .maybeSingle(),
+        supabase
+          .from("client_payment_settings")
+          .select("accepts_wire, accepts_stripe, stripe_charges_enabled")
+          .eq("client_id", activeClientId)
+          .maybeSingle(),
       ]);
+
       if (!active) return;
 
       const d: any = dealRes.data;
