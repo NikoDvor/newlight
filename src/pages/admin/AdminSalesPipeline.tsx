@@ -398,6 +398,7 @@ export default function AdminSalesPipeline() {
 
   const stats = [
     { label: "Open Pipeline", value: `$${totalPipeline.toLocaleString()}`, icon: DollarSign, accent: true },
+    { label: "Est. Pipeline Value", value: `$${Math.round(combinedPipelineEstimate).toLocaleString()}`, icon: TrendingUp },
     { label: "Active Opps", value: String(salesRecords.filter(c => c.paymentStatus !== "paid").length), icon: Briefcase },
     { label: "Ready to Present", value: String(readyToPresentCount), icon: Eye },
     { label: "Ready to Close", value: String(readyToCloseCount), icon: CheckCircle2 },
