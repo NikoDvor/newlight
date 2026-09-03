@@ -3,7 +3,7 @@
 // - Persists pricing/closing_notes/close_prep_completed_at on the deal.
 // - Creates a closing_meeting bdr_calendar_events row on the rep's own calendar.
 // - Fires universal + rep-focused notifications (SMS + email).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { esc, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
 
 const corsHeaders = {
