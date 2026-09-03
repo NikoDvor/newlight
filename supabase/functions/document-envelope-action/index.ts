@@ -161,7 +161,7 @@ serve(async (req) => {
 
       // Durable PDF snapshot of the signed agreement (idempotent per envelope).
       let signed_pdf_url: string | null = null;
-      if (envelope.envelope_type === "service_agreement" || envelope.envelope_type === "client_agreement") {
+      if (envelope.envelope_type === "service_agreement") {
         signed_pdf_url = await generateSignedAgreementPdf(supabase, envelope.id, {
           signerName: signer_name,
           signerEmail: signer_email,
