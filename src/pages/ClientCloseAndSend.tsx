@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BackArrow } from "@/components/BackArrow";
 import { AlertTriangle, Loader2, FileSignature, Copy, Check, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +12,12 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 
 interface MergeField { key: string; label: string; }
+
+interface PaymentSettings {
+  accepts_wire: boolean;
+  accepts_stripe: boolean;
+  stripe_charges_enabled: boolean;
+}
 
 export default function ClientCloseAndSend() {
   const { dealId } = useParams();
@@ -26,6 +34,13 @@ export default function ClientCloseAndSend() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Optional payment request (client's own collection — separate from NewLight billing)
+  const [paySettings, setPaySettings] = useState<PaymentSettings | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDueDate, setPayDueDate] = useState("");
+  const [payMethod, setPayMethod] = useState<"wire" | "stripe">("wire");
+
 
   useEffect(() => {
     if (!activeClientId || !dealId) { setLoading(false); return; }
