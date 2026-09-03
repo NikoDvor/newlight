@@ -2325,6 +2325,50 @@ export type Database = {
           },
         ]
       }
+      client_agreement_templates: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          merge_fields: Json
+          template_body: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          merge_fields?: Json
+          template_body: string
+          template_name?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          merge_fields?: Json
+          template_body?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_agreement_templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_agreements: {
         Row: {
           agreement_status: string
@@ -14680,6 +14724,7 @@ export type Database = {
         | "onboarding_bundle"
         | "other"
         | "service_agreement"
+        | "client_agreement"
       household_relationship_role:
         | "head_of_household"
         | "spouse"
@@ -14878,6 +14923,7 @@ export const Constants = {
         "onboarding_bundle",
         "other",
         "service_agreement",
+        "client_agreement",
       ],
       household_relationship_role: [
         "head_of_household",
