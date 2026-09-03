@@ -166,6 +166,8 @@ import BDRLeadSourcing from "./pages/BDRLeadSourcing";
 import SalesTeamPipeline from "./pages/SalesTeamPipeline";
 import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
+import ClientCloseAndSign from "./pages/ClientCloseAndSign";
+import ClientAgreementTemplate from "./pages/ClientAgreementTemplate";
 import SetupCenter from "./pages/SetupCenter";
 import ServiceManager from "./pages/ServiceManager";
 import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
@@ -250,6 +252,7 @@ const App = () => {
               <Route path="/webinar/:slug" element={<WebinarRegistration />} />
               <Route path="/w/:slug" element={<WorkspaceEntry />} />
               <Route path="/proposal/:token" element={<ProposalView />} />
+              <Route path="/close-and-sign/:envelopeId" element={<ClientCloseAndSign />} />
               <Route path="/site/:clientSlug" element={<PublicSite />} />
               
               <Route path="/pay-sign/:token" element={<PaySign />} />
@@ -504,6 +507,7 @@ const App = () => {
                 <Route path="/chat" element={<PermissionGuard moduleKey="messaging"><Chat /></PermissionGuard>} />
                 <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
+                <Route path="/agreement-template" element={<PermissionGuard moduleKey="settings" minLevel="manage"><ClientAgreementTemplate /></PermissionGuard>} />
                 <Route path="/documents" element={<ClientDocuments />} />
                 
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />

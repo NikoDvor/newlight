@@ -55,6 +55,7 @@ const navStructure: NavEntry[] = [
       { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
       { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
       { title: "Pipeline Insights", url: "/pipeline-insights", icon: FileText, moduleKey: "reports" },
+      { title: "Agreement Template", url: "/agreement-template", icon: FileSignature, moduleKey: "settings" },
     ],
   },
   {
