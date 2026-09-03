@@ -8,7 +8,7 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
-  Eye, BarChart3,
+  Eye, BarChart3, DollarSign,
 } from "lucide-react";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
