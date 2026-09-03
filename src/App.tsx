@@ -111,6 +111,7 @@ import AdminProposalTemplates from "./pages/admin/AdminProposalTemplates";
 import AdminSalesDemoCreator from "./pages/admin/AdminSalesDemoCreator";
 import AdminProposalWizard from "./pages/admin/AdminProposalWizard";
 import AdminBilling from "./pages/admin/AdminBilling";
+import AdminClientRevenue from "./pages/admin/AdminClientRevenue";
 import AdminAutomations from "./pages/admin/AdminAutomations";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminLaunchChecklist from "./pages/admin/AdminLaunchChecklist";
@@ -314,6 +315,7 @@ const App = () => {
                 <Route path="employee-performance" element={<AdminEmployeePerformance />} />
                 <Route path="clients/:clientId/proposal-wizard" element={<AdminProposalWizard />} />
                 <Route path="billing" element={<AdminBilling />} />
+                <Route path="client-revenue" element={<AdminClientRevenue />} />
                 <Route path="automations" element={<AdminAutomations />} />
                 <Route path="executive" element={<Navigate to="/admin" replace />} />
                 <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
