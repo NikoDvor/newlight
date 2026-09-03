@@ -386,6 +386,9 @@ export default function AdminSalesPipeline() {
 
   const totalPipeline = deals.filter(d => !["closed_won", "closed_lost"].includes(d.pipeline_stage)).reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   const wonValue = deals.filter(d => d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+  // Combined estimate: leads with a deal contribute deal_value; pre-Close-Prep leads contribute estimated_annual_value.
+  const estLeadsValue = estimatedLeads.reduce((s, l) => s + (Number(l.estimated_annual_value) || 0), 0);
+  const combinedPipelineEstimate = totalPipeline + estLeadsValue;
 
   const readyToPresentCount = salesRecords.filter(c => c.readyToPresent && !c.proposalRevealed).length;
   const readyToCloseCount = salesRecords.filter(c => c.readyToClose).length;
