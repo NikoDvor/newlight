@@ -326,6 +326,7 @@ export default function AdminSalesPipeline() {
   const [riskFilter, setRiskFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<ClientSalesRecord | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [estimatedLeads, setEstimatedLeads] = useState<{ id: string; estimated_annual_value: number | null }[]>([]);
 
   const [form, setForm] = useState({
     businessName: "", contactName: "", email: "", phone: "",
