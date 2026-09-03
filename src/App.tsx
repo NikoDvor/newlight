@@ -169,6 +169,7 @@ import CalendarIntegrations from "./pages/CalendarIntegrations";
 import ProposalView from "./pages/ProposalView";
 import ClientCloseAndSign from "./pages/ClientCloseAndSign";
 import ClientAgreementTemplate from "./pages/ClientAgreementTemplate";
+import ClientCloseAndSend from "./pages/ClientCloseAndSend";
 import SetupCenter from "./pages/SetupCenter";
 import ServiceManager from "./pages/ServiceManager";
 import AdminClientSuccess from "./pages/admin/AdminClientSuccess";
