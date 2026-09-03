@@ -156,11 +156,48 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
 
   // ── Platform pricing ──
   const platformBase = financial ? FINANCIAL_FIRM_PRICING : PLATFORM_PRICING[opType];
-  const platformSetup = platformBase.setup;
+  let platformSetup = platformBase.setup;
   const platformMonthly = platformBase.monthly;
 
   const lineItems: QuoteLineItem[] = [];
   const hardCostNotes: string[] = [];
+
+  // ── App Store Launch Upgrade (Custom Quote) ──
+  let appStoreLaunchFee = 0;
+  let appStoreLineItem: QuoteLineItem | null = null;
+  if (includeAppStoreLaunchUpgrade) {
+    const customAmt = input.appStoreCustomAmount ?? null;
+    const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
+
+    if (financial && !hasCustomPrice) {
+      // Fold the flat financial-firm add-on into Platform Setup as a single line item.
+      platformSetup += FINANCIAL_APP_STORE_ADDON;
+      appStoreLaunchFee = 0;
+    } else {
+      const defaultAppStoreFee = financial ? FINANCIAL_APP_STORE_ADDON : 0;
+      appStoreLaunchFee = hasCustomPrice ? customAmt : defaultAppStoreFee;
+
+      const label = hasCustomPrice
+        ? "App Store Launch — Custom"
+        : financial
+          ? "App Store Launch — Financial Firm Add-On"
+          : "App Store Launch — Custom Quote";
+
+      const notes = hasCustomPrice
+        ? "Custom-scoped add-on. Developer account costs paid directly by client."
+        : financial
+          ? `Flat $${FINANCIAL_APP_STORE_ADDON.toLocaleString()} add-on for financial firms. Developer account costs paid directly by client.`
+          : "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.";
+
+      appStoreLineItem = {
+        category: "app_store",
+        label,
+        upfront: appStoreLaunchFee,
+        monthly: 0,
+        notes,
+      };
+    }
+  }
 
   lineItems.push({
     category: "platform",
