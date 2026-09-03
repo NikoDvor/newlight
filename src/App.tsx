@@ -97,6 +97,7 @@ import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
+import AdminChannelTracking from "./pages/admin/AdminChannelTracking";
 import AdminClientSOP from "./pages/admin/AdminClientSOP";
 import AdminProspectDetail from "./pages/admin/AdminProspectDetail";
 import AdminWelcome from "./pages/admin/AdminWelcome";
@@ -267,6 +268,7 @@ const App = () => {
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="clients/acquisition-analytics" element={<AdminClientAcquisitionAnalytics />} />
                 <Route path="clients/:clientId" element={<AdminClientProfile />} />
+                <Route path="channel-tracking" element={<AdminChannelTracking />} />
 
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
