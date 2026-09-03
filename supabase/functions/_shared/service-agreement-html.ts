@@ -49,7 +49,7 @@ export function buildServiceAgreementHtml(args: {
 <style>
   body { font-family: Georgia, 'Times New Roman', serif; color:#1a1a1a; background:#ffffff; margin:0; padding:0; line-height:1.6; }
   .wrap { max-width: 760px; margin: 0 auto; padding: 32px 40px 64px; }
-  .draft-banner { background:#fff4e5; border:2px solid #d97706; color:#7c2d12; padding:14px 18px; border-radius:8px; font-family:Arial,sans-serif; font-size:13px; font-weight:700; text-align:center; letter-spacing:0.5px; margin-bottom:28px; }
+  
   h1 { font-size: 26px; margin: 0 0 4px; letter-spacing:0.3px; }
   .subtitle { font-size: 13px; color:#555; margin: 0 0 24px; font-family:Arial,sans-serif; }
   h2 { font-size: 17px; margin: 28px 0 8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px; color:#111; }
@@ -64,8 +64,6 @@ export function buildServiceAgreementHtml(args: {
   .notes { background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:14px 18px; margin: 16px 0; font-family:Arial,sans-serif; font-size:13px; }
   .fine { font-size: 12px; color:#6b7280; font-family:Arial,sans-serif; margin-top: 32px; }
 </style></head><body><div class="wrap">
-  <div class="draft-banner">⚠ DRAFT — PENDING ATTORNEY REVIEW · NOT FINAL LEGAL LANGUAGE</div>
-
   <h1>Master Services Agreement</h1>
   <p class="subtitle">Between ${agency} ("Agency"), ${entityType}, and ${bn} ("Client")</p>
 
@@ -177,6 +175,5 @@ export function buildServiceAgreementHtml(args: {
   <p>Client further acknowledges that Agency is a marketing services provider and does not provide investment, legal, tax, or accounting advice, and is not itself a registered investment adviser, broker-dealer, or FINRA member.</p>
 
   <p class="fine">By signing the accompanying envelope, Client acknowledges receipt of this Agreement, agrees to be bound by its terms, and confirms that the Initial Fee is non-refundable and that Client's sole and exclusive remedy for underperformance during the Guarantee Period is the continued-service mechanism in Section 3.2.</p>
-  <p class="fine">This is a DRAFT document pending attorney review. Final executed version will be countersigned by ${agency} and retained with the signed envelope in Client's records.</p>
 </div></body></html>`;
 }
