@@ -1,9 +1,10 @@
 // Stripe Connect webhook for sub-account (client-owned) payment accounts.
 //
 // IMPORTANT: This is a SEPARATE webhook endpoint in the Stripe dashboard from NewLight's own
-// billing webhook (stripe-webhook). It must be configured on its own endpoint with its own
-// signing secret, stored as STRIPE_CONNECT_WEBHOOK_SECRET — do NOT reuse NewLight's
-// STRIPE_WEBHOOK_SECRET here.
+// billing webhook (stripe-webhook). It receives deliveries from TWO Stripe webhook endpoint
+// objects (one connect:true for account.updated, one connect:false for checkout.session.completed),
+// each with its own distinct signing secret. Configure both STRIPE_CONNECT_WEBHOOK_SECRET and
+// STRIPE_CONNECT_WEBHOOK_SECRET_2 — do NOT reuse NewLight's STRIPE_WEBHOOK_SECRET here.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -12,7 +13,9 @@ serve(async (req) => {
 
   const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
   const webhookSecret = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET");
-  if (!stripeSecret || !webhookSecret) {
+  const webhookSecret2 = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET_2");
+  const secrets = [webhookSecret, webhookSecret2].filter(Boolean) as string[];
+  if (!stripeSecret || secrets.length === 0) {
     console.error("Stripe Connect webhook not configured");
     return new Response("Not configured", { status: 503 });
   }
@@ -26,7 +29,21 @@ serve(async (req) => {
     const { Stripe } = await import("https://esm.sh/stripe@14.21.0?target=deno");
     const stripe = new Stripe(stripeSecret, { apiVersion: "2024-04-10" });
 
-    const event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
+    let event: any;
+    let lastError: any;
+    for (const secret of secrets) {
+      try {
+        event = await stripe.webhooks.constructEventAsync(rawBody, signature, secret);
+        break;
+      } catch (e: any) {
+        const isSigError =
+          e instanceof stripe.errors.StripeSignatureVerificationError ||
+          e?.type === "StripeSignatureVerificationError";
+        if (!isSigError) throw e;
+        lastError = e;
+      }
+    }
+    if (!event) throw lastError;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
