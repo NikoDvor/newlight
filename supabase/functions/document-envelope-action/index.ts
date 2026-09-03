@@ -53,6 +53,22 @@ function signingReceiptHtml(args: { title: string; signerName: string; signedAt:
 </body></html>`;
 }
 
+/** Unbranded receipt for client-owned agreements (client_agreement envelopes). */
+function genericReceiptHtml(args: { title: string; signerName: string; signedAt: string; signedPdfUrl: string }): string {
+  const { title, signerName, signedAt, signedPdfUrl } = args;
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your signed agreement</h1>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 12px;">Hi ${esc(signerName)},</p>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 20px;">Your agreement <strong>${esc(title)}</strong> was signed on <strong>${esc(signedAt)}</strong>.</p>
+    <div style="margin:20px 0;">
+      <a href="${esc(signedPdfUrl)}" style="display:inline-block;padding:12px 20px;background:#111;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">View / download your signed agreement</a>
+    </div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:24px 0 0;">Please keep this copy for your records.</p>
+  </div>
+</body></html>`;
+}
+
 const json = (body: any, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -158,7 +174,7 @@ serve(async (req) => {
 
       // Durable PDF snapshot of the signed agreement (idempotent per envelope).
       let signed_pdf_url: string | null = null;
-      if (envelope.envelope_type === "service_agreement") {
+      if (envelope.envelope_type === "service_agreement" || envelope.envelope_type === "client_agreement") {
         signed_pdf_url = await generateSignedAgreementPdf(supabase, envelope.id, {
           signerName: signer_name,
           signerEmail: signer_email,
@@ -218,6 +234,58 @@ serve(async (req) => {
           await sendEmail("team@newlightgen.com", subject, html, text);
         } catch (emailErr) {
           console.error("Signing receipt email failed:", emailErr);
+        }
+      }
+
+      // Client-owned agreements: unbranded receipt to the signer + whoever sent it. No NewLight ops copy.
+      if (signed_pdf_url && envelope.envelope_type === "client_agreement") {
+        try {
+          let senderEmail: string | null = null;
+          if (envelope.created_by) {
+            const { data: profile } = await supabase
+              .from("employee_profiles")
+              .select("email")
+              .eq("user_id", envelope.created_by)
+              .maybeSingle();
+            senderEmail = profile?.email || null;
+            if (!senderEmail) {
+              const { data: wsUser } = await supabase
+                .from("workspace_users")
+                .select("email")
+                .eq("user_id", envelope.created_by)
+                .maybeSingle();
+              senderEmail = wsUser?.email || null;
+            }
+            if (!senderEmail) {
+              const { data: user, error: userErr } = await supabase.auth.admin.getUserById(envelope.created_by);
+              if (!userErr && user?.user?.email) senderEmail = user.user.email;
+            }
+          }
+
+          const signedAtLabel = fmtWhen(sig?.created_at || new Date().toISOString());
+          const subject = `Your signed agreement — ${envelope.title}`;
+          const html = genericReceiptHtml({
+            title: envelope.title,
+            signerName: signer_name,
+            signedAt: signedAtLabel,
+            signedPdfUrl: signed_pdf_url,
+          });
+          const text = [
+            `Hi ${signer_name},`,
+            ``,
+            `Your agreement "${envelope.title}" was signed on ${signedAtLabel}.`,
+            ``,
+            `View your signed agreement: ${signed_pdf_url}`,
+            ``,
+            `Please keep this copy for your records.`,
+          ].join("\n");
+
+          await sendEmail(envelope.recipient_email, subject, html, text);
+          if (senderEmail && senderEmail !== envelope.recipient_email) {
+            await sendEmail(senderEmail, subject, html, text);
+          }
+        } catch (emailErr) {
+          console.error("Client agreement receipt email failed:", emailErr);
         }
       }
 
