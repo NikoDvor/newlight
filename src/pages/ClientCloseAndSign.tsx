@@ -4,12 +4,28 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CheckCircle2, Eye, FileSignature, FileText, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, CreditCard, Eye, FileSignature, FileText, Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type StepKey = "review" | "sign" | "done";
+
+function fmtMoney(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: (currency || "usd").toUpperCase() }).format(amount);
+  } catch {
+    return `${amount} ${(currency || "usd").toUpperCase()}`;
+  }
+}
+
+function fmtDueDate(dateStr: string): string {
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  if (!y || !m || !d) return String(dateStr);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
+  });
+}
 
 function StepIndicator({ current, signed }: { current: StepKey; signed: boolean }) {
   const steps: { key: StepKey; label: string; done: boolean }[] = [
@@ -50,6 +66,8 @@ export default function ClientCloseAndSign() {
   const [err, setErr] = useState<string | null>(null);
   const [envelope, setEnvelope] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [paymentRequest, setPaymentRequest] = useState<any>(null);
+  const [paymentSettings, setPaymentSettings] = useState<any>(null);
 
   const [reviewed, setReviewed] = useState(false);
   const [signed, setSigned] = useState(false);
@@ -75,6 +93,8 @@ export default function ClientCloseAndSign() {
       } else {
         setEnvelope(data.envelope);
         setItems(data.items || []);
+        setPaymentRequest(data.payment_request || null);
+        setPaymentSettings(data.payment_settings || null);
         setSignerName(data.envelope?.recipient_name || "");
         setSignerEmail(data.envelope?.recipient_email || "");
         if (data.envelope?.status === "signed") setSigned(true);
@@ -199,6 +219,60 @@ export default function ClientCloseAndSign() {
             )}
           </div>
         </Card>
+
+        {paymentRequest && (
+          <Card className="p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold">Payment</h2>
+                <p className="text-xs text-muted-foreground">Requested alongside this agreement.</p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Amount due</p>
+                <p className="text-lg font-semibold">{fmtMoney(Number(paymentRequest.amount), paymentRequest.currency)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Due date</p>
+                <p className="text-lg font-semibold">{fmtDueDate(paymentRequest.due_date)}</p>
+              </div>
+            </div>
+
+            {paymentRequest.method === "wire" && (
+              paymentSettings?.wire_instructions ? (
+                <div className="rounded-lg border border-border bg-muted/40 p-4">
+                  <p className="text-xs font-semibold mb-2">Wire transfer instructions</p>
+                  <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed">{paymentSettings.wire_instructions}</pre>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Wire instructions will be sent to you separately.
+                </p>
+              )
+            )}
+
+            {paymentRequest.method === "stripe" && (
+              paymentSettings?.stripe_charges_enabled ? (
+                // TODO: Stripe Connect is not live yet. When it is, call a
+                // `create-client-payment-checkout` edge function here to create a
+                // Checkout Session on the client's connected account and redirect
+                // the payer to the returned URL. Deliberately no Pay button until then.
+                <p className="text-sm text-muted-foreground">
+                  Online card payment for this agreement is being finalized — you'll receive a secure payment link shortly.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Payment collection is being set up — you'll be contacted separately to complete payment.
+                </p>
+              )
+            )}
+          </Card>
+        )}
 
         {!signed && (
           <Card className={cn("p-6 mb-6 transition-opacity", !reviewed && "opacity-50 pointer-events-none")}>
