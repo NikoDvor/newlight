@@ -84,9 +84,14 @@ serve(async (req) => {
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: isStaff } = await admin.rpc("has_role", { _user_id: callerId, _role: "admin" });
-    const { data: isOperator } = await admin.rpc("has_role", { _user_id: callerId, _role: "operator" });
-    if (!isStaff && !isOperator) return json({ error: "Forbidden" }, 403);
+    const { data: callerRole } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId)
+      .in("role", ["admin", "operator"])
+      .limit(1)
+      .maybeSingle();
+    if (!callerRole) return json({ error: "Only admins and operators can provision tracking numbers" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const { client_id, channel, label, forwards_to, area_code } = body || {};
@@ -98,7 +103,7 @@ serve(async (req) => {
       return json({ error: "forwards_to must be a valid E.164 number, e.g. +18055551234" }, 400);
     }
 
-    const { data: client } = await admin.from("clients").select("id, phone, business_name").eq("id", client_id).maybeSingle();
+    const { data: client } = await admin.from("clients").select("id, owner_phone, business_name").eq("id", client_id).maybeSingle();
     if (!client) return json({ error: "Client not found" }, 404);
 
     // Prefer the client's own area code, else the forwarding number's.
@@ -111,7 +116,7 @@ serve(async (req) => {
     };
     const desiredArea: string | null =
       (typeof area_code === "string" && /^\d{3}$/.test(area_code) ? area_code : null) ||
-      areaFrom(client.phone) ||
+      areaFrom(client.owner_phone) ||
       areaFrom(forwards_to);
 
     // 1. Find an available number.
