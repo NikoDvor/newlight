@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { BackArrow } from "@/components/BackArrow";
-import { AlertTriangle, CreditCard, Loader2, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CreditCard, ExternalLink, Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ export default function ClientPaymentSettings() {
   const [acceptsStripe, setAcceptsStripe] = useState(false);
   const [wireInstructions, setWireInstructions] = useState("");
   const [stripeChargesEnabled, setStripeChargesEnabled] = useState(false);
+  const [connectAccountId, setConnectAccountId] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     if (!activeClientId) { setLoading(false); return; }
@@ -35,6 +37,7 @@ export default function ClientPaymentSettings() {
         setAcceptsStripe(Boolean(data.accepts_stripe));
         setWireInstructions(data.wire_instructions || "");
         setStripeChargesEnabled(Boolean(data.stripe_charges_enabled));
+        setConnectAccountId(data.stripe_connect_account_id || null);
       }
       setLoading(false);
     })();
@@ -57,6 +60,25 @@ export default function ClientPaymentSettings() {
     if (error) return toast.error(error.message);
     toast.success("Payment settings saved");
   };
+
+  const connectStripe = async () => {
+    if (!activeClientId) return toast.error("No active workspace");
+    setConnecting(true);
+    const { data, error } = await supabase.functions.invoke("stripe-connect-onboard", {
+      body: { client_id: activeClientId },
+    });
+    setConnecting(false);
+    if (error || data?.error || !data?.onboarding_url) {
+      return toast.error(error?.message || data?.error || "Could not start Stripe onboarding");
+    }
+    window.location.href = data.onboarding_url;
+  };
+
+  const connectStatus = stripeChargesEnabled
+    ? { label: "Connected and active", cls: "text-emerald-500" }
+    : connectAccountId
+      ? { label: "Connected — finishing setup", cls: "text-amber-500" }
+      : { label: "Not connected", cls: "text-muted-foreground" };
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -114,12 +136,32 @@ export default function ClientPaymentSettings() {
               <Switch checked={acceptsStripe} onCheckedChange={setAcceptsStripe} />
             </div>
 
-            {acceptsStripe && !stripeChargesEnabled && (
-              <div className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
-                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-foreground">
-                  Stripe collection isn't active yet — contact NewLight to connect your account.
-                </p>
+            {acceptsStripe && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/40 p-4">
+                  <div className="flex items-center gap-2">
+                    {stripeChargesEnabled
+                      ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                    <div>
+                      <p className="text-xs text-muted-foreground">Stripe connection status</p>
+                      <p className={`text-sm font-semibold ${connectStatus.cls}`}>{connectStatus.label}</p>
+                    </div>
+                  </div>
+                  {!stripeChargesEnabled && (
+                    <Button onClick={connectStripe} disabled={connecting}>
+                      {connecting
+                        ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        : <ExternalLink className="h-4 w-4 mr-2" />}
+                      {connectAccountId ? "Finish Stripe setup" : "Connect Stripe"}
+                    </Button>
+                  )}
+                </div>
+                {!stripeChargesEnabled && (
+                  <p className="text-xs text-muted-foreground">
+                    Payouts go directly to your own Stripe account. You can complete onboarding at any time.
+                  </p>
+                )}
               </div>
             )}
           </Card>
