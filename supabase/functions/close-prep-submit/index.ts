@@ -4,7 +4,28 @@
 // - Creates a closing_meeting bdr_calendar_events row on the rep's own calendar.
 // - Fires universal + rep-focused notifications (SMS + email).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { esc, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
+import { esc, fmtMoney, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
+
+// Short, distinct receipt/terms-summary document (separate from the full 16-section agreement).
+function buildTermsSummaryHtml(args: { businessName: string; priceLine: string; retainerKpi?: string | null }): string {
+  const bn = esc(args.businessName);
+  const kpiRow = args.retainerKpi
+    ? `<tr><td style="padding:8px 0;color:#6b7280;width:140px;vertical-align:top;">KPI Target</td><td style="padding:8px 0;">${esc(args.retainerKpi)}</td></tr>`
+    : "";
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Receipt / Terms Summary — ${bn}</title></head>
+<body style="font-family:Georgia,'Times New Roman',serif;color:#111827;background:#ffffff;max-width:720px;margin:0 auto;padding:48px 40px;line-height:1.6;">
+  <h1 style="font-size:22px;margin:0 0 4px;">Receipt / Terms Summary</h1>
+  <p style="color:#6b7280;margin:0 0 24px;">${bn} &mdash; effective as of the date of signature</p>
+  <table style="width:100%;border-collapse:collapse;">
+    <tr><td style="padding:8px 0;color:#6b7280;width:140px;vertical-align:top;">Business</td><td style="padding:8px 0;"><strong>${bn}</strong></td></tr>
+    <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top;">Terms</td><td style="padding:8px 0;"><strong>${esc(args.priceLine)}</strong></td></tr>
+    ${kpiRow}
+  </table>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+  <p style="font-size:14px;color:#6b7280;">This is a summary for your records. The Service Agreement is the full governing legal document.</p>
+</body></html>`;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -208,8 +229,8 @@ Deno.serve(async (req) => {
     // 5a. Create Proposal row (Form 2 artifact #1)
     const priceLineForDoc =
       (isCommission
-        ? `Commission — Initial $${Number(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
-        : `Retainer — Initial $${Number(initial_fee ?? 0).toLocaleString()} + $${Number(recurring_fee ?? 0).toLocaleString()}/month`) +
+        ? `Commission — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
+        : `Retainer — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${fmtMoney(Number(recurring_fee ?? 0))}/month`) +
       (kpi ? ` · KPI: ${kpi}` : "");
 
     const { data: proposal, error: propErr } = await supabase
@@ -257,6 +278,8 @@ Deno.serve(async (req) => {
       dataRetentionDays: 365,
     });
     const summaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(summaryHtml)))}`;
+    const termsSummaryHtml = buildTermsSummaryHtml({ businessName: lead.business_name, priceLine: priceLineForDoc, retainerKpi: kpi });
+    const termsSummaryDataUrl = `data:text/html;base64,${btoa(unescape(encodeURIComponent(termsSummaryHtml)))}`;
 
     const { data: envelope, error: envErr } = await supabase
       .from("document_envelopes")
@@ -279,7 +302,7 @@ Deno.serve(async (req) => {
 
     await supabase.from("document_envelope_items").insert([
       { envelope_id: envelopeId, document_name: "Service Agreement", document_url: summaryDataUrl, display_order: 0 },
-      { envelope_id: envelopeId, document_name: "Receipt / Terms Summary", document_url: summaryDataUrl, display_order: 1 },
+      { envelope_id: envelopeId, document_name: "Receipt / Terms Summary", document_url: termsSummaryDataUrl, display_order: 1 },
     ] as any);
 
     // 5c. Update the deal with pricing + close_prep timestamp + meeting id + envelope/pay-sign linkage
@@ -401,8 +424,8 @@ async function sendClosePrepNotifications(supabase: any, args: {
   } catch (e) { console.error("[close-prep] rep lookup failed:", e); }
 
   const priceLine = pricing_model === "commission"
-    ? `Commission — Initial $${(initial_fee ?? 0).toLocaleString()} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
-    : `Retainer — Initial $${(initial_fee ?? 0).toLocaleString()} + $${(recurring_fee ?? 0).toLocaleString()}/mo`;
+    ? `Commission — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${Number(commission_rate ?? 0)}% yr 1 / ${Number(commission_rate_ongoing ?? 0)}% ongoing of Attributable Revenue`
+    : `Retainer — Initial ${fmtMoney(Number(initial_fee ?? 0))} + ${fmtMoney(Number(recurring_fee ?? 0))}/mo`;
 
   // Universal SMS
   await sendSms(UNIVERSAL_SMS_TO, `NewLight close prep: ${repName || "BDR"} scheduled ${who} for ${whenLbl}. ${priceLine}.`);
