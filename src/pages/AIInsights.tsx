@@ -5,7 +5,8 @@ import {
   Sparkles, RefreshCw, TrendingUp, ChevronDown, X, Clock, ThumbsUp,
   ThumbsDown, CheckCircle2, Megaphone, Search, Share2, Star, Globe,
   Users, Zap, Loader2, ArrowRight, ListChecks, BarChart3, Activity,
-  AlertTriangle, Flame, BookOpen, TrendingDown,
+  AlertTriangle, Flame, BookOpen, TrendingDown, Phone, FileText, DollarSign,
+  MousePointerClick,
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -408,6 +409,9 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Marketing Attribution ──────────────────────────────────── */}
+      <AttributionSummarySection clientId={activeClientId} />
+
       {/* ── Category Performance ─────────────────────────────────── */}
       <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
@@ -549,6 +553,229 @@ export default function AIInsights() {
       {/* ── Insights & Feedback ──────────────────────────────────── */}
       <InsightsFeedback recs={recs} wins={wins} />
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+interface AttributionEventRow {
+  id: string;
+  channel: string | null;
+  source: string | null;
+}
+
+interface AdConversionRow {
+  id: string;
+  platform: string | null;
+  conversion_value: number | null;
+  spend: number | null;
+}
+
+function AttributionSummarySection({ clientId }: { clientId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<AttributionEventRow[]>([]);
+  const [conversions, setConversions] = useState<AdConversionRow[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+
+      const [{ data: eventsData, error: eventsError }, { data: conversionsData, error: conversionsError }] = await Promise.all([
+        supabase
+          .from("attribution_events")
+          .select("id, channel, source")
+          .eq("client_id", clientId)
+          .gte("event_time", startOfMonth)
+          .lt("event_time", endOfMonth)
+          .order("event_time", { ascending: false }),
+        supabase
+          .from("ad_conversions")
+          .select("id, platform, conversion_value, spend")
+          .eq("client_id", clientId)
+          .gte("conversion_time", startOfMonth)
+          .lt("conversion_time", endOfMonth)
+          .order("conversion_time", { ascending: false }),
+      ]);
+
+      if (!cancelled) {
+        if (eventsError) console.error("attribution_events fetch failed:", eventsError);
+        if (conversionsError) console.error("ad_conversions fetch failed:", conversionsError);
+        setEvents((eventsData ?? []) as AttributionEventRow[]);
+        setConversions((conversionsData ?? []) as AdConversionRow[]);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  const { calls, forms, adEvents, totalEvents, channelBreakdown, adValue, adSpend, hasAnyData } = useMemo(() => {
+    const rows = events;
+    const calls = rows.filter((e) => (e.channel || "").toLowerCase() === "call").length;
+    const forms = rows.filter((e) => (e.channel || "").toLowerCase() === "form").length;
+    const adEvents = rows.filter((e) => (e.channel || "").toLowerCase() === "ad_conversion").length;
+    const totalEvents = rows.length;
+
+    const byChannel = new Map<string, number>();
+    rows.forEach((e) => {
+      const ch = e.channel || "Unknown";
+      byChannel.set(ch, (byChannel.get(ch) ?? 0) + 1);
+    });
+    const channelBreakdown = Array.from(byChannel.entries()).sort((a, b) => b[1] - a[1]);
+
+    const adValue = conversions.reduce((sum, c) => sum + (c.conversion_value ?? 0), 0);
+    const adSpend = conversions.reduce((sum, c) => sum + (c.spend ?? 0), 0);
+    const hasAnyData = totalEvents > 0 || conversions.length > 0;
+
+    return { calls, forms, adEvents, totalEvents, channelBreakdown, adValue, adSpend, hasAnyData };
+  }, [events, conversions]);
+
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="mt-6"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-8 w-8 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(280 75% 60%), hsl(211 96% 56%))" }}
+        >
+          <MousePointerClick className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">What We're Generating For You</h3>
+        <span className="text-xs text-muted-foreground">Marketing Attribution — this month</span>
+      </div>
+
+      {loading ? (
+        <div className="rounded-2xl p-8 text-center card-widget border border-border/50">
+          <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+        </div>
+      ) : !hasAnyData ? (
+        <div
+          className="rounded-2xl p-6 border border-dashed"
+          style={{ background: "hsla(210,50%,99%,.6)", borderColor: "hsla(211,96%,56%,.2)" }}
+        >
+          <p className="text-sm text-muted-foreground">
+            No tracked activity yet this month — provision a tracking number or connect an ad account to start seeing real attribution here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Calls */}
+            <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm flex items-start gap-4">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "hsla(142,71%,45%,.12)" }}
+              >
+                <Phone className="h-5 w-5" style={{ color: "hsl(142 71% 35%)" }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{calls}</p>
+                <p className="text-xs text-muted-foreground font-medium">Tracked calls this month</p>
+              </div>
+            </div>
+
+            {/* Forms */}
+            <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm flex items-start gap-4">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "hsla(197,92%,48%,.12)" }}
+              >
+                <FileText className="h-5 w-5" style={{ color: "hsl(197 92% 38%)" }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{forms}</p>
+                <p className="text-xs text-muted-foreground font-medium">Tracked form leads this month</p>
+              </div>
+            </div>
+
+            {/* Ad-attributed value */}
+            <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm flex items-start gap-4">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "hsla(45,93%,50%,.12)" }}
+              >
+                <DollarSign className="h-5 w-5" style={{ color: "hsl(38 90% 38%)" }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(adValue)}</p>
+                <p className="text-xs text-muted-foreground font-medium">Ad-attributed value this month</p>
+              </div>
+            </div>
+
+            {/* Total tracked events */}
+            <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm flex items-start gap-4">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "hsla(211,96%,56%,.12)" }}
+              >
+                <Activity className="h-5 w-5" style={{ color: "hsl(211 96% 46%)" }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{totalEvents}</p>
+                <p className="text-xs text-muted-foreground font-medium">Total tracked events this month</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Channel breakdown + ad spend */}
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Channel breakdown</h4>
+              {channelBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No channel data available.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {channelBreakdown.map(([channel, count]) => (
+                    <li key={channel} className="flex items-center justify-between text-sm">
+                      <span className="capitalize text-foreground">{channel.replace(/_/g, " ")}</span>
+                      <span className="font-semibold tabular-nums">{count}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {conversions.length > 0 && (
+              <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
+                <h4 className="text-sm font-semibold text-foreground mb-3">Ad spend by platform</h4>
+                <ul className="space-y-2">
+                  {Array.from(
+                    conversions.reduce((map, c) => {
+                      const platform = c.platform || "Unknown";
+                      map.set(platform, (map.get(platform) ?? 0) + (c.spend ?? 0));
+                      return map;
+                    }, new Map<string, number>())
+                  )
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([platform, spend]) => (
+                      <li key={platform} className="flex items-center justify-between text-sm">
+                        <span className="capitalize text-foreground">{platform}</span>
+                        <span className="font-semibold tabular-nums">{formatCurrency(spend)}</span>
+                      </li>
+                    ))}
+                </ul>
+                {adSpend > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Total spend</span>
+                    <span className="font-bold text-foreground">{formatCurrency(adSpend)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }
 
