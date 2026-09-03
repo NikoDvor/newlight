@@ -171,7 +171,7 @@ export default function AdminClientRevenue() {
         .from("financial_adjustments")
         .insert({
           client_id: row.client_id,
-          type: "attributed_revenue",
+          type: "revenue",
           amount: Number(row.matched_amount || 0),
           reason: `Attribution match — ${channel} event on ${eventDate} → deal "${dealName}"`,
           created_by: uid,
