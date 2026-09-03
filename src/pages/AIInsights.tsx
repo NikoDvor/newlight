@@ -588,16 +588,16 @@ function AttributionSummarySection({ clientId }: { clientId: string }) {
           .from("attribution_events")
           .select("id, channel, source")
           .eq("client_id", clientId)
-          .gte("event_time", startOfMonth)
-          .lt("event_time", endOfMonth)
-          .order("event_time", { ascending: false }),
+          .gte("occurred_at", startOfMonth)
+          .lt("occurred_at", endOfMonth)
+          .order("occurred_at", { ascending: false }),
         supabase
           .from("ad_conversions")
           .select("id, platform, conversion_value, spend")
           .eq("client_id", clientId)
-          .gte("conversion_time", startOfMonth)
-          .lt("conversion_time", endOfMonth)
-          .order("conversion_time", { ascending: false }),
+          .gte("date", startOfMonth.slice(0, 10))
+          .lt("date", endOfMonth.slice(0, 10))
+          .order("date", { ascending: false }),
       ]);
 
       if (!cancelled) {
