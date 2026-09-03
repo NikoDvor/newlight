@@ -58,6 +58,56 @@ export type Database = {
           },
         ]
       }
+      ad_account_connections: {
+        Row: {
+          client_id: string
+          connected_at: string | null
+          connected_by: string | null
+          created_at: string
+          error_message: string | null
+          external_account_id: string
+          id: string
+          last_synced_at: string | null
+          platform: string
+          secret_ref: string | null
+          status: string
+        }
+        Insert: {
+          client_id: string
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_account_id: string
+          id?: string
+          last_synced_at?: string | null
+          platform: string
+          secret_ref?: string | null
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          error_message?: string | null
+          external_account_id?: string
+          id?: string
+          last_synced_at?: string | null
+          platform?: string
+          secret_ref?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_account_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_campaigns: {
         Row: {
           budget: number | null
@@ -116,6 +166,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ad_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_conversions: {
+        Row: {
+          campaign_name: string | null
+          client_id: string
+          conversion_value: number
+          conversions: number
+          date: string
+          id: string
+          platform: string
+          spend: number
+          synced_at: string
+        }
+        Insert: {
+          campaign_name?: string | null
+          client_id: string
+          conversion_value?: number
+          conversions?: number
+          date: string
+          id?: string
+          platform: string
+          spend?: number
+          synced_at?: string
+        }
+        Update: {
+          campaign_name?: string | null
+          client_id?: string
+          conversion_value?: number
+          conversions?: number
+          date?: string
+          id?: string
+          platform?: string
+          spend?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_conversions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -578,6 +672,74 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attribution_events: {
+        Row: {
+          channel: string
+          client_id: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          event_type: string
+          id: string
+          occurred_at: string
+          raw_payload: Json | null
+          source: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          value: number | null
+        }
+        Insert: {
+          channel: string
+          client_id: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          raw_payload?: Json | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          value?: number | null
+        }
+        Update: {
+          channel?: string
+          client_id?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          raw_payload?: Json | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribution_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -2190,6 +2352,47 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_tracking_numbers: {
+        Row: {
+          active: boolean
+          channel: string
+          client_id: string
+          created_at: string
+          forwards_to: string
+          id: string
+          label: string
+          twilio_number: string
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          client_id: string
+          created_at?: string
+          forwards_to: string
+          id?: string
+          label: string
+          twilio_number: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          client_id?: string
+          created_at?: string
+          forwards_to?: string
+          id?: string
+          label?: string
+          twilio_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_tracking_numbers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
