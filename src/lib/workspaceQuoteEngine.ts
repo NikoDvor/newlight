@@ -18,7 +18,7 @@ const PLATFORM_PRICING: Record<BusinessOperationType, { setup: number; monthly: 
   custom_hybrid:       { setup: 9997,  monthly: 697 },
 };
 
-const FINANCIAL_FIRM_PRICING = { setup: 14997, monthly: 797 };
+const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 797 };
 
 // ═══════════════════════════════════════════════
 // Growth Module Pricing Tables (INTERNAL)
@@ -101,7 +101,7 @@ const APP_STORE_PRICING: Record<BusinessOperationType, number> = {
   custom_hybrid:       19997,
 };
 
-const FINANCIAL_APP_STORE_PRICE = 24997;
+const FINANCIAL_APP_STORE_ADDON = 2000;
 
 // Proposals + Content Planner are included at $0
 const INCLUDED_MODULES = ["proposals", "content_planner"];
@@ -207,15 +207,27 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   if (includeAppStoreLaunchUpgrade) {
     const customAmt = input.appStoreCustomAmount ?? null;
     const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
-    appStoreLaunchFee = hasCustomPrice ? customAmt : 0;
+    const defaultAppStoreFee = financial ? FINANCIAL_APP_STORE_ADDON : 0;
+    appStoreLaunchFee = hasCustomPrice ? customAmt : defaultAppStoreFee;
+
+    const label = hasCustomPrice
+      ? "App Store Launch — Custom"
+      : financial
+        ? "App Store Launch — Financial Firm Add-On"
+        : "App Store Launch — Custom Quote";
+
+    const notes = hasCustomPrice
+      ? "Custom-scoped add-on. Developer account costs paid directly by client."
+      : financial
+        ? `Flat $${FINANCIAL_APP_STORE_ADDON.toLocaleString()} add-on for financial firms. Developer account costs paid directly by client.`
+        : "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.";
+
     lineItems.push({
       category: "app_store",
-      label: hasCustomPrice ? "App Store Launch — Custom" : "App Store Launch — Custom Quote",
+      label,
       upfront: appStoreLaunchFee,
       monthly: 0,
-      notes: hasCustomPrice
-        ? "Custom-scoped add-on. Developer account costs paid directly by client."
-        : "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.",
+      notes,
     });
   }
 
