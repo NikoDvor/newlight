@@ -412,7 +412,8 @@ export default function ContactDetail() {
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Deal</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Stage</th>
                     <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Value</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground py-3 pr-4">Status</th>
+                    <th className="text-right text-xs font-medium text-muted-foreground py-3">Agreement</th>
                   </tr></thead>
                   <tbody>
                     {deals.map(d => (
@@ -420,7 +421,12 @@ export default function ContactDetail() {
                         <td className="text-sm font-medium py-3 pr-4">{d.deal_name}</td>
                         <td className="py-3 pr-4"><Badge className={`text-[10px] ${STAGE_COLORS[d.pipeline_stage] || "bg-secondary text-muted-foreground"}`}>{STAGE_LABELS[d.pipeline_stage] || d.pipeline_stage}</Badge></td>
                         <td className="text-sm tabular-nums py-3 pr-4">${Number(d.deal_value || 0).toLocaleString()}</td>
-                        <td className="text-sm text-muted-foreground py-3">{d.status}</td>
+                        <td className="text-sm text-muted-foreground py-3 pr-4">{d.status}</td>
+                        <td className="py-3 text-right">
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/close-and-send/${d.id}`)}>
+                            Generate &amp; Send Agreement
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
