@@ -8,7 +8,7 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
-  Eye, BarChart3,
+  Eye, BarChart3, DollarSign,
 } from "lucide-react";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -72,6 +72,7 @@ const adminGroups: NavGroup[] = [
       { title: "Reports", url: "/admin/reports", icon: LineChart },
       { title: "Pipeline Insights", url: "/admin/pipeline-insights", icon: BarChart3 },
       { title: "Billing", url: "/admin/billing", icon: Wallet },
+      { title: "Client Revenue", url: "/admin/client-revenue", icon: DollarSign },
       { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
