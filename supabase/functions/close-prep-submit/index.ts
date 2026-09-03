@@ -129,11 +129,13 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Not your lead" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // 2. Ensure calendar
+    // 2. Ensure calendar (reps may own several booking links — take the oldest)
     let { data: cal } = await supabase
       .from("bdr_calendars")
       .select("id, user_id, client_id")
       .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (!cal) {
       const { data: created, error: calErr } = await supabase
@@ -142,7 +144,7 @@ Deno.serve(async (req) => {
           user_id: userId,
           client_id: lead.client_id,
           name: "My Pipeline Calendar",
-          booking_slug: `bdr-${userId.slice(0, 8)}`,
+          booking_slug: `bdr-${userId.slice(0, 8)}-${Math.random().toString(36).slice(2, 6)}`,
         })
         .select("id, user_id, client_id")
         .single();
