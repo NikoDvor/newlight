@@ -98,6 +98,8 @@ Deno.serve(async (req) => {
       .from("bdr_calendars")
       .select("id, user_id, availability, timezone")
       .eq("user_id", uid)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     return { rep, calendar: cal || null };
   }
