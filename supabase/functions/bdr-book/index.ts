@@ -157,6 +157,10 @@ Deno.serve(async (req) => {
           (existingLead.user_id !== assignedCal.user_id ? " (claimed by another rep)" : "")
       );
     } else {
+      // Baseline estimate using financial-firm platform pricing (setup $7,997 + 12mo retainer-equivalent $797/mo)
+      // — see src/lib/workspaceQuoteEngine.ts FINANCIAL_FIRM_PRICING. Real deal value is set at
+      // Close Prep; this is a Form-1-stage placeholder so pipeline value isn't $0 before a deal exists.
+      const FORM1_ESTIMATED_ANNUAL_VALUE = 7997 + 797 * 12; // 17561
       const baseLead: Record<string, any> = {
         user_id: assignedCal.user_id,
         client_id: assignedCal.client_id,
@@ -173,6 +177,7 @@ Deno.serve(async (req) => {
         logo_url: logoClean,
         has_sales_team: hasSalesTeamClean,
         sales_team_size: salesTeamSizeClean,
+        estimated_annual_value: FORM1_ESTIMATED_ANNUAL_VALUE,
       };
 
       let { data: newLead, error: leadErr } = await supabase
