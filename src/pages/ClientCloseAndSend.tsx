@@ -270,6 +270,67 @@ export default function ClientCloseAndSend() {
             )}
           </Card>
 
+          {paySettings && (
+            <Card className="p-6 space-y-4">
+              <div>
+                <h2 className="text-base font-semibold">Request Payment <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
+                <p className="text-xs text-muted-foreground">
+                  Leave blank to send the agreement without a payment request.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Amount (USD)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    placeholder="2500.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Due date</label>
+                  <Input type="date" value={payDueDate} onChange={(e) => setPayDueDate(e.target.value)} />
+                </div>
+              </div>
+
+              {bothMethods ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Payment method</p>
+                  <RadioGroup value={payMethod} onValueChange={(v) => setPayMethod(v as "wire" | "stripe")} className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="wire" id="pay-wire" />
+                      <Label htmlFor="pay-wire" className="text-sm font-normal">Wire transfer</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="stripe" id="pay-stripe" />
+                      <Label htmlFor="pay-stripe" className="text-sm font-normal">Stripe</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Method: {paySettings.accepts_wire ? "Wire transfer" : "Stripe"}
+                </p>
+              )}
+
+              {((bothMethods && payMethod === "stripe") || (!bothMethods && paySettings.accepts_stripe)) &&
+                !paySettings.stripe_charges_enabled && (
+                <div className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground">
+                    Stripe collection isn't active yet — your recipient will be told they'll be contacted separately to pay.
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
+
+
+
           <div className="flex justify-end">
             <Button onClick={generate} disabled={sending}>
               {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSignature className="h-4 w-4 mr-2" />}
