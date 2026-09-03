@@ -101,6 +101,7 @@ export default function AdminClientRevenue() {
   const [sugLoading, setSugLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [editedAmounts, setEditedAmounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
