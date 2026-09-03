@@ -218,6 +218,33 @@ export default function AdminClientRevenue() {
     setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
   };
 
+  const markWirePaid = async (row: PaymentRow) => {
+    if (!window.confirm("Confirm you've verified this wire transfer actually arrived before marking it paid.")) return;
+    setMarkingPaidId(row.id);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("client_payment_requests")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          marked_paid_by: auth?.user?.id ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      setPayments((prev) =>
+        prev.map((p) => (p.id === row.id ? { ...p, status: "paid" } : p))
+      );
+      toast.success("Marked as paid.");
+    } catch (e: any) {
+      toast.error(e?.message || "Update failed");
+    } finally {
+      setMarkingPaidId(null);
+    }
+  };
+
 
   const payStats = useMemo(() => {
     const sum = (s: string) =>
