@@ -11,10 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 
-const ACTIVE_STAGES = [
-  "new_lead", "contacted", "qualified", "appointment_set",
-  "appointment_attended", "proposal_sent", "negotiation",
-];
+const ACTIVE_STAGES = ["new_lead", "appointment_booked", "negotiation"];
 
 interface BookingLink { id: string; slug: string; }
 interface Template { id: string; template_name: string; }
