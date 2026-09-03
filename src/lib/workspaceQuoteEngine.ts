@@ -211,10 +211,6 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
     lineItems.push({ category: "website", label: `Website Build — ${wb.label}`, upfront: wb.fee, monthly: 0 });
   }
 
-  if (appStoreLineItem) {
-    lineItems.push(appStoreLineItem);
-  }
-
   const totalUpfront = platformSetup + moduleActivationTotal + websiteBuildFee + appStoreLaunchFee;
   const totalMonthly = platformMonthly + moduleMonthlyTotal;
 
