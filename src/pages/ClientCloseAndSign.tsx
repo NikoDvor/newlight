@@ -67,7 +67,7 @@ export default function ClientCloseAndSign() {
     if (!token) return;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke("document-envelope-action", {
+      const { data, error } = await supabase.functions.invoke("client-agreement-action", {
         body: { share_token: token, action: "view" },
       });
       if (error || data?.error) {
@@ -112,7 +112,7 @@ export default function ClientCloseAndSign() {
     if (sigMode === "draw" && !drawn) return toast.error("Draw your signature");
     const signatureData = sigMode === "type" ? typedSig : canvasRef.current?.toDataURL() || null;
     setSignBusy(true);
-    const { data, error } = await supabase.functions.invoke("document-envelope-action", {
+    const { data, error } = await supabase.functions.invoke("client-agreement-action", {
       body: { share_token: token, action: "sign", signer_name: signerName, signer_email: signerEmail, signature_data: signatureData },
     });
     setSignBusy(false);

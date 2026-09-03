@@ -3,7 +3,10 @@
 // Sign-only — no payment step is wired into this flow.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { esc } from "../_shared/service-agreement-html.ts";
+/** Local HTML-escape helper (no shared NewLight dependency). */
+function esc(s: string): string {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
