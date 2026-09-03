@@ -371,11 +371,33 @@ Deno.serve(async (req) => {
     // Create invoice row if none exists
     let invId = deal.payment_invoice_id as string | null;
     if (!invId) {
+      // invoices.billing_account_id is NOT NULL — resolve or create the client's billing account
+      let billingAccountId: string | null = null;
+      const { data: existingBa } = await supabase
+        .from("billing_accounts")
+        .select("id")
+        .eq("client_id", deal.client_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (existingBa?.id) {
+        billingAccountId = existingBa.id;
+      } else {
+        const { data: newBa, error: baErr } = await supabase
+          .from("billing_accounts")
+          .insert({ client_id: deal.client_id })
+          .select("id")
+          .single();
+        if (baErr) return json({ error: baErr.message }, 500);
+        billingAccountId = newBa.id;
+      }
+
       const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
       const { data: newInv, error: invErr } = await supabase
         .from("invoices")
         .insert({
           client_id: deal.client_id,
+          billing_account_id: billingAccountId,
           invoice_number: invoiceNumber,
           invoice_type: "initial_fee",
           invoice_status: "pending",
