@@ -3244,6 +3244,7 @@ export type Database = {
           reminder_due_sent_at: string | null
           status: string
           stripe_checkout_url: string | null
+          updated_at: string
         }
         Insert: {
           amount: number
@@ -3265,6 +3266,7 @@ export type Database = {
           reminder_due_sent_at?: string | null
           status?: string
           stripe_checkout_url?: string | null
+          updated_at?: string
         }
         Update: {
           amount?: number
@@ -3286,6 +3288,7 @@ export type Database = {
           reminder_due_sent_at?: string | null
           status?: string
           stripe_checkout_url?: string | null
+          updated_at?: string
         }
         Relationships: [
           {

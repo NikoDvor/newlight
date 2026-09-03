@@ -101,6 +101,7 @@ export default function AdminClientRevenue() {
   const [sugLoading, setSugLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [editedAmounts, setEditedAmounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -215,6 +216,33 @@ export default function AdminClientRevenue() {
     if (error) { toast.error(error.message); return; }
     toast.success("Match rejected.");
     setSuggestions((prev) => prev.filter((s) => s.id !== row.id));
+  };
+
+  const markWirePaid = async (row: PaymentRow) => {
+    if (!window.confirm("Confirm you've verified this wire transfer actually arrived before marking it paid.")) return;
+    setMarkingPaidId(row.id);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("client_payment_requests")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          marked_paid_by: auth?.user?.id ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      setPayments((prev) =>
+        prev.map((p) => (p.id === row.id ? { ...p, status: "paid" } : p))
+      );
+      toast.success("Marked as paid.");
+    } catch (e: any) {
+      toast.error(e?.message || "Update failed");
+    } finally {
+      setMarkingPaidId(null);
+    }
   };
 
 
@@ -347,6 +375,7 @@ export default function AdminClientRevenue() {
                       <SortHead label="Due Date" active={paySort.key === "due_date"} dir={paySort.dir} onClick={() => togglePaySort("due_date")} />
                       <SortHead label="Status" active={paySort.key === "status"} dir={paySort.dir} onClick={() => togglePaySort("status")} />
                       <SortHead label="Payer" active={paySort.key === "payer"} dir={paySort.dir} onClick={() => togglePaySort("payer")} />
+                      <th className="text-left px-3 py-2 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -369,6 +398,25 @@ export default function AdminClientRevenue() {
                           </Badge>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{p.payer_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          {p.method === "wire" && p.status !== "paid" ? (
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              disabled={markingPaidId === p.id}
+                              onClick={() => markWirePaid(p)}
+                            >
+                              {markingPaidId === p.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              )}
+                              Mark as Paid
+                            </Button>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-[11px]">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
