@@ -3,6 +3,10 @@ export function esc(s: string): string {
   return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+export function fmtMoney(n: number): string {
+  return `$${(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function buildServiceAgreementHtml(args: {
   businessName: string;
   priceLine: string;
@@ -28,7 +32,7 @@ export function buildServiceAgreementHtml(args: {
   const entityType = esc(agencyEntityType);
   const govState = esc(governingState);
   const venue = esc(venueCounty);
-  const initFmt = `$${(initialFee || 0).toLocaleString()}`;
+  const initFmt = fmtMoney(initialFee);
   const isCommissionDeal = pricingModel === "commission";
   const retainerBlock = `<p>Beginning upon Recoupment or ninety (90) days after the Initial Fee payment, whichever is earlier, subject to Section 3, Client will pay Agency a recurring retainer of <strong>$${(recurringFee ?? 0).toLocaleString()} per month</strong> (the "Recurring Fee"), invoiced in advance, due on the same calendar day each month. The Recurring Fee is a fixed dollar amount and does not vary with Client's revenue, assets under management, number of clients, or investment performance.${retainerKpi ? ` This retainer is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;
   const commissionBlock = `<p>Beginning upon execution of this Agreement, Agency will invoice Client monthly in arrears an amount equal to a percentage of Attributable Revenue recognized by Client during that month (the "Commission"), as determined from the System of Record. For the first twelve (12) months following the Effective Date, the Commission rate is <strong>${commissionRate ?? 0}%</strong>. Beginning with the thirteenth (13th) month following the Effective Date and continuing thereafter, the Commission rate is <strong>${commissionRateOngoing ?? 0}%</strong>. This is a results-based compensation arrangement: the Commission is calculated solely on Attributable Revenue that Agency's own Services are shown to have generated for Client, as defined in Section 1, and is expressly NOT calculated on Client's overall advisory fee revenue, assets under management, or any revenue not attributable to the Services. If Attributable Revenue in a given month is zero, no Commission is due for that month.${retainerKpi ? ` This arrangement is evaluated against the following performance target: ${esc(retainerKpi)}.` : ""}</p>`;

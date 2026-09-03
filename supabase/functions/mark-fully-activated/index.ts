@@ -23,7 +23,8 @@ async function sendEmail(to: string, subject: string, html: string, text: string
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: "NewLight <team@newlightgen.com>", to: [to], subject, text, html }),
     });
-    if (!res.ok) { console.error("Resend error:", res.status, await res.text().catch(() => "")); return false; }
+    if (!res.ok) { console.error("[mark-fully-activated] Resend error:", res.status, await res.text().catch(() => "")); return false; }
+    console.log("[mark-fully-activated] email sent successfully to", to);
     return true;
   } catch (e) { console.error("Email send error:", e); return false; }
 }
