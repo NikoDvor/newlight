@@ -5583,12 +5583,14 @@ export type Database = {
       }
       document_envelopes: {
         Row: {
+          attorney_reviewed: boolean
           client_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
           envelope_type: Database["public"]["Enums"]["envelope_type"]
           id: string
+          legal_review_note: string | null
           recipient_email: string | null
           recipient_name: string | null
           related_id: string | null
@@ -5601,12 +5603,14 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          attorney_reviewed?: boolean
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           envelope_type?: Database["public"]["Enums"]["envelope_type"]
           id?: string
+          legal_review_note?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           related_id?: string | null
@@ -5619,12 +5623,14 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          attorney_reviewed?: boolean
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           envelope_type?: Database["public"]["Enums"]["envelope_type"]
           id?: string
+          legal_review_note?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           related_id?: string | null
