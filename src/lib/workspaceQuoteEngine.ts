@@ -101,7 +101,7 @@ const APP_STORE_PRICING: Record<BusinessOperationType, number> = {
   custom_hybrid:       19997,
 };
 
-const FINANCIAL_APP_STORE_PRICE = 24997;
+const FINANCIAL_APP_STORE_ADDON = 2000;
 
 // Proposals + Content Planner are included at $0
 const INCLUDED_MODULES = ["proposals", "content_planner"];
