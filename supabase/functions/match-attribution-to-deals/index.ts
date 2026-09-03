@@ -24,7 +24,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const cronSecret = Deno.env.get("ATTRIBUTION_MATCH_CRON_SECRET") || "";
+    const cronSecret = Deno.env.get("ATTRIBUTION_CRON_KEY") || "";
 
     const body = await req.json().catch(() => ({} as any));
     const clientId = typeof body?.client_id === "string" && body.client_id ? body.client_id : null;
