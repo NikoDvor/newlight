@@ -81,12 +81,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await anonClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) {
+    const { data: authData, error: authErr } = await anonClient.auth.getUser(token);
+    if (authErr || !authData?.user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const userId = claims.claims.sub as string;
-    const userEmail = (claims.claims as any).email as string | undefined;
+    const userId = authData.user.id as string;
+    const userEmail = authData.user.email as string | undefined;
 
     const body = await req.json();
     const {
