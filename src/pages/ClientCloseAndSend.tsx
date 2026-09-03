@@ -89,14 +89,34 @@ export default function ClientCloseAndSend() {
             .filter((f) => f.key),
         });
       }
+
+      const p: any = payRes.data;
+      if (p && (p.accepts_wire || p.accepts_stripe)) {
+        setPaySettings({
+          accepts_wire: Boolean(p.accepts_wire),
+          accepts_stripe: Boolean(p.accepts_stripe),
+          stripe_charges_enabled: Boolean(p.stripe_charges_enabled),
+        });
+        setPayMethod(p.accepts_wire ? "wire" : "stripe");
+      }
       setLoading(false);
     })();
     return () => { active = false; };
   }, [activeClientId, dealId]);
 
+  const bothMethods = Boolean(paySettings?.accepts_wire && paySettings?.accepts_stripe);
+  const paymentFilledIn = Boolean(payAmount.trim() && payDueDate);
+
   const generate = async () => {
     if (!activeClientId) return toast.error("No active workspace");
     if (!recipientName.trim() || !recipientEmail.trim()) return toast.error("Recipient name and email are required");
+    if (paySettings && (payAmount.trim() || payDueDate) && !paymentFilledIn) {
+      return toast.error("Enter both an amount and a due date, or clear the payment section");
+    }
+    const amountNum = Number(payAmount);
+    if (paymentFilledIn && (!Number.isFinite(amountNum) || amountNum <= 0)) {
+      return toast.error("Enter a valid payment amount");
+    }
     setSending(true);
     const { data, error } = await supabase.functions.invoke("generate-client-envelope", {
       body: {
@@ -107,15 +127,39 @@ export default function ClientCloseAndSend() {
         field_values: values,
       },
     });
-    setSending(false);
     if (error || (data as any)?.error) {
+      setSending(false);
       return toast.error((data as any)?.error || error?.message || "Failed to generate agreement");
     }
     const token = (data as any)?.share_token;
-    if (!token) return toast.error("Agreement created but no share link was returned");
+    const envelopeId = (data as any)?.envelope_id;
+    if (!token) {
+      setSending(false);
+      return toast.error("Agreement created but no share link was returned");
+    }
+
+    if (paySettings && paymentFilledIn) {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error: payErr } = await supabase.from("client_payment_requests").insert({
+        client_id: activeClientId,
+        deal_id: dealId || null,
+        envelope_id: envelopeId || null,
+        amount: amountNum,
+        currency: "usd",
+        method: bothMethods ? payMethod : (paySettings.accepts_wire ? "wire" : "stripe"),
+        due_date: payDueDate,
+        payer_name: recipientName.trim(),
+        payer_email: recipientEmail.trim(),
+        created_by: auth?.user?.id || null,
+      });
+      if (payErr) toast.error(`Agreement sent, but the payment request failed: ${payErr.message}`);
+    }
+
+    setSending(false);
     setShareUrl(`https://newlight-app.com/close-and-sign/${token}`);
     toast.success("Agreement generated");
   };
+
 
   const copy = async () => {
     if (!shareUrl) return;
