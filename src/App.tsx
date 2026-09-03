@@ -511,6 +511,7 @@ const App = () => {
                 <Route path="/content-planner" element={<Navigate to="/social-media" replace />} />
                 <Route path="/proposals" element={<PermissionGuard moduleKey="proposals"><Proposals /></PermissionGuard>} />
                 <Route path="/agreement-template" element={<PermissionGuard moduleKey="settings" minLevel="manage"><ClientAgreementTemplate /></PermissionGuard>} />
+                <Route path="/close-and-send/:dealId" element={<PermissionGuard moduleKey="crm"><ClientCloseAndSend /></PermissionGuard>} />
                 <Route path="/documents" element={<ClientDocuments />} />
                 
                 <Route path="/help-desk" element={<PermissionGuard moduleKey="support"><HelpDesk /></PermissionGuard>} />
