@@ -162,41 +162,13 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   const lineItems: QuoteLineItem[] = [];
   const hardCostNotes: string[] = [];
 
-  // ── App Store Launch Upgrade (Custom Quote) ──
+  // ── App Store Launch Upgrade (folded into Platform Setup) ──
   let appStoreLaunchFee = 0;
-  let appStoreLineItem: QuoteLineItem | null = null;
   if (includeAppStoreLaunchUpgrade) {
     const customAmt = input.appStoreCustomAmount ?? null;
     const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
-
-    if (financial && !hasCustomPrice) {
-      // Fold the flat financial-firm add-on into Platform Setup as a single line item.
-      platformSetup += FINANCIAL_APP_STORE_ADDON;
-      appStoreLaunchFee = 0;
-    } else {
-      const defaultAppStoreFee = financial ? FINANCIAL_APP_STORE_ADDON : 0;
-      appStoreLaunchFee = hasCustomPrice ? customAmt : defaultAppStoreFee;
-
-      const label = hasCustomPrice
-        ? "App Store Launch — Custom"
-        : financial
-          ? "App Store Launch — Financial Firm Add-On"
-          : "App Store Launch — Custom Quote";
-
-      const notes = hasCustomPrice
-        ? "Custom-scoped add-on. Developer account costs paid directly by client."
-        : financial
-          ? `Flat $${FINANCIAL_APP_STORE_ADDON.toLocaleString()} add-on for financial firms. Developer account costs paid directly by client.`
-          : "Custom-scoped add-on. Pricing determined during final review. Developer account costs paid directly by client.";
-
-      appStoreLineItem = {
-        category: "app_store",
-        label,
-        upfront: appStoreLaunchFee,
-        monthly: 0,
-        notes,
-      };
-    }
+    appStoreLaunchFee = hasCustomPrice ? customAmt : (financial ? FINANCIAL_APP_STORE_ADDON : 0);
+    platformSetup += appStoreLaunchFee;
   }
 
   lineItems.push({
@@ -239,11 +211,7 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
     lineItems.push({ category: "website", label: `Website Build — ${wb.label}`, upfront: wb.fee, monthly: 0 });
   }
 
-  if (appStoreLineItem) {
-    lineItems.push(appStoreLineItem);
-  }
-
-  const totalUpfront = platformSetup + moduleActivationTotal + websiteBuildFee + appStoreLaunchFee;
+  const totalUpfront = platformSetup + moduleActivationTotal + websiteBuildFee;
   const totalMonthly = platformMonthly + moduleMonthlyTotal;
 
   return {
