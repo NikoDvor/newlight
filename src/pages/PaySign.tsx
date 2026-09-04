@@ -607,7 +607,8 @@ export default function PaySign() {
                     Confirm onboarding time
                   </Button>
                 </div>
-              )
+              )}
+              </div>
             )}
           </Card>
         )}
