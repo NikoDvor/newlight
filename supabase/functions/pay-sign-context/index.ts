@@ -149,9 +149,47 @@ Deno.serve(async (req) => {
     });
   }
 
+  if (action === "list_onboarding_pocs") {
+    try {
+      const pocs = await listOnboardingPocs(supabase);
+      return json({ pocs });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to list onboarding POCs" }, 500);
+    }
+  }
+
+  if (action === "onboarding_poc_availability") {
+    const pocId = body.poc_user_id;
+    if (!pocId || typeof pocId !== "string") return json({ error: "poc_user_id is required" }, 400);
+    try {
+      const cal = await ensureServicePocCalendar(supabase, pocId);
+      const { data: availability } = await supabase
+        .from("calendar_availability")
+        .select("day_of_week, start_time, end_time, slot_interval_minutes, is_active, timezone")
+        .eq("calendar_id", cal.id)
+        .eq("is_active", true)
+        .order("day_of_week");
+      const { data: apptTypes } = await supabase
+        .from("calendar_appointment_types")
+        .select("duration_minutes")
+        .eq("calendar_id", cal.id)
+        .eq("is_active", true)
+        .limit(1);
+      return json({
+        calendar_id: cal.id,
+        timezone: cal.timezone || "America/Los_Angeles",
+        availability: availability || [],
+        default_duration_minutes: apptTypes?.[0]?.duration_minutes ?? 60,
+      });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to load availability" }, 500);
+    }
+  }
+
   if (action === "schedule_onboarding") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
     const starts_at = body.starts_at;
+    const pocUserId = typeof body.poc_user_id === "string" && body.poc_user_id ? body.poc_user_id : null;
     if (!starts_at || typeof starts_at !== "string" || isNaN(Date.parse(starts_at))) {
       return json({ error: "Valid starts_at is required" }, 400);
     }
@@ -160,7 +198,20 @@ Deno.serve(async (req) => {
     }
 
     const { rep, calendar } = await resolveRepAndCalendar();
-    if (!calendar?.id) return json({ error: "Assigned rep has no calendar configured" }, 409);
+
+    // If an explicit POC was picked, book on their calendar instead of the rep's.
+    let targetCalendarId: string | null = calendar?.id || null;
+    let targetUserId: string | null = rep?.id || calendar?.user_id || null;
+    if (pocUserId) {
+      try {
+        const pocCal = await ensureServicePocCalendar(supabase, pocUserId);
+        targetCalendarId = pocCal.id;
+        targetUserId = pocUserId;
+      } catch (e: any) {
+        return json({ error: e?.message || "Failed to resolve POC calendar" }, 500);
+      }
+    }
+    if (!targetCalendarId) return json({ error: "Assigned rep has no calendar configured" }, 409);
 
     const { data: originatingLead } = await supabase
       .from("nl_bdr_leads")
