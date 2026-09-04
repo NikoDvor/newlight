@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink, Search } from "lucide-react";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ export default function AdminDashboard() {
   const [templateCount, setTemplateCount] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [recentClients, setRecentClients] = useState<{ id: string; business_name: string; status: string }[]>([]);
+  const [allClients, setAllClients] = useState<{ id: string; business_name: string; status: string; payment_status: string; created_at: string }[]>([]);
+  const [subAccountSearch, setSubAccountSearch] = useState("");
 
   const enterClientView = (clientId: string) => {
     setViewMode("workspace");
@@ -43,6 +45,7 @@ export default function AdminDashboard() {
     Promise.all([
       supabase.from("clients").select("id", { count: "exact", head: true }).then(({ count }) => setClientCount(count ?? 0)),
       supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
+      supabase.from("clients").select("id, business_name, status, payment_status, created_at").order("created_at", { ascending: false }).then(({ data }) => setAllClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
       supabase.from("prospects").select("id", { count: "exact", head: true }).then(({ count }) => setProspectCount(count ?? 0)),
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "build_in_progress").then(({ count }) => setDemoInProgress(count ?? 0)),
