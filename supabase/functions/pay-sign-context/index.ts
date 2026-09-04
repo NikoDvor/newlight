@@ -224,8 +224,8 @@ Deno.serve(async (req) => {
     const { data: ev, error: evErr } = await supabase
       .from("bdr_calendar_events")
       .insert({
-        calendar_id: calendar.id,
-        user_id: rep?.id || calendar.user_id,
+        calendar_id: targetCalendarId,
+        user_id: targetUserId,
         client_id: deal.client_id,
         contact_id: deal.contact_id,
         lead_id: originatingLead?.id || null,
