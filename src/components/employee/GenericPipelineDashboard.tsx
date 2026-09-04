@@ -334,9 +334,19 @@ export function GenericPipelineDashboard() {
       })()}
       </Reveal>
 
-
-
-
+      {/* 0.6 EST. PIPELINE VALUE — deal_value (post Close Prep) + estimated_annual_value (post Form 1) */}
+      <Reveal delay={0.07}>
+        <Card className={`${GLASS} p-4 flex items-center gap-3`}>
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+            <DollarSign className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Est. Pipeline Value</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">${Math.round(pipelineValue).toLocaleString()}</p>
+            <p className="text-[11px] text-muted-foreground">Booked-lead estimates + open deal values</p>
+          </div>
+        </Card>
+      </Reveal>
 
       {/* 1. PIPELINE TABLE */}
       <Reveal delay={0.1}>
