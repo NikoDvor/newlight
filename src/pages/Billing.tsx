@@ -40,6 +40,7 @@ export default function Billing() {
   const [sub, setSub] = useState<any>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [contract, setContract] = useState<any>(null);
+  const [envelope, setEnvelope] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [manageOpen, setManageOpen] = useState(false);
@@ -51,6 +52,7 @@ export default function Billing() {
       supabase.from("subscriptions").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setSub(r.data)),
       supabase.from("invoices").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
       supabase.from("contract_records").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setContract(r.data)),
+      supabase.from("document_envelopes").select("*").eq("client_id", activeClientId).eq("envelope_type", "service_agreement").order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setEnvelope(r.data)),
     ]).finally(() => setLoading(false));
   }, [activeClientId]);
 
@@ -73,8 +75,15 @@ export default function Billing() {
 
   const monthlyAmount = monthlyFee ? `$${Number(monthlyFee).toLocaleString()}` : "—";
   const subStatus = sub?.subscription_status || "—";
-  const contractStatus = contract?.contract_status || "—";
-  const paidCount = invoices.filter(i => i.invoice_status === "Paid").length;
+
+  // Contract status: real source of truth is the signed service-agreement envelope.
+  // contract_records is kept as a fallback only if no envelope exists.
+  const envelopeStatus = envelope?.status as string | undefined;
+  const contractStatus = envelopeStatus
+    ? ({ signed: "Signed", sent: "Sent — awaiting signature", viewed: "Sent — awaiting signature", draft: "Draft", declined: "Declined", expired: "Expired" }[envelopeStatus] || envelopeStatus)
+    : contract?.contract_status || "—";
+
+  const paidCount = invoices.filter(i => i.invoice_status?.toLowerCase() === "paid").length;
 
   const paymentMethodLabel: Record<string, string> = {
     wire_transfer: "Wire Transfer",
