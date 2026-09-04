@@ -494,6 +494,43 @@ export function PipelineRevenueOpportunity({
         </div>
       </motion.div>
 
+      {/* ── BDR only: multi-stage, reschedule-stratified close rates ── */}
+      {source === "bdr" && bdrStageRates && (
+        <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 lg:grid-cols-3">
+          <BdrStageRateCard
+            title="First Meeting Close Rate"
+            caption="Booked discovery call → real pipeline progress"
+            stage={bdrStageRates.firstMeeting}
+            accent="hsl(var(--nl-sky))"
+          />
+          <BdrStageRateCard
+            title="Second Meeting Close Rate"
+            caption="Close-prep call → won"
+            stage={bdrStageRates.secondMeeting}
+            accent="hsl(var(--nl-cyan))"
+          />
+          <div className="rounded-xl p-3.5" style={SUBPANEL}>
+            <p className="text-[10px] uppercase tracking-wider text-white/45 font-semibold">
+              Final Close Rate
+            </p>
+            <p
+              className="text-3xl font-bold tabular-nums leading-none mt-2"
+              style={{ color: "hsl(152 62% 55%)" }}
+            >
+              {fmtPct(bdrStageRates.finalClose.rate, 1)}
+            </p>
+            <p className="text-[10px] text-white/35 tabular-nums mt-1">
+              n={bdrStageRates.finalClose.n}
+              {bdrStageRates.finalClose.lowConfidence && " · low confidence"}
+            </p>
+            <p className="text-[11px] text-white/45 leading-snug mt-2">
+              True first-booked-meeting → won conversion. Not split by reschedules —
+              onboarding (Form 3) has no reschedule flow yet.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* ── show-up rate ── */}
       <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">
         {model.showUp.map((s) => (
