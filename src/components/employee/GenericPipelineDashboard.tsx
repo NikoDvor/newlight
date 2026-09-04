@@ -163,6 +163,14 @@ export function GenericPipelineDashboard() {
 
       if (cancelled) return;
 
+      // Combined "Est. Pipeline Value": open deal_value for leads with a deal,
+      // plus estimated_annual_value for leads that don't have a deal yet.
+      const openDealValue = (repDeals || [])
+        .filter((d: any) => !["closed_won", "closed_lost"].includes(d.pipeline_stage))
+        .reduce((s: number, d: any) => s + (Number(d.deal_value) || 0), 0);
+      const estLeadValue = (estLeads || []).reduce((s: number, l: any) => s + (Number(l.estimated_annual_value) || 0), 0);
+      setPipelineValue(openDealValue + estLeadValue);
+
       const merged: Row[] = [];
       (callbacks || []).forEach((c: any) => {
         merged.push({
