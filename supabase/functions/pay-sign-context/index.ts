@@ -479,6 +479,16 @@ Deno.serve(async (req) => {
       payment_method: "stripe",
     }).eq("id", deal.payment_invoice_id);
 
+    // Reflect payment reality on the client record. Unconditional: payment_status
+    // tracks whether the client has paid, independent of envelope signature state.
+    if (deal.client_id) {
+      await supabase.from("clients")
+        .update({ payment_status: "paid" })
+        .eq("id", deal.client_id);
+    }
+
+
+
     const originHdr = req.headers.get("origin") || req.headers.get("referer") || "";
     let base = ""; try { base = originHdr ? new URL(originHdr).origin : ""; } catch { base = ""; }
     const paySignLink = base ? `${base}/pay-sign/${share_token}` : `/pay-sign/${share_token}`;
