@@ -166,6 +166,60 @@ export default function AdminDashboard() {
         </CardContent>
       </div>
 
+      {/* All Sub-Accounts — every client workspace regardless of payment status */}
+      <div className="card-admin overflow-hidden border-t-2 border-t-[hsla(197,92%,68%,.25)]">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle className="text-sm font-semibold text-white/80">All Sub-Accounts</CardTitle>
+            <p className="text-[11px] text-white/35 mt-1">Every provisioned workspace, including unpaid prospects from Form 1 bookings</p>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+            <input
+              type="text"
+              value={subAccountSearch}
+              onChange={(e) => setSubAccountSearch(e.target.value)}
+              placeholder="Search by business name..."
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[hsla(211,96%,60%,.4)]"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-y-auto" style={{ maxHeight: "min(50vh, 420px)" }}>
+            {allClients.filter((c) => {
+              const q = subAccountSearch.trim().toLowerCase();
+              return !q || c.business_name.toLowerCase().includes(q);
+            }).length === 0 ? (
+              <p className="text-xs text-white/30 py-4 text-center">No sub-accounts match</p>
+            ) : allClients.filter((c) => {
+              const q = subAccountSearch.trim().toLowerCase();
+              return !q || c.business_name.toLowerCase().includes(q);
+            }).map((c) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/admin/clients/${c.id}`)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.06] transition-all group text-left min-h-[44px]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0" />
+                  <span className="text-sm text-white/80 truncate">{c.business_name}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-white/30 hidden md:inline">{new Date(c.created_at).toLocaleDateString()}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                    c.status === "active" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-white/5 text-white/30"
+                  }`}>{c.status}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                    c.payment_status === "paid" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-[hsla(35,90%,55%,.12)] text-[hsl(35,90%,60%)]"
+                  }`}>{c.payment_status}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </div>
+
       {/* Automation Health */}
       <div className="card-admin p-0 overflow-hidden">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
