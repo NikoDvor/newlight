@@ -214,3 +214,134 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
 
   return { model, rows };
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Multi-stage, reschedule-stratified close rates (BDR only).
+ *
+ * A "reschedule" is inferred from the calendar: a lead with N events of a given
+ * meeting kind was rescheduled N-1 times for that kind. Discovery-kind = every
+ * event whose `source` is NOT "closing_meeting" (Form 1); closing_meeting-kind
+ * = the Form 2 close-prep call.
+ *
+ * NOTE — no reschedule tier exists for the final stage. Form 3 (onboarding)
+ * currently has NO reschedule mechanism at all: `schedule_onboarding` in
+ * supabase/functions/pay-sign-context hard-blocks a second scheduling call once
+ * `onboarding_meeting_id` is set on the deal, so a lead can never accumulate
+ * more than one onboarding event. `finalClose` is therefore a flat overall rate
+ * (first booked meeting → won), not reschedule-stratified, until a reschedule
+ * flow is built for Form 3 separately.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Sample size below which the UI should mark a rate as low confidence. */
+export const LOW_CONFIDENCE_N = 5;
+
+export type RescheduleTier = "0" | "1" | "2" | "3+";
+export const RESCHEDULE_TIERS: RescheduleTier[] = ["0", "1", "2", "3+"];
+export const RESCHEDULE_TIER_LABEL: Record<RescheduleTier, string> = {
+  "0": "Booked on time",
+  "1": "After 1 reschedule",
+  "2": "After 2 reschedules",
+  "3+": "After 3+ reschedules",
+};
+
+export interface CloseRate {
+  /** 0-1. Zero when there is no sample. */
+  rate: number;
+  /** Denominator — how many leads this rate was computed from. */
+  n: number;
+  /** Numerator, kept for tooltips/debugging. */
+  hits: number;
+  lowConfidence: boolean;
+}
+
+export interface StageCloseRate extends CloseRate {
+  byReschedule: Array<{ tier: RescheduleTier; label: string } & CloseRate>;
+}
+
+export interface BdrStageCloseRates {
+  firstMeeting: StageCloseRate;
+  secondMeeting: StageCloseRate;
+  /** Not reschedule-stratified — see module note above. */
+  finalClose: CloseRate;
+}
+
+const rateOf = (hits: number, n: number): CloseRate => ({
+  rate: n > 0 ? hits / n : 0,
+  n,
+  hits,
+  lowConfidence: n > 0 && n < LOW_CONFIDENCE_N,
+});
+
+const tierOf = (eventCount: number): RescheduleTier => {
+  const t = Math.max(0, eventCount - 1);
+  return t >= 3 ? "3+" : (String(t) as RescheduleTier);
+};
+
+/**
+ * Stage-by-stage close rates for NewLight's BDR pipeline, stratified by how
+ * many times each meeting was rescheduled.
+ */
+export function computeBdrStageCloseRates(
+  leads: BdrLeadRow[],
+  deals: BdrLinkedDealRow[],
+  events: BdrEventRow[],
+): BdrStageCloseRates {
+  const dealById = new Map(deals.map((d) => [d.id, d]));
+  const eventsByLead = new Map<string, BdrEventRow[]>();
+  for (const e of events) {
+    if (!e.lead_id) continue;
+    const arr = eventsByLead.get(e.lead_id) ?? [];
+    arr.push(e);
+    eventsByLead.set(e.lead_id, arr);
+  }
+
+  const rows = leads.map((lead) => {
+    const leadEvents = eventsByLead.get(lead.id) ?? [];
+    const deal = lead.crm_deal_id ? dealById.get(lead.crm_deal_id) : undefined;
+    const closing = leadEvents.filter((e) => e.source === "closing_meeting");
+    const discovery = leadEvents.filter((e) => e.source !== "closing_meeting");
+    const stage = bdrLeadStage(lead, deal, leadEvents);
+    return {
+      stage,
+      nonCold: stage !== "cold",
+      won: stage === "won",
+      discoveryTier: tierOf(discovery.length),
+      closingTier: tierOf(closing.length),
+      hasClosingEvent: closing.length > 0,
+    };
+  });
+
+  const tierBreakdown = (
+    pool: typeof rows,
+    tierKey: (r: (typeof rows)[number]) => RescheduleTier,
+    hit: (r: (typeof rows)[number]) => boolean,
+  ) =>
+    RESCHEDULE_TIERS.map((tier) => {
+      const inTier = pool.filter((r) => tierKey(r) === tier);
+      return {
+        tier,
+        label: RESCHEDULE_TIER_LABEL[tier],
+        ...rateOf(inTier.filter(hit).length, inTier.length),
+      };
+    });
+
+  // Stage 1 — did a booked discovery call lead to real progress?
+  const firstPool = rows;
+  const firstMeeting: StageCloseRate = {
+    ...rateOf(firstPool.filter((r) => r.nonCold).length, firstPool.length),
+    byReschedule: tierBreakdown(firstPool, (r) => r.discoveryTier, (r) => r.nonCold),
+  };
+
+  // Stage 2 — of the leads that reached a close-prep call, how many won?
+  const secondPool = rows.filter((r) => r.hasClosingEvent);
+  const secondMeeting: StageCloseRate = {
+    ...rateOf(secondPool.filter((r) => r.won).length, secondPool.length),
+    byReschedule: tierBreakdown(secondPool, (r) => r.closingTier, (r) => r.won),
+  };
+
+  // Final — true first-booked-meeting → won conversion across all live leads.
+  const finalPool = rows.filter((r) => r.nonCold);
+  const finalClose = rateOf(finalPool.filter((r) => r.won).length, finalPool.length);
+
+  return { firstMeeting, secondMeeting, finalClose };
+}
