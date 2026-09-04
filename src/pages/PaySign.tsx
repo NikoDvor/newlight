@@ -214,18 +214,21 @@ export default function PaySign() {
   const allDone = bothDone && scheduled;
 
   const slots = useMemo(() => {
-    if (!ctx?.rep_availability) return [];
-    return computeAvailableSlots(weeklyMapToRows(ctx.rep_availability), {
+    // Use the explicitly selected POC's availability when it differs from the rep's.
+    const availability = onbAvailability || ctx?.rep_availability;
+    const tz = (onbAvailability ? onbTimezone : ctx?.rep_timezone) || "America/Los_Angeles";
+    if (!availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(availability), {
       durationMinutes: 60,
       slotIntervalMinutes: 30,
       minNoticeMinutes: 0,
       daysAhead: 14,
-      timeZone: ctx?.rep_timezone || "America/Los_Angeles",
+      timeZone: tz,
     }).map((d) => ({
       date: d,
       label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
     }));
-  }, [ctx?.rep_availability, ctx?.rep_timezone]);
+  }, [ctx?.rep_availability, ctx?.rep_timezone, onbAvailability, onbTimezone]);
 
   const currentStep: StepKey = allDone
     ? "done"
