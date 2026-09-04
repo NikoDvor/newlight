@@ -587,40 +587,66 @@ export default function PaySign() {
                 {onbPocs.length > 0 && (
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Meeting host</label>
-                    <select
-                      value={onbPocId}
-                      onChange={(e) => setOnbPocId(e.target.value)}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">— Select a person —</option>
-                      {onbPocs.map((p) => (
-                        <option key={p.user_id} value={p.user_id}>{p.full_name}</option>
-                      ))}
-                    </select>
+                    <Popover open={onbPocOpen} onOpenChange={setOnbPocOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={onbPocOpen}
+                          className="w-full justify-between"
+                        >
+                          {onbPocs.find((p) => p.user_id === onbPocId)?.full_name || "— Select a person —"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search employees..." />
+                          <CommandList>
+                            <CommandEmpty>No employee found.</CommandEmpty>
+                            <CommandGroup>
+                              {onbPocs.map((p) => (
+                                <CommandItem
+                                  key={p.user_id}
+                                  value={`${p.full_name} ${p.user_id}`}
+                                  onSelect={() => {
+                                    setOnbPocId(p.user_id);
+                                    setOnbPocOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      onbPocId === p.user_id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {p.full_name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
                 {slots.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
-                  No times are currently published. Your NewLight rep will reach out to schedule.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <select
-                    value={selectedSlot}
-                    onChange={(e) => setSelectedSlot(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">— Select a time —</option>
-                    {slots.map((s) => (
-                      <option key={s.date.toISOString()} value={s.date.toISOString()}>{s.label}</option>
-                    ))}
-                  </select>
-                  <Button onClick={handleSchedule} disabled={scheduleBusy || !selectedSlot} className="w-full sm:w-auto">
-                    {scheduleBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarClock className="h-4 w-4 mr-2" />}
-                    Confirm onboarding time
-                  </Button>
-                </div>
-              )}
+                  <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                    No times are currently published. Your NewLight rep will reach out to schedule.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <BookingSlotPicker
+                      slots={slots}
+                      selectedSlot={selectedSlot}
+                      onSelectSlot={setSelectedSlot}
+                    />
+                    <Button onClick={handleSchedule} disabled={scheduleBusy || !selectedSlot} className="w-full sm:w-auto">
+                      {scheduleBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarClock className="h-4 w-4 mr-2" />}
+                      Confirm onboarding time
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </Card>
