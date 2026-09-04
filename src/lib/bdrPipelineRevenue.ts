@@ -38,6 +38,7 @@ export interface BdrLeadRow {
   meeting_booked: string | null;
   objection_category: string | null;
   crm_deal_id: string | null;
+  estimated_annual_value: number | string | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -133,15 +134,15 @@ export interface BdrPipelineResult {
   model: PipelineRevenueModel;
   /** Synthetic deal rows, exposed so the widget can drive the slider. */
   rows: DealRow[];
-  /** Average won value — used as the expected value of an unconverted lead. */
-  averageWonValue: number;
 }
 
 /**
  * Projects BDR leads onto DealRow shape and runs the SAME compute layer used by
- * sub-account dashboards. Open leads carry no dollar value of their own (a
- * price only exists once Form 2 quotes one), so they are valued at the average
- * realised conversion value — the honest expected value of a lead.
+ * sub-account dashboards. Valuation rules:
+ *  - cold leads contribute $0 — no meeting booked means no pipeline value;
+ *  - won leads use the real linked deal (initial fee + 12× recurring);
+ *  - warm/hot leads without a deal yet use their own Form-1
+ *    `estimated_annual_value` (the $34,997 baseline captured at booking).
  */
 export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineResult {
   const dealById = new Map(input.deals.map((d) => [d.id, d]));
@@ -159,17 +160,17 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
     return { lead, deal, stage: bdrLeadStage(lead, deal, events) };
   });
 
-  const wonValues = staged
-    .filter((s) => s.stage === "won")
-    .map((s) => bdrDealValue(s.deal))
-    .filter((v) => v > 0);
-  const averageWonValue = wonValues.length
-    ? wonValues.reduce((a, b) => a + b, 0) / wonValues.length
-    : 0;
-
   const rows: DealRow[] = staged.map(({ lead, deal, stage }) => {
     const known = bdrDealValue(deal);
-    const value = stage === "won" ? known : known || averageWonValue;
+    const value =
+      stage === "cold"
+        ? 0
+        : stage === "won"
+          ? known
+          : // Warm/hot without a linked deal: use the lead's own Form-1
+            // estimate. The 34,997 literal is a legacy safety net for rows
+            // booked before estimated_annual_value existed.
+            known || num(lead.estimated_annual_value) || 34997;
     return {
       id: lead.id,
       client_id: null,
@@ -211,5 +212,5 @@ export function computeBdrPipelineRevenue(input: BdrComputeInput): BdrPipelineRe
     now: input.now,
   });
 
-  return { model, rows, averageWonValue };
+  return { model, rows };
 }

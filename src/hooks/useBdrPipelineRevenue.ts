@@ -40,7 +40,7 @@ export function useBdrPipelineRevenue(
         (supabase as any)
           .from("nl_bdr_leads")
           .select(
-            "id,user_id,business_name,pipeline_stage,status,called,meeting_booked,objection_category,crm_deal_id,created_at,updated_at",
+            "id,user_id,business_name,pipeline_stage,status,called,meeting_booked,objection_category,crm_deal_id,estimated_annual_value,created_at,updated_at",
           ),
         (supabase as any)
           .from("bdr_calendar_events")
