@@ -8,6 +8,7 @@ import { ResponsiveContainer, AreaChart, Area, Tooltip as RTooltip } from "recha
 import { Slider } from "@/components/ui/slider";
 import { usePipelineRevenue } from "@/hooks/usePipelineRevenue";
 import { useBdrPipelineRevenue } from "@/hooks/useBdrPipelineRevenue";
+import type { StageCloseRate } from "@/lib/bdrPipelineRevenue";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,60 @@ function CountUp({ value, className, style }: { value: number; className?: strin
   return <span className={className} style={style}>{n}</span>;
 }
 
+/** BDR-only: one stage's overall close rate plus its reschedule-tier breakdown. */
+function BdrStageRateCard({
+  title, caption, stage, accent,
+}: {
+  title: string;
+  caption: string;
+  stage: StageCloseRate;
+  accent: string;
+}) {
+  return (
+    <div className="rounded-xl p-3.5" style={SUBPANEL}>
+      <p className="text-[10px] uppercase tracking-wider text-white/45 font-semibold">{title}</p>
+      <p className="text-3xl font-bold tabular-nums leading-none mt-2" style={{ color: accent }}>
+        {fmtPct(stage.rate, 1)}
+      </p>
+      <p className="text-[10px] text-white/35 tabular-nums mt-1">
+        n={stage.n}
+        {stage.lowConfidence && " · low confidence"}
+      </p>
+      <p className="text-[11px] text-white/45 leading-snug mt-1">{caption}</p>
+      <div className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-2.5">
+        {stage.byReschedule.map((t) => {
+          const dim = t.n === 0 || t.lowConfidence;
+          return (
+            <div key={t.tier} className="flex items-center justify-between gap-2">
+              <span className={`text-[11px] ${dim ? "text-white/30" : "text-white/60"}`}>{t.label}</span>
+              <div className="flex items-center gap-2">
+                {t.lowConfidence && (
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide"
+                    style={{ background: "hsla(38,92%,55%,.14)", color: "hsl(38 95% 68%)" }}
+                    title={`Only ${t.n} observations — treat this rate as indicative.`}
+                  >
+                    low confidence · n={t.n}
+                  </span>
+                )}
+                {!t.lowConfidence && (
+                  <span className="text-[9px] text-white/30 tabular-nums">n={t.n}</span>
+                )}
+                <span
+                  className={`text-[11px] tabular-nums font-semibold ${dim ? "text-white/30" : ""}`}
+                  style={dim ? undefined : { color: accent }}
+                >
+                  {t.n ? fmtPct(t.rate, 1) : "—"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function PipelineRevenueOpportunity({
   clientId,
   variant = "client",
@@ -92,6 +147,7 @@ export function PipelineRevenueOpportunity({
   const bdrData = useBdrPipelineRevenue(source === "bdr" ? clientId : null);
   const { loading, model, openDeals, repNames, vertical, refresh } =
     source === "bdr" ? bdrData : crmData;
+  const bdrStageRates = source === "bdr" ? bdrData.stageCloseRates : null;
 
 
   const baseRates = useMemo(() => (model?.stageRates ?? []).map((s) => s.rate), [model]);
@@ -493,6 +549,43 @@ export function PipelineRevenueOpportunity({
           </div>
         </div>
       </motion.div>
+
+      {/* ── BDR only: multi-stage, reschedule-stratified close rates ── */}
+      {source === "bdr" && bdrStageRates && (
+        <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 lg:grid-cols-3">
+          <BdrStageRateCard
+            title="First Meeting Close Rate"
+            caption="Booked discovery call → real pipeline progress"
+            stage={bdrStageRates.firstMeeting}
+            accent="hsl(var(--nl-sky))"
+          />
+          <BdrStageRateCard
+            title="Second Meeting Close Rate"
+            caption="Close-prep call → won"
+            stage={bdrStageRates.secondMeeting}
+            accent="hsl(var(--nl-cyan))"
+          />
+          <div className="rounded-xl p-3.5" style={SUBPANEL}>
+            <p className="text-[10px] uppercase tracking-wider text-white/45 font-semibold">
+              Final Close Rate
+            </p>
+            <p
+              className="text-3xl font-bold tabular-nums leading-none mt-2"
+              style={{ color: "hsl(152 62% 55%)" }}
+            >
+              {fmtPct(bdrStageRates.finalClose.rate, 1)}
+            </p>
+            <p className="text-[10px] text-white/35 tabular-nums mt-1">
+              n={bdrStageRates.finalClose.n}
+              {bdrStageRates.finalClose.lowConfidence && " · low confidence"}
+            </p>
+            <p className="text-[11px] text-white/45 leading-snug mt-2">
+              True first-booked-meeting → won conversion. Not split by reschedules —
+              onboarding (Form 3) has no reschedule flow yet.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── show-up rate ── */}
       <motion.div {...block(5, !!reduced)} className="px-5 sm:px-6 pb-5 grid gap-2.5 sm:grid-cols-2">

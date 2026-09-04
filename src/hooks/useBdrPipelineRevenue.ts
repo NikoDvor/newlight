@@ -2,12 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   computeBdrPipelineRevenue,
+  computeBdrStageCloseRates,
   type BdrEventRow,
   type BdrLeadRow,
   type BdrLinkedDealRow,
+  type BdrStageCloseRates,
 } from "@/lib/bdrPipelineRevenue";
 import type { PipelineRevenueModel } from "@/lib/pipelineRevenue";
 import type { UsePipelineRevenueResult } from "@/hooks/usePipelineRevenue";
+
+export interface UseBdrPipelineRevenueResult extends UsePipelineRevenueResult {
+  /** BDR-only: multi-stage, reschedule-stratified close rates. */
+  stageCloseRates: BdrStageCloseRates;
+}
 
 /**
  * Admin-only variant of usePipelineRevenue. Same output contract, different
@@ -20,7 +27,7 @@ import type { UsePipelineRevenueResult } from "@/hooks/usePipelineRevenue";
  */
 export function useBdrPipelineRevenue(
   clientId: string | null | undefined,
-): UsePipelineRevenueResult {
+): UseBdrPipelineRevenueResult {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<BdrLeadRow[]>([]);
   const [deals, setDeals] = useState<BdrLinkedDealRow[]>([]);
@@ -103,6 +110,11 @@ export function useBdrPipelineRevenue(
 
   const model: PipelineRevenueModel | null = leads.length || !loading ? computed.model : null;
 
+  const stageCloseRates = useMemo(
+    () => computeBdrStageCloseRates(leads, deals, events),
+    [leads, deals, events],
+  );
+
   const openDeals = useMemo(
     () =>
       computed.rows
@@ -111,5 +123,5 @@ export function useBdrPipelineRevenue(
     [computed.rows],
   );
 
-  return { loading, model, openDeals, repNames, vertical: null, refresh };
+  return { loading, model, openDeals, repNames, vertical: null, refresh, stageCloseRates };
 }
