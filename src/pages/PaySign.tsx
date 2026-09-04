@@ -113,6 +113,7 @@ export default function PaySign() {
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const [onbPocs, setOnbPocs] = useState<{ user_id: string; full_name: string; email: string | null }[]>([]);
   const [onbPocId, setOnbPocId] = useState("");
+  const [onbPocOpen, setOnbPocOpen] = useState(false);
   const [onbAvailability, setOnbAvailability] = useState<any>(null);
   const [onbTimezone, setOnbTimezone] = useState<string | null>(null);
   // Ongoing service meetings (optional)
