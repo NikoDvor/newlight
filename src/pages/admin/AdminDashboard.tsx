@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("clients").select("id", { count: "exact", head: true }).then(({ count }) => setClientCount(count ?? 0)),
+      supabase.from("clients").select("id", { count: "exact", head: true }).eq("payment_status", "paid").then(({ count }) => setClientCount(count ?? 0)),
       supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
       supabase.from("clients").select("id, business_name, status, payment_status, created_at").order("created_at", { ascending: false }).then(({ data }) => setAllClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
