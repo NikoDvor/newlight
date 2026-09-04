@@ -298,7 +298,7 @@ export default function PaySign() {
     if (!token || !selectedSlot) return;
     setScheduleBusy(true);
     const { data, error } = await supabase.functions.invoke("pay-sign-context", {
-      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot },
+      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot, poc_user_id: onbPocId || undefined },
     });
     setScheduleBusy(false);
     if (error || data?.error) {
@@ -576,6 +576,19 @@ export default function PaySign() {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Meeting host</label>
+                    <select
+                      value={onbPocId}
+                      onChange={(e) => setOnbPocId(e.target.value)}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">— Select a person —</option>
+                      {onbPocs.map((p) => (
+                        <option key={p.user_id} value={p.user_id}>{p.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <select
                     value={selectedSlot}
                     onChange={(e) => setSelectedSlot(e.target.value)}
