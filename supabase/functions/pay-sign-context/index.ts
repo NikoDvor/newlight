@@ -215,7 +215,8 @@ Deno.serve(async (req) => {
     let targetUserId: string | null = rep?.id || calendar?.user_id || null;
     if (pocUserId) {
       try {
-        const pocCal = await ensureServicePocCalendar(supabase, pocUserId);
+        await ensureServicePocCalendar(supabase, pocUserId);
+        const pocCal = await ensureOnboardingCalendar(pocUserId);
         targetCalendarId = pocCal.id;
         targetUserId = pocUserId;
       } catch (e: any) {
