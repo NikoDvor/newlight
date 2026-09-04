@@ -22,9 +22,12 @@ export function WorkspaceSwitcher() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    supabase.from("clients").select("id, business_name, workspace_slug, status").neq("status", "archived").order("business_name").then(({ data }) => {
-      setClients(data ?? []);
-    });
+    supabase.from("clients").select("id, business_name, workspace_slug, status")
+      .neq("status", "archived")
+      .eq("payment_status", "paid")
+      .order("business_name").then(({ data }) => {
+        setClients(data ?? []);
+      });
   }, []);
 
   const filteredClients = useMemo(() => {

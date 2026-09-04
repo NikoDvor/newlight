@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink } from "lucide-react";
+import { Users, Activity, DollarSign, AlertTriangle, Zap, Server, Plus, ArrowRight, Hammer, Clock, CheckCircle2, Play, Target, FileText, Briefcase, Building2, ExternalLink, Search } from "lucide-react";
 import { NewLightHero } from "@/components/admin/NewLightHero";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ export default function AdminDashboard() {
   const [templateCount, setTemplateCount] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [recentClients, setRecentClients] = useState<{ id: string; business_name: string; status: string }[]>([]);
+  const [allClients, setAllClients] = useState<{ id: string; business_name: string; status: string; payment_status: string; created_at: string }[]>([]);
+  const [subAccountSearch, setSubAccountSearch] = useState("");
 
   const enterClientView = (clientId: string) => {
     setViewMode("workspace");
@@ -43,6 +45,7 @@ export default function AdminDashboard() {
     Promise.all([
       supabase.from("clients").select("id", { count: "exact", head: true }).then(({ count }) => setClientCount(count ?? 0)),
       supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
+      supabase.from("clients").select("id, business_name, status, payment_status, created_at").order("created_at", { ascending: false }).then(({ data }) => setAllClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
       supabase.from("prospects").select("id", { count: "exact", head: true }).then(({ count }) => setProspectCount(count ?? 0)),
       supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "build_in_progress").then(({ count }) => setDemoInProgress(count ?? 0)),
@@ -160,6 +163,60 @@ export default function AdminDashboard() {
               </Button>
             </motion.div>
           ))}
+        </CardContent>
+      </div>
+
+      {/* All Sub-Accounts — every client workspace regardless of payment status */}
+      <div className="card-admin overflow-hidden border-t-2 border-t-[hsla(197,92%,68%,.25)]">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle className="text-sm font-semibold text-white/80">All Sub-Accounts</CardTitle>
+            <p className="text-[11px] text-white/35 mt-1">Every provisioned workspace, including unpaid prospects from Form 1 bookings</p>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+            <input
+              type="text"
+              value={subAccountSearch}
+              onChange={(e) => setSubAccountSearch(e.target.value)}
+              placeholder="Search by business name..."
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[hsla(211,96%,60%,.4)]"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-y-auto" style={{ maxHeight: "min(50vh, 420px)" }}>
+            {allClients.filter((c) => {
+              const q = subAccountSearch.trim().toLowerCase();
+              return !q || c.business_name.toLowerCase().includes(q);
+            }).length === 0 ? (
+              <p className="text-xs text-white/30 py-4 text-center">No sub-accounts match</p>
+            ) : allClients.filter((c) => {
+              const q = subAccountSearch.trim().toLowerCase();
+              return !q || c.business_name.toLowerCase().includes(q);
+            }).map((c) => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/admin/clients/${c.id}`)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.06] transition-all group text-left min-h-[44px]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0" />
+                  <span className="text-sm text-white/80 truncate">{c.business_name}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-white/30 hidden md:inline">{new Date(c.created_at).toLocaleDateString()}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                    c.status === "active" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-white/5 text-white/30"
+                  }`}>{c.status}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                    c.payment_status === "paid" ? "bg-[hsla(152,60%,44%,.15)] text-[hsl(152,60%,55%)]" : "bg-[hsla(35,90%,55%,.12)] text-[hsl(35,90%,60%)]"
+                  }`}>{c.payment_status}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </button>
+            ))}
+          </div>
         </CardContent>
       </div>
 
