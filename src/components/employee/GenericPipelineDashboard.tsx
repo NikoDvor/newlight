@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Award, BarChart3, CalendarClock, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Award, BarChart3, CalendarClock, DollarSign, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +119,7 @@ export function GenericPipelineDashboard() {
   const [training, setTraining] = useState<TrainingStats | null>(null);
   const [dailyActivity, setDailyActivity] = useState<{ day: string; count: number }[]>([]);
   const [dialCounts, setDialCounts] = useState({ today: 0, week: 0, month: 0 });
+  const [pipelineValue, setPipelineValue] = useState(0);
 
   // live tick
   useEffect(() => {
@@ -143,6 +144,8 @@ export function GenericPipelineDashboard() {
         { data: outcomes },
         { data: unlockRows },
         { data: outcomes14 },
+        { data: estLeads },
+        { data: repDeals },
       ] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("id, business_name, owner_name, callback_at, status").eq("user_id", userId).not("callback_at", "is", null),
         (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome").eq("user_id", userId).gte("starts_at", new Date(Date.now() - 86400000).toISOString()),
@@ -152,9 +155,21 @@ export function GenericPipelineDashboard() {
         (supabase as any).from("bdr_call_outcomes").select("id, logged_at").eq("bdr_user_id", userId).gte("logged_at", monthStart),
         (supabase as any).from("nl_objection_unlocks").select("objection_category, foundation_unlocked, intermediate_unlocked, advanced_unlocked, foundation_passed, intermediate_passed, advanced_passed").eq("user_id", userId),
         (supabase as any).from("bdr_call_outcomes").select("logged_at").eq("bdr_user_id", userId).gte("logged_at", fourteen.toISOString()),
+        // Pipeline value sources: pre-Close-Prep leads carry estimated_annual_value;
+        // post-Close-Prep leads carry a real crm_deals.deal_value.
+        (supabase as any).from("nl_bdr_leads").select("id, estimated_annual_value").eq("user_id", userId).is("crm_deal_id", null).not("estimated_annual_value", "is", null),
+        (supabase as any).from("crm_deals").select("id, deal_value, pipeline_stage").eq("assigned_user", userId).eq("client_id", "00000000-0000-0000-0000-0000000000ff"),
       ]);
 
       if (cancelled) return;
+
+      // Combined "Est. Pipeline Value": open deal_value for leads with a deal,
+      // plus estimated_annual_value for leads that don't have a deal yet.
+      const openDealValue = (repDeals || [])
+        .filter((d: any) => !["closed_won", "closed_lost"].includes(d.pipeline_stage))
+        .reduce((s: number, d: any) => s + (Number(d.deal_value) || 0), 0);
+      const estLeadValue = (estLeads || []).reduce((s: number, l: any) => s + (Number(l.estimated_annual_value) || 0), 0);
+      setPipelineValue(openDealValue + estLeadValue);
 
       const merged: Row[] = [];
       (callbacks || []).forEach((c: any) => {
@@ -319,9 +334,19 @@ export function GenericPipelineDashboard() {
       })()}
       </Reveal>
 
-
-
-
+      {/* 0.6 EST. PIPELINE VALUE — deal_value (post Close Prep) + estimated_annual_value (post Form 1) */}
+      <Reveal delay={0.07}>
+        <Card className={`${GLASS} p-4 flex items-center gap-3`}>
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+            <DollarSign className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Est. Pipeline Value</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">${Math.round(pipelineValue).toLocaleString()}</p>
+            <p className="text-[11px] text-muted-foreground">Booked-lead estimates + open deal values</p>
+          </div>
+        </Card>
+      </Reveal>
 
       {/* 1. PIPELINE TABLE */}
       <Reveal delay={0.1}>

@@ -8128,6 +8128,7 @@ export type Database = {
           customer_notes: string | null
           dialer_bookable: boolean | null
           email: string | null
+          estimated_annual_value: number | null
           front_desk_phone: string | null
           front_desk_phone_normalized: string | null
           has_booking_system: boolean | null
@@ -8195,6 +8196,7 @@ export type Database = {
           customer_notes?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
+          estimated_annual_value?: number | null
           front_desk_phone?: string | null
           front_desk_phone_normalized?: string | null
           has_booking_system?: boolean | null
@@ -8262,6 +8264,7 @@ export type Database = {
           customer_notes?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
+          estimated_annual_value?: number | null
           front_desk_phone?: string | null
           front_desk_phone_normalized?: string | null
           has_booking_system?: boolean | null

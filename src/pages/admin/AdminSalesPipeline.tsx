@@ -326,6 +326,7 @@ export default function AdminSalesPipeline() {
   const [riskFilter, setRiskFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<ClientSalesRecord | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [estimatedLeads, setEstimatedLeads] = useState<{ id: string; estimated_annual_value: number | null }[]>([]);
 
   const [form, setForm] = useState({
     businessName: "", contactName: "", email: "", phone: "",
@@ -333,12 +334,16 @@ export default function AdminSalesPipeline() {
   });
 
   const fetchData = useCallback(async () => {
-    const [dealsRes, clientsRes] = await Promise.all([
-      supabase.from("crm_deals").select("*, crm_contacts(full_name, email), crm_companies(company_name), workspace_users!crm_deals_assigned_user_fkey(full_name)").order("created_at", { ascending: false }).limit(500),
+    const [dealsRes, clientsRes, estLeadsRes] = await Promise.all([
+      // Scope strictly to the NewLight ops workspace — never mix client sub-accounts' CRM deals into this view.
+      supabase.from("crm_deals").select("*, crm_contacts(full_name, email), crm_companies(company_name), workspace_users!crm_deals_assigned_user_fkey(full_name)").eq("client_id", "00000000-0000-0000-0000-0000000000ff").order("created_at", { ascending: false }).limit(500),
       supabase.from("clients").select("id, business_name, business_type, proposal_status, payment_status, implementation_status, agreement_status, portal_access_enabled, created_at").order("created_at", { ascending: false }).limit(200),
+      // Pre-Close-Prep leads carry only an estimated value until a deal exists.
+      supabase.from("nl_bdr_leads").select("id, estimated_annual_value").is("crm_deal_id", null).not("estimated_annual_value", "is", null).limit(1000),
     ]);
     setDeals(dealsRes.data || []);
     setClients(clientsRes.data || []);
+    setEstimatedLeads(estLeadsRes.data || []);
     setLoading(false);
   }, []);
 
@@ -381,6 +386,9 @@ export default function AdminSalesPipeline() {
 
   const totalPipeline = deals.filter(d => !["closed_won", "closed_lost"].includes(d.pipeline_stage)).reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   const wonValue = deals.filter(d => d.pipeline_stage === "closed_won").reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+  // Combined estimate: leads with a deal contribute deal_value; pre-Close-Prep leads contribute estimated_annual_value.
+  const estLeadsValue = estimatedLeads.reduce((s, l) => s + (Number(l.estimated_annual_value) || 0), 0);
+  const combinedPipelineEstimate = totalPipeline + estLeadsValue;
 
   const readyToPresentCount = salesRecords.filter(c => c.readyToPresent && !c.proposalRevealed).length;
   const readyToCloseCount = salesRecords.filter(c => c.readyToClose).length;
@@ -390,6 +398,7 @@ export default function AdminSalesPipeline() {
 
   const stats = [
     { label: "Open Pipeline", value: `$${totalPipeline.toLocaleString()}`, icon: DollarSign, accent: true },
+    { label: "Est. Pipeline Value", value: `$${Math.round(combinedPipelineEstimate).toLocaleString()}`, icon: TrendingUp },
     { label: "Active Opps", value: String(salesRecords.filter(c => c.paymentStatus !== "paid").length), icon: Briefcase },
     { label: "Ready to Present", value: String(readyToPresentCount), icon: Eye },
     { label: "Ready to Close", value: String(readyToCloseCount), icon: CheckCircle2 },
