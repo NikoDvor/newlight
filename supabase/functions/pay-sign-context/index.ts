@@ -158,28 +158,39 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Onboarding meetings live in bdr_calendar_events, whose calendar_id FK points at
+  // bdr_calendars — so a POC's onboarding calendar must be their bdr_calendars row.
+  async function ensureOnboardingCalendar(userId: string) {
+    const { data: existing } = await supabase
+      .from("bdr_calendars")
+      .select("id, user_id, availability, timezone")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (existing) return existing;
+
+    const { data: ep } = await supabase
+      .from("employee_profiles").select("full_name").eq("user_id", userId).maybeSingle();
+    const { data: created, error } = await supabase
+      .from("bdr_calendars")
+      .insert({ user_id: userId, name: `${ep?.full_name || "Employee"}'s Calendar` })
+      .select("id, user_id, availability, timezone")
+      .single();
+    if (error) throw new Error(error.message);
+    return created;
+  }
+
   if (action === "onboarding_poc_availability") {
     const pocId = body.poc_user_id;
     if (!pocId || typeof pocId !== "string") return json({ error: "poc_user_id is required" }, 400);
     try {
-      const cal = await ensureServicePocCalendar(supabase, pocId);
-      const { data: availability } = await supabase
-        .from("calendar_availability")
-        .select("day_of_week, start_time, end_time, slot_interval_minutes, is_active, timezone")
-        .eq("calendar_id", cal.id)
-        .eq("is_active", true)
-        .order("day_of_week");
-      const { data: apptTypes } = await supabase
-        .from("calendar_appointment_types")
-        .select("duration_minutes")
-        .eq("calendar_id", cal.id)
-        .eq("is_active", true)
-        .limit(1);
+      // Keep the Service POC calendar in sync (used by the recurring-service flow).
+      await ensureServicePocCalendar(supabase, pocId);
+      const cal = await ensureOnboardingCalendar(pocId);
       return json({
         calendar_id: cal.id,
         timezone: cal.timezone || "America/Los_Angeles",
-        availability: availability || [],
-        default_duration_minutes: apptTypes?.[0]?.duration_minutes ?? 60,
+        availability: cal.availability || null,
+        default_duration_minutes: 60,
       });
     } catch (e: any) {
       return json({ error: e?.message || "Failed to load availability" }, 500);
