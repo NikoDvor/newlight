@@ -2,12 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   computeBdrPipelineRevenue,
+  computeBdrStageCloseRates,
   type BdrEventRow,
   type BdrLeadRow,
   type BdrLinkedDealRow,
+  type BdrStageCloseRates,
 } from "@/lib/bdrPipelineRevenue";
 import type { PipelineRevenueModel } from "@/lib/pipelineRevenue";
 import type { UsePipelineRevenueResult } from "@/hooks/usePipelineRevenue";
+
+export interface UseBdrPipelineRevenueResult extends UsePipelineRevenueResult {
+  /** BDR-only: multi-stage, reschedule-stratified close rates. */
+  stageCloseRates: BdrStageCloseRates;
+}
 
 /**
  * Admin-only variant of usePipelineRevenue. Same output contract, different
