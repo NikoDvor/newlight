@@ -32,9 +32,9 @@ export default function ClosePrep() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
-  const [initialFee, setInitialFee] = useState("");
+  const [initialFee, setInitialFee] = useState("7997");
   const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
-  const [recurringFee, setRecurringFee] = useState("");
+  const [recurringFee, setRecurringFee] = useState("3000");
   const [commissionRate, setCommissionRate] = useState("25");
   const [commissionRateOngoing, setCommissionRateOngoing] = useState("10");
   const [kpiTarget, setKpiTarget] = useState("");
@@ -171,6 +171,9 @@ export default function ClosePrep() {
             placeholder="e.g. 2500"
             className="bg-white/5 border-white/10 text-white mt-1"
           />
+          <p className="text-[11px] text-white/45 mt-1">
+            Default financial-firm pricing — adjust for the actual negotiated terms.
+          </p>
         </div>
 
         <div>
