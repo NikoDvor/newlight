@@ -27,7 +27,7 @@ export interface UseBdrPipelineRevenueResult extends UsePipelineRevenueResult {
  */
 export function useBdrPipelineRevenue(
   clientId: string | null | undefined,
-): UsePipelineRevenueResult {
+): UseBdrPipelineRevenueResult {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<BdrLeadRow[]>([]);
   const [deals, setDeals] = useState<BdrLinkedDealRow[]>([]);
@@ -110,6 +110,11 @@ export function useBdrPipelineRevenue(
 
   const model: PipelineRevenueModel | null = leads.length || !loading ? computed.model : null;
 
+  const stageCloseRates = useMemo(
+    () => computeBdrStageCloseRates(leads, deals, events),
+    [leads, deals, events],
+  );
+
   const openDeals = useMemo(
     () =>
       computed.rows
@@ -118,5 +123,5 @@ export function useBdrPipelineRevenue(
     [computed.rows],
   );
 
-  return { loading, model, openDeals, repNames, vertical: null, refresh };
+  return { loading, model, openDeals, repNames, vertical: null, refresh, stageCloseRates };
 }
