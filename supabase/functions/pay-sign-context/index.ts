@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
-import { ensureServicePocCalendar, listServicePocs } from "../_shared/service-poc-calendar.ts";
+import { ensureServicePocCalendar, listServicePocs, listOnboardingPocs } from "../_shared/service-poc-calendar.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,9 +149,58 @@ Deno.serve(async (req) => {
     });
   }
 
+  if (action === "list_onboarding_pocs") {
+    try {
+      const pocs = await listOnboardingPocs(supabase);
+      return json({ pocs });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to list onboarding POCs" }, 500);
+    }
+  }
+
+  // Onboarding meetings live in bdr_calendar_events, whose calendar_id FK points at
+  // bdr_calendars — so a POC's onboarding calendar must be their bdr_calendars row.
+  async function ensureOnboardingCalendar(userId: string) {
+    const { data: existing } = await supabase
+      .from("bdr_calendars")
+      .select("id, user_id, availability, timezone")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (existing) return existing;
+
+    const { data: ep } = await supabase
+      .from("employee_profiles").select("full_name").eq("user_id", userId).maybeSingle();
+    const { data: created, error } = await supabase
+      .from("bdr_calendars")
+      .insert({ user_id: userId, name: `${ep?.full_name || "Employee"}'s Calendar` })
+      .select("id, user_id, availability, timezone")
+      .single();
+    if (error) throw new Error(error.message);
+    return created;
+  }
+
+  if (action === "onboarding_poc_availability") {
+    const pocId = body.poc_user_id;
+    if (!pocId || typeof pocId !== "string") return json({ error: "poc_user_id is required" }, 400);
+    try {
+      // Keep the Service POC calendar in sync (used by the recurring-service flow).
+      await ensureServicePocCalendar(supabase, pocId);
+      const cal = await ensureOnboardingCalendar(pocId);
+      return json({
+        calendar_id: cal.id,
+        timezone: cal.timezone || "America/Los_Angeles",
+        availability: cal.availability || null,
+        default_duration_minutes: 60,
+      });
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to load availability" }, 500);
+    }
+  }
+
   if (action === "schedule_onboarding") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
     const starts_at = body.starts_at;
+    const pocUserId = typeof body.poc_user_id === "string" && body.poc_user_id ? body.poc_user_id : null;
     if (!starts_at || typeof starts_at !== "string" || isNaN(Date.parse(starts_at))) {
       return json({ error: "Valid starts_at is required" }, 400);
     }
@@ -160,7 +209,21 @@ Deno.serve(async (req) => {
     }
 
     const { rep, calendar } = await resolveRepAndCalendar();
-    if (!calendar?.id) return json({ error: "Assigned rep has no calendar configured" }, 409);
+
+    // If an explicit POC was picked, book on their calendar instead of the rep's.
+    let targetCalendarId: string | null = calendar?.id || null;
+    let targetUserId: string | null = rep?.id || calendar?.user_id || null;
+    if (pocUserId) {
+      try {
+        await ensureServicePocCalendar(supabase, pocUserId);
+        const pocCal = await ensureOnboardingCalendar(pocUserId);
+        targetCalendarId = pocCal.id;
+        targetUserId = pocUserId;
+      } catch (e: any) {
+        return json({ error: e?.message || "Failed to resolve POC calendar" }, 500);
+      }
+    }
+    if (!targetCalendarId) return json({ error: "Assigned rep has no calendar configured" }, 409);
 
     const { data: originatingLead } = await supabase
       .from("nl_bdr_leads")
@@ -173,8 +236,8 @@ Deno.serve(async (req) => {
     const { data: ev, error: evErr } = await supabase
       .from("bdr_calendar_events")
       .insert({
-        calendar_id: calendar.id,
-        user_id: rep?.id || calendar.user_id,
+        calendar_id: targetCalendarId,
+        user_id: targetUserId,
         client_id: deal.client_id,
         contact_id: deal.contact_id,
         lead_id: originatingLead?.id || null,

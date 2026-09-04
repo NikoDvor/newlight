@@ -99,6 +99,10 @@ export default function PaySign() {
   const [reviewed, setReviewed] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [onbPocs, setOnbPocs] = useState<{ user_id: string; full_name: string; email: string | null }[]>([]);
+  const [onbPocId, setOnbPocId] = useState("");
+  const [onbAvailability, setOnbAvailability] = useState<any>(null);
+  const [onbTimezone, setOnbTimezone] = useState<string | null>(null);
   // Ongoing service meetings (optional)
   const [pocs, setPocs] = useState<{ user_id: string; full_name: string; email: string | null }[]>([]);
   const [pocId, setPocId] = useState("");
@@ -138,7 +142,30 @@ export default function PaySign() {
     supabase.functions
       .invoke("pay-sign-context", { body: { share_token: token, action: "list_service_pocs" } })
       .then(({ data }) => { if (data?.pocs) setPocs(data.pocs); });
+    supabase.functions
+      .invoke("pay-sign-context", { body: { share_token: token, action: "list_onboarding_pocs" } })
+      .then(({ data }) => { if (data?.pocs) setOnbPocs(data.pocs); });
   }, [token]);
+
+  // Default the onboarding POC to the deal's assigned rep.
+  useEffect(() => {
+    if (ctx?.rep?.id && !onbPocId) setOnbPocId(ctx.rep.id);
+  }, [ctx?.rep?.id]); // eslint-disable-line
+
+  // Load the selected POC's own availability.
+  useEffect(() => {
+    if (!token || !onbPocId) { setOnbAvailability(null); return; }
+    if (ctx?.rep?.id && onbPocId === ctx.rep.id) { setOnbAvailability(null); return; }
+    setSelectedSlot("");
+    supabase.functions
+      .invoke("pay-sign-context", {
+        body: { share_token: token, action: "onboarding_poc_availability", poc_user_id: onbPocId },
+      })
+      .then(({ data }) => {
+        setOnbAvailability(data?.availability || null);
+        setOnbTimezone(data?.timezone || null);
+      });
+  }, [token, onbPocId, ctx?.rep?.id]);
 
   useEffect(() => {
     if (!token || !pocId) { setPocAvailability([]); return; }
@@ -187,18 +214,21 @@ export default function PaySign() {
   const allDone = bothDone && scheduled;
 
   const slots = useMemo(() => {
-    if (!ctx?.rep_availability) return [];
-    return computeAvailableSlots(weeklyMapToRows(ctx.rep_availability), {
+    // Use the explicitly selected POC's availability when it differs from the rep's.
+    const availability = onbAvailability || ctx?.rep_availability;
+    const tz = (onbAvailability ? onbTimezone : ctx?.rep_timezone) || "America/Los_Angeles";
+    if (!availability) return [];
+    return computeAvailableSlots(weeklyMapToRows(availability), {
       durationMinutes: 60,
       slotIntervalMinutes: 30,
       minNoticeMinutes: 0,
       daysAhead: 14,
-      timeZone: ctx?.rep_timezone || "America/Los_Angeles",
+      timeZone: tz,
     }).map((d) => ({
       date: d,
       label: d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
     }));
-  }, [ctx?.rep_availability, ctx?.rep_timezone]);
+  }, [ctx?.rep_availability, ctx?.rep_timezone, onbAvailability, onbTimezone]);
 
   const currentStep: StepKey = allDone
     ? "done"
@@ -268,7 +298,7 @@ export default function PaySign() {
     if (!token || !selectedSlot) return;
     setScheduleBusy(true);
     const { data, error } = await supabase.functions.invoke("pay-sign-context", {
-      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot },
+      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot, poc_user_id: onbPocId || undefined },
     });
     setScheduleBusy(false);
     if (error || data?.error) {
@@ -540,7 +570,23 @@ export default function PaySign() {
             </div>
 
             {!scheduled && (
-              slots.length === 0 ? (
+              <div className="space-y-3">
+                {onbPocs.length > 0 && (
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Meeting host</label>
+                    <select
+                      value={onbPocId}
+                      onChange={(e) => setOnbPocId(e.target.value)}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">— Select a person —</option>
+                      {onbPocs.map((p) => (
+                        <option key={p.user_id} value={p.user_id}>{p.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {slots.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
                   No times are currently published. Your NewLight rep will reach out to schedule.
                 </div>
@@ -561,7 +607,8 @@ export default function PaySign() {
                     Confirm onboarding time
                   </Button>
                 </div>
-              )
+              )}
+              </div>
             )}
           </Card>
         )}

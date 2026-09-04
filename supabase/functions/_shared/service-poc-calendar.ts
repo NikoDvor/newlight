@@ -60,3 +60,39 @@ export async function listServicePocs(supabase: any) {
     email: byId.get(id)?.email || null,
   }));
 }
+
+// Roles considered "real staff" and therefore eligible to host an onboarding meeting.
+// Client-facing roles (client_owner, client_team, read_only) are intentionally excluded.
+export const ONBOARDING_POC_ROLES = [
+  "admin",
+  "operator",
+  "marketing_staff",
+  "support_staff",
+  "project_manager",
+  "service_poc",
+];
+
+/** All active employees eligible to be assigned an onboarding meeting. */
+export async function listOnboardingPocs(supabase: any) {
+  const { data: roles, error } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .in("role", ONBOARDING_POC_ROLES);
+  if (error) throw new Error(error.message);
+
+  const ids = Array.from(new Set((roles || []).map((r: any) => r.user_id).filter(Boolean)));
+  if (ids.length === 0) return [];
+
+  const { data: profiles, error: pErr } = await supabase
+    .from("employee_profiles")
+    .select("user_id, full_name, email")
+    .in("user_id", ids)
+    .order("full_name");
+  if (pErr) throw new Error(pErr.message);
+
+  return (profiles || []).map((p: any) => ({
+    user_id: p.user_id,
+    full_name: p.full_name || "Employee",
+    email: p.email || null,
+  }));
+}
