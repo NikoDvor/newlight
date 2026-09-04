@@ -570,12 +570,8 @@ export default function PaySign() {
             </div>
 
             {!scheduled && (
-              slots.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
-                  No times are currently published. Your NewLight rep will reach out to schedule.
-                </div>
-              ) : (
-                <div className="space-y-3">
+              <div className="space-y-3">
+                {onbPocs.length > 0 && (
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Meeting host</label>
                     <select
@@ -589,6 +585,13 @@ export default function PaySign() {
                       ))}
                     </select>
                   </div>
+                )}
+                {slots.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                  No times are currently published. Your NewLight rep will reach out to schedule.
+                </div>
+              ) : (
+                <div className="space-y-3">
                   <select
                     value={selectedSlot}
                     onChange={(e) => setSelectedSlot(e.target.value)}
