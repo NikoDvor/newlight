@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Award, BarChart3, CalendarClock, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Award, BarChart3, CalendarClock, DollarSign, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +119,7 @@ export function GenericPipelineDashboard() {
   const [training, setTraining] = useState<TrainingStats | null>(null);
   const [dailyActivity, setDailyActivity] = useState<{ day: string; count: number }[]>([]);
   const [dialCounts, setDialCounts] = useState({ today: 0, week: 0, month: 0 });
+  const [pipelineValue, setPipelineValue] = useState(0);
 
   // live tick
   useEffect(() => {
@@ -143,6 +144,8 @@ export function GenericPipelineDashboard() {
         { data: outcomes },
         { data: unlockRows },
         { data: outcomes14 },
+        { data: estLeads },
+        { data: repDeals },
       ] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("id, business_name, owner_name, callback_at, status").eq("user_id", userId).not("callback_at", "is", null),
         (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome").eq("user_id", userId).gte("starts_at", new Date(Date.now() - 86400000).toISOString()),
