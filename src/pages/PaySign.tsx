@@ -138,7 +138,30 @@ export default function PaySign() {
     supabase.functions
       .invoke("pay-sign-context", { body: { share_token: token, action: "list_service_pocs" } })
       .then(({ data }) => { if (data?.pocs) setPocs(data.pocs); });
+    supabase.functions
+      .invoke("pay-sign-context", { body: { share_token: token, action: "list_onboarding_pocs" } })
+      .then(({ data }) => { if (data?.pocs) setOnbPocs(data.pocs); });
   }, [token]);
+
+  // Default the onboarding POC to the deal's assigned rep.
+  useEffect(() => {
+    if (ctx?.rep?.id && !onbPocId) setOnbPocId(ctx.rep.id);
+  }, [ctx?.rep?.id]); // eslint-disable-line
+
+  // Load the selected POC's own availability.
+  useEffect(() => {
+    if (!token || !onbPocId) { setOnbAvailability(null); return; }
+    if (ctx?.rep?.id && onbPocId === ctx.rep.id) { setOnbAvailability(null); return; }
+    setSelectedSlot("");
+    supabase.functions
+      .invoke("pay-sign-context", {
+        body: { share_token: token, action: "onboarding_poc_availability", poc_user_id: onbPocId },
+      })
+      .then(({ data }) => {
+        setOnbAvailability(data?.availability || null);
+        setOnbTimezone(data?.timezone || null);
+      });
+  }, [token, onbPocId, ctx?.rep?.id]);
 
   useEffect(() => {
     if (!token || !pocId) { setPocAvailability([]); return; }
