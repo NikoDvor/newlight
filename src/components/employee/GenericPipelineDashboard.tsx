@@ -155,6 +155,10 @@ export function GenericPipelineDashboard() {
         (supabase as any).from("bdr_call_outcomes").select("id, logged_at").eq("bdr_user_id", userId).gte("logged_at", monthStart),
         (supabase as any).from("nl_objection_unlocks").select("objection_category, foundation_unlocked, intermediate_unlocked, advanced_unlocked, foundation_passed, intermediate_passed, advanced_passed").eq("user_id", userId),
         (supabase as any).from("bdr_call_outcomes").select("logged_at").eq("bdr_user_id", userId).gte("logged_at", fourteen.toISOString()),
+        // Pipeline value sources: pre-Close-Prep leads carry estimated_annual_value;
+        // post-Close-Prep leads carry a real crm_deals.deal_value.
+        (supabase as any).from("nl_bdr_leads").select("id, estimated_annual_value").eq("user_id", userId).is("crm_deal_id", null).not("estimated_annual_value", "is", null),
+        (supabase as any).from("crm_deals").select("id, deal_value, pipeline_stage").eq("assigned_user", userId).eq("client_id", "00000000-0000-0000-0000-0000000000ff"),
       ]);
 
       if (cancelled) return;
