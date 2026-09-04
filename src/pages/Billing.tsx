@@ -75,8 +75,15 @@ export default function Billing() {
 
   const monthlyAmount = monthlyFee ? `$${Number(monthlyFee).toLocaleString()}` : "—";
   const subStatus = sub?.subscription_status || "—";
-  const contractStatus = contract?.contract_status || "—";
-  const paidCount = invoices.filter(i => i.invoice_status === "Paid").length;
+
+  // Contract status: real source of truth is the signed service-agreement envelope.
+  // contract_records is kept as a fallback only if no envelope exists.
+  const envelopeStatus = envelope?.status as string | undefined;
+  const contractStatus = envelopeStatus
+    ? ({ signed: "Signed", sent: "Sent — awaiting signature", viewed: "Sent — awaiting signature", draft: "Draft", declined: "Declined", expired: "Expired" }[envelopeStatus] || envelopeStatus)
+    : contract?.contract_status || "—";
+
+  const paidCount = invoices.filter(i => i.invoice_status?.toLowerCase() === "paid").length;
 
   const paymentMethodLabel: Record<string, string> = {
     wire_transfer: "Wire Transfer",
