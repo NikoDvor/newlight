@@ -40,6 +40,7 @@ export default function Billing() {
   const [sub, setSub] = useState<any>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [contract, setContract] = useState<any>(null);
+  const [envelope, setEnvelope] = useState<any>(null);
   const [billingAccount, setBillingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [manageOpen, setManageOpen] = useState(false);
@@ -51,6 +52,7 @@ export default function Billing() {
       supabase.from("subscriptions").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setSub(r.data)),
       supabase.from("invoices").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
       supabase.from("contract_records").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setContract(r.data)),
+      supabase.from("document_envelopes").select("*").eq("client_id", activeClientId).eq("envelope_type", "service_agreement").order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setEnvelope(r.data)),
     ]).finally(() => setLoading(false));
   }, [activeClientId]);
 
