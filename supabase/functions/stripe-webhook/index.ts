@@ -322,6 +322,23 @@ Deno.serve(async (req) => {
           .update({ stripe_status: "active" })
           .eq("stripe_customer_id", customerId);
 
+        // Retainer subscriptions: keep the deal's next_charge_at aligned with
+        // Stripe's own schedule — the period just paid ends when the next one starts.
+        const subId = typeof invoice.subscription === "string"
+          ? invoice.subscription
+          : invoice.subscription?.id ?? null;
+        const periodEnd = invoice.period_end ?? invoice.lines?.data?.[0]?.period?.end ?? null;
+        if (subId && periodEnd) {
+          const { data: subDeal } = await supabase
+            .from("crm_deals").select("id").eq("stripe_subscription_id", subId).maybeSingle();
+          if (subDeal?.id) {
+            await supabase.from("crm_deals")
+              .update({ next_charge_at: new Date(periodEnd * 1000).toISOString() })
+              .eq("id", subDeal.id);
+          }
+        }
+
+
         await supabase.from("audit_logs").insert({
           action: "stripe_payment_succeeded",
           module: "billing",
