@@ -371,6 +371,31 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
             <Separator />
 
+            {/* ── A3b. Documents & Files ── */}
+            <Section title="Documents & Files">
+              {loadingDetail ? <LoadingSkeleton /> : legalDocs.length > 0 ? (
+                <div className="space-y-1.5">
+                  {legalDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between text-xs gap-2">
+                      <div className="min-w-0">
+                        <span className="text-foreground truncate">{doc.document_name}</span>
+                        <div className="text-[10px] text-muted-foreground">
+                          {String(doc.document_type || "other").replace(/_/g, " ")} · {new Date(doc.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="text-xs h-8 gap-2 shrink-0" onClick={() => openLegalDoc(doc.file_url)}>
+                        <ExternalLink className="h-3.5 w-3.5 text-primary" /> View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No additional documents uploaded yet.</p>}
+            </Section>
+
+            <Separator />
+
+
+
             {/* ── A4. Payment History ── */}
             <Section title="Payment History">
               {loadingDetail ? <LoadingSkeleton /> : invoiceList.length > 0 ? (
