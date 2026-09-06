@@ -145,6 +145,9 @@ export default function ClientDocuments() {
           })}
         </div>
       )}
+
+      <LegalDocumentsSection clientId={activeClientId} />
     </div>
   );
 }
+
