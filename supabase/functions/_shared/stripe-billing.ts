@@ -118,7 +118,7 @@ function computeRetainerTrialEnd(bookedAt: Date): number {
 
 /**
  * Given a trial_end timestamp, returns the 1st of the FOLLOWING calendar month
- * (in PST/UTC-8) at 8:00 AM PST (16:00 UTC) as the billing-cycle anchor.
+ * (in PST/UTC-8) at 10:00 AM PST (18:00 UTC) as the billing-cycle anchor.
  * This guarantees a real partial period between trial_end and the anchor.
  */
 function computeBillingCycleAnchor(trialEndUnix: number): number {
@@ -134,7 +134,7 @@ function computeBillingCycleAnchor(trialEndUnix: number): number {
   const anchorYear = pstYear + Math.floor((pstMonth + 1) / 12);
   const anchorMonth = (pstMonth + 1) % 12;
 
-  const anchor = new Date(Date.UTC(anchorYear, anchorMonth, 1, 16, 0, 0));
+  const anchor = new Date(Date.UTC(anchorYear, anchorMonth, 1, 18, 0, 0));
   return Math.floor(anchor.getTime() / 1000);
 }
 
