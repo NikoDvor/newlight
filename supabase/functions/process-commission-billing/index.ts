@@ -170,6 +170,12 @@ Deno.serve(async (req) => {
           failure_notification_sent: true,
         }).eq("id", invoice.id);
 
+        // Still a processed deal — roll its next expected charge to the next cycle.
+        await supabase.from("crm_deals")
+          .update({ next_charge_at: nextCommissionChargeAt() })
+          .eq("id", deal.id);
+
+
         const subject = `ACTION NEEDED — Commission charge failed: ${businessName} · ${amountFmt}`;
         const text = [
           `Commission billing failed and was NOT retried.`,
