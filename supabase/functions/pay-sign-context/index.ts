@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   if (envelope.related_type === "crm_deal" && envelope.related_id) {
     const { data: d } = await supabase
       .from("crm_deals")
-      .select("id, client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id")
+      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id")
       .eq("id", envelope.related_id)
       .maybeSingle();
     deal = d;
