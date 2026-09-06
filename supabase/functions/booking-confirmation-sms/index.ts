@@ -294,6 +294,7 @@ async function runNotifications(
     startsAt: string;
     meta: Record<string, any>;
     recordId: string;
+    leadId: string | null;
   },
 ): Promise<void> {
   try {
