@@ -13,6 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+const OPS_EMAIL_TO = "team@newlightgen.com";
 const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.newlight-app.com";
 
 function json(data: unknown, status = 200) {
