@@ -2,6 +2,17 @@
 // Used by stripe-webhook (initial payment fallback + subscription creation)
 // and process-commission-billing (monthly off-session commission charges).
 
+/** Flat all-inclusive annual plan price. */
+export const ANNUAL_PLAN_PRICE = 29997;
+
+/** Calendar-interval day arithmetic (DST/leap-year safe, no fixed-ms math). */
+export function addDays(from: Date, days: number): Date {
+  const d = new Date(from.getTime());
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+
+
 // deno-lint-ignore no-explicit-any
 export async function getStripe(): Promise<any | null> {
   const key = Deno.env.get("STRIPE_SECRET_KEY");
@@ -172,7 +183,11 @@ export async function createRetainerSubscription(
 
   });
 
-  await supabase.from("crm_deals").update({ stripe_subscription_id: sub.id }).eq("id", deal.id);
+  await supabase.from("crm_deals").update({
+    stripe_subscription_id: sub.id,
+    // First real (non-trial) charge date — drives reminders + reporting.
+    next_charge_at: new Date(billingCycleAnchor * 1000).toISOString(),
+  }).eq("id", deal.id);
 
   if (deal.client_id) {
     await supabase.from("clients")
@@ -242,9 +257,11 @@ export async function applyAnnualSwitch(
     }
   }
 
+  const annualStart = new Date();
   await supabase.from("crm_deals").update({
     billing_cadence: "annual",
-    annual_started_at: new Date().toISOString(),
+    annual_started_at: annualStart.toISOString(),
+    next_charge_at: addDays(annualStart, 365).toISOString(),
     app_store_complimentary: true,
     ...(cancelled ? { stripe_subscription_id: null } : {}),
   }).eq("id", dealId);

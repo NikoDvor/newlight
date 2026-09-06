@@ -574,9 +574,13 @@ Deno.serve(async (req) => {
       const { data: curDeal } = await supabase
         .from("crm_deals").select("billing_cadence").eq("id", deal.id).maybeSingle();
       if (curDeal?.billing_cadence !== "annual") {
+        const annualStart = new Date();
+        const nextCharge = new Date(annualStart.getTime());
+        nextCharge.setUTCDate(nextCharge.getUTCDate() + 365);
         await supabase.from("crm_deals").update({
           billing_cadence: "annual",
-          annual_started_at: new Date().toISOString(),
+          annual_started_at: annualStart.toISOString(),
+          next_charge_at: nextCharge.toISOString(),
           app_store_complimentary: true,
         }).eq("id", deal.id);
       }

@@ -1,13 +1,10 @@
-// Monthly commission billing (pg_cron, 1st of each month).
-// For every commission-priced deal that has completed Pay & Sign:
-//   - sum the client's financial_adjustments revenue for the prior calendar month
-//   - commission = commission_rate% * revenue
-//   - create a commission invoice and charge the saved card off-session
-//   - on success: mark paid + send the standard confirmation set + client receipt
-//   - on failure: NO retry — alert ops + assigned rep, leave invoice payment_failed
+// Daily annual-renewal charging (pg_cron, 09:00 PST / 17:00 UTC).
+// Finds annual deals whose next_charge_at has come due and charges the saved
+// card $29,997 off-session. Mirrors process-commission-billing exactly:
+//   - success: advance next_charge_at 365 days + email the client a receipt
+//   - failure: NO retry — alert ops + the assigned rep, leave the invoice failed
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
-import { getStripe, chargeOffSession } from "../_shared/stripe-billing.ts";
-import { sendPaymentConfirmation } from "../_shared/pay-sign-notify.ts";
+import { getStripe, chargeOffSession, addDays, ANNUAL_PLAN_PRICE } from "../_shared/stripe-billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,30 +19,10 @@ function json(data: unknown, status = 200) {
   });
 }
 
-/**
- * The next time this cron will actually charge: the 1st of the FOLLOWING month
- * at the same hour the cron fires (18:00 UTC — see the monthly-commission-charge job).
- */
-function nextCommissionChargeAt(): string {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 18, 0, 0)).toISOString();
-}
-
-function priorMonth(): { start: string; end: string; label: string } {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0));
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-    label: start.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
-  };
-}
-
 async function sendEmail(to: string, subject: string, html: string, text: string) {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY) {
-    console.log(`[commission EMAIL QUEUED - no RESEND_API_KEY] to=${to} subject="${subject}"`);
+    console.log(`[annual-renewal EMAIL QUEUED - no RESEND_API_KEY] to=${to} subject="${subject}"`);
     return { ok: false, detail: "resend credentials missing" };
   }
   const res = await fetch("https://api.resend.com/emails", {
@@ -55,7 +32,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    console.error("[commission Resend error]", res.status, t);
+    console.error("[annual-renewal Resend error]", res.status, t);
     return { ok: false, detail: `${res.status}: ${t}` };
   }
   return { ok: true, detail: "sent" };
@@ -80,7 +57,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Auth: cron secret OR admin/operator JWT
+  // Auth: cron secret OR admin/operator JWT (same gate as commission billing).
   const CRON_SECRET = Deno.env.get("CRON_SECRET");
   const cronHeader = req.headers.get("x-cron-secret") ?? "";
   let allowed = Boolean(CRON_SECRET && cronHeader && cronHeader === CRON_SECRET);
@@ -97,79 +74,62 @@ Deno.serve(async (req) => {
   }
   if (!allowed) return json({ error: "Unauthorized" }, 401);
 
-  const body = await req.json().catch(() => ({}));
-  const period = body.period_start && body.period_end
-    ? { start: body.period_start, end: body.period_end, label: `${body.period_start} – ${body.period_end}` }
-    : priorMonth();
-
   const stripe = await getStripe();
+  const nowIso = new Date().toISOString();
 
   const { data: deals, error: dealsErr } = await supabase
     .from("crm_deals")
-    .select("id, client_id, deal_name, commission_rate, commission_rate_ongoing, commission_start_at, pricing_model, pay_sign_status, assigned_user")
-    .eq("pricing_model", "commission")
-    .eq("pay_sign_status", "paid_signed");
+    .select("id, client_id, provisioned_client_id, deal_name, billing_cadence, next_charge_at, assigned_user")
+    .eq("billing_cadence", "annual")
+    .not("next_charge_at", "is", null)
+    .lte("next_charge_at", nowIso);
   if (dealsErr) return json({ error: dealsErr.message }, 500);
 
+  const amount = ANNUAL_PLAN_PRICE;
+  const amountFmt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const results: unknown[] = [];
 
   for (const deal of deals ?? []) {
     try {
-      if (!deal.client_id) { results.push({ deal_id: deal.id, skipped: "no_client" }); continue; }
-
-      if (!deal.commission_start_at) { results.push({ deal_id: deal.id, skipped: "no_commission_start_at" }); continue; }
-      const monthsElapsed = (Date.now() - new Date(deal.commission_start_at).getTime()) / (30 * 24 * 3600 * 1000);
-      const rate = monthsElapsed < 12 ? Number(deal.commission_rate || 0) : Number(deal.commission_rate_ongoing || 0);
-      const tierLabel = monthsElapsed < 12 ? "yr 1 rate" : "ongoing rate";
-      if (!(rate > 0)) { results.push({ deal_id: deal.id, skipped: "no_rate" }); continue; }
-
-      const { data: adjustments } = await supabase
-        .from("financial_adjustments")
-        .select("amount")
-        .eq("client_id", deal.client_id)
-        .eq("type", "revenue")
-        .gte("created_at", `${period.start}T00:00:00Z`)
-        .lte("created_at", `${period.end}T23:59:59Z`);
-      // deno-lint-ignore no-explicit-any
-      const revenue = (adjustments ?? []).reduce((s: number, a: any) => s + (Number(a.amount) || 0), 0);
-      const amount = Math.round(revenue * (rate / 100) * 100) / 100;
-      if (!(amount > 0)) { results.push({ deal_id: deal.id, skipped: "zero_amount", revenue }); continue; }
+      const billingClientId = deal.provisioned_client_id || deal.client_id;
+      if (!billingClientId) { results.push({ deal_id: deal.id, skipped: "no_client" }); continue; }
 
       const { data: client } = await supabase
         .from("clients")
         .select("id, name, owner_email, stripe_customer_id, stripe_payment_method_id")
-        .eq("id", deal.client_id)
+        .eq("id", billingClientId)
         .maybeSingle();
 
-      // Invoice row (unique per client/period via partial index → idempotent).
+      const businessName = client?.name || deal.deal_name || "Client";
+      const dueLabel = new Date(deal.next_charge_at).toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
+      });
+
       const { data: invoice, error: invErr } = await supabase
         .from("invoices")
         .insert({
-          client_id: deal.client_id,
+          client_id: billingClientId,
+          provisioned_client_id: deal.provisioned_client_id ?? null,
           deal_id: deal.id,
-          invoice_number: `COM-${Date.now().toString(36).toUpperCase()}`,
-          invoice_type: "commission",
+          invoice_number: `ANN-${Date.now().toString(36).toUpperCase()}`,
+          invoice_type: "annual",
           invoice_status: "pending",
           subtotal_amount: amount,
           tax_amount: 0,
           total_amount: amount,
           amount_paid: 0,
-          period_start: period.start,
-          period_end: period.end,
-          payment_notes: `Commission ${rate}% on ${period.label} revenue of $${revenue.toLocaleString()} (${tierLabel})`,
+          payment_notes: `Annual plan renewal — 12 months (app included)`,
           issued_at: new Date().toISOString(),
         } as any)
         .select("id, invoice_number")
         .maybeSingle();
 
       if (invErr || !invoice) {
-        results.push({ deal_id: deal.id, skipped: "invoice_exists_or_error", detail: invErr?.message });
+        results.push({ deal_id: deal.id, skipped: "invoice_error", detail: invErr?.message });
         continue;
       }
 
       const repEmail = await repEmailFor(supabase, deal.assigned_user ?? null);
-      const businessName = client?.name || deal.deal_name || "Client";
-      const amountFmt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       const fail = async (reason: string) => {
         await supabase.from("invoices").update({
@@ -179,20 +139,13 @@ Deno.serve(async (req) => {
           failure_notification_sent: true,
         }).eq("id", invoice.id);
 
-        // Still a processed deal — roll its next expected charge to the next cycle.
-        await supabase.from("crm_deals")
-          .update({ next_charge_at: nextCommissionChargeAt() })
-          .eq("id", deal.id);
-
-
-        const subject = `ACTION NEEDED — Commission charge failed: ${businessName} · ${amountFmt}`;
+        const subject = `ACTION NEEDED — Annual renewal charge failed: ${businessName} · ${amountFmt}`;
         const text = [
-          `Commission billing failed and was NOT retried.`,
+          `Annual renewal billing failed and was NOT retried.`,
           ``,
           `Client: ${businessName}`,
-          `Period: ${period.label}`,
-          `Revenue logged: $${revenue.toLocaleString()}`,
-          `Commission (${rate}%): ${amountFmt}`,
+          `Renewal due: ${dueLabel}`,
+          `Amount: ${amountFmt}`,
           `Invoice: ${invoice.invoice_number} (left as payment_failed)`,
           `Reason: ${reason}`,
           ``,
@@ -200,12 +153,11 @@ Deno.serve(async (req) => {
         ].join("\n");
         const html = `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <div style="background:#b91c1c;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;">COMMISSION CHARGE FAILED</div>
+    <div style="background:#b91c1c;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;">ANNUAL RENEWAL CHARGE FAILED</div>
     <h1 style="font-size:20px;margin:20px 0 6px;">${businessName}</h1>
     <table style="width:100%;font-size:14px;line-height:1.8;">
-      <tr><td style="color:#6b7280;width:150px;">Period</td><td>${period.label}</td></tr>
-      <tr><td style="color:#6b7280;">Revenue logged</td><td>$${revenue.toLocaleString()}</td></tr>
-      <tr><td style="color:#6b7280;">Commission (${rate}%)</td><td><strong>${amountFmt}</strong></td></tr>
+      <tr><td style="color:#6b7280;width:150px;">Renewal due</td><td>${dueLabel}</td></tr>
+      <tr><td style="color:#6b7280;">Amount</td><td><strong>${amountFmt}</strong></td></tr>
       <tr><td style="color:#6b7280;">Invoice</td><td>${invoice.invoice_number}</td></tr>
       <tr><td style="color:#6b7280;">Reason</td><td>${reason}</td></tr>
     </table>
@@ -227,8 +179,8 @@ Deno.serve(async (req) => {
         customerId: client.stripe_customer_id,
         paymentMethodId: client.stripe_payment_method_id,
         amount,
-        description: `Commission — ${period.label} (${rate}% of $${revenue.toLocaleString()}, ${tierLabel})`,
-        metadata: { client_id: deal.client_id, deal_id: deal.id, invoice_id: invoice.id, period: period.label },
+        description: `Annual plan renewal — ${businessName}`,
+        metadata: { client_id: billingClientId, deal_id: deal.id, invoice_id: invoice.id, kind: "annual_renewal" },
       });
 
       if (!charge.ok) { await fail(charge.error || "Charge failed"); continue; }
@@ -241,29 +193,65 @@ Deno.serve(async (req) => {
         stripe_payment_intent_id: charge.payment_intent_id,
       }).eq("id", invoice.id);
 
-      const notify = await sendPaymentConfirmation(supabase, deal.id, {
-        invoiceId: invoice.id,
-        payerEmail: client.owner_email || null,
+      const nextChargeAt = addDays(new Date(deal.next_charge_at), 365).toISOString();
+      await supabase.from("crm_deals").update({ next_charge_at: nextChargeAt }).eq("id", deal.id);
+      await supabase.from("clients").update({ payment_status: "paid" }).eq("id", billingClientId);
+
+      const nextLabel = new Date(nextChargeAt).toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric", timeZone: "UTC",
       });
 
-      await supabase.from("crm_deals")
-        .update({ next_charge_at: nextCommissionChargeAt() })
-        .eq("id", deal.id);
+      let receipt: unknown = { ok: false, detail: "no client email" };
+      if (client?.owner_email) {
+        const subject = `Payment received — Annual plan renewal (${amountFmt})`;
+        const text = [
+          `Hi ${businessName},`,
+          ``,
+          `Your annual plan has been renewed for another 12 months.`,
+          ``,
+          `Amount charged: ${amountFmt}`,
+          `Invoice: ${invoice.invoice_number}`,
+          `Next renewal: ${nextLabel}`,
+          ``,
+          `Thank you,`,
+          `NewLight`,
+        ].join("\n");
+        const html = `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;margin:0 0 16px;">Annual plan renewed</h1>
+    <p style="font-size:14px;line-height:1.6;">Hi ${businessName}, your annual plan has been renewed for another 12 months.</p>
+    <table style="width:100%;font-size:14px;line-height:1.8;margin-top:12px;">
+      <tr><td style="color:#6b7280;width:150px;">Amount charged</td><td><strong>${amountFmt}</strong></td></tr>
+      <tr><td style="color:#6b7280;">Invoice</td><td>${invoice.invoice_number}</td></tr>
+      <tr><td style="color:#6b7280;">Next renewal</td><td>${nextLabel}</td></tr>
+    </table>
+    <p style="font-size:13px;color:#6b7280;margin-top:24px;">Thank you,<br/>NewLight</p>
+  </div></body></html>`;
+        receipt = await sendEmail(client.owner_email, subject, html, text);
+      }
 
-      results.push({ deal_id: deal.id, invoice_id: invoice.id, ok: true, amount, revenue, notify });
+      await supabase.from("audit_logs").insert({
+        client_id: billingClientId,
+        action: "annual_renewal_charged",
+        module: "billing",
+        status: "success",
+        metadata: { deal_id: deal.id, invoice_id: invoice.id, amount, next_charge_at: nextChargeAt },
+      });
+
+      results.push({ deal_id: deal.id, invoice_id: invoice.id, ok: true, amount, next_charge_at: nextChargeAt, receipt });
     } catch (e) {
-      console.error("[process-commission-billing] deal error", deal.id, e);
+      console.error("[charge-annual-renewals] deal error", deal.id, e);
       results.push({ deal_id: deal.id, error: String((e as Error).message) });
     }
   }
 
-  // deno-lint-ignore no-explicit-any
   const summary = {
-    period,
-    total_deals: (deals ?? []).length,
+    due_deals: (deals ?? []).length,
+    // deno-lint-ignore no-explicit-any
     charged: results.filter((r: any) => r.ok).length,
+    // deno-lint-ignore no-explicit-any
     failed: results.filter((r: any) => r.failed).length,
   };
-  console.log("[process-commission-billing]", JSON.stringify(summary));
+  console.log("[charge-annual-renewals]", JSON.stringify(summary));
   return json({ ...summary, results });
 });
