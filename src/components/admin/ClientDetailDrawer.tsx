@@ -215,6 +215,16 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
     setLoadingDetail(false);
   }
 
+  async function openLegalDoc(path: string) {
+    if (!path) return;
+    if (/^https?:\/\//i.test(path)) { window.open(path, "_blank"); return; }
+    const { data, error } = await supabase.storage.from("client-legal-documents").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Could not open document"); return; }
+    window.open(data.signedUrl, "_blank");
+  }
+
+
+
 
   if (!client) return null;
 
