@@ -569,6 +569,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existingByOwner) {
+        await linkBdrLead(existingByOwner.id);
         return new Response(
           JSON.stringify({
             success: true,
@@ -620,7 +621,6 @@ Deno.serve(async (req) => {
     if (clientErr || !client) {
       return new Response(
         JSON.stringify({ error: clientErr?.message || "Failed to create workspace" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
