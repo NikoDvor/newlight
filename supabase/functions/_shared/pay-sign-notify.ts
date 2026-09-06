@@ -371,3 +371,70 @@ export async function sendWelcomeDocument(
   const results = await Promise.all(sends);
   return { sent: true, results };
 }
+
+/**
+ * Confirms an onboarding meeting that was moved to a new time.
+ */
+export async function sendOnboardingRescheduleNotice(opts: {
+  clientEmail: string | null;
+  clientName: string | null;
+  repName: string | null;
+  repEmail: string | null;
+  previousStartsAt: string | null;
+  newStartsAt: string;
+  paySignUrl?: string;
+}): Promise<{ sent: boolean; results: { ok: boolean; detail: string }[] }> {
+  const businessName = opts.clientName || "your business";
+  const fmt = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleString("en-US", {
+          timeZone: "America/Los_Angeles",
+          weekday: "long", month: "long", day: "numeric",
+          hour: "numeric", minute: "2-digit",
+        }) + " PT"
+      : "an earlier time";
+
+  const newWhen = fmt(opts.newStartsAt);
+  const oldWhen = fmt(opts.previousStartsAt);
+  const subject = `Your onboarding meeting has been moved — ${newWhen}`;
+
+  const text = [
+    `Hi${opts.clientName ? ` ${opts.clientName}` : ""},`,
+    ``,
+    `Your onboarding meeting has been moved to ${newWhen}.`,
+    `(Previously: ${oldWhen})`,
+    ``,
+    opts.repName ? `You'll be meeting with ${opts.repName}.` : ``,
+    opts.paySignUrl ? `View your documents and meeting details: ${opts.paySignUrl}` : ``,
+    ``,
+    `Questions? Reach us at ${OPS_EMAIL_TO} or ${OPS_PHONE_DISPLAY}.`,
+  ].filter(Boolean).join("\n");
+
+  const html = `<!doctype html><html><body style="margin:0;background:#f6f7f9;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 20px;">
+    <div style="background:#fff;border-radius:12px;padding:32px;">
+      <h1 style="font-size:20px;margin:0 0 12px;color:#0f172a;">Your onboarding meeting has been moved</h1>
+      <p style="font-size:14px;color:#334155;line-height:1.7;margin:0 0 16px;">
+        Hi${opts.clientName ? ` ${esc(opts.clientName)}` : ""}, your onboarding meeting for
+        ${esc(businessName)} is now scheduled for
+        <strong style="color:#0f172a;">${esc(newWhen)}</strong>.
+      </p>
+      <p style="font-size:13px;color:#6b7280;margin:0 0 24px;">Previously: ${esc(oldWhen)}</p>
+      ${opts.repName ? `<p style="font-size:14px;color:#334155;margin:0 0 24px;">You'll be meeting with ${esc(opts.repName)}.</p>` : ""}
+      ${opts.paySignUrl ? `<div style="margin:0 0 24px;"><a href="${esc(opts.paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">View meeting details</a></div>` : ""}
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+      <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0;">
+        Questions? Reach the team at <a href="mailto:${OPS_EMAIL_TO}" style="color:#0369a1;">${OPS_EMAIL_TO}</a> or ${OPS_PHONE_DISPLAY}.
+      </p>
+    </div>
+  </div>
+</body></html>`;
+
+  const sends: Promise<{ ok: boolean; detail: string }>[] = [];
+  if (opts.clientEmail) sends.push(sendEmail(opts.clientEmail, subject, html, text));
+  sends.push(sendEmail(OPS_EMAIL_TO, `Onboarding rescheduled — ${businessName}`, html, text));
+  if (opts.repEmail && opts.repEmail !== OPS_EMAIL_TO) sends.push(sendEmail(opts.repEmail, `Onboarding rescheduled — ${businessName}`, html, text));
+
+  const results = await Promise.all(sends);
+  return { sent: true, results };
+}
