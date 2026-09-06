@@ -198,6 +198,9 @@ Deno.serve(async (req) => {
         assigned_user: userId,
         contact_id: contactId,
         client_id: lead.client_id,
+        // Carries the real per-business workspace provisioned at booking time,
+        // so payment can be reflected on the correct client (not the ops workspace).
+        provisioned_client_id: (lead as any).provisioned_client_id ?? null,
       } as any).select("id").single();
       if (dealErr) throw dealErr;
       dealId = deal!.id as string;
