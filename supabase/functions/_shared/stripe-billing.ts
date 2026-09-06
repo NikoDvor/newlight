@@ -172,7 +172,11 @@ export async function createRetainerSubscription(
 
   });
 
-  await supabase.from("crm_deals").update({ stripe_subscription_id: sub.id }).eq("id", deal.id);
+  await supabase.from("crm_deals").update({
+    stripe_subscription_id: sub.id,
+    // First real (non-trial) charge date — drives reminders + reporting.
+    next_charge_at: new Date(billingCycleAnchor * 1000).toISOString(),
+  }).eq("id", deal.id);
 
   if (deal.client_id) {
     await supabase.from("clients")
