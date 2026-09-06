@@ -4897,10 +4897,12 @@ export type Database = {
           id: string
           initial_fee: number | null
           interest_type: string | null
+          last_reminder_sent_for: string | null
           lead_source: string | null
           lost_at: string | null
           lost_reason: string | null
           meeting_id_latest: string | null
+          next_charge_at: string | null
           notes_summary: string | null
           onboarding_meeting_id: string | null
           paid_signed_at: string | null
@@ -4950,10 +4952,12 @@ export type Database = {
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
+          last_reminder_sent_for?: string | null
           lead_source?: string | null
           lost_at?: string | null
           lost_reason?: string | null
           meeting_id_latest?: string | null
+          next_charge_at?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
           paid_signed_at?: string | null
@@ -5003,10 +5007,12 @@ export type Database = {
           id?: string
           initial_fee?: number | null
           interest_type?: string | null
+          last_reminder_sent_for?: string | null
           lead_source?: string | null
           lost_at?: string | null
           lost_reason?: string | null
           meeting_id_latest?: string | null
+          next_charge_at?: string | null
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
           paid_signed_at?: string | null
