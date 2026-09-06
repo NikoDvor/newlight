@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientCount, setClientCount] = useState(0);
+  const [potentialClientCount, setPotentialClientCount] = useState(0);
   const [fixCount, setFixCount] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
   const [demoInProgress, setDemoInProgress] = useState(0);
