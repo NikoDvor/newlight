@@ -22,6 +22,15 @@ function json(data: unknown, status = 200) {
   });
 }
 
+/**
+ * The next time this cron will actually charge: the 1st of the FOLLOWING month
+ * at the same hour the cron fires (18:00 UTC — see the monthly-commission-charge job).
+ */
+function nextCommissionChargeAt(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 18, 0, 0)).toISOString();
+}
+
 function priorMonth(): { start: string; end: string; label: string } {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
