@@ -74,6 +74,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Total Clients", value: clientCount.toString(), icon: Users, color: "hsl(var(--nl-sky))" },
+    { label: "Potential Clients", value: potentialClientCount.toString(), icon: Building2, color: "hsl(var(--nl-cyan))" },
     { label: "Prospects", value: prospectCount.toString(), icon: Zap, color: "hsl(var(--nl-neon))" },
     { label: "Demo Builds", value: demoInProgress.toString(), icon: Hammer, color: "hsl(var(--nl-cyan))" },
     { label: "Awaiting Closing", value: awaitingClosing.toString(), icon: Clock, color: "hsl(var(--nl-electric))" },
