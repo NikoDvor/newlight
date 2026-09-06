@@ -134,6 +134,13 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   const [implTasks, setImplTasks] = useState<ImplTask[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [deal, setDeal] = useState<any | null>(null);
+  const [repName, setRepName] = useState<string | null>(null);
+  const [envelope, setEnvelope] = useState<any | null>(null);
+  const [signatures, setSignatures] = useState<any[]>([]);
+  const [invoiceList, setInvoiceList] = useState<any[]>([]);
+  const [lead, setLead] = useState<any | null>(null);
+  const [discoveryAt, setDiscoveryAt] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showAppLink, setShowAppLink] = useState(false);
 
@@ -144,18 +151,54 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   async function loadDetail(clientId: string) {
     setLoadingDetail(true);
-    const [setupRes, implRes, teamRes, auditRes] = await Promise.all([
+    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes] = await Promise.all([
       supabase.from("client_setup_items" as any).select("id, item_name, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("implementation_tasks").select("id, task_title, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("workspace_users").select("id, display_name, email, provisioning_status, workspace_role").eq("client_id", clientId),
       supabase.from("audit_logs").select("id, action, module, created_at, status").eq("client_id", clientId).order("created_at", { ascending: false }).limit(15),
+      supabase.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, billing_cadence, next_charge_at, pay_sign_status, assigned_user, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("invoices").select("id, invoice_number, invoice_type, total_amount, invoice_status, paid_at, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("nl_bdr_leads" as any).select("id, lead_source, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
     setImplTasks((implRes.data || []) as any[]);
     setTeamMembers((teamRes.data || []) as any[]);
     setAuditLogs((auditRes.data || []) as any[]);
+
+    const dealRow = (dealRes.data || null) as any;
+    setDeal(dealRow);
+    setRepName(null);
+    if (dealRow?.assigned_user) {
+      const { data: emp } = await supabase.from("employee_profiles").select("full_name, email").eq("user_id", dealRow.assigned_user).maybeSingle();
+      if (emp?.full_name || emp?.email) setRepName(emp.full_name || emp.email);
+      else {
+        const { data: wu } = await supabase.from("workspace_users").select("display_name, email").eq("user_id", dealRow.assigned_user).limit(1).maybeSingle();
+        setRepName((wu as any)?.display_name || (wu as any)?.email || null);
+      }
+    }
+
+    const envRow = (envRes.data || null) as any;
+    setEnvelope(envRow);
+    setSignatures([]);
+    if (envRow?.id) {
+      const { data: sigs } = await supabase.from("document_envelope_signatures").select("id, signer_name, signer_email, signed_at").eq("envelope_id", envRow.id).order("signed_at", { ascending: false });
+      setSignatures((sigs || []) as any[]);
+    }
+
+    setInvoiceList((invRes.data || []) as any[]);
+
+    const leadRow = (leadRes.data || null) as any;
+    setLead(leadRow);
+    setDiscoveryAt(null);
+    if (leadRow?.id) {
+      const { data: ev } = await supabase.from("bdr_calendar_events").select("starts_at").eq("lead_id", leadRow.id).order("starts_at", { ascending: true }).limit(1).maybeSingle();
+      setDiscoveryAt((ev as any)?.starts_at || null);
+    }
+
     setLoadingDetail(false);
   }
+
 
   if (!client) return null;
 
