@@ -8156,6 +8156,7 @@ export type Database = {
           phone_normalized: string | null
           phone_type: string | null
           pipeline_stage: string | null
+          provisioned_client_id: string | null
           released_at: string | null
           sales_team_size: string | null
           self_booking_widget_non_owner: boolean | null
@@ -8224,6 +8225,7 @@ export type Database = {
           phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          provisioned_client_id?: string | null
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
@@ -8292,6 +8294,7 @@ export type Database = {
           phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          provisioned_client_id?: string | null
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
@@ -8330,6 +8333,13 @@ export type Database = {
             columns: ["crm_deal_id"]
             isOneToOne: false
             referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_bdr_leads_provisioned_client_id_fkey"
+            columns: ["provisioned_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
