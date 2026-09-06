@@ -49,7 +49,9 @@ export default function ClientDocuments() {
         .select(
           "id, title, envelope_type, status, sent_at, viewed_at, completed_at, created_at, document_envelope_items(id, document_name, document_url)"
         )
-        .eq("client_id", activeClientId)
+        // Client-facing scope: provisioned_client_id is the real business workspace
+        // (client_id on this table points at the NewLight ops workspace).
+        .eq("provisioned_client_id", activeClientId)
         .order("created_at", { ascending: false });
       setEnvelopes((data as Envelope[]) || []);
       setLoading(false);
