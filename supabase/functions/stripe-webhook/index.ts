@@ -139,13 +139,41 @@ Deno.serve(async (req) => {
         if (session.metadata?.annual_switch === "true") {
           const annualDealId = session.metadata?.deal_id as string | undefined;
           if (annualDealId) {
+            // Save the card so next year's renewal can be charged off-session.
+            let savedPaymentMethodId: string | null = null;
+            try {
+              const { data: annualDeal } = await supabase
+                .from("crm_deals")
+                .select("id, client_id, provisioned_client_id")
+                .eq("id", annualDealId)
+                .maybeSingle();
+              const annualClientId = annualDeal?.provisioned_client_id || annualDeal?.client_id || null;
+              const annualCustomerId = await ensureStripeCustomer(stripe, supabase, {
+                clientId: annualClientId,
+                email: clientEmail,
+                existingCustomerId: typeof customerId === "string" ? customerId : null,
+              });
+              if (annualCustomerId) {
+                savedPaymentMethodId = await savePaymentMethodFromSession(
+                  stripe, supabase, session, annualCustomerId, annualClientId,
+                );
+              }
+            } catch (e) {
+              console.error("[stripe-webhook] annual switch card save failed", e);
+            }
+
             const res = await applyAnnualSwitch(stripe, supabase, annualDealId);
             console.log("[stripe-webhook] annual switch:", JSON.stringify(res));
             await supabase.from("audit_logs").insert({
               action: "annual_billing_activated",
               module: "billing",
               status: "success",
-              metadata: { session_id: session.id, deal_id: annualDealId, ...res },
+              metadata: {
+                session_id: session.id,
+                deal_id: annualDealId,
+                card_saved: Boolean(savedPaymentMethodId),
+                ...res,
+              },
             });
           }
           break;
