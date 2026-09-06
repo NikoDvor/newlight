@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     // 1. Load the lead & confirm ownership
     const { data: lead, error: leadErr } = await supabase
       .from("nl_bdr_leads")
-      .select("id, user_id, client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id")
+      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id")
       .eq("id", lead_id)
       .maybeSingle();
     if (leadErr || !lead) {
@@ -198,6 +198,9 @@ Deno.serve(async (req) => {
         assigned_user: userId,
         contact_id: contactId,
         client_id: lead.client_id,
+        // Carries the real per-business workspace provisioned at booking time,
+        // so payment can be reflected on the correct client (not the ops workspace).
+        provisioned_client_id: (lead as any).provisioned_client_id ?? null,
       } as any).select("id").single();
       if (dealErr) throw dealErr;
       dealId = deal!.id as string;

@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   if (envelope.related_type === "crm_deal" && envelope.related_id) {
     const { data: d } = await supabase
       .from("crm_deals")
-      .select("id, client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id")
+      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id")
       .eq("id", envelope.related_id)
       .maybeSingle();
     deal = d;
@@ -542,12 +542,14 @@ Deno.serve(async (req) => {
       payment_method: "stripe",
     }).eq("id", deal.payment_invoice_id);
 
-    // Reflect payment reality on the client record. Unconditional: payment_status
-    // tracks whether the client has paid, independent of envelope signature state.
-    if (deal.client_id) {
+    // Reflect payment reality on the client record. Target the REAL per-business
+    // workspace provisioned at booking time; fall back to deal.client_id (the ops
+    // workspace) only for older deals or leads created outside the booking flow.
+    const paidClientId = (deal as any).provisioned_client_id || deal.client_id;
+    if (paidClientId) {
       await supabase.from("clients")
         .update({ payment_status: "paid" })
-        .eq("id", deal.client_id);
+        .eq("id", paidClientId);
     }
 
     // Additive: deal.client_id is the NewLight ops workspace (kept as-is above).

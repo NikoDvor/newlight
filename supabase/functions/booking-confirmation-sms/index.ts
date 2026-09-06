@@ -243,6 +243,7 @@ Deno.serve(async (req) => {
       clientBusinessName, clientLogoUrl,
       bdrUserId, bdrPhone, bdrEmail, bdrName,
       startsAt, meta, recordId: record.id as string,
+      leadId: leadId ?? null,
     };
 
     // deno-lint-ignore no-explicit-any
@@ -293,10 +294,11 @@ async function runNotifications(
     startsAt: string;
     meta: Record<string, any>;
     recordId: string;
+    leadId: string | null;
   },
 ): Promise<void> {
   try {
-    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
+    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId, leadId } = contacts;
     const when = formatDateTime(startsAt);
 
     // --- 0. Create Zoom meeting for this booking -----------------------------

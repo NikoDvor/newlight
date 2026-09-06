@@ -1,0 +1,2 @@
+ALTER TABLE public.crm_deals ADD COLUMN IF NOT EXISTS provisioned_client_id uuid REFERENCES public.clients(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_crm_deals_provisioned_client_id ON public.crm_deals(provisioned_client_id);

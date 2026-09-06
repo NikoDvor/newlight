@@ -4907,6 +4907,7 @@ export type Database = {
           pipeline_stage_id: string | null
           pricing_model: string | null
           proposal_id_current: string | null
+          provisioned_client_id: string | null
           qualification_status: string | null
           recurring_fee: number | null
           retainer_kpi: string | null
@@ -4956,6 +4957,7 @@ export type Database = {
           pipeline_stage_id?: string | null
           pricing_model?: string | null
           proposal_id_current?: string | null
+          provisioned_client_id?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
           retainer_kpi?: string | null
@@ -5005,6 +5007,7 @@ export type Database = {
           pipeline_stage_id?: string | null
           pricing_model?: string | null
           proposal_id_current?: string | null
+          provisioned_client_id?: string | null
           qualification_status?: string | null
           recurring_fee?: number | null
           retainer_kpi?: string | null
@@ -5071,6 +5074,13 @@ export type Database = {
             columns: ["proposal_id_current"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_provisioned_client_id_fkey"
+            columns: ["provisioned_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
