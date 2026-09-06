@@ -165,7 +165,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   async function loadDetail(clientId: string) {
     setLoadingDetail(true);
-    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes] = await Promise.all([
+    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes, docsRes] = await Promise.all([
       supabase.from("client_setup_items" as any).select("id, item_label, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("implementation_tasks").select("id, task_label, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("workspace_users").select("id, full_name, email, provisioning_status, role_preset").eq("client_id", clientId),
@@ -174,8 +174,10 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
       supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("invoices").select("id, invoice_number, invoice_type, total_amount, invoice_status, paid_at, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(20),
       supabase.from("nl_bdr_leads" as any).select("id, lead_source, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("client_legal_documents" as any).select("id, document_type, document_name, file_url, notes, created_at").eq("client_id", clientId).order("created_at", { ascending: false }).limit(50),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
+    setLegalDocs((docsRes.data || []) as any[]);
     setImplTasks((implRes.data || []) as any[]);
     setTeamMembers((teamRes.data || []) as any[]);
     setAuditLogs((auditRes.data || []) as any[]);
