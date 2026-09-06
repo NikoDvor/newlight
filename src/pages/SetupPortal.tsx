@@ -513,24 +513,8 @@ export default function SetupPortal() {
         />
       )}
 
-      {/* ── Progress Card ── */}
-      <Card className="border border-border/50 shadow-sm">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Setup Progress</p>
-              <p className="text-xs text-muted-foreground">{submittedCount} of {totalClient} items submitted</p>
-            </div>
-            <span className="text-2xl font-bold text-primary">{progressPct}%</span>
-          </div>
-          <Progress value={progressPct} className="h-2" />
-          {progressPct === 100 && (
-            <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" /> All items submitted! Our team is reviewing your information.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+
+
 
       {/* Implementation Status */}
       {client?.implementation_status && (
