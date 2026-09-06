@@ -243,6 +243,7 @@ Deno.serve(async (req) => {
       clientBusinessName, clientLogoUrl,
       bdrUserId, bdrPhone, bdrEmail, bdrName,
       startsAt, meta, recordId: record.id as string,
+      leadId: leadId ?? null,
     };
 
     // deno-lint-ignore no-explicit-any
