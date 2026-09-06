@@ -13,6 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+const OPS_EMAIL_TO = "team@newlightgen.com";
 const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.newlight-app.com";
 
 function json(data: unknown, status = 200) {
@@ -355,6 +356,84 @@ Deno.serve(async (req) => {
         await supabase.from("clients")
           .update({ stripe_status: "past_due" })
           .eq("stripe_customer_id", customerId);
+
+        // ---- Alert ops + the assigned rep (mirrors charge-annual-renewals' fail()) ----
+        try {
+          const failedSubId = typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : invoice.subscription?.id ?? null;
+
+          let failedDeal: any = null;
+          if (failedSubId) {
+            const { data: d } = await supabase
+              .from("crm_deals")
+              .select("id, deal_name, client_id, provisioned_client_id, recurring_fee, assigned_user")
+              .eq("stripe_subscription_id", failedSubId)
+              .maybeSingle();
+            failedDeal = d;
+          }
+
+          let businessName = failedDeal?.deal_name || null;
+          const nameClientId = failedDeal?.provisioned_client_id || failedDeal?.client_id || null;
+          if (nameClientId) {
+            const { data: c } = await supabase
+              .from("clients").select("name, business_name").eq("id", nameClientId).maybeSingle();
+            businessName = c?.business_name || c?.name || businessName;
+          }
+          if (!businessName) {
+            const { data: c2 } = await supabase
+              .from("clients").select("name, business_name").eq("stripe_customer_id", customerId).maybeSingle();
+            businessName = c2?.business_name || c2?.name || "Unknown client";
+          }
+
+          const amountDue = typeof invoice.amount_due === "number" ? invoice.amount_due / 100 : null;
+          const amountFmt = amountDue !== null
+            ? `$${amountDue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : (failedDeal?.recurring_fee
+              ? `$${Number(failedDeal.recurring_fee).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : "amount unavailable");
+
+          let repEmail: string | null = null;
+          if (failedDeal?.assigned_user) {
+            const { data: ep } = await supabase
+              .from("employee_profiles").select("email").eq("user_id", failedDeal.assigned_user).maybeSingle();
+            repEmail = ep?.email ?? null;
+            if (!repEmail) {
+              const { data: wu } = await supabase
+                .from("workspace_users").select("email").eq("user_id", failedDeal.assigned_user).maybeSingle();
+              repEmail = wu?.email ?? null;
+            }
+          }
+
+          const subject = `ACTION NEEDED — Retainer payment failed: ${businessName} · ${amountFmt}`;
+          const text = [
+            `A retainer subscription payment failed in Stripe.`,
+            ``,
+            `Client: ${businessName}`,
+            `Amount: ${amountFmt}`,
+            `Stripe invoice: ${invoice.id}`,
+            failedSubId ? `Subscription: ${failedSubId}` : ``,
+            ``,
+            `Stripe will retry automatically on its own dunning schedule — no manual retry is needed,`,
+            `but a human should be aware and follow up with the client about their card.`,
+          ].filter(Boolean).join("\n");
+          const html = `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <div style="background:#b91c1c;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;">RETAINER PAYMENT FAILED</div>
+    <h1 style="font-size:20px;margin:20px 0 6px;">${businessName}</h1>
+    <table style="width:100%;font-size:14px;line-height:1.8;">
+      <tr><td style="color:#6b7280;width:150px;">Amount</td><td><strong>${amountFmt}</strong></td></tr>
+      <tr><td style="color:#6b7280;">Stripe invoice</td><td>${invoice.id}</td></tr>
+      ${failedSubId ? `<tr><td style="color:#6b7280;">Subscription</td><td>${failedSubId}</td></tr>` : ""}
+    </table>
+    <p style="font-size:13px;color:#6b7280;margin-top:24px;">Stripe will retry automatically per its own dunning schedule. Please follow up with the client about their payment method.</p>
+  </div></body></html>`;
+
+          await sendAdhocEmail([OPS_EMAIL_TO], subject, html);
+          if (repEmail && repEmail !== OPS_EMAIL_TO) await sendAdhocEmail([repEmail], subject, html);
+        } catch (e) {
+          console.error("[stripe-webhook] payment_failed alerting error", e);
+        }
 
         await supabase.from("audit_logs").insert({
           action: "stripe_payment_failed",

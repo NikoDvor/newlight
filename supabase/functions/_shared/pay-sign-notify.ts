@@ -9,6 +9,8 @@ const OPS_SMS_TO = "+18058363557";
 const OPS_PHONE_DISPLAY = "(805) 836-3557";
 const OPS_EMAIL_TO = "team@newlightgen.com";
 const TWILIO_FROM = "+18058940908";
+const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.newlight-app.com";
+const SETUP_PORTAL_URL = `${APP_BASE_URL}/setup-portal`;
 
 function esc(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -310,6 +312,10 @@ export async function sendWelcomeDocument(
     `Your account manager: ${rep.name}${rep.email ? ` (${rep.email})` : ""}`,
     `Terms: ${terms}`,
     ``,
+    ``,
+    `Complete your setup checklist: ${SETUP_PORTAL_URL}`,
+    `(Sign in with your NewLight account to upload your logo, hours, services and access details.)`,
+    ``,
     `Anything at all: ${OPS_EMAIL_TO} · ${OPS_PHONE_DISPLAY}`,
     signedPdfUrl ? `Signed service agreement (PDF): ${signedPdfUrl}` : ``,
     opts.paySignUrl ? `Your signed documents: ${opts.paySignUrl}` : ``,
@@ -338,6 +344,12 @@ export async function sendWelcomeDocument(
         <tr><td style="color:#6b7280;">Your terms</td><td>${esc(terms)}</td></tr>
         <tr><td style="color:#6b7280;">Agreement</td><td>Signed and retained with a verified audit trail</td></tr>
       </table>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:18px;margin:0 0 24px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Your first step: complete your setup checklist</div>
+        <p style="font-size:13px;color:#475569;line-height:1.7;margin:0 0 14px;">Upload your logo, hours, services and account access so we can start building. It takes about 10 minutes.</p>
+        <a href="${SETUP_PORTAL_URL}" style="display:inline-block;background:#0369a1;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700;">Complete your setup checklist</a>
+      </div>
 
       ${signedPdfUrl ? `<div style="margin:0 0 24px;"><a href="${esc(signedPdfUrl)}" style="display:inline-block;background:#0369a1;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">Download your signed agreement (PDF)</a></div>` : ""}
       ${opts.paySignUrl ? `<div style="margin:0 0 24px;"><a href="${esc(opts.paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">View your signed documents</a></div>` : ""}
