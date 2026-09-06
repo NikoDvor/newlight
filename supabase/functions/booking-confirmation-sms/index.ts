@@ -421,6 +421,9 @@ async function runNotifications(
           body: JSON.stringify({
             business_name: businessName,
             company_name: businessName,
+            // Links the originating BDR lead to the provisioned workspace so
+            // downstream payment logic can update the real business client.
+            bdr_lead_id: leadId || null,
             logo_url: logoUrl,
             contact_name: clientName || clientEmail.split("@")[0],
             contact_email: clientEmail,
