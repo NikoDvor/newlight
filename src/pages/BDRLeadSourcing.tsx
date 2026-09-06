@@ -140,6 +140,9 @@ export default function BDRLeadSourcing() {
         r.branches != null ? `Branches: ${r.branches}` : null,
       ].filter(Boolean).join("\n"),
       list_name: cleanList,
+      lead_source: "sec_iapd_scrape",
+      source_type: "financial_advisor_scrape",
+
     }));
     const { error } = await (supabase as any).from("nl_bdr_leads").insert(inserts);
     setImporting(false);

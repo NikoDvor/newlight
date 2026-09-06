@@ -129,11 +129,31 @@ function statusColor(status: string | null): string {
   return map[status || ""] || "bg-muted text-muted-foreground border-border";
 }
 
+function money(v: any): string {
+  const n = Number(v);
+  if (v == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+}
+
+function pct(v: any): string {
+  const n = Number(v);
+  if (v == null || Number.isNaN(n)) return "";
+  return `${n}%`;
+}
+
+
 export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   const [setupItems, setSetupItems] = useState<SetupItem[]>([]);
   const [implTasks, setImplTasks] = useState<ImplTask[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [deal, setDeal] = useState<any | null>(null);
+  const [repName, setRepName] = useState<string | null>(null);
+  const [envelope, setEnvelope] = useState<any | null>(null);
+  const [signatures, setSignatures] = useState<any[]>([]);
+  const [invoiceList, setInvoiceList] = useState<any[]>([]);
+  const [lead, setLead] = useState<any | null>(null);
+  const [discoveryAt, setDiscoveryAt] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showAppLink, setShowAppLink] = useState(false);
 
@@ -144,18 +164,54 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   async function loadDetail(clientId: string) {
     setLoadingDetail(true);
-    const [setupRes, implRes, teamRes, auditRes] = await Promise.all([
+    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes] = await Promise.all([
       supabase.from("client_setup_items" as any).select("id, item_name, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("implementation_tasks").select("id, task_title, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("workspace_users").select("id, display_name, email, provisioning_status, workspace_role").eq("client_id", clientId),
       supabase.from("audit_logs").select("id, action, module, created_at, status").eq("client_id", clientId).order("created_at", { ascending: false }).limit(15),
+      supabase.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, billing_cadence, next_charge_at, pay_sign_status, assigned_user, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("invoices").select("id, invoice_number, invoice_type, total_amount, invoice_status, paid_at, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("nl_bdr_leads" as any).select("id, lead_source, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
     setImplTasks((implRes.data || []) as any[]);
     setTeamMembers((teamRes.data || []) as any[]);
     setAuditLogs((auditRes.data || []) as any[]);
+
+    const dealRow = (dealRes.data || null) as any;
+    setDeal(dealRow);
+    setRepName(null);
+    if (dealRow?.assigned_user) {
+      const { data: emp } = await supabase.from("employee_profiles").select("full_name, email").eq("user_id", dealRow.assigned_user).maybeSingle();
+      if (emp?.full_name || emp?.email) setRepName(emp.full_name || emp.email);
+      else {
+        const { data: wu } = await supabase.from("workspace_users").select("display_name, email").eq("user_id", dealRow.assigned_user).limit(1).maybeSingle();
+        setRepName((wu as any)?.display_name || (wu as any)?.email || null);
+      }
+    }
+
+    const envRow = (envRes.data || null) as any;
+    setEnvelope(envRow);
+    setSignatures([]);
+    if (envRow?.id) {
+      const { data: sigs } = await supabase.from("document_envelope_signatures").select("id, signer_name, signer_email, signed_at").eq("envelope_id", envRow.id).order("signed_at", { ascending: false });
+      setSignatures((sigs || []) as any[]);
+    }
+
+    setInvoiceList((invRes.data || []) as any[]);
+
+    const leadRow = (leadRes.data || null) as any;
+    setLead(leadRow);
+    setDiscoveryAt(null);
+    if (leadRow?.id) {
+      const { data: ev } = await supabase.from("bdr_calendar_events").select("starts_at").eq("lead_id", leadRow.id).order("starts_at", { ascending: true }).limit(1).maybeSingle();
+      setDiscoveryAt((ev as any)?.starts_at || null);
+    }
+
     setLoadingDetail(false);
   }
+
 
   if (!client) return null;
 
@@ -241,7 +297,128 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
             <Separator />
 
+            {/* ── A2. Deal & Pricing ── */}
+            <Section title="Deal & Pricing">
+              {loadingDetail ? <LoadingSkeleton /> : deal ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <SummaryItem label="Pricing Model" value={deal.pricing_model} />
+                  <SummaryItem label="Billing" value={deal.billing_cadence} />
+                  <SummaryItem label="Initial Fee" value={money(deal.initial_fee)} raw />
+                  {deal.pricing_model === "commission" ? (
+                    <SummaryItem label="Commission" value={[pct(deal.commission_rate), pct(deal.commission_rate_ongoing)].filter(Boolean).join(" / ") || "—"} raw />
+                  ) : (
+                    <SummaryItem label="Recurring" value={deal.recurring_fee != null ? `${money(deal.recurring_fee)} / mo` : "—"} raw />
+                  )}
+                  <SummaryItem label="Next Charge" value={deal.next_charge_at ? new Date(deal.next_charge_at).toLocaleDateString() : "Not scheduled"} raw />
+                  <SummaryItem label="Pay & Sign" value={deal.pay_sign_status} />
+                  <SummaryItem label="Assigned Rep" value={repName || "Unassigned"} raw />
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No deal linked to this workspace yet.</p>}
+            </Section>
+
+            <Separator />
+
+            {/* ── A3. Signed Agreement ── */}
+            <Section title="Signed Agreement">
+              {loadingDetail ? <LoadingSkeleton /> : envelope ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <SummaryItem label="Status" value={envelope.status} />
+                    <SummaryItem label="Completed" value={envelope.completed_at ? new Date(envelope.completed_at).toLocaleDateString() : "—"} raw />
+                  </div>
+                  <div className={`text-[11px] ${envelope.attorney_reviewed ? "text-emerald-400/80" : "text-amber-400/80"}`}>
+                    Attorney reviewed: {envelope.attorney_reviewed ? "Yes" : "No"}
+                    {envelope.attorney_reviewed && envelope.legal_review_note ? ` — ${envelope.legal_review_note}` : ""}
+                  </div>
+                  {signatures.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      {signatures.map((s) => (
+                        <div key={s.id} className="text-xs">
+                          <span className="text-foreground">{s.signer_name || "Unnamed signer"}</span>
+                          <span className="text-muted-foreground"> · {s.signer_email || "—"}</span>
+                          <div className="text-[10px] text-muted-foreground">
+                            Signed {s.signed_at ? new Date(s.signed_at).toLocaleString() : "—"}
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-white/30">Full audit trail available.</p>
+                    </div>
+                  )}
+                  {(() => {
+                    const item = (envelope.document_envelope_items || []).find((i: any) => i.document_url);
+                    if (item) {
+                      return (
+                        <Button variant="outline" size="sm" className="text-xs h-8 gap-2" onClick={() => window.open(item.document_url, "_blank")}>
+                          <ExternalLink className="h-3.5 w-3.5 text-primary" /> View signed document
+                        </Button>
+                      );
+                    }
+                    if (envelope.share_token) {
+                      return (
+                        <Button variant="outline" size="sm" className="text-xs h-8 gap-2" onClick={() => window.open(`${window.location.origin}/sign/${envelope.share_token}`, "_blank")}>
+                          <ExternalLink className="h-3.5 w-3.5 text-primary" /> Open agreement
+                        </Button>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No service agreement yet.</p>}
+            </Section>
+
+            <Separator />
+
+            {/* ── A4. Payment History ── */}
+            <Section title="Payment History">
+              {loadingDetail ? <LoadingSkeleton /> : invoiceList.length > 0 ? (
+                <div className="space-y-1.5">
+                  {invoiceList.map((inv) => (
+                    <div key={inv.id} className="flex items-center justify-between text-xs gap-2">
+                      <div className="min-w-0">
+                        <span className="text-foreground truncate">{inv.invoice_number || "—"}</span>
+                        {inv.invoice_type && <span className="text-muted-foreground"> · {String(inv.invoice_type).replace(/_/g, " ")}</span>}
+                        <div className="text-[10px] text-muted-foreground">
+                          {inv.paid_at ? `Paid ${new Date(inv.paid_at).toLocaleDateString()}` : "Not paid"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="tabular-nums text-foreground">{money(inv.total_amount)}</span>
+                        <Badge variant="outline" className={`text-[9px] ${statusColor(inv.invoice_status)}`}>
+                          {(inv.invoice_status || "—").replace(/_/g, " ")}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No payments recorded yet.</p>}
+            </Section>
+
+            <Separator />
+
+            {/* ── A5. Lead Origin ── */}
+            <Section title="Lead Origin">
+              {loadingDetail ? <LoadingSkeleton /> : lead ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <SummaryItem label="Lead Source" value={lead.lead_source || "—"} raw />
+                    <SummaryItem label="Source Type" value={lead.source_type || "—"} raw />
+                    <SummaryItem label="CRD" value={lead.crd || "—"} raw />
+                    <SummaryItem label="First Booked" value={discoveryAt ? new Date(discoveryAt).toLocaleString() : "No meeting booked"} raw />
+                  </div>
+                  {lead.notes ? (
+                    <div>
+                      <div className="text-[10px] text-muted-foreground mb-1">Origin notes</div>
+                      <pre className="text-[11px] text-white/60 whitespace-pre-wrap font-sans leading-relaxed">{lead.notes}</pre>
+                    </div>
+                  ) : <p className="text-[11px] text-muted-foreground">No origin notes recorded.</p>}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No originating lead linked to this workspace.</p>}
+            </Section>
+
+            <Separator />
+
             {/* ── B. Setup Snapshot ── */}
+
             <Section title="Setup Snapshot">
               {loadingDetail ? <LoadingSkeleton /> : (
                 <>
