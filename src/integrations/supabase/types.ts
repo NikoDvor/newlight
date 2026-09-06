@@ -4870,8 +4870,11 @@ export type Database = {
       }
       crm_deals: {
         Row: {
+          annual_started_at: string | null
+          app_store_complimentary: boolean
           assigned_operator_user_id: string | null
           assigned_user: string | null
+          billing_cadence: string
           client_id: string
           client_is_finra_member: boolean
           close_date: string | null
@@ -4920,8 +4923,11 @@ export type Database = {
           welcome_email_sent: boolean
         }
         Insert: {
+          annual_started_at?: string | null
+          app_store_complimentary?: boolean
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
+          billing_cadence?: string
           client_id: string
           client_is_finra_member?: boolean
           close_date?: string | null
@@ -4970,8 +4976,11 @@ export type Database = {
           welcome_email_sent?: boolean
         }
         Update: {
+          annual_started_at?: string | null
+          app_store_complimentary?: boolean
           assigned_operator_user_id?: string | null
           assigned_user?: string | null
+          billing_cadence?: string
           client_id?: string
           client_is_finra_member?: boolean
           close_date?: string | null
@@ -5601,6 +5610,7 @@ export type Database = {
           envelope_type: Database["public"]["Enums"]["envelope_type"]
           id: string
           legal_review_note: string | null
+          provisioned_client_id: string | null
           recipient_email: string | null
           recipient_name: string | null
           related_id: string | null
@@ -5621,6 +5631,7 @@ export type Database = {
           envelope_type?: Database["public"]["Enums"]["envelope_type"]
           id?: string
           legal_review_note?: string | null
+          provisioned_client_id?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           related_id?: string | null
@@ -5641,6 +5652,7 @@ export type Database = {
           envelope_type?: Database["public"]["Enums"]["envelope_type"]
           id?: string
           legal_review_note?: string | null
+          provisioned_client_id?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           related_id?: string | null
@@ -5652,7 +5664,15 @@ export type Database = {
           updated_at?: string
           viewed_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_envelopes_provisioned_client_id_fkey"
+            columns: ["provisioned_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_connections: {
         Row: {
@@ -7121,6 +7141,7 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           proposal_id: string | null
+          provisioned_client_id: string | null
           sent_at: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -7153,6 +7174,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           proposal_id?: string | null
+          provisioned_client_id?: string | null
           sent_at?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -7185,6 +7207,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           proposal_id?: string | null
+          provisioned_client_id?: string | null
           sent_at?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -7221,6 +7244,13 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_provisioned_client_id_fkey"
+            columns: ["provisioned_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
