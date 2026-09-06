@@ -3,6 +3,7 @@
 // No JWT required — the share_token itself is the capability.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
+import { seedSetupItemsForClient } from "../_shared/setup-items-seeder.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
 import { ensureServicePocCalendar, listServicePocs, listOnboardingPocs } from "../_shared/service-poc-calendar.ts";
@@ -650,7 +651,7 @@ Deno.serve(async (req) => {
       await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
     }
 
-    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify, payment_notify: paymentNotify });
+    return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify, payment_notify: paymentNotify, setup_seed: setupSeed });
   }
 
   return json({ error: "Unknown action" }, 400);
