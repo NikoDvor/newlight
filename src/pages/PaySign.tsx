@@ -619,7 +619,7 @@ export default function PaySign() {
         )}
 
         {/* Schedule onboarding */}
-        {!allDone && (
+        {(!allDone || rescheduling) && (
           <Card className={cn("p-6 mb-6 transition-opacity", !bothDone && "opacity-50 pointer-events-none")}>
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
@@ -627,9 +627,13 @@ export default function PaySign() {
                   {scheduled ? <CheckCircle2 className="h-5 w-5" /> : <CalendarClock className="h-5 w-5" />}
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold">Step 4 · Schedule onboarding meeting</h2>
+                  <h2 className="text-base font-semibold">
+                    {rescheduling ? "Pick a new onboarding time" : "Step 4 · Schedule onboarding meeting"}
+                  </h2>
                   <p className="text-xs text-muted-foreground">
-                    {scheduled
+                    {rescheduling
+                      ? "Choose a new time below — we'll email everyone the update."
+                      : scheduled
                       ? "Your onboarding meeting is booked."
                       : bothDone
                       ? `1 hour with ${ctx.rep?.name || "your NewLight rep"}.`
@@ -637,10 +641,15 @@ export default function PaySign() {
                   </p>
                 </div>
               </div>
-              {scheduled && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Scheduled</span>}
+              {scheduled && !rescheduling && <span className="text-xs px-2 py-1 rounded bg-emerald-500/15 text-emerald-500">Scheduled</span>}
+              {rescheduling && (
+                <Button variant="ghost" size="sm" onClick={() => { setRescheduling(false); setSelectedSlot(""); }}>
+                  Cancel
+                </Button>
+              )}
             </div>
 
-            {!scheduled && (
+            {(!scheduled || rescheduling) && (
               <div className="space-y-3">
                 {onbPocs.length > 0 && (
                   <div>
@@ -701,7 +710,7 @@ export default function PaySign() {
                     />
                     <Button onClick={handleSchedule} disabled={scheduleBusy || !selectedSlot} className="w-full sm:w-auto">
                       {scheduleBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarClock className="h-4 w-4 mr-2" />}
-                      Confirm onboarding time
+                      {rescheduling ? "Confirm new time" : "Confirm onboarding time"}
                     </Button>
                   </div>
                 )}
