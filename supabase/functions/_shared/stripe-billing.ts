@@ -246,9 +246,11 @@ export async function applyAnnualSwitch(
     }
   }
 
+  const annualStart = new Date();
   await supabase.from("crm_deals").update({
     billing_cadence: "annual",
-    annual_started_at: new Date().toISOString(),
+    annual_started_at: annualStart.toISOString(),
+    next_charge_at: addDays(annualStart, 365).toISOString(),
     app_store_complimentary: true,
     ...(cancelled ? { stripe_subscription_id: null } : {}),
   }).eq("id", dealId);
