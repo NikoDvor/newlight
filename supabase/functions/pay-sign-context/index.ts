@@ -632,9 +632,20 @@ Deno.serve(async (req) => {
     // If envelope also signed, transition deal to paid_signed and notify ops; else just mark paid.
     let newStatus = "paid";
     let notify: any = null;
+    let setupSeed: any = null;
     if (envelope.status === "signed") {
       notify = await notifyPaidSignedIfTransition(supabase, deal.id, { paySignUrl: paySignLink, envelopeId: envelope.id });
       newStatus = "paid_signed";
+
+      // Stand up the client's Setup Portal checklist as soon as they're paid + signed.
+      const seedClientId = (deal as any).provisioned_client_id || null;
+      if (seedClientId) {
+        try {
+          setupSeed = await seedSetupItemsForClient(supabase, seedClientId);
+        } catch (e: any) {
+          console.error("[pay-sign-context] setup item seeding failed (non-blocking):", e?.message);
+        }
+      }
     } else {
       await supabase.from("crm_deals").update({ pay_sign_status: "paid" }).eq("id", deal.id);
     }
