@@ -621,8 +621,12 @@ Deno.serve(async (req) => {
     if (clientErr || !client) {
       return new Response(
         JSON.stringify({ error: clientErr?.message || "Failed to create workspace" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    await linkBdrLead(client.id);
+
 
     const integrationNames = [
       "Google Analytics",
