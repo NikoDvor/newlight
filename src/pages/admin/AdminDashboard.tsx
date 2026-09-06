@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientCount, setClientCount] = useState(0);
+  const [potentialClientCount, setPotentialClientCount] = useState(0);
   const [fixCount, setFixCount] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
   const [demoInProgress, setDemoInProgress] = useState(0);
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     Promise.all([
       supabase.from("clients").select("id", { count: "exact", head: true }).eq("payment_status", "paid").then(({ count }) => setClientCount(count ?? 0)),
+      supabase.from("clients").select("id", { count: "exact", head: true }).or("payment_status.neq.paid,payment_status.is.null").then(({ count }) => setPotentialClientCount(count ?? 0)),
       supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
       supabase.from("clients").select("id, business_name, status, payment_status, created_at").order("created_at", { ascending: false }).then(({ data }) => setAllClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
@@ -72,6 +74,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Total Clients", value: clientCount.toString(), icon: Users, color: "hsl(var(--nl-sky))" },
+    { label: "Potential Clients", value: potentialClientCount.toString(), icon: Building2, color: "hsl(var(--nl-cyan))" },
     { label: "Prospects", value: prospectCount.toString(), icon: Zap, color: "hsl(var(--nl-neon))" },
     { label: "Demo Builds", value: demoInProgress.toString(), icon: Hammer, color: "hsl(var(--nl-cyan))" },
     { label: "Awaiting Closing", value: awaitingClosing.toString(), icon: Clock, color: "hsl(var(--nl-electric))" },
