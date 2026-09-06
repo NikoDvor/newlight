@@ -50,9 +50,11 @@ export default function Billing() {
     Promise.all([
       supabase.from("billing_accounts").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setBillingAccount(r.data)),
       supabase.from("subscriptions").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setSub(r.data)),
-      supabase.from("invoices").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
+      // Client-facing rows are stamped with provisioned_client_id (the real business
+      // workspace); client_id on these tables points at the NewLight ops workspace.
+      supabase.from("invoices").select("*").eq("provisioned_client_id", activeClientId).order("created_at", { ascending: false }).limit(10).then(r => setInvoices(r.data ?? [])),
       supabase.from("contract_records").select("*").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setContract(r.data)),
-      supabase.from("document_envelopes").select("*").eq("client_id", activeClientId).eq("envelope_type", "service_agreement").order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setEnvelope(r.data)),
+      supabase.from("document_envelopes").select("*").eq("provisioned_client_id", activeClientId).eq("envelope_type", "service_agreement").order("created_at", { ascending: false }).limit(1).maybeSingle().then(r => setEnvelope(r.data)),
     ]).finally(() => setLoading(false));
   }, [activeClientId]);
 
