@@ -298,7 +298,7 @@ async function runNotifications(
   },
 ): Promise<void> {
   try {
-    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId } = contacts;
+    const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId, leadId } = contacts;
     const when = formatDateTime(startsAt);
 
     // --- 0. Create Zoom meeting for this booking -----------------------------
