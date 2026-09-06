@@ -430,12 +430,12 @@ Deno.serve(async (req) => {
     const initialFee = Number(deal.initial_fee ?? 0);
     if (!(initialFee > 0)) return json({ error: "No initial fee set on the deal" }, 400);
 
-    // Payment cadence chosen on Form 3. "annual" adds the flat $29,997 annual plan
-    // (app add-on complimentary) ON TOP of the setup fee — the setup fee is never
-    // discounted or reduced by any billing structure.
+    // Payment cadence chosen on Form 3. "annual" is a flat, all-inclusive first-year
+    // rate of $29,997 (app add-on complimentary) and replaces the setup-fee-plus-monthly
+    // structure for that first year. The setup fee is never discounted on the monthly path.
     const annualSelected = body.billing_cadence === "annual";
     const ANNUAL_PRICE = 29997;
-    const chargeTotal = initialFee + (annualSelected ? ANNUAL_PRICE : 0);
+    const chargeTotal = annualSelected ? ANNUAL_PRICE : initialFee;
 
     const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecret) return json({ error: "Stripe not configured" }, 503);
@@ -472,7 +472,7 @@ Deno.serve(async (req) => {
           billing_account_id: billingAccountId,
           invoice_number: invoiceNumber,
           provisioned_client_id: (deal as any).provisioned_client_id ?? null,
-          invoice_type: "initial_fee",
+          invoice_type: annualSelected ? "annual" : "initial_fee",
           invoice_status: "pending",
           subtotal_amount: chargeTotal,
           tax_amount: 0,
@@ -507,26 +507,27 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — Initial Fee` },
-            unit_amount: Math.round(initialFee * 100),
+      line_items: annualSelected
+        ? [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: { name: "Annual Plan — 12 months (app included)" },
+              unit_amount: ANNUAL_PRICE * 100,
+            },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-        ...(annualSelected
-          ? [{
-              price_data: {
-                currency: "usd",
-                product_data: { name: "Annual Plan — 12 months (app add-on included, complimentary)" },
-                unit_amount: ANNUAL_PRICE * 100,
-              },
-              quantity: 1,
-            }]
-          : []),
-      ],
+        ]
+        : [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — Initial Fee` },
+              unit_amount: Math.round(initialFee * 100),
+            },
+            quantity: 1,
+          },
+        ],
       ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
       payment_intent_data: { setup_future_usage: "off_session" },
       success_url: successUrl,
