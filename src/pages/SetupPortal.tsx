@@ -18,6 +18,8 @@ import {
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
 import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
 import { SetupActivityFeed } from "@/components/SetupActivityFeed";
+import { SetupProgressHero } from "@/components/setup/SetupProgressHero";
+
 
 interface SetupItem {
   id: string;
@@ -47,7 +49,10 @@ interface ClientInfo {
   payment_status: string;
   implementation_status: string;
   portal_last_login_at: string | null;
+  portal_access_enabled: boolean | null;
+  portal_invite_status: string | null;
 }
+
 
 const CATEGORY_ICONS: Record<string, any> = {
   branding: Palette, website: Globe, services: Package, team: Users,
@@ -445,6 +450,22 @@ export default function SetupPortal() {
           Your live working calendar will appear in your workspace after setup is complete.
         </p>
       </div>
+
+      {/* ── Onboarding Progress Hero ── */}
+      <SetupProgressHero
+        client={client}
+        total={totalClient}
+        complete={submittedCount}
+        needsAttention={actionItems.length}
+        overdue={overdueItems.length}
+        blocked={blockedItems.length}
+        categories={grouped.map(g => ({
+          category: g.category,
+          label: g.label,
+          complete: g.complete,
+          total: g.items.length,
+        }))}
+      />
 
       {/* ── Attention Panel ── */}
       {actionItems.length > 0 && (
