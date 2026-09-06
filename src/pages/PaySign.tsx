@@ -316,18 +316,27 @@ export default function PaySign() {
 
   const handleSchedule = async () => {
     if (!token || !selectedSlot) return;
+    const isReschedule = rescheduling;
     setScheduleBusy(true);
     const { data, error } = await supabase.functions.invoke("pay-sign-context", {
-      body: { share_token: token, action: "schedule_onboarding", starts_at: selectedSlot, poc_user_id: onbPocId || undefined },
+      body: {
+        share_token: token,
+        action: isReschedule ? "reschedule_onboarding" : "schedule_onboarding",
+        starts_at: selectedSlot,
+        poc_user_id: onbPocId || undefined,
+      },
     });
     setScheduleBusy(false);
     if (error || data?.error) {
-      toast.error(error?.message || data?.error || "Couldn't schedule onboarding");
+      toast.error(error?.message || data?.error || (isReschedule ? "Couldn't reschedule onboarding" : "Couldn't schedule onboarding"));
       return;
     }
-    toast.success("Onboarding meeting scheduled.");
+    toast.success(isReschedule ? "Onboarding meeting rescheduled." : "Onboarding meeting scheduled.");
+    setRescheduling(false);
+    setSelectedSlot("");
     load();
   };
+
 
   const handleRecurring = async () => {
     if (!token || !pocId || recurDay === "" || !recurTime) return;
