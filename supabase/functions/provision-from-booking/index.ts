@@ -523,7 +523,23 @@ Deno.serve(async (req) => {
       booking_source,
       customer_notes,
       provisional_profile: explicit_profile,
+      bdr_lead_id,
     } = rawBody;
+
+    // Best-effort backlink: record which client workspace was provisioned for
+    // this BDR lead. Never throws — provisioning the client is the priority.
+    const linkBdrLead = async (provisionedClientId: string) => {
+      if (!bdr_lead_id || typeof bdr_lead_id !== "string") return;
+      try {
+        const { error } = await adminClient
+          .from("nl_bdr_leads")
+          .update({ provisioned_client_id: provisionedClientId })
+          .eq("id", bdr_lead_id);
+        if (error) console.error("[provision-from-booking] bdr lead link failed (non-blocking):", error.message);
+      } catch (e) {
+        console.error("[provision-from-booking] bdr lead link failed (non-blocking):", (e as Error)?.message);
+      }
+    };
 
     if (!contact_email || !business_name) {
       return new Response(
@@ -553,6 +569,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (existingByOwner) {
+        await linkBdrLead(existingByOwner.id);
         return new Response(
           JSON.stringify({
             success: true,
@@ -607,6 +624,9 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    await linkBdrLead(client.id);
+
 
     const integrationNames = [
       "Google Analytics",

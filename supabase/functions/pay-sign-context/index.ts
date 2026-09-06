@@ -550,6 +550,26 @@ Deno.serve(async (req) => {
         .eq("id", deal.client_id);
     }
 
+    // Additive: deal.client_id is the NewLight ops workspace (kept as-is above).
+    // The REAL per-business workspace is reached via the originating BDR lead's
+    // provisioned_client_id — mark that client paid too. Silently skipped when
+    // no BDR lead exists or the link was never recorded (non-BDR clients).
+    try {
+      const { data: bdrLead } = await supabase
+        .from("nl_bdr_leads")
+        .select("provisioned_client_id")
+        .eq("crm_deal_id", deal.id)
+        .limit(1)
+        .maybeSingle();
+      if (bdrLead?.provisioned_client_id) {
+        await supabase.from("clients")
+          .update({ payment_status: "paid" })
+          .eq("id", bdrLead.provisioned_client_id);
+      }
+    } catch (e: any) {
+      console.error("[pay-sign-context] provisioned client payment update failed (non-blocking):", e?.message);
+    }
+
 
 
     const originHdr = req.headers.get("origin") || req.headers.get("referer") || "";
