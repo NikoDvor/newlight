@@ -421,7 +421,19 @@ export default function PaySign() {
                   </span>
                   . A welcome email with your signed copy and meeting details is on its way.
                 </p>
+                {!rescheduling && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => { setSelectedSlot(""); setRescheduling(true); }}
+                  >
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    Reschedule
+                  </Button>
+                )}
               </div>
+
             </div>
           </Card>
         )}
