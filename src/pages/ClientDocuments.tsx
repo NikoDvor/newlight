@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, ExternalLink, Loader2 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
+import { LegalDocumentsSection } from "@/components/client/LegalDocumentsSection";
 
 type Item = { id: string; document_name: string; document_url: string | null };
 type Envelope = {
