@@ -2,6 +2,17 @@
 // Used by stripe-webhook (initial payment fallback + subscription creation)
 // and process-commission-billing (monthly off-session commission charges).
 
+/** Flat all-inclusive annual plan price. */
+export const ANNUAL_PLAN_PRICE = 29997;
+
+/** Calendar-interval day arithmetic (DST/leap-year safe, no fixed-ms math). */
+export function addDays(from: Date, days: number): Date {
+  const d = new Date(from.getTime());
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+
+
 // deno-lint-ignore no-explicit-any
 export async function getStripe(): Promise<any | null> {
   const key = Deno.env.get("STRIPE_SECRET_KEY");
