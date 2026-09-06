@@ -198,6 +198,21 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Shared by schedule_onboarding + reschedule_onboarding: figures out which
+  // calendar/user the onboarding event should live on.
+  async function resolveOnboardingTarget(pocUserId: string | null) {
+    const { rep, calendar } = await resolveRepAndCalendar();
+    let targetCalendarId: string | null = calendar?.id || null;
+    let targetUserId: string | null = rep?.id || calendar?.user_id || null;
+    if (pocUserId) {
+      await ensureServicePocCalendar(supabase, pocUserId);
+      const pocCal = await ensureOnboardingCalendar(pocUserId);
+      targetCalendarId = pocCal.id;
+      targetUserId = pocUserId;
+    }
+    return { rep, targetCalendarId, targetUserId };
+  }
+
   if (action === "schedule_onboarding") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
     const starts_at = body.starts_at;
@@ -209,22 +224,14 @@ Deno.serve(async (req) => {
       return json({ ok: true, already_scheduled: true, event_id: deal.onboarding_meeting_id });
     }
 
-    const { rep, calendar } = await resolveRepAndCalendar();
-
-    // If an explicit POC was picked, book on their calendar instead of the rep's.
-    let targetCalendarId: string | null = calendar?.id || null;
-    let targetUserId: string | null = rep?.id || calendar?.user_id || null;
-    if (pocUserId) {
-      try {
-        await ensureServicePocCalendar(supabase, pocUserId);
-        const pocCal = await ensureOnboardingCalendar(pocUserId);
-        targetCalendarId = pocCal.id;
-        targetUserId = pocUserId;
-      } catch (e: any) {
-        return json({ error: e?.message || "Failed to resolve POC calendar" }, 500);
-      }
+    let rep: any = null, targetCalendarId: string | null = null, targetUserId: string | null = null;
+    try {
+      ({ rep, targetCalendarId, targetUserId } = await resolveOnboardingTarget(pocUserId));
+    } catch (e: any) {
+      return json({ error: e?.message || "Failed to resolve POC calendar" }, 500);
     }
     if (!targetCalendarId) return json({ error: "Assigned rep has no calendar configured" }, 409);
+
 
     const { data: originatingLead } = await supabase
       .from("nl_bdr_leads")
