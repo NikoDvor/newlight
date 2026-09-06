@@ -153,6 +153,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   const [signatures, setSignatures] = useState<any[]>([]);
   const [invoiceList, setInvoiceList] = useState<any[]>([]);
   const [lead, setLead] = useState<any | null>(null);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
   const [discoveryAt, setDiscoveryAt] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showAppLink, setShowAppLink] = useState(false);
@@ -164,7 +165,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
   async function loadDetail(clientId: string) {
     setLoadingDetail(true);
-    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes] = await Promise.all([
+    const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes, docsRes] = await Promise.all([
       supabase.from("client_setup_items" as any).select("id, item_label, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("implementation_tasks").select("id, task_label, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("workspace_users").select("id, full_name, email, provisioning_status, role_preset").eq("client_id", clientId),
@@ -173,8 +174,10 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
       supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("invoices").select("id, invoice_number, invoice_type, total_amount, invoice_status, paid_at, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(20),
       supabase.from("nl_bdr_leads" as any).select("id, lead_source, source_type, crd, notes, created_at, business_name").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("client_legal_documents" as any).select("id, document_type, document_name, file_url, notes, created_at").eq("client_id", clientId).order("created_at", { ascending: false }).limit(50),
     ]);
     setSetupItems((setupRes.data || []) as any[]);
+    setLegalDocs((docsRes.data || []) as any[]);
     setImplTasks((implRes.data || []) as any[]);
     setTeamMembers((teamRes.data || []) as any[]);
     setAuditLogs((auditRes.data || []) as any[]);
@@ -211,6 +214,16 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
 
     setLoadingDetail(false);
   }
+
+  async function openLegalDoc(path: string) {
+    if (!path) return;
+    if (/^https?:\/\//i.test(path)) { window.open(path, "_blank"); return; }
+    const { data, error } = await supabase.storage.from("client-legal-documents").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Could not open document"); return; }
+    window.open(data.signedUrl, "_blank");
+  }
+
+
 
 
   if (!client) return null;
@@ -367,6 +380,31 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
             </Section>
 
             <Separator />
+
+            {/* ── A3b. Documents & Files ── */}
+            <Section title="Documents & Files">
+              {loadingDetail ? <LoadingSkeleton /> : legalDocs.length > 0 ? (
+                <div className="space-y-1.5">
+                  {legalDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between text-xs gap-2">
+                      <div className="min-w-0">
+                        <span className="text-foreground truncate">{doc.document_name}</span>
+                        <div className="text-[10px] text-muted-foreground">
+                          {String(doc.document_type || "other").replace(/_/g, " ")} · {new Date(doc.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="text-xs h-8 gap-2 shrink-0" onClick={() => openLegalDoc(doc.file_url)}>
+                        <ExternalLink className="h-3.5 w-3.5 text-primary" /> View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No additional documents uploaded yet.</p>}
+            </Section>
+
+            <Separator />
+
+
 
             {/* ── A4. Payment History ── */}
             <Section title="Payment History">
