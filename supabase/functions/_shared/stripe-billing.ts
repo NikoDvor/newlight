@@ -211,6 +211,52 @@ export async function createRetainerSubscription(
   return { created: true, subscription_id: sub.id };
 }
 
+/**
+ * Moves a deal onto the flat annual plan after a successful $29,997 payment.
+ * Cancels any active monthly Stripe subscription (retainer deals); commission
+ * deals have none, so nothing to cancel. Never touches initial_fee.
+ * Idempotent: a deal already on annual is left alone.
+ */
+// deno-lint-ignore no-explicit-any
+export async function applyAnnualSwitch(
+  stripe: any,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  dealId: string,
+): Promise<{ ok: boolean; cancelled_subscription?: string | null; skipped?: boolean }> {
+  const { data: deal } = await supabase
+    .from("crm_deals")
+    .select("id, client_id, provisioned_client_id, billing_cadence, stripe_subscription_id")
+    .eq("id", dealId)
+    .maybeSingle();
+  if (!deal) return { ok: false };
+  if (deal.billing_cadence === "annual") return { ok: true, skipped: true };
+
+  let cancelled: string | null = null;
+  if (deal.stripe_subscription_id) {
+    try {
+      await stripe.subscriptions.cancel(deal.stripe_subscription_id);
+      cancelled = deal.stripe_subscription_id;
+    } catch (e) {
+      console.error("[stripe-billing] annual switch: subscription cancel failed", e);
+    }
+  }
+
+  await supabase.from("crm_deals").update({
+    billing_cadence: "annual",
+    annual_started_at: new Date().toISOString(),
+    app_store_complimentary: true,
+    ...(cancelled ? { stripe_subscription_id: null } : {}),
+  }).eq("id", dealId);
+
+  const clientId = deal.provisioned_client_id || deal.client_id;
+  if (clientId) {
+    await supabase.from("clients").update({ payment_status: "paid" }).eq("id", clientId);
+  }
+
+  return { ok: true, cancelled_subscription: cancelled };
+}
+
 /** Off-session charge against a saved card. Never retries. */
 // deno-lint-ignore no-explicit-any
 export async function chargeOffSession(
