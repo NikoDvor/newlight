@@ -231,6 +231,10 @@ Deno.serve(async (req) => {
         payerEmail: client.owner_email || null,
       });
 
+      await supabase.from("crm_deals")
+        .update({ next_charge_at: nextCommissionChargeAt() })
+        .eq("id", deal.id);
+
       results.push({ deal_id: deal.id, invoice_id: invoice.id, ok: true, amount, revenue, notify });
     } catch (e) {
       console.error("[process-commission-billing] deal error", deal.id, e);
