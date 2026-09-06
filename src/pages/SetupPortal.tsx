@@ -18,6 +18,8 @@ import {
 import { seedSetupItems, CATEGORY_LABELS, CATEGORY_ORDER } from "@/lib/setupItemsSeeder";
 import { TeamAccessSection } from "@/components/setup/TeamAccessSection";
 import { SetupActivityFeed } from "@/components/SetupActivityFeed";
+import { SetupProgressHero } from "@/components/setup/SetupProgressHero";
+
 
 interface SetupItem {
   id: string;
@@ -47,7 +49,10 @@ interface ClientInfo {
   payment_status: string;
   implementation_status: string;
   portal_last_login_at: string | null;
+  portal_access_enabled: boolean | null;
+  portal_invite_status: string | null;
 }
+
 
 const CATEGORY_ICONS: Record<string, any> = {
   branding: Palette, website: Globe, services: Package, team: Users,
@@ -94,7 +99,7 @@ export default function SetupPortal() {
   const load = useCallback(async () => {
     if (!activeClientId) return;
     const [clientRes, itemsRes] = await Promise.all([
-      supabase.from("clients").select("id, business_name, payment_status, implementation_status, portal_last_login_at").eq("id", activeClientId).single(),
+      supabase.from("clients").select("id, business_name, payment_status, implementation_status, portal_last_login_at, portal_access_enabled, portal_invite_status").eq("id", activeClientId).single(),
       supabase.from("client_setup_items" as any).select("*").eq("client_id", activeClientId).order("created_at"),
     ]);
     if (clientRes.data) setClient(clientRes.data as any);
@@ -446,6 +451,22 @@ export default function SetupPortal() {
         </p>
       </div>
 
+      {/* ── Onboarding Progress Hero ── */}
+      <SetupProgressHero
+        client={client}
+        total={totalClient}
+        complete={submittedCount}
+        needsAttention={actionItems.length}
+        overdue={overdueItems.length}
+        blocked={blockedItems.length}
+        categories={grouped.map(g => ({
+          category: g.category,
+          label: g.label,
+          complete: g.complete,
+          total: g.items.length,
+        }))}
+      />
+
       {/* ── Attention Panel ── */}
       {actionItems.length > 0 && (
         <Card className="border border-amber-500/30 shadow-sm bg-amber-500/[0.03]">
@@ -513,24 +534,8 @@ export default function SetupPortal() {
         />
       )}
 
-      {/* ── Progress Card ── */}
-      <Card className="border border-border/50 shadow-sm">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Setup Progress</p>
-              <p className="text-xs text-muted-foreground">{submittedCount} of {totalClient} items submitted</p>
-            </div>
-            <span className="text-2xl font-bold text-primary">{progressPct}%</span>
-          </div>
-          <Progress value={progressPct} className="h-2" />
-          {progressPct === 100 && (
-            <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" /> All items submitted! Our team is reviewing your information.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+
+
 
       {/* Implementation Status */}
       {client?.implementation_status && (
