@@ -277,6 +277,110 @@ Deno.serve(async (req) => {
     return json({ ok: true, event_id: ev.id, starts_at: ev.starts_at, welcome });
   }
 
+  // Move an already-booked onboarding meeting to a new time. Creates a NEW event row
+  // (so reschedule-tier close-rate tracking sees a real reschedule signal) and marks
+  // the old row attendance = 'rescheduled' rather than deleting it.
+  if (action === "reschedule_onboarding") {
+    if (!deal) return json({ error: "No deal linked to envelope" }, 400);
+    const starts_at = body.starts_at;
+    if (!starts_at || typeof starts_at !== "string" || isNaN(Date.parse(starts_at))) {
+      return json({ error: "Valid starts_at is required" }, 400);
+    }
+    if (!deal.onboarding_meeting_id) {
+      return json({ error: "No onboarding meeting exists yet — use schedule_onboarding to book the first one." }, 409);
+    }
+
+    const { data: oldEvent } = await supabase
+      .from("bdr_calendar_events")
+      .select("id, calendar_id, user_id, lead_id, contact_id, client_id, title, source, starts_at, reschedule_count")
+      .eq("id", deal.onboarding_meeting_id)
+      .maybeSingle();
+    if (!oldEvent) return json({ error: "Existing onboarding meeting could not be found" }, 404);
+
+    // Default to whoever is already hosting the existing event.
+    const pocUserId = typeof body.poc_user_id === "string" && body.poc_user_id ? body.poc_user_id : null;
+    let rep: any = null;
+    let targetCalendarId: string | null = oldEvent.calendar_id;
+    let targetUserId: string | null = oldEvent.user_id;
+    if (pocUserId) {
+      try {
+        const resolved = await resolveOnboardingTarget(pocUserId);
+        rep = resolved.rep;
+        targetCalendarId = resolved.targetCalendarId;
+        targetUserId = resolved.targetUserId;
+      } catch (e: any) {
+        return json({ error: e?.message || "Failed to resolve POC calendar" }, 500);
+      }
+    } else {
+      ({ rep } = await resolveRepAndCalendar());
+    }
+    if (!targetCalendarId) return json({ error: "No calendar available for the onboarding meeting" }, 409);
+
+    const start = new Date(starts_at);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const { data: newEvent, error: newErr } = await supabase
+      .from("bdr_calendar_events")
+      .insert({
+        calendar_id: targetCalendarId,
+        user_id: targetUserId,
+        client_id: oldEvent.client_id ?? deal.client_id,
+        contact_id: oldEvent.contact_id ?? deal.contact_id,
+        lead_id: oldEvent.lead_id,
+        title: oldEvent.title || `Onboarding: ${client?.name || deal.deal_name || "Client"}`,
+        source: oldEvent.source || "onboarding_meeting",
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        attendance: "pending",
+        reschedule_count: (oldEvent.reschedule_count ?? 0) + 1,
+        metadata: {
+          deal_id: deal.id,
+          envelope_id: envelope.id,
+          rescheduled_from_event_id: oldEvent.id,
+          rescheduled_from_starts_at: oldEvent.starts_at,
+        },
+      } as any)
+      .select("id, starts_at, ends_at, user_id, calendar_id")
+      .single();
+    if (newErr) return json({ error: newErr.message }, 500);
+
+    await supabase
+      .from("bdr_calendar_events")
+      .update({ attendance: "rescheduled", outcome: "rescheduled" })
+      .eq("id", oldEvent.id);
+
+    await supabase.from("crm_deals").update({ onboarding_meeting_id: newEvent.id }).eq("id", deal.id);
+
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
+    const paySignUrl = originBase ? `${originBase}/pay-sign/${share_token}` : undefined;
+
+    let notify: any = null;
+    try {
+      notify = await sendOnboardingRescheduleNotice({
+        clientEmail: envelope.recipient_email,
+        clientName: client?.name || null,
+        repName: rep?.name || null,
+        repEmail: rep?.email || null,
+        previousStartsAt: oldEvent.starts_at,
+        newStartsAt: newEvent.starts_at,
+        paySignUrl,
+      });
+    } catch (e: any) {
+      notify = { sent: false, error: e?.message || String(e) };
+    }
+
+    return json({
+      ok: true,
+      event_id: newEvent.id,
+      starts_at: newEvent.starts_at,
+      ends_at: newEvent.ends_at,
+      previous_event_id: oldEvent.id,
+      previous_starts_at: oldEvent.starts_at,
+      notify,
+    });
+  }
+
+
 
 
   // ---------------------------------------------------------------------------
