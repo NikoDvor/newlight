@@ -191,7 +191,7 @@ export default function AdminOnboardingCommandCenter() {
     const { data: setupItems } = await supabase.from("client_setup_items" as any).select("client_id, item_status");
     const { data: implTasks } = await supabase.from("implementation_tasks").select("client_id, task_status, blocked_by, due_date");
     const { data: wsUsers } = await supabase.from("workspace_users").select("client_id, provisioning_status");
-    const { data: profiles } = await supabase.from("workspace_profiles" as any).select("client_id, applied_profile");
+    const { data: profiles } = await supabase.from("workspace_profiles" as any).select("client_id, profile_type");
 
     const setupMap = new Map<string, { total: number; completed: number; action: number; overdue: number; requested: number; reminded: number; revision: number; blocked: number }>();
     ((setupItems || []) as any[]).forEach((si: any) => {
@@ -227,7 +227,7 @@ export default function AdminOnboardingCommandCenter() {
     });
 
     const profileMap = new Map<string, string>();
-    ((profiles || []) as any[]).forEach((p: any) => { profileMap.set(p.client_id, p.applied_profile); });
+    ((profiles || []) as any[]).forEach((p: any) => { profileMap.set(p.client_id, p.profile_type); });
 
     const enriched: ClientRow[] = rawClients.map((c: any) => {
       const s = setupMap.get(c.id) || { total: 0, completed: 0, action: 0, overdue: 0, requested: 0, reminded: 0, revision: 0, blocked: 0 };

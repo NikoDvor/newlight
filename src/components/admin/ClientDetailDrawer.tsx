@@ -48,7 +48,7 @@ interface ClientSummary {
 
 interface SetupItem {
   id: string;
-  item_name: string;
+  item_label: string;
   item_status: string;
   target_due_date: string | null;
   category: string | null;
@@ -56,7 +56,7 @@ interface SetupItem {
 
 interface ImplTask {
   id: string;
-  task_title: string;
+  task_label: string;
   task_status: string;
   due_date: string | null;
   blocked_by: string | null;
@@ -65,10 +65,10 @@ interface ImplTask {
 
 interface TeamMember {
   id: string;
-  display_name: string | null;
+  full_name: string | null;
   email: string | null;
   provisioning_status: string | null;
-  workspace_role: string | null;
+  role_preset: string | null;
 }
 
 interface AuditEntry {
@@ -165,9 +165,9 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   async function loadDetail(clientId: string) {
     setLoadingDetail(true);
     const [setupRes, implRes, teamRes, auditRes, dealRes, envRes, invRes, leadRes] = await Promise.all([
-      supabase.from("client_setup_items" as any).select("id, item_name, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
-      supabase.from("implementation_tasks").select("id, task_title, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
-      supabase.from("workspace_users").select("id, display_name, email, provisioning_status, workspace_role").eq("client_id", clientId),
+      supabase.from("client_setup_items" as any).select("id, item_label, item_status, target_due_date, category").eq("client_id", clientId).order("target_due_date", { ascending: true, nullsFirst: false }),
+      supabase.from("implementation_tasks").select("id, task_label, task_status, due_date, blocked_by, assigned_to").eq("client_id", clientId).order("due_date", { ascending: true, nullsFirst: false }),
+      supabase.from("workspace_users").select("id, full_name, email, provisioning_status, role_preset").eq("client_id", clientId),
       supabase.from("audit_logs").select("id, action, module, created_at, status").eq("client_id", clientId).order("created_at", { ascending: false }).limit(15),
       supabase.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, billing_cadence, next_charge_at, pay_sign_status, assigned_user, created_at").eq("provisioned_client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("document_envelopes").select("id, status, completed_at, sent_at, viewed_at, attorney_reviewed, legal_review_note, share_token, title, document_envelope_items(id, document_name, document_url)").eq("provisioned_client_id", clientId).eq("envelope_type", "service_agreement" as any).order("created_at", { ascending: false }).limit(1).maybeSingle(),
@@ -186,8 +186,8 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
       const { data: emp } = await supabase.from("employee_profiles").select("full_name, email").eq("user_id", dealRow.assigned_user).maybeSingle();
       if (emp?.full_name || emp?.email) setRepName(emp.full_name || emp.email);
       else {
-        const { data: wu } = await supabase.from("workspace_users").select("display_name, email").eq("user_id", dealRow.assigned_user).limit(1).maybeSingle();
-        setRepName((wu as any)?.display_name || (wu as any)?.email || null);
+        const { data: wu } = await supabase.from("workspace_users").select("full_name, email").eq("user_id", dealRow.assigned_user).limit(1).maybeSingle();
+        setRepName((wu as any)?.full_name || (wu as any)?.email || null);
       }
     }
 
@@ -438,7 +438,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
                             <Badge variant="outline" className={`text-[9px] shrink-0 ${statusColor(si.item_status)}`}>
                               {si.item_status.replace(/_/g, " ")}
                             </Badge>
-                            <span className="text-foreground truncate">{si.item_name}</span>
+                            <span className="text-foreground truncate">{si.item_label}</span>
                           </div>
                           {si.target_due_date && (
                             <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
@@ -494,7 +494,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
                   </div>
                   {nearestImpl && (
                     <div className="text-xs text-muted-foreground">
-                      Next due: <span className="text-foreground font-medium">{nearestImpl.task_title}</span> — {new Date(nearestImpl.due_date!).toLocaleDateString()}
+                      Next due: <span className="text-foreground font-medium">{nearestImpl.task_label}</span> — {new Date(nearestImpl.due_date!).toLocaleDateString()}
                     </div>
                   )}
                   {blockerSummary.length > 0 && (
