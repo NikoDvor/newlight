@@ -430,6 +430,13 @@ Deno.serve(async (req) => {
     const initialFee = Number(deal.initial_fee ?? 0);
     if (!(initialFee > 0)) return json({ error: "No initial fee set on the deal" }, 400);
 
+    // Payment cadence chosen on Form 3. "annual" adds the flat $29,997 annual plan
+    // (app add-on complimentary) ON TOP of the setup fee — the setup fee is never
+    // discounted or reduced by any billing structure.
+    const annualSelected = body.billing_cadence === "annual";
+    const ANNUAL_PRICE = 29997;
+    const chargeTotal = initialFee + (annualSelected ? ANNUAL_PRICE : 0);
+
     const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecret) return json({ error: "Stripe not configured" }, 503);
 
@@ -464,11 +471,12 @@ Deno.serve(async (req) => {
           client_id: deal.client_id,
           billing_account_id: billingAccountId,
           invoice_number: invoiceNumber,
+          provisioned_client_id: (deal as any).provisioned_client_id ?? null,
           invoice_type: "initial_fee",
           invoice_status: "pending",
-          subtotal_amount: initialFee,
+          subtotal_amount: chargeTotal,
           tax_amount: 0,
-          total_amount: initialFee,
+          total_amount: chargeTotal,
           amount_paid: 0,
           issued_at: new Date().toISOString(),
         } as any)
@@ -499,26 +507,43 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — Initial Fee` },
-          unit_amount: Math.round(initialFee * 100),
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: { name: `${client?.name || deal.deal_name || "NewLight"} — Initial Fee` },
+            unit_amount: Math.round(initialFee * 100),
+          },
+          quantity: 1,
         },
-        quantity: 1,
-      }],
+        ...(annualSelected
+          ? [{
+              price_data: {
+                currency: "usd",
+                product_data: { name: "Annual Plan — 12 months (app add-on included, complimentary)" },
+                unit_amount: ANNUAL_PRICE * 100,
+              },
+              quantity: 1,
+            }]
+          : []),
+      ],
       ...(customerId ? { customer: customerId } : { customer_email: envelope.recipient_email || undefined }),
       payment_intent_data: { setup_future_usage: "off_session" },
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: { invoice_id: invId!, deal_id: deal.id, envelope_id: envelope.id },
+      metadata: {
+        invoice_id: invId!,
+        deal_id: deal.id,
+        envelope_id: envelope.id,
+        ...(annualSelected ? { annual: "true" } : {}),
+      },
     });
 
     await supabase.from("invoices")
       .update({ payment_link_url: session.url, stripe_checkout_session_id: session.id })
       .eq("id", invId!);
 
-    return json({ url: session.url, session_id: session.id, invoice_id: invId });
+    return json({ url: session.url, session_id: session.id, invoice_id: invId, amount: chargeTotal });
   }
 
   if (action === "mark_paid") {
@@ -541,6 +566,20 @@ Deno.serve(async (req) => {
       paid_at: new Date().toISOString(),
       payment_method: "stripe",
     }).eq("id", deal.payment_invoice_id);
+
+    // Annual cadence chosen at checkout — stamp it on the deal (webhook does this
+    // too; both paths are idempotent).
+    if (sess.metadata?.annual === "true" || sess.metadata?.annual_switch === "true") {
+      const { data: curDeal } = await supabase
+        .from("crm_deals").select("billing_cadence").eq("id", deal.id).maybeSingle();
+      if (curDeal?.billing_cadence !== "annual") {
+        await supabase.from("crm_deals").update({
+          billing_cadence: "annual",
+          annual_started_at: new Date().toISOString(),
+          app_store_complimentary: true,
+        }).eq("id", deal.id);
+      }
+    }
 
     // Reflect payment reality on the client record. Target the REAL per-business
     // workspace provisioned at booking time; fall back to deal.client_id (the ops

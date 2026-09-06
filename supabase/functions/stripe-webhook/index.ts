@@ -5,6 +5,7 @@ import {
   ensureStripeCustomer,
   savePaymentMethodFromSession,
   createRetainerSubscription,
+  applyAnnualSwitch,
 } from "../_shared/stripe-billing.ts";
 
 const corsHeaders = {
@@ -134,6 +135,22 @@ Deno.serve(async (req) => {
         }
 
 
+        // ---- Annual plan switch ($29,997 one-time, dashboard or Form 3) ----
+        if (session.metadata?.annual_switch === "true") {
+          const annualDealId = session.metadata?.deal_id as string | undefined;
+          if (annualDealId) {
+            const res = await applyAnnualSwitch(stripe, supabase, annualDealId);
+            console.log("[stripe-webhook] annual switch:", JSON.stringify(res));
+            await supabase.from("audit_logs").insert({
+              action: "annual_billing_activated",
+              module: "billing",
+              status: "success",
+              metadata: { session_id: session.id, deal_id: annualDealId, ...res },
+            });
+          }
+          break;
+        }
+
         // ---- Pay & Sign (Form 3) initial-fee payment: authoritative confirmation ----
         if (paySignInvoiceId) {
           const dealId = session.metadata?.deal_id as string | undefined;
@@ -184,7 +201,7 @@ Deno.serve(async (req) => {
           }
 
           // Retainer → create the real recurring Stripe subscription.
-          if (deal && deal.pricing_model === "retainer" && effectiveCustomerId) {
+          if (deal && deal.pricing_model === "retainer" && effectiveCustomerId && session.metadata?.annual !== "true") {
             try {
               let clientName: string | null = null;
               if (deal.client_id) {
@@ -197,6 +214,16 @@ Deno.serve(async (req) => {
               console.log("[stripe-webhook] retainer subscription:", JSON.stringify(subRes));
             } catch (e) {
               console.error("[stripe-webhook] subscription creation failed", e);
+            }
+          }
+
+          // Form 3 annual cadence — stamp the annual fields on the deal.
+          if (session.metadata?.annual === "true" && dealId) {
+            try {
+              const res = await applyAnnualSwitch(stripe, supabase, dealId);
+              console.log("[stripe-webhook] form3 annual:", JSON.stringify(res));
+            } catch (e) {
+              console.error("[stripe-webhook] form3 annual switch failed", e);
             }
           }
 

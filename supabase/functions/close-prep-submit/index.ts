@@ -288,6 +288,8 @@ Deno.serve(async (req) => {
       .from("document_envelopes")
       .insert({
         client_id: lead.client_id,
+        // Real per-business workspace, used by client-facing document/billing views.
+        provisioned_client_id: (lead as any).provisioned_client_id ?? null,
         envelope_type: "service_agreement",
         title: `Service Agreement — ${lead.business_name}`,
         status: "draft",

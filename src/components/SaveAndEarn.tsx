@@ -1,150 +1,156 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Gift, ArrowRight, Lock, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, Gift, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
-// Placeholder / mock values — no real billing wiring yet
-const MOCK_MONTHLY = 497;
-const ANNUAL_DISCOUNT = 0.30;
-
+const ANNUAL_PRICE = 29997;
 const fmt = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
+type DealRow = {
+  id: string;
+  billing_cadence: string | null;
+  annual_started_at: string | null;
+  app_store_complimentary: boolean | null;
+  pricing_model: string | null;
+  recurring_fee: number | null;
+};
+
+/**
+ * Real annual-billing card. Reads the client's actual deal (matched on
+ * provisioned_client_id) and starts a genuine Stripe checkout for the flat
+ * $29,997/year plan. The setup fee is never touched by this flow.
+ */
 export function AnnualSwitchCard() {
-  const [step, setStep] = useState<"idle" | "confirm" | "processing" | "coming-soon">("idle");
-  const [pwd, setPwd] = useState("");
+  const { activeClientId } = useWorkspace();
+  const [deal, setDeal] = useState<DealRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
-  const twelveMoTotal = MOCK_MONTHLY * 12;
-  const discountedAnnual = twelveMoTotal * (1 - ANNUAL_DISCOUNT);
-  const saved = twelveMoTotal - discountedAnnual;
+  useEffect(() => {
+    if (!activeClientId) { setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    supabase
+      .from("crm_deals")
+      .select("id, billing_cadence, annual_started_at, app_store_complimentary, pricing_model, recurring_fee")
+      .eq("provisioned_client_id", activeClientId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) { setDeal((data as DealRow) || null); setLoading(false); }
+      });
+    return () => { cancelled = true; };
+  }, [activeClientId]);
 
-  const handleConfirm = () => {
-    if (!pwd) {
-      toast.error("Please enter your password to continue.");
+  const isAnnual = deal?.billing_cadence === "annual";
+
+  const handleSwitch = async () => {
+    if (!activeClientId) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("switch-to-annual", {
+      body: { client_id: activeClientId },
+    });
+    setBusy(false);
+    if (error || data?.error || !data?.url) {
+      toast.error(error?.message || data?.error || "Could not start checkout.");
       return;
     }
-    setStep("processing");
-    setTimeout(() => setStep("coming-soon"), 900);
-  };
-
-  const closeModal = () => {
-    setStep("idle");
-    setPwd("");
+    window.location.href = data.url;
   };
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative rounded-2xl p-6 overflow-hidden"
-        style={{
-          background: "linear-gradient(160deg, hsla(211,96%,56%,0.08), hsla(197,92%,68%,0.04))",
-          border: "1px solid hsla(211,96%,62%,0.22)",
-          backdropFilter: "blur(14px)",
-        }}
-      >
-        <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, hsla(211,96%,62%,0.18), transparent 70%)", filter: "blur(24px)" }} />
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="relative rounded-2xl p-6 overflow-hidden"
+      style={{
+        background: "linear-gradient(160deg, hsla(211,96%,56%,0.08), hsla(197,92%,68%,0.04))",
+        border: "1px solid hsla(211,96%,62%,0.22)",
+        backdropFilter: "blur(14px)",
+      }}
+    >
+      <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, hsla(211,96%,62%,0.18), transparent 70%)", filter: "blur(24px)" }} />
 
-        <div className="relative flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl" style={{ background: "hsla(211,96%,56%,0.15)" }}>
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-base font-bold tracking-tight">Switch to Annual & Save</h3>
+      <div className="relative flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl" style={{ background: "hsla(211,96%,56%,0.15)" }}>
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
-            style={{ background: "hsla(152,60%,44%,0.14)", color: "hsl(152,60%,54%)" }}>
-            Save 30%
-          </span>
+          <h3 className="text-base font-bold tracking-tight">
+            {isAnnual ? "You're on the annual plan" : "Pay yearly instead"}
+          </h3>
         </div>
+        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
+          style={{ background: "hsla(152,60%,44%,0.14)", color: "hsl(152,60%,54%)" }}>
+          {isAnnual ? "Active" : "App included"}
+        </span>
+      </div>
 
-        <p className="relative text-xs text-muted-foreground leading-relaxed mb-5">
-          Pay for your next 12 months upfront and save 30% compared to paying monthly.
+      {loading ? (
+        <div className="relative py-8 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : !deal ? (
+        <p className="relative text-xs text-muted-foreground leading-relaxed py-4">
+          Your plan details aren't linked to this workspace yet. Once your agreement is finalised,
+          the yearly option will appear here.
         </p>
-
-        <div className="relative grid grid-cols-2 gap-3 mb-5">
-          <div className="rounded-xl p-3" style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.06)" }}>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Current Monthly</p>
-            <p className="text-lg font-bold tabular-nums">{fmt(MOCK_MONTHLY)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+      ) : isAnnual ? (
+        <div className="relative space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="h-4 w-4" style={{ color: "hsl(152,60%,54%)" }} />
+            <span>{fmt(ANNUAL_PRICE)} per year — paid in full</span>
           </div>
-          <div className="rounded-xl p-3" style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.06)" }}>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">12-Month Total</p>
-            <p className="text-lg font-bold tabular-nums line-through text-muted-foreground">{fmt(twelveMoTotal)}</p>
-          </div>
-          <div className="rounded-xl p-3" style={{ background: "hsla(211,96%,56%,0.08)", border: "1px solid hsla(211,96%,62%,0.22)" }}>
-            <p className="text-[10px] uppercase tracking-wider text-primary/80 mb-1">Annual (30% off)</p>
-            <p className="text-lg font-bold tabular-nums text-primary">{fmt(discountedAnnual)}</p>
-          </div>
-          <div className="rounded-xl p-3" style={{ background: "hsla(152,60%,44%,0.08)", border: "1px solid hsla(152,60%,44%,0.22)" }}>
-            <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: "hsl(152,60%,54%)" }}>You Save</p>
-            <p className="text-lg font-bold tabular-nums" style={{ color: "hsl(152,60%,54%)" }}>{fmt(saved)}</p>
-          </div>
+          {deal.app_store_complimentary && (
+            <p className="text-xs text-muted-foreground">The app is included at no extra charge.</p>
+          )}
+          {deal.annual_started_at && (
+            <p className="text-xs text-muted-foreground">
+              Started {new Date(deal.annual_started_at).toLocaleDateString()}.
+            </p>
+          )}
         </div>
+      ) : (
+        <>
+          <p className="relative text-xs text-muted-foreground leading-relaxed mb-5">
+            You're currently billed monthly. Pay for the year in one go instead — the app is
+            included, with no separate charge. Your original setup fee is unaffected.
+          </p>
 
-        <Button className="w-full btn-gradient" onClick={() => setStep("confirm")}>
-          Switch to Annual <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-      </motion.div>
+          <div className="relative grid grid-cols-2 gap-3 mb-5">
+            <div className="rounded-xl p-3" style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.06)" }}>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Right now</p>
+              <p className="text-lg font-bold tabular-nums">
+                {deal.pricing_model === "commission"
+                  ? "Commission"
+                  : deal.recurring_fee
+                  ? `${fmt(Number(deal.recurring_fee))}/mo`
+                  : "Monthly"}
+              </p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: "hsla(211,96%,56%,0.08)", border: "1px solid hsla(211,96%,62%,0.22)" }}>
+              <p className="text-[10px] uppercase tracking-wider text-primary/80 mb-1">Yearly</p>
+              <p className="text-lg font-bold tabular-nums text-primary">{fmt(ANNUAL_PRICE)}</p>
+            </div>
+          </div>
 
-      <Dialog open={step !== "idle"} onOpenChange={(o) => !o && closeModal()}>
-        <DialogContent className="sm:max-w-md">
-          {step === "confirm" && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" /> Confirm Your Password
-                </DialogTitle>
-                <DialogDescription>
-                  For your security, please re-enter your account password to authorize switching to annual billing.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 py-2">
-                <Label htmlFor="pwd-confirm">Password</Label>
-                <Input
-                  id="pwd-confirm" type="password" value={pwd}
-                  onChange={(e) => setPwd(e.target.value)}
-                  placeholder="Enter your password"
-                  autoFocus
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={closeModal}>Cancel</Button>
-                <Button onClick={handleConfirm} className="btn-gradient">Continue</Button>
-              </DialogFooter>
-            </>
-          )}
-          {step === "processing" && (
-            <div className="py-10 flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Verifying…</p>
-            </div>
-          )}
-          {step === "coming-soon" && (
-            <div className="py-8 text-center space-y-3">
-              <div className="mx-auto w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ background: "hsla(211,96%,56%,0.15)" }}>
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <DialogTitle>Coming Soon</DialogTitle>
-              <DialogDescription>
-                Redirecting to secure checkout… Annual billing will be available shortly.
-              </DialogDescription>
-              <Button variant="outline" onClick={closeModal} className="mt-2">Close</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          <Button className="w-full btn-gradient" onClick={handleSwitch} disabled={busy}>
+            {busy ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Opening checkout…</>
+              : <>{fmt(ANNUAL_PRICE)}/year — includes the app <ArrowRight className="h-4 w-4 ml-2" /></>}
+          </Button>
+        </>
+      )}
+    </motion.div>
   );
 }
 
