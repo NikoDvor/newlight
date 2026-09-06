@@ -153,6 +153,7 @@ export default function ClientDetailDrawer({ client, open, onClose }: Props) {
   const [signatures, setSignatures] = useState<any[]>([]);
   const [invoiceList, setInvoiceList] = useState<any[]>([]);
   const [lead, setLead] = useState<any | null>(null);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
   const [discoveryAt, setDiscoveryAt] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showAppLink, setShowAppLink] = useState(false);
