@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     // 1. Load the lead & confirm ownership
     const { data: lead, error: leadErr } = await supabase
       .from("nl_bdr_leads")
-      .select("id, user_id, client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id")
+      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id")
       .eq("id", lead_id)
       .maybeSingle();
     if (leadErr || !lead) {
