@@ -476,19 +476,21 @@ export function PipelineRevenueOpportunity({
                 <p className="text-[9px] uppercase tracking-wider text-white/35">Projected</p>
                 <motion.p
                   className="text-lg font-bold tabular-nums leading-none"
-                  style={{ color: dirty ? "hsl(var(--nl-gold))" : "hsl(var(--nl-sky))" }}
-                  animate={{ scale: dirty ? [1, 1.04, 1] : 1 }}
+                  style={{ color: dirty || valueDirty ? "hsl(var(--nl-gold))" : "hsl(var(--nl-sky))" }}
+                  animate={{ scale: dirty || valueDirty ? [1, 1.04, 1] : 1 }}
                   transition={{ duration: 0.25 }}
                 >
                   {fmtMoney(projected)}
                 </motion.p>
               </div>
-              {dirty && (
+              {(dirty || valueDirty) && (
                 <button
                   onClick={() => {
                     setRates(baseRates);
                     setDirty(false);
+                    setAvgValueDraft("");
                   }}
+
                   className="text-[10px] text-white/45 hover:text-white/80 inline-flex items-center gap-1"
                 >
                   <RotateCcw className="h-3 w-3" /> Reset
