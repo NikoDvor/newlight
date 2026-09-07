@@ -1555,14 +1555,6 @@ function InsightsFeedback({ recs, wins }: { recs: Recommendation[]; wins: Recomm
           <Activity className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
         </div>
         <h3 className="text-lg font-bold text-foreground">Insights &amp; Feedback</h3>
-        {isExample && (
-          <span
-            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
-            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
-          >
-            Example data
-          </span>
-        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -1628,23 +1620,59 @@ function StatTile({ label, value, hue }: { label: string; value: string; hue: st
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Shared empty state — shown instead of invented example content
+// ─────────────────────────────────────────────────────────────────
+function PanelEmptyState({
+  title,
+  subtitle,
+  gradient,
+  icon: Icon,
+  message,
+}: {
+  title: string;
+  subtitle: string;
+  gradient: string;
+  icon: typeof Flame;
+  message: string;
+}) {
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: gradient }}>
+          <Icon className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
+        <span className="text-xs text-muted-foreground">{subtitle}</span>
+      </div>
+      <div className="rounded-2xl bg-card border border-border p-6 text-sm text-muted-foreground">
+        {message}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Priority Actions strip — top 3 must-do items (urgent accent)
 // ─────────────────────────────────────────────────────────────────
-
-const EXAMPLE_PRIORITY = [
-  { title: "Reply to 3 pending Google reviews", impact: "Protects reputation + local ranking" },
-  { title: "Follow up with last week's stalled leads", impact: "~$2.4K in at-risk pipeline" },
-  { title: "Enable no-show reminders", impact: "Recover ~15% of lost appointments" },
-];
 
 function PriorityActionsStrip({ recs }: { recs: Recommendation[] }) {
   const top = [...recs]
     .sort((a, b) => (b.rice_score ?? 0) - (a.rice_score ?? 0))
     .slice(0, 3);
-  const isExample = top.length === 0;
-  const items = isExample
-    ? EXAMPLE_PRIORITY.map((e, i) => ({ id: `ex-${i}`, title: e.title, impact: e.impact, hue: "0 72% 51%" }))
-    : top.map((r) => ({
+
+  if (top.length === 0) {
+    return (
+      <PanelEmptyState
+        title="Priority Actions"
+        subtitle="Top 3 must-do moves right now"
+        gradient="linear-gradient(135deg, hsl(0 72% 51%), hsl(24 95% 54%))"
+        icon={Flame}
+        message="Not enough activity yet to rank priority actions — check back once there's some CRM, calendar or review activity."
+      />
+    );
+  }
+
+  const items = top.map((r) => ({
         id: r.id,
         title: r.title || "Untitled priority",
         impact: r.expected_impact_value != null
@@ -1664,14 +1692,6 @@ function PriorityActionsStrip({ recs }: { recs: Recommendation[] }) {
         </div>
         <h3 className="text-lg font-bold text-foreground">Priority Actions</h3>
         <span className="text-xs text-muted-foreground">Top 3 must-do moves right now</span>
-        {isExample && (
-          <span
-            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
-            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
-          >
-            Example data
-          </span>
-        )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -1717,21 +1737,24 @@ function PriorityActionsStrip({ recs }: { recs: Recommendation[] }) {
 // Next Steps roadmap — sequential 30-day plan
 // ─────────────────────────────────────────────────────────────────
 
-const EXAMPLE_ROADMAP = [
-  { title: "Week 1 · Foundation", detail: "Connect integrations and confirm CRM data is flowing cleanly." },
-  { title: "Week 2 · Activate", detail: "Turn on review requests and appointment reminders." },
-  { title: "Week 3 · Amplify", detail: "Launch a re-engagement push to stalled leads." },
-  { title: "Week 4 · Measure", detail: "Review scoreboard and double down on what's converting." },
-];
-
 function NextStepsRoadmap({ recs, wins }: { recs: Recommendation[]; wins: Recommendation[] }) {
   const active = [...recs.filter((r) => r.status === "accepted"), ...wins]
     .sort((a, b) => (b.rice_score ?? 0) - (a.rice_score ?? 0))
     .slice(0, 4);
-  const isExample = active.length === 0;
-  const steps = isExample
-    ? EXAMPLE_ROADMAP
-    : active.map((r, i) => ({
+
+  if (active.length === 0) {
+    return (
+      <PanelEmptyState
+        title="Next Steps"
+        subtitle="Suggested order of operations · next 30 days"
+        gradient="linear-gradient(135deg, hsl(211 96% 56%), hsl(280 75% 60%))"
+        icon={ArrowRight}
+        message="No accepted actions yet — accept a recommendation above and your 30-day plan will build itself here."
+      />
+    );
+  }
+
+  const steps = active.map((r, i) => ({
         title: `Step ${i + 1} · ${CATEGORY_META[normalizeCategory(r.category)].label}`,
         detail: r.action_label || r.title || "Continue execution.",
       }));
@@ -1747,14 +1770,6 @@ function NextStepsRoadmap({ recs, wins }: { recs: Recommendation[]; wins: Recomm
         </div>
         <h3 className="text-lg font-bold text-foreground">Next Steps</h3>
         <span className="text-xs text-muted-foreground">Suggested order of operations · next 30 days</span>
-        {isExample && (
-          <span
-            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
-            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
-          >
-            Example data
-          </span>
-        )}
       </div>
 
       <div className="rounded-2xl bg-card border border-border p-6">
@@ -1800,18 +1815,22 @@ function NextStepsRoadmap({ recs, wins }: { recs: Recommendation[]; wins: Recomm
 // ─────────────────────────────────────────────────────────────────
 
 const OWNER_CATEGORIES = new Set<Category>(["reviews", "website"]);
-const EXAMPLE_HOMEWORK = [
-  { title: "Upload 10 before/after photos", detail: "Fresh visuals drive higher social + web conversion." },
-  { title: "Respond to your 3 pending reviews", detail: "A personal reply from the owner earns trust fast." },
-  { title: "Confirm business hours on Google", detail: "Wrong hours = missed calls and lost bookings." },
-];
-
 function HomeworkPanel({ recs }: { recs: Recommendation[] }) {
   const owner = recs.filter((r) => OWNER_CATEGORIES.has(normalizeCategory(r.category))).slice(0, 3);
-  const isExample = owner.length === 0;
-  const items = isExample
-    ? EXAMPLE_HOMEWORK
-    : owner.map((r) => ({
+
+  if (owner.length === 0) {
+    return (
+      <PanelEmptyState
+        title="Homework"
+        subtitle="Tasks only you can do"
+        gradient="linear-gradient(135deg, hsl(45 93% 50%), hsl(24 95% 54%))"
+        icon={BookOpen}
+        message="Nothing needs you personally right now — owner tasks will appear here as your reviews and website data come in."
+      />
+    );
+  }
+
+  const items = owner.map((r) => ({
         title: r.title || "Owner task",
         detail: r.action_label || r.why_reasoning || "Requires owner attention.",
       }));
@@ -1827,14 +1846,6 @@ function HomeworkPanel({ recs }: { recs: Recommendation[] }) {
         </div>
         <h3 className="text-lg font-bold text-foreground">Homework</h3>
         <span className="text-xs text-muted-foreground">Tasks only you can do</span>
-        {isExample && (
-          <span
-            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
-            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
-          >
-            Example data
-          </span>
-        )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -1890,18 +1901,6 @@ const METRIC_LABELS: Record<string, string> = {
   ad_ctr: "Ad click-through rate",
 };
 
-const EXAMPLE_WEAKNESSES: WeaknessSignal[] = [
-  { metric_key: "review_velocity_monthly", category: "reviews", actual: 3, benchmark: 12, unit: "/mo", gap_pct: 75 },
-  { metric_key: "no_show_rate", category: "crm", actual: 22, benchmark: 8, unit: "%", gap_pct: 175 },
-  { metric_key: "reply_time_minutes", category: "crm", actual: 240, benchmark: 15, unit: "min", gap_pct: 94 },
-  { metric_key: "conversion_rate", category: "crm", actual: 4, benchmark: 12, unit: "%", gap_pct: 67 },
-  { metric_key: "avg_rating", category: "reviews", actual: 4.1, benchmark: 4.7, unit: "★", gap_pct: 13 },
-  { metric_key: "cost_per_lead", category: "ads", actual: 82, benchmark: 45, unit: "$", gap_pct: 82 },
-  { metric_key: "organic_traffic", category: "seo", actual: 340, benchmark: 900, unit: "/mo", gap_pct: 62 },
-  { metric_key: "social_engagement", category: "social", actual: 1.1, benchmark: 3.5, unit: "%", gap_pct: 69 },
-  { metric_key: "ad_ctr", category: "ads", actual: 0.9, benchmark: 2.4, unit: "%", gap_pct: 63 },
-  { metric_key: "reactivation_rate", category: "crm", actual: 2, benchmark: 8, unit: "%", gap_pct: 75 },
-];
 
 function formatSignalValue(v: number, unit: string): string {
   const u = (unit || "").trim();
@@ -1920,8 +1919,19 @@ function severityFor(gapPct: number): { hue: string; label: string } {
 }
 
 function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
-  const isExample = signals.length === 0;
-  const items = (isExample ? EXAMPLE_WEAKNESSES : signals)
+  if (signals.length === 0) {
+    return (
+      <PanelEmptyState
+        title="Top 10 Weaknesses"
+        subtitle="Metrics falling short of industry benchmark"
+        gradient="linear-gradient(135deg, hsl(0 72% 51%), hsl(24 95% 54%))"
+        icon={TrendingDown}
+        message="Not enough activity yet to benchmark your metrics — check back after some CRM, calendar or review activity."
+      />
+    );
+  }
+
+  const items = signals
     .slice()
     .sort((a, b) => b.gap_pct - a.gap_pct)
     .slice(0, 10);
@@ -1937,14 +1947,6 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
         </div>
         <h3 className="text-lg font-bold text-foreground">Top 10 Weaknesses</h3>
         <span className="text-xs text-muted-foreground">Metrics falling short of industry benchmark</span>
-        {isExample && (
-          <span
-            className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
-            style={{ background: "hsla(45,93%,50%,.14)", color: "hsl(38 90% 38%)" }}
-          >
-            Example data
-          </span>
-        )}
       </div>
 
       <div className="rounded-2xl bg-card border border-border overflow-hidden">
