@@ -1518,29 +1518,33 @@ function CategoryPerformanceGrid({
 // ─────────────────────────────────────────────────────────────────
 
 function InsightsFeedback({ recs, wins }: { recs: Recommendation[]; wins: Recommendation[] }) {
-  const totalLive = recs.length + wins.length;
-  const isExample = totalLive < 3;
+  if (recs.length + wins.length === 0) {
+    return (
+      <PanelEmptyState
+        title="Insights &amp; Feedback"
+        subtitle="Engagement with your recommendations"
+        gradient="linear-gradient(135deg, hsl(197 92% 48%), hsl(142 71% 45%))"
+        icon={Activity}
+        message="No recommendations generated yet — refresh insights once there's some CRM, calendar or review activity."
+      />
+    );
+  }
 
-  const total = isExample ? 42 : totalLive;
-  const accepted = isExample ? 28 : recs.filter((r) => r.status === "accepted").length + wins.length;
+  const total = recs.length + wins.length;
+  const accepted = recs.filter((r) => r.status === "accepted").length + wins.length;
   const acceptanceRate = total > 0 ? Math.round((accepted / total) * 100) : 0;
-  const avgConf = isExample
-    ? 74
-    : Math.round(
-        (recs.reduce((s, r) => s + (r.confidence_pct ?? 0), 0) || 0) / Math.max(1, recs.length)
-      );
+  const avgConf = Math.round(
+    (recs.reduce((s, r) => s + (r.confidence_pct ?? 0), 0) || 0) / Math.max(1, recs.length)
+  );
 
   const chartData = (["ads", "seo", "social", "reviews", "website", "crm"] as Category[]).map((k) => {
     const meta = CATEGORY_META[k];
     const liveCount =
       recs.filter((r) => normalizeCategory(r.category) === k).length +
       wins.filter((r) => normalizeCategory(r.category) === k).length;
-    const exampleCounts: Record<Category, number> = {
-      ads: 9, seo: 7, social: 6, reviews: 8, website: 5, crm: 7,
-    };
     return {
       name: meta.label,
-      count: isExample ? exampleCounts[k] : liveCount,
+      count: liveCount,
       fill: `hsl(${meta.hue})`,
     };
   });
@@ -1591,11 +1595,6 @@ function InsightsFeedback({ recs, wins }: { recs: Recommendation[]; wins: Recomm
               </BarChart>
             </ResponsiveContainer>
           </div>
-          {isExample && (
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Illustrative distribution — real values appear as you refresh insights over time.
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -2015,11 +2014,6 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
         })}
       </div>
 
-      {isExample && (
-        <p className="text-[10px] text-muted-foreground mt-2 px-1">
-          Refresh insights to compute your live weaknesses against industry benchmarks.
-        </p>
-      )}
     </div>
   );
 }
