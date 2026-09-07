@@ -160,10 +160,36 @@ export function PipelineRevenueOpportunity({
     setDirty(false);
   }, [baseRates.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const projected = useMemo(
-    () => (rates.length ? projectRevenue(openDeals as any, rates) : 0),
-    [openDeals, rates],
+  const [avgValueDraft, setAvgValueDraft] = useState<string>("");
+
+  const naturalAvg = useMemo(() => {
+    const rows = (openDeals ?? []) as { value: number }[];
+    return rows.length ? rows.reduce((s, d) => s + Number(d.value || 0), 0) / rows.length : 0;
+  }, [openDeals]);
+
+  const avgOverride = useMemo(() => {
+    const n = Number(String(avgValueDraft).replace(/[^0-9.]/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [avgValueDraft]);
+
+  const baseline = useMemo(
+    () => (baseRates.length ? projectRevenue(openDeals as any, baseRates) : 0),
+    [openDeals, baseRates],
   );
+
+  const lever = useMemo(
+    () =>
+      projectRevenueLever(openDeals as any, rates.length ? rates : baseRates, {
+        avgDealValueOverride: avgOverride,
+        revenueTarget: model?.revenueTarget ?? null,
+        baseline,
+      }),
+    [openDeals, rates, baseRates, avgOverride, model?.revenueTarget, baseline],
+  );
+
+  const projected = lever.projectedRevenue;
+  const valueDirty = avgOverride !== null && Math.round(avgOverride) !== Math.round(naturalAvg);
+
 
   if (!clientId) return null;
 
