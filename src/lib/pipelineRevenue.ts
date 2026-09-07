@@ -636,3 +636,66 @@ export function projectRevenue(
 export const fmtMoney = (n: number) =>
   `$${Math.round(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 export const fmtPct = (n: number, digits = 0) => `${(n * 100).toFixed(digits)}%`;
+
+/* ───────────────── revenue lever (second draggable input) ─────────────────
+ * Same engine as the close-rate sliders — `cumulativeCloseRate` — with an
+ * optional override of the per-deal value, plus the implied volume needed to
+ * hit a revenue target. Do NOT build a parallel projection anywhere else.
+ */
+
+export interface RevenueLeverProjection {
+  /** Projected weighted revenue under the current rates + value override. */
+  projectedRevenue: number;
+  /** Expected number of open deals that close, under the current rates. */
+  expectedWonDeals: number;
+  /** Per-deal value actually used in the projection. */
+  avgDealValue: number;
+  /** Revenue the plan is being measured against. */
+  target: number;
+  /** Won clients required to reach `target` at `avgDealValue`. */
+  wonClientsNeeded: number;
+  /** Appointments (Warm stage) required to produce those wins. */
+  appointmentsNeeded: number;
+  /** Delta vs. the untouched baseline projection. */
+  deltaRevenue: number;
+}
+
+export function projectRevenueLever(
+  openDeals: { stage: CanonStage; value: number }[],
+  rates: number[],
+  opts: { avgDealValueOverride?: number | null; revenueTarget?: number | null; baseline?: number } = {},
+): RevenueLeverProjection {
+  const override =
+    opts.avgDealValueOverride && opts.avgDealValueOverride > 0 ? opts.avgDealValueOverride : null;
+
+  let projectedRevenue = 0;
+  let expectedWonDeals = 0;
+  for (const d of openDeals) {
+    const p = cumulativeCloseRate(d.stage, rates);
+    projectedRevenue += (override ?? d.value) * p;
+    expectedWonDeals += p;
+  }
+
+  const naturalAvg = openDeals.length
+    ? openDeals.reduce((s, d) => s + d.value, 0) / openDeals.length
+    : 0;
+  const avgDealValue = override ?? naturalAvg;
+
+  const target = opts.revenueTarget && opts.revenueTarget > 0 ? opts.revenueTarget : projectedRevenue;
+
+  const wonClientsNeeded = avgDealValue > 0 ? Math.ceil(target / avgDealValue) : 0;
+  // Warm = "appointment booked", so the Warm→Won cumulative rate converts
+  // appointments into wins.
+  const warmToWon = cumulativeCloseRate("warm", rates);
+  const appointmentsNeeded = warmToWon > 0 ? Math.ceil(wonClientsNeeded / warmToWon) : 0;
+
+  return {
+    projectedRevenue,
+    expectedWonDeals,
+    avgDealValue,
+    target,
+    wonClientsNeeded,
+    appointmentsNeeded,
+    deltaRevenue: projectedRevenue - (opts.baseline ?? projectedRevenue),
+  };
+}
