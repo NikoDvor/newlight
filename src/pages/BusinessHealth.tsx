@@ -4,7 +4,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
 import { motion } from "framer-motion";
-import { Slider } from "@/components/ui/slider";
+import { RevenueSimulator, type SimulatorLever } from "@/components/RevenueSimulator";
 import { Button } from "@/components/ui/button";
 import {
   Activity, Globe, Search, Share2, Users, Star, Megaphone,
@@ -36,16 +36,28 @@ const statusIcon = (status: string) => {
   return <XCircle className="h-4 w-4" style={{ color: "hsl(0 72% 51%)" }} />;
 };
 
+const SIM_SEED = { convRate: 3, reviewRating: 4.2, traffic: 5000, retention: 40 };
+
+const SIM_LEVERS: SimulatorLever[] = [
+  { key: "convRate", label: "Conversion Rate", min: 1, max: 10, step: 0.5, value: SIM_SEED.convRate, format: (v) => `${v}%` },
+  { key: "reviewRating", label: "Review Rating", min: 1, max: 5, step: 0.1, value: SIM_SEED.reviewRating, format: (v) => `${v.toFixed(1)}★` },
+  { key: "traffic", label: "Monthly Traffic", min: 500, max: 50000, step: 500, value: SIM_SEED.traffic, format: (v) => v.toLocaleString() },
+  { key: "retention", label: "Customer Retention", min: 10, max: 90, step: 5, value: SIM_SEED.retention, format: (v) => `${v}%` },
+];
+
+const projectHealthRevenue = (v: Record<string, number>) => {
+  const base = v.traffic * (v.convRate / 100) * 200;
+  const reviewMultiplier = v.reviewRating >= 4.5 ? 1.15 : v.reviewRating >= 4.0 ? 1.0 : 0.85;
+  const retentionMultiplier = 1 + (v.retention / 100) * 0.3;
+  return Math.round(base * reviewMultiplier * retentionMultiplier);
+};
+
 export default function BusinessHealth() {
   const { activeClientId } = useWorkspace();
   const [categories, setCategories] = useState<CategoryScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [funnelData, setFunnelData] = useState<any>(null);
-  // Revenue simulator
-  const [simConvRate, setSimConvRate] = useState(3);
-  const [simReviewRating, setSimReviewRating] = useState(4.2);
-  const [simTraffic, setSimTraffic] = useState(5000);
-  const [simRetention, setSimRetention] = useState(40);
+  // Revenue simulator seeds
 
   useEffect(() => {
     if (!activeClientId) { setLoading(false); return; }
@@ -126,7 +138,7 @@ export default function BusinessHealth() {
 
     // Funnel data
     setFunnelData({
-      traffic: simTraffic,
+      traffic: SIM_SEED.traffic,
       leads: totalContacts,
       bookedAppts: totalAppts,
       completedAppts,
@@ -160,12 +172,6 @@ export default function BusinessHealth() {
 
   const healthyCount = categories.filter(c => c.status === "Strong").length;
   const issueCount = categories.filter(c => c.status !== "Strong").length;
-
-  // Revenue simulator computation
-  const simBaseRevenue = simTraffic * (simConvRate / 100) * 200;
-  const simReviewMultiplier = simReviewRating >= 4.5 ? 1.15 : simReviewRating >= 4.0 ? 1.0 : 0.85;
-  const simRetentionMultiplier = 1 + (simRetention / 100) * 0.3;
-  const simProjectedRevenue = Math.round(simBaseRevenue * simReviewMultiplier * simRetentionMultiplier);
 
   // Funnel stages
   const funnelStages = funnelData ? [
@@ -306,52 +312,13 @@ export default function BusinessHealth() {
       )}
 
       {/* Revenue Simulator */}
-      <DataCard title="Revenue Growth Simulator" className="mt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Conversion Rate: {simConvRate}%
-            </label>
-            <Slider value={[simConvRate]} min={1} max={10} step={0.5}
-              onValueChange={([v]) => setSimConvRate(v)} />
-          </div>
-          <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Review Rating: {simReviewRating.toFixed(1)}★
-            </label>
-            <Slider value={[simReviewRating]} min={1} max={5} step={0.1}
-              onValueChange={([v]) => setSimReviewRating(v)} />
-          </div>
-          <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Monthly Traffic: {simTraffic.toLocaleString()}
-            </label>
-            <Slider value={[simTraffic]} min={500} max={50000} step={500}
-              onValueChange={([v]) => setSimTraffic(v)} />
-          </div>
-          <div>
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-              Customer Retention: {simRetention}%
-            </label>
-            <Slider value={[simRetention]} min={10} max={90} step={5}
-              onValueChange={([v]) => setSimRetention(v)} />
-          </div>
-        </div>
-        <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: "hsla(211,96%,56%,.04)", border: "1px solid hsla(211,96%,56%,.1)" }}>
-          <Calculator className="h-8 w-8 shrink-0" style={{ color: "hsl(211 96% 56%)" }} />
-          <div>
-            <p className="text-xs text-muted-foreground">Projected Monthly Revenue</p>
-            <p className="metric-value text-2xl">${simProjectedRevenue.toLocaleString()}</p>
-          </div>
-          <div className="ml-auto text-right">
-            <p className="text-[10px] text-muted-foreground">vs current baseline</p>
-            <p className="text-sm font-bold" style={{ color: "hsl(152 60% 44%)" }}>
-              {simProjectedRevenue > (funnelData?.revenue || 0) ? "+" : ""}
-              ${(simProjectedRevenue - (funnelData?.revenue || 0)).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </DataCard>
+      <RevenueSimulator
+        title="Revenue Growth Simulator"
+        className="mt-6"
+        levers={SIM_LEVERS}
+        project={projectHealthRevenue}
+        baseline={funnelData?.revenue || 0}
+      />
     </div>
   );
 }
