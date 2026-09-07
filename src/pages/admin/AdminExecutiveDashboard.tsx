@@ -29,6 +29,26 @@ interface StatCard {
   label: string; value: string; icon: any; color: string; sub?: string;
 }
 
+/**
+ * Internal / non-client workspaces that must never count toward platform metrics.
+ * - 00000000-...00ff = ADMIN_OPS_CLIENT_ID ("NewLight Internal", AdminOpsContext)
+ * - d0c0edc1-...      = "NewLight" own sales workspace (holds all 154 closed-won BDR deals)
+ * The rest are seeded/QA test workspaces.
+ */
+const EXCLUDED_CLIENT_IDS = [
+  "00000000-0000-0000-0000-0000000000ff",
+  "d0c0edc1-ff61-4597-8500-96e02fdd87d8",
+  "0a36f02b-2900-40e6-bea5-392534de1b82",
+  "c6882831-3220-4915-9ef4-6935f9d814bf",
+  "b61c967d-40ea-438d-b39a-54e806ac06f0",
+  "9b5f828e-8850-408c-8ffe-d05ef47bb90b",
+  "b33ccb3c-4ce2-451c-ab1a-c7a50a07ef28",
+  "0555604e-a50d-42d6-9e7e-4171b97b1ec2",
+  "785cd5a0-795c-4077-9d1b-65521b360045",
+  "c928f5a8-eb0e-43e0-8e2f-70551345330b",
+];
+const EXCLUDED_FILTER = `(${EXCLUDED_CLIENT_IDS.join(",")})`;
+
 export default function AdminExecutiveDashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState({
@@ -42,15 +62,23 @@ export default function AdminExecutiveDashboard() {
   const [pipelineTrend, setPipelineTrend] = useState<any[]>([]);
 
   useEffect(() => {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
     Promise.all([
-      supabase.from("clients").select("id, company_name", { count: "exact" }),
+      supabase.from("clients").select("id, business_name", { count: "exact" })
+        .eq("payment_status", "paid").not("id", "in", EXCLUDED_FILTER),
       supabase.from("prospects").select("id", { count: "exact", head: true }),
       supabase.from("crm_contacts").select("id", { count: "exact", head: true }),
       supabase.from("calendar_events").select("id, calendar_status", { count: "exact" }),
-      supabase.from("crm_deals").select("deal_value, pipeline_stage, status"),
-      supabase.from("proposals").select("id, status"),
+      supabase.from("crm_deals").select("client_id, deal_value, pipeline_stage, status, created_at")
+        .not("client_id", "in", EXCLUDED_FILTER),
+      supabase.from("proposals").select("id, status").not("client_id", "in", EXCLUDED_FILTER),
       supabase.from("billing_accounts").select("billing_status"),
-      supabase.from("subscriptions" as any).select("status, monthly_amount"),
+      supabase.from("subscriptions" as any).select("subscription_status, monthly_amount")
+        .not("client_id", "in", EXCLUDED_FILTER),
       supabase.from("automations").select("id, enabled"),
       supabase.from("automation_runs").select("status").order("started_at", { ascending: false }).limit(200),
       supabase.from("workspace_users").select("id", { count: "exact", head: true }),
@@ -68,7 +96,7 @@ export default function AdminExecutiveDashboard() {
 
       const closedWon = d.filter((x: any) => x.pipeline_stage === "closed_won");
       const closedWonRevenue = closedWon.reduce((sum: number, x: any) => sum + (Number(x.deal_value) || 0), 0);
-      const activeSubs = s.filter((x: any) => x.status === "active");
+      const activeSubs = s.filter((x: any) => x.subscription_status === "active");
       const mrr = activeSubs.reduce((sum: number, x: any) => sum + (Number(x.monthly_amount) || 0), 0);
 
       setData({
@@ -93,25 +121,45 @@ export default function AdminExecutiveDashboard() {
         fixItems: fixes.count || 0,
       });
 
-      // Revenue by client (top 6)
-      const clientData = clients.data || [];
-      if (clientData.length > 0) {
-        const clientRevenue = clientData.slice(0, 6).map((c: any) => {
-          const clientDeals = d.filter((x: any) => x.pipeline_stage === "closed_won");
-          const rev = clientDeals.reduce((s: number, x: any) => s + (Number(x.deal_value) || 0), 0);
-          return { name: (c.company_name || "Client").split(" ")[0], revenue: Math.round(rev / Math.max(clientData.length, 1)) };
-        });
-        setRevenueByClient(clientRevenue);
-      }
-    });
+      // Revenue by client: sum each client's own closed-won deals
+      const nameById = new Map<string, string>(
+        (clients.data || []).map((c: any) => [c.id, c.business_name || "Client"])
+      );
+      const totals = new Map<string, number>();
+      closedWon.forEach((x: any) => {
+        if (!x.client_id) return;
+        totals.set(x.client_id, (totals.get(x.client_id) || 0) + (Number(x.deal_value) || 0));
+      });
+      setRevenueByClient(
+        Array.from(totals.entries())
+          .sort((x, y) => y[1] - x[1])
+          .slice(0, 6)
+          .map(([id, revenue]) => ({ name: (nameById.get(id) || "Client").split(" ")[0], revenue }))
+      );
 
-    // Build a simple trend (using months as labels with placeholder logic)
-    setPipelineTrend([
-      { month: "Oct", value: 12 }, { month: "Nov", value: 18 },
-      { month: "Dec", value: 15 }, { month: "Jan", value: 24 },
-      { month: "Feb", value: 28 }, { month: "Mar", value: 32 },
-    ]);
+      // Real closed-won trend for the last 6 months
+      const months: { key: string; month: string; value: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const dt = new Date();
+        dt.setDate(1);
+        dt.setMonth(dt.getMonth() - i);
+        months.push({
+          key: `${dt.getFullYear()}-${dt.getMonth()}`,
+          month: dt.toLocaleString("en-US", { month: "short" }),
+          value: 0,
+        });
+      }
+      closedWon.forEach((x: any) => {
+        if (!x.created_at) return;
+        const dt = new Date(x.created_at);
+        const key = `${dt.getFullYear()}-${dt.getMonth()}`;
+        const bucket = months.find((m) => m.key === key);
+        if (bucket) bucket.value += 1;
+      });
+      setPipelineTrend(months.map(({ month, value }) => ({ month, value })));
+    });
   }, []);
+
 
   const proposalAcceptRate = data.proposalsSent > 0
     ? Math.round((data.proposalsAccepted / data.proposalsSent) * 100) : 0;
