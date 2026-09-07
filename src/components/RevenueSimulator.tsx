@@ -94,10 +94,7 @@ export function RevenueSimulator({
         </div>
         <div className="ml-auto text-right">
           <p className="text-[10px] text-muted-foreground">{baselineLabel}</p>
-          <p
-            className="text-sm font-bold"
-            style={{ color: delta >= 0 ? "hsl(152 60% 44%)" : "hsl(0 72% 51%)" }}
-          >
+          <p className="text-sm font-bold" style={{ color: "hsl(152 60% 44%)" }}>
             {delta > 0 ? "+" : ""}${delta.toLocaleString()}
           </p>
         </div>
