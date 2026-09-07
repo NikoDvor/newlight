@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Activity, Globe, Search, Share2, Users, Star, Megaphone,
   Heart, Shield, TrendingUp, CheckCircle, AlertTriangle, XCircle,
-  DollarSign, Calendar, RefreshCw, Zap, Calculator
+  DollarSign, Calendar, RefreshCw, Zap
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
