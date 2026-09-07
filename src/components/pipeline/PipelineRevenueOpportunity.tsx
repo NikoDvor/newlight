@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   FUNNEL_STAGES, STAGE_COLOR, STAGE_LABEL, STAGE_DESCRIPTION,
-  LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue,
+  LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue, projectRevenueLever,
   type CanonStage,
 } from "@/lib/pipelineRevenue";
 
@@ -160,10 +160,36 @@ export function PipelineRevenueOpportunity({
     setDirty(false);
   }, [baseRates.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const projected = useMemo(
-    () => (rates.length ? projectRevenue(openDeals as any, rates) : 0),
-    [openDeals, rates],
+  const [avgValueDraft, setAvgValueDraft] = useState<string>("");
+
+  const naturalAvg = useMemo(() => {
+    const rows = (openDeals ?? []) as { value: number }[];
+    return rows.length ? rows.reduce((s, d) => s + Number(d.value || 0), 0) / rows.length : 0;
+  }, [openDeals]);
+
+  const avgOverride = useMemo(() => {
+    const n = Number(String(avgValueDraft).replace(/[^0-9.]/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [avgValueDraft]);
+
+  const baseline = useMemo(
+    () => (baseRates.length ? projectRevenue(openDeals as any, baseRates) : 0),
+    [openDeals, baseRates],
   );
+
+  const lever = useMemo(
+    () =>
+      projectRevenueLever(openDeals as any, rates.length ? rates : baseRates, {
+        avgDealValueOverride: avgOverride,
+        revenueTarget: model?.revenueTarget ?? null,
+        baseline,
+      }),
+    [openDeals, rates, baseRates, avgOverride, model?.revenueTarget, baseline],
+  );
+
+  const projected = lever.projectedRevenue;
+  const valueDirty = avgOverride !== null && Math.round(avgOverride) !== Math.round(naturalAvg);
+
 
   if (!clientId) return null;
 
@@ -450,19 +476,21 @@ export function PipelineRevenueOpportunity({
                 <p className="text-[9px] uppercase tracking-wider text-white/35">Projected</p>
                 <motion.p
                   className="text-lg font-bold tabular-nums leading-none"
-                  style={{ color: dirty ? "hsl(var(--nl-gold))" : "hsl(var(--nl-sky))" }}
-                  animate={{ scale: dirty ? [1, 1.04, 1] : 1 }}
+                  style={{ color: dirty || valueDirty ? "hsl(var(--nl-gold))" : "hsl(var(--nl-sky))" }}
+                  animate={{ scale: dirty || valueDirty ? [1, 1.04, 1] : 1 }}
                   transition={{ duration: 0.25 }}
                 >
                   {fmtMoney(projected)}
                 </motion.p>
               </div>
-              {dirty && (
+              {(dirty || valueDirty) && (
                 <button
                   onClick={() => {
                     setRates(baseRates);
                     setDirty(false);
+                    setAvgValueDraft("");
                   }}
+
                   className="text-[10px] text-white/45 hover:text-white/80 inline-flex items-center gap-1"
                 >
                   <RotateCcw className="h-3 w-3" /> Reset
@@ -470,6 +498,57 @@ export function PipelineRevenueOpportunity({
               )}
             </div>
           </div>
+
+          {/* revenue lever — second modelling input */}
+          <div className="mb-4 rounded-lg border border-white/[0.07] bg-white/[0.02] p-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <label
+                htmlFor="prv-avg-value"
+                className="text-[10px] uppercase tracking-wider text-white/45 font-semibold"
+              >
+                Revenue per deal · drag to model
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-white/40">$</span>
+                <input
+                  id="prv-avg-value"
+                  inputMode="numeric"
+                  value={avgValueDraft}
+                  placeholder={Math.round(naturalAvg).toString()}
+                  onChange={(e) => setAvgValueDraft(e.target.value.replace(/[^0-9.]/g, ""))}
+                  className="w-28 rounded-md bg-white/[0.05] px-2 py-1 text-[12px] tabular-nums text-white/85 outline-none focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+            </div>
+            <Slider
+              className="mt-3 prv-slider"
+              value={[Math.round(lever.avgDealValue)]}
+              min={0}
+              max={Math.max(Math.round(naturalAvg * 3), 30000)}
+              step={100}
+              onValueChange={([v]) => setAvgValueDraft(String(v))}
+            />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { k: "Avg deal value", v: fmtMoney(lever.avgDealValue) },
+                { k: "Won clients needed", v: lever.wonClientsNeeded.toLocaleString() },
+                { k: "Appointments needed", v: lever.appointmentsNeeded.toLocaleString() },
+              ].map((m) => (
+                <div key={m.k} className="rounded-md bg-white/[0.03] px-2.5 py-2">
+                  <p className="text-[9px] uppercase tracking-wider text-white/35">{m.k}</p>
+                  <p className="text-[13px] font-semibold tabular-nums text-white/85 leading-tight mt-0.5">
+                    {m.v}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] text-white/35">
+              Volume needed to reach{" "}
+              {model.revenueTarget ? `your ${fmtMoney(model.revenueTarget)} target` : "the projection above"}
+              , at the current stage close rates.
+            </p>
+          </div>
+
 
           <div className="space-y-3.5">
             {stageRates.map((sr, i) => (

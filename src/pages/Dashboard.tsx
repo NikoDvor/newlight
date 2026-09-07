@@ -3,7 +3,6 @@ import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
 import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
-import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
@@ -1268,9 +1267,6 @@ export default function Dashboard() {
               implementationStatus={clientStages.implementationStatus}
             />
           )}
-
-          {/* ══════ PIPELINE REVENUE OPPORTUNITY — headline metric ══════ */}
-          <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
 
           {/* ══════ REVENUE BY PERIOD — same closed-won source ══════ */}
           <RevenueByPeriod clientId={activeClientId} />

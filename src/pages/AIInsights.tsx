@@ -13,6 +13,7 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { PageHeader } from "@/components/PageHeader";
+import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -414,6 +415,11 @@ export default function AIInsights() {
 
       {/* ── Category Performance ─────────────────────────────────── */}
       <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
+
+      {/* ── Pipeline revenue opportunity + stage close-rate coaching ── */}
+      <div className="mt-8">
+        <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
+      </div>
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
       <WeaknessesPanel signals={signals} />
