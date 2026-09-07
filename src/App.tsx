@@ -26,7 +26,6 @@ import Reviews from "./pages/Reviews";
 import Meetings from "./pages/Meetings";
 import Reports from "./pages/Reports";
 import SalesPipelineInsights from "./pages/SalesPipelineInsights";
-import Intelligence from "./pages/Intelligence";
 import AIInsights from "./pages/AIInsights";
 import Training from "./pages/Training";
 import SettingsPage from "./pages/Settings";
@@ -455,7 +454,6 @@ const App = () => {
                 <Route path="/approvals" element={<PermissionGuard moduleKey="approvals"><Approvals /></PermissionGuard>} />
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/reports" element={<PermissionGuard moduleKey="reports"><Reports /></PermissionGuard>} />
-                <Route path="/intelligence" element={<Intelligence />} />
                 <Route path="/ai-insights" element={<PermissionGuard moduleKey="ai"><AIInsights /></PermissionGuard>} />
                 <Route path="/training" element={<PermissionGuard moduleKey="training"><Training /></PermissionGuard>} />
                 <Route path="/settings" element={<PermissionGuard moduleKey="settings"><SettingsPage /></PermissionGuard>} />
