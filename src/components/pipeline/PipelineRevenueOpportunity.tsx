@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   FUNNEL_STAGES, STAGE_COLOR, STAGE_LABEL, STAGE_DESCRIPTION,
-  LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue,
+  LOST_REASON_LABEL, fmtMoney, fmtPct, projectRevenue, projectRevenueLever,
   type CanonStage,
 } from "@/lib/pipelineRevenue";
 
