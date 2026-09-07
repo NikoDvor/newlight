@@ -499,6 +499,57 @@ export function PipelineRevenueOpportunity({
             </div>
           </div>
 
+          {/* revenue lever — second modelling input */}
+          <div className="mb-4 rounded-lg border border-white/[0.07] bg-white/[0.02] p-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <label
+                htmlFor="prv-avg-value"
+                className="text-[10px] uppercase tracking-wider text-white/45 font-semibold"
+              >
+                Revenue per deal · drag to model
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-white/40">$</span>
+                <input
+                  id="prv-avg-value"
+                  inputMode="numeric"
+                  value={avgValueDraft}
+                  placeholder={Math.round(naturalAvg).toString()}
+                  onChange={(e) => setAvgValueDraft(e.target.value.replace(/[^0-9.]/g, ""))}
+                  className="w-28 rounded-md bg-white/[0.05] px-2 py-1 text-[12px] tabular-nums text-white/85 outline-none focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+            </div>
+            <Slider
+              className="mt-3 prv-slider"
+              value={[Math.round(lever.avgDealValue)]}
+              min={0}
+              max={Math.max(Math.round(naturalAvg * 3), 30000)}
+              step={100}
+              onValueChange={([v]) => setAvgValueDraft(String(v))}
+            />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { k: "Avg deal value", v: fmtMoney(lever.avgDealValue) },
+                { k: "Won clients needed", v: lever.wonClientsNeeded.toLocaleString() },
+                { k: "Appointments needed", v: lever.appointmentsNeeded.toLocaleString() },
+              ].map((m) => (
+                <div key={m.k} className="rounded-md bg-white/[0.03] px-2.5 py-2">
+                  <p className="text-[9px] uppercase tracking-wider text-white/35">{m.k}</p>
+                  <p className="text-[13px] font-semibold tabular-nums text-white/85 leading-tight mt-0.5">
+                    {m.v}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] text-white/35">
+              Volume needed to reach{" "}
+              {model.revenueTarget ? `your ${fmtMoney(model.revenueTarget)} target` : "the projection above"}
+              , at the current stage close rates.
+            </p>
+          </div>
+
+
           <div className="space-y-3.5">
             {stageRates.map((sr, i) => (
               <div key={`${sr.from}-${sr.to}`}>
