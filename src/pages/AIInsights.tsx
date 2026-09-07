@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toCanonStage } from "@/lib/pipelineRevenue";
 
 // ── Revenue Impact Simulator ─────────────────────────────────────
 // Three levers seeded from the client's real CRM + calendar data.
@@ -50,10 +51,13 @@ function RevenueImpactSimulator({ clientId }: { clientId: string }) {
       if (cancelled) return;
 
       const deals = dealsRes.data ?? [];
-      const won = deals.filter((d) => d.pipeline_stage === "closed_won");
-      const lost = deals.filter((d) => d.pipeline_stage === "closed_lost");
+      const won = deals.filter((d) => toCanonStage(d.pipeline_stage) === "won");
+      const lost = deals.filter((d) => toCanonStage(d.pipeline_stage) === "lost");
       const open = deals.filter(
-        (d) => d.pipeline_stage !== "closed_won" && d.pipeline_stage !== "closed_lost"
+        (d) => {
+          const stage = toCanonStage(d.pipeline_stage);
+          return stage !== "won" && stage !== "lost";
+        }
       );
       const decided = won.length + lost.length;
       const closeRate = decided > 0 ? (won.length / decided) * 100 : 0;
