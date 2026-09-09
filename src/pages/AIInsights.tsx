@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toCanonStage, LOST_REASONS } from "@/lib/pipelineRevenue";
 
 
 // ── Executable action mapping ────────────────────────────────────
@@ -410,11 +411,14 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Pipeline Takeaways ─────────────────────────────────────── */}
+      <PipelineTakeaways clientId={activeClientId} />
+
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
 
-      {/* ── Category Performance ─────────────────────────────────── */}
-      <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
+      {/* ── Channel Snapshot (compact, real data only) ─────────────── */}
+      <ChannelSnapshotStrip clientId={activeClientId} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
       <WeaknessesPanel signals={signals} />
@@ -1170,205 +1174,321 @@ function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAc
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Category Performance — 6 mini dashboards, always visible.
-// Uses illustrative placeholder numbers so the customer sees exactly
-// what the surface will look like once integrations are connected.
-// Clicking a card filters the "Do This Next" stack via existing state.
+// Pipeline Takeaways — compact narrative bullets derived from the same
+// crm_deals data that powers the full pipeline panel on the Dashboard.
+// Bullets that can't be computed from real history are simply omitted.
 // ─────────────────────────────────────────────────────────────────
 
-interface CatPerf {
-  key: Category;
-  stats: Array<{ label: string; value: string }>;
-  spark: Array<{ x: string; y: number }>;
-  chartType: "bar" | "line";
+interface TakeawayDeal {
+  pipeline_stage: string | null;
+  deal_value: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  lost_reason: string | null;
 }
 
-const CATEGORY_PERF_EXAMPLES: CatPerf[] = [
-  {
-    key: "ads",
-    stats: [
-      { label: "Cost / Lead", value: "$42" },
-      { label: "CTR", value: "3.8%" },
-      { label: "Spend / mo", value: "$2.4K" },
-    ],
-    spark: [
-      { x: "W1", y: 58 }, { x: "W2", y: 51 }, { x: "W3", y: 47 },
-      { x: "W4", y: 42 }, { x: "W5", y: 44 }, { x: "W6", y: 40 },
-    ],
-    chartType: "line",
-  },
-  {
-    key: "seo",
-    stats: [
-      { label: "Ranking Keywords", value: "128" },
-      { label: "Organic Traffic", value: "1.9K" },
-      { label: "Backlinks", value: "84" },
-    ],
-    spark: [
-      { x: "M1", y: 90 }, { x: "M2", y: 110 }, { x: "M3", y: 118 },
-      { x: "M4", y: 121 }, { x: "M5", y: 125 }, { x: "M6", y: 128 },
-    ],
-    chartType: "bar",
-  },
-  {
-    key: "social",
-    stats: [
-      { label: "Engagement Rate", value: "4.2%" },
-      { label: "Follower Growth", value: "+38 / mo" },
-      { label: "Posts / mo", value: "18" },
-    ],
-    spark: [
-      { x: "W1", y: 3.1 }, { x: "W2", y: 3.6 }, { x: "W3", y: 3.9 },
-      { x: "W4", y: 4.0 }, { x: "W5", y: 4.4 }, { x: "W6", y: 4.2 },
-    ],
-    chartType: "line",
-  },
-  {
-    key: "reviews",
-    stats: [
-      { label: "Avg Rating", value: "4.6★" },
-      { label: "Reviews / mo", value: "12" },
-      { label: "Response Rate", value: "92%" },
-    ],
-    spark: [
-      { x: "M1", y: 6 }, { x: "M2", y: 8 }, { x: "M3", y: 9 },
-      { x: "M4", y: 11 }, { x: "M5", y: 10 }, { x: "M6", y: 12 },
-    ],
-    chartType: "bar",
-  },
-  {
-    key: "website",
-    stats: [
-      { label: "Conversion Rate", value: "3.4%" },
-      { label: "Bounce Rate", value: "42%" },
-      { label: "Page Views / mo", value: "8.6K" },
-    ],
-    spark: [
-      { x: "W1", y: 2.6 }, { x: "W2", y: 2.9 }, { x: "W3", y: 3.1 },
-      { x: "W4", y: 3.2 }, { x: "W5", y: 3.3 }, { x: "W6", y: 3.4 },
-    ],
-    chartType: "line",
-  },
-  {
-    key: "crm",
-    stats: [
-      { label: "Open Deals", value: "24" },
-      { label: "Pipeline Value", value: "$86K" },
-      { label: "Avg Response", value: "12 min" },
-    ],
-    spark: [
-      { x: "M1", y: 14 }, { x: "M2", y: 17 }, { x: "M3", y: 19 },
-      { x: "M4", y: 22 }, { x: "M5", y: 23 }, { x: "M6", y: 24 },
-    ],
-    chartType: "bar",
-  },
-];
+const DAY_MS = 86_400_000;
 
-function CategoryPerformanceGrid({
-  recs,
+function lostReasonLabel(raw: string): string {
+  const found = LOST_REASONS.find((r) => r.value === raw);
+  return found ? found.label.toLowerCase() : raw.replace(/_/g, " ").toLowerCase();
+}
+
+function buildPipelineTakeaways(deals: TakeawayDeal[]): string[] {
+  const out: string[] = [];
+  if (deals.length === 0) return out;
+
+  const canon = deals.map((d) => ({ ...d, stage: toCanonStage(d.pipeline_stage) }));
+  const count = (s: string) => canon.filter((d) => d.stage === s).length;
+  const cold = count("cold");
+  const warm = count("warm");
+  const hot = count("hot");
+  const won = count("won");
+  const lost = count("lost");
+
+  // 1. Biggest stage-to-stage drop-off.
+  const transitions = [
+    { label: "Cold to Warm", from: cold + warm + hot + won, to: warm + hot + won, note: "leads aren't converting into booked conversations" },
+    { label: "Warm to Hot", from: warm + hot + won, to: hot + won, note: "most deals are stalling after the first meeting" },
+    { label: "Hot to Won", from: hot + won, to: won, note: "deals are reaching the finish line but not closing" },
+  ].filter((t) => t.from >= 3);
+
+  if (transitions.length > 0) {
+    const worst = transitions.reduce((a, b) => (b.to / b.from < a.to / a.from ? b : a));
+    const pct = Math.round((worst.to / worst.from) * 100);
+    out.push(`${worst.label} is your biggest drop-off at only ${pct}% — ${worst.note}.`);
+  }
+
+  // 2. Aging / stuck open deals.
+  const now = Date.now();
+  const open = canon.filter((d) => d.stage !== "won" && d.stage !== "lost");
+  const aging = open
+    .map((d) => ({ d, days: Math.floor((now - new Date(d.updated_at || d.created_at || Date.now()).getTime()) / DAY_MS) }))
+    .filter((x) => x.days >= 21)
+    .sort((a, b) => b.days - a.days);
+  if (aging.length > 0) {
+    const oldest = aging[0].days;
+    out.push(
+      `${aging.length} open deal${aging.length === 1 ? " has" : "s have"} not moved in over three weeks — the oldest has been sitting untouched for ${oldest} days. Reach out or close them out so your pipeline reflects reality.`
+    );
+  }
+
+  // 3. Top recurring loss reason.
+  if (lost > 0) {
+    const tally = new Map<string, number>();
+    canon
+      .filter((d) => d.stage === "lost" && d.lost_reason)
+      .forEach((d) => tally.set(d.lost_reason as string, (tally.get(d.lost_reason as string) ?? 0) + 1));
+    if (tally.size > 0) {
+      const [reason, n] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+      out.push(
+        `${lostReasonLabel(reason)} is the reason you lose most often — ${n} of ${lost} lost deal${lost === 1 ? "" : "s"} ended there. Worth addressing it earlier in the conversation.`
+      );
+    }
+  }
+
+  // 4. Close-rate trend vs the prior period (needs enough closed history).
+  const closedIn = (startDaysAgo: number, endDaysAgo: number) =>
+    canon.filter((d) => {
+      if (d.stage !== "won" && d.stage !== "lost") return false;
+      const t = new Date(d.updated_at || d.created_at || 0).getTime();
+      if (!t) return false;
+      const age = (now - t) / DAY_MS;
+      return age >= endDaysAgo && age < startDaysAgo;
+    });
+  const recent = closedIn(30, 0);
+  const prior = closedIn(60, 30);
+  if (recent.length >= 3 && prior.length >= 3) {
+    const rate = (arr: typeof recent) => (arr.filter((d) => d.stage === "won").length / arr.length) * 100;
+    const r = Math.round(rate(recent));
+    const p = Math.round(rate(prior));
+    const diff = r - p;
+    if (Math.abs(diff) >= 3) {
+      out.push(
+        diff > 0
+          ? `Your close rate is trending up — ${r}% over the last 30 days versus ${p}% the month before. Whatever changed recently is working.`
+          : `Your close rate slipped to ${r}% over the last 30 days, down from ${p}% the month before. Worth reviewing what changed.`
+      );
+    } else {
+      out.push(`Your close rate is holding steady at about ${r}% month over month.`);
+    }
+  }
+
+  // 5. Where the money currently sits.
+  const openValue = open.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+  if (open.length > 0 && openValue > 0) {
+    out.push(
+      `You have $${Math.round(openValue).toLocaleString()} across ${open.length} open deal${open.length === 1 ? "" : "s"} still in play — that's the revenue at stake if follow-up slips.`
+    );
+  }
+
+  return out.slice(0, 5);
+}
+
+function PipelineTakeaways({ clientId }: { clientId: string }) {
+  const [bullets, setBullets] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("crm_deals")
+        .select("pipeline_stage, deal_value, created_at, updated_at, lost_reason")
+        .eq("client_id", clientId);
+      if (cancelled) return;
+      setBullets(buildPipelineTakeaways((data ?? []) as TakeawayDeal[]));
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  if (!loaded || bullets.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-8 rounded-2xl border bg-card p-5"
+      style={{ borderColor: "hsl(var(--border))" }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <div
+          className="h-7 w-7 rounded-lg flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, hsl(211 96% 56%), hsl(280 75% 60%))" }}
+        >
+          <TrendingUp className="h-3.5 w-3.5" style={{ color: "hsl(210 40% 98%)" }} />
+        </div>
+        <h3 className="text-base font-bold text-foreground">Pipeline Takeaways</h3>
+        <span className="text-[11px] text-muted-foreground">From your live deal data</span>
+      </div>
+      <ul className="space-y-2">
+        {bullets.map((b, i) => (
+          <li key={i} className="flex gap-2.5 text-sm text-foreground/90 leading-snug">
+            <span
+              className="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0"
+              style={{ background: "hsl(211 96% 56%)" }}
+            />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Channel Snapshot — compact strip of real numbers only. Channels with
+// no connected integration and no real data are omitted entirely.
+// ─────────────────────────────────────────────────────────────────
+
+interface ChannelStat {
+  key: Category;
+  primary: string;
+  secondary: string;
+}
+
+function ChannelSnapshotStrip({
+  clientId,
   onSelect,
   activeFilter,
 }: {
-  recs: Recommendation[];
+  clientId: string;
   onSelect: (k: "all" | Category) => void;
   activeFilter: "all" | Category;
 }) {
+  const [stats, setStats] = useState<ChannelStat[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const since = new Date(Date.now() - 30 * DAY_MS).toISOString();
+      const sinceDate = since.slice(0, 10);
+
+      const [adsRes, seoRes, socialRes, dealsRes] = await Promise.all([
+        supabase
+          .from("ad_conversions")
+          .select("spend, conversions, conversion_value")
+          .eq("client_id", clientId)
+          .gte("date", sinceDate),
+        supabase
+          .from("seo_keywords")
+          .select("position")
+          .eq("client_id", clientId),
+        supabase
+          .from("social_posts")
+          .select("likes, comments, shares, published_at")
+          .eq("client_id", clientId)
+          .gte("published_at", since),
+        supabase
+          .from("crm_deals")
+          .select("pipeline_stage, deal_value")
+          .eq("client_id", clientId),
+      ]);
+
+      if (cancelled) return;
+      const next: ChannelStat[] = [];
+
+      const ads = adsRes.data ?? [];
+      if (ads.length > 0) {
+        const spend = ads.reduce((s, r) => s + (Number(r.spend) || 0), 0);
+        const conv = ads.reduce((s, r) => s + (Number(r.conversions) || 0), 0);
+        next.push({
+          key: "ads",
+          primary: `$${Math.round(spend).toLocaleString()} spend`,
+          secondary: `${conv} conversion${conv === 1 ? "" : "s"} · 30 days`,
+        });
+      }
+
+      const kws = seoRes.data ?? [];
+      if (kws.length > 0) {
+        const ranked = kws.filter((k) => Number(k.position) > 0);
+        const avg = ranked.length > 0
+          ? Math.round(ranked.reduce((s, k) => s + Number(k.position), 0) / ranked.length)
+          : null;
+        next.push({
+          key: "seo",
+          primary: `${kws.length} keyword${kws.length === 1 ? "" : "s"} tracked`,
+          secondary: avg != null ? `Average position ${avg}` : "Not yet ranking",
+        });
+      }
+
+      const posts = socialRes.data ?? [];
+      if (posts.length > 0) {
+        const eng = posts.reduce(
+          (s, p) => s + (Number(p.likes) || 0) + (Number(p.comments) || 0) + (Number(p.shares) || 0),
+          0
+        );
+        next.push({
+          key: "social",
+          primary: `${posts.length} post${posts.length === 1 ? "" : "s"} published`,
+          secondary: `${eng.toLocaleString()} interactions · 30 days`,
+        });
+      }
+
+      const deals = dealsRes.data ?? [];
+      const openDeals = deals.filter((d) => {
+        const s = toCanonStage(d.pipeline_stage);
+        return s !== "won" && s !== "lost";
+      });
+      if (deals.length > 0) {
+        const value = openDeals.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
+        next.push({
+          key: "crm",
+          primary: `${openDeals.length} open deal${openDeals.length === 1 ? "" : "s"}`,
+          secondary: `$${Math.round(value).toLocaleString()} in pipeline`,
+        });
+      }
+
+      setStats(next);
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  if (!loaded) return null;
+
+  if (stats.length === 0) {
+    return (
+      <div className="mt-8 rounded-xl border bg-card px-4 py-3 text-xs text-muted-foreground" style={{ borderColor: "hsl(var(--border))" }}>
+        No channel data yet — connect your ads, SEO or social accounts in Integrations and real numbers will appear here.
+      </div>
+    );
+  }
+
   return (
     <div className="mt-8">
-      <div className="flex items-center gap-2 mb-4">
-        <div
-          className="h-8 w-8 rounded-lg flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, hsl(280 75% 60%), hsl(211 96% 56%))" }}
-        >
-          <BarChart3 className="h-4 w-4" style={{ color: "hsl(210 40% 98%)" }} />
-        </div>
-        <h3 className="text-lg font-bold text-foreground">Category Performance</h3>
-        <span className="text-xs text-muted-foreground">Click a card to focus your action queue</span>
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-base font-bold text-foreground">Channel Snapshot</h3>
+        <span className="text-[11px] text-muted-foreground">Connected channels only</span>
       </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CATEGORY_PERF_EXAMPLES.map((cp, idx) => {
-          const meta = CATEGORY_META[cp.key];
+      <div className="flex flex-wrap gap-2">
+        {stats.map((s) => {
+          const meta = CATEGORY_META[s.key];
           const Icon = meta.icon;
-          const active = activeFilter === cp.key;
-          const catRecs = recs.filter((r) => normalizeCategory(r.category) === cp.key).length;
+          const active = activeFilter === s.key;
           return (
-            <motion.button
-              key={cp.key}
+            <button
+              key={s.key}
               type="button"
-              onClick={() => onSelect(active ? "all" : cp.key)}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              whileHover={{ y: -3 }}
-              className="text-left rounded-2xl p-5 transition-all bg-card border"
-              style={{
-                borderColor: active ? `hsla(${meta.hue},.45)` : "hsl(var(--border))",
-                boxShadow: active
-                  ? `0 12px 32px -14px hsla(${meta.hue},.35)`
-                  : "0 2px 8px -4px hsla(215,25%,20%,.06)",
-              }}
+              onClick={() => onSelect(active ? "all" : s.key)}
+              className="flex items-center gap-2.5 rounded-xl border bg-card px-3.5 py-2.5 text-left transition-colors"
+              style={{ borderColor: active ? `hsla(${meta.hue},.45)` : "hsl(var(--border))" }}
             >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, hsla(${meta.hue},.16), hsla(${meta.hue},.06))` }}
-                  >
-                    <Icon className="h-4.5 w-4.5" style={{ color: `hsl(${meta.hue})` }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground leading-tight">{meta.label}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {catRecs > 0 ? `${catRecs} recommendation${catRecs === 1 ? "" : "s"}` : "No live signals yet"}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full whitespace-nowrap"
-                  style={{
-                    background: "hsla(45,93%,50%,.14)",
-                    color: "hsl(38 90% 38%)",
-                  }}
-                  title="Illustrative numbers — connect the account below for live data"
-                >
-                  Example data
-                </span>
+              <div
+                className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: `hsla(${meta.hue},.12)` }}
+              >
+                <Icon className="h-3.5 w-3.5" style={{ color: `hsl(${meta.hue})` }} />
               </div>
-
-              <div className="h-16 -mx-1">
-                <ResponsiveContainer width="100%" height="100%">
-                  {cp.chartType === "line" ? (
-                    <LineChart data={cp.spark} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                      <Line
-                        type="monotone"
-                        dataKey="y"
-                        stroke={`hsl(${meta.hue})`}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  ) : (
-                    <BarChart data={cp.spark} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                      <Bar dataKey="y" fill={`hsl(${meta.hue})`} radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
+              <div className="leading-tight">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{meta.label}</p>
+                <p className="text-sm font-bold text-foreground tabular-nums">{s.primary}</p>
+                <p className="text-[10px] text-muted-foreground">{s.secondary}</p>
               </div>
-
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {cp.stats.map((s) => (
-                  <div key={s.label}>
-                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold truncate">{s.label}</p>
-                    <p className="text-sm font-bold text-foreground tabular-nums mt-0.5">{s.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-[10px] text-muted-foreground mt-3 leading-snug">
-                Connect your {meta.label.toLowerCase()} account in Integrations to replace with live numbers.
-              </p>
-            </motion.button>
+            </button>
           );
         })}
       </div>
