@@ -20,7 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { toCanonStage, LOST_REASONS } from "@/lib/pipelineRevenue";
+import { toCanonStage } from "@/lib/pipelineRevenue";
+import { detectLeakage, type TakeawayDeal } from "@/lib/pipelineLeakage";
+
+const DAY_MS = 86_400_000;
 
 
 // ── Executable action mapping ────────────────────────────────────
