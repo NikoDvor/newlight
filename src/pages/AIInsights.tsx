@@ -170,6 +170,7 @@ export default function AIInsights() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [wins, setWins] = useState<Recommendation[]>([]);
   const [signals, setSignals] = useState<WeaknessSignal[]>([]);
+  const [leakageFlags, setLeakageFlags] = useState<LeakageFlag[]>([]);
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -179,7 +180,7 @@ export default function AIInsights() {
   const fetchAll = useCallback(async () => {
     if (!activeClientId) return;
     setLoading(true);
-    const [{ data: recsData }, { data: winsData }, { data: healthData }, { data: snapshotData }] = await Promise.all([
+    const [{ data: recsData }, { data: winsData }, { data: healthData }, { data: snapshotData }, { data: dealsData }] = await Promise.all([
       supabase
         .from("ai_recommendations")
         .select("*")
