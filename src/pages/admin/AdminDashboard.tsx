@@ -105,7 +105,12 @@ export default function AdminDashboard() {
       {/* Won revenue by period — same closed-won source as the widget above */}
       <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />
 
-
+      {/* Company-wide BDR sales pipeline (all reps, all nl_bdr_leads) */}
+      <PipelineRevenueOpportunity
+        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
+        variant="admin"
+        source="bdr"
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {stats.map((s, i) => (
