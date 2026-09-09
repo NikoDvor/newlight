@@ -1953,15 +1953,20 @@ function WeaknessesPanel({ signals, leakage }: { signals: WeaknessSignal[]; leak
       </div>
 
       <div className="rounded-2xl bg-card border border-border overflow-hidden">
-        {items.map((s, i) => {
-          const cat = normalizeCategory(s.category);
+        {items.map((item, i) => {
+          const isSignal = item.kind === "signal";
+          const s = item.kind === "signal" ? item.signal : null;
+          const flag = item.kind === "leakage" ? item.flag : null;
+          const cat = isSignal ? normalizeCategory(s!.category) : "crm";
           const meta = CATEGORY_META[cat];
-          const sev = severityFor(s.gap_pct);
-          const barWidth = Math.min(100, Math.max(6, s.gap_pct));
-          const label = METRIC_LABELS[s.metric_key] || s.metric_key.replace(/_/g, " ");
+          const sev = severityFor(item.sortGap);
+          const barWidth = Math.min(100, Math.max(6, item.sortGap));
+          const label = isSignal
+            ? (METRIC_LABELS[s!.metric_key] || s!.metric_key.replace(/_/g, " "))
+            : LEAKAGE_LABELS[flag!.type];
           return (
             <motion.div
-              key={`${s.metric_key}-${i}`}
+              key={`${isSignal ? s!.metric_key : flag!.type}-${i}`}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
