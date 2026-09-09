@@ -1262,6 +1262,80 @@ function PipelineTakeaways({ clientId }: { clientId: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Pipeline Detail — compact five-tile stage breakdown (count + $) of
+// the active client's real crm_deals, via the shared toCanonStage
+// classification. Hidden entirely when the client has no deals; the
+// full funnel panel stays exclusive to the Dashboard.
+// ─────────────────────────────────────────────────────────────────
+
+const PIPELINE_DETAIL_STAGES: { key: string; label: string; hue: string }[] = [
+  { key: "cold", label: "Cold", hue: "215 25% 55%" },
+  { key: "warm", label: "Warm", hue: "45 93% 50%" },
+  { key: "hot", label: "Hot", hue: "24 95% 54%" },
+  { key: "won", label: "Won", hue: "142 71% 45%" },
+  { key: "lost", label: "Lost", hue: "0 72% 51%" },
+];
+
+function PipelineDetailStrip({ clientId }: { clientId: string }) {
+  const [tiles, setTiles] = useState<{ key: string; label: string; hue: string; count: number; value: number }[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("crm_deals")
+        .select("pipeline_stage, deal_value")
+        .eq("client_id", clientId);
+      if (cancelled) return;
+      const deals = data ?? [];
+      if (deals.length === 0) {
+        setTiles(null);
+        return;
+      }
+      setTiles(
+        PIPELINE_DETAIL_STAGES.map((s) => {
+          const inStage = deals.filter((d) => toCanonStage(d.pipeline_stage) === s.key);
+          return {
+            ...s,
+            count: inStage.length,
+            value: inStage.reduce((sum, d) => sum + (Number(d.deal_value) || 0), 0),
+          };
+        })
+      );
+    })();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  if (!tiles) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+    >
+      {tiles.map((t) => (
+        <div
+          key={t.key}
+          className="rounded-xl border bg-card px-4 py-3"
+          style={{ borderColor: "hsl(var(--border))" }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: `hsl(${t.hue})` }}>
+            {t.label}
+          </p>
+          <p className="text-xl font-bold text-foreground tabular-nums leading-tight mt-1">
+            {t.count}
+          </p>
+          <p className="text-[11px] text-muted-foreground tabular-nums">
+            ${Math.round(t.value).toLocaleString()}
+          </p>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Channel Snapshot — compact strip of real numbers only. Channels with
 // no connected integration and no real data are omitted entirely.
 // ─────────────────────────────────────────────────────────────────
