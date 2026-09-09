@@ -102,7 +102,7 @@ export function RevenueSimulator({
           </p>
         </div>
       </motion.div>
-      {footer}
+      {typeof footer === "function" ? footer(values) : footer}
     </DataCard>
   );
 }
