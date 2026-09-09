@@ -4,6 +4,7 @@ import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
+import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
@@ -1270,6 +1271,12 @@ export default function Dashboard() {
 
           {/* ══════ REVENUE BY PERIOD — same closed-won source ══════ */}
           <RevenueByPeriod clientId={activeClientId} />
+
+          {/* ══════ PIPELINE REVENUE OPPORTUNITY — stage funnel + close-rate coaching ══════ */}
+          <div className="mt-8">
+            <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
+          </div>
+
 
 
           {/* ══════ REFERRAL — ABOVE THE FOLD (3s light blue → 3s neon green → 3s back) ══════ */}
