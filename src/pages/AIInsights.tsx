@@ -1994,30 +1994,40 @@ function WeaknessesPanel({ signals, leakage }: { signals: WeaknessSignal[]; leak
                     {meta.label}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <div className="flex-1 max-w-[240px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(215,25%,50%,.12)" }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${barWidth}%` }}
-                      transition={{ delay: i * 0.04 + 0.1, duration: 0.5, ease: "easeOut" }}
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, hsl(${sev.hue}), hsla(${sev.hue},.7))` }}
-                    />
+                {isSignal ? (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex-1 max-w-[240px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(215,25%,50%,.12)" }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${barWidth}%` }}
+                        transition={{ delay: i * 0.04 + 0.1, duration: 0.5, ease: "easeOut" }}
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, hsl(${sev.hue}), hsla(${sev.hue},.7))` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold tabular-nums" style={{ color: `hsl(${sev.hue})` }}>
+                      {Math.round(s!.gap_pct)}% gap · {sev.label}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold tabular-nums" style={{ color: `hsl(${sev.hue})` }}>
-                    {Math.round(s.gap_pct)}% gap · {sev.label}
-                  </span>
-                </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground leading-snug mt-1.5">
+                    <span className="font-semibold" style={{ color: `hsl(${sev.hue})` }}>{sev.label}</span>
+                    {" — "}
+                    {flag!.message}
+                  </p>
+                )}
               </div>
 
-              <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-foreground tabular-nums leading-tight">
-                  {formatSignalValue(s.actual, s.unit)}
-                </p>
-                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                  vs {formatSignalValue(s.benchmark, s.unit)} benchmark
-                </p>
-              </div>
+              {isSignal && (
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-bold text-foreground tabular-nums leading-tight">
+                    {formatSignalValue(s!.actual, s!.unit)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
+                    vs {formatSignalValue(s!.benchmark, s!.unit)} benchmark
+                  </p>
+                </div>
+              )}
             </motion.div>
           );
         })}
