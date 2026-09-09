@@ -13,8 +13,6 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { PageHeader } from "@/components/PageHeader";
-import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
-import { RevenueSimulator, type SimulatorLever } from "@/components/RevenueSimulator";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,139 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { toCanonStage } from "@/lib/pipelineRevenue";
 
-// ── Revenue Impact Simulator ─────────────────────────────────────
-// Three levers seeded from the client's real CRM + calendar data.
-function RevenueImpactSimulator({ clientId }: { clientId: string }) {
-  const [state, setState] = useState<{
-    loading: boolean;
-    closeRate: number;
-    appointments: number;
-    pipelineValue: number;
-    avgDealValue: number;
-    hasData: boolean;
-  }>({ loading: true, closeRate: 0, appointments: 0, pipelineValue: 0, avgDealValue: 0, hasData: false });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const [dealsRes, apptRes] = await Promise.all([
-        supabase.from("crm_deals").select("pipeline_stage, deal_value").eq("client_id", clientId),
-        supabase
-          .from("calendar_events")
-          .select("id", { count: "exact", head: true })
-          .eq("client_id", clientId)
-          .gte("start_time", since),
-      ]);
-      if (cancelled) return;
-
-      const deals = dealsRes.data ?? [];
-      const won = deals.filter((d) => toCanonStage(d.pipeline_stage) === "won");
-      const lost = deals.filter((d) => toCanonStage(d.pipeline_stage) === "lost");
-      const open = deals.filter(
-        (d) => {
-          const stage = toCanonStage(d.pipeline_stage);
-          return stage !== "won" && stage !== "lost";
-        }
-      );
-      const decided = won.length + lost.length;
-      const closeRate = decided > 0 ? (won.length / decided) * 100 : 0;
-      const pipelineValue = open.reduce((sum, d) => sum + (Number(d.deal_value) || 0), 0);
-      const avgFrom = (rows: { deal_value: number | null }[]) =>
-        rows.length > 0 ? rows.reduce((s, d) => s + (Number(d.deal_value) || 0), 0) / rows.length : 0;
-      const avgDealValue = won.length > 0 ? avgFrom(won) : avgFrom(open);
-
-      setState({
-        loading: false,
-        closeRate: Math.round(closeRate * 10) / 10,
-        appointments: apptRes.count ?? 0,
-        pipelineValue: Math.round(pipelineValue),
-        avgDealValue: Math.round(avgDealValue),
-        hasData: deals.length > 0 || (apptRes.count ?? 0) > 0,
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [clientId]);
-
-  const SEED_APPTS = 20;
-  const SEED_DEAL_VALUE = 2500;
-  const SEED_CLOSE_RATE = 25;
-
-  const levers = useMemo<SimulatorLever[]>(() => {
-    const apptMax = Math.max(10, Math.round((state.appointments || SEED_APPTS) * 3));
-    const pipeMax = Math.max(10000, Math.round((state.pipelineValue || 50000) * 3));
-    return [
-      {
-        key: "closeRate",
-        label: "Close Rate",
-        min: 0,
-        max: 100,
-        step: 1,
-        value: state.closeRate || 0,
-        format: (v) => `${v}%`,
-      },
-      {
-        key: "appointments",
-        label: "Appointments / mo",
-        min: 0,
-        max: apptMax,
-        step: Math.max(1, Math.round(apptMax / 60)),
-        value: state.appointments,
-        format: (v) => v.toLocaleString(),
-      },
-      {
-        key: "pipelineValue",
-        label: "Pipeline Value",
-        min: 0,
-        max: pipeMax,
-        step: Math.max(100, Math.round(pipeMax / 100)),
-        value: state.pipelineValue,
-        format: (v) => `$${Math.round(v).toLocaleString()}`,
-      },
-    ];
-  }, [state]);
-
-  // Average deal value: real when known, otherwise a sensible seed so the
-  // model stays usable for brand-new workspaces.
-  const avgDealValue = state.avgDealValue > 0 ? state.avgDealValue : SEED_DEAL_VALUE;
-  const effectiveCloseRate = state.closeRate > 0 ? state.closeRate : SEED_CLOSE_RATE;
-  const currentRevenue = Math.round(state.appointments * (effectiveCloseRate / 100) * avgDealValue);
-
-  if (state.loading) {
-    return (
-      <div className="mt-8 card-widget flex items-center gap-3 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading your revenue model…
-      </div>
-    );
-  }
-
-  const isSeeded = !state.hasData || state.avgDealValue === 0;
-
-  return (
-    <div className="mt-8">
-      <RevenueSimulator
-        title="Revenue Impact Simulator"
-        levers={levers}
-        project={(v) => (v.appointments || 0) * ((v.closeRate || 0) / 100) * avgDealValue}
-        baseline={currentRevenue}
-        gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6"
-        projectedLabel="Projected Monthly Revenue"
-        baselineLabel={`vs current ($${currentRevenue.toLocaleString()}/mo)`}
-        footer={
-          <p className="text-[11px] text-muted-foreground mt-3">
-            {isSeeded
-              ? `Not enough closed deals yet — modeled on an example deal value of $${avgDealValue.toLocaleString()}. Numbers become real as deals close.`
-              : `Based on your average closed deal value of $${avgDealValue.toLocaleString()} and ${state.appointments.toLocaleString()} appointments in the last 30 days.`}
-          </p>
-        }
-      />
-    </div>
-  );
-}
 
 // ── Executable action mapping ────────────────────────────────────
 // Keyword-based detection: if a recommendation's action_label matches an
