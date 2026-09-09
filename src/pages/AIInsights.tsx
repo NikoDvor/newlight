@@ -1179,102 +1179,16 @@ function RecommendationCard({ rec, index, expanded, businessName, onToggle, onAc
 // Bullets that can't be computed from real history are simply omitted.
 // ─────────────────────────────────────────────────────────────────
 
-interface TakeawayDeal {
-  pipeline_stage: string | null;
-  deal_value: number | null;
-  created_at: string | null;
-  updated_at: string | null;
-  lost_reason: string | null;
-}
-
-const DAY_MS = 86_400_000;
-
-function lostReasonLabel(raw: string): string {
-  const found = LOST_REASONS.find((r) => r.value === raw);
-  return found ? found.label.toLowerCase() : raw.replace(/_/g, " ").toLowerCase();
-}
-
 function buildPipelineTakeaways(deals: TakeawayDeal[]): string[] {
-  const out: string[] = [];
-  if (deals.length === 0) return out;
+  if (deals.length === 0) return [];
 
-  const canon = deals.map((d) => ({ ...d, stage: toCanonStage(d.pipeline_stage) }));
-  const count = (s: string) => canon.filter((d) => d.stage === s).length;
-  const cold = count("cold");
-  const warm = count("warm");
-  const hot = count("hot");
-  const won = count("won");
-  const lost = count("lost");
+  const out = detectLeakage({ deals }).map((f) => f.message);
 
-  // 1. Biggest stage-to-stage drop-off.
-  const transitions = [
-    { label: "Cold to Warm", from: cold + warm + hot + won, to: warm + hot + won, note: "leads aren't converting into booked conversations" },
-    { label: "Warm to Hot", from: warm + hot + won, to: hot + won, note: "most deals are stalling after the first meeting" },
-    { label: "Hot to Won", from: hot + won, to: won, note: "deals are reaching the finish line but not closing" },
-  ].filter((t) => t.from >= 3);
-
-  if (transitions.length > 0) {
-    const worst = transitions.reduce((a, b) => (b.to / b.from < a.to / a.from ? b : a));
-    const pct = Math.round((worst.to / worst.from) * 100);
-    out.push(`${worst.label} is your biggest drop-off at only ${pct}% — ${worst.note}.`);
-  }
-
-  // 2. Aging / stuck open deals.
-  const now = Date.now();
-  const open = canon.filter((d) => d.stage !== "won" && d.stage !== "lost");
-  const aging = open
-    .map((d) => ({ d, days: Math.floor((now - new Date(d.updated_at || d.created_at || Date.now()).getTime()) / DAY_MS) }))
-    .filter((x) => x.days >= 21)
-    .sort((a, b) => b.days - a.days);
-  if (aging.length > 0) {
-    const oldest = aging[0].days;
-    out.push(
-      `${aging.length} open deal${aging.length === 1 ? " has" : "s have"} not moved in over three weeks — the oldest has been sitting untouched for ${oldest} days. Reach out or close them out so your pipeline reflects reality.`
-    );
-  }
-
-  // 3. Top recurring loss reason.
-  if (lost > 0) {
-    const tally = new Map<string, number>();
-    canon
-      .filter((d) => d.stage === "lost" && d.lost_reason)
-      .forEach((d) => tally.set(d.lost_reason as string, (tally.get(d.lost_reason as string) ?? 0) + 1));
-    if (tally.size > 0) {
-      const [reason, n] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
-      out.push(
-        `${lostReasonLabel(reason)} is the reason you lose most often — ${n} of ${lost} lost deal${lost === 1 ? "" : "s"} ended there. Worth addressing it earlier in the conversation.`
-      );
-    }
-  }
-
-  // 4. Close-rate trend vs the prior period (needs enough closed history).
-  const closedIn = (startDaysAgo: number, endDaysAgo: number) =>
-    canon.filter((d) => {
-      if (d.stage !== "won" && d.stage !== "lost") return false;
-      const t = new Date(d.updated_at || d.created_at || 0).getTime();
-      if (!t) return false;
-      const age = (now - t) / DAY_MS;
-      return age >= endDaysAgo && age < startDaysAgo;
-    });
-  const recent = closedIn(30, 0);
-  const prior = closedIn(60, 30);
-  if (recent.length >= 3 && prior.length >= 3) {
-    const rate = (arr: typeof recent) => (arr.filter((d) => d.stage === "won").length / arr.length) * 100;
-    const r = Math.round(rate(recent));
-    const p = Math.round(rate(prior));
-    const diff = r - p;
-    if (Math.abs(diff) >= 3) {
-      out.push(
-        diff > 0
-          ? `Your close rate is trending up — ${r}% over the last 30 days versus ${p}% the month before. Whatever changed recently is working.`
-          : `Your close rate slipped to ${r}% over the last 30 days, down from ${p}% the month before. Worth reviewing what changed.`
-      );
-    } else {
-      out.push(`Your close rate is holding steady at about ${r}% month over month.`);
-    }
-  }
-
-  // 5. Where the money currently sits.
+  // Where the money currently sits (context, not a leak).
+  const open = deals.filter((d) => {
+    const s = toCanonStage(d.pipeline_stage);
+    return s !== "won" && s !== "lost";
+  });
   const openValue = open.reduce((s, d) => s + (Number(d.deal_value) || 0), 0);
   if (open.length > 0 && openValue > 0) {
     out.push(
