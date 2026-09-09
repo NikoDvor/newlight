@@ -1898,8 +1898,29 @@ function severityFor(gapPct: number): { hue: string; label: string } {
   return { hue: "45 93% 50%", label: "Mild" };
 }
 
-function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
-  if (signals.length === 0) {
+// Sort key for leakage entries — aligns with the severityFor() gap
+// thresholds (Severe ≥60, Moderate ≥30, Mild <30) so merged ranking and
+// tier labels stay consistent. Used for ordering/tier only, never shown.
+const LEAKAGE_SORT_GAP: Record<LeakageFlag["severity"], number> = {
+  high: 70,
+  medium: 40,
+  low: 10,
+};
+
+const LEAKAGE_LABELS: Record<LeakageFlag["type"], string> = {
+  stage_bottleneck: "Pipeline stage drop-off",
+  aging_deals: "Stalled open deals",
+  loss_reason: "Recurring loss reason",
+  close_rate_decline: "Close-rate trend",
+  low_show_up_rate: "Appointment show-up rate",
+};
+
+type WeaknessItem =
+  | { kind: "signal"; sortGap: number; signal: WeaknessSignal }
+  | { kind: "leakage"; sortGap: number; flag: LeakageFlag };
+
+function WeaknessesPanel({ signals, leakage }: { signals: WeaknessSignal[]; leakage: LeakageFlag[] }) {
+  if (signals.length === 0 && leakage.length === 0) {
     return (
       <PanelEmptyState
         title="Top 10 Weaknesses"
@@ -1911,9 +1932,11 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
     );
   }
 
-  const items = signals
-    .slice()
-    .sort((a, b) => b.gap_pct - a.gap_pct)
+  const items: WeaknessItem[] = [
+    ...signals.map((s) => ({ kind: "signal" as const, sortGap: s.gap_pct, signal: s })),
+    ...leakage.map((f) => ({ kind: "leakage" as const, sortGap: LEAKAGE_SORT_GAP[f.severity], flag: f })),
+  ]
+    .sort((a, b) => b.sortGap - a.sortGap)
     .slice(0, 10);
 
   return (
