@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toCanonStage } from "@/lib/pipelineRevenue";
-import { detectLeakage, type TakeawayDeal } from "@/lib/pipelineLeakage";
+import { detectLeakage, type LeakageFlag, type TakeawayDeal } from "@/lib/pipelineLeakage";
 
 const DAY_MS = 86_400_000;
 
@@ -170,6 +170,7 @@ export default function AIInsights() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [wins, setWins] = useState<Recommendation[]>([]);
   const [signals, setSignals] = useState<WeaknessSignal[]>([]);
+  const [leakageFlags, setLeakageFlags] = useState<LeakageFlag[]>([]);
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -179,7 +180,7 @@ export default function AIInsights() {
   const fetchAll = useCallback(async () => {
     if (!activeClientId) return;
     setLoading(true);
-    const [{ data: recsData }, { data: winsData }, { data: healthData }, { data: snapshotData }] = await Promise.all([
+    const [{ data: recsData }, { data: winsData }, { data: healthData }, { data: snapshotData }, { data: dealsData }] = await Promise.all([
       supabase
         .from("ai_recommendations")
         .select("*")
@@ -203,11 +204,16 @@ export default function AIInsights() {
         .select("signals")
         .eq("client_id", activeClientId)
         .maybeSingle(),
+      supabase
+        .from("crm_deals")
+        .select("pipeline_stage, deal_value, created_at, updated_at, lost_reason")
+        .eq("client_id", activeClientId),
     ]);
     setRecs((recsData ?? []) as Recommendation[]);
     setWins((winsData ?? []) as Recommendation[]);
     const rawSignals = (snapshotData?.signals ?? []) as unknown;
     setSignals(Array.isArray(rawSignals) ? (rawSignals as WeaknessSignal[]) : []);
+    setLeakageFlags(detectLeakage({ deals: (dealsData ?? []) as TakeawayDeal[] }));
     if (healthData?.overall_score != null) {
       setHealthScore(Number(healthData.overall_score));
     } else if ((recsData ?? []).length > 0) {
@@ -416,6 +422,7 @@ export default function AIInsights() {
 
       {/* ── Pipeline Takeaways ─────────────────────────────────────── */}
       <PipelineTakeaways clientId={activeClientId} />
+      <PipelineDetailStrip clientId={activeClientId} />
 
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
@@ -424,7 +431,7 @@ export default function AIInsights() {
       <ChannelSnapshotStrip clientId={activeClientId} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
-      <WeaknessesPanel signals={signals} />
+      <WeaknessesPanel signals={signals} leakage={leakageFlags} />
 
       {/* ── Category filter tabs ─────────────────────────────────── */}
       <div className="mt-8 flex flex-wrap gap-2">
@@ -1255,6 +1262,80 @@ function PipelineTakeaways({ clientId }: { clientId: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Pipeline Detail — compact five-tile stage breakdown (count + $) of
+// the active client's real crm_deals, via the shared toCanonStage
+// classification. Hidden entirely when the client has no deals; the
+// full funnel panel stays exclusive to the Dashboard.
+// ─────────────────────────────────────────────────────────────────
+
+const PIPELINE_DETAIL_STAGES: { key: string; label: string; hue: string }[] = [
+  { key: "cold", label: "Cold", hue: "215 25% 55%" },
+  { key: "warm", label: "Warm", hue: "45 93% 50%" },
+  { key: "hot", label: "Hot", hue: "24 95% 54%" },
+  { key: "won", label: "Won", hue: "142 71% 45%" },
+  { key: "lost", label: "Lost", hue: "0 72% 51%" },
+];
+
+function PipelineDetailStrip({ clientId }: { clientId: string }) {
+  const [tiles, setTiles] = useState<{ key: string; label: string; hue: string; count: number; value: number }[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("crm_deals")
+        .select("pipeline_stage, deal_value")
+        .eq("client_id", clientId);
+      if (cancelled) return;
+      const deals = data ?? [];
+      if (deals.length === 0) {
+        setTiles(null);
+        return;
+      }
+      setTiles(
+        PIPELINE_DETAIL_STAGES.map((s) => {
+          const inStage = deals.filter((d) => toCanonStage(d.pipeline_stage) === s.key);
+          return {
+            ...s,
+            count: inStage.length,
+            value: inStage.reduce((sum, d) => sum + (Number(d.deal_value) || 0), 0),
+          };
+        })
+      );
+    })();
+    return () => { cancelled = true; };
+  }, [clientId]);
+
+  if (!tiles) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+    >
+      {tiles.map((t) => (
+        <div
+          key={t.key}
+          className="rounded-xl border bg-card px-4 py-3"
+          style={{ borderColor: "hsl(var(--border))" }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: `hsl(${t.hue})` }}>
+            {t.label}
+          </p>
+          <p className="text-xl font-bold text-foreground tabular-nums leading-tight mt-1">
+            {t.count}
+          </p>
+          <p className="text-[11px] text-muted-foreground tabular-nums">
+            ${Math.round(t.value).toLocaleString()}
+          </p>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Channel Snapshot — compact strip of real numbers only. Channels with
 // no connected integration and no real data are omitted entirely.
 // ─────────────────────────────────────────────────────────────────
@@ -1817,8 +1898,29 @@ function severityFor(gapPct: number): { hue: string; label: string } {
   return { hue: "45 93% 50%", label: "Mild" };
 }
 
-function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
-  if (signals.length === 0) {
+// Sort key for leakage entries — aligns with the severityFor() gap
+// thresholds (Severe ≥60, Moderate ≥30, Mild <30) so merged ranking and
+// tier labels stay consistent. Used for ordering/tier only, never shown.
+const LEAKAGE_SORT_GAP: Record<LeakageFlag["severity"], number> = {
+  high: 70,
+  medium: 40,
+  low: 10,
+};
+
+const LEAKAGE_LABELS: Record<LeakageFlag["type"], string> = {
+  stage_bottleneck: "Pipeline stage drop-off",
+  aging_deals: "Stalled open deals",
+  loss_reason: "Recurring loss reason",
+  close_rate_decline: "Close-rate trend",
+  low_show_up_rate: "Appointment show-up rate",
+};
+
+type WeaknessItem =
+  | { kind: "signal"; sortGap: number; signal: WeaknessSignal }
+  | { kind: "leakage"; sortGap: number; flag: LeakageFlag };
+
+function WeaknessesPanel({ signals, leakage }: { signals: WeaknessSignal[]; leakage: LeakageFlag[] }) {
+  if (signals.length === 0 && leakage.length === 0) {
     return (
       <PanelEmptyState
         title="Top 10 Weaknesses"
@@ -1830,9 +1932,11 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
     );
   }
 
-  const items = signals
-    .slice()
-    .sort((a, b) => b.gap_pct - a.gap_pct)
+  const items: WeaknessItem[] = [
+    ...signals.map((s) => ({ kind: "signal" as const, sortGap: s.gap_pct, signal: s })),
+    ...leakage.map((f) => ({ kind: "leakage" as const, sortGap: LEAKAGE_SORT_GAP[f.severity], flag: f })),
+  ]
+    .sort((a, b) => b.sortGap - a.sortGap)
     .slice(0, 10);
 
   return (
@@ -1849,15 +1953,20 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
       </div>
 
       <div className="rounded-2xl bg-card border border-border overflow-hidden">
-        {items.map((s, i) => {
-          const cat = normalizeCategory(s.category);
+        {items.map((item, i) => {
+          const isSignal = item.kind === "signal";
+          const s = item.kind === "signal" ? item.signal : null;
+          const flag = item.kind === "leakage" ? item.flag : null;
+          const cat = isSignal ? normalizeCategory(s!.category) : "crm";
           const meta = CATEGORY_META[cat];
-          const sev = severityFor(s.gap_pct);
-          const barWidth = Math.min(100, Math.max(6, s.gap_pct));
-          const label = METRIC_LABELS[s.metric_key] || s.metric_key.replace(/_/g, " ");
+          const sev = severityFor(item.sortGap);
+          const barWidth = Math.min(100, Math.max(6, item.sortGap));
+          const label = isSignal
+            ? (METRIC_LABELS[s!.metric_key] || s!.metric_key.replace(/_/g, " "))
+            : LEAKAGE_LABELS[flag!.type];
           return (
             <motion.div
-              key={`${s.metric_key}-${i}`}
+              key={`${isSignal ? s!.metric_key : flag!.type}-${i}`}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
@@ -1885,30 +1994,40 @@ function WeaknessesPanel({ signals }: { signals: WeaknessSignal[] }) {
                     {meta.label}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <div className="flex-1 max-w-[240px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(215,25%,50%,.12)" }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${barWidth}%` }}
-                      transition={{ delay: i * 0.04 + 0.1, duration: 0.5, ease: "easeOut" }}
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, hsl(${sev.hue}), hsla(${sev.hue},.7))` }}
-                    />
+                {isSignal ? (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex-1 max-w-[240px] h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(215,25%,50%,.12)" }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${barWidth}%` }}
+                        transition={{ delay: i * 0.04 + 0.1, duration: 0.5, ease: "easeOut" }}
+                        className="h-full rounded-full"
+                        style={{ background: `linear-gradient(90deg, hsl(${sev.hue}), hsla(${sev.hue},.7))` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold tabular-nums" style={{ color: `hsl(${sev.hue})` }}>
+                      {Math.round(s!.gap_pct)}% gap · {sev.label}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold tabular-nums" style={{ color: `hsl(${sev.hue})` }}>
-                    {Math.round(s.gap_pct)}% gap · {sev.label}
-                  </span>
-                </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground leading-snug mt-1.5">
+                    <span className="font-semibold" style={{ color: `hsl(${sev.hue})` }}>{sev.label}</span>
+                    {" — "}
+                    {flag!.message}
+                  </p>
+                )}
               </div>
 
-              <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-foreground tabular-nums leading-tight">
-                  {formatSignalValue(s.actual, s.unit)}
-                </p>
-                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                  vs {formatSignalValue(s.benchmark, s.unit)} benchmark
-                </p>
-              </div>
+              {isSignal && (
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-bold text-foreground tabular-nums leading-tight">
+                    {formatSignalValue(s!.actual, s!.unit)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
+                    vs {formatSignalValue(s!.benchmark, s!.unit)} benchmark
+                  </p>
+                </div>
+              )}
             </motion.div>
           );
         })}
