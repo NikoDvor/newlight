@@ -524,7 +524,7 @@ export function PipelineRevenueOpportunity({
               className="mt-3 prv-slider"
               value={[Math.round(lever.avgDealValue)]}
               min={0}
-              max={Math.max(Math.round(naturalAvg * 3), 30000)}
+              max={Math.max(Math.round(naturalAvg * 3), 250000)}
               step={100}
               onValueChange={([v]) => setAvgValueDraft(String(v))}
             />
