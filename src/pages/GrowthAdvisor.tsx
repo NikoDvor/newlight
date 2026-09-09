@@ -21,53 +21,62 @@ import { cn } from "@/lib/utils";
 import { toCanonStage } from "@/lib/pipelineRevenue";
 
 // ── Revenue Impact Simulator ─────────────────────────────────────
-// Three levers seeded from the client's real CRM + calendar data.
+// Two draggable levers (close rate, appointments) seeded from the client's
+// real CRM + calendar data, plus an editable average ticket that persists to
+// clients.avg_deal_value. Pipeline value is computed, never a lever.
+const SEED_APPTS = 20;
+const SEED_DEAL_VALUE = 2500;
+const SEED_CLOSE_RATE = 25;
+
 function RevenueImpactSimulator({ clientId }: { clientId: string }) {
   const [state, setState] = useState<{
     loading: boolean;
     closeRate: number;
     appointments: number;
-    pipelineValue: number;
     avgDealValue: number;
+    savedAvg: number | null;
     hasData: boolean;
-  }>({ loading: true, closeRate: 0, appointments: 0, pipelineValue: 0, avgDealValue: 0, hasData: false });
+  }>({ loading: true, closeRate: 0, appointments: 0, avgDealValue: 0, savedAvg: null, hasData: false });
+
+  // Editable average ticket (string so the input can be cleared while typing)
+  const [ticket, setTicket] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const [dealsRes, apptRes] = await Promise.all([
+      const [dealsRes, apptRes, clientRes] = await Promise.all([
         supabase.from("crm_deals").select("pipeline_stage, deal_value").eq("client_id", clientId),
         supabase
           .from("calendar_events")
           .select("id", { count: "exact", head: true })
           .eq("client_id", clientId)
           .gte("start_time", since),
+        supabase.from("clients").select("avg_deal_value").eq("id", clientId).maybeSingle(),
       ]);
       if (cancelled) return;
 
       const deals = dealsRes.data ?? [];
       const won = deals.filter((d) => toCanonStage(d.pipeline_stage) === "won");
       const lost = deals.filter((d) => toCanonStage(d.pipeline_stage) === "lost");
-      const open = deals.filter(
-        (d) => {
-          const stage = toCanonStage(d.pipeline_stage);
-          return stage !== "won" && stage !== "lost";
-        }
-      );
       const decided = won.length + lost.length;
       const closeRate = decided > 0 ? (won.length / decided) * 100 : 0;
-      const pipelineValue = open.reduce((sum, d) => sum + (Number(d.deal_value) || 0), 0);
-      const avgFrom = (rows: { deal_value: number | null }[]) =>
-        rows.length > 0 ? rows.reduce((s, d) => s + (Number(d.deal_value) || 0), 0) / rows.length : 0;
-      const avgDealValue = won.length > 0 ? avgFrom(won) : avgFrom(open);
+      const avgWon =
+        won.length > 0
+          ? won.reduce((s, d) => s + (Number(d.deal_value) || 0), 0) / won.length
+          : 0;
 
+      const savedRaw = (clientRes.data as any)?.avg_deal_value;
+      const savedAvg = savedRaw != null && Number(savedRaw) > 0 ? Number(savedRaw) : null;
+      const effectiveTicket = savedAvg ?? (avgWon > 0 ? Math.round(avgWon) : SEED_DEAL_VALUE);
+
+      setTicket(String(effectiveTicket));
       setState({
         loading: false,
         closeRate: Math.round(closeRate * 10) / 10,
         appointments: apptRes.count ?? 0,
-        pipelineValue: Math.round(pipelineValue),
-        avgDealValue: Math.round(avgDealValue),
+        avgDealValue: Math.round(avgWon),
+        savedAvg,
         hasData: deals.length > 0 || (apptRes.count ?? 0) > 0,
       });
     })();
@@ -76,13 +85,24 @@ function RevenueImpactSimulator({ clientId }: { clientId: string }) {
     };
   }, [clientId]);
 
-  const SEED_APPTS = 20;
-  const SEED_DEAL_VALUE = 2500;
-  const SEED_CLOSE_RATE = 25;
+  const ticketValue = Math.max(0, Number(ticket) || 0);
+
+  // Debounced persistence of the manually-entered average ticket.
+  const loaded = !state.loading;
+  useEffect(() => {
+    if (!loaded || ticket === "") return;
+    const t = setTimeout(() => {
+      supabase
+        .from("clients")
+        .update({ avg_deal_value: ticketValue } as any)
+        .eq("id", clientId)
+        .then(() => {});
+    }, 700);
+    return () => clearTimeout(t);
+  }, [ticketValue, ticket, loaded, clientId]);
 
   const levers = useMemo<SimulatorLever[]>(() => {
     const apptMax = Math.max(10, Math.round((state.appointments || SEED_APPTS) * 3));
-    const pipeMax = Math.max(10000, Math.round((state.pipelineValue || 50000) * 3));
     return [
       {
         key: "closeRate",
@@ -102,23 +122,12 @@ function RevenueImpactSimulator({ clientId }: { clientId: string }) {
         value: state.appointments,
         format: (v) => v.toLocaleString(),
       },
-      {
-        key: "pipelineValue",
-        label: "Pipeline Value",
-        min: 0,
-        max: pipeMax,
-        step: Math.max(100, Math.round(pipeMax / 100)),
-        value: state.pipelineValue,
-        format: (v) => `$${Math.round(v).toLocaleString()}`,
-      },
     ];
   }, [state]);
 
-  // Average deal value: real when known, otherwise a sensible seed so the
-  // model stays usable for brand-new workspaces.
-  const avgDealValue = state.avgDealValue > 0 ? state.avgDealValue : SEED_DEAL_VALUE;
   const effectiveCloseRate = state.closeRate > 0 ? state.closeRate : SEED_CLOSE_RATE;
-  const currentRevenue = Math.round(state.appointments * (effectiveCloseRate / 100) * avgDealValue);
+  const currentPipeline = Math.round(state.appointments * ticketValue);
+  const currentRevenue = Math.round(currentPipeline * (effectiveCloseRate / 100));
 
   if (state.loading) {
     return (
@@ -128,24 +137,56 @@ function RevenueImpactSimulator({ clientId }: { clientId: string }) {
     );
   }
 
-  const isSeeded = !state.hasData || state.avgDealValue === 0;
+  const isSeededTicket = state.savedAvg == null && state.avgDealValue === 0;
 
   return (
     <RevenueSimulator
       title="Revenue Impact Simulator"
       levers={levers}
-      project={(v) => (v.appointments || 0) * ((v.closeRate || 0) / 100) * avgDealValue}
+      project={(v) => (v.appointments || 0) * ticketValue * ((v.closeRate || 0) / 100)}
       baseline={currentRevenue}
       gridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6"
       projectedLabel="Projected Monthly Revenue"
       baselineLabel={`vs current ($${currentRevenue.toLocaleString()}/mo)`}
-      footer={
-        <p className="text-[11px] text-muted-foreground mt-3">
-          {isSeeded
-            ? `Not enough closed deals yet — modeled on an example deal value of $${avgDealValue.toLocaleString()}. Numbers become real as deals close.`
-            : `Based on your average closed deal value of $${avgDealValue.toLocaleString()} and ${state.appointments.toLocaleString()} appointments in the last 30 days.`}
-        </p>
-      }
+      footer={(v) => {
+        const appts = v.appointments ?? state.appointments;
+        const pipeline = Math.round(appts * ticketValue);
+        return (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                Average Ticket
+              </label>
+              <div className="flex items-center gap-2 max-w-[220px]">
+                <span className="text-sm text-muted-foreground">$</span>
+                <Input
+                  type="number"
+                  min={0}
+                  step={50}
+                  value={ticket}
+                  onChange={(e) => setTicket(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-muted/40 border border-border/40">
+              <span className="text-xs text-muted-foreground">
+                Pipeline Value (Appointments × Avg Ticket) · computed
+              </span>
+              <span className="text-sm font-bold">${pipeline.toLocaleString()}</span>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              {isSeededTicket
+                ? `No closed deals yet — average ticket starts from an example of $${SEED_DEAL_VALUE.toLocaleString()}. Edit it to your real average and it's saved for next time.`
+                : state.savedAvg != null
+                  ? `Using your saved average ticket of $${ticketValue.toLocaleString()}. Pipeline value and projected revenue update as you drag.`
+                  : `Seeded from your average closed deal value of $${state.avgDealValue.toLocaleString()}. Edit the average ticket to save your own figure.`}
+            </p>
+          </div>
+        );
+      }}
     />
   );
 }
