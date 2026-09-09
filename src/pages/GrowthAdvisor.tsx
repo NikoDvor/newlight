@@ -559,6 +559,15 @@ export default function GrowthAdvisor() {
           </section>
         )}
 
+        {/* FIX WHAT'S LEAKING — shared leakage detection + curated fix routes */}
+        {activeClientId && (
+          <section>
+            <FixWhatsLeaking clientId={activeClientId} />
+          </section>
+        )}
+
+
+
         {/* GROWTH THESIS HERO */}
         <motion.section
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
