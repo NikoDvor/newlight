@@ -3993,6 +3993,7 @@ export type Database = {
         Row: {
           agreement_status: string
           allow_sms: boolean
+          avg_deal_value: number | null
           business_name: string
           business_type: string | null
           created_at: string
@@ -4046,6 +4047,7 @@ export type Database = {
         Insert: {
           agreement_status?: string
           allow_sms?: boolean
+          avg_deal_value?: number | null
           business_name: string
           business_type?: string | null
           created_at?: string
@@ -4099,6 +4101,7 @@ export type Database = {
         Update: {
           agreement_status?: string
           allow_sms?: boolean
+          avg_deal_value?: number | null
           business_name?: string
           business_type?: string | null
           created_at?: string

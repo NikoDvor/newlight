@@ -29,8 +29,11 @@ interface RevenueSimulatorProps {
   gridClassName?: string;
   projectedLabel?: string;
   baselineLabel?: string;
-  /** Rendered under the projection bar (extra context, empty states, etc.) */
-  footer?: React.ReactNode;
+  /**
+   * Rendered under the projection bar (extra context, empty states, etc.).
+   * May be a function of the live lever values for computed read-only readouts.
+   */
+  footer?: React.ReactNode | ((values: Record<string, number>) => React.ReactNode);
 }
 
 const seedOf = (levers: SimulatorLever[]) =>
@@ -99,7 +102,7 @@ export function RevenueSimulator({
           </p>
         </div>
       </motion.div>
-      {footer}
+      {typeof footer === "function" ? footer(values) : footer}
     </DataCard>
   );
 }
