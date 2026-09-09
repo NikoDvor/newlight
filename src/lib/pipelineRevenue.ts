@@ -77,7 +77,12 @@ const RAW_TO_CANON: Record<string, CanonStage> = {
 
 export function toCanonStage(raw: string | null | undefined): CanonStage {
   if (!raw) return "cold";
-  return RAW_TO_CANON[String(raw).toLowerCase()] ?? "cold";
+  const normalized = String(raw).toLowerCase();
+  const canon = RAW_TO_CANON[normalized];
+  if (!canon && import.meta.env.DEV) {
+    console.warn(`[toCanonStage] unmapped pipeline_stage "${raw}" defaulted to "cold"`);
+  }
+  return canon ?? "cold";
 }
 
 /** The value written back when a deal is marked lost. */
