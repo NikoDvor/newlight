@@ -381,6 +381,13 @@ export default function GrowthAdvisor() {
           </Link>
         </motion.div>
 
+        {/* REVENUE IMPACT SIMULATOR — seeded from real CRM + calendar data */}
+        {activeClientId && (
+          <section>
+            <RevenueImpactSimulator clientId={activeClientId} />
+          </section>
+        )}
+
         {/* GROWTH THESIS HERO */}
         <motion.section
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
