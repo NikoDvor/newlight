@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
+import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 
 
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
       supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
         setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
       }),
-      supabase.from("crm_deals").select("pipeline_stage").then(({ data }) => {
+      supabase.from("crm_deals").select("pipeline_stage").neq("client_id", "d0c0edc1-ff61-4597-8500-96e02fdd87d8").then(({ data }) => {
         const stages: Record<string, number> = {};
         (data ?? []).forEach((d: any) => { stages[d.pipeline_stage] = (stages[d.pipeline_stage] || 0) + 1; });
         setPipelineStages(stages);
@@ -104,7 +105,12 @@ export default function AdminDashboard() {
       {/* Won revenue by period — same closed-won source as the widget above */}
       <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />
 
-
+      {/* Company-wide BDR sales pipeline (all reps, all nl_bdr_leads) */}
+      <PipelineRevenueOpportunity
+        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
+        variant="admin"
+        source="bdr"
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {stats.map((s, i) => (
