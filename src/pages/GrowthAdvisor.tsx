@@ -19,6 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { toCanonStage } from "@/lib/pipelineRevenue";
+import {
+  detectLeakage,
+  LEAKAGE_FIXES,
+  type LeakageFlag,
+  type TakeawayDeal,
+} from "@/lib/pipelineLeakage";
 
 // ── Revenue Impact Simulator ─────────────────────────────────────
 // Two draggable levers (close rate, appointments) seeded from the client's
