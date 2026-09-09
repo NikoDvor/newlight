@@ -213,6 +213,7 @@ export default function AIInsights() {
     setWins((winsData ?? []) as Recommendation[]);
     const rawSignals = (snapshotData?.signals ?? []) as unknown;
     setSignals(Array.isArray(rawSignals) ? (rawSignals as WeaknessSignal[]) : []);
+    setLeakageFlags(detectLeakage({ deals: (dealsData ?? []) as TakeawayDeal[] }));
     if (healthData?.overall_score != null) {
       setHealthScore(Number(healthData.overall_score));
     } else if ((recsData ?? []).length > 0) {
@@ -421,6 +422,7 @@ export default function AIInsights() {
 
       {/* ── Pipeline Takeaways ─────────────────────────────────────── */}
       <PipelineTakeaways clientId={activeClientId} />
+      <PipelineDetailStrip clientId={activeClientId} />
 
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
@@ -429,7 +431,7 @@ export default function AIInsights() {
       <ChannelSnapshotStrip clientId={activeClientId} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
-      <WeaknessesPanel signals={signals} />
+      <WeaknessesPanel signals={signals} leakage={leakageFlags} />
 
       {/* ── Category filter tabs ─────────────────────────────────── */}
       <div className="mt-8 flex flex-wrap gap-2">
