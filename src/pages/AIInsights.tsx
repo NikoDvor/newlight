@@ -410,18 +410,11 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
-      <RevenueImpactSimulator clientId={activeClientId} />
-
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
 
       {/* ── Category Performance ─────────────────────────────────── */}
       <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
-
-      {/* ── Pipeline revenue opportunity + stage close-rate coaching ── */}
-      <div className="mt-8">
-        <PipelineRevenueOpportunity clientId={activeClientId} variant="client" />
-      </div>
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
       <WeaknessesPanel signals={signals} />
