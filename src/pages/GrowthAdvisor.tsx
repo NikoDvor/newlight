@@ -197,6 +197,130 @@ function RevenueImpactSimulator({ clientId }: { clientId: string }) {
   );
 }
 
+// ── Fix What's Leaking ───────────────────────────────────────────
+// Structured leakage flags from the shared detector, each paired with
+// three curated fix routes.
+const SEVERITY_STYLE: Record<LeakageFlag["severity"], { label: string; className: string }> = {
+  high: { label: "High impact", className: "bg-destructive/10 text-destructive border-destructive/30" },
+  medium: { label: "Worth fixing", className: "bg-amber-500/10 text-amber-500 border-amber-500/30" },
+  low: { label: "Keep an eye on", className: "bg-muted text-muted-foreground border-border/50" },
+};
+
+function FixWhatsLeaking({ clientId }: { clientId: string }) {
+  const [flags, setFlags] = useState<LeakageFlag[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      const [dealsRes, apptRes] = await Promise.all([
+        supabase
+          .from("crm_deals")
+          .select("pipeline_stage, deal_value, created_at, updated_at, lost_reason")
+          .eq("client_id", clientId),
+        supabase
+          .from("appointments")
+          .select("status")
+          .eq("client_id", clientId)
+          .gte("created_at", since),
+      ]);
+      if (cancelled) return;
+      const appointments = (apptRes.data ?? [])
+        .map((a) => ({ status: String((a as { status: string | null }).status ?? "") }))
+        .filter((a) => a.status);
+      setFlags(
+        detectLeakage({
+          deals: (dealsRes.data ?? []) as TakeawayDeal[],
+          appointments: appointments.length > 0 ? appointments : undefined,
+        })
+      );
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+
+  if (loading) {
+    return (
+      <div className="card-widget flex items-center gap-3 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> Checking your pipeline for leaks…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-2xl font-semibold tracking-tight">Fix What's Leaking</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Where deals and meetings are slipping away, and what you can do about each one.
+        </p>
+      </div>
+
+      {flags.length === 0 ? (
+        <div className="rounded-2xl border border-border/40 bg-card p-6 flex items-center gap-3">
+          <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            No leakage detected in your pipeline right now.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {flags.map((flag) => {
+            const sev = SEVERITY_STYLE[flag.severity];
+            return (
+              <div
+                key={flag.type}
+                className="rounded-2xl border border-border/40 bg-card p-5 space-y-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium leading-snug">{flag.message}</p>
+                    <span
+                      className={cn(
+                        "inline-block text-[10px] uppercase tracking-wider font-semibold rounded-full border px-2 py-0.5",
+                        sev.className
+                      )}
+                    >
+                      {sev.label}
+                    </span>
+                  </div>
+                </div>
+
+                <ol className="space-y-3 border-t border-border/40 pt-4">
+                  {LEAKAGE_FIXES[flag.type].map((fix, i) => (
+                    <li key={fix.title} className="flex gap-3">
+                      <span className="h-5 w-5 shrink-0 rounded-full bg-primary/10 text-primary text-[11px] font-semibold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-snug">{fix.title}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {fix.description}
+                        </p>
+                        {fix.caveat && (
+                          <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed">
+                            {fix.caveat}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 type OppType = "new_service" | "new_channel" | "pricing" | "new_geo" | "retention";
 type OppStatus = "active" | "pursuing" | "completed" | "dismissed";
 
