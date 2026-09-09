@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toCanonStage } from "@/lib/pipelineRevenue";
-import { detectLeakage, type TakeawayDeal } from "@/lib/pipelineLeakage";
+import { detectLeakage, type LeakageFlag, type TakeawayDeal } from "@/lib/pipelineLeakage";
 
 const DAY_MS = 86_400_000;
 
@@ -204,6 +204,10 @@ export default function AIInsights() {
         .select("signals")
         .eq("client_id", activeClientId)
         .maybeSingle(),
+      supabase
+        .from("crm_deals")
+        .select("pipeline_stage, deal_value, created_at, updated_at, lost_reason")
+        .eq("client_id", activeClientId),
     ]);
     setRecs((recsData ?? []) as Recommendation[]);
     setWins((winsData ?? []) as Recommendation[]);
