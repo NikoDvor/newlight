@@ -411,11 +411,14 @@ export default function AIInsights() {
         </div>
       </motion.div>
 
+      {/* ── Pipeline Takeaways ─────────────────────────────────────── */}
+      <PipelineTakeaways clientId={activeClientId} />
+
       {/* ── Marketing Attribution ──────────────────────────────────── */}
       <AttributionSummarySection clientId={activeClientId} />
 
-      {/* ── Category Performance ─────────────────────────────────── */}
-      <CategoryPerformanceGrid recs={recs} onSelect={(k) => setFilter(k)} activeFilter={filter} />
+      {/* ── Channel Snapshot (compact, real data only) ─────────────── */}
+      <ChannelSnapshotStrip clientId={activeClientId} onSelect={(k) => setFilter(k)} activeFilter={filter} />
 
       {/* ── Weaknesses ───────────────────────────────────────────── */}
       <WeaknessesPanel signals={signals} />
