@@ -6,17 +6,15 @@ import { ProposalStageBanner } from "@/components/ProposalStageBanner";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 
-import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
-import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Activity, TrendingUp, DollarSign, CheckSquare,
+  Activity, TrendingUp, DollarSign,
   Target, Users, Star, ArrowUpRight, Calendar, Upload,
   Plug, Rocket, FileText, Clock, Briefcase,
   Plus, UserPlus, Send, BarChart3, Zap, Cpu, Radio,
   Wifi, Brain, Sparkles, AlertTriangle,
-  ChevronRight, LineChart, Eye, Shield, Layers, ArrowUp, Heart
+  ChevronRight, LineChart, Layers, Heart
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,8 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useCountUp } from "@/hooks/useCountUp";
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, LineChart as RLineChart, Line
+  AreaChart, Area, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid
 } from "recharts";
 
 /* ── animation presets ── */
@@ -280,48 +278,6 @@ function SectionHeader({ icon: Icon, label, extra }: { icon: any; label: string;
   );
 }
 
-/* ── Revenue Glow Card with 3D tilt ── */
-function RevenueGlowCard({ label, value, sub, icon: Icon, intensity = "high", to, sparkData }: {
-  label: string; value: number; sub: string; icon: any; intensity?: "high" | "med" | "low"; to?: string; sparkData?: number[];
-}) {
-  const count = useCountUp(value, 1600);
-  const display = `$${count.toLocaleString()}`;
-  const intensities = {
-    high: { grad: "linear-gradient(135deg, hsl(211 96% 70%), hsl(211 96% 55%))", glow: "hsla(211,96%,60%,.22)", bg: "hsla(211,96%,60%,.07)" },
-    med:  { grad: "linear-gradient(135deg, hsl(197 88% 62%), hsl(211 96% 58%))", glow: "hsla(197,88%,55%,.18)", bg: "hsla(197,88%,55%,.06)" },
-    low:  { grad: "linear-gradient(135deg, hsl(205 80% 68%), hsl(211 96% 60%))", glow: "hsla(205,80%,60%,.14)", bg: "hsla(205,80%,60%,.05)" },
-  };
-  const c = intensities[intensity];
-
-  const inner = (
-    <motion.div variants={fadeUp} className="h-full">
-      <TiltCard className="h-full">
-        <div className="dash-revenue-card group relative h-full" style={{ "--glow-color": c.glow, "--glow-bg": c.bg } as any}>
-          <div className="relative z-10 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <motion.div className="h-8 w-8 rounded-lg flex items-center justify-center"
-                  style={{ background: c.bg, border: `1px solid ${c.glow}` }}
-                  animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }}>
-                  <Icon className="h-4 w-4" style={{ color: "hsl(211 96% 68%)" }} />
-                </motion.div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(210,50%,75%,.45)" }}>{label}</p>
-              </div>
-              {sparkData && <Sparkline data={sparkData} color="hsl(211 96% 62%)" width={64} height={24} />}
-            </div>
-            <div>
-              <motion.p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight"
-                style={{ background: c.grad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", filter: `drop-shadow(0 0 10px ${c.glow})` }}
-              >{display}</motion.p>
-              <p className="text-[11px] mt-1" style={{ color: "hsla(210,50%,65%,.45)" }}>{sub}</p>
-            </div>
-          </div>
-        </div>
-      </TiltCard>
-    </motion.div>
-  );
-  return to ? <Link to={to} className="block h-full">{inner}</Link> : inner;
-}
 
 /* ── KPI Card with 3D tilt ── */
 function KpiCard({ label, value, sub, icon: Icon, accent = false, to, sparkData }: {
@@ -523,34 +479,6 @@ function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; des
   );
 }
 
-/* ── Generate chart data ── */
-function generateChartData(base: number, len = 7): { name: string; value: number }[] {
-  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return Array.from({ length: len }, (_, i) => ({
-    name: labels[i] || `P${i + 1}`,
-    value: Math.max(0, Math.round(base * (0.5 + Math.random() * 1.0))),
-  }));
-}
-
-function generateBarData(base: number, len = 12): { name: string; value: number }[] {
-  return Array.from({ length: len }, (_, i) => ({
-    name: `W${i + 1}`,
-    value: Math.max(0, Math.round(base * (0.3 + Math.random() * 1.2))),
-  }));
-}
-
-function generateGrowthData(months = 6): { name: string; current: number; projected: number }[] {
-  const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
-  let base = 40;
-  return Array.from({ length: months }, (_, i) => {
-    base = base + Math.random() * 20 - 5;
-    return {
-      name: labels[i] || `M${i + 1}`,
-      current: Math.round(Math.max(0, base)),
-      projected: Math.round(Math.max(0, base * (1.2 + Math.random() * 0.3))),
-    };
-  });
-}
 
 function fakeSparkline(base: number, len = 7): number[] {
   if (base === 0) return Array.from({ length: len }, () => 0);
@@ -584,88 +512,6 @@ function CircularProgress({ value, size = 56, stroke = 4 }: { value: number; siz
   );
 }
 
-/* ── NEW: Growth Intelligence Section ── */
-function GrowthIntelligenceSection({ metrics }: { metrics: any }) {
-  const growthData = useMemo(() => generateGrowthData(6), []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <SectionHeader icon={Brain} label="Growth Intelligence" extra={<AIIndicator label="Forecasting" />} />
-      <TiltCard>
-        <div className="dash-card p-6">
-          <div className="flex items-center justify-between mb-5 relative z-10">
-            <div>
-              <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Projected Growth Trajectory</h3>
-              <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>AI-modeled performance forecast vs. current pace</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(211 96% 62%)" }} />
-                <span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Current</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-[2px] rounded-full" style={{ background: "hsl(197 88% 55%)" }} />
-                <span className="text-[9px]" style={{ color: "hsla(210,40%,65%,.45)" }}>Projected</span>
-              </div>
-            </div>
-          </div>
-          <div className="relative z-10" style={{ height: 220 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={growthData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                <defs>
-                  <linearGradient id="growthCurrent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="growthProjected" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(197 88% 55%)" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="hsl(197 88% 55%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
-                <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area type="monotone" dataKey="current" name="Current" stroke="hsl(211 96% 62%)" strokeWidth={2}
-                  fill="url(#growthCurrent)" dot={false}
-                  activeDot={{ r: 4, fill: "hsl(211 96% 65%)", stroke: "hsla(211,96%,60%,.3)", strokeWidth: 6 }}
-                  style={{ filter: "drop-shadow(0 0 6px hsla(211,96%,60%,.3))" }} />
-                <Area type="monotone" dataKey="projected" name="Projected" stroke="hsl(197 88% 55%)" strokeWidth={2}
-                  fill="url(#growthProjected)" dot={false} strokeDasharray="6 3"
-                  activeDot={{ r: 4, fill: "hsl(197 88% 55%)", stroke: "hsla(197,88%,55%,.3)", strokeWidth: 6 }}
-                  style={{ filter: "drop-shadow(0 0 6px hsla(197,88%,55%,.2))" }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          {/* Trend indicators */}
-          <div className="flex gap-4 mt-4 relative z-10">
-            {[
-              { label: "Growth Rate", value: "+18%", icon: ArrowUp },
-              { label: "Conversion", value: "3.2%", icon: Target },
-              { label: "Engagement", value: "High", icon: Activity },
-            ].map((t, i) => (
-              <motion.div key={t.label} className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                style={{ background: "hsla(211,96%,60%,.04)", border: "1px solid hsla(211,96%,60%,.08)" }}
-                initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                transition={{ delay: 0.3 + i * 0.1 }}>
-                <t.icon className="h-3 w-3" style={{ color: "hsl(211 96% 65%)" }} />
-                <div>
-                  <p className="text-[9px] uppercase tracking-wider" style={{ color: "hsla(210,40%,65%,.4)" }}>{t.label}</p>
-                  <p className="text-xs font-bold" style={{ color: "hsl(211 96% 72%)" }}>{t.value}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </TiltCard>
-    </motion.div>
-  );
-}
 
 /* ── NEW: Revenue Trends Section (real billing data) ── */
 function RevenueTrendsSection({ data }: {
@@ -808,187 +654,7 @@ function RevenueTrendsSection({ data }: {
   );
 }
 
-/* ── Revenue Expansion with Psychology ── */
-function OpportunitiesSection({ metrics, intel }: { metrics: any; intel: ClientIntelligenceOutput | null }) {
-  const totalPotential = useMemo(() => {
-    const base = Math.max(metrics.pipelineValue, 8000);
-    return Math.round(base * 0.45 / 100) * 100;
-  }, [metrics.pipelineValue]);
 
-  const opportunities = useMemo(() => {
-    const lever = intel?.primaryGrowthLever ?? "Optimize growth channels";
-    const urgency = intel?.urgencySignal ?? "Take action to capture missed revenue";
-    return [
-      { title: lever.split("+")[0]?.trim() || "Growth Lever", potential: `$${(Math.round(totalPotential * 0.41 / 100) * 100).toLocaleString()}`, confidence: intel ? Math.min(92, intel.growthPotentialPct + 10) : 82, icon: TrendingUp, desc: intel?.nicheOpportunitySummary?.substring(0, 60) + "…" || "Based on service usage patterns", growth: "+$3.2K/mo" },
-      { title: "Reactivation Campaign", potential: `$${(Math.round(totalPotential * 0.27 / 100) * 100).toLocaleString()}`, confidence: 67, icon: Users, desc: "Dormant contacts identified for reactivation", growth: "+18% conv." },
-      { title: "Referral Pipeline", potential: `$${(Math.round(totalPotential * 0.19 / 100) * 100).toLocaleString()}`, confidence: 74, icon: Sparkles, desc: "High-satisfaction clients ready for referrals", growth: "+9 leads" },
-      { title: "Cross-Sell Opportunity", potential: `$${(Math.round(totalPotential * 0.13 / 100) * 100).toLocaleString()}`, confidence: 58, icon: Layers, desc: "Complementary services match", growth: "+2 deals" },
-    ];
-  }, [totalPotential, intel]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6 }}
-    >
-      <SectionHeader icon={DollarSign} label="Revenue Expansion Opportunities" extra={
-        <motion.span className="text-[9px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
-          style={{ color: "hsl(197 88% 60%)", background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.12)" }}
-          animate={{ boxShadow: ["0 0 8px -2px hsla(197,88%,55%,.1)", "0 0 20px -2px hsla(197,88%,55%,.25)", "0 0 8px -2px hsla(197,88%,55%,.1)"] }}
-          transition={{ duration: 3, repeat: Infinity }}>
-          ${totalPotential.toLocaleString()}+ Identified
-        </motion.span>
-      } />
-
-      {/* Urgency banner */}
-      <motion.div className="dash-card p-4 mb-5"
-        initial={{ opacity: 0, scale: 0.97 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        style={{ borderColor: "hsla(197,88%,55%,.15)" }}>
-        <div className="flex items-center gap-3 relative z-10">
-          <motion.div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "hsla(197,88%,55%,.08)", border: "1px solid hsla(197,88%,55%,.15)" }}
-            animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 3, repeat: Infinity }}>
-            <DollarSign className="h-5 w-5" style={{ color: "hsl(197 88% 60%)" }} />
-          </motion.div>
-          <div className="flex-1">
-            <p className="text-sm font-bold" style={{ color: "hsl(210 40% 90%)" }}>
-              You're leaving an estimated <span style={{ color: "hsl(197 88% 60%)" }}>${totalPotential.toLocaleString()}/mo</span> on the table
-            </p>
-            <p className="text-[10px] mt-0.5" style={{ color: "hsla(210,40%,65%,.5)" }}>
-              AI detected {opportunities.length} missed revenue channels based on your business profile
-            </p>
-          </div>
-          <motion.div className="text-2xl font-bold shrink-0"
-            style={{
-              background: "linear-gradient(135deg, hsl(197 88% 60%), hsl(211 96% 68%))",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              filter: "drop-shadow(0 0 8px hsla(197,88%,55%,.2))",
-            }}
-            animate={{ opacity: [0.8, 1, 0.8] }} transition={{ duration: 2.5, repeat: Infinity }}>
-            +{Math.round(((totalPotential / Math.max(metrics.pipelineValue || totalPotential, 1)) * 100))}%
-          </motion.div>
-        </div>
-      </motion.div>
-
-      <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {opportunities.map((opp, i) => (
-          <motion.div key={opp.title} variants={fadeUp}>
-            <TiltCard>
-              <div className="dash-card p-5 group">
-                <div className="flex items-start gap-4 relative z-10">
-                  <motion.div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{
-                      background: "linear-gradient(145deg, hsla(211,96%,60%,.1), hsla(197,88%,55%,.05))",
-                      border: "1px solid hsla(211,96%,60%,.1)",
-                    }}
-                    whileHover={{ scale: 1.1, rotate: 5 }}>
-                    <opp.icon className="h-5 w-5" style={{ color: "hsl(211 96% 65%)" }} />
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold mb-0.5" style={{ color: "hsl(210 40% 88%)" }}>{opp.title}</p>
-                    <p className="text-[10px]" style={{ color: "hsla(210,40%,65%,.45)" }}>{opp.desc}</p>
-                    <div className="flex items-center gap-3 mt-3">
-                      <span className="text-lg font-bold"
-                        style={{
-                          background: "linear-gradient(135deg, hsl(211 96% 68%), hsl(197 88% 58%))",
-                          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                        }}>{opp.potential}</span>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "hsla(211,96%,60%,.08)" }}>
-                          <motion.div className="h-full rounded-full"
-                            style={{ background: "linear-gradient(90deg, hsl(211 96% 58%), hsl(197 88% 55%))" }}
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${opp.confidence}%` }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 1.2, ease: "easeOut", delay: i * 0.1 }} />
-                        </div>
-                        <span className="text-[9px] font-bold tabular-nums" style={{ color: "hsla(211,96%,65%,.5)" }}>{opp.confidence}%</span>
-                      </div>
-                    </div>
-                    <motion.span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                      style={{
-                        color: "hsl(197 88% 62%)",
-                        background: "hsla(197,88%,55%,.06)",
-                        border: "1px solid hsla(197,88%,55%,.1)",
-                      }}
-                      initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                      transition={{ delay: 0.5 + i * 0.1 }}>
-                      {opp.growth}
-                    </motion.span>
-                  </div>
-                </div>
-              </div>
-            </TiltCard>
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* ── AI Insights Layer (connected to intelligence engine) ── */
-function AIInsightsLayer({ intel }: { intel: ClientIntelligenceOutput | null }) {
-  const insights = intel ? [
-    { title: "Growth Opportunity", body: intel.nicheOpportunitySummary, icon: TrendingUp, priority: "high" },
-    { title: "Primary Growth Lever", body: intel.primaryGrowthLever, icon: Zap, priority: "med" },
-    { title: "Urgency Signal", body: intel.urgencySignal, icon: AlertTriangle, priority: "high" },
-  ] : [
-    { title: "Lead Response Time", body: "Average response is 4.2 hours — reducing to under 1 hour could increase conversion by 21%", icon: Clock, priority: "high" },
-    { title: "Best Performing Channel", body: "Organic search drives 42% of qualified leads. Consider increasing SEO investment.", icon: Eye, priority: "med" },
-    { title: "Proposal Win Rate", body: "Your close rate is 34% — 8% above industry average. Maintain current follow-up cadence.", icon: Shield, priority: "low" },
-  ];
-
-  const priorityStyles = {
-    high: { border: "hsla(211,96%,60%,.2)", bg: "hsla(211,96%,60%,.05)", dot: "hsl(211 96% 62%)" },
-    med:  { border: "hsla(197,88%,55%,.18)", bg: "hsla(197,88%,55%,.04)", dot: "hsl(197 88% 58%)" },
-    low:  { border: "hsla(205,80%,65%,.15)", bg: "hsla(205,80%,65%,.03)", dot: "hsl(205 80% 60%)" },
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6 }}
-    >
-      <SectionHeader icon={Brain} label="AI Intelligence Feed" extra={<AIIndicator label="Processing" />} />
-      <div className="space-y-3">
-        {insights.map((ins, i) => {
-          const s = priorityStyles[ins.priority as keyof typeof priorityStyles];
-          return (
-            <motion.div key={ins.title}
-              className="dash-card p-5 group"
-              initial={{ opacity: 0, x: -20, scale: 0.98 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-30px" }}
-              transition={{ delay: i * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-              <div className="flex items-start gap-4 relative z-10">
-                <motion.div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: s.bg, border: `1px solid ${s.border}` }}
-                  animate={{ scale: [1, 1.03, 1] }} transition={{ duration: 5, repeat: Infinity, delay: i * 0.5 }}>
-                  <ins.icon className="h-4.5 w-4.5" style={{ color: s.dot }} />
-                </motion.div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }}
-                      animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }} />
-                    <p className="text-sm font-bold" style={{ color: "hsl(210 40% 88%)" }}>{ins.title}</p>
-                  </div>
-                  <p className="text-xs leading-relaxed" style={{ color: "hsla(210,40%,70%,.55)" }}>{ins.body}</p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
 
 export default function Dashboard() {
   const { activeClientId, branding, activeClientName } = useWorkspace();
@@ -1004,7 +670,7 @@ export default function Dashboard() {
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [clientStages, setClientStages] = useState({ proposalStatus: "not_sent", agreementStatus: "not_sent", paymentStatus: "unpaid", implementationStatus: "not_started" });
-  const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [healthRecord, setHealthRecord] = useState<any>(null);
   const [healthMilestones, setHealthMilestones] = useState<any[]>([]);
@@ -1103,8 +769,7 @@ export default function Dashboard() {
       supabase.from("crm_activities").select("activity_type, activity_note, created_at").eq("client_id", activeClientId).order("created_at", { ascending: false }).limit(8),
       supabase.from("follow_up_queues" as any).select("id, status, due_at").eq("client_id", activeClientId).in("status", ["Pending"]),
       supabase.from("proposals").select("id", { count: "exact", head: true }).eq("client_id", activeClientId).eq("proposal_status", "sent"),
-      supabase.from("workspace_profiles").select("profile_type, config_overrides").eq("client_id", activeClientId).maybeSingle(),
-    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals, wpRes]) => {
+    ]).then(([onb, intg, clientStage, contacts, deals, events, reviews, tasks, acts, fuRes, proposals]) => {
       const cs = clientStage.data as any;
       setOnboardingStage(cs?.onboarding_stage || "lead");
       setClientStages({
@@ -1144,21 +809,6 @@ export default function Dashboard() {
       });
       setActivities(acts.data || []);
 
-      // Hydrate workspace profile for intelligence engine
-      const wpData = wpRes.data;
-      if (wpData) {
-        const ov = (wpData.config_overrides && typeof wpData.config_overrides === "object" && !Array.isArray(wpData.config_overrides))
-          ? wpData.config_overrides as Record<string, any> : {};
-        setWorkspaceProfile({
-          industry: ov.industry || "agencies_professional",
-          niche: ov.niche || null,
-          archetype: ov.archetype || "retainers",
-          zoomTier: ov.zoomTier || "z2",
-          legacyProfileType: (wpData as any).profile_type || "",
-          legacyIndustryValue: ov.legacyIndustryValue || "",
-          metadata: ov.metadata || { revenueModel: "retainer", salesCycle: "medium", ticketSize: "medium", complexityLevel: "medium", complianceLevel: "none" },
-        });
-      }
 
       setLoading(false);
     });
@@ -1168,15 +818,8 @@ export default function Dashboard() {
   const isLive = onboardingStage === "active";
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
   const displayName = branding.company_name || activeClientName || "your business";
-  const intel = useMemo(() => workspaceProfile ? generateClientIntelligence(workspaceProfile) : null, [workspaceProfile]);
-
-  const sparkPipeline = useMemo(() => fakeSparkline(metrics.pipelineValue), [metrics.pipelineValue]);
-  const sparkWon = useMemo(() => fakeSparkline(metrics.wonValue), [metrics.wonValue]);
   const sparkContacts = useMemo(() => fakeSparkline(metrics.contacts), [metrics.contacts]);
   const sparkEvents = useMemo(() => fakeSparkline(metrics.upcomingEvents), [metrics.upcomingEvents]);
-
-  const areaChartData = useMemo(() => generateChartData(Math.max(metrics.pipelineValue / 1000, metrics.contacts, 5)), [metrics.pipelineValue, metrics.contacts]);
-  const barChartData = useMemo(() => generateBarData(Math.max(metrics.contacts, metrics.openDeals, 3)), [metrics.contacts, metrics.openDeals]);
 
   const quickActions = [
     { label: "New Contact", icon: UserPlus, to: "/crm" },
@@ -1382,25 +1025,6 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* ══════ REVENUE ══════ */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <SectionHeader icon={DollarSign} label="Revenue & Growth" extra={
-              <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: "hsla(211,96%,62%,.35)" }}>
-                {hasData ? "Tracking" : "Ready"}
-              </span>
-            } />
-            <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <RevenueGlowCard label="Pipeline Value" value={metrics.pipelineValue} sub={`${metrics.openDeals} open deal${metrics.openDeals !== 1 ? "s" : ""}`} icon={TrendingUp} intensity="high" to="/pipeline" sparkData={sparkPipeline} />
-              <RevenueGlowCard label="Revenue Won" value={metrics.wonValue} sub="Closed deals" icon={DollarSign} intensity="med" to="/pipeline" sparkData={sparkWon} />
-              <RevenueGlowCard label="Revenue Influenced" value={metrics.pipelineValue + metrics.wonValue} sub="Total tracked value" icon={LineChart} intensity="low" />
-            </motion.div>
-          </motion.div>
 
           {/* ══════ REVENUE TRENDS (real billing data) ══════ */}
           <RevenueTrendsSection data={revenueData} />
@@ -1424,90 +1048,7 @@ export default function Dashboard() {
             </motion.div>
           </motion.div>
 
-          {/* ══════ GRAPHS SECTION (Recharts) ══════ */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <SectionHeader icon={BarChart3} label="Performance Overview" extra={<Waveform />} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Area chart — Growth Trend */}
-              <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                <TiltCard>
-                  <div className="dash-card p-6">
-                    <div className="flex items-center justify-between mb-5 relative z-10">
-                      <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Growth Trend</h3>
-                      <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>7 days</span>
-                    </div>
-                    <div className="relative z-10" style={{ height: 160 }}>
-                      {metrics.contacts === 0 && metrics.openDeals === 0 ? (
-                        <EmptyBlock icon={LineChart} title="Trends loading" desc="Data will populate as your system tracks activity." />
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={areaChartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                            <defs>
-                              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.25} />
-                                <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
-                            <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                            <Tooltip content={<ChartTooltip />} />
-                            <Area type="monotone" dataKey="value" name="Growth"
-                              stroke="hsl(211 96% 62%)" strokeWidth={2}
-                              fill="url(#areaGrad)" dot={false}
-                              activeDot={{ r: 4, fill: "hsl(211 96% 65%)", stroke: "hsla(211,96%,60%,.3)", strokeWidth: 6 }}
-                              style={{ filter: "drop-shadow(0 0 6px hsla(211,96%,60%,.3))" }} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                  </div>
-                </TiltCard>
-              </motion.div>
 
-              {/* Bar chart — Activity Volume */}
-              <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                <TiltCard>
-                  <div className="dash-card p-6">
-                    <div className="flex items-center justify-between mb-5 relative z-10">
-                      <h3 className="text-sm font-bold" style={{ color: "hsl(210 40% 85%)" }}>Activity Volume</h3>
-                      <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "hsla(211,96%,62%,.35)" }}>12 weeks</span>
-                    </div>
-                    <div className="relative z-10" style={{ height: 160 }}>
-                      {metrics.contacts === 0 && activities.length === 0 ? (
-                        <EmptyBlock icon={BarChart3} title="Activity ready" desc="Volume data will appear as your system captures events." />
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={barChartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                            <defs>
-                              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(211 96% 62%)" stopOpacity={0.6} />
-                                <stop offset="100%" stopColor="hsl(211 96% 62%)" stopOpacity={0.15} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsla(211,96%,60%,.06)" />
-                            <XAxis dataKey="name" tick={{ fill: "hsla(210,40%,65%,.35)", fontSize: 9 }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fill: "hsla(210,40%,65%,.25)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                            <Tooltip content={<ChartTooltip />} />
-                            <Bar dataKey="value" name="Activity" fill="url(#barGrad)" radius={[4, 4, 0, 0]}
-                              style={{ filter: "drop-shadow(0 0 4px hsla(211,96%,60%,.15))" }} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                  </div>
-                </TiltCard>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* ══════ GROWTH INTELLIGENCE (NEW) ══════ */}
-          <GrowthIntelligenceSection metrics={metrics} />
 
           {/* ══════ BUSINESS INTELLIGENCE (from engine) ══════ */}
           {activeClientId && (
@@ -1598,9 +1139,6 @@ export default function Dashboard() {
             );
           })()}
 
-          {/* ══════ OPPORTUNITIES / REVENUE EXPANSION (NEW) ══════ */}
-
-          <OpportunitiesSection metrics={metrics} intel={intel} />
 
           {/* ══════ QUICK ACTIONS ══════ */}
           <motion.div
@@ -1632,58 +1170,8 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ══════ AI INSIGHTS LAYER ══════ */}
-          <AIInsightsLayer intel={intel} />
 
-          {/* ══════ ENERGY SWEEP DIVIDER ══════ */}
-          <motion.div className="relative py-2"
-            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            <motion.div className="h-px" style={{
-              background: "linear-gradient(90deg, transparent 0%, hsla(211,96%,60%,.3) 20%, hsla(197,88%,55%,.4) 50%, hsla(211,96%,60%,.3) 80%, transparent 100%)",
-              boxShadow: "0 0 12px 0 hsla(211,96%,60%,.12)",
-            }}
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
-          </motion.div>
 
-          {/* ══════ PERFORMANCE TRENDS ══════ */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <SectionHeader icon={Activity} label="Performance Trends" extra={<AIIndicator label="Tracking" />} />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { label: "Lead Velocity", value: "+23%", sub: "vs. last month", color: "hsl(211 96% 62%)" },
-                { label: "Conversion Rate", value: "3.8%", sub: "above industry avg", color: "hsl(197 88% 58%)" },
-                { label: "Avg Deal Size", value: `$${Math.max(2400, Math.round(metrics.pipelineValue / Math.max(metrics.openDeals, 1))).toLocaleString()}`, sub: "trending up", color: "hsl(211 96% 68%)" },
-                { label: "Response Time", value: "< 2hr", sub: "optimal range", color: "hsl(197 88% 62%)" },
-              ].map((trend, i) => (
-                <motion.div key={trend.label}
-                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}>
-                  <TiltCard>
-                    <div className="dash-card p-4 text-center">
-                      <div className="relative z-10">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: "hsla(210,50%,70%,.45)" }}>{trend.label}</p>
-                        <motion.p className="text-2xl font-bold"
-                          style={{ color: trend.color, filter: `drop-shadow(0 0 8px ${trend.color}40)` }}
-                          animate={{ opacity: [0.85, 1, 0.85] }}
-                          transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}>
-                          {trend.value}
-                        </motion.p>
-                        <p className="text-[10px] mt-1" style={{ color: "hsla(210,40%,65%,.4)" }}>{trend.sub}</p>
-                      </div>
-                    </div>
-                  </TiltCard>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
 
           {/* ══════ MAIN CONTENT GRID ══════ */}
           <motion.div
