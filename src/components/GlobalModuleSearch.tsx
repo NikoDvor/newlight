@@ -66,7 +66,7 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "System Settings", url: "/admin/settings", icon: SettingsIcon, groupLabel: "System" },
   // Ops Top
   { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles, groupLabel: "Ops — General" },
-  { title: "Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain, groupLabel: "Ops — General" },
+  { title: "AI Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain, groupLabel: "Ops — General" },
   // Client Overview
   { title: "Business Health", url: "/admin/ops/business-health", icon: HeartPulse, groupLabel: "Client Overview" },
   { title: "Revenue Opportunities", url: "/admin/ops/revenue-opportunities", icon: TrendingUp, groupLabel: "Client Overview" },
