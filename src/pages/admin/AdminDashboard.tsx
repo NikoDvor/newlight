@@ -62,7 +62,7 @@ export default function AdminDashboard() {
       supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
         setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
       }),
-      supabase.from("crm_deals").select("pipeline_stage").then(({ data }) => {
+      supabase.from("crm_deals").select("pipeline_stage").neq("client_id", "d0c0edc1-ff61-4597-8500-96e02fdd87d8").then(({ data }) => {
         const stages: Record<string, number> = {};
         (data ?? []).forEach((d: any) => { stages[d.pipeline_stage] = (stages[d.pipeline_stage] || 0) + 1; });
         setPipelineStages(stages);
