@@ -471,33 +471,28 @@ async function sendClosePrepNotifications(supabase: any, args: {
     await sendEmail(repEmail, subj, html, text);
   }
 
-  // Direct client-facing email (additive; never blocks the rest of the flow)
+  // Direct client-facing email — meeting confirmation ONLY (no pricing/payment/signing content)
   if (lead.email) {
     try {
-      const subj = `Next step to get started — ${lead.business_name}`;
+      const subj = `Your meeting is confirmed — ${whenLbl}`;
       const signer = repName || "The NewLight Team";
-      const contactLines = [repEmail ? `Email: ${repEmail}` : ""].filter(Boolean);
       const text = [
         `Hi ${lead.owner_name || "there"},`,
         ``,
-        `Thank you for your time today. Here are the terms we discussed for ${lead.business_name}:`,
-        `  • ${priceLine}`,
+        `Your meeting is confirmed for ${whenLbl} (Pacific Time).`,
         ``,
-        `When you're ready, complete your next step here:`,
-        paySignUrl,
-        ``,
-        `That single link lets you:`,
-        `  1. Review and e-sign your service agreement`,
-        `  2. Pay the initial amount securely`,
-        `  3. Pick a date for your first onboarding meeting`,
-        ``,
-        `If anything looks off or you have questions, just reply to this email.`,
+        `Looking forward to speaking with you. If you need to change the time, just reply to this email.`,
         ``,
         `— ${signer}`,
-        ...contactLines,
+        repEmail ? `Email: ${repEmail}` : "",
       ].filter(Boolean).join("\n");
-      const html = clientNextStepHtml({ businessName: lead.business_name, ownerName: lead.owner_name || null, priceLine, paySignUrl, signer, repEmail: repEmail || null });
-      console.log(`[close-prep client email] to=${lead.email} subject="${subj}" priceLine="${priceLine}" paySignUrl="${paySignUrl}"`);
+      const html = clientMeetingConfirmHtml({
+        ownerName: lead.owner_name || null,
+        whenLbl,
+        signer,
+        repEmail: repEmail || null,
+      });
+      console.log(`[close-prep client email] to=${lead.email} subject="${subj}" when="${whenLbl}"`);
       await sendEmail(lead.email, subj, html, text);
     } catch (e) {
       console.error("[close-prep] client email failed:", e);
@@ -505,34 +500,24 @@ async function sendClosePrepNotifications(supabase: any, args: {
   }
 }
 
-function clientNextStepHtml(args: {
-  businessName: string;
+function clientMeetingConfirmHtml(args: {
   ownerName: string | null;
-  priceLine: string;
-  paySignUrl: string;
+  whenLbl: string;
   signer: string;
   repEmail: string | null;
 }): string {
-  const { businessName, ownerName, priceLine, paySignUrl, signer, repEmail } = args;
+  const { ownerName, whenLbl, signer, repEmail } = args;
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Next step to get started</h1>
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your meeting is confirmed</h1>
     <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ${esc(ownerName || "there")},</p>
-    <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Thank you for your time today. Here are the terms we discussed for <strong>${esc(businessName)}</strong>:</p>
-    <div style="padding:12px 14px;background:#f9fafb;border-radius:8px;font-size:14px;color:#111827;margin:0 0 20px;"><strong>${esc(priceLine)}</strong></div>
-    <p style="margin:0 0 20px;"><a href="${paySignUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 26px;border-radius:8px;">Review, sign &amp; get started</a></p>
-    <p style="font-size:14px;line-height:1.6;margin:0 0 8px;">That single link lets you:</p>
-    <ol style="font-size:14px;line-height:1.7;margin:0 0 20px;padding-left:20px;color:#374151;">
-      <li>Review and e-sign your service agreement</li>
-      <li>Pay the initial amount securely</li>
-      <li>Pick a date for your first onboarding meeting</li>
-    </ol>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:0 0 20px;">If the button doesn't work, use this link:<br><a href="${paySignUrl}" style="color:#2563eb;word-break:break-all;">${paySignUrl}</a></p>
-    <p style="font-size:14px;line-height:1.6;margin:0;">If anything looks off or you have questions, just reply to this email.</p>
+    <div style="padding:14px 16px;background:#f9fafb;border-radius:8px;font-size:15px;color:#111827;margin:0 0 20px;"><strong>${esc(whenLbl)}</strong> <span style="color:#6b7280;font-size:13px;">(Pacific Time)</span></div>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Looking forward to speaking with you. If you need to change the time, just reply to this email.</p>
     <p style="font-size:14px;line-height:1.6;margin:20px 0 0;">— ${esc(signer)}${repEmail ? `<br><span style="color:#6b7280;font-size:13px;">${esc(repEmail)}</span>` : ""}</p>
   </div>
 </body></html>`;
 }
+
 
 function closePrepHtml(args: {
   heading: string;
