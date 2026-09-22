@@ -255,7 +255,6 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
 export interface ProposalQuote {
   workspaceProfileSummary: {
     industry: string;
-    niche: string | null;
     archetype: string;
     zoomTier: string;
     operationType: string;
