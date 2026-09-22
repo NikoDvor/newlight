@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { executeSalesIntake } from "@/lib/salesAutomation";
 import { WORKFLOW_STEPS, PROPOSAL_STATUSES, type WorkflowStepKey, type ProposalStatusKey } from "@/contexts/ActiveSalesContext";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { MarkLostDialog } from "@/components/pipeline/MarkLostDialog";
 import { resolveOperationType } from "@/lib/businessOperationTypes";
 import { DEFAULT_WORKSPACE_PROFILE } from "@/lib/workspaceProfileTypes";
@@ -77,9 +76,8 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
     archetype: client.business_type === "agency" ? "agency" : "local_business",
     niche: client.business_type || "",
   };
-  const niche = NICHE_REGISTRY[profile.niche] || null;
   const opType = resolveOperationType(profile.archetype as any, profile.industry);
-  const nicheLabel = niche?.label || profile.niche || "General";
+  const nicheLabel = "Financial Firm";
 
   const ps = client.proposal_status || "not_sent";
   const payStatus = client.payment_status || "unpaid";
@@ -104,7 +102,7 @@ function deriveClientSalesRecord(client: any): ClientSalesRecord {
     salesStage = "first_meeting"; proposalStatus = "draft";
   }
 
-  const readyToPresent = !!(profile.industry && profile.niche);
+  const readyToPresent = !!profile.industry;
   const readyToClose = proposalRevealed && paymentReady;
 
   let riskIndicator = "On Track";
