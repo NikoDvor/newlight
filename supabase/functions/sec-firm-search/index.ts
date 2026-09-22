@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const maxRawRecords = city && state ? 2000 : state ? 1000 : 500;
     const HARD_PAGE_CAP = 150; // absolute safety net
 
-    const cityLower = city.toLowerCase();
+    const cityLower = city ? normalizeCity(city) : "";
     const rawResults: FirmResult[] = [];
     const filtered: FirmResult[] = [];
     let total = 0;
