@@ -1,5 +1,5 @@
 import { SystemStatusBar } from "@/components/SystemStatusBar";
-import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
+import { ReferralCard } from "@/components/SaveAndEarn";
 import { BusinessHealthSection } from "@/components/BusinessHealthSection";
 import { BusinessIntelligencePreview } from "@/components/BusinessIntelligencePreview";
 import { ProposalStageBanner } from "@/components/ProposalStageBanner";
@@ -1332,17 +1332,6 @@ export default function Dashboard() {
 
           <BusinessHealthSection />
 
-          {/* ══════ ANNUAL SAVINGS OFFER ══════ */}
-          <section className="mt-8">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, hsla(211,96%,62%,0.3), transparent)" }} />
-              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground">Save & Earn</h2>
-              <div className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, hsla(211,96%,62%,0.3), transparent)" }} />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <AnnualSwitchCard />
-            </div>
-          </section>
 
 
         </div>
