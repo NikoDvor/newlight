@@ -273,7 +273,6 @@ export function buildProposalQuote(input: QuoteInput): ProposalQuote {
   return {
     workspaceProfileSummary: {
       industry: input.workspaceProfile.industry,
-      niche: input.workspaceProfile.niche,
       archetype: input.workspaceProfile.archetype,
       zoomTier: input.workspaceProfile.zoomTier,
       operationType: quote.businessOperationType,
