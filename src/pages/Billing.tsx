@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard, Receipt, CheckCircle, Clock, FileText, Building2, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { AnnualSwitchCard, ReferralCard } from "@/components/SaveAndEarn";
+import { ReferralCard } from "@/components/SaveAndEarn";
 import { ManageSubscriptionDialog } from "@/components/ManageSubscriptionDialog";
 
 const statusColor: Record<string, string> = {
@@ -209,10 +209,6 @@ export default function Billing() {
 
       <section className="mt-10">
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Billing</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <AnnualSwitchCard />
-          <div className="hidden lg:block" />
-        </div>
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold tracking-tight text-foreground mb-1">Referrals</h3>
