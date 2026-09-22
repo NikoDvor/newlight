@@ -246,6 +246,7 @@ const App = () => {
           <WorkspaceProvider>
             <PWAInstallProvider>
               <PWAUpdateBanner />
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
 
               {/* Public landing */}
@@ -547,6 +548,7 @@ const App = () => {
 
               <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </PWAInstallProvider>
           </WorkspaceProvider>
         </BrowserRouter>
