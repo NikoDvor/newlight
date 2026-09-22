@@ -6,19 +6,17 @@ import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { resolveOperationType, isFinancialFirm, type BusinessOperationType } from "@/lib/businessOperationTypes";
 
 // ═══════════════════════════════════════════════
-// Platform Pricing Tables (INTERNAL)
+// Platform Pricing (INTERNAL) — financial firms only
 // ═══════════════════════════════════════════════
 
-const PLATFORM_PRICING: Record<BusinessOperationType, { setup: number; monthly: number }> = {
-  field_service:       { setup: 4997,  monthly: 397 },
-  appointment_local:   { setup: 6997,  monthly: 497 },
-  consultative_sales:  { setup: 7997,  monthly: 597 },
-  membership_recurring:{ setup: 6997,  monthly: 497 },
-  project_service:     { setup: 5997,  monthly: 447 },
-  custom_hybrid:       { setup: 9997,  monthly: 697 },
-};
+/** $7,997 setup, then a flat $3,000/mo retainer (or commission billing instead). */
+export const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 3000 };
 
-const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 797 };
+/** Billing model offered alongside the setup fee. */
+export type PricingModel = "retainer" | "commission";
+
+/** Commission billing: 25% of client revenue in year one, 10% every year after. */
+export const COMMISSION_DEFAULTS = { yearOneRate: 25, ongoingRate: 10 };
 
 // ═══════════════════════════════════════════════
 // Growth Module Pricing Tables (INTERNAL)
