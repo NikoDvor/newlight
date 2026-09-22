@@ -293,7 +293,6 @@ const App = () => {
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="pipeline-insights" element={<AdminPipelineInsights />} />
                 <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
-                <Route path="activation" element={<AdminActivation />} />
                 <Route path="master-activation" element={<AdminMasterActivation />} />
                 <Route path="clients/:clientId/activate" element={<AdminMasterActivation />} />
                 <Route path="demo-builds" element={<AdminDemoBuilds />} />
