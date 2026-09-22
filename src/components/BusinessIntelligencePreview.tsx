@@ -153,7 +153,7 @@ export function BusinessIntelligencePreview({ clientId, profile: externalProfile
         <div className="flex items-start gap-2.5">
           <Lightbulb className="h-4 w-4 text-[hsl(var(--nl-sky))] shrink-0 mt-0.5" />
           <div>
-            <p className="text-[11px] text-white/60 leading-relaxed">{intel.nicheOpportunitySummary}</p>
+            <p className="text-[11px] text-white/60 leading-relaxed">{intel.opportunitySummary}</p>
             <p className="text-[10px] text-[hsl(var(--nl-neon))] mt-2 font-medium">{intel.primaryGrowthLever}</p>
             <p className="text-[10px] text-amber-400/50 mt-1 flex items-center gap-1">
               <AlertTriangle className="h-2.5 w-2.5" /> {intel.urgencySignal}

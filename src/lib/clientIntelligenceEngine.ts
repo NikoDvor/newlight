@@ -13,7 +13,7 @@ export interface ClientIntelligenceOutput {
   businessComplexityLabel: string;
   complianceSensitivityLabel: string;
   estimateLabel: string;
-  nicheOpportunitySummary: string;
+  opportunitySummary: string;
   primaryGrowthLever: string;
   urgencySignal: string;
 }
@@ -92,7 +92,7 @@ export function generateClientIntelligence(profile: WorkspaceProfile): ClientInt
     businessComplexityLabel,
     complianceSensitivityLabel,
     estimateLabel: "Estimated opportunity until final setup",
-    nicheOpportunitySummary: FINANCIAL_FIRM_OPPORTUNITY.summary,
+    opportunitySummary: FINANCIAL_FIRM_OPPORTUNITY.summary,
     primaryGrowthLever: FINANCIAL_FIRM_OPPORTUNITY.lever,
     urgencySignal: FINANCIAL_FIRM_OPPORTUNITY.urgency,
   };
