@@ -28,8 +28,10 @@ export default defineConfig(({ mode }) => ({
         name: "NewLight",
         short_name: "NewLight",
         description: "AI-powered business growth platform",
-        theme_color: "#0EA5E9",
-        background_color: "#0EA5E9",
+        // Real brand values: app shell background (index.html) and the
+        // --primary token from index.css (hsl(211 96% 60%) === #3796FB).
+        theme_color: "#030608",
+        background_color: "#030608",
         display: "standalone",
         orientation: "portrait-primary",
         scope: "/",
