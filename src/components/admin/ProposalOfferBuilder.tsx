@@ -163,7 +163,7 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
           <div className="flex items-start gap-2">
             <Lightbulb className="h-3 w-3 text-[hsl(var(--nl-sky))] shrink-0 mt-0.5" />
             <div>
-              <p className="text-[10px] text-white/60 leading-relaxed">{intel.nicheOpportunitySummary}</p>
+              <p className="text-[10px] text-white/60 leading-relaxed">{intel.opportunitySummary}</p>
               <p className="text-[10px] text-[hsl(var(--nl-neon))] mt-1.5 font-medium">Primary lever: {intel.primaryGrowthLever}</p>
               <p className="text-[10px] text-amber-400/60 mt-0.5 flex items-center gap-1">
                 <AlertTriangle className="h-2.5 w-2.5" /> {intel.urgencySignal}
