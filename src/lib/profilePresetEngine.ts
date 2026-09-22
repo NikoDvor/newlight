@@ -44,7 +44,7 @@ const CATEGORY_PRICING: Record<string, ResolvedPricing> = {
 
 export function resolvePricing(profile: StructuredWorkspaceProfile): ResolvedPricing {
   return CATEGORY_PRICING[profile.category] ?? {
-    family: (profile.pricing?.family as BusinessOperationType) ?? "custom_hybrid",
+    family: FINANCIAL_FIRM_OPERATION_TYPE,
     bracket: (profile.pricing?.bracket as PricingBracket) ?? "standard",
     isFinancialPremium: false,
   };
