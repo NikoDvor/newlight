@@ -93,24 +93,20 @@ export function WorkspaceIntelligencePanel({
         </CardContent>
       </Card>
 
-      {/* Niche Metadata */}
-      {niche && (
-        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Niche Profile</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-              <InfoRow label="Revenue Model" value={niche.revenueModel.replace(/_/g, " ")} />
-              <InfoRow label="Sales Cycle" value={niche.salesCycle} />
-              <InfoRow label="Ticket Size" value={niche.ticketSize.replace(/_/g, " ")} />
-              <InfoRow label="Complexity" value={intel.businessComplexityLabel} />
-              <InfoRow label="Compliance" value={intel.complianceSensitivityLabel} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Business Profile */}
+      <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+            <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Business Profile</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+            <InfoRow label="Vertical" value="Financial Firm" />
+            <InfoRow label="Complexity" value={intel.businessComplexityLabel} />
+            <InfoRow label="Compliance" value={intel.complianceSensitivityLabel} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Module Emphasis */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
