@@ -113,8 +113,28 @@ export default function ClosePrep() {
       toast({ title: "Couldn't complete close prep", description: (data as any).error, variant: "destructive" });
       return;
     }
+    setShareToken((data as any)?.envelope_share_token || null);
     setDone(true);
     toast({ title: "Close prep complete", description: "Closing meeting scheduled and notifications sent." });
+  };
+
+  const sendPaySignEmail = async () => {
+    if (!shareToken || sendingLink) return;
+    setSendingLink(true);
+    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+      body: { action: "send_pay_sign_email", share_token: shareToken },
+    });
+    setSendingLink(false);
+    const err = (error as any)?.message || (data as any)?.error;
+    if (err) {
+      toast({ title: "Couldn't send the link", description: err, variant: "destructive" });
+      return;
+    }
+    setLinkSent(true);
+    toast({
+      title: "Pay & Sign link sent",
+      description: `Emailed to ${(data as any)?.to || "the client"} with the agreed terms.`,
+    });
   };
 
   if (loading) return (
