@@ -90,15 +90,6 @@ export const WEBSITE_BUILD_FEES: Record<string, { label: string; fee: number }> 
 // App Store Launch Upgrade (INTERNAL)
 // ═══════════════════════════════════════════════
 
-const APP_STORE_PRICING: Record<BusinessOperationType, number> = {
-  field_service:        9997,
-  appointment_local:   14997,
-  consultative_sales:  17997,
-  membership_recurring:14997,
-  project_service:     11997,
-  custom_hybrid:       19997,
-};
-
 const FINANCIAL_APP_STORE_ADDON = 2000;
 
 // Proposals + Content Planner are included at $0
