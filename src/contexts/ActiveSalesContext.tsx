@@ -9,7 +9,6 @@ import { computeQuote, WEBSITE_BUILD_FEES, type QuoteOutput } from "@/lib/worksp
 import { generateClientIntelligence, type ClientIntelligenceOutput } from "@/lib/clientIntelligenceEngine";
 import { generatePackageFitNarrative, type PackageFitNarrative } from "@/lib/packageFitNarrative";
 import { resolveOperationType, isFinancialFirm } from "@/lib/businessOperationTypes";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { DEFAULT_WORKSPACE_PROFILE, type WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 
 // ═══════════════════════════════════════════════
@@ -378,7 +377,7 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
   const presentedVersion = useMemo(() => versions.find(v => v.isPresented) || null, [versions]);
 
   // Computed
-  const niche = NICHE_REGISTRY[profile.niche || ""];
+  const niche = null as any;
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const financial = isFinancialFirm(profile.industry);
 
@@ -442,7 +441,7 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
   // Readiness
   const stageIdx = WORKFLOW_STEPS.findIndex(s => s.key === currentStage);
   const appStoreAmountOk = !activeVersion.appStoreLaunch || (!!activeVersion.appStoreCustomAmount && parseFloat(activeVersion.appStoreCustomAmount) > 0);
-  const readyToPresent = !!(profile.industry && profile.archetype && profile.niche && (quote.totalUpfront > 0 || quote.totalMonthly > 0) && narrative.opportunity && appStoreAmountOk);
+  const readyToPresent = !!(profile.industry && profile.archetype && (quote.totalUpfront > 0 || quote.totalMonthly > 0) && narrative.opportunity && appStoreAmountOk);
   const readyToClose = !!((proposalStatus === "revealed" || proposalStatus === "accepted") && stageIdx >= 7 && stageIdx >= 8 && stageIdx >= 9);
 
   // Risk flags
@@ -462,12 +461,12 @@ export function ActiveSalesProvider({ children, initialProfile }: { children: Re
       generatedAt: new Date().toISOString(),
       versionName: src.name,
       profile,
-      nicheLabel: niche?.label || profile.niche || "General",
+      nicheLabel: "Financial Firm",
       modules: src.modules,
       websiteBuild: src.websiteBuild,
       appStoreLaunch: src.appStoreLaunch,
       appStoreCustomAmount: src.appStoreCustomAmount || "",
-      complianceLevel: niche?.complianceLevel || "none",
+      complianceLevel: "high",
       setupTotal: srcQuote.totalUpfront,
       monthlyTotal: srcQuote.totalMonthly,
       effectiveSetup: src.setupOverride ? parseInt(src.setupOverride) : Math.round(srcQuote.totalUpfront * (1 - dP / 100)),

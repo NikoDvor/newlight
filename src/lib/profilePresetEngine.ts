@@ -4,7 +4,7 @@
 // Consumes businessCategoryRegistry — does NOT duplicate it.
 
 import type { StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
-import type { BusinessOperationType } from "@/lib/businessOperationTypes";
+import { FINANCIAL_FIRM_OPERATION_TYPE, type BusinessOperationType } from "@/lib/businessOperationTypes";
 
 // ═══════════════════════════════════════════════
 // Pricing Bracket Definitions
@@ -30,21 +30,21 @@ export interface ResolvedPricing {
 }
 
 const CATEGORY_PRICING: Record<string, ResolvedPricing> = {
-  financial_compliance:     { family: "consultative_sales",   bracket: "premium_financial",        isFinancialPremium: true },
-  aesthetics_wellness:      { family: "appointment_local",    bracket: "high_local",               isFinancialPremium: false },
-  field_local_service:      { family: "field_service",        bracket: "standard_field",           isFinancialPremium: false },
-  food_hospitality:         { family: "appointment_local",    bracket: "standard_local",           isFinancialPremium: false },
-  professional_consultative:{ family: "consultative_sales",   bracket: "standard_consultative",    isFinancialPremium: false },
-  real_estate:              { family: "consultative_sales",   bracket: "real_estate_consultative",  isFinancialPremium: false },
-  membership_recurring:     { family: "membership_recurring", bracket: "standard_membership",      isFinancialPremium: false },
-  retail_ecommerce:         { family: "appointment_local",    bracket: "safe_default_retail",      isFinancialPremium: false },
-  technology_saas:          { family: "membership_recurring", bracket: "saas_recurring",           isFinancialPremium: false },
-  project_delivery:         { family: "project_service",      bracket: "standard_project",         isFinancialPremium: false },
+  financial_compliance:     { family: "financial_firm",   bracket: "premium_financial",        isFinancialPremium: true },
+  aesthetics_wellness:      { family: "financial_firm",    bracket: "high_local",               isFinancialPremium: false },
+  field_local_service:      { family: "financial_firm",        bracket: "standard_field",           isFinancialPremium: false },
+  food_hospitality:         { family: "financial_firm",    bracket: "standard_local",           isFinancialPremium: false },
+  professional_consultative:{ family: "financial_firm",   bracket: "standard_consultative",    isFinancialPremium: false },
+  real_estate:              { family: "financial_firm",   bracket: "real_estate_consultative",  isFinancialPremium: false },
+  membership_recurring:     { family: "financial_firm", bracket: "standard_membership",      isFinancialPremium: false },
+  retail_ecommerce:         { family: "financial_firm",    bracket: "safe_default_retail",      isFinancialPremium: false },
+  technology_saas:          { family: "financial_firm", bracket: "saas_recurring",           isFinancialPremium: false },
+  project_delivery:         { family: "financial_firm",      bracket: "standard_project",         isFinancialPremium: false },
 };
 
 export function resolvePricing(profile: StructuredWorkspaceProfile): ResolvedPricing {
   return CATEGORY_PRICING[profile.category] ?? {
-    family: (profile.pricing?.family as BusinessOperationType) ?? "custom_hybrid",
+    family: FINANCIAL_FIRM_OPERATION_TYPE,
     bracket: (profile.pricing?.bracket as PricingBracket) ?? "standard",
     isFinancialPremium: false,
   };

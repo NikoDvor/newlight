@@ -2,7 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { QuoteOutput } from "@/lib/workspaceQuoteEngine";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { BUSINESS_OPERATION_TYPES, resolveOperationType } from "@/lib/businessOperationTypes";
 import { INDUSTRY_CATEGORIES } from "@/lib/workspaceProfileTypes";
 import { generatePackageFitNarrative } from "@/lib/packageFitNarrative";
@@ -16,7 +15,6 @@ interface Props {
 }
 
 export function ProposalQuotePreview({ quote, profile, internalNotes, selectedModules = [] }: Props) {
-  const niche = NICHE_REGISTRY.find(n => n.id === profile.niche);
   const industry = INDUSTRY_CATEGORIES.find(c => c.value === profile.industry);
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
@@ -39,7 +37,7 @@ export function ProposalQuotePreview({ quote, profile, internalNotes, selectedMo
             <p className="text-[10px] text-white/40 uppercase mb-2">Business Summary</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
               <div><span className="text-white/40 block">Industry</span><span className="text-white">{industry?.label}</span></div>
-              <div><span className="text-white/40 block">Niche</span><span className="text-white">{niche?.label ?? "General"}</span></div>
+              <div><span className="text-white/40 block">Vertical</span><span className="text-white">Financial Firm</span></div>
               <div><span className="text-white/40 block">Operation</span><span className="text-white">{opLabel}</span></div>
               <div><span className="text-white/40 block">Tier</span><span className="text-white">{profile.zoomTier.toUpperCase()}</span></div>
             </div>
@@ -72,7 +70,7 @@ export function ProposalQuotePreview({ quote, profile, internalNotes, selectedMo
           <div className="rounded-lg p-4 mb-4" style={{ background: "hsla(140,60%,50%,.03)", border: "1px solid hsla(140,60%,50%,.08)" }}>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-              <p className="text-[10px] text-emerald-400 uppercase font-semibold">Focus Outcomes for {niche?.label ?? "This Business"}</p>
+              <p className="text-[10px] text-emerald-400 uppercase font-semibold">Focus Outcomes for Financial Firms</p>
             </div>
             <div className="space-y-2">
               {narrative.focusOutcomes.map((outcome, i) => (

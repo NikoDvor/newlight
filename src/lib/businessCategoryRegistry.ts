@@ -3,8 +3,6 @@
 // Categories map to pricing families; niches refine within each category.
 
 import type { IndustryCategory, BusinessArchetype, ZoomTier } from "@/lib/workspaceProfileTypes";
-import type { NicheDefinition } from "@/lib/workspaceNiches";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 
 // ── Business Categories ──
 export interface BusinessCategory {
@@ -144,13 +142,6 @@ export function getCategoryById(id: string): BusinessCategory | undefined {
   return BUSINESS_CATEGORIES.find((c) => c.id === id);
 }
 
-/** Get niches filtered by a business category */
-export function getNichesForCategory(categoryId: string): NicheDefinition[] {
-  const cat = getCategoryById(categoryId);
-  if (!cat) return [];
-  return NICHE_REGISTRY.filter((n) => cat.industryKeys.includes(n.industry));
-}
-
 // ── Structured Workspace Profile ──
 
 export interface StructuredWorkspaceProfile {
@@ -183,7 +174,7 @@ export interface StructuredWorkspaceProfile {
 /** Build the new structured workspace profile from category + optional niche */
 export function buildStructuredProfile(
   categoryId: string,
-  niche: NicheDefinition | null
+  _legacyNicheArg: null = null
 ): StructuredWorkspaceProfile {
   const cat = getCategoryById(categoryId);
 
@@ -193,8 +184,8 @@ export function buildStructuredProfile(
   const fallbackPricingFamily = "custom_hybrid";
   const fallbackArchetype = "appointments";
 
-  const archetype = niche?.archetype ?? cat?.defaultArchetype ?? fallbackArchetype;
-  const zoomTier = niche?.defaultZoomTier ?? cat?.defaultZoomTier ?? "z2";
+  const archetype = cat?.defaultArchetype ?? fallbackArchetype;
+  const zoomTier = cat?.defaultZoomTier ?? "z2";
   const pricingFamily = cat?.pricingFamily ?? fallbackPricingFamily;
   const legacyIndustry = cat?.legacyIndustry ?? fallbackLegacyIndustry;
   const legacyProfile = cat?.legacyProfile ?? fallbackLegacyProfile;
@@ -229,10 +220,10 @@ export function buildStructuredProfile(
   return {
     version: 2,
     category: categoryId,
-    nichePreset: niche?.id ?? null,
+    nichePreset: null,
     archetype,
     zoomTier,
-    demoModel: niche ? `niche_${niche.id}` : `category_${categoryId}`,
+    demoModel: `category_${categoryId}`,
     dashboard: {
       emphasis: emphasisMap[archetype] || "bookings_revenue",
       gating: [], // populated later by gating engine
@@ -242,7 +233,7 @@ export function buildStructuredProfile(
       bracket: bracketMap[categoryId] || "standard",
     },
     twilioPlaybook: `${archetype}_default`,
-    appStoreTier: niche?.pricingProfile?.setupTier === "premium" ? "premium" : "standard",
+    appStoreTier: "premium",
     onboardingPreset: `${archetype}_onboarding`,
     modulePreset: `${archetype}_modules`,
     proposalPreset: `${archetype}_proposal`,

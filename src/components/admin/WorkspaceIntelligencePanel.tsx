@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { INDUSTRY_CATEGORIES } from "@/lib/workspaceProfileTypes";
 import { resolveOperationType, isFinancialFirm, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
@@ -52,7 +51,6 @@ export function WorkspaceIntelligencePanel({
   proposalStatus,
   paymentStatus,
 }: Props) {
-  const niche = useMemo(() => NICHE_REGISTRY.find(n => n.id === profile.niche), [profile.niche]);
   const industry = useMemo(() => INDUSTRY_CATEGORIES.find(c => c.value === profile.industry), [profile.industry]);
   const opType = useMemo(() => resolveOperationType(profile.archetype, profile.industry), [profile]);
   const opLabel = useMemo(() => BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType, [opType]);
@@ -60,14 +58,10 @@ export function WorkspaceIntelligencePanel({
   const intel = useMemo(() => generateClientIntelligence(profile), [profile]);
 
   const presets: ResolvedPresets | null = useMemo(() => {
-    if (niche) {
-      const cat = getCategoryById(niche.industry);
-      if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, niche));
-    }
-    const cat = getCategoryById(profile.industry);
-    if (cat) return resolveAllPresets(buildStructuredProfile(cat.id, null));
+    const cat = getCategoryById(profile.industry) ?? getCategoryById("financial_compliance");
+    if (cat) return resolveAllPresets(buildStructuredProfile(cat.id));
     return null;
-  }, [niche, profile.industry]);
+  }, [profile.industry]);
 
   const quote: QuoteOutput | null = useMemo(() => {
     if (selectedModules.length === 0 && !hasPurchasedPlatformSetup) return null;
@@ -90,7 +84,7 @@ export function WorkspaceIntelligencePanel({
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-0">
             <InfoRow label="Industry" value={industry?.label ?? profile.industry} />
-            <InfoRow label="Niche" value={niche?.label ?? "General"} />
+            <InfoRow label="Vertical" value="Financial Firm" />
             <InfoRow label="Archetype" value={profile.archetype.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} />
             <InfoRow label="Zoom Tier" value={profile.zoomTier.toUpperCase()} />
             <InfoRow label="Operation Type" value={opLabel} accent />
@@ -99,24 +93,20 @@ export function WorkspaceIntelligencePanel({
         </CardContent>
       </Card>
 
-      {/* Niche Metadata */}
-      {niche && (
-        <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-              <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Niche Profile</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-              <InfoRow label="Revenue Model" value={niche.revenueModel.replace(/_/g, " ")} />
-              <InfoRow label="Sales Cycle" value={niche.salesCycle} />
-              <InfoRow label="Ticket Size" value={niche.ticketSize.replace(/_/g, " ")} />
-              <InfoRow label="Complexity" value={intel.businessComplexityLabel} />
-              <InfoRow label="Compliance" value={intel.complianceSensitivityLabel} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Business Profile */}
+      <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
+            <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Business Profile</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+            <InfoRow label="Vertical" value="Financial Firm" />
+            <InfoRow label="Complexity" value={intel.businessComplexityLabel} />
+            <InfoRow label="Compliance" value={intel.complianceSensitivityLabel} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Module Emphasis */}
       <Card className="border-0 bg-white/[0.04]" style={{ borderColor: "hsla(211,96%,60%,.08)" }}>

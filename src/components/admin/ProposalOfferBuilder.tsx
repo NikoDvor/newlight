@@ -9,7 +9,6 @@ import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { computeQuote, WEBSITE_BUILD_FEES, type QuoteOutput } from "@/lib/workspaceQuoteEngine";
 import { generateClientIntelligence } from "@/lib/clientIntelligenceEngine";
 import { resolveOperationType, BUSINESS_OPERATION_TYPES } from "@/lib/businessOperationTypes";
-import { NICHE_REGISTRY } from "@/lib/workspaceNiches";
 import { getCategoryById, buildStructuredProfile, type StructuredWorkspaceProfile } from "@/lib/businessCategoryRegistry";
 import { resolveModulePreset, resolveProposalPreset, resolveDemoModel, resolvePricing } from "@/lib/profilePresetEngine";
 import {
@@ -57,23 +56,16 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
   const [appStoreUpgrade, setAppStoreUpgrade] = useState(false);
   const [internalNotes, setInternalNotes] = useState("");
 
-  const niche = useMemo(() => NICHE_REGISTRY.find(n => n.id === profile.niche), [profile.niche]);
   const intel = useMemo(() => generateClientIntelligence(profile), [profile]);
   const opType = resolveOperationType(profile.archetype, profile.industry);
   const opLabel = BUSINESS_OPERATION_TYPES.find(b => b.value === opType)?.label ?? opType;
 
   // Try to derive a StructuredWorkspaceProfile for preset-driven recommendations
   const structuredProfile = useMemo((): StructuredWorkspaceProfile | null => {
-    if (!niche) {
-      // Try to find category from industry
-      const cat = getCategoryById(profile.industry);
-      if (cat) return buildStructuredProfile(cat.id, null);
-      return null;
-    }
-    const cat = getCategoryById(niche.industry);
-    if (cat) return buildStructuredProfile(cat.id, niche);
+    const cat = getCategoryById(profile.industry) ?? getCategoryById("financial_compliance");
+    if (cat) return buildStructuredProfile(cat.id);
     return null;
-  }, [niche, profile.industry]);
+  }, [profile.industry]);
 
   const modulePreset = useMemo(() => {
     if (structuredProfile) return resolveModulePreset(structuredProfile);
@@ -113,25 +105,13 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
     onQuoteChange?.(quote, selectedModules, internalNotes);
   }, [quote, selectedModules, internalNotes, onQuoteChange]);
 
-  // Recommended modules: prefer preset engine, fallback to niche priority
+  // Recommended modules: prefer preset engine, fallback to financial-firm defaults
   const recommended = useMemo(() => {
     if (modulePreset) {
       return [...modulePreset.priority];
     }
-    if (!niche) return [];
-    const priority = niche.modulePriority;
-    const map: Record<string, number> = {
-      paid_ads: priority.ads,
-      seo: priority.seo,
-      website_management: priority.website,
-      crm_automation: priority.crm,
-      lifecycle_nurture: priority.automation,
-      reputation_reviews: 3,
-      tracking_attribution: 3,
-      financial_compliance: niche.complianceLevel === "high" ? 5 : niche.complianceLevel === "moderate" ? 3 : 1,
-    };
-    return Object.entries(map).filter(([, v]) => v >= 4).map(([k]) => k);
-  }, [modulePreset, niche]);
+    return ["crm_automation", "lifecycle_nurture", "financial_compliance", "website_management"];
+  }, [modulePreset]);
 
   const selectRecommended = useCallback(() => {
     setSelectedModules(recommended);
@@ -158,7 +138,7 @@ export function ProposalOfferBuilder({ profile, onQuoteChange }: Props) {
           )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] mb-3">
-          <div><span className="text-white/40 block">Niche</span><span className="text-white/80">{niche?.label ?? "General"}</span></div>
+          <div><span className="text-white/40 block">Vertical</span><span className="text-white/80">Financial Firm</span></div>
           <div><span className="text-white/40 block">Operation</span><span className="text-white/80">{opLabel}</span></div>
           <div><span className="text-white/40 block">Revenue Opp.</span><span className="text-[hsl(var(--nl-neon))]">{intel.revenueOpportunity}</span></div>
           <div><span className="text-white/40 block">Growth</span><span className="text-[hsl(var(--nl-neon))]">{intel.growthPotentialPct}%</span></div>

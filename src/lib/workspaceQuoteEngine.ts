@@ -6,19 +6,17 @@ import type { WorkspaceProfile } from "@/lib/workspaceProfileTypes";
 import { resolveOperationType, isFinancialFirm, type BusinessOperationType } from "@/lib/businessOperationTypes";
 
 // ═══════════════════════════════════════════════
-// Platform Pricing Tables (INTERNAL)
+// Platform Pricing (INTERNAL) — financial firms only
 // ═══════════════════════════════════════════════
 
-const PLATFORM_PRICING: Record<BusinessOperationType, { setup: number; monthly: number }> = {
-  field_service:       { setup: 4997,  monthly: 397 },
-  appointment_local:   { setup: 6997,  monthly: 497 },
-  consultative_sales:  { setup: 7997,  monthly: 597 },
-  membership_recurring:{ setup: 6997,  monthly: 497 },
-  project_service:     { setup: 5997,  monthly: 447 },
-  custom_hybrid:       { setup: 9997,  monthly: 697 },
-};
+/** $7,997 setup, then a flat $3,000/mo retainer (or commission billing instead). */
+export const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 3000 };
 
-const FINANCIAL_FIRM_PRICING = { setup: 7997, monthly: 797 };
+/** Billing model offered alongside the setup fee. */
+export type PricingModel = "retainer" | "commission";
+
+/** Commission billing: 25% of client revenue in year one, 10% every year after. */
+export const COMMISSION_DEFAULTS = { yearOneRate: 25, ongoingRate: 10 };
 
 // ═══════════════════════════════════════════════
 // Growth Module Pricing Tables (INTERNAL)
@@ -92,15 +90,6 @@ export const WEBSITE_BUILD_FEES: Record<string, { label: string; fee: number }> 
 // App Store Launch Upgrade (INTERNAL)
 // ═══════════════════════════════════════════════
 
-const APP_STORE_PRICING: Record<BusinessOperationType, number> = {
-  field_service:        9997,
-  appointment_local:   14997,
-  consultative_sales:  17997,
-  membership_recurring:14997,
-  project_service:     11997,
-  custom_hybrid:       19997,
-};
-
 const FINANCIAL_APP_STORE_ADDON = 2000;
 
 // Proposals + Content Planner are included at $0
@@ -117,6 +106,12 @@ export interface QuoteInput {
   includeWebsiteBuild?: string | null;
   includeAppStoreLaunchUpgrade?: boolean;
   appStoreCustomAmount?: number | null;
+  /** Billing model: flat retainer (default) or commission on client revenue */
+  pricingModel?: PricingModel;
+  /** Year-one commission rate (% of client revenue). Defaults to 25. */
+  commissionYearOneRate?: number | null;
+  /** Year-two-and-after commission rate (%). Defaults to 10. */
+  commissionOngoingRate?: number | null;
 }
 
 export interface QuoteLineItem {
@@ -130,6 +125,13 @@ export interface QuoteLineItem {
 export interface QuoteOutput {
   businessOperationType: BusinessOperationType;
   isFinancial: boolean;
+  /** Which billing model this quote represents */
+  pricingModel: PricingModel;
+  /** Flat retainer amount for the retainer model ($3,000). 0 under commission. */
+  retainerMonthly: number;
+  /** Commission rates (always populated so a rep can show both options) */
+  commissionYearOneRate: number;
+  commissionOngoingRate: number;
   platformSetup: number;
   platformMonthly: number;
   moduleActivationFees: number;
@@ -154,10 +156,15 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   const opType = resolveOperationType(workspaceProfile.archetype, workspaceProfile.industry);
   const financial = isFinancialFirm(workspaceProfile.industry);
 
-  // ── Platform pricing ──
-  const platformBase = financial ? FINANCIAL_FIRM_PRICING : PLATFORM_PRICING[opType];
+  const pricingModel: PricingModel = input.pricingModel ?? "retainer";
+  const commissionYearOneRate = input.commissionYearOneRate ?? COMMISSION_DEFAULTS.yearOneRate;
+  const commissionOngoingRate = input.commissionOngoingRate ?? COMMISSION_DEFAULTS.ongoingRate;
+
+  // ── Platform pricing (financial firms only) ──
+  const platformBase = FINANCIAL_FIRM_PRICING;
   let platformSetup = platformBase.setup;
-  const platformMonthly = platformBase.monthly;
+  const retainerMonthly = platformBase.monthly;
+  const platformMonthly = pricingModel === "commission" ? 0 : retainerMonthly;
 
   const lineItems: QuoteLineItem[] = [];
   const hardCostNotes: string[] = [];
@@ -167,15 +174,18 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   if (includeAppStoreLaunchUpgrade) {
     const customAmt = input.appStoreCustomAmount ?? null;
     const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
-    appStoreLaunchFee = hasCustomPrice ? customAmt : (financial ? FINANCIAL_APP_STORE_ADDON : 0);
+    appStoreLaunchFee = hasCustomPrice ? customAmt : FINANCIAL_APP_STORE_ADDON;
     platformSetup += appStoreLaunchFee;
   }
 
   lineItems.push({
     category: "platform",
-    label: `Platform Setup — ${financial ? "Financial Firms (Premium)" : opType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}`,
+    label: "Platform Setup — Financial Firms",
     upfront: platformSetup,
     monthly: platformMonthly,
+    notes: pricingModel === "commission"
+      ? `Commission billing: ${commissionYearOneRate}% of revenue in year one, ${commissionOngoingRate}% each year after (no flat retainer).`
+      : `Flat retainer: $${retainerMonthly.toLocaleString()}/mo.`,
   });
 
   // ── Included modules ──
@@ -217,6 +227,10 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   return {
     businessOperationType: opType,
     isFinancial: financial,
+    pricingModel,
+    retainerMonthly,
+    commissionYearOneRate,
+    commissionOngoingRate,
     platformSetup,
     platformMonthly,
     moduleActivationFees: moduleActivationTotal,
@@ -227,7 +241,9 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
     totalUpfront,
     totalMonthly,
     lineItems,
-    pricingSummary: `Setup: $${totalUpfront.toLocaleString()} | Monthly: $${totalMonthly.toLocaleString()}/mo`,
+    pricingSummary: pricingModel === "commission"
+      ? `Setup: $${totalUpfront.toLocaleString()} | Commission: ${commissionYearOneRate}% year one, ${commissionOngoingRate}% after${moduleMonthlyTotal > 0 ? ` | Modules: $${moduleMonthlyTotal.toLocaleString()}/mo` : ""}`
+      : `Setup: $${totalUpfront.toLocaleString()} | Monthly: $${totalMonthly.toLocaleString()}/mo`,
     pricingVisibility: "admin_only",
   };
 }
