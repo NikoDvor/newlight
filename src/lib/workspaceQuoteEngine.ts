@@ -227,6 +227,10 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   return {
     businessOperationType: opType,
     isFinancial: financial,
+    pricingModel,
+    retainerMonthly,
+    commissionYearOneRate,
+    commissionOngoingRate,
     platformSetup,
     platformMonthly,
     moduleActivationFees: moduleActivationTotal,
@@ -237,7 +241,9 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
     totalUpfront,
     totalMonthly,
     lineItems,
-    pricingSummary: `Setup: $${totalUpfront.toLocaleString()} | Monthly: $${totalMonthly.toLocaleString()}/mo`,
+    pricingSummary: pricingModel === "commission"
+      ? `Setup: $${totalUpfront.toLocaleString()} | Commission: ${commissionYearOneRate}% year one, ${commissionOngoingRate}% after${moduleMonthlyTotal > 0 ? ` | Modules: $${moduleMonthlyTotal.toLocaleString()}/mo` : ""}`
+      : `Setup: $${totalUpfront.toLocaleString()} | Monthly: $${totalMonthly.toLocaleString()}/mo`,
     pricingVisibility: "admin_only",
   };
 }
