@@ -32,7 +32,6 @@ import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Tasks from "./pages/Tasks";
 import Pipeline from "./pages/Pipeline";
-import Inbox from "./pages/Inbox";
 
 import ProspectDetail from "./pages/ProspectDetail";
 import AuditPack from "./pages/AuditPack";
@@ -462,7 +461,7 @@ const App = () => {
                 <Route path="/pipeline" element={<PermissionGuard moduleKey="crm"><Pipeline /></PermissionGuard>} />
                 <Route path="/pipeline-insights" element={<PermissionGuard moduleKey="reports"><SalesPipelineInsights /></PermissionGuard>} />
                 <Route path="/inbox" element={<Navigate to="/conversations" replace />} />
-                <Route path="/inbox" element={<PermissionGuard moduleKey="messaging"><Inbox /></PermissionGuard>} />
+
                 
                 <Route path="/prospect-detail" element={<ProspectDetail />} />
                 <Route path="/audit-pack" element={<AuditPack />} />
