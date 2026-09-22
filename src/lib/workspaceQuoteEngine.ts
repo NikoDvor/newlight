@@ -106,6 +106,12 @@ export interface QuoteInput {
   includeWebsiteBuild?: string | null;
   includeAppStoreLaunchUpgrade?: boolean;
   appStoreCustomAmount?: number | null;
+  /** Billing model: flat retainer (default) or commission on client revenue */
+  pricingModel?: PricingModel;
+  /** Year-one commission rate (% of client revenue). Defaults to 25. */
+  commissionYearOneRate?: number | null;
+  /** Year-two-and-after commission rate (%). Defaults to 10. */
+  commissionOngoingRate?: number | null;
 }
 
 export interface QuoteLineItem {
@@ -119,6 +125,13 @@ export interface QuoteLineItem {
 export interface QuoteOutput {
   businessOperationType: BusinessOperationType;
   isFinancial: boolean;
+  /** Which billing model this quote represents */
+  pricingModel: PricingModel;
+  /** Flat retainer amount for the retainer model ($3,000). 0 under commission. */
+  retainerMonthly: number;
+  /** Commission rates (always populated so a rep can show both options) */
+  commissionYearOneRate: number;
+  commissionOngoingRate: number;
   platformSetup: number;
   platformMonthly: number;
   moduleActivationFees: number;
@@ -143,10 +156,15 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   const opType = resolveOperationType(workspaceProfile.archetype, workspaceProfile.industry);
   const financial = isFinancialFirm(workspaceProfile.industry);
 
-  // ── Platform pricing ──
-  const platformBase = financial ? FINANCIAL_FIRM_PRICING : PLATFORM_PRICING[opType];
+  const pricingModel: PricingModel = input.pricingModel ?? "retainer";
+  const commissionYearOneRate = input.commissionYearOneRate ?? COMMISSION_DEFAULTS.yearOneRate;
+  const commissionOngoingRate = input.commissionOngoingRate ?? COMMISSION_DEFAULTS.ongoingRate;
+
+  // ── Platform pricing (financial firms only) ──
+  const platformBase = FINANCIAL_FIRM_PRICING;
   let platformSetup = platformBase.setup;
-  const platformMonthly = platformBase.monthly;
+  const retainerMonthly = platformBase.monthly;
+  const platformMonthly = pricingModel === "commission" ? 0 : retainerMonthly;
 
   const lineItems: QuoteLineItem[] = [];
   const hardCostNotes: string[] = [];
@@ -156,15 +174,18 @@ export function computeQuote(input: QuoteInput): QuoteOutput {
   if (includeAppStoreLaunchUpgrade) {
     const customAmt = input.appStoreCustomAmount ?? null;
     const hasCustomPrice = typeof customAmt === "number" && customAmt > 0;
-    appStoreLaunchFee = hasCustomPrice ? customAmt : (financial ? FINANCIAL_APP_STORE_ADDON : 0);
+    appStoreLaunchFee = hasCustomPrice ? customAmt : FINANCIAL_APP_STORE_ADDON;
     platformSetup += appStoreLaunchFee;
   }
 
   lineItems.push({
     category: "platform",
-    label: `Platform Setup — ${financial ? "Financial Firms (Premium)" : opType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}`,
+    label: "Platform Setup — Financial Firms",
     upfront: platformSetup,
     monthly: platformMonthly,
+    notes: pricingModel === "commission"
+      ? `Commission billing: ${commissionYearOneRate}% of revenue in year one, ${commissionOngoingRate}% each year after (no flat retainer).`
+      : `Flat retainer: $${retainerMonthly.toLocaleString()}/mo.`,
   });
 
   // ── Included modules ──
