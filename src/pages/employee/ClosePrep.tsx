@@ -31,6 +31,9 @@ export default function ClosePrep() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
 
   const [initialFee, setInitialFee] = useState("7997");
   const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
