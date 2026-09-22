@@ -810,9 +810,9 @@ Deno.serve(async (req) => {
     if (!ownerName && lead?.owner_name) ownerName = lead.owner_name;
     if (!to && deal.contact_id) {
       const { data: ct } = await supabase
-        .from("crm_contacts").select("email, first_name").eq("id", deal.contact_id).maybeSingle();
+        .from("crm_contacts").select("email, full_name").eq("id", deal.contact_id).maybeSingle();
       if (ct?.email) to = ct.email;
-      if (!ownerName && ct?.first_name) ownerName = ct.first_name;
+      if (!ownerName && ct?.full_name) ownerName = ct.full_name;
     }
     if (!to) return json({ error: "No client email on file for this deal" }, 400);
 
