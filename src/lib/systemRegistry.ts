@@ -418,7 +418,7 @@ export const systemModules: SystemModule[] = [
     status: "Operational",
     dependency: "Native",
     description: "Client onboarding, workspace provisioning, master activation form.",
-    routes: ["/admin/activation", "/admin/master-activation", "/admin/provision"],
+    routes: ["/admin/master-activation", "/admin/provision"],
     dataModels: ["clients"],
     feedsInto: ["billing", "health_scoring"],
     receivesFrom: ["proposals", "packages", "sales_pipeline"],

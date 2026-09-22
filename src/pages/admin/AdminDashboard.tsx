@@ -339,7 +339,7 @@ export default function AdminDashboard() {
           <CardContent className="space-y-1">
             {[
               { label: "New Demo Build", path: "/admin/demo-builds" },
-              { label: "Client Activation", path: "/admin/activation" },
+              { label: "Client Activation", path: "/admin/master-activation" },
               { label: "View Prospects", path: "/admin/prospects" },
               { label: "Provision Queue", path: "/admin/provision" },
               { label: "Deploy Template", path: "/admin/templates" },

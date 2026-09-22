@@ -91,7 +91,6 @@ import AdminBDRCertification from "./pages/admin/AdminBDRCertification";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminPipelineInsights from "./pages/admin/AdminPipelineInsights";
 import AdminGrowthAdvisor from "./pages/admin/AdminGrowthAdvisor";
-import AdminActivation from "./pages/admin/AdminActivation";
 import AdminDemoBuilds from "./pages/admin/AdminDemoBuilds";
 import AdminCloseConfirm from "./pages/admin/AdminCloseConfirm";
 import AdminClientSetup from "./pages/admin/AdminClientSetup";
@@ -205,7 +204,6 @@ import AdminBDRPerformance from "./pages/admin/AdminBDRPerformance";
 import AdminBdrMeetingAnalytics from "./pages/admin/AdminBdrMeetingAnalytics";
 import AdminBDRCalendars from "./pages/admin/AdminBDRCalendars";
 import AdminAllCalendars from "./pages/admin/AdminAllCalendars";
-import AdminClientActivation from "./pages/admin/AdminClientActivation";
 import AdminStaffCalendars from "./pages/admin/AdminStaffCalendars";
 import AdminMeetingIntelligence from "./pages/admin/AdminMeetingIntelligence";
 import AdminEmployeePerformance from "./pages/admin/AdminEmployeePerformance";
@@ -214,7 +212,6 @@ import AdminClientHealth from "./pages/admin/AdminClientHealth";
 import AdminRevenueGrowth from "./pages/admin/AdminRevenueGrowth";
 import AdminPriorityAlerts from "./pages/admin/AdminPriorityAlerts";
 import AdminBrokenSetupFlags from "./pages/admin/AdminBrokenSetupFlags";
-import AdminOnboardingProgressPage from "./pages/admin/AdminOnboardingProgressPage";
 import AdminWinTracking from "./pages/admin/AdminWinTracking";
 import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
@@ -293,7 +290,6 @@ const App = () => {
                 <Route path="reports" element={<AdminReports />} />
                 <Route path="pipeline-insights" element={<AdminPipelineInsights />} />
                 <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
-                <Route path="activation" element={<AdminActivation />} />
                 <Route path="master-activation" element={<AdminMasterActivation />} />
                 <Route path="clients/:clientId/activate" element={<AdminMasterActivation />} />
                 <Route path="demo-builds" element={<AdminDemoBuilds />} />
@@ -334,7 +330,6 @@ const App = () => {
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="bdr-meeting-analytics" element={<AdminBdrMeetingAnalytics />} />
-                <Route path="client-activation" element={<AdminClientActivation />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
                 <Route path="calendars" element={<AdminAllCalendars />} />
                 <Route path="websites" element={<AdminWebsites />} />
@@ -343,7 +338,6 @@ const App = () => {
                 <Route path="client-intelligence/revenue" element={<AdminRevenueGrowth />} />
                 <Route path="client-intelligence/alerts" element={<AdminPriorityAlerts />} />
                 <Route path="client-intelligence/setup-flags" element={<AdminBrokenSetupFlags />} />
-                <Route path="client-intelligence/onboarding-progress" element={<AdminOnboardingProgressPage />} />
                 <Route path="client-intelligence/wins" element={<AdminWinTracking />} />
                 <Route path="client-intelligence/optimization" element={<AdminOptimizationFlags />} />
                 <Route path="client-intelligence/retention" element={<AdminRetention />} />
