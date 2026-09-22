@@ -31,6 +31,9 @@ export default function ClosePrep() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
 
   const [initialFee, setInitialFee] = useState("7997");
   const [pricingModel, setPricingModel] = useState<"retainer" | "commission">("retainer");
@@ -110,8 +113,28 @@ export default function ClosePrep() {
       toast({ title: "Couldn't complete close prep", description: (data as any).error, variant: "destructive" });
       return;
     }
+    setShareToken((data as any)?.envelope_share_token || null);
     setDone(true);
     toast({ title: "Close prep complete", description: "Closing meeting scheduled and notifications sent." });
+  };
+
+  const sendPaySignEmail = async () => {
+    if (!shareToken || sendingLink) return;
+    setSendingLink(true);
+    const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+      body: { action: "send_pay_sign_email", share_token: shareToken },
+    });
+    setSendingLink(false);
+    const err = (error as any)?.message || (data as any)?.error;
+    if (err) {
+      toast({ title: "Couldn't send the link", description: err, variant: "destructive" });
+      return;
+    }
+    setLinkSent(true);
+    toast({
+      title: "Pay & Sign link sent",
+      description: `Emailed to ${(data as any)?.to || "the client"} with the agreed terms.`,
+    });
   };
 
   if (loading) return (
@@ -136,11 +159,30 @@ export default function ClosePrep() {
         <p className="text-sm text-white/60">
           Closing meeting scheduled with {lead.business_name}. Check your email — we sent you the deal terms and contact info to bring to the meeting.
         </p>
+
+        {shareToken && (
+          <div className="pt-4 mt-2 border-t border-white/10 space-y-2 text-left">
+            <div className="text-sm font-semibold text-white">After the closing meeting</div>
+            <p className="text-xs text-white/55">
+              Only send this once {lead.business_name} has verbally agreed. It emails them the terms and their secure link to sign, pay, and pick an onboarding date.
+            </p>
+            <Button
+              onClick={sendPaySignEmail}
+              disabled={sendingLink}
+              className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+            >
+              {sendingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : linkSent ? "Resend Pay & Sign link" : "Send Pay & Sign link to client"}
+            </Button>
+            {linkSent && <p className="text-xs text-[hsl(142,72%,52%)]">Sent. You can resend at any time.</p>}
+          </div>
+        )}
+
         <div className="flex gap-2 justify-center pt-2">
           <Button variant="outline" onClick={() => navigate("/employee/leads")}>Back to My Leads</Button>
           <Button onClick={() => navigate("/employee/calendar")}>View Calendar</Button>
         </div>
       </div>
+
     </div>
   );
 

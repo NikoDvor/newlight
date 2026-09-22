@@ -765,5 +765,147 @@ Deno.serve(async (req) => {
     return json({ ok: true, invoice_status: "paid", pay_sign_status: newStatus, notify, payment_notify: paymentNotify, setup_seed: setupSeed });
   }
 
+  // Rep/admin-triggered: send the client the "review, sign & pay" email.
+  // Repeatable on purpose — a rep may need to resend.
+  if (action === "send_pay_sign_email") {
+    if (!deal) return json({ error: "No deal linked to this envelope" }, 404);
+
+    const authHeader = req.headers.get("Authorization") || "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    const jwt = authHeader.replace("Bearer ", "");
+    const anon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: authData, error: authErr } = await anon.auth.getUser(jwt);
+    const callerId = authData?.user?.id;
+    if (authErr || !callerId) return json({ error: "Unauthorized" }, 401);
+
+    let allowed = deal.assigned_user === callerId;
+    if (!allowed) {
+      const { data: roles } = await supabase
+        .from("user_roles").select("role").eq("user_id", callerId);
+      allowed = (roles || []).some((r: any) => r.role === "admin");
+    }
+    if (!allowed) return json({ error: "Forbidden" }, 403);
+
+    // Full pricing detail for the terms line
+    const { data: dealFull } = await supabase
+      .from("crm_deals")
+      .select("initial_fee, recurring_fee, pricing_model, commission_rate, commission_rate_ongoing, retainer_kpi")
+      .eq("id", deal.id)
+      .maybeSingle();
+    const d: any = dealFull || deal;
+
+    // Recipient: envelope recipient, else originating lead, else CRM contact
+    let to: string | null = envelope.recipient_email || null;
+    let ownerName: string | null = envelope.recipient_name || null;
+    const { data: lead } = await supabase
+      .from("nl_bdr_leads")
+      .select("email, owner_name, business_name")
+      .eq("crm_deal_id", deal.id)
+      .maybeSingle();
+    if (!to && lead?.email) to = lead.email;
+    if (!ownerName && lead?.owner_name) ownerName = lead.owner_name;
+    if (!to && deal.contact_id) {
+      const { data: ct } = await supabase
+        .from("crm_contacts").select("email, full_name").eq("id", deal.contact_id).maybeSingle();
+      if (ct?.email) to = ct.email;
+      if (!ownerName && ct?.full_name) ownerName = ct.full_name;
+    }
+    if (!to) return json({ error: "No client email on file for this deal" }, 400);
+
+    const businessName = lead?.business_name || client?.name || deal.deal_name || "your business";
+
+    const money = (n: any) =>
+      `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    const priceLine = d.pricing_model === "commission"
+      ? `${money(d.initial_fee)} initial + ${Number(d.commission_rate ?? 0)}% commission (year 1), ${Number(d.commission_rate_ongoing ?? 0)}% ongoing`
+      : `${money(d.initial_fee)} initial + ${money(d.recurring_fee)}/month`;
+
+    const originHdr = req.headers.get("origin") || req.headers.get("referer") || "";
+    let base = ""; try { base = originHdr ? new URL(originHdr).origin : ""; } catch { base = ""; }
+    if (!base) base = (Deno.env.get("SITE_URL") || "https://newlight-app.com").replace(/\/$/, "");
+    const paySignUrl = `${base}/pay-sign/${share_token}`;
+
+    const subject = `Next step to get started — ${businessName}`;
+    const text = [
+      `Hi ${ownerName || "there"},`,
+      ``,
+      `Here's everything you need to get started with NewLight.`,
+      ``,
+      `Your terms: ${priceLine}`,
+      d.retainer_kpi ? `KPI target: ${d.retainer_kpi}` : ``,
+      ``,
+      `Open your secure link: ${paySignUrl}`,
+      ``,
+      `From that link you'll:`,
+      `1. Review and sign your service agreement`,
+      `2. Make your initial payment`,
+      `3. Pick your onboarding date`,
+      ``,
+      `Reply to this email with any questions.`,
+      ``,
+      `— The NewLight Team`,
+    ].filter(Boolean).join("\n");
+
+    const html = clientNextStepHtml({ ownerName, priceLine, retainerKpi: d.retainer_kpi || null, paySignUrl });
+
+    const sent = await sendPlainEmail(to, subject, html, text);
+    return json({ ok: true, sent, to, pay_sign_url: paySignUrl, terms: priceLine });
+  }
+
   return json({ error: "Unknown action" }, 400);
 });
+
+function escHtml(s: string): string {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function sendPlainEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.log(`[EMAIL QUEUED - no RESEND_API_KEY] to=${to} subject="${subject}"`);
+    return false;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "NewLight <team@newlightgen.com>", to: [to], subject, text, html }),
+    });
+    if (!res.ok) { console.error("Resend error:", res.status, await res.text().catch(() => "")); return false; }
+    return true;
+  } catch (e) { console.error("Email send error:", e); return false; }
+}
+
+// "Review, sign & pay" email body — terms + secure link + the 3 steps.
+function clientNextStepHtml(args: {
+  ownerName: string | null;
+  priceLine: string;
+  retainerKpi: string | null;
+  paySignUrl: string;
+}): string {
+  const { ownerName, priceLine, retainerKpi, paySignUrl } = args;
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Next step to get started</h1>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ${escHtml(ownerName || "there")},</p>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Here's everything you need to get started with NewLight.</p>
+    <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;margin:0 0 20px;">
+      <tr><td style="padding:12px 16px;color:#6b7280;font-size:13px;width:120px;">Your terms</td><td style="padding:12px 16px;font-size:14px;"><strong>${escHtml(priceLine)}</strong></td></tr>
+      ${retainerKpi ? `<tr><td style="padding:12px 16px;color:#6b7280;font-size:13px;">KPI target</td><td style="padding:12px 16px;font-size:14px;">${escHtml(retainerKpi)}</td></tr>` : ""}
+    </table>
+    <div style="margin:0 0 24px;"><a href="${escHtml(paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-size:14px;">Review, sign &amp; pay</a></div>
+    <p style="font-size:14px;line-height:1.6;margin:0 0 8px;">From that link you'll:</p>
+    <ol style="font-size:14px;line-height:1.7;margin:0 0 20px;padding-left:20px;color:#374151;">
+      <li>Review and sign your service agreement</li>
+      <li>Make your initial payment</li>
+      <li>Pick your onboarding date</li>
+    </ol>
+    <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:0;">Reply to this email with any questions.<br>— The NewLight Team</p>
+  </div>
+</body></html>`;
+}
+
