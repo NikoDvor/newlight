@@ -209,10 +209,6 @@ export default function Billing() {
 
       <section className="mt-10">
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Billing</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <AnnualSwitchCard />
-          <div className="hidden lg:block" />
-        </div>
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold tracking-tight text-foreground mb-1">Referrals</h3>
