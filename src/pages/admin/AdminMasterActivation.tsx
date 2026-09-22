@@ -781,7 +781,7 @@ export default function AdminMasterActivation() {
       <div className="flex items-start justify-between">
         <div>
           <button onClick={() => navigate("/admin/clients")} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 mb-2 transition-colors">
-            <ArrowLeft className="h-3 w-3" /> {clientId ? "Back to Clients" : "Back to Clients"}
+            <ArrowLeft className="h-3 w-3" /> Back to Clients
           </button>
           <h1 className="text-xl font-bold text-white">
             {clientId ? `Sales Wizard — ${clientName}` : "Master Sales Wizard"}
