@@ -159,11 +159,30 @@ export default function ClosePrep() {
         <p className="text-sm text-white/60">
           Closing meeting scheduled with {lead.business_name}. Check your email — we sent you the deal terms and contact info to bring to the meeting.
         </p>
+
+        {shareToken && (
+          <div className="pt-4 mt-2 border-t border-white/10 space-y-2 text-left">
+            <div className="text-sm font-semibold text-white">After the closing meeting</div>
+            <p className="text-xs text-white/55">
+              Only send this once {lead.business_name} has verbally agreed. It emails them the terms and their secure link to sign, pay, and pick an onboarding date.
+            </p>
+            <Button
+              onClick={sendPaySignEmail}
+              disabled={sendingLink}
+              className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
+            >
+              {sendingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : linkSent ? "Resend Pay & Sign link" : "Send Pay & Sign link to client"}
+            </Button>
+            {linkSent && <p className="text-xs text-[hsl(142,72%,52%)]">Sent. You can resend at any time.</p>}
+          </div>
+        )}
+
         <div className="flex gap-2 justify-center pt-2">
           <Button variant="outline" onClick={() => navigate("/employee/leads")}>Back to My Leads</Button>
           <Button onClick={() => navigate("/employee/calendar")}>View Calendar</Button>
         </div>
       </div>
+
     </div>
   );
 
