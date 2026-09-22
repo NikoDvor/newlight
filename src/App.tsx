@@ -211,6 +211,7 @@ import AdminWebsites from "./pages/admin/AdminWebsites";
 import AdminClientHealth from "./pages/admin/AdminClientHealth";
 import AdminRevenueGrowth from "./pages/admin/AdminRevenueGrowth";
 import AdminPriorityAlerts from "./pages/admin/AdminPriorityAlerts";
+import AdminBrokenSetupFlags from "./pages/admin/AdminBrokenSetupFlags";
 import AdminWinTracking from "./pages/admin/AdminWinTracking";
 import AdminOptimizationFlags from "./pages/admin/AdminOptimizationFlags";
 import Approvals from "./pages/Approvals";
@@ -329,7 +330,6 @@ const App = () => {
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="bdr-meeting-analytics" element={<AdminBdrMeetingAnalytics />} />
-                <Route path="client-activation" element={<AdminClientActivation />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
                 <Route path="calendars" element={<AdminAllCalendars />} />
                 <Route path="websites" element={<AdminWebsites />} />
@@ -338,7 +338,6 @@ const App = () => {
                 <Route path="client-intelligence/revenue" element={<AdminRevenueGrowth />} />
                 <Route path="client-intelligence/alerts" element={<AdminPriorityAlerts />} />
                 <Route path="client-intelligence/setup-flags" element={<AdminBrokenSetupFlags />} />
-                <Route path="client-intelligence/onboarding-progress" element={<AdminOnboardingProgressPage />} />
                 <Route path="client-intelligence/wins" element={<AdminWinTracking />} />
                 <Route path="client-intelligence/optimization" element={<AdminOptimizationFlags />} />
                 <Route path="client-intelligence/retention" element={<AdminRetention />} />
