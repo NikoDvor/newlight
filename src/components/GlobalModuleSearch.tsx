@@ -53,7 +53,6 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Client Accounts", url: "/admin/clients", icon: Users, groupLabel: "Clients & Success" },
   { title: "Acquisition Analytics", url: "/admin/clients/acquisition-analytics", icon: TrendingUp, groupLabel: "Clients & Success" },
   { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket, groupLabel: "Clients & Success" },
-  { title: "Client Activation", url: "/admin/activation", icon: Zap, groupLabel: "Clients & Success" },
   { title: "Provision Queue", url: "/admin/provision", icon: ListChecks, groupLabel: "Clients & Success" },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity, groupLabel: "Clients & Success" },
   { title: "Client Success", url: "/admin/client-success", icon: Shield, groupLabel: "Clients & Success" },
