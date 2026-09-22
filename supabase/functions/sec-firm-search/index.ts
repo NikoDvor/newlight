@@ -122,8 +122,10 @@ Deno.serve(async (req) => {
         filtered.push(r);
       }
 
-      // Short-circuit once we've satisfied the requested count
-      if (filtered.length >= requestedMaxResults) {
+      // Without a city filter, stop once we can satisfy the requested count.
+      // City searches must exhaust the available raw-result walk so relevant
+      // firms ranked deeper by SEC are still counted and can be returned.
+      if (!cityLower && filtered.length >= requestedMaxResults) {
         stoppedReason = "satisfied";
         break;
       }
@@ -149,7 +151,9 @@ Deno.serve(async (req) => {
 
     return json({
       results,
-      total,
+      total: cityLower ? filtered.length : total,
+      sec_total: total,
+      city_match_total: cityLower ? filtered.length : null,
       returned: results.length,
       filtered_out: rawResults.length - filtered.length,
       raw_walked: rawResults.length,
@@ -159,7 +163,9 @@ Deno.serve(async (req) => {
       stopped_reason: stoppedReason,
       source: "SEC IAPD",
       source_url: lastUrl,
-      note: "Paginated walk with strict post-filter on state+city. AUM requires Form ADV parsing.",
+      note: cityLower
+        ? "Completed the available SEC result walk before applying the result limit. AUM requires Form ADV parsing."
+        : "Paginated walk with strict post-filter on state. AUM requires Form ADV parsing.",
     });
 
   } catch (err) {

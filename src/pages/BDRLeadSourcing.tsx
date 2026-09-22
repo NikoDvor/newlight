@@ -305,9 +305,9 @@ export default function BDRLeadSourcing() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+          <CardContent className="p-0 min-h-0">
+            <div className="max-h-[70dvh] overflow-auto overscroll-contain">
+              <table className="nl-native-table w-full min-w-max text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.06] text-left">
                     <Th className="w-8"></Th><Th>Firm</Th><Th>Location</Th><Th>CRD</Th><Th>SEC #</Th><Th>Branches</Th><Th>Status</Th><Th></Th>
