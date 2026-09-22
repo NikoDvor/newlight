@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const maxRawRecords = city && state ? 2000 : state ? 1000 : 500;
     const HARD_PAGE_CAP = 150; // absolute safety net
 
-    const cityLower = city.toLowerCase();
+    const cityLower = city ? normalizeCity(city) : "";
     const rawResults: FirmResult[] = [];
     const filtered: FirmResult[] = [];
     let total = 0;
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       // Strict server-side post-filter (SEC's own state filter leaks other states)
       for (const r of pageRows) {
         if (state && (r.state ?? "").toUpperCase() !== state) continue;
-        if (cityLower && (r.city ?? "").toLowerCase() !== cityLower) continue;
+        if (cityLower && normalizeCity(r.city ?? "") !== cityLower) continue;
         filtered.push(r);
       }
 
@@ -166,6 +166,18 @@ Deno.serve(async (req) => {
     return json({ error: (err as Error).message || "Unknown error" }, 500);
   }
 });
+
+// Tolerant city comparison: trim, collapse whitespace, strip punctuation
+// (periods/commas) so "St. Louis", "st.  louis" and "st louis" all match,
+// while staying an exact-equality check (not substring matching).
+export function normalizeCity(raw: string): string {
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[.,]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
