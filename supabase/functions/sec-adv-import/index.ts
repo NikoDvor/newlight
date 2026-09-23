@@ -49,9 +49,23 @@ export function deriveServices(y: (k: string) => boolean): string[] {
   return s;
 }
 
+// SEC file names are inconsistent (ia09012026-registered.zip, ia08032026_1.zip,
+// ia060126_0.zip, ia050120.zip), so parse the date from every non-exempt link
+// and take the newest.
+function zipDate(h: string): number {
+  const m = h.match(/\/ia(\d{6,8})[^/]*\.zip$/i);
+  if (!m) return 0;
+  const d = m[1];
+  const mm = d.slice(0, 2), dd = d.slice(2, 4);
+  const yy = d.length === 8 ? d.slice(4) : `20${d.slice(4)}`;
+  return Number(`${yy}${mm}${dd}`);
+}
+
 async function latestZipUrl(): Promise<string> {
-  const html = await (await fetch(PAGE_URL, { headers: { "User-Agent": UA } })).text();
-  const links = [...html.matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]).filter((h) => /information-about-registered-investment-advisers/.test(h) && !/exempt/i.test(h));
+  const html = await (await fetch(PAGE_URL, { headers: { "User-Agent": UA, Accept: "text/html" } })).text();
+  const links = [...html.matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1])
+    .filter((h) => !/exempt/i.test(h) && zipDate(h) > 0)
+    .sort((a, b) => zipDate(b) - zipDate(a));
   if (!links.length) throw new Error("No registered-adviser ZIP link found on SEC page");
   return links[0].startsWith("http") ? links[0] : `https://www.sec.gov${links[0]}`;
 }
