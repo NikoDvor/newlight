@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
 import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
+import { isNewLightInternal } from "@/lib/newlightInternal";
 import {
   Building2, Palette, Users, Plug, KeyRound, Settings2,
   ChevronRight, ChevronLeft, Check, Rocket, Plus, Trash2, Smartphone
@@ -42,8 +43,6 @@ const INTEGRATION_OPTIONS = [
   { key: "existing_crm", label: "Existing CRM" },
 ];
 
-const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
-
 interface TeamMember {
   name: string;
   email: string;
@@ -54,7 +53,7 @@ type PipelineStageInsert = Database["public"]["Tables"]["pipeline_stages"]["Inse
 
 export default function Onboarding() {
   const { activeClientId, user } = useWorkspace();
-  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
+  const isAdminOps = isNewLightInternal(activeClientId);
   const { install, isInstalled } = usePWAInstall();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);

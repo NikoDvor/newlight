@@ -15,15 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useResolvedClientId } from "@/hooks/useResolvedClientId";
 import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
 import { toast } from "sonner";
+import { isNewLightInternal } from "@/lib/newlightInternal";
 
 type YesNo = "yes" | "no" | "";
-
-const ADMIN_OPS_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 
 export default function ClientSetup() {
   const clientHook = useResolvedClientId();
   const { effectiveClientId: activeClientId } = clientHook;
-  const isAdminOps = activeClientId === ADMIN_OPS_CLIENT_ID;
+  const isAdminOps = isNewLightInternal(activeClientId);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
