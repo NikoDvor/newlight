@@ -12,6 +12,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { EmployeeLayout } from "@/components/EmployeeLayout";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { ClientFlagGate } from "@/components/ClientFlagGate";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 
 import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
 
