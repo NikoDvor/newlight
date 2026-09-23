@@ -228,7 +228,10 @@ export default function BDRLeadSourcing() {
           </div>
           <div>
             <Label className="text-xs">City</Label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Optional" className="h-9" />
+            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Santa Barbara, Montecito, Goleta" className="h-9" />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Separate multiple towns with commas to cover neighboring markets in one search.
+            </p>
           </div>
           <div className="md:col-span-2">
             <Label className="text-xs">Keyword</Label>
