@@ -59,6 +59,9 @@ export default defineConfig(({ mode }) => ({
         // "non-precached-url" while sw.js is evaluating, which kills the whole
         // worker and makes deploys look permanently stuck. SPA navigations are
         // already handled by the NetworkFirst runtimeCaching rule below.
+        // Must be set explicitly: vite-plugin-pwa defaults it to "index.html"
+        // when the key is absent, so only an explicit undefined disables it.
+        navigateFallback: undefined,
         // Intentionally NOT setting skipWaiting/clientsClaim so the user controls
         // when the reload happens via the update banner (calling updateSW(true) on
         // demand). A forced/automatic reload would interrupt an in-progress session
