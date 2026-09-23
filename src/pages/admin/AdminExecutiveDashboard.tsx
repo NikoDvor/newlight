@@ -31,7 +31,7 @@ interface StatCard {
 
 /**
  * Internal / non-client workspaces that must never count toward platform metrics.
- * - 00000000-...00ff = ADMIN_OPS_CLIENT_ID ("NewLight Internal", AdminOpsContext)
+ * - 00000000-...00ff = the NewLight Internal workspace
  * - d0c0edc1-...      = "NewLight" own sales workspace (holds all 154 closed-won BDR deals)
  * The rest are seeded/QA test workspaces.
  */

@@ -48,6 +48,7 @@ import { supabase } from "@/integrations/supabase/client";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { isNewLightInternal } from "@/lib/newlightInternal";
 
 interface NavItem {
   title: string;
@@ -55,6 +56,7 @@ interface NavItem {
   icon: typeof LayoutDashboard;
   moduleKey?: string;
   salesTeamOnly?: boolean;
+  internalOnly?: boolean;
 }
 
 interface NavModule {
@@ -157,7 +159,12 @@ const navStructure: NavModule[] = [
     title: "Client Overview",
     subtitle: "Performance and monitoring across your client base.",
     icon: ClipboardList,
-    url: "/client-overview",
+    items: [
+      { title: "Business Health", url: "/client-overview?view=health", icon: Activity, internalOnly: true },
+      { title: "Revenue Opportunities", url: "/client-overview?view=revenue", icon: TrendingUp, internalOnly: true },
+      { title: "Priority Actions", url: "/client-overview?view=actions", icon: ListChecks, internalOnly: true },
+      { title: "Live Activity Feed", url: "/client-overview?view=activity", icon: Activity, internalOnly: true },
+    ],
   },
   {
     title: "Team & Training",
@@ -205,12 +212,13 @@ export function AppSidebar() {
   const isActive = (url: string) => {
     const path = pathOnly(url);
     if (path === "/dashboard") return location.pathname === "/dashboard" || location.pathname === "/";
-    if (url.includes("?view=companies")) return location.pathname === "/crm" && location.search.includes("view=companies");
+    if (url.includes("?")) return location.pathname === path && location.search === `?${url.split("?")[1]}`;
     if (path === "/crm") return location.pathname === "/crm" && !location.search.includes("view=companies");
     return location.pathname.startsWith(path);
   };
 
-  const canSee = (item: Pick<NavItem, "moduleKey" | "salesTeamOnly">) => {
+  const canSee = (item: Pick<NavItem, "moduleKey" | "salesTeamOnly" | "internalOnly">) => {
+    if (item.internalOnly && !isNewLightInternal(activeClientId)) return false;
     if (item.salesTeamOnly && !isAdmin && !hasSalesTeam) return false;
     if (!item.moduleKey || isAdmin) return true;
     if (item.moduleKey === "meeting_intel" && isFieldService) return false;
@@ -269,6 +277,24 @@ export function AppSidebar() {
       <SidebarContent className="relative z-10 px-2">
         {navStructure.map((module) => {
           const visibleItems = module.items?.filter(canSee) ?? [];
+          if (module.title === "Client Overview" && visibleItems.length === 0) {
+            return (
+              <SidebarGroup key={module.title} className="py-0.5">
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={isActive("/client-overview")} tooltip={collapsed ? module.title : undefined} className={`h-auto min-h-11 rounded-lg px-3 py-2 ${isActive("/client-overview") ? "bg-primary/10 text-primary ring-1 ring-primary/20" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+                        <Link to="/client-overview" className="items-start">
+                          <module.icon className="mt-0.5 h-4 w-4 shrink-0" />
+                          {!collapsed && <span className="min-w-0"><span className="block text-xs font-semibold">{module.title}</span><span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-sidebar-foreground/45">{module.subtitle}</span></span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
           if (module.items && visibleItems.length === 0) return null;
           const moduleActive = module.url ? isActive(module.url) : visibleItems.some((item) => isActive(item.url));
 

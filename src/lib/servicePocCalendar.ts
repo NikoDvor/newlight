@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 
 export const SERVICE_POC_CALENDAR_TYPE = "service_poc";
 
@@ -11,7 +11,7 @@ export interface ServicePocPerson {
 
 /**
  * Gets (or creates) the Service POC calendar owned by `userId`.
- * Lives in the internal NewLight Ops tenant (ADMIN_OPS_CLIENT_ID).
+ * Lives in the NewLight Internal workspace.
  */
 export async function ensureServicePocCalendar(userId: string) {
   const { data: existing, error: findErr } = await supabase
@@ -35,7 +35,7 @@ export async function ensureServicePocCalendar(userId: string) {
       calendar_name: `${profile?.full_name || "Service POC"} — Service Calendar`,
       calendar_type: SERVICE_POC_CALENDAR_TYPE,
       owner_user_id: userId,
-      client_id: ADMIN_OPS_CLIENT_ID,
+      client_id: NEWLIGHT_INTERNAL_CLIENT_ID,
       is_active: true,
     })
     .select("*")

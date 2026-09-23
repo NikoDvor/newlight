@@ -76,121 +76,6 @@ const adminGroups: NavGroup[] = [
   },
 ];
 
-// SECTION 2 — NewLight Operations (mirrors AppSidebar.tsx navStructure, minus Dashboard)
-const opsGroups: NavGroup[] = [
-  {
-    label: "AI & Growth",
-    ungrouped: true,
-    items: [
-      { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles },
-      { title: "AI Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain },
-    ],
-  },
-  {
-    label: "Client Overview",
-    items: [
-      { title: "Business Health", url: "/admin/ops/business-health", icon: HeartPulse },
-      { title: "Revenue Opportunities", url: "/admin/ops/revenue-opportunities", icon: TrendingUp },
-      { title: "Priority Actions", url: "/admin/ops/priority-actions", icon: AlertTriangle },
-      { title: "Live Activity Feed", url: "/admin/ops/live-activity", icon: Activity },
-    ],
-  },
-  {
-    label: "Client Acquisition",
-    items: [
-      { title: "Website", url: "/admin/ops/website", icon: Globe },
-      { title: "SEO", url: "/admin/ops/seo", icon: Search },
-      { title: "Ads", url: "/admin/ops/ads", icon: Megaphone },
-      { title: "Social Media", url: "/admin/ops/social", icon: Share2 },
-      { title: "AI Visibility", url: "/admin/ops/ai-visibility", icon: Eye },
-    ],
-  },
-  {
-    label: "Sales & CRM",
-    items: [
-      { title: "CRM", url: "/admin/ops/crm", icon: Contact },
-      { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature },
-      { title: "Follow-Ups", url: "/admin/ops/follow-ups", icon: ListChecks },
-    ],
-  },
-  {
-    label: "Calendar & Meetings",
-    items: [
-      { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar },
-      { title: "All Calendars", url: "/admin/calendars", icon: CalendarCog },
-      { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog },
-      { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog },
-      { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare },
-    ],
-  },
-  {
-    label: "Communications",
-    items: [
-      { title: "Email", url: "/admin/ops/email", icon: Mail },
-      { title: "Forms", url: "/admin/ops/forms", icon: FileSignature },
-      { title: "Notifications", url: "/admin/ops/notifications", icon: Bell },
-    ],
-  },
-  {
-    label: "Retention & Compliance",
-    items: [
-      { title: "Reviews", url: "/admin/ops/reviews", icon: Star },
-    ],
-  },
-  {
-    label: "Enterprise Services",
-    items: [
-      { title: "Marketing Review", url: "/admin/marketing-review", icon: Megaphone },
-      { title: "Content Templates", url: "/admin/marketing-templates", icon: FileText },
-      { title: "Risk Profiles", url: "/admin/risk-profiles", icon: ShieldCheck },
-      { title: "Promoters", url: "/admin/promoters", icon: Users },
-      { title: "Households", url: "/admin/households", icon: Home },
-      { title: "Webinars", url: "/admin/webinars", icon: Calendar },
-    ],
-  },
-  {
-    label: "Business Intelligence",
-    items: [
-      { title: "Market Research", url: "/admin/ops/market-research", icon: Search },
-      { title: "Competitor Tracking", url: "/admin/ops/competitor-tracking", icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Setup & Integrations",
-    items: [
-      { title: "Setup Center", url: "/admin/ops/setup-center", icon: ClipboardCheck },
-      { title: "Services & Products", url: "/admin/ops/services", icon: Package },
-      { title: "Brand Assets", url: "/admin/ops/brand-assets", icon: ImageIcon },
-      { title: "Integrations", url: "/admin/ops/integrations", icon: Plug },
-      { title: "Notetaker Webhooks", url: "/admin/notetaker-integrations", icon: Mic },
-      { title: "Onboarding", url: "/admin/ops/onboarding", icon: Rocket },
-    ],
-  },
-  {
-    label: "Team & Training",
-    items: [
-      { title: "Team & Users", url: "/admin/team", icon: Users },
-      { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase },
-      { title: "Courses", url: "/admin/ops/training", icon: GraduationCap },
-    ],
-  },
-  {
-    label: "Client Success & Support",
-    items: [
-      { title: "Support Tickets", url: "/admin/ops/support-tickets", icon: LifeBuoy },
-      { title: "Knowledge Base", url: "/admin/ops/knowledge-base", icon: BookOpen },
-      { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse },
-      { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      { title: "Reports", url: "/admin/ops/reports", icon: LineChart },
-    ],
-  },
-];
-
 export function AdminSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
@@ -202,7 +87,7 @@ export function AdminSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const allGroups = [...adminGroups, ...opsGroups];
+  const allGroups = adminGroups;
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     allGroups.forEach((g) => {
@@ -313,18 +198,7 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
-        {/* SECTION 1 — Admin modules */}
         {adminGroups.map(renderGroup)}
-
-        {/* SECTION 2 — NewLight Operations (non-collapsible header) */}
-        <div className="mt-4 mb-1 mx-2 pt-3 border-t border-white/10">
-          {!collapsed && (
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--nl-neon))]/80">
-              NewLight Operations
-            </div>
-          )}
-        </div>
-        {opsGroups.map(renderGroup)}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-3 relative z-10">

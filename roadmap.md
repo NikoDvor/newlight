@@ -1,4 +1,5 @@
 - [x] Rebuild the client sidebar into the approved ten-module structure, add client routes/placeholders, move account controls, and verify navigation.
+- [x] Move NewLight Internal into the shared client shell, activate its Client Overview, and retire the duplicate ops shell.
 # Roadmap
 
 - [x] Make city-filtered SEC searches exhaust the existing raw-record budget and report the filtered match total.

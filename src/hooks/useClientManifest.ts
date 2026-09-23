@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 
 type AdminBranding = {
   company_name: string | null;
@@ -31,7 +31,7 @@ function withCacheBust(url: string, version: string | null | undefined): string 
  * - Admin viewing a sub-account → that client's name + logo
  * - Logged in directly to a sub-account → that sub-account's name + logo
  * - Any signed-in user with no sub-account selected → NewLight Ops branding
- *   (from the ADMIN_OPS_CLIENT_ID client_branding row)
+ *   (from the NewLight Internal client_branding row)
  */
 export function useClientManifest() {
   const { activeClientId, branding } = useWorkspace();
@@ -44,7 +44,7 @@ export function useClientManifest() {
     supabase
       .from("client_branding")
       .select("company_name, app_display_name, logo_url, app_icon_url, pwa_icon_url, primary_color, updated_at")
-      .eq("client_id", ADMIN_OPS_CLIENT_ID)
+      .eq("client_id", NEWLIGHT_INTERNAL_CLIENT_ID)
       .maybeSingle()
       .then(({ data }) => {
         if (!cancelled) setAdminBranding((data as AdminBranding | null) ?? null);

@@ -1,7 +1,33 @@
 import { Eye } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { isNewLightInternal } from "@/lib/newlightInternal";
+import BusinessHealth from "@/pages/BusinessHealth";
+import RevenueOpportunities from "@/pages/RevenueOpportunities";
+import PriorityActions from "@/pages/PriorityActions";
+import LiveActivity from "@/pages/LiveActivity";
+
+const internalViews = {
+  health: BusinessHealth,
+  revenue: RevenueOpportunities,
+  actions: PriorityActions,
+  activity: LiveActivity,
+} as const;
 
 export default function ClientOverview() {
+  const { activeClientId } = useWorkspace();
+  const [searchParams] = useSearchParams();
+
+  if (isNewLightInternal(activeClientId)) {
+    const requestedView = searchParams.get("view") ?? "health";
+    const view = requestedView in internalViews
+      ? requestedView as keyof typeof internalViews
+      : "health";
+    const ActiveView = internalViews[view];
+    return <ActiveView />;
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <PageHeader

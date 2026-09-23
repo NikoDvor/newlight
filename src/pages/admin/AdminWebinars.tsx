@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Users, Copy, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 
 type WebEvent = {
   id: string;
@@ -44,7 +44,7 @@ const slugify = (s: string) =>
 
 export default function AdminWebinars() {
   const { activeClientId } = useWorkspace();
-  const clientId = activeClientId || ADMIN_OPS_CLIENT_ID;
+  const clientId = activeClientId || NEWLIGHT_INTERNAL_CLIENT_ID;
   const [events, setEvents] = useState<WebEvent[]>([]);
   const [counts, setCounts] = useState<Record<string, { registered: number; attended: number }>>({});
   const [loading, setLoading] = useState(true);

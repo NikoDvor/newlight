@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useResolvedClientId } from "@/hooks/useResolvedClientId";
 import { ResolvedClientEmpty } from "@/components/ResolvedClientEmpty";
-import { ADMIN_OPS_CLIENT_ID } from "@/contexts/AdminOpsContext";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 import { toast } from "sonner";
 import { emitEvent } from "@/lib/automationEngine";
 
@@ -67,8 +67,8 @@ export default function BrandingSettings() {
   // Admin viewing the bare portal (no client selected) edits the shared
   // NewLight Ops branding record so the admin app has its own logo/PWA icon.
   const effectiveClientId =
-    clientHook.effectiveClientId || (isAdmin ? ADMIN_OPS_CLIENT_ID : null);
-  const isAdminOps = effectiveClientId === ADMIN_OPS_CLIENT_ID;
+    clientHook.effectiveClientId || (isAdmin ? NEWLIGHT_INTERNAL_CLIENT_ID : null);
+  const isAdminOps = effectiveClientId === NEWLIGHT_INTERNAL_CLIENT_ID;
   const [form, setForm] = useState(defaultForm);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
