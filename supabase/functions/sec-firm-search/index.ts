@@ -75,12 +75,13 @@ Deno.serve(async (req) => {
       | "time_budget"
       | "rate_limited" = "end_of_results";
 
-    // Two sort orders per city. SEC's paging is lossy in either order, but the
-    // sets it drops differ, so merging a Relevance pass with a FirmName pass
-    // (deduped by CRD) recovers firms one pass alone misses — verified live.
-    const SORTS: { field: string; order: string }[] = cities.length
-      ? [{ field: "Relevance", order: "Desc" }, { field: "FirmName", order: "Asc" }]
-      : [{ field: "Relevance", order: "Desc" }];
+    // Single Relevance pass for every scope. The dual-sort merge was measured
+    // against the 413-page STATEWIDE walk, where deep pagination is lossy and
+    // the two orders drop different records. A city-scoped walk with SEC's
+    // native city filter is shallow (~10 pages for a large metro), well under
+    // that instability — a second sort pass only doubles the request volume
+    // and trips SEC's rate limiter, which is what actually loses pages.
+    const SORTS: { field: string; order: string }[] = [{ field: "Relevance", order: "Desc" }];
 
     const buildUrl = (start: number, city: string | null, sort = SORTS[0]) => {
       const params = new URLSearchParams({
