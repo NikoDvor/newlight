@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Download, CheckCircle2, ExternalLink, AlertTriangle, Loader2, Copy } from "lucide-react";
+import { Search, Download, CheckCircle2, ExternalLink, AlertTriangle, Loader2, Copy, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
+
+type SourceKey = "SEC" | "TX_DFS" | "FL_DFS";
 
 interface FirmResult {
   crd: string;
@@ -22,6 +25,9 @@ interface FirmResult {
   branches: number | null;
   iapd_url: string;
   aum: null;
+  source: SourceKey;
+  license_type?: string | null;
+  license_number?: string | null;
 }
 
 type MatchType = "none" | "hard_crd" | "soft_name_city";
@@ -37,8 +43,24 @@ const US_STATES = [
   "TX","UT","VT","VA","WA","WV","WI","WY","DC",
 ];
 
+const INSURANCE_STATES = ["TX", "FL"];
+
+const SOURCE_LABEL: Record<SourceKey, string> = {
+  SEC: "SEC IAPD",
+  TX_DFS: "TX DFS",
+  FL_DFS: "FL DFS",
+};
+
+const SOURCE_STYLE: Record<SourceKey, { bg: string; fg: string }> = {
+  SEC: { bg: "hsla(210,90%,55%,.15)", fg: "hsl(210,90%,70%)" },
+  TX_DFS: { bg: "hsla(28,90%,55%,.15)", fg: "hsl(28,90%,68%)" },
+  FL_DFS: { bg: "hsla(160,70%,45%,.15)", fg: "hsl(160,70%,58%)" },
+};
+
 function rowKey(r: FirmResult) {
-  return r.crd ? `crd:${r.crd}` : `nc:${(r.firm_name || "").toLowerCase()}|${(r.city || "").toLowerCase()}`;
+  return r.crd
+    ? `crd:${r.crd}`
+    : `${r.source}:${(r.firm_name || "").toLowerCase()}|${(r.city || "").toLowerCase()}|${r.license_number ?? ""}`;
 }
 
 export default function BDRLeadSourcing() {
@@ -52,6 +74,7 @@ export default function BDRLeadSourcing() {
   const [maxAum, setMaxAum] = useState("");
   const [maxResults, setMaxResults] = useState(25);
   const [loading, setLoading] = useState(false);
+  const [insLoading, setInsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<FirmResult[]>([]);
   const [meta, setMeta] = useState<{ total: number; source: string; note?: string } | null>(null);
@@ -60,6 +83,8 @@ export default function BDRLeadSourcing() {
   const [importing, setImporting] = useState(false);
   const [listName, setListName] = useState("SEC IAPD Import");
   const [claimMap, setClaimMap] = useState<Record<string, ClaimStatus>>({});
+
+  const insuranceAvailable = INSURANCE_STATES.includes(state);
 
   async function checkClaimsBatch(rows: FirmResult[]) {
     if (!rows.length) return;
@@ -78,7 +103,9 @@ export default function BDRLeadSourcing() {
         claimed_by_name: d.claimed_by_name ?? null,
       };
     });
-    setClaimMap(map);
+    // Merge so an insurance search doesn't drop claim flags already computed
+    // for SEC rows still showing in the table (and vice versa).
+    setClaimMap((prev) => ({ ...prev, ...map }));
   }
 
   async function runSearch() {
@@ -99,7 +126,7 @@ export default function BDRLeadSourcing() {
         setError(`SEC fetch failed: ${(data as any).error}${(data as any).detail ? ` — ${(data as any).detail}` : ""}`);
         return;
       }
-      const rows: FirmResult[] = (data as any)?.results || [];
+      const rows: FirmResult[] = ((data as any)?.results || []).map((r: any) => ({ ...r, source: "SEC" as const }));
       setResults(rows);
       setMeta({ total: (data as any).total ?? rows.length, source: (data as any).source, note: (data as any).note });
       // Fire duplicate check in the background
@@ -109,10 +136,62 @@ export default function BDRLeadSourcing() {
     } finally { setLoading(false); }
   }
 
-  function toggleOne(crd: string) {
+  async function runInsuranceSearch() {
+    if (!insuranceAvailable) return;
+    const fn = state === "TX" ? "tx-insurance-search" : "fl-insurance-search";
+    const sourceKey: SourceKey = state === "TX" ? "TX_DFS" : "FL_DFS";
+    setInsLoading(true); setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body: { city: city.trim() || null, keyword: keyword.trim() || null, max_results: maxResults },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) {
+        setError(`${SOURCE_LABEL[sourceKey]} fetch failed: ${(data as any).error}`);
+        return;
+      }
+      const rows: FirmResult[] = ((data as any)?.results || []).map((r: any) => ({
+        crd: "",
+        firm_name: r.business_name,
+        city: r.city ?? null,
+        state: r.state ?? state,
+        street: r.address ?? null,
+        sec_number: null,
+        scope: r.license_status ?? "LICENSED",
+        branches: null,
+        iapd_url: "",
+        aum: null,
+        source: sourceKey,
+        license_type: r.license_type ?? null,
+        license_number: r.license_number ?? null,
+      }));
+
+      // APPEND to whatever is already on screen; dedupe against existing rows.
+      let added: FirmResult[] = [];
+      setResults((prev) => {
+        const seen = new Set(prev.map(rowKey));
+        added = rows.filter((r) => !seen.has(rowKey(r)));
+        return [...prev, ...added];
+      });
+      setMeta((prev) => ({
+        total: (prev?.total ?? 0) + rows.length,
+        source: prev?.source ? `${prev.source} + ${(data as any).source}` : (data as any).source,
+        note: (data as any).note,
+      }));
+      checkClaimsBatch(rows);
+      toast({
+        title: `Added ${rows.length} ${SOURCE_LABEL[sourceKey]} record${rows.length !== 1 ? "s" : ""}`,
+        description: rows.length ? "Appended below your existing results." : "No licensed agencies matched those filters.",
+      });
+    } catch (e: any) {
+      setError(`Insurance license fetch failed: ${e?.message || String(e)}`);
+    } finally { setInsLoading(false); }
+  }
+
+  function toggleOne(key: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(crd) ? next.delete(crd) : next.add(crd);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   }
@@ -130,19 +209,20 @@ export default function BDRLeadSourcing() {
       client_id: clientId,
       business_name: r.firm_name,
       city: [r.city, r.state].filter(Boolean).join(", ") || null,
-      website: r.iapd_url,
+      website: r.iapd_url || null,
       crd: r.crd || null,
       notes: [
-        `Sourced from SEC IAPD.`,
+        r.source === "SEC" ? `Sourced from SEC IAPD.` : `Sourced from ${SOURCE_LABEL[r.source]} insurance licensing.`,
         r.sec_number ? `SEC #: ${r.sec_number}` : null,
         r.crd ? `CRD: ${r.crd}` : null,
+        r.license_number ? `License #: ${r.license_number}` : null,
+        r.license_type ? `License type: ${r.license_type}` : null,
         r.street ? `Address: ${r.street}` : null,
         r.branches != null ? `Branches: ${r.branches}` : null,
       ].filter(Boolean).join("\n"),
       list_name: cleanList,
-      lead_source: "sec_iapd_scrape",
-      source_type: "financial_advisor_scrape",
-
+      lead_source: r.source === "SEC" ? "sec_iapd_scrape" : r.source === "TX_DFS" ? "tx_dfs_insurance" : "fl_dfs_insurance",
+      source_type: r.source === "SEC" ? "financial_advisor_scrape" : "insurance_agency_scrape",
     }));
     const { error } = await (supabase as any).from("nl_bdr_leads").insert(inserts);
     setImporting(false);
@@ -152,7 +232,7 @@ export default function BDRLeadSourcing() {
     }
     setImported((prev) => {
       const next = new Set(prev);
-      rows.forEach((r) => next.add(r.crd));
+      rows.forEach((r) => next.add(rowKey(r)));
       return next;
     });
     setSelected(new Set());
@@ -173,9 +253,11 @@ export default function BDRLeadSourcing() {
       toast({ title: "Nothing to copy", description: "All results are already claimed or likely duplicates.", variant: "destructive" });
       return;
     }
-    const header = "Business Name | City | CRD";
-    const sep = "--- | --- | ---";
-    const body = eligible.map((r) => `${r.firm_name} | ${[r.city, r.state].filter(Boolean).join(", ") || "—"} | ${r.crd || "—"}`).join("\n");
+    const header = "Business Name | City | CRD | Source";
+    const sep = "--- | --- | --- | ---";
+    const body = eligible
+      .map((r) => `${r.firm_name} | ${[r.city, r.state].filter(Boolean).join(", ") || "—"} | ${r.crd || r.license_number || "—"} | ${SOURCE_LABEL[r.source]}`)
+      .join("\n");
     const text = `${header}\n${sep}\n${body}\n`;
     try {
       await navigator.clipboard.writeText(text);
@@ -190,7 +272,7 @@ export default function BDRLeadSourcing() {
     }
   }
 
-  const selectedRows = results.filter((r) => selected.has(r.crd));
+  const selectedRows = results.filter((r) => selected.has(rowKey(r)));
   const dupSummary = (() => {
     let hard = 0, soft = 0;
     results.forEach((r) => {
@@ -204,9 +286,10 @@ export default function BDRLeadSourcing() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Lead Sourcing — SEC IAPD</h1>
+        <h1 className="text-2xl font-bold text-foreground">Lead Sourcing — SEC IAPD & State Insurance Licenses</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Search state- and SEC-registered investment adviser firms in real time from adviserinfo.sec.gov, then push any row directly into your My Leads pipeline.
+          Search state- and SEC-registered investment adviser firms in real time from adviserinfo.sec.gov, plus licensed
+          insurance agencies in Texas and Florida, then push any row directly into your My Leads pipeline.
         </p>
       </div>
 
@@ -264,7 +347,7 @@ export default function BDRLeadSourcing() {
           </div>
           <div className="md:col-span-7 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-[11px] text-muted-foreground max-w-xl">
-              AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment.
+              AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment. Insurance license search covers Texas and Florida only and ignores the AUM filters.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
               <div className="flex-1 sm:flex-none sm:w-56">
@@ -275,6 +358,28 @@ export default function BDRLeadSourcing() {
                 {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
                 Search SEC IAPD
               </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        onClick={runInsuranceSearch}
+                        disabled={!insuranceAvailable || insLoading}
+                        className="h-9 w-full sm:w-auto"
+                      >
+                        {insLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
+                        Insurance License Search
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {insuranceAvailable
+                      ? `Adds licensed ${state} insurance agencies to your current results.`
+                      : "Insurance license search only available for TX and FL currently"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </CardContent>
@@ -325,27 +430,32 @@ export default function BDRLeadSourcing() {
               <table className="nl-native-table w-full min-w-max text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.06] text-left">
-                    <Th className="w-8"></Th><Th>Firm</Th><Th>Location</Th><Th>CRD</Th><Th>SEC #</Th><Th>Branches</Th><Th>Status</Th><Th></Th>
+                    <Th className="w-8"></Th><Th>Firm</Th><Th>Source</Th><Th>Location</Th><Th>CRD</Th><Th>SEC #</Th><Th>Branches</Th><Th>Status</Th><Th></Th>
                   </tr>
                 </thead>
                 <tbody>
                   {results.map((r, i) => {
-                    const isImported = imported.has(r.crd);
-                    const claim = claimMap[rowKey(r)];
+                    const key = rowKey(r);
+                    const isImported = imported.has(key);
+                    const claim = claimMap[key];
                     const isHard = claim?.match_type === "hard_crd";
                     const isSoft = claim?.match_type === "soft_name_city";
                     const dim = isImported;
+                    const srcStyle = SOURCE_STYLE[r.source];
                     return (
-                      <motion.tr key={r.crd + "-" + i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                      <motion.tr key={key + "-" + i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i, 30) * 0.02 }}
                         className="border-b border-white/[0.04] hover:bg-white/[0.03]"
                         style={dim ? { opacity: 0.55 } : undefined}>
                         <Td>
-                          <input type="checkbox" checked={selected.has(r.crd)} onChange={() => toggleOne(r.crd)} disabled={isImported}
+                          <input type="checkbox" checked={selected.has(key)} onChange={() => toggleOne(key)} disabled={isImported}
                             className="h-4 w-4 accent-primary" />
                         </Td>
                         <Td>
                           <div className="flex flex-col gap-0.5">
                             <span className={`font-medium ${dim ? "line-through text-muted-foreground" : "text-foreground"}`}>{r.firm_name}</span>
+                            {r.license_type && (
+                              <span className="text-[10px] text-muted-foreground">{r.license_type}</span>
+                            )}
                             {isHard && (
                               <span className="text-[10px] font-semibold" style={{ color: "hsl(142,72%,55%)" }}>
                                 Already imported{claim?.claimed_by_name ? ` · ${claim.claimed_by_name}` : ""}
@@ -358,14 +468,20 @@ export default function BDRLeadSourcing() {
                             )}
                           </div>
                         </Td>
+                        <Td>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: srcStyle.bg, color: srcStyle.fg }}>
+                            {SOURCE_LABEL[r.source]}
+                          </span>
+                        </Td>
                         <Td className="text-muted-foreground">{[r.city, r.state].filter(Boolean).join(", ") || "—"}</Td>
                         <Td className="tabular-nums text-xs text-muted-foreground">{r.crd || "—"}</Td>
-                        <Td className="tabular-nums text-xs text-muted-foreground">{r.sec_number || "—"}</Td>
+                        <Td className="tabular-nums text-xs text-muted-foreground">{r.sec_number || r.license_number || "—"}</Td>
                         <Td className="tabular-nums text-xs text-muted-foreground">{r.branches ?? "—"}</Td>
                         <Td>
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                            style={{ background: r.scope === "ACTIVE" ? "hsla(142,72%,42%,.15)" : "hsla(0,0%,50%,.15)",
-                                     color: r.scope === "ACTIVE" ? "hsl(142,72%,55%)" : "hsl(0,0%,65%)" }}>
+                            style={{ background: r.scope === "ACTIVE" || r.scope === "VALID" || r.scope === "LICENSED" ? "hsla(142,72%,42%,.15)" : "hsla(0,0%,50%,.15)",
+                                     color: r.scope === "ACTIVE" || r.scope === "VALID" || r.scope === "LICENSED" ? "hsl(142,72%,55%)" : "hsl(0,0%,65%)" }}>
                             {r.scope || "—"}
                           </span>
                         </Td>
@@ -399,9 +515,9 @@ export default function BDRLeadSourcing() {
         </Card>
       )}
 
-      {!loading && !error && results.length === 0 && (
+      {!loading && !insLoading && !error && results.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-8">
-          Enter a state and keyword, then Search SEC IAPD to fetch live firm records.
+          Enter a state and keyword, then Search SEC IAPD to fetch live firm records — or pick TX / FL and run an insurance license search.
         </p>
       )}
     </div>
