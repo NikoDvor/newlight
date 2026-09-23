@@ -77,7 +77,7 @@ export function SessionGate({ children }: SessionGateProps) {
     );
   }
 
-  if (shouldRedirect) return null;
+  if (shouldRedirect || needsSignIn) return null;
 
   return <>{children}</>;
 }
