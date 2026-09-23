@@ -6354,6 +6354,75 @@ export type Database = {
           },
         ]
       }
+      fl_insurance_licensees: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          business_name: string
+          city: string | null
+          county: string | null
+          created_at: string
+          email: string | null
+          id: string
+          imported_at: string
+          license_issue_date: string | null
+          license_number: string
+          license_status: string | null
+          license_tycl: string | null
+          license_type: string | null
+          npn: string | null
+          phone: string | null
+          residency_type: string | null
+          state: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          business_name: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          imported_at?: string
+          license_issue_date?: string | null
+          license_number: string
+          license_status?: string | null
+          license_tycl?: string | null
+          license_type?: string | null
+          npn?: string | null
+          phone?: string | null
+          residency_type?: string | null
+          state?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          business_name?: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          imported_at?: string
+          license_issue_date?: string | null
+          license_number?: string
+          license_status?: string | null
+          license_tycl?: string | null
+          license_type?: string | null
+          npn?: string | null
+          phone?: string | null
+          residency_type?: string | null
+          state?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       follow_up_queues: {
         Row: {
           assigned_user_id: string | null
