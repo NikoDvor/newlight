@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     let paceMs = 250;
     let skippedPages = 0;
+    const missedPages: { page: number; city: string | null; sort: { field: string; order: string } }[] = [];
 
     // SEC intermittently answers with {errorCode: -1, "Search unavailable"} and
     // a null hits payload — verified live, it succeeds on retry.
@@ -221,6 +222,7 @@ Deno.serve(async (req) => {
             if (rawResults.length > 0) {
               stoppedReason = "rate_limited";
               skippedPages++;
+              missedPages.push({ page, city: scopeCity, sort });
               if (scopeTotal > 0 && page * SEC_HITS_PER_PAGE >= scopeTotal) break;
               continue;
             }
@@ -270,6 +272,32 @@ Deno.serve(async (req) => {
         if (page === HARD_PAGE_CAP) stoppedReason = "safety_cap";
       }
       }
+    }
+
+    // Second chance for pages SEC failed on: retry them once at the end, when
+    // the burst of requests that caused the throttling has passed.
+    let recoveredPages = 0;
+    for (const m of missedPages) {
+      if (Date.now() - startedAt >= TIME_BUDGET_MS) break;
+      try {
+        const p = await fetchPage(m.page, m.city, m.sort);
+        recoveredPages++;
+        pagesFetched++;
+        const pageRows = parseHits(p.hits);
+        rawResults.push(...pageRows);
+        for (const r of pageRows) {
+          if (state && (r.state ?? "").toUpperCase() !== state) continue;
+          if (cityKeys.size && !cityKeys.has(normalizeCity(r.city ?? ""))) continue;
+          if (r.crd && seenCrd.has(r.crd)) continue;
+          if (r.crd) seenCrd.add(r.crd);
+          filtered.push(r);
+        }
+      } catch { /* still unavailable — leave it counted as skipped */ }
+    }
+    skippedPages -= recoveredPages;
+    if (skippedPages <= 0 && stoppedReason === "rate_limited") {
+      skippedPages = 0;
+      stoppedReason = "end_of_results";
     }
 
     const results = filtered.slice(0, requestedMaxResults);
