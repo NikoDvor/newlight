@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const cityKeys = new Set(cities.map(normalizeCity));
 
     const HARD_PAGE_CAP = 500; // per search scope
-    const TIME_BUDGET_MS = 130000;
+    const TIME_BUDGET_MS = 115000;
     const startedAt = Date.now();
 
     const rawResults: FirmResult[] = [];
@@ -75,15 +75,22 @@ Deno.serve(async (req) => {
       | "time_budget"
       | "rate_limited" = "end_of_results";
 
-    const buildUrl = (start: number, city: string | null) => {
+    // Two sort orders per city. SEC's paging is lossy in either order, but the
+    // sets it drops differ, so merging a Relevance pass with a FirmName pass
+    // (deduped by CRD) recovers firms one pass alone misses — verified live.
+    const SORTS: { field: string; order: string }[] = cities.length
+      ? [{ field: "Relevance", order: "Desc" }, { field: "FirmName", order: "Asc" }]
+      : [{ field: "Relevance", order: "Desc" }];
+
+    const buildUrl = (start: number, city: string | null, sort = SORTS[0]) => {
       const params = new URLSearchParams({
         start: String(start),
         pageSize: String(SEC_REQUESTED_PAGE_SIZE),
         size: String(SEC_REQUESTED_PAGE_SIZE),
         hl: "true",
         includePrevious: "false",
-        sortField: "Relevance",
-        sortOrder: "Desc",
+        sortField: sort.field,
+        sortOrder: sort.order,
         investorType: "all",
       });
       // SEC treats `query=*` as a literal match-nothing token. Omitting the
@@ -118,13 +125,13 @@ Deno.serve(async (req) => {
       });
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    let paceMs = 350;
+    let paceMs = 250;
     let skippedPages = 0;
 
     // SEC intermittently answers with {errorCode: -1, "Search unavailable"} and
     // a null hits payload — verified live, it succeeds on retry.
-    const fetchPage = async (pageNumber: number, city: string | null) => {
-      const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE, city);
+    const fetchPage = async (pageNumber: number, city: string | null, sort = SORTS[0]) => {
+      const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE, city, sort);
       let lastErr: SecError | null = null;
       for (let attempt = 0; attempt < 8; attempt++) {
         if (attempt > 0) await sleep(1200 * attempt);
