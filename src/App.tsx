@@ -14,8 +14,6 @@ import { PermissionGuard } from "@/components/PermissionGuard";
 import { ClientFlagGate } from "@/components/ClientFlagGate";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 
-import { AdminOpsProvider } from "@/contexts/AdminOpsContext";
-
 // Pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CRM = lazy(() => import("./pages/CRM"));
@@ -367,52 +365,6 @@ const App = () => {
                 <Route path="households" element={<AdminHouseholds />} />
                 <Route path="webinars" element={<AdminWebinars />} />
 
-                {/* NewLight Ops — internal admin operations workspace (reuses workspace pages, scoped to ADMIN_OPS_CLIENT_ID) */}
-                <Route path="ops/dashboard" element={<AdminOpsProvider><Dashboard /></AdminOpsProvider>} />
-                <Route path="ops/crm" element={<AdminOpsProvider><CRM /></AdminOpsProvider>} />
-                <Route path="ops/pipeline" element={<AdminOpsProvider><Pipeline /></AdminOpsProvider>} />
-                <Route path="ops/calendar" element={<AdminOpsProvider><CalendarPage /></AdminOpsProvider>} />
-                <Route path="ops/calendar-management" element={<AdminOpsProvider><CalendarManagement /></AdminOpsProvider>} />
-                <Route path="ops/calendar-management/:calendarId" element={<AdminOpsProvider><CalendarDetail /></AdminOpsProvider>} />
-                <Route path="ops/conversations" element={<AdminOpsProvider><ConversationsPage /></AdminOpsProvider>} />
-                <Route path="ops/follow-ups" element={<AdminOpsProvider><FollowUpQueue /></AdminOpsProvider>} />
-                <Route path="ops/proposals" element={<AdminOpsProvider><Proposals /></AdminOpsProvider>} />
-                <Route path="ops/reviews" element={<AdminOpsProvider><Reviews /></AdminOpsProvider>} />
-                <Route path="ops/social" element={<AdminOpsProvider><SocialMedia /></AdminOpsProvider>} />
-                <Route path="ops/seo" element={<AdminOpsProvider><SEO /></AdminOpsProvider>} />
-                <Route path="ops/ads" element={<AdminOpsProvider><PaidAds /></AdminOpsProvider>} />
-                <Route path="ops/website" element={<AdminOpsProvider><Website /></AdminOpsProvider>} />
-                <Route path="ops/ai-visibility" element={<AdminOpsProvider><AIVisibility /></AdminOpsProvider>} />
-
-                <Route path="ops/ai-insights" element={<AdminOpsProvider><AIInsights /></AdminOpsProvider>} />
-                <Route path="ops/growth-advisor" element={<AdminOpsProvider><GrowthAdvisor /></AdminOpsProvider>} />
-                <Route path="ops/market-research" element={<AdminOpsProvider><MarketResearch /></AdminOpsProvider>} />
-                <Route path="ops/content" element={<AdminOpsProvider><ContentPlanner /></AdminOpsProvider>} />
-                <Route path="ops/workforce" element={<AdminOpsProvider><Workforce /></AdminOpsProvider>} />
-                
-                <Route path="ops/integrations" element={<AdminOpsProvider><Integrations /></AdminOpsProvider>} />
-                <Route path="ops/settings" element={<AdminOpsProvider><SettingsPage /></AdminOpsProvider>} />
-                <Route path="ops/tasks" element={<AdminOpsProvider><Tasks /></AdminOpsProvider>} />
-                <Route path="ops/email" element={<AdminOpsProvider><EmailPage /></AdminOpsProvider>} />
-                <Route path="ops/message-templates" element={<AdminOpsProvider><MessageTemplates /></AdminOpsProvider>} />
-                <Route path="ops/forms" element={<AdminOpsProvider><FormBuilder /></AdminOpsProvider>} />
-                <Route path="ops/reports" element={<AdminOpsProvider><Reports /></AdminOpsProvider>} />
-                <Route path="ops/help-desk" element={<AdminOpsProvider><HelpDesk /></AdminOpsProvider>} />
-                <Route path="ops/business-health" element={<AdminOpsProvider><BusinessHealth /></AdminOpsProvider>} />
-                <Route path="ops/revenue-opportunities" element={<AdminOpsProvider><RevenueOpportunities /></AdminOpsProvider>} />
-                <Route path="ops/priority-actions" element={<AdminOpsProvider><PriorityActions /></AdminOpsProvider>} />
-                <Route path="ops/live-activity" element={<AdminOpsProvider><LiveActivity /></AdminOpsProvider>} />
-                <Route path="ops/competitor-tracking" element={<AdminOpsProvider><CompetitorTracking /></AdminOpsProvider>} />
-                <Route path="ops/meeting-intelligence" element={<AdminOpsProvider><MeetingIntelligence /></AdminOpsProvider>} />
-                <Route path="ops/services" element={<AdminOpsProvider><ServiceManager /></AdminOpsProvider>} />
-                <Route path="ops/brand-assets" element={<AdminOpsProvider><BrandAssets /></AdminOpsProvider>} />
-                <Route path="ops/onboarding" element={<AdminOpsProvider><Onboarding /></AdminOpsProvider>} />
-                <Route path="ops/notifications" element={<AdminOpsProvider><Notifications /></AdminOpsProvider>} />
-                <Route path="ops/calendar-integrations" element={<AdminOpsProvider><CalendarIntegrations /></AdminOpsProvider>} />
-                <Route path="ops/training" element={<AdminOpsProvider><Training /></AdminOpsProvider>} />
-                <Route path="ops/support-tickets" element={<AdminOpsProvider><SupportTickets /></AdminOpsProvider>} />
-                <Route path="ops/knowledge-base" element={<AdminOpsProvider><KnowledgeBase /></AdminOpsProvider>} />
-                <Route path="ops/setup-center" element={<AdminOpsProvider><SetupCenter /></AdminOpsProvider>} />
               </Route>
 
               {/* Employee Portal */}
