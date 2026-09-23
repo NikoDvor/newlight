@@ -121,6 +121,9 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const startRow = Math.max(0, Number(body.start_row) || 0);
+    // Keep each call well inside the worker's CPU/memory limit; callers loop
+    // on next_row until done (the monthly job does this automatically).
+    const maxRows = Math.min(20000, Math.max(500, Number(body.max_rows) || 5000));
     const zipUrl = typeof body.zip_url === "string" && body.zip_url ? body.zip_url : await latestZipUrl();
 
     const zr = await fetch(zipUrl, { headers: { "User-Agent": UA } });
@@ -149,7 +152,8 @@ Deno.serve(async (req) => {
       upserted += pending.length; pending = [];
     };
     const seen = new Set<string>();
-    for (; row < totalRows; row++) {
+    const endRow = Math.min(totalRows, startRow + maxRows);
+    for (; row < endRow; row++) {
       const line = lines[row + 1];
       if (!line) continue;
       const f = splitCsvLine(line);
