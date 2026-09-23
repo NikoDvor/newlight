@@ -391,7 +391,14 @@ export default function AdminDealDetail() {
               <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.03]">
                 <Building2 className="h-4 w-4 text-[hsl(var(--nl-sky))]" />
                 <div>
-                  <p className="text-sm text-white">{company.company_name}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-sm text-white">{company.company_name}</p>
+                    {company.industry && (
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
+                        title="Firm type">{company.industry}</span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-white/40">{company.industry || "—"} · {company.website || "—"}</p>
                 </div>
               </div>
