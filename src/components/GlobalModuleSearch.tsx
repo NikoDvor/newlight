@@ -9,7 +9,7 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
-  Eye, Award, BarChart3, ClipboardList, Phone, UserCircle,
+  Eye, Award, BarChart3, ClipboardList, Phone, UserCircle, DollarSign,
 } from "lucide-react";
 import {
   CommandDialog,
