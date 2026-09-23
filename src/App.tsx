@@ -247,6 +247,7 @@ const App = () => {
           <WorkspaceProvider>
             <PWAInstallProvider>
               <PWAUpdateBanner />
+              <ChunkErrorBoundary>
               <Suspense fallback={<RouteFallback />}>
               <Routes>
 
