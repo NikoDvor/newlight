@@ -51,7 +51,7 @@ export function deriveServices(y: (k: string) => boolean): string[] {
 
 async function latestZipUrl(): Promise<string> {
   const html = await (await fetch(PAGE_URL, { headers: { "User-Agent": UA } })).text();
-  const links = [...html.matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]).filter((h) => !/exempt/i.test(h));
+  const links = [...html.matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1]).filter((h) => /information-about-registered-investment-advisers/.test(h) && !/exempt/i.test(h));
   if (!links.length) throw new Error("No registered-adviser ZIP link found on SEC page");
   return links[0].startsWith("http") ? links[0] : `https://www.sec.gov${links[0]}`;
 }
