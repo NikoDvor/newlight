@@ -118,15 +118,16 @@ Deno.serve(async (req) => {
       });
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    let paceMs = 200;
+    let paceMs = 350;
+    let skippedPages = 0;
 
     // SEC intermittently answers with {errorCode: -1, "Search unavailable"} and
     // a null hits payload — verified live, it succeeds on retry.
     const fetchPage = async (pageNumber: number, city: string | null) => {
       const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE, city);
       let lastErr: SecError | null = null;
-      for (let attempt = 0; attempt < 6; attempt++) {
-        if (attempt > 0) await sleep(1000 * attempt);
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (attempt > 0) await sleep(1200 * attempt);
         else if (paceMs) await sleep(paceMs);
         const resp = await fetch(secUrl, {
           headers: {
@@ -266,6 +267,7 @@ Deno.serve(async (req) => {
       filtered_out: rawResults.length - filtered.length,
       raw_walked: rawResults.length,
       pages_fetched: pagesFetched,
+      skipped_pages: skippedPages,
       requested_sec_page_size: SEC_REQUESTED_PAGE_SIZE,
       stopped_reason: stoppedReason,
       source: "SEC IAPD",
