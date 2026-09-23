@@ -201,11 +201,12 @@ Deno.serve(async (req) => {
         if (!resolved || resolved.total === 0) continue;
         scopeCity = resolved.variant;
       }
+      for (const sort of SORTS) {
       let scopeTotal = 0;
       for (let page = 1; page <= HARD_PAGE_CAP; page++) {
         let p;
         try {
-          p = await fetchPage(page, scopeCity);
+          p = await fetchPage(page, scopeCity, sort);
         } catch (e) {
           if (e instanceof SecError) {
             // A transient SEC failure skips this page only — keep walking the
@@ -228,8 +229,10 @@ Deno.serve(async (req) => {
         lastUrl = p.url;
         if (page === 1) {
           scopeTotal = p.total || p.hits.length;
-          total += scopeTotal;
-          if (scopeCity) perCityTotals[scopeCity] = scopeTotal;
+          if (sort === SORTS[0]) {
+            total += scopeTotal;
+            if (scopeCity) perCityTotals[scopeCity] = scopeTotal;
+          }
         }
         pagesFetched++;
 
@@ -258,6 +261,7 @@ Deno.serve(async (req) => {
           break outer;
         }
         if (page === HARD_PAGE_CAP) stoppedReason = "safety_cap";
+      }
       }
     }
 
