@@ -34,47 +34,69 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    let q = supabase
-      .from("fl_insurance_licensees")
-      .select("license_number, license_tycl, business_name, license_type, license_status, city, state, zip, address1, address2, county, phone, email, imported_at")
-      .eq("license_status", "VALID")
-      .order("business_name", { ascending: true })
-      .limit(Math.min(1500, maxResults * 6));
+    // Paged walk (same pattern as the TX search): the snapshot has ~105k rows,
+    // so a single capped query would only ever return the alphabetically-first
+    // slice. Walk pages until the caller's Max Results is satisfied, the data
+    // runs out, or the time budget hits — one row per license type, collapsed
+    // to one entry per licensed business.
+    const PAGE_SIZE = 1000;
+    const MAX_PAGES = 60; // 60k-row safety cap per request
+    const TIME_BUDGET_MS = 45_000;
+    const started = Date.now();
 
-    if (cities.length) q = q.in("city", cities.map((c) => c.toUpperCase()));
-    if (keyword) q = q.ilike("business_name", `%${keyword}%`);
-
-    const { data, error } = await q;
-    if (error) return json({ error: `Florida lookup failed: ${error.message}` }, 500);
-
-    // One row per license type — collapse to one row per licensed business.
     const byLicense = new Map<string, any>();
     const perCity: Record<string, number> = {};
-    for (const r of data ?? []) {
-      const key = r.license_number;
-      const existing = byLicense.get(key);
-      if (existing) {
-        if (r.license_type && !existing.license_type?.includes(r.license_type)) {
-          existing.license_type = `${existing.license_type}, ${r.license_type}`;
+    let rawRows = 0;
+    let offset = 0;
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      if (byLicense.size >= maxResults || Date.now() - started >= TIME_BUDGET_MS) break;
+
+      let q = supabase
+        .from("fl_insurance_licensees")
+        .select("license_number, license_tycl, business_name, license_type, license_status, city, state, zip, address1, address2, county, phone, email, imported_at")
+        .eq("license_status", "VALID")
+        .order("business_name", { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (cities.length) q = q.in("city", cities.map((c) => c.toUpperCase()));
+      if (keyword) q = q.ilike("business_name", `%${keyword}%`);
+
+      const { data, error } = await q;
+      if (error) return json({ error: `Florida lookup failed: ${error.message}` }, 500);
+      if (!data?.length) break;
+      rawRows += data.length;
+
+      for (const r of data) {
+        const key = r.license_number;
+        const existing = byLicense.get(key);
+        if (existing) {
+          if (r.license_type && !existing.license_type?.includes(r.license_type)) {
+            existing.license_type = `${existing.license_type}, ${r.license_type}`;
+          }
+          continue;
         }
-        continue;
+        if (r.city) perCity[r.city] = (perCity[r.city] ?? 0) + 1;
+        byLicense.set(key, {
+          business_name: r.business_name,
+          city: r.city,
+          state: r.state ?? "FL",
+          address: [r.address1, r.address2].filter(Boolean).join(", ") || null,
+          license_type: r.license_type,
+          license_number: r.license_number,
+          county: r.county,
+          phone: r.phone,
+          email: r.email,
+          source: "FL_DFS",
+        });
       }
-      if (r.city) perCity[r.city] = (perCity[r.city] ?? 0) + 1;
-      byLicense.set(key, {
-        business_name: r.business_name,
-        city: r.city,
-        state: r.state ?? "FL",
-        address: [r.address1, r.address2].filter(Boolean).join(", ") || null,
-        license_type: r.license_type,
-        license_number: r.license_number,
-        county: r.county,
-        phone: r.phone,
-        email: r.email,
-        source: "FL_DFS",
-      });
+
+      if (data.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
     }
 
     const results = Array.from(byLicense.values()).slice(0, maxResults);
+
 
     const { data: freshness } = await supabase
       .from("fl_insurance_licensees")
