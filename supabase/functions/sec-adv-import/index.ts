@@ -100,7 +100,7 @@ async function latestZipUrl(): Promise<string> {
         const dd = String(day).padStart(2, "0");
         for (const n of [`ia${mm}${dd}${yyyy}-registered.zip`, `ia${mm}${dd}${yyyy}.zip`, `ia${mm}${dd}${yyyy}_1.zip`, `ia${mm}${dd}${yy}.zip`, `ia${mm}${dd}${yy}_0.zip`]) {
           const r = await fetch(base + n, { method: "HEAD", headers: { "User-Agent": UA } }).catch(() => null);
-          if (r?.ok && (r.headers.get("content-type") || "").includes("zip")) return base + n;
+          if (r?.ok && !(r.headers.get("content-type") || "").includes("html")) return base + n;
         }
       }
     }
