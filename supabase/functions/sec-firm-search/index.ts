@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const cityKeys = new Set(cities.map(normalizeCity));
 
     const HARD_PAGE_CAP = 500; // per search scope
-    const TIME_BUDGET_MS = 115000;
+    const TIME_BUDGET_MS = 90000;
     const startedAt = Date.now();
 
     const rawResults: FirmResult[] = [];
@@ -133,8 +133,11 @@ Deno.serve(async (req) => {
     const fetchPage = async (pageNumber: number, city: string | null, sort = SORTS[0]) => {
       const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE, city, sort);
       let lastErr: SecError | null = null;
-      for (let attempt = 0; attempt < 8; attempt++) {
-        if (attempt > 0) await sleep(1200 * attempt);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (Date.now() - startedAt >= TIME_BUDGET_MS) {
+          throw new SecError(504, "Time budget reached", secUrl);
+        }
+        if (attempt > 0) await sleep(800 * attempt);
         else if (paceMs) await sleep(paceMs);
         const resp = await fetch(secUrl, {
           headers: {
@@ -202,6 +205,10 @@ Deno.serve(async (req) => {
         scopeCity = resolved.variant;
       }
       for (const sort of SORTS) {
+      if (Date.now() - startedAt >= TIME_BUDGET_MS) {
+        stoppedReason = "time_budget";
+        break outer;
+      }
       let scopeTotal = 0;
       for (let page = 1; page <= HARD_PAGE_CAP; page++) {
         let p;
