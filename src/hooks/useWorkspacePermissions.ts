@@ -22,7 +22,7 @@ const FULL_ACCESS_ROLES = new Set([
 ]);
 
 export function useWorkspacePermissions(): WorkspacePermissions {
-  const { user, activeClientId, isAdmin, userRole } = useWorkspace();
+  const { user, activeClientId, isAdmin, userRole, roles: sharedRoles, rolesLoaded } = useWorkspace();
   const [permissions, setPermissions] = useState<Record<string, AccessLevel>>({});
   const [loading, setLoading] = useState(true);
   const [ownerLike, setOwnerLike] = useState(false);
@@ -38,10 +38,10 @@ export function useWorkspacePermissions(): WorkspacePermissions {
 
     (async () => {
       // 1. Owner-like role on THIS workspace via user_roles → full access.
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role, client_id")
-        .eq("user_id", user.id);
+      // Reuse the roles already loaded at startup by WorkspaceContext.
+      const roles = rolesLoaded
+        ? sharedRoles
+        : (await supabase.from("user_roles").select("role, client_id").eq("user_id", user.id)).data;
 
       const hasOwnerRole = (roles ?? []).some(
         (r: any) =>

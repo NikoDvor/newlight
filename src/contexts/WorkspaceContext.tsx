@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { primeEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { startSession, endSession, installSessionLifecycleHandlers } from "@/lib/sessionTracking";
 
 type ViewMode = "admin" | "workspace" | "employee";
@@ -198,6 +199,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           console.error("[WorkspaceContext] employee_profiles query failed:", profileError);
           return;
         }
+        primeEmployeeClientId(userId, (profile as any)?.client_id);
         setEmployeeProfile(profile ?? null);
       } else {
         // Client user — prefer a role row that carries an explicit client_id
