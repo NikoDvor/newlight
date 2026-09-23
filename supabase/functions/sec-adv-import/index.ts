@@ -172,7 +172,19 @@ Deno.serve(async (req) => {
       }
     }
     await flush();
-    return json({ ok: true, zip_url: zipUrl, start_row: startRow, next_row: row, total_rows: totalRows, rows_upserted: upserted, done: row >= totalRows, elapsed_ms: Date.now() - started });
+    const done = row >= totalRows;
+    // chain=true (used by the monthly schedule): hand the next chunk to a fresh
+    // invocation so the whole file imports unattended.
+    if (body.chain && !done) {
+      const next = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/sec-adv-import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: req.headers.get("Authorization") ?? "" },
+        body: JSON.stringify({ start_row: row, zip_url: zipUrl, max_rows: maxRows, chain: true }),
+      }).catch(() => {});
+      // deno-lint-ignore no-explicit-any
+      (globalThis as any).EdgeRuntime?.waitUntil?.(next);
+    }
+    return json({ ok: true, zip_url: zipUrl, start_row: startRow, next_row: row, total_rows: totalRows, rows_upserted: upserted, done, elapsed_ms: Date.now() - started });
   } catch (e) {
     return json({ error: (e as Error).message || "Unknown error" }, 500);
   }
