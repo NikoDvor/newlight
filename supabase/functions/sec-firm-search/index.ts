@@ -166,16 +166,18 @@ Deno.serve(async (req) => {
       s.toLowerCase().replace(/(^|[\s\-'])([a-z])/g, (_m, p, c) => p + c.toUpperCase());
 
     const resolveCity = async (city: string) => {
+      // Upper case first: where it works it returns the largest set. Only fall
+      // back when SEC rejects it or returns nothing, to keep request count low
+      // (SEC gets flaky when hammered).
       const variants = Array.from(new Set([city.toUpperCase(), titleCase(city), city]));
-      let best: { variant: string; total: number } | null = null;
       for (const v of variants) {
         try {
           const p = await fetchPage(1, v);
           const t = p.total || p.hits.length;
-          if (!best || t > best.total) best = { variant: v, total: t };
+          if (t > 0) return { variant: v, total: t };
         } catch { /* variant unusable — try next */ }
       }
-      return best;
+      return null;
     };
 
     // One scope per city (native SEC city filter), or a single statewide /
