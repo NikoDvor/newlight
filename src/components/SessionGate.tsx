@@ -18,7 +18,7 @@ function isStandaloneLaunch() {
 
 export function SessionGate({ children }: SessionGateProps) {
   useClientManifest();
-  const { user, isAdmin, userRole, employeeProfile, isSessionLoading } = useWorkspace();
+  const { user, isAdmin, userRole, employeeProfile, isSessionLoading, sessionExpired } = useWorkspace();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,7 +47,11 @@ export function SessionGate({ children }: SessionGateProps) {
     navigate("/dashboard", { replace: true });
   }, [needsSignIn, shouldRedirect, isAdmin, userRole, employeeProfile?.job_title, navigate]);
 
-  if (isSessionLoading) {
+  // A signed-in user whose role hasn't resolved yet is still "deciding" — never
+  // fall through to the logged-out landing page in that window.
+  const awaitingRole = !!user && !userRole && !sessionExpired;
+
+  if (isSessionLoading || awaitingRole) {
     return (
       <div
         style={{

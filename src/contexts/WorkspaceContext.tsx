@@ -111,7 +111,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   // Fetch user role from user_roles table — supports multi-workspace users
   // `attempt` guards against infinite retry loops: one refresh + retry max.
-  const fetchUserRole = async (userId: string, attempt = 0): Promise<void> => {
+  const fetchUserRole = async (userId: string, attempt = 0, netAttempt = 0): Promise<void> => {
     // Fetch ALL roles for this user (multi-workspace support)
     const { data: roles, error: rolesError } = await supabase
       .from("user_roles")
@@ -132,8 +132,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setSessionExpired(true);
         return;
       }
-      // Non-auth failure (network/RLS): don't fake a role, surface nothing.
+      // Non-auth failure (network/RLS). Right after a service-worker update
+      // reload the network can briefly fail; retry with backoff instead of
+      // leaving the user role-less (which rendered the logged-out landing page).
       console.error("[WorkspaceContext] user_roles query failed:", rolesError);
+      if (netAttempt < 3) {
+        await new Promise(r => setTimeout(r, 400 * Math.pow(2, netAttempt)));
+        return fetchUserRole(userId, attempt, netAttempt + 1);
+      }
       return;
     }
 
