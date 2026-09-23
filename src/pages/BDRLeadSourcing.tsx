@@ -256,8 +256,11 @@ export default function BDRLeadSourcing() {
           </div>
           <div>
             <Label className="text-xs">Max results</Label>
-            <Input type="number" value={maxResults} min={1} max={50}
-              onChange={(e) => setMaxResults(Math.max(1, Math.min(50, Number(e.target.value) || 25)))} className="h-9" />
+            <Input type="number" value={maxResults} min={1} max={300}
+              onChange={(e) => setMaxResults(Math.max(1, Math.min(300, Number(e.target.value) || 25)))} className="h-9" />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Larger metro areas can have hundreds of firms — raising this for a city search is expected, not unusual.
+            </p>
           </div>
           <div className="md:col-span-7 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-[11px] text-muted-foreground max-w-xl">
