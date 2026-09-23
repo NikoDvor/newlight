@@ -99,6 +99,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     let cleanupVisibility: (() => void) | null = null;
+    let cleanupPolling: (() => void) | null = null;
 
     // Use vite-plugin-pwa's registerSW so onNeedRefresh fires when a NEW
     // service worker has installed and is WAITING to activate. That's the
