@@ -158,13 +158,39 @@ Deno.serve(async (req) => {
       throw lastErr!;
     };
 
+    // Verified live: SEC's city filter is case-sensitive in an inconsistent
+    // way — "SANTA BARBARA" returns 181 records while "Santa Barbara" returns
+    // 66, yet "MONTECITO" errors where "Montecito" works. So probe the case
+    // variants and walk whichever yields the most records.
+    const titleCase = (s: string) =>
+      s.toLowerCase().replace(/(^|[\s\-'])([a-z])/g, (_m, p, c) => p + c.toUpperCase());
+
+    const resolveCity = async (city: string) => {
+      const variants = Array.from(new Set([city.toUpperCase(), titleCase(city), city]));
+      let best: { variant: string; total: number } | null = null;
+      for (const v of variants) {
+        try {
+          const p = await fetchPage(1, v);
+          const t = p.total || p.hits.length;
+          if (!best || t > best.total) best = { variant: v, total: t };
+        } catch { /* variant unusable — try next */ }
+      }
+      return best;
+    };
+
     // One scope per city (native SEC city filter), or a single statewide /
     // keyword scope when no city was given.
     const scopes: (string | null)[] = cities.length ? cities : [null];
     const perCityTotals: Record<string, number> = {};
 
     outer:
-    for (const scopeCity of scopes) {
+    for (const rawScopeCity of scopes) {
+      let scopeCity = rawScopeCity;
+      if (scopeCity) {
+        const resolved = await resolveCity(scopeCity);
+        if (!resolved || resolved.total === 0) continue;
+        scopeCity = resolved.variant;
+      }
       let scopeTotal = 0;
       for (let page = 1; page <= HARD_PAGE_CAP; page++) {
         let p;
