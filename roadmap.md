@@ -1,3 +1,4 @@
+- [ ] Rebuild the client sidebar into the approved ten-module structure, add client routes/placeholders, move account controls, and verify navigation.
 # Roadmap
 
 - [x] Make city-filtered SEC searches exhaust the existing raw-record budget and report the filtered match total.
