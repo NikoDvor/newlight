@@ -20,58 +20,54 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 
-interface NavItem { title: string; url: string; icon: any }
+interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
   label: string;
   ungrouped?: boolean;
   items: NavItem[];
 }
 
-// SECTION 1 — Admin modules (unchanged)
 const adminGroups: NavGroup[] = [
   {
     label: "Top",
     ungrouped: true,
     items: [
-      { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle },
+      { title: "Dashboard", description: "See agency performance and priorities at a glance.", url: "/admin", icon: LayoutDashboard },
+      { title: "Fix Now", description: "Resolve urgent issues across client accounts.", url: "/admin/fix-now", icon: AlertTriangle },
     ],
   },
   {
     label: "Sales",
     items: [
-      { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch },
-      { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard },
-      { title: "Prospects", url: "/admin/prospects", icon: Contact },
-      { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp },
-      { title: "BDR Meeting Analytics", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
-      { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature },
-      { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer },
+      { title: "Client Pipeline Overview", description: "Compare pipeline performance across every client workspace.", url: "/admin/pipeline-insights", icon: BarChart3 },
+      { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
+      { title: "Prospects", description: "Track potential NewLight clients before they become accounts.", url: "/admin/prospects", icon: Contact },
+      { title: "BDR Performance", description: "Review call activity and outcomes across the BDR team.", url: "/admin/bdr-performance", icon: TrendingUp },
+      { title: "BDR Meeting Analytics", description: "Measure meeting attendance, progression, and close outcomes.", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
+      { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
+      { title: "Sales Demo Creator", description: "Capture a prospect and create a branded demo workspace.", url: "/admin/sales-demo-creator", icon: Hammer },
     ],
   },
   {
     label: "Clients & Success",
     items: [
-      { title: "Client Accounts", url: "/admin/clients", icon: Users },
-      { title: "Acquisition Analytics", url: "/admin/clients/acquisition-analytics", icon: TrendingUp },
-      { title: "Onboarding Ops", url: "/admin/onboarding-command-center", icon: Rocket },
-      { title: "Provision Queue", url: "/admin/provision", icon: ListChecks },
-      { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity },
-      { title: "Client Success", url: "/admin/client-success", icon: Shield },
-      { title: "Retention", url: "/admin/client-intelligence/retention", icon: HeartPulse },
-      { title: "Signed Documents", url: "/admin/client-intelligence/signed-documents", icon: FileSignature },
-      { title: "Website Portfolio", url: "/admin/websites", icon: Globe },
+      { title: "Client Accounts", description: "Manage every client workspace and account status.", url: "/admin/clients", icon: Users },
+      { title: "Acquisition Analytics", description: "Compare how client acquisition channels are performing.", url: "/admin/clients/acquisition-analytics", icon: TrendingUp },
+      { title: "Onboarding Ops", description: "Oversee setup progress and blockers across clients.", url: "/admin/onboarding-command-center", icon: Rocket },
+      { title: "Provision Queue", description: "Track workspace creation and setup work.", url: "/admin/provision", icon: ListChecks },
+      { title: "Client Monitoring", description: "Watch client health, integrations, and system alerts.", url: "/admin/monitoring", icon: Activity },
+      { title: "Client Success", description: "Manage risks, support, renewals, and growth opportunities.", url: "/admin/client-success", icon: Shield },
+      { title: "Website Portfolio", description: "Oversee websites managed across client accounts.", url: "/admin/websites", icon: Globe },
 
     ],
   },
   {
     label: "System",
     items: [
-      { title: "Reports", url: "/admin/reports", icon: LineChart },
-      { title: "Pipeline Insights", url: "/admin/pipeline-insights", icon: BarChart3 },
-      { title: "Billing", url: "/admin/billing", icon: Wallet },
-      { title: "Client Revenue", url: "/admin/client-revenue", icon: DollarSign },
-      { title: "System Settings", url: "/admin/settings", icon: SettingsIcon },
+      { title: "Reports", description: "Review sales, billing, bookings, and reviews agency-wide.", url: "/admin/reports", icon: LineChart },
+      { title: "Billing", description: "Manage client accounts, invoices, subscriptions, and payments.", url: "/admin/billing", icon: Wallet },
+      { title: "Client Revenue", description: "Trace attributed revenue across client accounts.", url: "/admin/client-revenue", icon: DollarSign },
+      { title: "System Settings", description: "Configure platform-wide administrative settings.", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
 ];
@@ -108,7 +104,7 @@ export function AdminSidebar() {
           asChild
           isActive={active}
           tooltip={collapsed ? item.title : undefined}
-          className={`h-11 md:h-8 px-3 rounded-xl text-[13px] md:text-[12px] font-medium transition-all duration-200 group ${
+          className={`h-auto min-h-12 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 group ${
             active
               ? "text-white font-semibold"
               : "text-white/60 hover:text-white hover:bg-white/[0.08]"
@@ -118,13 +114,18 @@ export function AdminSidebar() {
             boxShadow: "0 0 18px -4px hsla(211,96%,60%,.25), inset 0 0 0 1px hsla(211,96%,60%,.15)",
           } : undefined}
         >
-          <Link to={item.url}>
-            <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
+          <Link to={item.url} className="items-start">
+            <item.icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 transition-all duration-200 ${
               active
                 ? "drop-shadow-[0_0_6px_hsla(211,96%,60%,.7)]"
                 : "group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110"
             }`} />
-            {!collapsed && <span>{item.title}</span>}
+            {!collapsed && (
+              <span className="min-w-0">
+                <span className="block text-[12px] font-semibold leading-4">{item.title}</span>
+                <span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-white/40">{item.description}</span>
+              </span>
+            )}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -9,7 +9,7 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
-  Eye, Award, BarChart3, ClipboardList, Phone, UserCircle,
+  Eye, Award, BarChart3, ClipboardList, Phone, UserCircle, DollarSign,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -43,10 +43,11 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, groupLabel: "General" },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle, groupLabel: "General" },
   // Sales
-  { title: "Sales Pipeline", url: "/admin/sales-pipeline", icon: GitBranch, groupLabel: "Sales" },
+  { title: "Client Pipeline Overview", url: "/admin/pipeline-insights", icon: BarChart3, groupLabel: "Sales" },
   { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard, groupLabel: "Sales" },
   { title: "Prospects", url: "/admin/prospects", icon: Contact, groupLabel: "Sales" },
   { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp, groupLabel: "Sales" },
+  { title: "BDR Meeting Analytics", url: "/admin/bdr-meeting-analytics", icon: BarChart3, groupLabel: "Sales" },
   { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature, groupLabel: "Sales" },
   { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer, groupLabel: "Sales" },
   // Clients & Success
@@ -56,12 +57,11 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Provision Queue", url: "/admin/provision", icon: ListChecks, groupLabel: "Clients & Success" },
   { title: "Client Monitoring", url: "/admin/monitoring", icon: Activity, groupLabel: "Clients & Success" },
   { title: "Client Success", url: "/admin/client-success", icon: Shield, groupLabel: "Clients & Success" },
-  { title: "Retention", url: "/admin/client-intelligence/retention", icon: HeartPulse, groupLabel: "Clients & Success" },
-  { title: "Signed Documents", url: "/admin/client-intelligence/signed-documents", icon: FileSignature, groupLabel: "Clients & Success" },
   { title: "Website Portfolio", url: "/admin/websites", icon: Globe, groupLabel: "Clients & Success" },
   // System
   { title: "Reports", url: "/admin/reports", icon: LineChart, groupLabel: "System" },
   { title: "Billing", url: "/admin/billing", icon: Wallet, groupLabel: "System" },
+  { title: "Client Revenue", url: "/admin/client-revenue", icon: DollarSign, groupLabel: "System" },
   { title: "System Settings", url: "/admin/settings", icon: SettingsIcon, groupLabel: "System" },
 ];
 
