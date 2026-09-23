@@ -233,7 +233,16 @@ export default function BDRLeadSourcing() {
           <div className="md:col-span-2">
             <Label className="text-xs">Keyword</Label>
             <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="wealth, retirement, planning…" className="h-9" />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Matches firm names only. Use one word — multi-word phrases like “financial services” are matched much more strictly by SEC and often return nothing.
+            </p>
+            {keyword.trim().split(/\s+/).length > 1 && (
+              <p className="text-[11px] text-amber-500 mt-1">
+                Multi-word keyword detected — try just “{keyword.trim().split(/\s+/)[0]}” if results look too low.
+              </p>
+            )}
           </div>
+
           <div>
             <Label className="text-xs">Min AUM ($M)</Label>
             <Input type="number" value={minAum} onChange={(e) => setMinAum(e.target.value)} placeholder="—" className="h-9" />
