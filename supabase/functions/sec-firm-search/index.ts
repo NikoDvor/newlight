@@ -1,11 +1,20 @@
 // Search SEC IAPD (Investment Adviser Public Disclosure) for RIA firms.
 // Real data source: https://api.adviserinfo.sec.gov/search/firm
 // Returns normalized rows the client can import into nl_bdr_leads.
+//
+// Architecture note (verified live): SEC's search endpoint accepts a native
+// `city` parameter. Using it scopes the walk to ~9 pages instead of paging
+// through an entire state (CA = 413 pages), which avoids SEC's deep-pagination
+// instability — measured live, a full statewide walk silently repeats some
+// records and drops others (Arlington Financial Advisors, Ariadne Wealth
+// Management, Omega Financial Group, Monarch Wealth Strategies, Certis Capital
+// Management, Bourke Wealth Management, Athens Capital Management were all
+// lost that way despite existing in SEC's data).
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SEC_ENDPOINT = "https://api.adviserinfo.sec.gov/search/firm";
-// SEC's search endpoint caps at ~20 hits/page regardless of requested pageSize.
-const SEC_REQUESTED_PAGE_SIZE = 100; // requested; actual returned is typically 20
+const SEC_REQUESTED_PAGE_SIZE = 100; // requested; SEC returns 20 per page
+const SEC_HITS_PER_PAGE = 20;
 
 interface FirmResult {
   crd: string;
@@ -32,31 +41,27 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const state = typeof body.state === "string" ? body.state.trim().toUpperCase() : "";
-    const city = typeof body.city === "string" ? body.city.trim() : "";
+    const cityRaw = typeof body.city === "string" ? body.city.trim() : "";
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
     const requestedMaxResults = Math.max(1, Math.min(100, Number(body.max_results) || 25));
 
-    if (!keyword && !state && !city) {
+    if (!keyword && !state && !cityRaw) {
       return json({ error: "Provide at least a keyword, state, or city." }, 400);
     }
 
-    // City+state searches walk to completion (see completeness fix), so the
-    // record cap is effectively lifted; page cap + time budget are the real
-    // safety nets. Broader searches keep tighter depth.
-    const maxRawRecords = city && state ? 40000 : state ? 1000 : 500;
-    // 500 pages x 20 hits = 10,000 raw records — above the largest single-state
-    // universe (CA is ~8,250 firms / ~413 pages). Measured live from the edge
-    // runtime: concurrent fetching gets 429'd after ~2,500 records, while a
-    // paced one-at-a-time walk sustains ~3 pages/sec cleanly (~130s for all of
-    // CA). The time budget below is the real ceiling — it stops the walk and
-    // returns partial results well before the edge wall-clock limit, so a deep
-    // walk degrades into "fewer records scanned", never a failed request.
-    const HARD_PAGE_CAP = 500;
+    // The city field accepts a comma-separated list so a rep can cover a metro
+    // and its neighboring towns in one pass (e.g. "Santa Barbara, Montecito,
+    // Goleta, Carpinteria, Summerland").
+    const cities = cityRaw
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
+    const cityKeys = new Set(cities.map(normalizeCity));
+
+    const HARD_PAGE_CAP = 500; // per search scope
     const TIME_BUDGET_MS = 130000;
-    const CONCURRENCY = 1;
     const startedAt = Date.now();
 
-    const cityLower = city ? normalizeCity(city) : "";
     const rawResults: FirmResult[] = [];
     const filtered: FirmResult[] = [];
     const seenCrd = new Set<string>();
@@ -70,12 +75,7 @@ Deno.serve(async (req) => {
       | "time_budget"
       | "rate_limited" = "end_of_results";
 
-    // SEC uses `start` offset (Elasticsearch-style), NOT `pageNumber`. Each
-    // response returns ~20 hits regardless of pageSize. The `pageNumber` param
-    // is silently ignored, so paginating with it just re-fetches page 1.
-    const SEC_HITS_PER_PAGE = 20;
-
-    const buildUrl = (start: number) => {
+    const buildUrl = (start: number, city: string | null) => {
       const params = new URLSearchParams({
         start: String(start),
         pageSize: String(SEC_REQUESTED_PAGE_SIZE),
@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       // query param entirely performs a true broad/match-all search.
       if (keyword) params.set("query", keyword);
       if (state) params.set("state", state);
+      if (city) params.set("city", city);
       return `${SEC_ENDPOINT}?${params.toString()}`;
     };
 
@@ -98,9 +99,8 @@ Deno.serve(async (req) => {
         const s = h?._source ?? {};
         let addr: any = {};
         try {
-          addr = typeof s.firm_ia_address_details === "string"
-            ? JSON.parse(s.firm_ia_address_details)?.officeAddress ?? {}
-            : {};
+          const detail = s.firm_ia_address_details ?? s.firm_address_details;
+          addr = typeof detail === "string" ? JSON.parse(detail)?.officeAddress ?? {} : {};
         } catch { /* ignore */ }
         const crd = String(s.firm_source_id ?? "");
         return {
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
           state: addr.state ?? null,
           street: [addr.street1, addr.street2].filter(Boolean).join(", ") || null,
           sec_number: s.firm_ia_full_sec_number ? String(s.firm_ia_full_sec_number) : null,
-          scope: s.firm_ia_scope ?? null,
+          scope: s.firm_ia_scope ?? s.firm_scope ?? null,
           branches: typeof s.firm_branches_count === "number" ? s.firm_branches_count : null,
           iapd_url: crd ? `https://adviserinfo.sec.gov/firm/summary/${crd}` : "",
           aum: null,
@@ -118,13 +118,12 @@ Deno.serve(async (req) => {
       });
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-    // Adaptive pacing: SEC throttles deep walks from shared edge egress IPs.
-    // Once we see a 429 we slow every subsequent request down permanently.
     let paceMs = 50;
 
-    const fetchPage = async (pageNumber: number) => {
-      const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE);
+    // SEC intermittently answers with {errorCode: -1, "Search unavailable"} and
+    // a null hits payload — verified live, it succeeds on retry.
+    const fetchPage = async (pageNumber: number, city: string | null) => {
+      const secUrl = buildUrl((pageNumber - 1) * SEC_HITS_PER_PAGE, city);
       let lastErr: SecError | null = null;
       for (let attempt = 0; attempt < 6; attempt++) {
         if (attempt > 0) await sleep(1000 * attempt);
@@ -145,92 +144,80 @@ Deno.serve(async (req) => {
           throw lastErr;
         }
         const data = await resp.json();
-        return {
-          url: secUrl,
-          hits: Array.isArray(data?.hits?.hits) ? data.hits.hits : [],
-          total: data?.hits?.total ?? 0,
-        };
+        const hits = data?.hits?.hits;
+        if (!Array.isArray(hits)) {
+          lastErr = new SecError(
+            503,
+            String(data?.errorMessage ?? "Search unavailable").slice(0, 200),
+            secUrl,
+          );
+          continue; // transient SEC error — retry
+        }
+        return { url: secUrl, hits, total: data?.hits?.total ?? 0 };
       }
       throw lastErr!;
     };
 
-    let done = false;
-    for (let page = 1; page <= HARD_PAGE_CAP && !done; page += CONCURRENCY) {
-      const batch: number[] = [];
-      for (let i = 0; i < CONCURRENCY && page + i <= HARD_PAGE_CAP; i++) {
-        batch.push(page + i);
-      }
+    // One scope per city (native SEC city filter), or a single statewide /
+    // keyword scope when no city was given.
+    const scopes: (string | null)[] = cities.length ? cities : [null];
+    const perCityTotals: Record<string, number> = {};
 
-      let pages;
-      try {
-        pages = await Promise.all(batch.map(fetchPage));
-      } catch (e) {
-        if (e instanceof SecError) {
-          // Already walked useful data: return partial rather than failing.
-          if (rawResults.length > 0) {
-            stoppedReason = "rate_limited";
-            break;
+    outer:
+    for (const scopeCity of scopes) {
+      let scopeTotal = 0;
+      for (let page = 1; page <= HARD_PAGE_CAP; page++) {
+        let p;
+        try {
+          p = await fetchPage(page, scopeCity);
+        } catch (e) {
+          if (e instanceof SecError) {
+            if (rawResults.length > 0) {
+              stoppedReason = "rate_limited";
+              break outer;
+            }
+            return json({
+              error: `SEC IAPD returned ${e.status}`,
+              detail: e.detail,
+              source_url: e.url,
+            }, 502);
           }
-          return json({
-            error: `SEC IAPD returned ${e.status}`,
-            detail: e.detail,
-            source_url: e.url,
-          }, 502);
+          throw e;
         }
-        throw e;
-      }
 
-      for (const p of pages) {
         lastUrl = p.url;
-        if (pagesFetched === 0) total = p.total || p.hits.length;
+        if (page === 1) {
+          scopeTotal = p.total || p.hits.length;
+          total += scopeTotal;
+          if (scopeCity) perCityTotals[scopeCity] = scopeTotal;
+        }
         pagesFetched++;
 
         const pageRows = parseHits(p.hits);
         rawResults.push(...pageRows);
 
-        // Strict server-side post-filter (SEC's own state filter leaks other
-        // states) plus CRD de-duplication (SEC returns some firms twice).
+        // Safety net: SEC's own city/state matching can be looser than exact.
+        // Should rarely reject anything now that the city is native.
         for (const r of pageRows) {
           if (state && (r.state ?? "").toUpperCase() !== state) continue;
-          if (cityLower && normalizeCity(r.city ?? "") !== cityLower) continue;
-          if (r.crd && seenCrd.has(r.crd)) continue;
+          if (cityKeys.size && !cityKeys.has(normalizeCity(r.city ?? ""))) continue;
+          if (r.crd && seenCrd.has(r.crd)) continue; // dedupe by CRD
           if (r.crd) seenCrd.add(r.crd);
           filtered.push(r);
         }
 
-        if (p.hits.length === 0) {
-          stoppedReason = "end_of_results";
-          done = true;
+        if (p.hits.length === 0) break; // end of this scope
+        if (scopeTotal > 0 && page * SEC_HITS_PER_PAGE >= scopeTotal) break;
+
+        if (!cityKeys.size && filtered.length >= requestedMaxResults) {
+          stoppedReason = "satisfied";
+          break outer;
         }
-      }
-
-      if (done) break;
-
-      // Without a city filter, stop once we can satisfy the requested count.
-      // City searches must exhaust the available raw-result walk so relevant
-      // firms ranked deeper by SEC are still counted and can be returned.
-      if (!cityLower && filtered.length >= requestedMaxResults) {
-        stoppedReason = "satisfied";
-        break;
-      }
-
-      if (total > 0 && rawResults.length >= total) {
-        stoppedReason = "end_of_results";
-        break;
-      }
-
-      if (rawResults.length >= maxRawRecords) {
-        stoppedReason = "safety_cap";
-        break;
-      }
-
-      if (Date.now() - startedAt >= TIME_BUDGET_MS) {
-        stoppedReason = "time_budget";
-        break;
-      }
-
-      if (page + CONCURRENCY > HARD_PAGE_CAP) {
-        stoppedReason = "safety_cap";
+        if (Date.now() - startedAt >= TIME_BUDGET_MS) {
+          stoppedReason = "time_budget";
+          break outer;
+        }
+        if (page === HARD_PAGE_CAP) stoppedReason = "safety_cap";
       }
     }
 
@@ -238,20 +225,21 @@ Deno.serve(async (req) => {
 
     return json({
       results,
-      total: cityLower ? filtered.length : total,
+      total: cityKeys.size ? filtered.length : total,
       sec_total: total,
-      city_match_total: cityLower ? filtered.length : null,
+      city_match_total: cityKeys.size ? filtered.length : null,
+      cities_searched: cities,
+      per_city_sec_total: cityKeys.size ? perCityTotals : null,
       returned: results.length,
       filtered_out: rawResults.length - filtered.length,
       raw_walked: rawResults.length,
       pages_fetched: pagesFetched,
-      max_raw_records: maxRawRecords,
       requested_sec_page_size: SEC_REQUESTED_PAGE_SIZE,
       stopped_reason: stoppedReason,
       source: "SEC IAPD",
       source_url: lastUrl,
-      note: cityLower
-        ? "Completed the available SEC result walk before applying the result limit. AUM requires Form ADV parsing."
+      note: cityKeys.size
+        ? "Queried SEC's native city filter per city, deduped by CRD. AUM requires Form ADV parsing."
         : "Paginated walk with strict post-filter on state. AUM requires Form ADV parsing.",
     });
 
