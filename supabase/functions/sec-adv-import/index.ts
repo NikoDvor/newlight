@@ -28,6 +28,22 @@ function json(p: unknown, status = 200) {
   return new Response(JSON.stringify(p), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+// Quote-aware record parser: SEC's roster has quoted fields containing
+// line breaks, so splitting on "\n" first corrupts ~15 rows.
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = []; let row: string[] = []; let cur = ""; let q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(cur); cur = ""; }
+    else if (ch === "\n") { row.push(cur.replace(/\r$/, "")); rows.push(row); row = []; cur = ""; }
+    else cur += ch;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
 function splitCsvLine(line: string): string[] {
   const out: string[] = []; let cur = ""; let q = false;
   for (let i = 0; i < line.length; i++) {
@@ -38,15 +54,30 @@ function splitCsvLine(line: string): string[] {
   out.push(cur); return out;
 }
 
-// Collapse Item 5.G into BDR-friendly labels, in Form ADV order.
-export function deriveServices(y: (k: string) => boolean): string[] {
-  const s: string[] = [];
-  if (y("5G(1)")) s.push("Financial Planning");
-  if (y("5G(2)") || y("5G(5)")) s.push("Portfolio Management");
-  if (y("5G(6)")) s.push("Pension Consulting");
-  if (y("5G(3)") || y("5G(4)")) s.push("Fund Management");
-  if (y("5G(7)")) s.push("Adviser Selection");
-  return s;
+// Collapse Item 5.G into BDR-friendly labels. `services` keeps every
+// service the firm offers; the primary label is one plain category:
+//   planning + portfolio mgmt  -> Wealth Management (typical planning-led RIA)
+//   planning only              -> Financial Planning
+//   portfolio mgmt (no plan.)  -> Portfolio Management (pure investment shop)
+//   funds / pooled vehicles    -> Fund Management (institutional / hedge / PE)
+//   pension consulting only    -> Pension Consulting
+//   adviser selection only     -> Adviser Selection
+export function deriveServices(y: (k: string) => boolean): { services: string[]; primary: string | null } {
+  const fp = y("5G(1)"), pm = y("5G(2)") || y("5G(5)"), fund = y("5G(3)") || y("5G(4)"),
+    pen = y("5G(6)"), sel = y("5G(7)");
+  const services: string[] = [];
+  if (fp) services.push("Financial Planning");
+  if (pm) services.push("Portfolio Management");
+  if (pen) services.push("Pension Consulting");
+  if (fund) services.push("Fund Management");
+  if (sel) services.push("Adviser Selection");
+  const primary = fp && pm ? "Wealth Management"
+    : fp ? "Financial Planning"
+    : pm ? "Portfolio Management"
+    : fund ? "Fund Management"
+    : pen ? "Pension Consulting"
+    : sel ? "Adviser Selection" : null;
+  return { services, primary };
 }
 
 // SEC file names are inconsistent (ia09012026-registered.zip, ia08032026_1.zip,
@@ -66,6 +97,24 @@ async function latestZipUrl(): Promise<string> {
   const links = [...html.matchAll(/href="([^"]+\.zip)"/g)].map((m) => m[1])
     .filter((h) => !/exempt/i.test(h) && zipDate(h) > 0)
     .sort((a, b) => zipDate(b) - zipDate(a));
+  // SEC sometimes serves the backend a stale cached copy of the page whose
+  // newest link is years old. If so, probe this and last month's likely names.
+  const cutoff = Number(new Date(Date.now() - 50 * 864e5).toISOString().slice(0, 10).replace(/-/g, ""));
+  if (!links.length || zipDate(links[0]) < cutoff) {
+    const base = "https://www.sec.gov/files/investment/data/other/information-about-registered-investment-advisers-exempt-reporting-advisers/";
+    const now = new Date();
+    for (let back = 0; back < 3; back++) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1));
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0"), yyyy = String(d.getUTCFullYear()), yy = yyyy.slice(2);
+      for (let day = 1; day <= 5; day++) {
+        const dd = String(day).padStart(2, "0");
+        for (const n of [`ia${mm}${dd}${yyyy}-registered.zip`, `ia${mm}${dd}${yyyy}.zip`, `ia${mm}${dd}${yyyy}_1.zip`, `ia${mm}${dd}${yy}.zip`, `ia${mm}${dd}${yy}_0.zip`]) {
+          const r = await fetch(base + n, { method: "HEAD", headers: { "User-Agent": UA } }).catch(() => null);
+          if (r?.ok && (r.headers.get("content-type") || "").includes("zip")) return base + n;
+        }
+      }
+    }
+  }
   if (!links.length) throw new Error("No registered-adviser ZIP link found on SEC page");
   return links[0].startsWith("http") ? links[0] : `https://www.sec.gov${links[0]}`;
 }
@@ -85,8 +134,8 @@ Deno.serve(async (req) => {
     if (!name) return json({ error: "ZIP contained no CSV", zip_url: zipUrl }, 502);
     // SEC's roster is Windows-1252 encoded.
     const text = new TextDecoder("windows-1252").decode(files[name]);
-    const lines = text.split(/\r?\n/);
-    const header = splitCsvLine(lines[0]);
+    const lines = parseCsv(text);
+    const header = lines[0];
     const col = (k: string) => header.indexOf(k);
     const iCrd = col("Organization CRD#"), iSec = col("SEC#"), iName = col("Primary Business Name");
     const gCols = ["5G(1)", "5G(2)", "5G(3)", "5G(4)", "5G(5)", "5G(6)", "5G(7)"];
@@ -105,16 +154,15 @@ Deno.serve(async (req) => {
     };
     const seen = new Set<string>();
     for (; row < totalRows; row++) {
-      const line = lines[row + 1];
-      if (!line || !line.trim()) continue;
-      const f = splitCsvLine(line);
+      const f = lines[row + 1];
+      if (!f || f.length < header.length / 2) continue;
       const crd = (f[iCrd] || "").trim();
-      if (!crd || seen.has(crd)) continue;
+      if (!/^\d+$/.test(crd) || seen.has(crd)) continue;
       seen.add(crd);
-      const services = deriveServices((k) => (f[col(k)] || "").trim().toUpperCase() === "Y");
+      const { services, primary } = deriveServices((k) => (f[col(k)] || "").trim().toUpperCase() === "Y");
       pending.push({
         crd, firm_name: (f[iName] || "").trim() || null, sec_number: iSec >= 0 ? (f[iSec] || "").trim() || null : null,
-        services, focus_label: services.slice(0, 2).join(" + ") || null, source_file: zipUrl, imported_at: now,
+        services, focus_label: primary, source_file: zipUrl, imported_at: now,
       });
       if (pending.length >= BATCH) {
         await flush();
