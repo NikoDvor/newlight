@@ -135,31 +135,36 @@ export function GenericPipelineDashboard() {
       const fourteen = new Date(Date.now() - 13 * 86400000);
       fourteen.setHours(0, 0, 0, 0);
 
+      const yesterdayIso = new Date(Date.now() - 86400000).toISOString();
+      const fourteenIso = fourteen.toISOString();
+      const eventsSince = yesterdayIso < monthStart ? yesterdayIso : monthStart;
+      const outcomesSince = fourteenIso < monthStart ? fourteenIso : monthStart;
+      // Consolidated: one leads query, one calendar query, one outcomes query
+      // (previously 2 + 3 + 2 separate round trips), split client-side below.
       const [
-        { data: callbacks },
-        { data: events },
-        { data: monthEvents },
+        { data: leadRows },
+        { data: allEvents },
         { data: proposals },
         { data: objections },
-        { data: outcomes },
+        { data: allOutcomes },
         { data: unlockRows },
-        { data: outcomes14 },
-        { data: estLeads },
         { data: repDeals },
       ] = await Promise.all([
-        (supabase as any).from("nl_bdr_leads").select("id, business_name, owner_name, callback_at, status").eq("user_id", userId).not("callback_at", "is", null),
-        (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome").eq("user_id", userId).gte("starts_at", new Date(Date.now() - 86400000).toISOString()),
-        (supabase as any).from("bdr_calendar_events").select("id, starts_at").eq("user_id", userId).gte("starts_at", monthStart),
+        (supabase as any).from("nl_bdr_leads").select("id, business_name, owner_name, callback_at, status, crm_deal_id, estimated_annual_value").eq("user_id", userId).or("callback_at.not.is.null,and(crm_deal_id.is.null,estimated_annual_value.not.is.null)"),
+        (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome, source").eq("user_id", userId).gte("starts_at", eventsSince),
         (supabase as any).from("proposals").select("id, accepted_at, proposal_status, created_at").eq("assigned_salesman_user_id", userId).gte("created_at", monthStart),
         (supabase as any).from("nl_bdr_objections").select("objection_category, triggered_at").eq("user_id", userId),
-        (supabase as any).from("bdr_call_outcomes").select("id, logged_at").eq("bdr_user_id", userId).gte("logged_at", monthStart),
+        (supabase as any).from("bdr_call_outcomes").select("id, logged_at").eq("bdr_user_id", userId).gte("logged_at", outcomesSince),
         (supabase as any).from("nl_objection_unlocks").select("objection_category, foundation_unlocked, intermediate_unlocked, advanced_unlocked, foundation_passed, intermediate_passed, advanced_passed").eq("user_id", userId),
-        (supabase as any).from("bdr_call_outcomes").select("logged_at").eq("bdr_user_id", userId).gte("logged_at", fourteen.toISOString()),
-        // Pipeline value sources: pre-Close-Prep leads carry estimated_annual_value;
-        // post-Close-Prep leads carry a real crm_deals.deal_value.
-        (supabase as any).from("nl_bdr_leads").select("id, estimated_annual_value").eq("user_id", userId).is("crm_deal_id", null).not("estimated_annual_value", "is", null),
         (supabase as any).from("crm_deals").select("id, deal_value, pipeline_stage").eq("assigned_user", userId).eq("client_id", "00000000-0000-0000-0000-0000000000ff"),
       ]);
+      const ms = new Date(monthStart).getTime();
+      const callbacks = (leadRows || []).filter((l: any) => l.callback_at);
+      const estLeads = (leadRows || []).filter((l: any) => !l.crm_deal_id && l.estimated_annual_value != null);
+      const events = (allEvents || []).filter((e: any) => e.starts_at >= yesterdayIso);
+      const monthEvents = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= ms);
+      const outcomes = (allOutcomes || []).filter((o: any) => o.logged_at && new Date(o.logged_at).getTime() >= ms);
+      const outcomes14 = (allOutcomes || []).filter((o: any) => o.logged_at && o.logged_at >= fourteenIso);
 
       if (cancelled) return;
 
@@ -226,12 +231,8 @@ export function GenericPipelineDashboard() {
 
       // Dials: bdr_calendar_events where source='dialer', bucketed today/week/month
       const monthStartD = startOfCurrentMonth();
-      const { data: dialEvents } = await (supabase as any)
-        .from("bdr_calendar_events")
-        .select("starts_at")
-        .eq("user_id", userId)
-        .eq("source", "dialer")
-        .gte("starts_at", monthStartD.toISOString());
+      const monthStartIso = monthStartD.toISOString();
+      const dialEvents = (allEvents || []).filter((e: any) => e.source === "dialer" && e.starts_at >= monthStartIso);
       if (cancelled) return;
       const todayD = startOfToday();
       const weekD = startOfCurrentWeek();
