@@ -114,6 +114,8 @@ Deno.serve(async (req) => {
       results,
       total: byLicense.size,
       returned: results.length,
+      raw_rows_walked: rawRows,
+
       cities_searched: cities,
       per_city_total: perCity,
       source: "FL DFS",
