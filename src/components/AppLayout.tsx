@@ -4,7 +4,7 @@ import { AIAssistant } from "@/components/AIAssistant";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
-import { Bell, Building2, LogOut, Shield, ArrowLeft } from "lucide-react";
+import { Bell, Building2, LogOut, ArrowLeft, Settings, User } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +14,15 @@ import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import { getEmployeeRoute } from "@/lib/employeeRouting";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { GlobalAtmosphere } from "@/components/GlobalAtmosphere";
 
@@ -186,26 +195,34 @@ export function AppLayout() {
                 }} />
               </button>
               {user && (
-                <button
-                  onClick={signOut}
-                  className="p-2 rounded-xl transition-all duration-200 hover:bg-red-500/10 group"
-                  title="Sign out"
-                >
-                  <LogOut className="h-4 w-4 text-white/50 group-hover:text-red-400 transition-colors" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" aria-label="Open account menu">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary ring-1 ring-primary/25">
+                        {(displayName || user.email || "NL").substring(0, 2).toUpperCase()}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="font-normal">
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium">{displayName || "My Account"}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+                        </span>
+                      </span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => navigate("/settings")}>
+                      <Settings className="mr-2 h-4 w-4" /> Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => void signOut()} className="text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" /> Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-              <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{
-                background: hasCustomBranding
-                  ? `linear-gradient(135deg, ${branding.secondary_color}, ${branding.primary_color})`
-                  : "linear-gradient(135deg, hsl(197 92% 68%), hsl(217 90% 58%))",
-                boxShadow: hasCustomBranding
-                  ? `0 2px 14px -3px ${branding.primary_color}60`
-                  : "0 2px 14px -3px hsla(211,96%,56%,.35)"
-              }}>
-                <span className="text-xs font-bold text-white">
-                  {(displayName || "NL").substring(0, 2).toUpperCase()}
-                </span>
-              </div>
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg flex flex-col">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ModuleHelpPanel } from "@/components/ModuleHelpPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
@@ -64,7 +64,9 @@ const LEAD_SOURCES = ["Google Ads", "Organic", "Referral", "Social Media", "Dire
 
 export default function CRM() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { activeClientId } = useWorkspace();
+  const recordView = searchParams.get("view") === "companies" ? "companies" : "contacts";
   const [contacts, setContacts] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
@@ -460,7 +462,11 @@ export default function CRM() {
           </TabsList>
           <TabsContent value="contacts" className="mt-4 space-y-2">
             <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Contacts</p>
-            <Tabs defaultValue="contacts" className="w-full">
+            <Tabs
+              value={recordView}
+              onValueChange={(view) => setSearchParams(view === "companies" ? { view: "companies" } : {})}
+              className="w-full"
+            >
               <TabsList className="bg-transparent h-9 rounded-none border-b border-border w-full justify-start gap-4 flex-wrap">
                 <TabsTrigger value="contacts" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Contacts</TabsTrigger>
                 <TabsTrigger value="companies" className="rounded-none text-xs px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground">Companies</TabsTrigger>
