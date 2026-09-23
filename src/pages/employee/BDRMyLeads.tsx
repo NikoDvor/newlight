@@ -582,7 +582,7 @@ export default function BDRMyLeads() {
       toast({ title: "Error", description: msg, variant: "destructive" });
       return;
     }
-    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website }, data.id);
+    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website, niche: form.niche || null, city: form.city || null }, data.id);
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
