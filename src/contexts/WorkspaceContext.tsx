@@ -10,7 +10,9 @@ interface EmployeeProfile {
   department: string | null;
   job_title: string | null;
   employee_role: string;
+  client_id?: string | null;
 }
+export interface UserRoleRow { role: string; client_id: string | null }
 
 interface ClientBranding {
   logo_url: string;
@@ -49,6 +51,8 @@ interface WorkspaceContextType {
   branding: ClientBranding;
   userRole: string | null;
   employeeProfile: EmployeeProfile | null;
+  roles: UserRoleRow[];
+  rolesLoaded: boolean;
   isSessionLoading: boolean;
   sessionExpired: boolean;
   signOut: () => Promise<void>;
@@ -65,6 +69,8 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   branding: defaultBranding,
   userRole: null,
   employeeProfile: null,
+  roles: [],
+  rolesLoaded: false,
   isSessionLoading: true,
   sessionExpired: false,
   signOut: async () => {},
@@ -80,6 +86,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [roles, setRoles] = useState<UserRoleRow[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
+  const rolesRef = useRef<UserRoleRow[]>([]);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const signOut = async () => {
@@ -91,6 +100,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setEmployeeProfile(null);
     setActiveClientId(null);
     setSessionExpired(false);
+    roleLoadRef.current = null;
+    rolesRef.current = [];
+    setRoles([]);
+    setRolesLoaded(false);
   };
 
   // Detect auth/JWT failures (stale tokens — common in installed PWAs)
@@ -144,6 +157,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
 
     setSessionExpired(false);
+    rolesRef.current = (roles ?? []) as UserRoleRow[];
+    setRoles(rolesRef.current);
+    setRolesLoaded(true);
 
     if (roles && roles.length > 0) {
       const adminRoles = ["admin", "operator"];
@@ -162,7 +178,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setActiveClientId(null);
         const { data: profile, error: profileError } = await supabase
           .from("employee_profiles")
-          .select("full_name, email, department, job_title, employee_role")
+          .select("full_name, email, department, job_title, employee_role, client_id")
           .eq("user_id", userId)
           .maybeSingle();
         if (profileError) {
@@ -310,7 +326,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, sessionExpired, signOut,
+      isAdmin, user, branding, userRole, employeeProfile, roles, rolesLoaded, isSessionLoading, sessionExpired, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
