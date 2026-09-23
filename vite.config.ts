@@ -103,6 +103,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // Stamped fresh on every build so BUILD_TAG is a real deploy signal
+    // instead of a hardcoded string someone has to remember to bump.
+    __BUILD_TAG__: JSON.stringify(
+      mode === "development" ? "dev" : new Date().toISOString().replace(/\.\d+Z$/, "Z"),
+    ),
+  },
   build: {
     chunkSizeWarningLimit: 4096,
   },
