@@ -1341,3 +1341,24 @@
   }
   .prv-slider [role="slider"] { transition: none; }
 }
+
+/* Performance: large, always-running decorative animations behind the app
+   shell cost real frame time on every page (measured ~6fps idle on the
+   dashboard at 4x CPU throttle). Keep the look, freeze the motion. Small
+   indicators (AI dots, wave bars) and hover effects still animate. */
+.nl-animated-bg,
+.card-glow-border:not(:hover),
+.glow-pulse,
+.dash-neural-grid,
+.dash-neural-grid::after,
+.dash-scanline::after,
+.dash-geo-fragment,
+.dash-geo-ring,
+.dash-breathe,
+.dash-lightning,
+.dash-orb--primary,
+.dash-orb--cyan,
+.dash-orb--secondary,
+.dash-card::after {
+  animation: none !important;
+}

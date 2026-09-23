@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +108,7 @@ function SectionCard({ title, icon: Icon, right, children }: { title: string; ic
 export function GenericPipelineDashboard() {
   const { user } = useWorkspace();
   const userId = user?.id;
-  const [now, setNow] = useState(() => Date.now());
+
   const [rows, setRows] = useState<Row[]>([]);
   const [monthMeetings, setMonthMeetings] = useState(0);
   const [monthProposals, setMonthProposals] = useState<any[]>([]);
@@ -121,11 +121,6 @@ export function GenericPipelineDashboard() {
   const [dialCounts, setDialCounts] = useState({ today: 0, week: 0, month: 0 });
   const [pipelineValue, setPipelineValue] = useState(0);
 
-  // live tick
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -291,12 +286,11 @@ export function GenericPipelineDashboard() {
             className="border p-4 backdrop-blur-xl relative overflow-hidden"
             style={{ borderColor: tone.border, background: tone.bg, boxShadow: tone.glow }}
           >
-            <motion.div
+            {/* Static glow: an infinitely pulsing layer under backdrop-blur cards forced full re-blur every frame. */}
+            <div
               aria-hidden
               className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-30 pointer-events-none"
               style={{ background: `radial-gradient(circle, ${tone.bar} 0%, transparent 70%)` }}
-              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
             <div className="flex items-center justify-between gap-4 flex-wrap relative">
               <div className="flex items-center gap-3 min-w-0">
@@ -352,61 +346,7 @@ export function GenericPipelineDashboard() {
       {/* 1. PIPELINE TABLE */}
       <Reveal delay={0.1}>
 
-      <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
-        {rows.length === 0 ? (
-          <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No upcoming callbacks or meetings.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
-                  <th className="text-left font-medium py-2 pr-3">Contact / Lead</th>
-                  <th className="text-left font-medium py-2 pr-3">Type</th>
-                  <th className="text-left font-medium py-2 pr-3">Date & Time</th>
-                  <th className="text-left font-medium py-2 pr-3">Countdown</th>
-                  <th className="text-left font-medium py-2 pr-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.slice(0, 25).map((r) => {
-                  const target = new Date(r.when).getTime();
-                  const diff = target - now;
-                  const overdue = diff <= 0;
-                  const withinHour = !overdue && diff <= 3600000;
-                  const within24 = !overdue && !withinHour && diff <= 86400000;
-                  const rowStyle = overdue || withinHour
-                    ? { background: "hsla(0,72%,55%,.10)", borderLeft: "3px solid hsl(0,72%,55%)" }
-                    : within24
-                    ? { background: "hsla(45,95%,55%,.08)", borderLeft: "3px solid hsl(45,95%,55%)" }
-                    : { borderLeft: "3px solid transparent" };
-                  const countdownColor = overdue || withinHour
-                    ? "text-[hsl(0,72%,65%)]"
-                    : within24
-                    ? "text-[hsl(45,95%,60%)]"
-                    : "text-[hsl(190,90%,65%)]";
-                  return (
-                    <tr key={r.id} style={rowStyle} className="border-b border-border/40">
-                      <td className="py-2.5 px-3 font-medium text-foreground truncate max-w-[220px]">{r.title}</td>
-                      <td className="py-2.5 pr-3">
-                        <Badge variant="outline" className="text-[10px] uppercase">
-                          {r.kind}
-                        </Badge>
-                      </td>
-                      <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">
-                        {new Date(r.when).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                      </td>
-                      <td className={`py-2.5 pr-3 font-mono font-bold tabular-nums ${countdownColor}`}>
-                        {overdue ? <span className="inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />Overdue {formatRemaining(diff)}</span> : formatRemaining(diff)}
-                      </td>
-                      <td className="py-2.5 pr-3 text-xs text-muted-foreground capitalize">{r.status?.replace(/_/g, " ")}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
+      <UpcomingPipelineCard rows={rows} />
       </Reveal>
 
       {/* 2. STATS ROW */}
@@ -535,3 +475,70 @@ export function GenericPipelineDashboard() {
     </div>
   );
 }
+
+// Owns the 1-second countdown tick so only this table re-renders each second,
+// not the whole dashboard (charts, stats, cards).
+const UpcomingPipelineCard = memo(function UpcomingPipelineCard({ rows }: { rows: Row[] }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+      <SectionCard title="Pipeline — Upcoming Callbacks & Meetings" icon={CalendarClock} right={<span className="text-xs text-muted-foreground">{rows.length} items</span>}>
+        {rows.length === 0 ? (
+          <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No upcoming callbacks or meetings.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
+                  <th className="text-left font-medium py-2 pr-3">Contact / Lead</th>
+                  <th className="text-left font-medium py-2 pr-3">Type</th>
+                  <th className="text-left font-medium py-2 pr-3">Date & Time</th>
+                  <th className="text-left font-medium py-2 pr-3">Countdown</th>
+                  <th className="text-left font-medium py-2 pr-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, 25).map((r) => {
+                  const target = new Date(r.when).getTime();
+                  const diff = target - now;
+                  const overdue = diff <= 0;
+                  const withinHour = !overdue && diff <= 3600000;
+                  const within24 = !overdue && !withinHour && diff <= 86400000;
+                  const rowStyle = overdue || withinHour
+                    ? { background: "hsla(0,72%,55%,.10)", borderLeft: "3px solid hsl(0,72%,55%)" }
+                    : within24
+                    ? { background: "hsla(45,95%,55%,.08)", borderLeft: "3px solid hsl(45,95%,55%)" }
+                    : { borderLeft: "3px solid transparent" };
+                  const countdownColor = overdue || withinHour
+                    ? "text-[hsl(0,72%,65%)]"
+                    : within24
+                    ? "text-[hsl(45,95%,60%)]"
+                    : "text-[hsl(190,90%,65%)]";
+                  return (
+                    <tr key={r.id} style={rowStyle} className="border-b border-border/40">
+                      <td className="py-2.5 px-3 font-medium text-foreground truncate max-w-[220px]">{r.title}</td>
+                      <td className="py-2.5 pr-3">
+                        <Badge variant="outline" className="text-[10px] uppercase">
+                          {r.kind}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">
+                        {new Date(r.when).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </td>
+                      <td className={`py-2.5 pr-3 font-mono font-bold tabular-nums ${countdownColor}`}>
+                        {overdue ? <span className="inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />Overdue {formatRemaining(diff)}</span> : formatRemaining(diff)}
+                      </td>
+                      <td className="py-2.5 pr-3 text-xs text-muted-foreground capitalize">{r.status?.replace(/_/g, " ")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+  );
+});
