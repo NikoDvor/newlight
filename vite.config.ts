@@ -53,9 +53,12 @@ export default defineConfig(({ mode }) => ({
         // Purge old precache buckets from prior deploys so storage doesn't
         // accumulate and stale entries can't be resurrected.
         cleanupOutdatedCaches: true,
-        // Route SPA navigations through index.html, served via NetworkFirst below.
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+        // NO navigateFallback. Workbox's navigation route binds the fallback to a
+        // PRECACHED url (createHandlerBoundToURL), but index.html is deliberately
+        // excluded from the precache globs above — that combination throws
+        // "non-precached-url" while sw.js is evaluating, which kills the whole
+        // worker and makes deploys look permanently stuck. SPA navigations are
+        // already handled by the NetworkFirst runtimeCaching rule below.
         // Intentionally NOT setting skipWaiting/clientsClaim so the user controls
         // when the reload happens via the update banner (calling updateSW(true) on
         // demand). A forced/automatic reload would interrupt an in-progress session
