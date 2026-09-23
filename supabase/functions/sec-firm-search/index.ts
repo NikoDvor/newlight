@@ -200,11 +200,13 @@ Deno.serve(async (req) => {
           p = await fetchPage(page, scopeCity);
         } catch (e) {
           if (e instanceof SecError) {
-            // A transient SEC failure ends this city's walk only — keep the
-            // rows already gathered and move on to the next city.
+            // A transient SEC failure skips this page only — keep walking the
+            // rest of the city so one flaky response can't truncate results.
             if (rawResults.length > 0) {
               stoppedReason = "rate_limited";
-              break;
+              skippedPages++;
+              if (scopeTotal > 0 && page * SEC_HITS_PER_PAGE >= scopeTotal) break;
+              continue;
             }
             return json({
               error: `SEC IAPD returned ${e.status}`,
