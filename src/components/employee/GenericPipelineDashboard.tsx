@@ -286,12 +286,11 @@ export function GenericPipelineDashboard() {
             className="border p-4 backdrop-blur-xl relative overflow-hidden"
             style={{ borderColor: tone.border, background: tone.bg, boxShadow: tone.glow }}
           >
-            <motion.div
+            {/* Static glow: an infinitely pulsing layer under backdrop-blur cards forced full re-blur every frame. */}
+            <div
               aria-hidden
               className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-30 pointer-events-none"
               style={{ background: `radial-gradient(circle, ${tone.bar} 0%, transparent 70%)` }}
-              animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
             <div className="flex items-center justify-between gap-4 flex-wrap relative">
               <div className="flex items-center gap-3 min-w-0">
