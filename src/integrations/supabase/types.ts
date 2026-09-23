@@ -11946,6 +11946,42 @@ export type Database = {
           },
         ]
       }
+      sec_adv_services: {
+        Row: {
+          crd: string
+          created_at: string
+          firm_name: string | null
+          focus_label: string | null
+          imported_at: string
+          sec_number: string | null
+          services: string[]
+          source_file: string | null
+          updated_at: string
+        }
+        Insert: {
+          crd: string
+          created_at?: string
+          firm_name?: string | null
+          focus_label?: string | null
+          imported_at?: string
+          sec_number?: string | null
+          services?: string[]
+          source_file?: string | null
+          updated_at?: string
+        }
+        Update: {
+          crd?: string
+          created_at?: string
+          firm_name?: string | null
+          focus_label?: string | null
+          imported_at?: string
+          sec_number?: string | null
+          services?: string[]
+          source_file?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seo_backlinks: {
         Row: {
           client_id: string

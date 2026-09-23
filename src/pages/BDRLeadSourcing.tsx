@@ -28,6 +28,9 @@ interface FirmResult {
   source: SourceKey;
   license_type?: string | null;
   license_number?: string | null;
+  /** Plain firm-type label (SEC Form ADV Item 5.G, or "Insurance"). */
+  focus?: string | null;
+  services?: string[];
 }
 
 type MatchType = "none" | "hard_crd" | "soft_name_city";
@@ -127,6 +130,17 @@ export default function BDRLeadSourcing() {
         return;
       }
       const rows: FirmResult[] = ((data as any)?.results || []).map((r: any) => ({ ...r, source: "SEC" as const }));
+      // Join to SEC Form ADV Item 5.G services by CRD for the Focus badge.
+      const crds = rows.map((r) => r.crd).filter(Boolean);
+      if (crds.length) {
+        const { data: svc } = await (supabase as any).from("sec_adv_services")
+          .select("crd, focus_label, services").in("crd", crds);
+        const byCrd = new Map<string, any>((svc || []).map((s: any) => [s.crd, s]));
+        rows.forEach((r) => {
+          const s = byCrd.get(r.crd);
+          if (s) { r.focus = s.focus_label ?? null; r.services = s.services ?? []; }
+        });
+      }
       setResults(rows);
       setMeta({ total: (data as any).total ?? rows.length, source: (data as any).source, note: (data as any).note });
       // Fire duplicate check in the background
@@ -164,6 +178,7 @@ export default function BDRLeadSourcing() {
         source: sourceKey,
         license_type: r.license_type ?? null,
         license_number: r.license_number ?? null,
+        focus: "Insurance",
       }));
 
       // APPEND to whatever is already on screen; dedupe against existing rows.
@@ -211,6 +226,7 @@ export default function BDRLeadSourcing() {
       city: [r.city, r.state].filter(Boolean).join(", ") || null,
       website: r.iapd_url || null,
       crd: r.crd || null,
+      niche: r.focus || null,
       notes: [
         r.source === "SEC" ? `Sourced from SEC IAPD.` : `Sourced from ${SOURCE_LABEL[r.source]} insurance licensing.`,
         r.sec_number ? `SEC #: ${r.sec_number}` : null,
@@ -469,10 +485,22 @@ export default function BDRLeadSourcing() {
                           </div>
                         </Td>
                         <Td>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                            style={{ background: srcStyle.bg, color: srcStyle.fg }}>
-                            {SOURCE_LABEL[r.source]}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                              style={{ background: srcStyle.bg, color: srcStyle.fg }}>
+                              {SOURCE_LABEL[r.source]}
+                            </span>
+                            {r.focus ? (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                                style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
+                                title={r.services?.length ? `SEC Form ADV services: ${r.services.join(", ")}` : undefined}>
+                                {r.focus}
+                              </span>
+                            ) : r.source === "SEC" ? (
+                              <span className="text-[10px] text-muted-foreground whitespace-nowrap"
+                                title="Not in SEC's registered-adviser file (state-registered or broker-dealer only)">Focus unknown</span>
+                            ) : null}
+                          </div>
                         </Td>
                         <Td className="text-muted-foreground">{[r.city, r.state].filter(Boolean).join(", ") || "—"}</Td>
                         <Td className="tabular-nums text-xs text-muted-foreground">{r.crd || "—"}</Td>

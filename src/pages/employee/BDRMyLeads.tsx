@@ -514,19 +514,35 @@ export default function BDRMyLeads() {
   };
 
 
-  const createCRMRecords = async (lead: { business_name: string; owner_name?: string; phone?: string; website?: string }, leadId: string) => {
-    if (!user?.id) return;
-    const { data: contact } = await supabase.from("crm_contacts").insert({
-      full_name: lead.owner_name || lead.business_name, phone: lead.phone || null,
+  // BDR deals have no `clients` row until the account is provisioned after
+  // close (crm_deals.provisioned_client_id), so the firm type is stored on a
+  // crm_companies row linked via crm_deals.company_id — the same place
+  // AdminDealDetail already reads `industry` from.
+  const createCRMRecords = async (
+    lead: { business_name: string; owner_name?: string; phone?: string; website?: string; niche?: string | null; city?: string | null },
+    leadId: string,
+  ): Promise<string | null> => {
+    if (!user?.id || !clientId) return null;
+    const { data: company, error: coErr } = await supabase.from("crm_companies").insert({
+      client_id: clientId, company_name: lead.business_name, industry: lead.niche || null,
+      website: lead.website || null, city: lead.city || null, phone: lead.phone || null,
+      assigned_salesman_user_id: user.id,
+    } as any).select("id").single();
+    if (coErr) console.warn("crm_companies insert failed:", coErr.message);
+    const { data: contact, error: ctErr } = await supabase.from("crm_contacts").insert({
+      client_id: clientId, full_name: lead.owner_name || lead.business_name, phone: lead.phone || null,
       lead_source: "bdr_field", contact_status: "lead", contact_owner: user.id,
     } as any).select("id").single();
-    if (contact) {
-      const { data: deal } = await supabase.from("crm_deals").insert({
-        deal_name: `${lead.business_name} — BDR Lead`, pipeline_stage: "new_lead",
-        status: "open", lead_source: "bdr_field", assigned_user: user.id, contact_id: contact.id,
-      } as any).select("id").single();
-      await (supabase as any).from("nl_bdr_leads").update({ crm_contact_id: contact.id, crm_deal_id: deal?.id || null }).eq("id", leadId);
-    }
+    if (ctErr) console.warn("crm_contacts insert failed:", ctErr.message);
+    if (!contact) return null;
+    const { data: deal, error: dErr } = await supabase.from("crm_deals").insert({
+      client_id: clientId, deal_name: `${lead.business_name} — BDR Lead`, pipeline_stage: "new_lead",
+      status: "open", lead_source: "bdr_field", assigned_user: user.id, contact_id: contact.id,
+      company_id: company?.id ?? null,
+    } as any).select("id").single();
+    if (dErr) console.warn("crm_deals insert failed:", dErr.message);
+    await (supabase as any).from("nl_bdr_leads").update({ crm_contact_id: contact.id, crm_deal_id: deal?.id || null }).eq("id", leadId);
+    return deal?.id ?? null;
   };
 
   const checkClaim = async (phone?: string | null, website?: string | null) => {
@@ -566,7 +582,7 @@ export default function BDRMyLeads() {
       toast({ title: "Error", description: msg, variant: "destructive" });
       return;
     }
-    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website }, data.id);
+    await createCRMRecords({ business_name: form.business_name, owner_name: form.owner_name, phone: primaryPhone, website: form.website, niche: form.niche || null, city: form.city || null }, data.id);
     toast({ title: "Lead added" }); setShowAdd(false); fetchLeads();
   };
 
@@ -693,11 +709,18 @@ export default function BDRMyLeads() {
       notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
     }).eq("id", lead.id);
 
-    if (lead.crm_deal_id) {
+    // Leads imported from Lead Sourcing have no CRM deal yet — create it on
+    // the first logged outcome so the firm-type label carries into the pipeline.
+    const dealId = lead.crm_deal_id || await createCRMRecords({
+      business_name: lead.business_name, owner_name: lead.owner_name || undefined,
+      phone: lead.owner_direct_phone || lead.front_desk_phone || lead.phone || undefined,
+      website: lead.website || undefined, niche: lead.niche, city: lead.city,
+    }, lead.id);
+    if (dealId) {
       await supabase.from("crm_deals").update({
         pipeline_stage: outcome.pipeline,
         ...(outcome.status === "closed_won" ? { status: "won" as any } : outcome.status === "closed_lost" ? { status: "lost" as any } : {}),
-      } as any).eq("id", lead.crm_deal_id);
+      } as any).eq("id", dealId);
     }
 
     if (outcome.createTask) {
