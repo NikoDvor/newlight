@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       });
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    let paceMs = 50;
+    let paceMs = 200;
 
     // SEC intermittently answers with {errorCode: -1, "Search unavailable"} and
     // a null hits payload — verified live, it succeeds on retry.
