@@ -7,7 +7,6 @@ import { Outlet, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Bell, Building2, LogOut, ArrowLeft, Settings, User } from "lucide-react";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClientManifest } from "@/hooks/useClientManifest";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
@@ -33,8 +32,10 @@ function CursorGlow() {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current) {
-        ref.current.style.left = `${e.clientX}px`;
-        ref.current.style.top = `${e.clientY}px`;
+        // transform (compositor-only) instead of left/top (forces layout).
+        ref.current.style.left = "0px";
+        ref.current.style.top = "0px";
+        ref.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
       }
     };
     window.addEventListener("mousemove", handler, { passive: true });
@@ -228,20 +229,11 @@ export function AppLayout() {
           <main className="flex-1 min-w-0 overflow-auto nl-dark-bg flex flex-col">
             <GlobalAtmosphere />
             <CursorGlow />
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1"
-              >
+            <div key={location.pathname} className="animate-fade-in w-full min-w-0 p-4 sm:p-6 lg:p-10 relative z-1 flex-1">
                 <PWAInstallBanner />
 
                 <Outlet />
-              </motion.div>
-            </AnimatePresence>
+              </div>
           </main>
         </div>
         <AIAssistant />
