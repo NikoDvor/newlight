@@ -142,6 +142,22 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
         };
         document.addEventListener("visibilitychange", visibilityChange);
         cleanupVisibility = () => document.removeEventListener("visibilitychange", visibilityChange);
+
+        // An installed home-screen app can stay open for days without ever
+        // firing a visibility transition (iOS restores frozen standalone apps
+        // silently). Poll on a timer and whenever connectivity returns.
+        const poll = (reason: string) => {
+          registration.update().catch((error) => {
+            pwaLog(`${reason} registration.update() failed`, error);
+          });
+        };
+        const intervalId = window.setInterval(() => poll("interval"), 20 * 60 * 1000);
+        const onlineCheck = () => poll("online");
+        window.addEventListener("online", onlineCheck);
+        cleanupPolling = () => {
+          window.clearInterval(intervalId);
+          window.removeEventListener("online", onlineCheck);
+        };
       },
     });
 
