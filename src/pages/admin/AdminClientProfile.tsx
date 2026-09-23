@@ -63,6 +63,7 @@ export default function AdminClientProfile() {
   const [logs, setLogs] = useState<any[]>([]);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [agreementLoading, setAgreementLoading] = useState(false);
+  const [firmType, setFirmType] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clientId) return;
@@ -87,6 +88,14 @@ export default function AdminClientProfile() {
       setSubs(subRes.data || []);
       setInvoices(invRes.data || []);
       setLogs(logRes.data || []);
+
+      // Firm type for BDR-sourced accounts lives on the originating deal's
+      // crm_companies row (deal.provisioned_client_id → this client).
+      const { data: origin } = await (supabase as any).from("crm_deals")
+        .select("crm_companies(industry)").eq("provisioned_client_id", clientId)
+        .not("company_id", "is", null).order("created_at", { ascending: false }).limit(1);
+      if (!cancelled) setFirmType(origin?.[0]?.crm_companies?.industry || lead?.niche || null);
+
 
       const userIds = [lead?.user_id, dl?.assigned_user].filter(Boolean) as string[];
       if (userIds.length) {
@@ -215,7 +224,14 @@ export default function AdminClientProfile() {
             <h1 className="text-2xl font-bold text-white truncate">{client.business_name}</h1>
             <Pill className={statusColor(client.status)}>{String(client.status).replace(/_/g, " ")}</Pill>
           </div>
-          <p className="text-sm text-white/45 mt-1">{client.industry || "No industry set"} · {client.workspace_slug}</p>
+          <p className="text-sm text-white/45 mt-1 flex flex-wrap items-center gap-1.5">
+            <span>{client.industry || "No industry set"} · {client.workspace_slug}</span>
+            {firmType && (
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
+                title="Firm type (from lead sourcing)">{firmType}</span>
+            )}
+          </p>
         </div>
         <Button onClick={openWorkspace} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white shrink-0">
           <ExternalLink className="h-4 w-4 mr-1.5" /> Open Workspace
