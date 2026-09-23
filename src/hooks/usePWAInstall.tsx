@@ -166,6 +166,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
       cleanupVisibility?.();
+      cleanupPolling?.();
       updateSWRef.current = null;
     };
   }, []);
