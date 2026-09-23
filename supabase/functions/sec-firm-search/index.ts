@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const state = typeof body.state === "string" ? body.state.trim().toUpperCase() : "";
     const cityRaw = typeof body.city === "string" ? body.city.trim() : "";
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
-    const requestedMaxResults = Math.max(1, Math.min(100, Number(body.max_results) || 25));
+    const requestedMaxResults = Math.max(1, Math.min(300, Number(body.max_results) || 25));
 
     if (!keyword && !state && !cityRaw) {
       return json({ error: "Provide at least a keyword, state, or city." }, 400);
@@ -178,18 +178,21 @@ Deno.serve(async (req) => {
       s.toLowerCase().replace(/(^|[\s\-'])([a-z])/g, (_m, p, c) => p + c.toUpperCase());
 
     const resolveCity = async (city: string) => {
-      // Upper case first: where it works it returns the largest set. Only fall
-      // back when SEC rejects it or returns nothing, to keep request count low
-      // (SEC gets flaky when hammered).
+      // Probe ALL casing variants and keep the one yielding the largest set.
+      // Returning the first non-zero variant made the walk vulnerable to a
+      // transient SEC error on the first probe: it would silently fall through
+      // to a lower-total variant (e.g. "Santa Barbara" = 66 vs "SANTA BARBARA"
+      // = 181) and never cover the missing firms.
       const variants = Array.from(new Set([city.toUpperCase(), titleCase(city), city]));
+      let best: { variant: string; total: number } | null = null;
       for (const v of variants) {
         try {
           const p = await fetchPage(1, v);
           const t = p.total || p.hits.length;
-          if (t > 0) return { variant: v, total: t };
-        } catch { /* variant unusable — try next */ }
+          if (t > 0 && (!best || t > best.total)) best = { variant: v, total: t };
+        } catch { /* variant unusable — try the others */ }
       }
-      return null;
+      return best;
     };
 
     // One scope per city (native SEC city filter), or a single statewide /
