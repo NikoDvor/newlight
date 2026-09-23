@@ -1,129 +1,178 @@
-import { useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Sparkles, Brain,
-  Globe, Search, Megaphone, Share2, Users,
-  Calendar, FileText, CreditCard, Star,
-  ChevronLeft, ChevronDown, BookOpen, LifeBuoy,
-  MessageSquare, Mail, ListChecks, GraduationCap, TrendingUp, CheckCircle,
-  Workflow, Kanban, Shield, Gift, Phone, Video,
-  Settings2, RefreshCw, Briefcase, FileSignature
+  Activity,
+  BarChart3,
+  Brain,
+  Building2,
+  Calendar,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  ClipboardList,
+  FileSignature,
+  FileText,
+  Footprints,
+  FormInput,
+  Globe,
+  GraduationCap,
+  LayoutDashboard,
+  ListChecks,
+  MapPin,
+  Megaphone,
+  MessageSquare,
+  Phone,
+  Search,
+  Share2,
+  Sparkles,
+  Star,
+  Target,
+  TrendingUp,
+  Users,
+  Workflow,
 } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuItem, SidebarMenuButton,
-  SidebarHeader, SidebarFooter
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import newlightLogo from "@/assets/newlight-logo.jpg";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
-interface NavEntry {
-  type: "item" | "group";
-  title?: string;
-  url?: string;
-  icon?: any;
-  label?: string;
-  /** Module key for permission filtering. Omit = always visible. */
+interface NavItem {
+  title: string;
+  url: string;
+  icon: typeof LayoutDashboard;
   moduleKey?: string;
-  items?: { title: string; url: string; icon: any; moduleKey?: string }[];
+  salesTeamOnly?: boolean;
 }
 
-const navStructure: NavEntry[] = [
-  { type: "item", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { type: "item", title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
-  { type: "item", title: "AI Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+interface NavModule {
+  title: string;
+  subtitle: string;
+  icon: typeof LayoutDashboard;
+  url?: string;
+  moduleKey?: string;
+  items?: NavItem[];
+}
+
+const navStructure: NavModule[] = [
   {
-    type: "group", label: "Client Acquisition",
+    title: "Dashboard",
+    subtitle: "A clear view of your business today.",
+    icon: LayoutDashboard,
+    url: "/dashboard",
+  },
+  {
+    title: "AI Insights",
+    subtitle: "AI-surfaced opportunities and research about your business.",
+    icon: Sparkles,
+    items: [
+      { title: "AI Insights", url: "/ai-insights", icon: Sparkles, moduleKey: "ai" },
+      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
+      { title: "Market Research", url: "/market-research", icon: Search, moduleKey: "reports" },
+      { title: "Competitor Tracking", url: "/competitor-tracking", icon: TrendingUp, moduleKey: "reports" },
+      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: MessageSquare, moduleKey: "meeting_intel" },
+      { title: "Automation Workflows", url: "/automations", icon: Workflow, moduleKey: "intelligence" },
+      { title: "Signed Documents", url: "/documents", icon: FileSignature },
+    ],
+  },
+  {
+    title: "AI Growth Advisor",
+    subtitle: "Your AI-generated growth strategy and roadmap.",
+    icon: Brain,
+    items: [
+      { title: "Growth Advisor", url: "/growth-advisor", icon: Brain, moduleKey: "ai" },
+      { title: "Revenue Expansion", url: "/revenue-expansion", icon: TrendingUp, moduleKey: "intelligence" },
+    ],
+  },
+  {
+    title: "Client Acquisition",
+    subtitle: "Finding and generating new leads.",
+    icon: Target,
+    items: [
+      { title: "Lead Sourcing", url: "/bdr-lead-sourcing", icon: Search, moduleKey: "crm", salesTeamOnly: true },
+      { title: "Dialer", url: "/bdr-dialer", icon: Phone, moduleKey: "crm", salesTeamOnly: true },
+      { title: "Street Walk", url: "/bdr-street-walk", icon: MapPin, moduleKey: "crm", salesTeamOnly: true },
+      { title: "Referral Program", url: "/referral-program", icon: Users, moduleKey: "intelligence" },
+      { title: "Lifecycle & Nurture", url: "/lifecycle-nurture", icon: Workflow, moduleKey: "intelligence" },
+    ],
+  },
+  {
+    title: "Pipeline",
+    subtitle: "Every deal, from first contact to close.",
+    icon: BarChart3,
+    items: [
+      { title: "Deals Kanban", url: "/pipeline", icon: BarChart3, moduleKey: "crm" },
+      { title: "Tasks", url: "/tasks", icon: ListChecks },
+      { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
+    ],
+  },
+  {
+    title: "CRM",
+    subtitle: "Your system of record.",
+    icon: Building2,
+    items: [
+      { title: "Contacts", url: "/crm", icon: Users, moduleKey: "crm" },
+      { title: "Companies", url: "/crm?view=companies", icon: Building2, moduleKey: "crm" },
+      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
+      { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
+    ],
+  },
+  {
+    title: "Growth Systems",
+    subtitle: "Your marketing channels in one place.",
+    icon: TrendingUp,
     items: [
       { title: "Website", url: "/website", icon: Globe, moduleKey: "website" },
       { title: "SEO", url: "/seo", icon: Search, moduleKey: "seo" },
       { title: "Ads", url: "/paid-ads", icon: Megaphone, moduleKey: "ads" },
       { title: "Social Media", url: "/social-media", icon: Share2, moduleKey: "social" },
       { title: "AI Visibility", url: "/ai-visibility", icon: Sparkles, moduleKey: "ai_visibility" },
-      { title: "Tracking & Attribution", url: "/tracking-attribution", icon: TrendingUp, moduleKey: "tracking" },
+      { title: "Tracking & Attribution", url: "/tracking-attribution", icon: Activity, moduleKey: "tracking" },
     ],
   },
   {
-    type: "group", label: "Sales & CRM",
-    items: [
-      { title: "Onboarding Pipeline", url: "/onboarding-pipeline", icon: Workflow, moduleKey: "crm" },
-      { title: "Pipeline", url: "/pipeline", icon: Kanban, moduleKey: "crm" },
-      { title: "CRM", url: "/crm", icon: Users, moduleKey: "crm" },
-      { title: "Sales Team", url: "/sales-team", icon: TrendingUp, moduleKey: "crm" },
-      { title: "Call Tracking", url: "/call-tracking", icon: Phone, moduleKey: "crm" },
-      { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
-      { title: "Approvals", url: "/approvals", icon: CheckCircle, moduleKey: "approvals" },
-      { title: "Pipeline Insights", url: "/pipeline-insights", icon: FileText, moduleKey: "reports" },
-      { title: "Agreement Template", url: "/agreement-template", icon: FileSignature, moduleKey: "settings" },
-      { title: "Payment Settings", url: "/payment-settings", icon: CreditCard, moduleKey: "settings" },
-    ],
-  },
-  {
-    type: "group", label: "Calendar & Meetings",
-    items: [
-      { title: "AI Calendar", url: "/calendar", icon: Calendar, moduleKey: "calendar" },
-      { title: "Meeting Intelligence", url: "/meeting-intelligence", icon: Video, moduleKey: "meeting_intel" },
-      { title: "Tasks", url: "/tasks", icon: ListChecks },
-      { title: "Calendar Management", url: "/calendar-management", icon: Settings2, moduleKey: "calendar" },
-      { title: "Calendar Sync", url: "/calendar-integrations", icon: RefreshCw, moduleKey: "calendar" },
-    ],
-  },
-  {
-    type: "group", label: "Communications",
+    title: "Communications",
+    subtitle: "Templates, follow-ups, and forms.",
+    icon: MessageSquare,
     items: [
       { title: "Inbox", url: "/conversations", icon: MessageSquare, moduleKey: "messaging" },
-      { title: "Email", url: "/email", icon: Mail, moduleKey: "email" },
+      { title: "Follow-Ups", url: "/follow-ups", icon: ListChecks, moduleKey: "crm" },
       { title: "Templates", url: "/message-templates", icon: FileText, moduleKey: "messaging" },
-      { title: "Forms", url: "/forms", icon: FileText, moduleKey: "forms" },
+      { title: "Forms", url: "/forms", icon: FormInput, moduleKey: "forms" },
     ],
   },
   {
-    type: "group", label: "Retention & Compliance",
-    items: [
-      { title: "Reviews", url: "/reviews", icon: Star, moduleKey: "reviews" },
-      { title: "Lifecycle & Nurture", url: "/lifecycle-nurture", icon: Workflow, moduleKey: "lifecycle" },
-      { title: "Financial Compliance", url: "/financial-compliance", icon: Shield, moduleKey: "compliance" },
-      { title: "Referral Program", url: "/referral-program", icon: Gift, moduleKey: "referral" },
-    ],
+    title: "Client Overview",
+    subtitle: "Performance and monitoring across your client base.",
+    icon: ClipboardList,
+    url: "/client-overview",
   },
   {
-    type: "group", label: "Team & Training",
+    title: "Team & Training",
+    subtitle: "Everything about your team.",
+    icon: Users,
     items: [
       { title: "Team", url: "/team", icon: Users, moduleKey: "team" },
       { title: "Staff Calendars", url: "/staff-calendars", icon: Calendar, moduleKey: "team" },
       { title: "Employee Performance", url: "/employee-performance", icon: TrendingUp, moduleKey: "team" },
       { title: "Training Center", url: "/training-center", icon: GraduationCap, moduleKey: "training" },
-      { title: "Onboarding", url: "/sops", icon: BookOpen, moduleKey: "training" },
-      { title: "Workforce", url: "/workforce", icon: Briefcase, moduleKey: "workforce" },
-    ],
-  },
-  {
-    type: "group", label: "Client Success & Support",
-    items: [
-      { title: "Help Center", url: "/help-desk", icon: LifeBuoy, moduleKey: "helpdesk" },
-      { title: "Client Success", url: "/client-success", icon: Shield },
-      { title: "Support Tickets", url: "/support-tickets", icon: LifeBuoy, moduleKey: "support" },
-      { title: "Knowledge Base", url: "/knowledge-base", icon: BookOpen, moduleKey: "support" },
-    ],
-  },
-  {
-    type: "group", label: "Account",
-    items: [
-      { title: "Billing", url: "/billing", icon: CreditCard },
-      { title: "Documents", url: "/documents", icon: FileText },
-      { title: "Reports", url: "/reports", icon: FileText, moduleKey: "reports" },
-      { title: "Audit Logs", url: "/audit-logs", icon: FileText, moduleKey: "intelligence" },
-      { title: "Proposals", url: "/proposals", icon: FileSignature, moduleKey: "proposals" },
+      { title: "Onboarding", url: "/sops", icon: Footprints, moduleKey: "training" },
     ],
   },
 ];
 
-const bottomItems: { title: string; url: string; icon: any }[] = [];
-
-// Field-service business types that don't need Zoom/meeting-intelligence
 const FIELD_SERVICE_TYPES = [
   "hvac", "construction", "automotive", "window washing", "landscaping",
   "plumbing", "roofing", "cleaning service",
@@ -136,53 +185,51 @@ export function AppSidebar() {
   const { hasAccess } = useWorkspacePermissions();
   const { isAdmin, activeClientId } = useWorkspace();
   const [clientIndustry, setClientIndustry] = useState<string | null>(null);
-  const [hasSalesTeam, setHasSalesTeam] = useState<boolean>(false);
+  const [hasSalesTeam, setHasSalesTeam] = useState(false);
 
-  // Load business type + operations flags for module visibility
   useEffect(() => {
     if (!activeClientId) return;
-    (async () => {
+    void (async () => {
       const { data } = await supabase
         .from("clients")
         .select("industry, has_sales_team")
         .eq("id", activeClientId)
         .maybeSingle();
       setClientIndustry(data?.industry?.toLowerCase() || null);
-      setHasSalesTeam(Boolean((data as any)?.has_sales_team));
+      setHasSalesTeam(Boolean((data as { has_sales_team?: boolean } | null)?.has_sales_team));
     })();
   }, [activeClientId]);
 
   const isFieldService = clientIndustry ? FIELD_SERVICE_TYPES.includes(clientIndustry) : false;
-
-  const isActive = (path: string) => {
+  const pathOnly = (url: string) => url.split("?")[0];
+  const isActive = (url: string) => {
+    const path = pathOnly(url);
     if (path === "/dashboard") return location.pathname === "/dashboard" || location.pathname === "/";
+    if (url.includes("?view=companies")) return location.pathname === "/crm" && location.search.includes("view=companies");
+    if (path === "/crm") return location.pathname === "/crm" && !location.search.includes("view=companies");
     return location.pathname.startsWith(path);
   };
 
-  const canSee = (moduleKey?: string, url?: string) => {
-    // Sales Team pipeline requires the workspace to have declared a sales team.
-    if (url === "/sales-team" && !isAdmin && !hasSalesTeam) return false;
-    if (!moduleKey || isAdmin) return true;
-    // Hide Zoom/meeting-intelligence for field-service business types
-    if (moduleKey === "meeting_intel" && isFieldService) return false;
-    return hasAccess(moduleKey, "view");
+  const canSee = (item: Pick<NavItem, "moduleKey" | "salesTeamOnly">) => {
+    if (item.salesTeamOnly && !isAdmin && !hasSalesTeam) return false;
+    if (!item.moduleKey || isAdmin) return true;
+    if (item.moduleKey === "meeting_intel" && isFieldService) return false;
+    return hasAccess(item.moduleKey, "view");
   };
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    navStructure.forEach((entry) => {
-      if (entry.type === "group" && entry.items) {
-        init[entry.label!] = entry.items.some((i) => isActive(i.url));
-      }
-    });
-    return init;
-  });
+  const [openModules, setOpenModules] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(navStructure.map((module) => [
+      module.title,
+      Boolean(module.items?.some((item) => isActive(item.url))),
+    ])),
+  );
 
-  const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
+  useEffect(() => {
+    const activeModule = navStructure.find((module) => module.items?.some((item) => isActive(item.url)));
+    if (activeModule) setOpenModules((current) => ({ ...current, [activeModule.title]: true }));
+  }, [location.pathname, location.search]);
 
-  const NavItem = ({ item }: { item: { title: string; url: string; icon: any } }) => {
+  const NavItemLink = ({ item }: { item: NavItem }) => {
     const active = isActive(item.url);
     return (
       <SidebarMenuItem>
@@ -190,22 +237,14 @@ export function AppSidebar() {
           asChild
           isActive={active}
           tooltip={collapsed ? item.title : undefined}
-          className={`h-8 px-3 rounded-xl text-[12px] font-medium transition-all duration-300 group ${
+          className={`h-8 rounded-lg px-3 text-[12px] font-medium transition-colors ${
             active
-              ? "text-white font-semibold sidebar-active-glow"
-              : "text-white/40 hover:text-white/75 hover:bg-white/[0.04]"
+              ? "bg-primary/10 font-semibold text-primary ring-1 ring-primary/20"
+              : "text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           }`}
-          style={active ? {
-            background: "linear-gradient(135deg, hsla(211,96%,60%,.12), hsla(187,80%,55%,.06))",
-            boxShadow: "0 0 24px -4px hsla(211,96%,60%,.18), inset 0 0 0 1px hsla(211,96%,60%,.12)",
-          } : undefined}
         >
           <Link to={item.url}>
-            <item.icon className={`h-3.5 w-3.5 shrink-0 transition-all duration-300 ${
-              active
-                ? "drop-shadow-[0_0_8px_hsla(211,96%,68%,.6)]"
-                : "group-hover:drop-shadow-[0_0_6px_hsla(211,96%,68%,.3)] group-hover:scale-110"
-            }`} style={active ? { color: "hsl(211 96% 72%)" } : undefined} />
+            <item.icon className="h-3.5 w-3.5 shrink-0" />
             {!collapsed && <span>{item.title}</span>}
           </Link>
         </SidebarMenuButton>
@@ -214,63 +253,78 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0 overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none sidebar-futuristic" />
-      <div className="sidebar-glow-top absolute top-0 left-0 right-0 h-32 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 0%, hsla(211,96%,60%,.12), transparent 70%)" }} />
-      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 50% 100%, hsla(187,80%,55%,.06), transparent 70%)" }} />
+    <Sidebar collapsible="icon" className="overflow-hidden border-r-0">
+      <div className="sidebar-futuristic pointer-events-none absolute inset-0" />
 
-      <SidebarHeader className="p-3 relative z-10">
+      <SidebarHeader className="relative z-10 p-3">
         <div className="flex items-center justify-between px-2 py-1">
-          {!collapsed ? (
-            <div className="flex items-center gap-2.5">
-              <img src={newlightLogo} alt="NewLight" className="h-8 w-auto object-contain rounded-lg" style={{ filter: "brightness(1.1) drop-shadow(0 0 8px hsla(0,0%,100%,.3))" }} />
-            </div>
-          ) : (
-            <img src={newlightLogo} alt="NewLight" className="h-7 w-7 object-contain rounded-lg mx-auto" style={{ filter: "brightness(1.1) drop-shadow(0 0 8px hsla(0,0%,100%,.3))" }} />
-          )}
+          <img
+            src={newlightLogo}
+            alt="NewLight"
+            className={collapsed ? "mx-auto h-7 w-7 rounded-lg object-contain" : "h-8 w-auto rounded-lg object-contain"}
+          />
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 relative z-10">
-        {navStructure.map((entry, idx) => {
-          if (entry.type === "item") {
-            if (!canSee(entry.moduleKey, entry.url)) return null;
+      <SidebarContent className="relative z-10 px-2">
+        {navStructure.map((module) => {
+          const visibleItems = module.items?.filter(canSee) ?? [];
+          if (module.items && visibleItems.length === 0) return null;
+          const moduleActive = module.url ? isActive(module.url) : visibleItems.some((item) => isActive(item.url));
+
+          if (module.url) {
             return (
-              <SidebarGroup key={idx} className="py-0.5">
+              <SidebarGroup key={module.title} className="py-0.5">
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <NavItem item={entry as any} />
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={moduleActive}
+                        tooltip={collapsed ? module.title : undefined}
+                        className={`h-auto min-h-11 rounded-lg px-3 py-2 ${moduleActive ? "bg-primary/10 text-primary ring-1 ring-primary/20" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}
+                      >
+                        <Link to={module.url} className="items-start">
+                          <module.icon className="mt-0.5 h-4 w-4 shrink-0" />
+                          {!collapsed && (
+                            <span className="min-w-0">
+                              <span className="block text-xs font-semibold">{module.title}</span>
+                              <span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-sidebar-foreground/45">{module.subtitle}</span>
+                            </span>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             );
           }
 
-          const group = entry as NavEntry & { items: any[] };
-          const visibleItems = group.items!.filter(i => canSee(i.moduleKey, i.url));
-          if (visibleItems.length === 0) return null;
-
-          const isOpen = openGroups[group.label!] ?? false;
-
+          const open = openModules[module.title] ?? false;
           return (
-            <SidebarGroup key={idx} className="py-0.5">
+            <SidebarGroup key={module.title} className="py-0.5">
               {!collapsed && (
-                <button
-                  onClick={() => toggleGroup(group.label!)}
-                  className="flex items-center justify-between w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/30 hover:text-white/50 transition-colors"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOpenModules((current) => ({ ...current, [module.title]: !open }))}
+                  className={`h-auto min-h-11 w-full justify-start gap-2 rounded-lg px-3 py-2 text-left ${moduleActive ? "bg-primary/10 text-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}
+                  aria-expanded={open}
                 >
-                  <span>{group.label}</span>
-                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
-                </button>
+                  <module.icon className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-semibold">{module.title}</span>
+                    <span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-sidebar-foreground/45">{module.subtitle}</span>
+                  </span>
+                  <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? "" : "-rotate-90"}`} />
+                </Button>
               )}
-              {(collapsed || isOpen) && (
-                <SidebarGroupContent>
+
+              {(collapsed || open) && (
+                <SidebarGroupContent className={collapsed ? "" : "mt-1 pl-2"}>
                   <SidebarMenu>
-                    {visibleItems.map((item: any) => (
-                      <NavItem key={item.title} item={item} />
-                    ))}
+                    {visibleItems.map((item) => <NavItemLink key={`${item.title}-${item.url}`} item={item} />)}
                   </SidebarMenu>
                 </SidebarGroupContent>
               )}
@@ -279,18 +333,15 @@ export function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="px-2 pb-3 relative z-10">
+      <SidebarFooter className="relative z-10 px-2 pb-3">
         <SidebarMenu>
-          {bottomItems.map((item) => (
-            <NavItem key={item.title} item={item} />
-          ))}
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={toggleSidebar}
               tooltip={collapsed ? "Expand" : "Collapse"}
-              className="h-8 px-3 rounded-xl text-[12px] font-medium text-white/70 hover:text-white hover:bg-white/[0.12] transition-all duration-200 group"
+              className="h-8 rounded-lg px-3 text-[12px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
-              <ChevronLeft className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110 ${collapsed ? "rotate-180" : ""}`} />
+              <ChevronLeft className={`h-3.5 w-3.5 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`} />
               {!collapsed && <span>Collapse</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
