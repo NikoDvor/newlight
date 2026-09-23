@@ -83,3 +83,7 @@ export function installBrowserSessionGuard() {
   });
   window.addEventListener("pagehide", beat);
 }
+
+// Self-executing at import time: main.tsx imports this module first, and ES
+// import evaluation order guarantees this runs before the Supabase client module.
+installBrowserSessionGuard();

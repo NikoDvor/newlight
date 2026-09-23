@@ -1,8 +1,7 @@
+// Must be the first import: decides whether the login survives closing the browser.
+import "./lib/browserSessionGuard";
 import { createRoot } from "react-dom/client";
-// Must run before anything imports the Supabase client singleton.
-import { installBrowserSessionGuard } from "./lib/browserSessionGuard";
 
-installBrowserSessionGuard();
 
 import App from "./App.tsx";
 import "./index.css";
