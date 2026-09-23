@@ -206,27 +206,33 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
 
   const initialCheckDone = useRef(false);
+  // Single shared role lookup per user: getSession() and onAuthStateChange
+  // (INITIAL_SESSION / SIGNED_IN / TOKEN_REFRESHED) all reuse this promise.
+  const roleLoadRef = useRef<{ userId: string; promise: Promise<void> } | null>(null);
+  const loadRolesOnce = (userId: string) => {
+    if (roleLoadRef.current?.userId === userId) return roleLoadRef.current.promise;
+    const promise = fetchUserRole(userId);
+    roleLoadRef.current = { userId, promise };
+    return promise;
+  };
 
   useEffect(() => {
     installSessionLifecycleHandlers();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
-      setUser(u);
+      setUser((prev: any) => (prev?.id === u?.id && prev?.email_confirmed_at === u?.email_confirmed_at ? prev : u));
       (window as any).__nl_token__ = session?.access_token;
       if (u) {
+        const p = loadRolesOnce(u.id);
         if (event === "SIGNED_IN") {
-          // Defer to let role fetch determine client_id
-          setTimeout(async () => {
-            const { data: roles } = await supabase
-              .from("user_roles")
-              .select("client_id")
-              .eq("user_id", u.id)
-              .limit(1);
-            await startSession(u.id, roles?.[0]?.client_id ?? null);
-          }, 100);
+          // Reuse the shared role lookup instead of re-querying user_roles.
+          p.then(() => startSession(u.id, rolesRef.current.find(r => r.client_id)?.client_id ?? rolesRef.current[0]?.client_id ?? null));
         }
-        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
+        p.finally(() => setIsSessionLoading(false));
       } else {
+        roleLoadRef.current = null;
+        rolesRef.current = [];
+        setRoles([]);
         // Guard against the race where onAuthStateChange fires with a
         // momentarily-null session before getSession() has restored from
         // storage. Only close the loading gate on a no-user signal once the
@@ -241,13 +247,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
-      setUser(u);
+      setUser((prev: any) => (prev?.id === u?.id && prev?.email_confirmed_at === u?.email_confirmed_at ? prev : u));
       (window as any).__nl_token__ = session?.access_token;
       if (u) {
-        setTimeout(() => fetchUserRole(u.id).finally(() => {
+        loadRolesOnce(u.id).finally(() => {
           setIsSessionLoading(false);
           initialCheckDone.current = true;
-        }), 0);
+        });
       } else {
         setIsSessionLoading(false);
         initialCheckDone.current = true;
