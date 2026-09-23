@@ -28,20 +28,26 @@ function json(p: unknown, status = 200) {
   return new Response(JSON.stringify(p), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
-// Quote-aware record parser: SEC's roster has quoted fields containing
-// line breaks, so splitting on "\n" first corrupts ~15 rows.
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = []; let row: string[] = []; let cur = ""; let q = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
-    else if (ch === '"') q = true;
-    else if (ch === ",") { row.push(cur); cur = ""; }
-    else if (ch === "\n") { row.push(cur.replace(/\r$/, "")); rows.push(row); row = []; cur = ""; }
-    else cur += ch;
+// SEC's roster has quoted fields containing line breaks. Split on newlines
+// natively (cheap), then re-join physical lines while a quote is left open.
+function csvRecords(text: string): string[] {
+  const out: string[] = []; let buf: string | null = null;
+  for (const line of text.split("\n")) {
+    buf = buf === null ? line : buf + "\n" + line;
+    if (((buf.match(/"/g) || []).length & 1) === 0) { out.push(buf.replace(/\r$/, "")); buf = null; }
   }
-  if (cur || row.length) { row.push(cur); rows.push(row); }
-  return rows;
+  if (buf) out.push(buf);
+  return out;
+}
+
+function splitCsvLine(line: string): string[] {
+  const out: string[] = []; let cur = ""; let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true; else if (ch === ",") { out.push(cur); cur = ""; } else cur += ch;
+  }
+  out.push(cur); return out;
 }
 
 // Collapse Item 5.G into BDR-friendly labels. `services` keeps every
@@ -124,8 +130,8 @@ Deno.serve(async (req) => {
     if (!name) return json({ error: "ZIP contained no CSV", zip_url: zipUrl }, 502);
     // SEC's roster is Windows-1252 encoded.
     const text = new TextDecoder("windows-1252").decode(files[name]);
-    const lines = parseCsv(text);
-    const header = lines[0];
+    const lines = csvRecords(text);
+    const header = splitCsvLine(lines[0]);
     const col = (k: string) => header.indexOf(k);
     const iCrd = col("Organization CRD#"), iSec = col("SEC#"), iName = col("Primary Business Name");
     const gCols = ["5G(1)", "5G(2)", "5G(3)", "5G(4)", "5G(5)", "5G(6)", "5G(7)"];
@@ -144,8 +150,10 @@ Deno.serve(async (req) => {
     };
     const seen = new Set<string>();
     for (; row < totalRows; row++) {
-      const f = lines[row + 1];
-      if (!f || f.length < header.length / 2) continue;
+      const line = lines[row + 1];
+      if (!line) continue;
+      const f = splitCsvLine(line);
+      if (f.length < header.length / 2) continue;
       const crd = (f[iCrd] || "").trim();
       if (!/^\d+$/.test(crd) || seen.has(crd)) continue;
       seen.add(crd);
