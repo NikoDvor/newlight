@@ -224,6 +224,7 @@ const AdminWinTracking = lazy(() => import("./pages/admin/AdminWinTracking"));
 const AdminOptimizationFlags = lazy(() => import("./pages/admin/AdminOptimizationFlags"));
 const Approvals = lazy(() => import("./pages/Approvals"));
 const CallTracking = lazy(() => import("./pages/CallTracking"));
+const ClientOverview = lazy(() => import("./pages/ClientOverview"));
 import SessionGate from "@/components/SessionGate";
 import { PWAUpdateBanner } from "@/components/PWAUpdateBanner";
 
@@ -454,6 +455,7 @@ const App = () => {
                 <Route path="/crm/contacts/:contactId" element={<PermissionGuard moduleKey="crm"><ContactDetail /></PermissionGuard>} />
                 <Route path="/crm/companies/:companyId" element={<PermissionGuard moduleKey="crm"><CompanyDetail /></PermissionGuard>} />
                 <Route path="/call-tracking" element={<PermissionGuard moduleKey="crm"><CallTracking /></PermissionGuard>} />
+                <Route path="/client-overview" element={<ClientOverview />} />
                 <Route path="/sales-team" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><SalesTeamPipeline /></ClientFlagGate></PermissionGuard>} />
                 <Route path="/website" element={<PermissionGuard moduleKey="website"><Website /></PermissionGuard>} />
                 <Route path="/social-media" element={<PermissionGuard moduleKey="social"><SocialMedia /></PermissionGuard>} />
@@ -538,6 +540,8 @@ const App = () => {
                 <Route path="/team-management" element={<TeamManagement />} />
                 <Route path="/bdr-team-pipeline" element={<ClientFlagGate flag="has_sales_team"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="/bdr-lead-sourcing" element={<ClientFlagGate flag="has_sales_team"><BDRLeadSourcing /></ClientFlagGate>} />
+                <Route path="/bdr-dialer" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><BDRDialer /></ClientFlagGate></PermissionGuard>} />
+                <Route path="/bdr-street-walk" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><BDRStreetWalk /></ClientFlagGate></PermissionGuard>} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />
