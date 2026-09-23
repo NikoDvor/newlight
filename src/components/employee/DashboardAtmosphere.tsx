@@ -4,7 +4,11 @@ import { useEffect, useRef } from "react";
  * Lightweight canvas grid + drifting node atmosphere for the employee dashboard.
  * Renders faint blue lattice lines with slowly drifting glowing nodes.
  * Pointer-events-none, absolute-positioned, capped DPR, single rAF loop.
- * Respects prefers-reduced-motion (renders one static frame then stops).
+ *
+ * Performance: renders ONE static frame (and again on resize) instead of a
+ * continuous rAF loop. A full-page canvas repainting every frame forced every
+ * backdrop-blur card above it to re-blur every frame (~6-11fps idle on a
+ * throttled CPU).
  */
 export function DashboardAtmosphere() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -15,7 +19,6 @@ export function DashboardAtmosphere() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     let w = 0, h = 0;
@@ -32,8 +35,6 @@ export function DashboardAtmosphere() {
     };
     resize();
 
-    const ro = new ResizeObserver(resize);
-    if (canvas.parentElement) ro.observe(canvas.parentElement);
 
     // Nodes drift slowly across grid
     const NODE_COUNT = 22;
@@ -100,10 +101,11 @@ export function DashboardAtmosphere() {
         ctx.fill();
       }
 
-      if (!reduced) raf = requestAnimationFrame(draw);
     };
 
     raf = requestAnimationFrame(draw);
+    const ro = new ResizeObserver(() => { resize(); draw(performance.now()); });
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
