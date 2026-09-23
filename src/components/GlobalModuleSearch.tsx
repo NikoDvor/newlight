@@ -37,7 +37,7 @@ interface NavEntry {
 // so the search stays exhaustive without editing the sidebar files themselves.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Sourced from src/components/AdminSidebar.tsx (adminGroups + opsGroups).
+// Sourced from src/components/AdminSidebar.tsx (adminGroups).
 const ADMIN_NAV: NavEntry[] = [
   // Top
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, groupLabel: "General" },
@@ -63,58 +63,6 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Reports", url: "/admin/reports", icon: LineChart, groupLabel: "System" },
   { title: "Billing", url: "/admin/billing", icon: Wallet, groupLabel: "System" },
   { title: "System Settings", url: "/admin/settings", icon: SettingsIcon, groupLabel: "System" },
-  // Ops Top
-  { title: "AI Insights", url: "/admin/ops/ai-insights", icon: Sparkles, groupLabel: "Ops — General" },
-  { title: "AI Growth Advisor", url: "/admin/ops/growth-advisor", icon: Brain, groupLabel: "Ops — General" },
-  // Client Overview
-  { title: "Business Health", url: "/admin/ops/business-health", icon: HeartPulse, groupLabel: "Client Overview" },
-  { title: "Revenue Opportunities", url: "/admin/ops/revenue-opportunities", icon: TrendingUp, groupLabel: "Client Overview" },
-  { title: "Priority Actions", url: "/admin/ops/priority-actions", icon: AlertTriangle, groupLabel: "Client Overview" },
-  { title: "Live Activity Feed", url: "/admin/ops/live-activity", icon: Activity, groupLabel: "Client Overview" },
-  // Growth Systems
-  { title: "Website", url: "/admin/ops/website", icon: Globe, groupLabel: "Growth Systems" },
-  { title: "SEO", url: "/admin/ops/seo", icon: Search, groupLabel: "Growth Systems" },
-  { title: "Ads", url: "/admin/ops/ads", icon: Megaphone, groupLabel: "Growth Systems" },
-  { title: "Social Media", url: "/admin/ops/social", icon: Share2, groupLabel: "Growth Systems" },
-  { title: "CRM", url: "/admin/ops/crm", icon: Contact, groupLabel: "Growth Systems" },
-  { title: "AI Visibility", url: "/admin/ops/ai-visibility", icon: Eye, groupLabel: "Growth Systems" },
-  // Enterprise Services
-  { title: "Reviews", url: "/admin/ops/reviews", icon: Star, groupLabel: "Enterprise Services" },
-  { title: "Proposals", url: "/admin/ops/proposals", icon: FileSignature, groupLabel: "Enterprise Services" },
-  { title: "Marketing Review", url: "/admin/marketing-review", icon: Megaphone, groupLabel: "Enterprise Services" },
-  { title: "Content Templates", url: "/admin/marketing-templates", icon: FileText, groupLabel: "Enterprise Services" },
-  { title: "Risk Profiles", url: "/admin/risk-profiles", icon: ShieldCheck, groupLabel: "Enterprise Services" },
-  { title: "Promoters", url: "/admin/promoters", icon: Users, groupLabel: "Enterprise Services" },
-  { title: "Households", url: "/admin/households", icon: Home, groupLabel: "Enterprise Services" },
-  { title: "Webinars", url: "/admin/webinars", icon: Calendar, groupLabel: "Enterprise Services" },
-  { title: "Workforce", url: "/admin/ops/workforce", icon: Briefcase, groupLabel: "Enterprise Services" },
-  { title: "Team & Users", url: "/admin/team", icon: Users, groupLabel: "Enterprise Services" },
-  { title: "Calendar", url: "/admin/ops/calendar", icon: Calendar, groupLabel: "Enterprise Services" },
-  { title: "Manage Calendars", url: "/admin/ops/calendar-management", icon: CalendarCog, groupLabel: "Enterprise Services" },
-  { title: "Forms", url: "/admin/ops/forms", icon: FileSignature, groupLabel: "Enterprise Services" },
-  { title: "Calendar Sync", url: "/admin/ops/calendar-integrations", icon: CalendarCog, groupLabel: "Enterprise Services" },
-  { title: "Email", url: "/admin/ops/email", icon: Mail, groupLabel: "Enterprise Services" },
-  { title: "Notifications", url: "/admin/ops/notifications", icon: Bell, groupLabel: "Enterprise Services" },
-  // Business Intelligence
-  { title: "Market Research", url: "/admin/ops/market-research", icon: Search, groupLabel: "Business Intelligence" },
-  { title: "Competitor Tracking", url: "/admin/ops/competitor-tracking", icon: TrendingUp, groupLabel: "Business Intelligence" },
-  { title: "Meeting Intelligence", url: "/admin/ops/meeting-intelligence", icon: MessageSquare, groupLabel: "Business Intelligence" },
-  { title: "Automation Workflows", url: "/admin/automations", icon: Zap, groupLabel: "Business Intelligence" },
-  // Setup & Integrations
-  { title: "Setup Center", url: "/admin/ops/setup-center", icon: ClipboardCheck, groupLabel: "Setup & Integrations" },
-  { title: "Services & Products", url: "/admin/ops/services", icon: Package, groupLabel: "Setup & Integrations" },
-  { title: "Brand Assets", url: "/admin/ops/brand-assets", icon: ImageIcon, groupLabel: "Setup & Integrations" },
-  { title: "Integrations", url: "/admin/ops/integrations", icon: Plug, groupLabel: "Setup & Integrations" },
-  { title: "Notetaker Webhooks", url: "/admin/notetaker-integrations", icon: Mic, groupLabel: "Setup & Integrations" },
-  { title: "Onboarding", url: "/admin/ops/onboarding", icon: Rocket, groupLabel: "Setup & Integrations" },
-  // Training & Support
-  { title: "Support Tickets", url: "/admin/ops/support-tickets", icon: LifeBuoy, groupLabel: "Training & Support" },
-  { title: "Knowledge Base", url: "/admin/ops/knowledge-base", icon: BookOpen, groupLabel: "Training & Support" },
-  { title: "Help Desk", url: "/admin/ops/help-desk", icon: HeartPulse, groupLabel: "Training & Support" },
-  { title: "Courses", url: "/admin/ops/training", icon: GraduationCap, groupLabel: "Training & Support" },
-  { title: "How It Works", url: "/admin/how-it-works", icon: HelpCircle, groupLabel: "Training & Support" },
-  // Ops Bottom
-  { title: "Ops Reports", url: "/admin/ops/reports", icon: LineChart, groupLabel: "Ops — General" },
 ];
 
 // Sourced from src/components/EmployeeLayout.tsx (navItems + BDR Certification).
