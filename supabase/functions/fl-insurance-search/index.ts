@@ -22,9 +22,11 @@ Deno.serve(async (req) => {
     const maxResults = Math.max(1, Math.min(300, Number(body.max_results) || 50));
 
     const cities = cityRaw.split(",").map((c) => c.trim()).filter(Boolean);
-    if (!cities.length && !keyword) {
-      return json({ error: "Provide at least a city or a keyword for the Florida insurance search." }, 400);
-    }
+
+    // City and keyword are optional narrowing filters — with neither provided
+    // this becomes a full-state walk (every row here is Florida by definition),
+    // mirroring how the SEC search behaves with no city.
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

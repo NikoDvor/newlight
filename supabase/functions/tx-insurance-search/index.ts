@@ -43,9 +43,10 @@ Deno.serve(async (req) => {
 
     const cities = cityRaw.split(",").map((c) => c.trim()).filter(Boolean);
 
-    if (!cities.length && !keyword) {
-      return json({ error: "Provide at least a city or a keyword for the Texas insurance search." }, 400);
-    }
+    // City and keyword are optional narrowing filters — with neither provided
+    // this becomes a full-state walk (the state is fixed by which search this
+    // function serves), mirroring how the SEC search behaves with no city.
+
 
     const clauses: string[] = ["upper(state)='TX'"];
     if (cities.length) {
