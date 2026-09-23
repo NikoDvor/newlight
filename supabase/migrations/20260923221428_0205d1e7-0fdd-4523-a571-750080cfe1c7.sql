@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_nl_bdr_leads_user_pipeline_value ON public.nl_bdr_leads (user_id) INCLUDE (estimated_annual_value) WHERE crm_deal_id IS NULL AND estimated_annual_value IS NOT NULL;

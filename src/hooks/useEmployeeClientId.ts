@@ -44,6 +44,13 @@ export function useEmployeeClientId() {
   return { clientId, loading };
 }
 
+/** Seed the cache from the profile WorkspaceContext already loaded. */
+export function primeEmployeeClientId(userId: string, clientId: string | null | undefined) {
+  if (!clientId) return;
+  cachedUserId = userId;
+  cachedClientId = clientId;
+}
+
 export const NEWLIGHT_INTERNAL_CLIENT_ID = NEWLIGHT_INTERNAL_ID;
 
 /** Imperative resolver for non-hook code paths. */

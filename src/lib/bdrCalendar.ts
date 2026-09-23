@@ -1,3 +1,4 @@
+import { resolveEmployeeClientId as sharedResolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { supabase } from "@/integrations/supabase/client";
 
 /** Daily dial expectation for BDRs/Salesmen — matches Role training module. */
@@ -49,15 +50,8 @@ function slugify(input: string) {
 
 const NEWLIGHT_INTERNAL_CLIENT_ID = "00000000-0000-0000-0000-0000000000ff";
 
-async function resolveEmployeeClientId(userId: string): Promise<string> {
-  const { data: emp } = await (supabase as any)
-    .from("employee_profiles").select("client_id").eq("user_id", userId).maybeSingle();
-  if (emp?.client_id) return emp.client_id as string;
-  const { data: ws } = await (supabase as any)
-    .from("workspace_users").select("client_id").eq("user_id", userId)
-    .eq("status", "active").order("created_at", { ascending: true }).limit(1).maybeSingle();
-  return (ws?.client_id as string) || NEWLIGHT_INTERNAL_CLIENT_ID;
-}
+// Shared, cached resolver (primed from the profile loaded at sign-in).
+const resolveEmployeeClientId = (userId: string) => sharedResolveEmployeeClientId(userId);
 
 /** Ensure the current user has a personal BDR calendar. Returns it. */
 export async function ensureBdrCalendar(opts?: { firstName?: string | null; fullName?: string | null }): Promise<BdrCalendar | null> {

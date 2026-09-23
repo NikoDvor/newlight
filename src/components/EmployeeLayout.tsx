@@ -52,15 +52,20 @@ function EmployeeSidebar() {
       ]);
       const realMods = (mods || []).filter((m: any) => m.module_number >= 1 && m.module_number <= 8);
       const completedIds = new Set<string>();
-      for (const mod of realMods) {
+      const needChapterCount = realMods.filter((mod: any) => {
         const mp = (progress || []).filter((p: any) => p.module_id === mod.id);
-        if (mp.some((p: any) => !p.chapter_id && p.status === "completed")) completedIds.add(mod.id);
-        else {
-          const chapterDone = mp.filter((p: any) => p.chapter_id && p.status === "completed");
-          if (chapterDone.length > 0) {
-            const { count } = await supabase.from("nl_training_chapters").select("id", { count: "exact", head: true }).eq("module_id", mod.id);
-            if (count && chapterDone.length >= count) completedIds.add(mod.id);
-          }
+        if (mp.some((p: any) => !p.chapter_id && p.status === "completed")) { completedIds.add(mod.id); return false; }
+        return mp.some((p: any) => p.chapter_id && p.status === "completed");
+      });
+      if (needChapterCount.length > 0) {
+        // One request for all modules' chapters (was one count request per module).
+        const { data: chapters } = await supabase.from("nl_training_chapters").select("module_id").in("module_id", needChapterCount.map((m: any) => m.id));
+        const totals = new Map<string, number>();
+        (chapters || []).forEach((c: any) => totals.set(c.module_id, (totals.get(c.module_id) ?? 0) + 1));
+        for (const mod of needChapterCount) {
+          const done = (progress || []).filter((p: any) => p.module_id === mod.id && p.chapter_id && p.status === "completed").length;
+          const total = totals.get(mod.id) ?? 0;
+          if (total && done >= total) completedIds.add(mod.id);
         }
       }
       const unlocked = realMods.length >= 8 && realMods.every((m: any) => completedIds.has(m.id));

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { primeEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { startSession, endSession, installSessionLifecycleHandlers } from "@/lib/sessionTracking";
 
 type ViewMode = "admin" | "workspace" | "employee";
@@ -10,7 +11,9 @@ interface EmployeeProfile {
   department: string | null;
   job_title: string | null;
   employee_role: string;
+  client_id?: string | null;
 }
+export interface UserRoleRow { role: string; client_id: string | null }
 
 interface ClientBranding {
   logo_url: string;
@@ -49,6 +52,8 @@ interface WorkspaceContextType {
   branding: ClientBranding;
   userRole: string | null;
   employeeProfile: EmployeeProfile | null;
+  roles: UserRoleRow[];
+  rolesLoaded: boolean;
   isSessionLoading: boolean;
   sessionExpired: boolean;
   signOut: () => Promise<void>;
@@ -65,6 +70,8 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   branding: defaultBranding,
   userRole: null,
   employeeProfile: null,
+  roles: [],
+  rolesLoaded: false,
   isSessionLoading: true,
   sessionExpired: false,
   signOut: async () => {},
@@ -80,6 +87,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [roles, setRoles] = useState<UserRoleRow[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
+  const rolesRef = useRef<UserRoleRow[]>([]);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const signOut = async () => {
@@ -91,6 +101,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setEmployeeProfile(null);
     setActiveClientId(null);
     setSessionExpired(false);
+    roleLoadRef.current = null;
+    rolesRef.current = [];
+    setRoles([]);
+    setRolesLoaded(false);
   };
 
   // Detect auth/JWT failures (stale tokens — common in installed PWAs)
@@ -144,6 +158,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
 
     setSessionExpired(false);
+    rolesRef.current = (roles ?? []) as UserRoleRow[];
+    setRoles(rolesRef.current);
+    setRolesLoaded(true);
 
     if (roles && roles.length > 0) {
       const adminRoles = ["admin", "operator"];
@@ -162,7 +179,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setActiveClientId(null);
         const { data: profile, error: profileError } = await supabase
           .from("employee_profiles")
-          .select("full_name, email, department, job_title, employee_role")
+          .select("full_name, email, department, job_title, employee_role, client_id")
           .eq("user_id", userId)
           .maybeSingle();
         if (profileError) {
@@ -182,6 +199,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           console.error("[WorkspaceContext] employee_profiles query failed:", profileError);
           return;
         }
+        primeEmployeeClientId(userId, (profile as any)?.client_id);
         setEmployeeProfile(profile ?? null);
       } else {
         // Client user — prefer a role row that carries an explicit client_id
@@ -206,27 +224,33 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
 
   const initialCheckDone = useRef(false);
+  // Single shared role lookup per user: getSession() and onAuthStateChange
+  // (INITIAL_SESSION / SIGNED_IN / TOKEN_REFRESHED) all reuse this promise.
+  const roleLoadRef = useRef<{ userId: string; promise: Promise<void> } | null>(null);
+  const loadRolesOnce = (userId: string) => {
+    if (roleLoadRef.current?.userId === userId) return roleLoadRef.current.promise;
+    const promise = fetchUserRole(userId);
+    roleLoadRef.current = { userId, promise };
+    return promise;
+  };
 
   useEffect(() => {
     installSessionLifecycleHandlers();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
-      setUser(u);
+      setUser((prev: any) => (prev?.id === u?.id && prev?.email_confirmed_at === u?.email_confirmed_at ? prev : u));
       (window as any).__nl_token__ = session?.access_token;
       if (u) {
+        const p = loadRolesOnce(u.id);
         if (event === "SIGNED_IN") {
-          // Defer to let role fetch determine client_id
-          setTimeout(async () => {
-            const { data: roles } = await supabase
-              .from("user_roles")
-              .select("client_id")
-              .eq("user_id", u.id)
-              .limit(1);
-            await startSession(u.id, roles?.[0]?.client_id ?? null);
-          }, 100);
+          // Reuse the shared role lookup instead of re-querying user_roles.
+          p.then(() => startSession(u.id, rolesRef.current.find(r => r.client_id)?.client_id ?? rolesRef.current[0]?.client_id ?? null));
         }
-        setTimeout(() => fetchUserRole(u.id).finally(() => setIsSessionLoading(false)), 0);
+        p.finally(() => setIsSessionLoading(false));
       } else {
+        roleLoadRef.current = null;
+        rolesRef.current = [];
+        setRoles([]);
         // Guard against the race where onAuthStateChange fires with a
         // momentarily-null session before getSession() has restored from
         // storage. Only close the loading gate on a no-user signal once the
@@ -241,13 +265,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
-      setUser(u);
+      setUser((prev: any) => (prev?.id === u?.id && prev?.email_confirmed_at === u?.email_confirmed_at ? prev : u));
       (window as any).__nl_token__ = session?.access_token;
       if (u) {
-        setTimeout(() => fetchUserRole(u.id).finally(() => {
+        loadRolesOnce(u.id).finally(() => {
           setIsSessionLoading(false);
           initialCheckDone.current = true;
-        }), 0);
+        });
       } else {
         setIsSessionLoading(false);
         initialCheckDone.current = true;
@@ -304,7 +328,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       viewMode, setViewMode,
       activeClientId, setActiveClientId,
       activeClientName,
-      isAdmin, user, branding, userRole, employeeProfile, isSessionLoading, sessionExpired, signOut,
+      isAdmin, user, branding, userRole, employeeProfile, roles, rolesLoaded, isSessionLoading, sessionExpired, signOut,
     }}>
       {children}
     </WorkspaceContext.Provider>
