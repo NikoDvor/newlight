@@ -234,7 +234,7 @@ export default function BDRLeadSourcing() {
             <Label className="text-xs">Keyword</Label>
             <Input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="wealth, retirement, planning…" className="h-9" />
             <p className="text-[11px] text-muted-foreground mt-1">
-              Matches firm names only. Use one word — multi-word phrases like “financial services” are matched much more strictly by SEC and often return nothing.
+              Matches firm names only. Use one word — multi-word phrases like “financial services” are matched much more strictly by SEC and often return nothing. Leave blank to scan every firm in the state (most complete, takes up to ~2 minutes).
             </p>
             {keyword.trim().split(/\s+/).length > 1 && (
               <p className="text-[11px] text-amber-500 mt-1">
