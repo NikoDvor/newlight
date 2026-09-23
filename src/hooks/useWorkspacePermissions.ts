@@ -89,7 +89,7 @@ export function useWorkspacePermissions(): WorkspacePermissions {
       setOwnerLike(false);
       setLoading(false);
     })();
-  }, [user, activeClientId, isAdmin, userRole]);
+  }, [user, activeClientId, isAdmin, userRole, rolesLoaded, sharedRoles]);
 
   const hasAccess = (moduleKey: string, minLevel: AccessLevel = "view"): boolean => {
     if (isAdmin || ownerLike) return true;

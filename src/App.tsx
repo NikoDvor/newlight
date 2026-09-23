@@ -7,9 +7,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
 import { PWAInstallProvider } from "@/hooks/usePWAInstall";
-import { AppLayout } from "@/components/AppLayout";
-import { AdminLayout } from "@/components/AdminLayout";
-import { EmployeeLayout } from "@/components/EmployeeLayout";
+// Portal shells load on demand so each role only downloads its own layout.
+const AppLayout = lazy(() => import("@/components/AppLayout").then(m => ({ default: m.AppLayout })));
+const AdminLayout = lazy(() => import("@/components/AdminLayout").then(m => ({ default: m.AdminLayout })));
+const EmployeeLayout = lazy(() => import("@/components/EmployeeLayout").then(m => ({ default: m.EmployeeLayout })));
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { ClientFlagGate } from "@/components/ClientFlagGate";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
