@@ -161,10 +161,10 @@ export function GenericPipelineDashboard() {
       const ms = new Date(monthStart).getTime();
       const callbacks = (leadRows || []).filter((l: any) => l.callback_at);
       const estLeads = (leadRows || []).filter((l: any) => !l.crm_deal_id && l.estimated_annual_value != null);
-      const events = (allEvents || []).filter((e: any) => e.starts_at >= yesterdayIso);
+      const events = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= Date.parse(yesterdayIso));
       const monthEvents = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= ms);
       const outcomes = (allOutcomes || []).filter((o: any) => o.logged_at && new Date(o.logged_at).getTime() >= ms);
-      const outcomes14 = (allOutcomes || []).filter((o: any) => o.logged_at && o.logged_at >= fourteenIso);
+      const outcomes14 = (allOutcomes || []).filter((o: any) => o.logged_at && new Date(o.logged_at).getTime() >= Date.parse(fourteenIso));
 
       if (cancelled) return;
 
@@ -232,7 +232,7 @@ export function GenericPipelineDashboard() {
       // Dials: bdr_calendar_events where source='dialer', bucketed today/week/month
       const monthStartD = startOfCurrentMonth();
       const monthStartIso = monthStartD.toISOString();
-      const dialEvents = (allEvents || []).filter((e: any) => e.source === "dialer" && e.starts_at >= monthStartIso);
+      const dialEvents = (allEvents || []).filter((e: any) => e.source === "dialer" && new Date(e.starts_at).getTime() >= Date.parse(monthStartIso));
       if (cancelled) return;
       const todayD = startOfToday();
       const weekD = startOfCurrentWeek();
