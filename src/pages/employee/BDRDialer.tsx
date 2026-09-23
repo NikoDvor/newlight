@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
@@ -106,6 +107,7 @@ function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) =
 
 export default function BDRDialer() {
   const navigate = useNavigate();
+  const { activeClientId } = useWorkspace();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [outcomes, setOutcomes] = useState<OutcomeRow[]>([]);
   const [dialLog, setDialLog] = useState<DialLogRow[]>([]);
@@ -127,7 +129,7 @@ export default function BDRDialer() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
-      const cid = await resolveEmployeeClientId(user.id);
+      const cid = activeClientId || await resolveEmployeeClientId(user.id);
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
@@ -166,7 +168,7 @@ export default function BDRDialer() {
       }
       setLoading(false);
     })();
-  }, []);
+  }, [activeClientId]);
 
 
   const lists = useMemo(() => {

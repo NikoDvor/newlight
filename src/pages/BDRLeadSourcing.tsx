@@ -67,8 +67,9 @@ function rowKey(r: FirmResult) {
 }
 
 export default function BDRLeadSourcing() {
-  const { user } = useWorkspace();
-  const { clientId } = useEmployeeClientId();
+  const { user, activeClientId } = useWorkspace();
+  const { clientId: employeeClientId } = useEmployeeClientId();
+  const clientId = activeClientId || employeeClientId;
 
   const [state, setState] = useState("CA");
   const [city, setCity] = useState("");

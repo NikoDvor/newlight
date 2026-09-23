@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
 
@@ -148,6 +149,7 @@ function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) =
 
 export default function BDRStreetWalk() {
   const navigate = useNavigate();
+  const { activeClientId } = useWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
   const listParam = searchParams.get("list");
 
@@ -172,7 +174,7 @@ export default function BDRStreetWalk() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
-      setClientId(await resolveEmployeeClientId(user.id));
+      setClientId(activeClientId || await resolveEmployeeClientId(user.id));
       const { data } = await (supabase as any)
         .from("nl_bdr_leads")
         .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, website, list_name, notes, called, pipeline_stage, street_address, street_number, side_of_street, sequence_order, latitude, longitude, visit_status, source_type, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable")
@@ -182,7 +184,7 @@ export default function BDRStreetWalk() {
       setLeads((data || []) as WalkLead[]);
       setLoading(false);
     })();
-  }, []);
+  }, [activeClientId]);
 
   const lists = useMemo(() => {
     const map = new Map<string, number>();
