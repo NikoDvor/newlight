@@ -178,6 +178,33 @@ export default function AddTeamMemberForm({ clientId, existingMember, onComplete
         }).select("id").single();
         if (error) throw error;
         workspaceUserId = data.id;
+
+        // Auto-provision a personal calendar for the new team member
+        try {
+          const { data: cal, error: calError } = await supabase.from("calendars").insert({
+            client_id: clientId,
+            calendar_name: `${fullName}'s Calendar`,
+            calendar_type: "staff",
+            is_active: true,
+            description: "Personal calendar",
+            color: "#3B82F6",
+            timezone: "America/Los_Angeles",
+          }).select("id").single();
+          if (calError) throw calError;
+
+          const { error: accessError } = await supabase.from("calendar_user_access").insert({
+            client_id: clientId,
+            workspace_user_id: workspaceUserId,
+            calendar_id: cal.id,
+            can_view: true,
+            can_edit: true,
+            can_be_booked: isBookableStaff,
+            receives_notifications: true,
+          });
+          if (accessError) throw accessError;
+        } catch {
+          toast.error("Team member created, but calendar setup failed — add a calendar manually from Calendars.");
+        }
       }
 
       // Upsert permissions

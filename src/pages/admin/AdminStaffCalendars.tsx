@@ -29,7 +29,24 @@ export default function AdminStaffCalendars() {
           .select("id, business_name")
           .order("business_name"),
       ]);
-      setStaffCalendars(calRes.data || []);
+      const cals = calRes.data || [];
+
+      // For calendars without a worker_id, resolve display info via calendar_user_access -> workspace_users
+      const unlinkedIds = cals.filter((c: any) => !c.worker_id).map((c: any) => c.id);
+      const wsUserByCalendar: Record<string, any> = {};
+      if (unlinkedIds.length > 0) {
+        const { data: accessRows } = await supabase
+          .from("calendar_user_access")
+          .select("calendar_id, workspace_users(id, full_name, job_title, department, status, client_id)")
+          .in("calendar_id", unlinkedIds);
+        (accessRows || []).forEach((row: any) => {
+          if (row.workspace_users && !wsUserByCalendar[row.calendar_id]) {
+            wsUserByCalendar[row.calendar_id] = row.workspace_users;
+          }
+        });
+      }
+
+      setStaffCalendars(cals.map((c: any) => ({ ...c, _wsUser: wsUserByCalendar[c.id] || null })));
       setClients(clientRes.data || []);
       setLoading(false);
     };
