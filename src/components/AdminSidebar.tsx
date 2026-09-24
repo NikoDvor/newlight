@@ -73,6 +73,22 @@ const adminGroups: NavGroup[] = [
       { title: "System Settings", description: "Configure platform-wide administrative settings.", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
+  {
+    label: "Newlight Workspace",
+    workspace: true,
+    items: [
+      { title: "Dashboard", description: "A clear view of your business today.", url: "/dashboard", icon: LayoutDashboard },
+      { title: "AI Insights", description: "AI-surfaced opportunities and research about your business.", url: "/ai-insights", icon: Sparkles },
+      { title: "AI Growth Advisor", description: "Your AI-generated growth strategy and roadmap.", url: "/growth-advisor", icon: Brain },
+      { title: "Client Acquisition", description: "Finding and generating new leads.", url: "/bdr-lead-sourcing", icon: Target },
+      { title: "Pipeline", description: "Every deal, from first contact to close.", url: "/pipeline", icon: BarChart3 },
+      { title: "CRM", description: "Your system of record.", url: "/crm", icon: Building2 },
+      { title: "Growth Systems", description: "Your marketing channels in one place.", url: "/website", icon: TrendingUp },
+      { title: "Communications", description: "Templates, follow-ups, and forms.", url: "/conversations", icon: MessageSquare },
+      { title: "Client Overview", description: "Performance and monitoring across your client base.", url: "/client-overview", icon: ClipboardList },
+      { title: "Team & Training", description: "Everything about your team.", url: "/team", icon: Users },
+    ],
+  },
 ];
 
 export function AdminSidebar() {
