@@ -3,8 +3,8 @@ import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
   HeartPulse, TrendingUp, AlertTriangle, Sparkles,
-  LayoutDashboard, Contact, GitBranch, MessageSquare,
-  FileSignature, Star, Share2, Search, Megaphone, Globe,
+  LayoutDashboard, Contact, GitBranch, MessageSquare, Target,
+  ClipboardList, FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
@@ -26,6 +26,7 @@ interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
   label: string;
   ungrouped?: boolean;
+  workspace?: boolean;
   items: NavItem[];
 }
 
