@@ -19,7 +19,8 @@ import {
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
 import { useState } from "react";
-import { NEWLIGHT_INTERNAL_CLIENT_ID, Building2 } from "lucide-react";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
+import { Building2 } from "lucide-react";
 
 interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
