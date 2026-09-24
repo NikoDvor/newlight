@@ -3,8 +3,8 @@ import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
   HeartPulse, TrendingUp, AlertTriangle, Sparkles,
-  LayoutDashboard, Contact, GitBranch, MessageSquare,
-  FileSignature, Star, Share2, Search, Megaphone, Globe,
+  LayoutDashboard, Contact, GitBranch, MessageSquare, Target,
+  ClipboardList, FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
@@ -26,6 +26,7 @@ interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
   label: string;
   ungrouped?: boolean;
+  workspace?: boolean;
   items: NavItem[];
 }
 
@@ -72,6 +73,22 @@ const adminGroups: NavGroup[] = [
       { title: "System Settings", description: "Configure platform-wide administrative settings.", url: "/admin/settings", icon: SettingsIcon },
     ],
   },
+  {
+    label: "Newlight Workspace",
+    workspace: true,
+    items: [
+      { title: "Dashboard", description: "A clear view of your business today.", url: "/dashboard", icon: LayoutDashboard },
+      { title: "AI Insights", description: "AI-surfaced opportunities and research about your business.", url: "/ai-insights", icon: Sparkles },
+      { title: "AI Growth Advisor", description: "Your AI-generated growth strategy and roadmap.", url: "/growth-advisor", icon: Brain },
+      { title: "Client Acquisition", description: "Finding and generating new leads.", url: "/bdr-lead-sourcing", icon: Target },
+      { title: "Pipeline", description: "Every deal, from first contact to close.", url: "/pipeline", icon: BarChart3 },
+      { title: "CRM", description: "Your system of record.", url: "/crm", icon: Building2 },
+      { title: "Growth Systems", description: "Your marketing channels in one place.", url: "/website", icon: TrendingUp },
+      { title: "Communications", description: "Templates, follow-ups, and forms.", url: "/conversations", icon: MessageSquare },
+      { title: "Client Overview", description: "Performance and monitoring across your client base.", url: "/client-overview", icon: ClipboardList },
+      { title: "Team & Training", description: "Everything about your team.", url: "/team", icon: Users },
+    ],
+  },
 ];
 
 export function AdminSidebar() {
@@ -94,10 +111,11 @@ export function AdminSidebar() {
   };
 
   const allGroups = adminGroups;
+  const openGroupsInit = (g: NavGroup) => (g.workspace ? true : g.items.some((i) => isActive(i.url)));
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     allGroups.forEach((g) => {
-      init[g.label] = g.items.some((i) => isActive(i.url));
+      init[g.label] = openGroupsInit(g);
     });
     return init;
   });
@@ -142,6 +160,32 @@ export function AdminSidebar() {
     );
   };
 
+  const goToWorkspacePage = (url: string) => {
+    setViewMode("workspace");
+    setActiveClientId(NEWLIGHT_INTERNAL_CLIENT_ID);
+    navigate(url);
+  };
+
+  const renderWorkspaceItem = (item: NavItem) => {
+    return (
+      <SidebarMenuItem key={item.title + item.url}>
+        <SidebarMenuButton
+          onClick={() => goToWorkspacePage(item.url)}
+          tooltip={collapsed ? item.title : undefined}
+          className="h-auto min-h-12 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 group text-white/60 hover:text-white hover:bg-white/[0.08]"
+        >
+          <item.icon className="mt-0.5 h-3.5 w-3.5 shrink-0 transition-all duration-200 group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110" />
+          {!collapsed && (
+            <span className="min-w-0 text-left">
+              <span className="block text-[12px] font-semibold leading-4">{item.title}</span>
+              <span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-white/40">{item.description}</span>
+            </span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
   const renderGroup = (group: NavGroup) => {
     if (group.ungrouped) {
       return (
@@ -166,7 +210,7 @@ export function AdminSidebar() {
         )}
         {(collapsed || isOpen) && (
           <SidebarGroupContent>
-            <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{group.items.map(group.workspace ? renderWorkspaceItem : renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         )}
       </SidebarGroup>
