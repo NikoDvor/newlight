@@ -160,6 +160,32 @@ export function AdminSidebar() {
     );
   };
 
+  const goToWorkspacePage = (url: string) => {
+    setViewMode("workspace");
+    setActiveClientId(NEWLIGHT_INTERNAL_CLIENT_ID);
+    navigate(url);
+  };
+
+  const renderWorkspaceItem = (item: NavItem) => {
+    return (
+      <SidebarMenuItem key={item.title + item.url}>
+        <SidebarMenuButton
+          onClick={() => goToWorkspacePage(item.url)}
+          tooltip={collapsed ? item.title : undefined}
+          className="h-auto min-h-12 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 group text-white/60 hover:text-white hover:bg-white/[0.08]"
+        >
+          <item.icon className="mt-0.5 h-3.5 w-3.5 shrink-0 transition-all duration-200 group-hover:drop-shadow-[0_0_5px_hsla(211,96%,60%,.4)] group-hover:scale-110" />
+          {!collapsed && (
+            <span className="min-w-0 text-left">
+              <span className="block text-[12px] font-semibold leading-4">{item.title}</span>
+              <span className="mt-0.5 block whitespace-normal text-[10px] font-normal leading-4 text-white/40">{item.description}</span>
+            </span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
   const renderGroup = (group: NavGroup) => {
     if (group.ungrouped) {
       return (
@@ -184,7 +210,7 @@ export function AdminSidebar() {
         )}
         {(collapsed || isOpen) && (
           <SidebarGroupContent>
-            <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{group.items.map(group.workspace ? renderWorkspaceItem : renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         )}
       </SidebarGroup>
