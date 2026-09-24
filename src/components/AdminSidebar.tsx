@@ -19,7 +19,6 @@ import {
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
 import { useState } from "react";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
 import { Building2 } from "lucide-react";
 
