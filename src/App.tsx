@@ -211,6 +211,7 @@ const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance
 const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetingAnalytics"));
 const AdminBDRCalendars = lazy(() => import("./pages/admin/AdminBDRCalendars"));
 const AdminAllCalendars = lazy(() => import("./pages/admin/AdminAllCalendars"));
+const AdminCompanyCalendar = lazy(() => import("./pages/admin/AdminCompanyCalendar"));
 const AdminStaffCalendars = lazy(() => import("./pages/admin/AdminStaffCalendars"));
 const AdminMeetingIntelligence = lazy(() => import("./pages/admin/AdminMeetingIntelligence"));
 const AdminEmployeePerformance = lazy(() => import("./pages/admin/AdminEmployeePerformance"));
@@ -350,6 +351,7 @@ const App = () => {
                 <Route path="calendars" element={<AdminAllCalendars />} />
                 <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
+                <Route path="company-calendar" element={<AdminCompanyCalendar />} />
                 <Route path="client-intelligence/health" element={<AdminClientHealth />} />
                 <Route path="client-intelligence/revenue" element={<AdminRevenueGrowth />} />
                 <Route path="client-intelligence/alerts" element={<AdminPriorityAlerts />} />
