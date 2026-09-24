@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
-const cardStyle = {
-  background: "linear-gradient(180deg, hsla(215,35%,14%,.55), hsla(215,35%,10%,.55))",
-  border: "1px solid hsla(211,96%,60%,.10)",
-};
+const cardStyle = { background: "hsla(215,35%,10%,.8)", border: "1px solid hsla(211,96%,60%,.12)" };
 
 // Matches AdminBDRPerformance: "Schedule Callback" is the scheduled outcome; Won counts as a win.
 const BOOKED_OUTCOMES = new Set(["Schedule Callback", "Won"]);
