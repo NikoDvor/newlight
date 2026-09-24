@@ -73,12 +73,22 @@ export default function AdminCompanyCalendar() {
   // Lookups (once)
   useEffect(() => {
     (async () => {
-      const [c, e] = await Promise.all([
+      const [c, e, w] = await Promise.all([
         supabase.from("clients").select("id,business_name").order("business_name"),
         supabase.from("employee_profiles").select("user_id,full_name").order("full_name"),
+        supabase.from("workspace_users").select("user_id,full_name").order("full_name"),
       ]);
       setClients(Object.fromEntries((c.data || []).map((r: any) => [r.id, r.business_name || "Unnamed client"])));
-      setStaff(Object.fromEntries((e.data || []).filter((r: any) => r.user_id).map((r: any) => [r.user_id, r.full_name || "Unnamed"])));
+      // Merge employee_profiles + workspace_users into one staff map; workspace_users wins on conflict
+      // (more complete/current record) and rows with null user_id (pending invites) are skipped.
+      const merged: Record<string, string> = {};
+      for (const r of (e.data || [])) {
+        if (r.user_id) merged[r.user_id] = r.full_name || "Unnamed";
+      }
+      for (const r of (w.data || [])) {
+        if (r.user_id) merged[r.user_id] = r.full_name || merged[r.user_id] || "Unnamed";
+      }
+      setStaff(merged);
     })();
   }, []);
 
