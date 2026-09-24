@@ -76,9 +76,17 @@ const adminGroups: NavGroup[] = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
-  const { signOut } = useWorkspace();
+  const { signOut, setViewMode, setActiveClientId } = useWorkspace();
   const collapsed = state === "collapsed";
+
+  const goToNewLightWorkspace = () => {
+    setViewMode("workspace");
+    setActiveClientId(NEWLIGHT_INTERNAL_CLIENT_ID);
+    navigate("/dashboard");
+  };
+
 
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
