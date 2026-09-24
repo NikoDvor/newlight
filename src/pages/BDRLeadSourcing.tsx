@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 
@@ -87,6 +88,14 @@ export default function BDRLeadSourcing() {
   const [importing, setImporting] = useState(false);
   const [listName, setListName] = useState("SEC IAPD Import");
   const [claimMap, setClaimMap] = useState<Record<string, ClaimStatus>>({});
+  const [hideFundManagement, setHideFundManagement] = useState(true);
+
+  // Fund Management focus = fund-shell/GP/SPV entities that will never buy our
+  // service — hide them by default so reps only see client-facing firms.
+  const visibleResults = hideFundManagement
+    ? results.filter((r) => r.focus !== "Fund Management")
+    : results;
+  const hiddenCount = results.length - visibleResults.length;
 
   const insuranceAvailable = INSURANCE_STATES.includes(state);
 
