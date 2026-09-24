@@ -124,6 +124,11 @@ function TeamManagementInner() {
       if (res.error || res.data?.error) {
         toast.error(res.data?.error || "Failed to resend invite");
       } else {
+        // Backfill the auth-account link if this row predates it and the invite succeeded
+        if (res.data?.user_id && !member.user_id) {
+          await supabase.from("workspace_users").update({ user_id: res.data.user_id }).eq("id", member.id);
+          fetchMembers();
+        }
         toast.success("Invite resent to " + member.email);
       }
     } catch {
