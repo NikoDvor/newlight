@@ -61,7 +61,7 @@ export function WorkspaceSwitcher() {
           {isAdminView ? (
             <>
               <Shield className="h-3.5 w-3.5 text-[hsl(var(--nl-neon))]" />
-              <span className="text-white/80 hidden sm:inline">Admin Portal</span>
+              <span className="text-white/80">Admin Portal</span>
             </>
           ) : (
             <>
