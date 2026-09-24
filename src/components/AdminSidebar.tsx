@@ -65,6 +65,13 @@ const adminGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Calendars",
+    items: [
+      { title: "Staff Calendars", description: "See every employee's individual calendar across every client.", url: "/admin/staff-calendars", icon: Calendar },
+      { title: "Company Calendar", description: "Every booked meeting across every client and your own team, in one view.", url: "/admin/company-calendar", icon: CalendarCog },
+    ],
+  },
+  {
     label: "System",
     items: [
       { title: "Reports", description: "Review sales, billing, bookings, and reviews agency-wide.", url: "/admin/reports", icon: LineChart },
