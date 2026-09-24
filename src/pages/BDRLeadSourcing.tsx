@@ -269,12 +269,12 @@ export default function BDRLeadSourcing() {
   }
 
   async function copyForClaude() {
-    if (!results.length) return;
-    const eligible = results.filter((r) => {
+    if (!visibleResults.length) return;
+    const eligible = visibleResults.filter((r) => {
       const c = claimMap[rowKey(r)];
       return !c || c.match_type === "none";
     });
-    const excluded = results.length - eligible.length;
+    const excluded = visibleResults.length - eligible.length;
     if (!eligible.length) {
       toast({ title: "Nothing to copy", description: "All results are already claimed or likely duplicates.", variant: "destructive" });
       return;
@@ -427,7 +427,7 @@ export default function BDRLeadSourcing() {
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
             <div>
-              <CardTitle className="text-sm font-semibold">Results ({results.length} of {meta?.total?.toLocaleString?.() ?? results.length})</CardTitle>
+              <CardTitle className="text-sm font-semibold">Results ({visibleResults.length} of {meta?.total?.toLocaleString?.() ?? results.length})</CardTitle>
               {meta?.note && <p className="text-[11px] text-muted-foreground mt-1">{meta.note}</p>}
               {(dupSummary.hard > 0 || dupSummary.soft > 0) && (
                 <p className="text-[11px] mt-1">
@@ -438,6 +438,12 @@ export default function BDRLeadSourcing() {
               )}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <Switch checked={hideFundManagement} onCheckedChange={setHideFundManagement} />
+                <span className="text-xs text-muted-foreground">
+                  Hide fund managers & GP entities{hiddenCount > 0 ? ` (${hiddenCount} hidden)` : ""}
+                </span>
+              </label>
               <Button variant="outline" size="sm" onClick={copyForClaude}>
                 <Copy className="h-3 w-3 mr-1" />
                 Copy for Claude Research
@@ -446,7 +452,7 @@ export default function BDRLeadSourcing() {
                 {importing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
                 Import Selected ({selected.size})
               </Button>
-              <Button size="sm" disabled={importing || results.length === 0} onClick={() => importRows(results)}>
+              <Button size="sm" disabled={importing || visibleResults.length === 0} onClick={() => importRows(visibleResults)}>
                 Import All
               </Button>
             </div>
@@ -460,7 +466,7 @@ export default function BDRLeadSourcing() {
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((r, i) => {
+                  {visibleResults.map((r, i) => {
                     const key = rowKey(r);
                     const isImported = imported.has(key);
                     const claim = claimMap[key];
