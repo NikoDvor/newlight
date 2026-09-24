@@ -87,8 +87,14 @@ export default function AdminStaffCalendars() {
               </thead>
               <tbody>
                 {staffCalendars.map((cal: any) => {
-                  const worker = (cal.workers as any) || {};
-                  const clientName = clients.find((c) => c.id === worker.client_id)?.business_name || "—";
+                  const w = (cal.workers as any) || null;
+                  const ws = cal._wsUser || null;
+                  const worker = w
+                    ? { full_name: w.full_name, role_title: w.role_title, department: w.department, status: w.status, client_id: w.client_id }
+                    : ws
+                      ? { full_name: ws.full_name, role_title: ws.job_title, department: ws.department, status: ws.status, client_id: ws.client_id }
+                      : {};
+                  const clientName = clients.find((c) => c.id === (worker.client_id || cal.client_id))?.business_name || "—";
                   return (
                     <motion.tr
                       key={cal.id}
