@@ -1104,6 +1104,13 @@ export default function BDRMyLeads() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground truncate">{lead.business_name}</span>
+                          {lead.niche && (
+                            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                              style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
+                              title="Firm type — copied from the SEC Focus classification at import">
+                              {lead.niche}
+                            </span>
+                          )}
                           {lead.street_number != null && (
                             <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
                               style={{ background: "hsla(211,96%,60%,.10)", color: "hsl(211,96%,66%)" }}

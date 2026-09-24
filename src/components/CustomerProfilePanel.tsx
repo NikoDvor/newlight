@@ -25,6 +25,7 @@ interface LeadLite {
   customer_notes?: string | null;
   pipeline_stage?: string | null;
   status?: string | null;
+  niche?: string | null;
 }
 
 interface EventRow {
@@ -205,6 +206,15 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
             <section className="space-y-2">
               <div className="flex items-center gap-2"><User className="h-3.5 w-3.5 text-white/50" /><span className="text-sm">{lead.owner_name || "Unknown"}</span></div>
               <div className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-white/50" /><span className="text-sm">{lead.business_name}</span></div>
+              {lead.niche && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">Firm type:</span>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}>
+                    {lead.niche}
+                  </span>
+                </div>
+              )}
               {getLeadPhones(lead).map((p) => (
                 <div key={p.kind + p.number} className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-white/50" />
