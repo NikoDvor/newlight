@@ -258,9 +258,13 @@ export default function AddTeamMemberForm({ clientId, existingMember, onComplete
 
       // Send invite if new + pending
       if (!existingMember && status === "pending_invite") {
-        await supabase.functions.invoke("invite-user", {
+        const { data: inviteResult, error: inviteError } = await supabase.functions.invoke("invite-user", {
           body: { email, role: "client_team", client_id: clientId },
         });
+        // Link the workspace_users row to the new auth account (secondary — fail silently)
+        if (!inviteError && inviteResult?.user_id) {
+          await supabase.from("workspace_users").update({ user_id: inviteResult.user_id }).eq("id", workspaceUserId);
+        }
       }
 
       // Audit log
