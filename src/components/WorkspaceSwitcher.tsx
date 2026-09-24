@@ -66,7 +66,7 @@ export function WorkspaceSwitcher() {
           ) : (
             <>
               <Building2 className="h-3.5 w-3.5 text-[hsl(var(--nl-sky))]" />
-              <span className="text-white/80 hidden sm:inline truncate max-w-[120px]">{activeClientName || "Workspace"}</span>
+              <span className="text-white/80 truncate max-w-[140px]">{activeClientName || "Workspace"}</span>
             </>
           )}
           <ChevronDown className="h-3 w-3 text-white/40" />

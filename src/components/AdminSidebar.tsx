@@ -1,4 +1,4 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import {
   Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
   Calendar, FileText, ChevronDown, Rocket, Brain,
@@ -19,6 +19,8 @@ import {
   SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
 import { useState } from "react";
+import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/lib/newlightInternal";
+import { Building2 } from "lucide-react";
 
 interface NavItem { title: string; description: string; url: string; icon: any }
 interface NavGroup {
@@ -74,9 +76,17 @@ const adminGroups: NavGroup[] = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state, toggleSidebar } = useSidebar();
-  const { signOut } = useWorkspace();
+  const { signOut, setViewMode, setActiveClientId } = useWorkspace();
   const collapsed = state === "collapsed";
+
+  const goToNewLightWorkspace = () => {
+    setViewMode("workspace");
+    setActiveClientId(NEWLIGHT_INTERNAL_CLIENT_ID);
+    navigate("/dashboard");
+  };
+
 
   const isActive = (path: string) => {
     if (path === "/admin") return location.pathname === "/admin";
@@ -196,6 +206,19 @@ export function AdminSidebar() {
             </div>
           )}
         </div>
+        <button
+          onClick={goToNewLightWorkspace}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition-all duration-200 hover:bg-white/10 min-h-[44px]"
+          style={{
+            background: "hsla(211,96%,60%,.12)",
+            border: "1px solid hsla(211,96%,60%,.18)",
+            color: "hsla(0,0%,100%,.85)"
+          }}
+          title="Go to NewLight Workspace"
+        >
+          <Building2 className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--nl-sky))]" />
+          {!collapsed && <span className="truncate">Go to NewLight Workspace</span>}
+        </button>
       </SidebarHeader>
 
       <SidebarContent className="px-2 relative z-10 overflow-y-auto max-h-screen overscroll-contain">
