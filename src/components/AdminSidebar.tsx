@@ -111,10 +111,11 @@ export function AdminSidebar() {
   };
 
   const allGroups = adminGroups;
+  const openGroupsInit = (g: NavGroup) => (g.workspace ? true : g.items.some((i) => isActive(i.url)));
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     allGroups.forEach((g) => {
-      init[g.label] = g.items.some((i) => isActive(i.url));
+      init[g.label] = openGroupsInit(g);
     });
     return init;
   });
