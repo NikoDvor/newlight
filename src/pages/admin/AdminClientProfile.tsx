@@ -10,6 +10,7 @@ import { buildAppDownloadUrl } from "@/lib/appDownloadLink";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonner } from "sonner";
 import RecurringMeetingsTab from "@/components/admin/RecurringMeetingsTab";
+import ClientTeamLeadsTab from "@/components/admin/ClientTeamLeadsTab";
 import {
   Loader2, ExternalLink, Copy, FileText, Smartphone, ArrowLeft, Building2,
   Zap, ClipboardList, CreditCard, Wrench, CheckCircle2, ChevronRight,
@@ -245,6 +246,7 @@ export default function AdminClientProfile() {
           <TabsTrigger value="billing">Agreement &amp; Billing</TabsTrigger>
           <TabsTrigger value="workspace">Workspace &amp; Access</TabsTrigger>
           <TabsTrigger value="recurring">Recurring Meetings</TabsTrigger>
+          <TabsTrigger value="team">Team &amp; Leads</TabsTrigger>
           <TabsTrigger value="activity">Activity Log</TabsTrigger>
         </TabsList>
 
@@ -467,6 +469,10 @@ export default function AdminClientProfile() {
         </TabsContent>
 
         {/* ACTIVITY LOG */}
+        <TabsContent value="team" className="mt-4">
+          <ClientTeamLeadsTab clientId={clientId!} />
+        </TabsContent>
+
         <TabsContent value="activity" className="mt-4">
           <div className="rounded-xl p-5" style={cardStyle}>
             {logs.length === 0 ? (
