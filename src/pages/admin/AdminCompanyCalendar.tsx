@@ -167,7 +167,7 @@ export default function AdminCompanyCalendar() {
             <Button variant="ghost" size="icon" onClick={() => shift(1)} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
             <Button variant="outline" size="sm" onClick={() => { const n = new Date(); setCursor(n); setSelectedDay(n); }}>Today</Button>
           </div>
-          <ViewSwitcher value={view} onChange={setView} views={VIEWS} />
+          <ViewSwitcher<View> value={view} onChange={setView} views={VIEWS} />
         </div>
 
         {loading ? (
