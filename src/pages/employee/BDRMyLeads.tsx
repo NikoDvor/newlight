@@ -16,6 +16,7 @@ import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
+import ResearchQueueCard from "@/components/employee/ResearchQueueCard";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
@@ -662,6 +663,14 @@ export default function BDRMyLeads() {
         await createCRMRecords({ ...row, phone: primaryPhone }, data.id);
         inserted.push({ id: data.id, street_number: row.street_number ?? null, side_of_street: row.side_of_street ?? null });
         count++;
+        // Close the loop on the research queue — silent no-op if never sourced.
+        if (row.crd && clientId) {
+          try {
+            await (supabase as any).from("nl_sourced_leads")
+              .update({ status: "imported", imported_at: new Date().toISOString(), imported_lead_id: data.id })
+              .eq("client_id", clientId).eq("crd", String(row.crd));
+          } catch { /* never block import */ }
+        }
       }
     }
 
