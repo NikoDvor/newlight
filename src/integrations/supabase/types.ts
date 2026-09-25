@@ -8954,6 +8954,65 @@ export type Database = {
           },
         ]
       }
+      nl_sourced_leads: {
+        Row: {
+          business_name: string
+          city: string | null
+          client_id: string
+          crd: string | null
+          created_at: string
+          focus_label: string | null
+          id: string
+          imported_at: string | null
+          imported_lead_id: string | null
+          queued_at: string | null
+          researched_at: string | null
+          source: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          business_name: string
+          city?: string | null
+          client_id: string
+          crd?: string | null
+          created_at?: string
+          focus_label?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_lead_id?: string | null
+          queued_at?: string | null
+          researched_at?: string | null
+          source?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string
+          city?: string | null
+          client_id?: string
+          crd?: string | null
+          created_at?: string
+          focus_label?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_lead_id?: string | null
+          queued_at?: string | null
+          researched_at?: string | null
+          source?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_sourced_leads_imported_lead_id_fkey"
+            columns: ["imported_lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_training_certifications: {
         Row: {
           certificate_number: string | null
