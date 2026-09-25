@@ -2264,6 +2264,9 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             </div>
           </div>
 
+          <ResearchQueueCard />
+
+
           <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
             <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <div className="flex items-center gap-2">
