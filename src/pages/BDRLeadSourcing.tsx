@@ -99,6 +99,32 @@ export default function BDRLeadSourcing() {
 
   const insuranceAvailable = INSURANCE_STATES.includes(state);
 
+  // Research-queue status keyed by identifier (CRD, or license # for insurance).
+  const [sourcedStatus, setSourcedStatus] = useState<Record<string, string>>({});
+  const sourcedKey = (r: FirmResult) => r.crd || (r.license_number ? `${r.source}:${r.license_number}` : "");
+
+  async function persistSourced(rows: FirmResult[]) {
+    if (!user?.id || !clientId || !rows.length) return;
+    const payload = rows.map((r) => ({
+      client_id: clientId, user_id: user.id,
+      business_name: r.firm_name || "(unnamed)",
+      city: r.city, crd: sourcedKey(r) || null,
+      source: SOURCE_LABEL[r.source], focus_label: r.focus ?? null, status: "sourced",
+    }));
+    const { error } = await (supabase as any).from("nl_sourced_leads")
+      .upsert(payload, { onConflict: "client_id,crd", ignoreDuplicates: true });
+    if (error) console.warn("nl_sourced_leads upsert failed:", error.message);
+    const keys = payload.map((p) => p.crd).filter(Boolean) as string[];
+    if (!keys.length) return;
+    const { data } = await (supabase as any).from("nl_sourced_leads")
+      .select("crd, status").eq("client_id", clientId).in("crd", keys);
+    setSourcedStatus((prev) => {
+      const next = { ...prev };
+      (data || []).forEach((d: any) => { next[d.crd] = d.status; });
+      return next;
+    });
+  }
+
   async function checkClaimsBatch(rows: FirmResult[]) {
     if (!rows.length) return;
     const payload = rows.map((r) => ({ crd: r.crd || "", name: r.firm_name || "", city: r.city || "" }));
@@ -155,6 +181,7 @@ export default function BDRLeadSourcing() {
       setMeta({ total: (data as any).total ?? rows.length, source: (data as any).source, note: (data as any).note });
       // Fire duplicate check in the background
       checkClaimsBatch(rows);
+      persistSourced(rows);
     } catch (e: any) {
       setError(`SEC fetch failed: ${e?.message || String(e)}`);
     } finally { setLoading(false); }
@@ -204,6 +231,7 @@ export default function BDRLeadSourcing() {
         note: (data as any).note,
       }));
       checkClaimsBatch(rows);
+      persistSourced(rows);
       toast({
         title: `Added ${rows.length} ${SOURCE_LABEL[sourceKey]} record${rows.length !== 1 ? "s" : ""}`,
         description: rows.length ? "Appended below your existing results." : "No licensed agencies matched those filters.",
@@ -506,6 +534,15 @@ export default function BDRLeadSourcing() {
                               style={{ background: srcStyle.bg, color: srcStyle.fg }}>
                               {SOURCE_LABEL[r.source]}
                             </span>
+                            {(() => {
+                              const st = sourcedStatus[sourcedKey(r)];
+                              if (!st) return null;
+                              const s = QUEUE_STYLE[st] || QUEUE_STYLE.sourced;
+                              return (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap capitalize"
+                                  style={{ background: s.bg, color: s.fg }} title="Research queue status">{st}</span>
+                              );
+                            })()}
                             {r.focus ? (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
                                 style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
