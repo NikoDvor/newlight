@@ -580,9 +580,17 @@ export default function BDRDialer() {
                             <span>{cleaned || "—"}</span>
                             {flags.length > 0 && (
                               <div className="flex flex-wrap gap-1">
-                                {flags.map(f => (
-                                  <span key={f} className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)", border: "1px solid hsla(0,72%,50%,.4)" }}>{f}</span>
-                                ))}
+                                {flags.map(f => {
+                                  const isFitRisk = f.startsWith("FIT-RISK");
+                                  return (
+                                    <span key={f} className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                                      style={isFitRisk
+                                        ? { background: "hsla(38,92%,55%,.18)", color: "hsl(38,92%,68%)", border: "1px solid hsla(38,92%,55%,.4)" }
+                                        : { background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)", border: "1px solid hsla(0,72%,50%,.4)" }}>
+                                      {f}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>

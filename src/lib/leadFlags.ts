@@ -1,15 +1,17 @@
-// Shared parsing for CORPORATE / BOOTH RENTER / BD-AFFILIATED flags
-// embedded inside the owner_name field from the Lead Researcher output.
-// Used by BDRMyLeads (import preview) and BDRDialer (table row badges).
+// Shared parsing for flags embedded inside the owner_name field from the
+// Lead Researcher output: CORPORATE / BOOTH RENTER / BD-AFFILIATED (fixed
+// strings) and FIT-RISK:<reason> (variable text). Used by BDRMyLeads
+// (import preview), BDRDialer and LeadFields (table row badges).
 
-export type LeadFlag = "CORPORATE" | "BOOTH RENTER" | "BD-AFFILIATED";
-
-export function parseLeadFlags(ownerName: string | null | undefined): LeadFlag[] {
+export function parseLeadFlags(ownerName: string | null | undefined): string[] {
   const s = (ownerName || "").toLowerCase();
-  const out: LeadFlag[] = [];
+  const out: string[] = [];
   if (s.includes("corporate account")) out.push("CORPORATE");
   if (s.includes("booth renter")) out.push("BOOTH RENTER");
   if (s.includes("bd-affiliated") || s.includes("bd affiliated")) out.push("BD-AFFILIATED");
+  // FIT-RISK carries a variable reason, e.g. "[FIT-RISK: solo, $245K AUM]"
+  const fitRisk = ownerName?.match(/fit-risk\s*:\s*([^\]]+)/i);
+  if (fitRisk) out.push(`FIT-RISK: ${fitRisk[1].trim()}`);
   return out;
 }
 
@@ -21,6 +23,9 @@ export function stripLeadFlags(ownerName: string | null | undefined): string {
     .replace(/\bcorporate account\b/gi, "")
     .replace(/\bbooth renter\b/gi, "")
     .replace(/\bbd[- ]affiliated\b/gi, "")
+    // Remove the variable FIT-RISK reason text before stripping brackets,
+    // so "FIT-RISK: solo, $245K AUM" doesn't leak into the display name.
+    .replace(/fit-risk\s*:\s*[^\]]+/gi, "")
     .replace(/[\[\](){}]/g, "")
     .replace(/\s{2,}/g, " ")
     .replace(/^[\s,;:\-–—]+|[\s,;:\-–—]+$/g, "")
