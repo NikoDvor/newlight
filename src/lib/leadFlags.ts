@@ -1,8 +1,7 @@
-// Shared parsing for CORPORATE / BOOTH RENTER / BD-AFFILIATED flags
-// embedded inside the owner_name field from the Lead Researcher output.
-// Used by BDRMyLeads (import preview) and BDRDialer (table row badges).
-
-export type LeadFlag = "CORPORATE" | "BOOTH RENTER" | "BD-AFFILIATED";
+// Shared parsing for flags embedded inside the owner_name field from the
+// Lead Researcher output: CORPORATE / BOOTH RENTER / BD-AFFILIATED (fixed
+// strings) and FIT-RISK:<reason> (variable text). Used by BDRMyLeads
+// (import preview), BDRDialer and LeadFields (table row badges).
 
 export function parseLeadFlags(ownerName: string | null | undefined): string[] {
   const s = (ownerName || "").toLowerCase();
