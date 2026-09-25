@@ -61,6 +61,14 @@ const SOURCE_STYLE: Record<SourceKey, { bg: string; fg: string }> = {
   FL_DFS: { bg: "hsla(160,70%,45%,.15)", fg: "hsl(160,70%,58%)" },
 };
 
+const QUEUE_STYLE: Record<string, { bg: string; fg: string }> = {
+  sourced: { bg: "hsla(210,20%,60%,.15)", fg: "hsl(210,20%,75%)" },
+  queued: { bg: "hsla(38,92%,55%,.15)", fg: "hsl(38,92%,68%)" },
+  researched: { bg: "hsla(190,80%,50%,.15)", fg: "hsl(190,80%,65%)" },
+  imported: { bg: "hsla(142,72%,42%,.15)", fg: "hsl(142,72%,55%)" },
+  skipped: { bg: "hsla(0,0%,50%,.15)", fg: "hsl(0,0%,60%)" },
+};
+
 function rowKey(r: FirmResult) {
   return r.crd
     ? `crd:${r.crd}`
