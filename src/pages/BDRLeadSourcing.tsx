@@ -86,6 +86,20 @@ export default function BDRLeadSourcing() {
   const [minAum, setMinAum] = useState("");
   const [maxAum, setMaxAum] = useState("");
   const [maxResults, setMaxResults] = useState(25);
+  const [maxResultsInput, setMaxResultsInput] = useState("25");
+
+  // Commit the raw display text: empty/invalid falls back to 25, otherwise
+  // clamp to 1..300. Called on blur and right before each search so the
+  // request always uses a valid clamped number.
+  function commitMaxResults() {
+    const parsed = parseInt(maxResultsInput, 10);
+    const clamped = Number.isFinite(parsed)
+      ? Math.max(1, Math.min(300, parsed))
+      : 25;
+    setMaxResults(clamped);
+    setMaxResultsInput(String(clamped));
+    return clamped;
+  }
   const [loading, setLoading] = useState(false);
   const [insLoading, setInsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +172,7 @@ export default function BDRLeadSourcing() {
   async function runSearch() {
     setLoading(true); setError(null); setResults([]); setMeta(null); setSelected(new Set()); setClaimMap({});
     try {
+      const limit = commitMaxResults();
       const { data, error } = await supabase.functions.invoke("sec-firm-search", {
         body: {
           state,
@@ -165,7 +180,7 @@ export default function BDRLeadSourcing() {
           keyword,
           min_aum: minAum ? Number(minAum) : null,
           max_aum: maxAum ? Number(maxAum) : null,
-          max_results: maxResults,
+          max_results: limit,
         },
       });
       if (error) throw error;
@@ -201,8 +216,9 @@ export default function BDRLeadSourcing() {
     const sourceKey: SourceKey = state === "TX" ? "TX_DFS" : "FL_DFS";
     setInsLoading(true); setError(null);
     try {
+      const limit = commitMaxResults();
       const { data, error } = await supabase.functions.invoke(fn, {
-        body: { city: city.trim() || null, keyword: keyword.trim() || null, max_results: maxResults },
+        body: { city: city.trim() || null, keyword: keyword.trim() || null, max_results: limit },
       });
       if (error) throw error;
       if ((data as any)?.error) {
@@ -401,8 +417,9 @@ export default function BDRLeadSourcing() {
           </div>
           <div>
             <Label className="text-xs">Max results</Label>
-            <Input type="number" value={maxResults} min={1} max={300}
-              onChange={(e) => setMaxResults(Math.max(1, Math.min(300, Number(e.target.value) || 25)))} className="h-9" />
+            <Input type="number" inputMode="numeric" value={maxResultsInput} min={1} max={300}
+              onChange={(e) => setMaxResultsInput(e.target.value)}
+              onBlur={commitMaxResults} className="h-9" />
             <p className="text-[11px] text-muted-foreground mt-1">
               Larger metro areas can have hundreds of firms — raising this for a city search is expected, not unusual.
             </p>
