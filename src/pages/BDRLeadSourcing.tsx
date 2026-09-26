@@ -469,6 +469,9 @@ export default function BDRLeadSourcing() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <p className="text-[11px] leading-snug text-muted-foreground w-full sm:max-w-xs">
+                Searches state insurance-license databases (Texas and Florida only for now). Any licensed agents or agencies it finds are added to the same results table below — it doesn't replace or re-run your SEC results.
+              </p>
             </div>
           </div>
         </CardContent>
