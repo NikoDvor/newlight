@@ -24,6 +24,8 @@ interface FirmResult {
   street: string | null;
   sec_number: string | null;
   scope: string | null;
+  /** true = Exempt Reporting Adviser (private-fund-only), false = registered, null = unknown */
+  is_exempt_reporting?: boolean | null;
   branches: number | null;
   iapd_url: string;
   aum: null;
@@ -305,6 +307,38 @@ Deno.serve(async (req) => {
     }
 
     const results = filtered.slice(0, requestedMaxResults);
+
+    // Exempt Reporting Adviser detection (verified live against SEC IAPD):
+    // - SEC file number "802-" = SEC exempt reporting adviser; "801-" = registered.
+    // - No SEC number = state-registered RIA OR state ERA; the firm detail
+    //   record's orgScopeStatusFlags disambiguates (isERARegistered=Y with
+    //   isSECRegistered=N and isStateRegistered=N).
+    const needDetail: FirmResult[] = [];
+    for (const r of results) {
+      const sec = r.sec_number ?? "";
+      if (sec.startsWith("802-")) r.is_exempt_reporting = true;
+      else if (sec.startsWith("801-")) r.is_exempt_reporting = false;
+      else if (r.crd) needDetail.push(r);
+    }
+    const DETAIL_CONCURRENCY = 6;
+    for (let i = 0; i < needDetail.length; i += DETAIL_CONCURRENCY) {
+      if (Date.now() - startedAt >= TIME_BUDGET_MS + 15000) break;
+      await Promise.all(needDetail.slice(i, i + DETAIL_CONCURRENCY).map(async (r) => {
+        try {
+          const resp = await fetch(`${SEC_ENDPOINT}/${r.crd}`, {
+            headers: { "User-Agent": "NewLightBDR/1.0 (bdr-lead-sourcing)", Accept: "application/json" },
+          });
+          if (!resp.ok) return;
+          const d = await resp.json();
+          const raw = d?.hits?.hits?.[0]?._source?.iacontent;
+          const c = typeof raw === "string" ? JSON.parse(raw) : raw;
+          const f = c?.orgScopeStatusFlags;
+          if (!f) return;
+          r.is_exempt_reporting =
+            f.isERARegistered === "Y" && f.isSECRegistered !== "Y" && f.isStateRegistered !== "Y";
+        } catch { /* unknown — leave null so it stays visible */ }
+      }));
+    }
 
     return json({
       results,
