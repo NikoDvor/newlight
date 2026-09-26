@@ -161,6 +161,10 @@ export default function ResearchQueueCard() {
         <Button size="sm" variant="outline" onClick={() => removeRows(preview.map(p => p.id))} disabled={!preview.length}>
           <Trash2 className="h-3 w-3 mr-1" />Delete These {preview.length}
         </Button>
+        <Button size="sm" variant="outline" style={{ borderColor: "hsla(0,72%,51%,.4)", color: "hsl(0,72%,66%)" }}
+          onClick={() => setConfirmDeleteAll(true)} disabled={busy || !count}>
+          <AlertTriangle className="h-3 w-3 mr-1" />Delete All ({count ?? 0})
+        </Button>
       </div>
       {preview.length > 0 && (
         <div className="rounded border border-white/10 bg-white/[0.03] divide-y divide-white/[0.05] max-h-56 overflow-y-auto">
