@@ -203,6 +203,21 @@ export default function ResearchQueueCard() {
           </div>
         </div>
       )}
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete all {count ?? 0} queued leads?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes every lead still waiting to be researched ({count ?? 0}). Leads already
+              queued, imported, or skipped are not touched. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAllSourced}>Delete All</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
