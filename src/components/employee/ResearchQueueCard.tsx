@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Copy, Trash2, X } from "lucide-react";
+import { Loader2, Copy, Trash2, X, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface SourcedRow {
@@ -61,6 +71,7 @@ export default function ResearchQueueCard() {
   const [batchSize, setBatchSize] = useState(10);
   const [busy, setBusy] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!clientId) return;
