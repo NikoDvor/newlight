@@ -23,6 +23,8 @@ interface FirmResult {
   street: string | null;
   sec_number: string | null;
   scope: string | null;
+  /** SEC flag: Exempt Reporting Adviser, not SEC- or state-registered (private-fund-only). */
+  is_exempt_reporting?: boolean | null;
   branches: number | null;
   iapd_url: string;
   aum: null;
@@ -111,13 +113,21 @@ export default function BDRLeadSourcing() {
   const [listName, setListName] = useState("SEC IAPD Import");
   const [claimMap, setClaimMap] = useState<Record<string, ClaimStatus>>({});
   const [hideFundManagement, setHideFundManagement] = useState(true);
+  const [hideExemptReporting, setHideExemptReporting] = useState(true);
 
   // Fund Management focus = fund-shell/GP/SPV entities that will never buy our
   // service — hide them by default so reps only see client-facing firms.
-  const visibleResults = hideFundManagement
-    ? results.filter((r) => r.focus !== "Fund Management")
-    : results;
-  const hiddenCount = results.length - visibleResults.length;
+  // Exempt Reporting Advisers (SEC's own registration flag) are private-fund-only
+  // shops with no retail clients or public phone — hidden by default too.
+  const isFund = (r: FirmResult) => r.focus === "Fund Management";
+  const isEra = (r: FirmResult) => r.is_exempt_reporting === true;
+  const visibleResults = results.filter(
+    (r) => !(hideFundManagement && isFund(r)) && !(hideExemptReporting && isEra(r)),
+  );
+  const fundHiddenCount = hideFundManagement ? results.filter(isFund).length : 0;
+  const eraHiddenCount = hideExemptReporting
+    ? results.filter((r) => isEra(r) && !(hideFundManagement && isFund(r))).length
+    : 0;
 
   const insuranceAvailable = INSURANCE_STATES.includes(state);
 
@@ -494,7 +504,13 @@ export default function BDRLeadSourcing() {
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <Switch checked={hideFundManagement} onCheckedChange={setHideFundManagement} />
                 <span className="text-xs text-muted-foreground">
-                  Hide fund managers & GP entities{hiddenCount > 0 ? ` (${hiddenCount} hidden)` : ""}
+                  Hide fund managers & GP entities{fundHiddenCount > 0 ? ` (${fundHiddenCount} hidden)` : ""}
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <Switch checked={hideExemptReporting} onCheckedChange={setHideExemptReporting} />
+                <span className="text-xs text-muted-foreground">
+                  Hide exempt reporting / private-fund advisers{eraHiddenCount > 0 ? ` (${eraHiddenCount} hidden)` : ""}
                 </span>
               </label>
               <Button variant="outline" size="sm" onClick={copyForClaude}>
