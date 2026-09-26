@@ -438,7 +438,7 @@ export default function BDRLeadSourcing() {
             <p className="text-[11px] text-muted-foreground max-w-xl">
               AUM filters accepted but not applied server-side yet — SEC's search index doesn't return AUM. Follow-up will pull Form ADV Part 1 filings for enrichment. Insurance license search covers Texas and Florida only and ignores the AUM filters.
             </p>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full md:w-auto">
               <div className="flex-1 sm:flex-none sm:w-56">
                 <Label className="text-xs sm:hidden">Import list name</Label>
                 <Input value={listName} onChange={(e) => setListName(e.target.value)} placeholder="Import list name" className="h-9 w-full" />
@@ -469,6 +469,9 @@ export default function BDRLeadSourcing() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <p className="text-[11px] leading-snug text-muted-foreground w-full sm:max-w-xs">
+                Searches state insurance-license databases (Texas and Florida only for now). Any licensed agents or agencies it finds are added to the same results table below — it doesn't replace or re-run your SEC results.
+              </p>
             </div>
           </div>
         </CardContent>
