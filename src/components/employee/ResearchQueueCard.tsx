@@ -125,6 +125,15 @@ export default function ResearchQueueCard() {
     refresh();
   };
 
+  const deleteAllSourced = async () => {
+    if (!clientId) return;
+    const { error } = await (supabase as any).from("nl_sourced_leads")
+      .delete().eq("client_id", clientId).eq("status", "sourced");
+    if (error) toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    else toast({ title: `Deleted ${count ?? "all"} leads`, description: "The research queue is now empty." });
+    refresh();
+  };
+
   return (
     <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(38,92%,55%,.06)", border: "1px solid hsla(38,92%,55%,.3)" }}>
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
