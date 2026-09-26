@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Copy, Trash2, X } from "lucide-react";
+import { Loader2, Copy, Trash2, X, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface SourcedRow {
@@ -61,6 +71,7 @@ export default function ResearchQueueCard() {
   const [batchSize, setBatchSize] = useState(10);
   const [busy, setBusy] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!clientId) return;
@@ -114,6 +125,15 @@ export default function ResearchQueueCard() {
     refresh();
   };
 
+  const deleteAllSourced = async () => {
+    if (!clientId) return;
+    const { error } = await (supabase as any).from("nl_sourced_leads")
+      .delete().eq("client_id", clientId).eq("status", "sourced");
+    if (error) toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    else toast({ title: `Deleted ${count ?? "all"} leads`, description: "The research queue is now empty." });
+    refresh();
+  };
+
   return (
     <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(38,92%,55%,.06)", border: "1px solid hsla(38,92%,55%,.3)" }}>
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
@@ -140,6 +160,10 @@ export default function ResearchQueueCard() {
         </Button>
         <Button size="sm" variant="outline" onClick={() => removeRows(preview.map(p => p.id))} disabled={!preview.length}>
           <Trash2 className="h-3 w-3 mr-1" />Delete These {preview.length}
+        </Button>
+        <Button size="sm" variant="outline" style={{ borderColor: "hsla(0,72%,51%,.4)", color: "hsl(0,72%,66%)" }}
+          onClick={() => setConfirmDeleteAll(true)} disabled={busy || !count}>
+          <AlertTriangle className="h-3 w-3 mr-1" />Delete All ({count ?? 0})
         </Button>
       </div>
       {preview.length > 0 && (
@@ -179,6 +203,21 @@ export default function ResearchQueueCard() {
           </div>
         </div>
       )}
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete all {count ?? 0} queued leads?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes every lead still waiting to be researched ({count ?? 0}). Leads already
+              queued, imported, or skipped are not touched. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAllSourced}>Delete All</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
