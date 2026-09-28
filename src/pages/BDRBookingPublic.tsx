@@ -257,7 +257,7 @@ export default function BDRBookingPublic() {
     })();
   }, [slug]);
 
-  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles") : []), [cal]);
+  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles", bookedRanges) : []), [cal, bookedRanges]);
 
   // Prefill Step-2 contact fields from common form keys (name/email/phone/business) if present.
   useEffect(() => {
