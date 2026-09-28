@@ -129,6 +129,25 @@ export default function BDRBookingPublic() {
       console.error("[BDRBookingPublic] calendar lookup", { lookupValue, found: !!data, calErr });
       setCal(data);
 
+      // Fetch this calendar's booked times so existing events are excluded from
+      // the slot list (prevents double-booking). bdr_calendar_events is hidden
+      // from anon visitors by RLS, so we go through a locked-down RPC that only
+      // returns start/end times for booking-active calendars, ignoring rows
+      // marked attendance = 'rescheduled' (superseded, not real conflicts).
+      if (data) {
+        const now = new Date();
+        const windowEnd = new Date(now.getTime() + 16 * 24 * 60 * 60_000); // daysAhead is 15
+        const { data: bookedRows } = await (supabase as any)
+          .rpc("get_public_bdr_booked_slots", {
+            _calendar_id: data.id,
+            _from: now.toISOString(),
+            _to: windowEnd.toISOString(),
+          });
+        setBookedRanges(
+          (bookedRows || []).map((r: any) => ({ start: new Date(r._starts_at), end: new Date(r._ends_at) })),
+        );
+      }
+
 
       // If a form is assigned, prefer the new `forms` + `form_fields` schema,
       // fall back to the legacy `client_forms.intake_questions` payload.
