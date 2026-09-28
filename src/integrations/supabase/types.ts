@@ -15266,6 +15266,13 @@ export type Database = {
       }
       get_employee_client_id: { Args: { _user_id: string }; Returns: string }
       get_proposal_token: { Args: never; Returns: string }
+      get_public_bdr_booked_slots: {
+        Args: { _calendar_id: string; _from: string; _to: string }
+        Returns: {
+          _ends_at: string
+          _starts_at: string
+        }[]
+      }
       get_public_bdr_calendar: {
         Args: { _slug_or_id: string }
         Returns: {
