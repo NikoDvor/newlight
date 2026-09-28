@@ -72,7 +72,12 @@ interface FormField {
 
 import { computeAvailableSlots, weeklyMapToRows, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
-function buildSlots(availability: any, minNoticeMinutes: number, timeZone: string) {
+function buildSlots(
+  availability: any,
+  minNoticeMinutes: number,
+  timeZone: string,
+  booked: { start: Date; end: Date }[] = [],
+) {
   const rows = weeklyMapToRows(availability || {});
   const dates = computeAvailableSlots(rows, {
     durationMinutes: 60,
@@ -80,6 +85,7 @@ function buildSlots(availability: any, minNoticeMinutes: number, timeZone: strin
     minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
     daysAhead: 15,
     timeZone,
+    booked,
   });
   return dates.map(s => ({
     date: s,
@@ -106,6 +112,7 @@ export default function BDRBookingPublic() {
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
+  const [bookedRanges, setBookedRanges] = useState<{ start: Date; end: Date }[]>([]);
   const [hasSalesTeam, setHasSalesTeam] = useState<"" | "yes" | "no">("");
   const [hasCompliance, setHasCompliance] = useState<"" | "yes" | "no">("");
   const [logoUrl, setLogoUrl] = useState<string>("");
@@ -121,6 +128,25 @@ export default function BDRBookingPublic() {
       const data: Cal | null = Array.isArray(rpcData) ? rpcData[0] ?? null : rpcData;
       console.error("[BDRBookingPublic] calendar lookup", { lookupValue, found: !!data, calErr });
       setCal(data);
+
+      // Fetch this calendar's booked times so existing events are excluded from
+      // the slot list (prevents double-booking). bdr_calendar_events is hidden
+      // from anon visitors by RLS, so we go through a locked-down RPC that only
+      // returns start/end times for booking-active calendars, ignoring rows
+      // marked attendance = 'rescheduled' (superseded, not real conflicts).
+      if (data) {
+        const now = new Date();
+        const windowEnd = new Date(now.getTime() + 16 * 24 * 60 * 60_000); // daysAhead is 15
+        const { data: bookedRows } = await (supabase as any)
+          .rpc("get_public_bdr_booked_slots", {
+            _calendar_id: data.id,
+            _from: now.toISOString(),
+            _to: windowEnd.toISOString(),
+          });
+        setBookedRanges(
+          (bookedRows || []).map((r: any) => ({ start: new Date(r._starts_at), end: new Date(r._ends_at) })),
+        );
+      }
 
 
       // If a form is assigned, prefer the new `forms` + `form_fields` schema,
@@ -231,7 +257,7 @@ export default function BDRBookingPublic() {
     })();
   }, [slug]);
 
-  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles") : []), [cal]);
+  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles", bookedRanges) : []), [cal, bookedRanges]);
 
   // Prefill Step-2 contact fields from common form keys (name/email/phone/business) if present.
   useEffect(() => {
