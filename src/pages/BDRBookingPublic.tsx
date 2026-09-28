@@ -72,7 +72,12 @@ interface FormField {
 
 import { computeAvailableSlots, weeklyMapToRows, DEFAULT_MIN_NOTICE_MINUTES } from "@/lib/availabilitySlots";
 
-function buildSlots(availability: any, minNoticeMinutes: number, timeZone: string) {
+function buildSlots(
+  availability: any,
+  minNoticeMinutes: number,
+  timeZone: string,
+  booked: { start: Date; end: Date }[] = [],
+) {
   const rows = weeklyMapToRows(availability || {});
   const dates = computeAvailableSlots(rows, {
     durationMinutes: 60,
@@ -80,6 +85,7 @@ function buildSlots(availability: any, minNoticeMinutes: number, timeZone: strin
     minNoticeMinutes: minNoticeMinutes ?? DEFAULT_MIN_NOTICE_MINUTES,
     daysAhead: 15,
     timeZone,
+    booked,
   });
   return dates.map(s => ({
     date: s,
