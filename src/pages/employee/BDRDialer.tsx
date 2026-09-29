@@ -428,6 +428,7 @@ export default function BDRDialer() {
     { label: "No Answer", key: "Didn't Answer", tone: "hsl(215,14%,55%)" },
     { label: "Callbacks", key: "Schedule Callback", tone: "hsl(190,90%,55%)" },
     { label: "Gatekeeper", key: "Gatekeeper", tone: "hsl(38,92%,55%)" },
+    { label: "Didn't Get Past Gatekeeper", key: "Didn't Get Past Gatekeeper", tone: "hsl(28,90%,55%)" },
     { label: "Not Interested", key: "Not Interested", tone: "hsl(0,0%,70%)" },
     { label: "Don't See the Value", key: "Don't See the Value", tone: "hsl(0,0%,60%)" },
     { label: "Need to Think", key: "Need to Think", tone: "hsl(48,96%,55%)" },
@@ -764,9 +765,26 @@ export default function BDRDialer() {
                         style={{ background: current ? "hsla(211,96%,56%,.08)" : "hsla(0,0%,100%,.02)" }}
                       >
                         <option value="" className="bg-[hsl(220,35%,12%)]">— Select outcome —</option>
-                        {OUTCOMES.map(o => (
-                          <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
-                        ))}
+                        <optgroup label="No Contact">
+                          {OUTCOMES.filter(o => o.category === "no_contact").map(o => (
+                            <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Positive">
+                          {OUTCOMES.filter(o => o.category === "positive").map(o => (
+                            <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Objections">
+                          {OUTCOMES.filter(o => o.category === "objection").map(o => (
+                            <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Closed">
+                          {OUTCOMES.filter(o => o.category === "closed").map(o => (
+                            <option key={o.label} value={o.label} className="bg-[hsl(220,35%,12%)]">{o.label}</option>
+                          ))}
+                        </optgroup>
                       </select>
                       {(lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
                         <Button
