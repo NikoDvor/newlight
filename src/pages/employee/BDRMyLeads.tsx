@@ -2176,6 +2176,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [loadingPrompt, setLoadingPrompt] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [copiedHandoff, setCopiedHandoff] = React.useState(false);
+  const [copiedField, setCopiedField] = React.useState<string | null>(null);
 
   const promptVersion = useMemo(() => {
     const match = promptText.match(/—\s*(V\d+)/);
