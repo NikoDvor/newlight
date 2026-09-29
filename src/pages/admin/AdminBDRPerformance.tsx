@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, ChevronDown, ChevronUp, BookOpen, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -97,6 +98,33 @@ function computeCallMetrics(rows: any[]) {
   return out;
 }
 
+type OutcomeBreakdown = ReturnType<typeof computeCallMetrics>[string]["breakdown"];
+
+function OutcomeMixTable({ breakdown }: { breakdown: OutcomeBreakdown }) {
+  return (
+    <Table className="min-w-0">
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="h-8 px-3 text-xs">Outcome</TableHead>
+          <TableHead className="h-8 px-3 text-xs text-right w-16">Count</TableHead>
+          <TableHead className="h-8 px-3 text-xs text-right w-16">%</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {breakdown.length === 0 ? (
+          <TableRow className="hover:bg-transparent"><TableCell colSpan={3} className="px-3 py-3 text-xs text-muted-foreground">No outcomes in this period.</TableCell></TableRow>
+        ) : breakdown.map(o => (
+          <TableRow key={o.outcome}>
+            <TableCell className="px-3 py-1.5 text-xs text-foreground break-words">{o.outcome}</TableCell>
+            <TableCell className="px-3 py-1.5 text-xs text-right tabular-nums text-foreground">{o.count}</TableCell>
+            <TableCell className="px-3 py-1.5 text-xs text-right tabular-nums text-muted-foreground">{o.pct}%</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 function computeDialCounts(rows: { dialed_at: string }[]) {
   const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
   const out: Record<"today" | "week" | "month" | "all", number> = { today: 0, week: 0, month: 0, all: 0 };
@@ -117,6 +145,7 @@ export default function AdminBDRPerformance() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("all");
+  const [expandedCallBdr, setExpandedCallBdr] = useState<string | null>(null);
   const [selectedBdr, setSelectedBdr] = useState<string | null>(null);
   const [selectedObjection, setSelectedObjection] = useState<string | null>(null);
 
@@ -399,21 +428,10 @@ export default function AdminBDRPerformance() {
             </div>
           ))}
         </div>
-        {/* Outcome breakdown per bucket */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
-          {(["today", "week", "month", "all"] as const).map(b => (
-            <div key={b} className="rounded-2xl p-3" style={cardStyle}>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Outcome Mix ({b === "all" ? "Total" : b})</p>
-              {teamCallMetrics[b].breakdown.length === 0 ? (
-                <p className="text-xs text-muted-foreground">—</p>
-              ) : teamCallMetrics[b].breakdown.map(o => (
-                <div key={o.outcome} className="flex justify-between text-xs py-0.5">
-                  <span className="text-foreground truncate mr-2">{o.outcome}</span>
-                  <span className="text-muted-foreground shrink-0">{o.pct}% ({o.count})</span>
-                </div>
-              ))}
-            </div>
-          ))}
+        {/* Outcome breakdown for the selected date range */}
+        <div className="mt-3">
+          <h3 className="text-xs font-semibold text-foreground mb-1">Outcome Mix · {DATE_FILTERS.find(f => f.key === dateRange)?.label}</h3>
+          <OutcomeMixTable breakdown={teamCallMetrics[dateRange].breakdown} />
         </div>
       </div>
 
@@ -478,24 +496,22 @@ export default function AdminBDRPerformance() {
                     </span>
                     <span className="text-xs text-muted-foreground truncate">{top ? `${top.outcome} (${top.pct}%)` : "—"}</span>
                   </div>
-                  {/* Sched Appt % per bucket + outcome breakdown */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-primary/10">
-                    {(["today", "week", "month", "all"] as const).map(b => (
-                      <div key={b} className="text-xs">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-                          {b === "all" ? "Total" : b} · {row.metrics[b].total} calls · Sched {row.metrics[b].schedPct}%
-                        </p>
-                        {row.metrics[b].breakdown.length === 0 ? (
-                          <p className="text-muted-foreground">—</p>
-                        ) : row.metrics[b].breakdown.map(o => (
-                          <div key={o.outcome} className="flex justify-between py-0.5">
-                            <span className="text-foreground truncate mr-1">{o.outcome}</span>
-                            <span className="text-muted-foreground shrink-0">{o.pct}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                   <Button
+                     variant="ghost" size="sm"
+                     className="mt-2 h-8 px-1 text-xs text-muted-foreground hover:text-foreground"
+                     aria-expanded={expandedCallBdr === row.uid}
+                     aria-controls={`outcome-mix-${row.uid}`}
+                     onClick={() => setExpandedCallBdr(prev => prev === row.uid ? null : row.uid)}
+                   >
+                     {expandedCallBdr === row.uid ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
+                     Outcome Mix
+                   </Button>
+                   {expandedCallBdr === row.uid && (
+                     <div id={`outcome-mix-${row.uid}`} className="mt-1 pt-2 border-t border-primary/10">
+                       <p className="text-[10px] text-muted-foreground mb-1">{DATE_FILTERS.find(f => f.key === dateRange)?.label} · {row.metrics[dateRange].total} calls · Sched {row.metrics[dateRange].schedPct}%</p>
+                       <OutcomeMixTable breakdown={row.metrics[dateRange].breakdown} />
+                     </div>
+                   )}
                 </div>
               );
             })}
