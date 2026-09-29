@@ -2228,6 +2228,17 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
     }
   };
 
+  const copyProjectField = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+      toast({ title: "Copied" });
+      setTimeout(() => setCopiedField(null), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
+
   const proTips = [
     "Use the Copy Master Prompt button on the In-Person page to get the current desk-research protocol, then paste it into a fresh Claude chat with web search ON",
     "Paste the raw SEC output directly into the Master Prompt — Business Name | City | CRD is all it needs to start Phase 0",
