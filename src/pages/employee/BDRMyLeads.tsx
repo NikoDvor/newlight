@@ -2170,6 +2170,19 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 /* ──────────────────────────────────────────────── */
 const MASTER_PROMPT_CHAPTER_ID = "96ab38ae-6b56-4536-af0d-a809b4ea181a";
 
+const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency that fills calendars for service-based businesses (RIAs, law firms, med spas, HVAC/roofing/solar). This project sources and researches sales leads for NewLight's own outbound team.
+
+When given a raw lead list (SEC IAPD, Google Maps, licensing board, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately. Do not ask what to do with the files, do not ask clarifying questions — the system prompt is self-executing per its own Phase 0 rule. Output only the final table per that prompt's Phase 7.
+
+Condense all other responses. No commentary beyond what's requested.`;
+
+const CLAUDE_PROJECT_FIELDS = [
+  { key: "name", label: "Project name:", value: "NewLight Lead Research" },
+  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — owner names, phone numbers, and booking links for target verticals (RIAs, law firms, med spas, HVAC/roofing/solar)." },
+  { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists (SEC IAPD, Google Maps, state licensing boards) into dialer-ready leads with confirmed owner name + phone, fast and in bulk." },
+  { key: "instructions", label: "Project instructions:", value: CLAUDE_PROJECT_INSTRUCTIONS },
+];
+
 function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const [promptText, setPromptText] = React.useState<string>("");
