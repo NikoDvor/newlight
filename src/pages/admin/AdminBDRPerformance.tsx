@@ -100,7 +100,7 @@ function computeCallMetrics(rows: any[]) {
   return out;
 }
 
-type OutcomeBreakdown = ReturnType<typeof computeCallMetrics>[string]["breakdown"];
+type OutcomeBreakdown = ReturnType<typeof computeCallMetrics>[DateRangeKey]["breakdown"];
 
 function OutcomeMixTable({ breakdown }: { breakdown: OutcomeBreakdown }) {
   return (
@@ -128,8 +128,8 @@ function OutcomeMixTable({ breakdown }: { breakdown: OutcomeBreakdown }) {
 }
 
 function computeDialCounts(rows: { dialed_at: string }[]) {
-  const buckets: Array<"today" | "week" | "month" | "all"> = ["today", "week", "month", "all"];
-  const out: Record<"today" | "week" | "month" | "all", number> = { today: 0, week: 0, month: 0, all: 0 };
+  const buckets: DateRangeKey[] = ["today", "week", "month", "all"];
+  const out: Record<DateRangeKey, number> = { today: 0, week: 0, month: 0, all: 0 };
   for (const b of buckets) {
     out[b] = rows.filter(r => inBucket(r.dialed_at, b)).length;
   }
@@ -146,7 +146,7 @@ export default function AdminBDRPerformance() {
   const [dialLog, setDialLog] = useState<{ bdr_user_id: string; dialed_at: string }[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRangeKey>("all");
   const [expandedCallBdr, setExpandedCallBdr] = useState<string | null>(null);
   const [selectedBdr, setSelectedBdr] = useState<string | null>(null);
   const [selectedObjection, setSelectedObjection] = useState<string | null>(null);
