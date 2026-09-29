@@ -395,6 +395,7 @@ export default function BDRDialer() {
     if (lead.crm_deal_id) {
       await supabase.from("crm_deals").delete().eq("id", lead.crm_deal_id);
     }
+    await (supabase as any).from("bdr_calendar_events").delete().eq("lead_id", lead.id);
     toast({ title: "Lead deleted", description: lead.business_name });
   };
 
