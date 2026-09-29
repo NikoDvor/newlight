@@ -2336,7 +2336,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
                       {copiedField === f.key ? "Copied ✓" : "Copy"}
                     </Button>
                   </div>
-                  <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2 max-h-40 overflow-y-auto">
+                  <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2">
                     <p className="text-xs text-foreground/85 whitespace-pre-wrap">{f.value}</p>
                   </div>
                 </div>
