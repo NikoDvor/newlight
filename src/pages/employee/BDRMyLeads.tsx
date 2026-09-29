@@ -2170,17 +2170,19 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 /* ──────────────────────────────────────────────── */
 const MASTER_PROMPT_CHAPTER_ID = "96ab38ae-6b56-4536-af0d-a809b4ea181a";
 
-const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency that works EXCLUSIVELY with financial firms — independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. Never research or return leads for any other vertical (no law firms, med spas, salons, HVAC, etc.) even if a pasted list contains them — flag and skip those rows instead.
+const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency built entirely around financial firms — independent RIAs and wealth management firms, financial advisors and planners, venture capital firms, private equity firms, and hedge funds. This project researches and prepares sales leads in that world for NewLight's own outbound sales team.
 
-Broker-dealer affiliated reps (Edward Jones, Merrill Lynch, and similar) are explicitly excluded — they require compliance department approval NewLight doesn't have.
+Broker-dealer affiliated reps (Edward Jones, Merrill Lynch, and similar) are excluded — they require compliance department approval NewLight doesn't have. Bank-owned and large, well-established firms are usually a weak fit too — the strongest targets are solo and small/boutique firms that are actively growing and don't already have a marketing function of their own.
 
-When given a raw lead list (SEC IAPD, SEC EDGAR Form D, state licensing/Blue Sky filings, Google Maps, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately. Do not ask what to do with the files, do not ask clarifying questions — the system prompt is self-executing per its own Phase 0 rule. Output only the final table per that prompt's Phase 7.
+When given a raw lead list (SEC IAPD, SEC EDGAR Form D, state licensing/Blue Sky filings, Google Maps, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately — do not ask what to do with the files, do not ask clarifying questions. The system prompt is self-executing per its own Phase 0 rule, and its own exhaustiveness and formatting rules govern the output — follow them exactly rather than shortcutting.
 
-Condense all other responses. No commentary beyond what's requested.`;
+Every lead matters — this data goes straight to a BDR's dialer. A wrong or guessed owner name or phone number wastes a real phone call, so when something can't be confirmed, mark it "Research in field" rather than guessing.
+
+Condense all other responses outside of the lead tables themselves. No commentary beyond what's requested.`;
 
 const CLAUDE_PROJECT_FIELDS = [
   { key: "name", label: "Project name:", value: "NewLight Lead Research" },
-  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — a digital marketing agency that works exclusively with financial firms: independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. No other verticals — not law firms, med spas, salons, HVAC, roofing, solar, or any other home/local service business." },
+  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing, a digital marketing agency built entirely around financial firms: independent RIAs and wealth management firms, financial advisors and planners, venture capital firms, private equity firms, and hedge funds. The strongest targets are solo practitioners and small-to-boutique firms that are actively growing and don't already have an in-house marketing function or agency on retainer. The output of this project is a clean, dialer-ready lead list — a verified owner or principal name, a direct phone number, and, when available, a way to see their calendar." },
   { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists into dialer-ready leads with a confirmed owner/principal name and direct phone number, fast and in bulk. Sources vary by firm type: SEC IAPD / Form ADV Schedule A for RIAs and financial advisors, SEC EDGAR Form D filings and state Blue Sky filings for VC and PE firms, and SEC Form ADV (for hedge funds registered as advisers) plus CFTC/NFA registration lookups for unregistered hedge funds and fund managers." },
   { key: "instructions", label: "Project instructions:", value: CLAUDE_PROJECT_INSTRUCTIONS },
 ];
