@@ -2170,16 +2170,18 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 /* ──────────────────────────────────────────────── */
 const MASTER_PROMPT_CHAPTER_ID = "96ab38ae-6b56-4536-af0d-a809b4ea181a";
 
-const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency that fills calendars for service-based businesses (RIAs, law firms, med spas, HVAC/roofing/solar). This project sources and researches sales leads for NewLight's own outbound team.
+const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency that works EXCLUSIVELY with financial firms — independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. Never research or return leads for any other vertical (no law firms, med spas, salons, HVAC, etc.) even if a pasted list contains them — flag and skip those rows instead.
 
-When given a raw lead list (SEC IAPD, Google Maps, licensing board, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately. Do not ask what to do with the files, do not ask clarifying questions — the system prompt is self-executing per its own Phase 0 rule. Output only the final table per that prompt's Phase 7.
+Broker-dealer affiliated reps (Edward Jones, Merrill Lynch, and similar) are explicitly excluded — they require compliance department approval NewLight doesn't have.
+
+When given a raw lead list (SEC IAPD, SEC EDGAR Form D, state licensing/Blue Sky filings, Google Maps, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately. Do not ask what to do with the files, do not ask clarifying questions — the system prompt is self-executing per its own Phase 0 rule. Output only the final table per that prompt's Phase 7.
 
 Condense all other responses. No commentary beyond what's requested.`;
 
 const CLAUDE_PROJECT_FIELDS = [
   { key: "name", label: "Project name:", value: "NewLight Lead Research" },
-  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — owner names, phone numbers, and booking links for target verticals (RIAs, law firms, med spas, HVAC/roofing/solar)." },
-  { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists (SEC IAPD, Google Maps, state licensing boards) into dialer-ready leads with confirmed owner name + phone, fast and in bulk." },
+  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — a digital marketing agency that works exclusively with financial firms: independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. No other verticals — not law firms, med spas, salons, or home services." },
+  { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists into dialer-ready leads with a confirmed owner/principal name and direct phone number, fast and in bulk. Sources vary by firm type: SEC IAPD / Form ADV Schedule A for RIAs and financial advisors, SEC EDGAR Form D filings and state Blue Sky filings for VC and PE firms, and SEC Form ADV (for hedge funds registered as advisers) plus CFTC/NFA registration lookups for unregistered hedge funds and fund managers." },
   { key: "instructions", label: "Project instructions:", value: CLAUDE_PROJECT_INSTRUCTIONS },
 ];
 
