@@ -2180,7 +2180,7 @@ Condense all other responses. No commentary beyond what's requested.`;
 
 const CLAUDE_PROJECT_FIELDS = [
   { key: "name", label: "Project name:", value: "NewLight Lead Research" },
-  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — a digital marketing agency that works exclusively with financial firms: independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. No other verticals — not law firms, med spas, salons, or home services." },
+  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — a digital marketing agency that works exclusively with financial firms: independent RIAs, wealth management firms, financial advisors, venture capital firms, private equity firms, and hedge funds. No other verticals — not law firms, med spas, salons, HVAC, roofing, solar, or any other home/local service business." },
   { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists into dialer-ready leads with a confirmed owner/principal name and direct phone number, fast and in bulk. Sources vary by firm type: SEC IAPD / Form ADV Schedule A for RIAs and financial advisors, SEC EDGAR Form D filings and state Blue Sky filings for VC and PE firms, and SEC Form ADV (for hedge funds registered as advisers) plus CFTC/NFA registration lookups for unregistered hedge funds and fund managers." },
   { key: "instructions", label: "Project instructions:", value: CLAUDE_PROJECT_INSTRUCTIONS },
 ];
