@@ -573,8 +573,8 @@ export default function BDRDialer() {
           <table className="text-sm border-collapse w-max">
             <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
-                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px] sticky left-0 z-40" style={{ background: "hsl(215,35%,12%)" }}>#</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px] sticky z-40 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,12%)" }}>Business Name</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,12%)" }}>#</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px]" style={{ background: "hsl(215,35%,12%)" }}>Business Name</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
@@ -597,7 +597,7 @@ export default function BDRDialer() {
                     className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : undefined}>
 
-                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>
+                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,8%)" }}>
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-white/40 text-[11px]">{i + 1}</span>
                         <button
@@ -609,7 +609,7 @@ export default function BDRDialer() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
                       {(() => {
                         const flags = parseLeadFlags(lead.owner_name);
