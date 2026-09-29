@@ -2297,6 +2297,31 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
             </p>
           </div>
 
+          <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(262,70%,58%,.07)", border: "1px solid hsla(262,70%,58%,.3)" }}>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Set Up a Dedicated Claude Project (one-time)</h3>
+            <p className="text-xs leading-relaxed text-foreground/80 mb-3">
+              Do this once — keeps every lead-research chat self-contained so it never asks what to do with the files.
+            </p>
+            <div className="space-y-2">
+              {CLAUDE_PROJECT_FIELDS.map((f) => (
+                <div key={f.key} className="rounded-lg p-3" style={{ background: "hsla(262,70%,58%,.05)", border: "1px solid hsla(262,70%,58%,.18)" }}>
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <Label className="text-xs font-medium text-foreground/90">{f.label}</Label>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyProjectField(f.key, f.value)}>
+                      {copiedField === f.key ? "Copied ✓" : "Copy"}
+                    </Button>
+                  </div>
+                  <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2 max-h-40 overflow-y-auto">
+                    <p className="text-xs text-foreground/85 whitespace-pre-wrap">{f.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-foreground/85 mt-3">
+              Create the project in Claude, paste these four fields in, then upload the Master Prompt above as a file in that project so it's always there.
+            </p>
+          </div>
+
           <div className="rounded-xl p-4" style={{ background: "hsla(38,92%,55%,.08)", border: "1px solid hsla(38,92%,55%,.25)" }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
