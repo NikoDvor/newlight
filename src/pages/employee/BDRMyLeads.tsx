@@ -14,7 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import { useEmployeeClientId } from "@/hooks/useEmployeeClientId";
-import { parseLeadFlags, getLeadPhones } from "@/lib/leadFlags";
+import { parseLeadFlags, getLeadPhones, extractPhoneNumber } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import ResearchQueueCard from "@/components/employee/ResearchQueueCard";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
@@ -623,7 +623,7 @@ export default function BDRMyLeads() {
         owner_name: row.owner_name || null,
         // New-format columns
         front_desk_phone: row.front_desk_phone || null,
-        owner_direct_phone: row.owner_direct_phone || null,
+        owner_direct_phone: extractPhoneNumber(row.owner_direct_phone) || null,
         // Legacy fallthrough: only populate legacy phone/phone_type if the new
         // columns weren't produced by the parser (i.e. pasting old V17 data).
         phone: (!row.front_desk_phone && !row.owner_direct_phone) ? (row.phone || null) : null,
@@ -1898,7 +1898,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         const legacyPhone = phIdx >= 0 ? (r[phIdx]?.trim() || "") : "";
         const legacyPhoneType = ptIdx >= 0 ? parsePhoneType(r[ptIdx] || "") : null;
         const newFrontDesk = fdpIdx >= 0 ? (r[fdpIdx]?.trim() || "") : "";
-        const newOwnerDirect = odpIdx >= 0 ? (r[odpIdx]?.trim() || "") : "";
+        const newOwnerDirect = odpIdx >= 0 ? extractPhoneNumber(r[odpIdx]) : "";
         const hasNewCols = fdpIdx >= 0 || odpIdx >= 0;
         const front_desk_phone = hasNewCols
           ? (newFrontDesk || null)

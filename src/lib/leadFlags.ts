@@ -48,15 +48,26 @@ export interface LeadPhoneEntry {
   label: "Owner Direct" | "Front Desk" | "Owner" | "Phone";
   kind: "owner_direct" | "front_desk" | "legacy_owner" | "legacy_front_desk" | "legacy_unknown";
 }
+// Strips a "Same as Front Desk — " (or "Same As Front Desk:", any dash/colon
+// separator, case-insensitive) label some Owner Direct Phone cells carry,
+// returning just the trailing phone number. Falls back to the trimmed input
+// if the pattern doesn't match.
+export function extractPhoneNumber(raw: string | null | undefined): string {
+  const s = (raw || "").trim();
+  if (!s) return "";
+  const m = s.match(/^same\s*as\s*front\s*desk\s*[-–—:]\s*(.+)$/i);
+  return (m ? m[1] : s).trim();
+}
+
 export function getLeadPhones(lead: LeadPhoneShape): LeadPhoneEntry[] {
   const out: LeadPhoneEntry[] = [];
-  const owner = (lead.owner_direct_phone || "").trim();
-  const front = (lead.front_desk_phone || "").trim();
+  const owner = extractPhoneNumber(lead.owner_direct_phone);
+  const front = extractPhoneNumber(lead.front_desk_phone);
   if (owner) out.push({ number: owner, label: "Owner Direct", kind: "owner_direct" });
   if (front) out.push({ number: front, label: "Front Desk", kind: "front_desk" });
   if (out.length > 0) return out;
   // Legacy fallback: single phone + phone_type
-  const legacy = (lead.phone || "").trim();
+  const legacy = extractPhoneNumber(lead.phone);
   if (!legacy) return [];
   if (lead.phone_type === "owner") {
     out.push({ number: legacy, label: "Owner", kind: "legacy_owner" });
