@@ -2170,12 +2170,26 @@ function AddLeadModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 /* ──────────────────────────────────────────────── */
 const MASTER_PROMPT_CHAPTER_ID = "96ab38ae-6b56-4536-af0d-a809b4ea181a";
 
+const CLAUDE_PROJECT_INSTRUCTIONS = `NewLight Marketing is a digital marketing agency that fills calendars for service-based businesses (RIAs, law firms, med spas, HVAC/roofing/solar). This project sources and researches sales leads for NewLight's own outbound team.
+
+When given a raw lead list (SEC IAPD, Google Maps, licensing board, etc.) together with the "LEAD RESEARCHER SYSTEM PROMPT," begin Phase 1 immediately. Do not ask what to do with the files, do not ask clarifying questions — the system prompt is self-executing per its own Phase 0 rule. Output only the final table per that prompt's Phase 7.
+
+Condense all other responses. No commentary beyond what's requested.`;
+
+const CLAUDE_PROJECT_FIELDS = [
+  { key: "name", label: "Project name:", value: "NewLight Lead Research" },
+  { key: "working", label: "What are you working on:", value: "Sourcing and researching sales leads for NewLight Marketing — owner names, phone numbers, and booking links for target verticals (RIAs, law firms, med spas, HVAC/roofing/solar)." },
+  { key: "achieve", label: "What are you trying to achieve:", value: "Turn raw scraped lists (SEC IAPD, Google Maps, state licensing boards) into dialer-ready leads with confirmed owner name + phone, fast and in bulk." },
+  { key: "instructions", label: "Project instructions:", value: CLAUDE_PROJECT_INSTRUCTIONS },
+];
+
 function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const [promptText, setPromptText] = React.useState<string>("");
   const [loadingPrompt, setLoadingPrompt] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [copiedHandoff, setCopiedHandoff] = React.useState(false);
+  const [copiedField, setCopiedField] = React.useState<string | null>(null);
 
   const promptVersion = useMemo(() => {
     const match = promptText.match(/—\s*(V\d+)/);
@@ -2222,6 +2236,17 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
       setCopiedHandoff(true);
       toast({ title: "Handoff line copied" });
       setTimeout(() => setCopiedHandoff(false), 2500);
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
+    }
+  };
+
+  const copyProjectField = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+      toast({ title: "Copied" });
+      setTimeout(() => setCopiedField(null), 2500);
     } catch {
       toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
     }
@@ -2294,6 +2319,31 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
               Paste this into your Lead Researcher Claude Project (see Module 3 for setup) or a fresh Claude chat with web search ON.
               Then feed it your raw list from the SEC tool — it returns enriched, dial-ready rows.
               {promptText ? <span className="ml-1 text-foreground/60">({promptText.length.toLocaleString()} chars)</span> : null}
+            </p>
+          </div>
+
+          <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(262,70%,58%,.07)", border: "1px solid hsla(262,70%,58%,.3)" }}>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Set Up a Dedicated Claude Project (one-time)</h3>
+            <p className="text-xs leading-relaxed text-foreground/80 mb-3">
+              Do this once — keeps every lead-research chat self-contained so it never asks what to do with the files.
+            </p>
+            <div className="space-y-2">
+              {CLAUDE_PROJECT_FIELDS.map((f) => (
+                <div key={f.key} className="rounded-lg p-3" style={{ background: "hsla(262,70%,58%,.05)", border: "1px solid hsla(262,70%,58%,.18)" }}>
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <Label className="text-xs font-medium text-foreground/90">{f.label}</Label>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => copyProjectField(f.key, f.value)}>
+                      {copiedField === f.key ? "Copied ✓" : "Copy"}
+                    </Button>
+                  </div>
+                  <div className="rounded border border-white/10 bg-white/[0.03] px-3 py-2">
+                    <p className="text-xs text-foreground/85 whitespace-pre-wrap">{f.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-foreground/85 mt-3">
+              Create the project in Claude, paste these four fields in, then upload the Master Prompt above as a file in that project so it's always there.
             </p>
           </div>
 
