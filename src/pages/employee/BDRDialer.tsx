@@ -567,8 +567,8 @@ export default function BDRDialer() {
       {/* Spreadsheet */}
       <div className="rounded-xl" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
         <div
-          className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] rounded-xl"
-          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", overscrollBehaviorY: "contain", touchAction: "pan-x pan-y" }}
+          className="overflow-x-auto rounded-xl"
+          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", touchAction: "pan-x" }}
         >
           <table className="text-sm border-collapse w-max">
             <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
