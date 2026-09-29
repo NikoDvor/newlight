@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X } from "lucide-react";
+import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
@@ -46,6 +47,7 @@ interface Lead {
   self_booking_widget_non_owner: boolean | null;
   dialer_bookable: boolean | null;
   pipeline_stage: string | null;
+  crm_deal_id: string | null;
   _claimConflict?: boolean;
 }
 
@@ -123,6 +125,16 @@ export default function BDRDialer() {
   const [ownerSearch, setOwnerSearch] = useState<string>("");
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const [confirmState, setConfirmState] = useState<
+    { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
+  >(null);
+  // window.confirm() is blocked in the installed PWA / embedded app shell, which
+  // silently cancelled every destructive action. Use a real dialog instead.
+  const askConfirm = useCallback(
+    (title: string, description: string, confirmLabel = "Delete") =>
+      new Promise<boolean>(resolve => setConfirmState({ title, description, confirmLabel, resolve })),
+    [],
+  );
 
   useEffect(() => {
     (async () => {
@@ -133,7 +145,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -370,6 +382,22 @@ export default function BDRDialer() {
     await setOutcomeFor(lead, "Schedule Callback", iso);
   }, [callbackLead, callbackDate, callbackTime, setOutcomeFor]);
 
+  const handleDeleteLead = async (lead: Lead) => {
+    if (!userId) return;
+    if (!(await askConfirm("Delete lead", `Delete "${lead.business_name}" permanently? This cannot be undone.`))) return;
+    setLeads(prev => prev.filter(l => l.id !== lead.id));
+    const { error } = await (supabase as any).from("nl_bdr_leads").delete().eq("id", lead.id).eq("user_id", userId);
+    if (error) {
+      toast({ title: "Couldn't delete lead", description: error.message, variant: "destructive" });
+      setLeads(prev => [...prev, lead]);
+      return;
+    }
+    if (lead.crm_deal_id) {
+      await supabase.from("crm_deals").delete().eq("id", lead.crm_deal_id);
+    }
+    toast({ title: "Lead deleted", description: lead.business_name });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -539,8 +567,8 @@ export default function BDRDialer() {
       {/* Spreadsheet */}
       <div className="rounded-xl" style={{ border: "1px solid hsla(211,96%,60%,.12)", background: "hsla(215,35%,8%,.8)" }}>
         <div
-          className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)] rounded-xl"
-          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}
+          className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] rounded-xl"
+          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", overscrollBehaviorY: "contain", touchAction: "pan-x pan-y" }}
         >
           <table className="text-sm border-collapse w-max">
             <thead className="sticky top-0 z-30" style={{ background: "hsl(215,35%,12%)" }}>
@@ -569,7 +597,18 @@ export default function BDRDialer() {
                     className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : undefined}>
 
-                    <td className="px-3 py-3 border-b border-white/5 text-white/40 text-[11px] w-10 min-w-[40px] max-w-[40px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>{i + 1}</td>
+                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px] sticky left-0 z-10" style={{ background: "hsl(215,35%,8%)" }}>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-white/40 text-[11px]">{i + 1}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
+                          aria-label={`Delete ${lead.business_name}`}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug sticky z-10 min-w-[200px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]" style={{ left: 40, background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
                       {(() => {
@@ -785,6 +824,27 @@ export default function BDRDialer() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!confirmState}
+        onOpenChange={(o) => { if (!o) { confirmState?.resolve(false); setConfirmState(null); } }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { confirmState?.resolve(false); setConfirmState(null); }}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { confirmState?.resolve(true); setConfirmState(null); }}
+            >
+              {confirmState?.confirmLabel || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
