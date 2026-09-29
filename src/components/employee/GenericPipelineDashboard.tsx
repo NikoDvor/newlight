@@ -2,7 +2,8 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Award, BarChart3, CalendarClock, DollarSign, GraduationCap, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Award, BarChart3, CalendarClock, DollarSign, GraduationCap, ListChecks, PhoneCall, Sparkles, Target, TrendingUp } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,6 +116,7 @@ export function GenericPipelineDashboard() {
   const [monthObjections, setMonthObjections] = useState(0);
   const [monthCalls, setMonthCalls] = useState(0);
   const [objectionCounts, setObjectionCounts] = useState<{ category: string; count: number }[]>([]);
+  const [outcomeCounts, setOutcomeCounts] = useState<{ outcome: string; count: number }[]>([]);
   const [unlocks, setUnlocks] = useState<any[]>([]);
   const [training, setTraining] = useState<TrainingStats | null>(null);
   const [dailyActivity, setDailyActivity] = useState<{ day: string; count: number }[]>([]);
@@ -146,17 +148,25 @@ export function GenericPipelineDashboard() {
         { data: repDeals },
       ] = await Promise.all([
         (supabase as any).from("nl_bdr_leads").select("id, business_name, owner_name, callback_at, status, crm_deal_id, estimated_annual_value").eq("user_id", userId).or("callback_at.not.is.null,and(crm_deal_id.is.null,estimated_annual_value.not.is.null)"),
-        (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome, source").eq("user_id", userId).gte("starts_at", eventsSince),
+        (supabase as any).from("bdr_calendar_events").select("id, title, starts_at, stage, outcome, source, lead_id").eq("user_id", userId).gte("starts_at", eventsSince),
         (supabase as any).from("proposals").select("id, accepted_at, proposal_status, created_at").eq("assigned_salesman_user_id", userId).gte("created_at", monthStart),
         (supabase as any).from("nl_bdr_objections").select("objection_category, triggered_at").eq("user_id", userId),
-        (supabase as any).from("bdr_call_outcomes").select("id, logged_at").eq("bdr_user_id", userId).gte("logged_at", outcomesSince),
+        (supabase as any).from("bdr_call_outcomes").select("id, logged_at, outcome").eq("bdr_user_id", userId).gte("logged_at", outcomesSince),
         (supabase as any).from("nl_objection_unlocks").select("objection_category, foundation_unlocked, intermediate_unlocked, advanced_unlocked, foundation_passed, intermediate_passed, advanced_passed").eq("user_id", userId),
         (supabase as any).from("crm_deals").select("id, deal_value, pipeline_stage").eq("assigned_user", userId).eq("client_id", "00000000-0000-0000-0000-0000000000ff"),
       ]);
       const ms = new Date(monthStart).getTime();
       const callbacks = (leadRows || []).filter((l: any) => l.callback_at);
       const estLeads = (leadRows || []).filter((l: any) => !l.crm_deal_id && l.estimated_annual_value != null);
-      const events = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= Date.parse(yesterdayIso));
+      // Defensive: drop calendar events whose lead_id no longer resolves to a lead.
+      const upcomingRaw = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= Date.parse(yesterdayIso));
+      const refLeadIds = Array.from(new Set(upcomingRaw.map((e: any) => e.lead_id).filter(Boolean))) as string[];
+      let liveLeadIds = new Set<string>();
+      if (refLeadIds.length) {
+        const { data: live } = await (supabase as any).from("nl_bdr_leads").select("id").in("id", refLeadIds);
+        liveLeadIds = new Set((live || []).map((l: any) => l.id));
+      }
+      const events = upcomingRaw.filter((e: any) => !e.lead_id || liveLeadIds.has(e.lead_id));
       const monthEvents = (allEvents || []).filter((e: any) => new Date(e.starts_at).getTime() >= ms);
       const outcomes = (allOutcomes || []).filter((o: any) => o.logged_at && new Date(o.logged_at).getTime() >= ms);
       const outcomes14 = (allOutcomes || []).filter((o: any) => o.logged_at && new Date(o.logged_at).getTime() >= Date.parse(fourteenIso));
@@ -198,6 +208,12 @@ export function GenericPipelineDashboard() {
       const monthObj = (objections || []).filter((o: any) => o.triggered_at && new Date(o.triggered_at) >= startOfMonth()).length;
       setMonthObjections(monthObj);
       setMonthCalls((outcomes || []).length);
+      const oc = new Map<string, number>();
+      (outcomes || []).forEach((o: any) => {
+        const k = o.outcome || "Unspecified";
+        oc.set(k, (oc.get(k) ?? 0) + 1);
+      });
+      setOutcomeCounts(Array.from(oc.entries()).map(([outcome, count]) => ({ outcome, count })).sort((a, b) => b.count - a.count));
 
       const counts = new Map<string, number>();
       (objections || []).forEach((o: any) => {
@@ -376,6 +392,34 @@ export function GenericPipelineDashboard() {
                 <Bar dataKey="count" fill="hsl(190,90%,55%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        )}
+      </SectionCard>
+      </Reveal>
+
+      {/* 3b. OUTCOME BREAKDOWN */}
+      <Reveal>
+      <SectionCard title="Outcome Breakdown" icon={ListChecks} right={<span className="text-xs text-muted-foreground">This month</span>}>
+        {outcomeCounts.length === 0 ? (
+          <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-6 text-sm text-muted-foreground text-center">No calls logged yet this month.</div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto rounded-lg border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Outcome</TableHead>
+                  <TableHead className="text-right w-24">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {outcomeCounts.map((o) => (
+                  <TableRow key={o.outcome}>
+                    <TableCell className="py-2">{o.outcome}</TableCell>
+                    <TableCell className="py-2 text-right tabular-nums">{o.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </SectionCard>
