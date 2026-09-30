@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     // Mirror of the page's hide toggles: the walk only counts firms that will
     // actually be visible on screen toward max_results. Hidden firms are still
     // returned (tagged) so switching a toggle off reveals them without a re-search.
-    const hideFund = body.hide_fund !== false && body.hide_fund !== undefined ? true : false;
+    const hideFund = body.hide_fund === true;
     const hideEra = body.hide_era === true;
     let noCrdCount = 0;
 

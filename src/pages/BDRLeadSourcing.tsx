@@ -213,6 +213,8 @@ export default function BDRLeadSourcing() {
           max_aum: maxAum ? Number(maxAum) : null,
           max_results: limit,
           exclude_crds,
+          hide_fund: hideFundManagement,
+          hide_era: hideExemptReporting,
         },
       });
       if (error) throw error;
@@ -389,6 +391,8 @@ export default function BDRLeadSourcing() {
     }
   }
 
+  // Live, toggle-aware count of SEC rows actually visible on screen.
+  const secVisible = visibleResults.filter((r) => r.source === "SEC").length;
   const selectedRows = results.filter((r) => selected.has(rowKey(r)));
   const dupSummary = (() => {
     let hard = 0, soft = 0;
@@ -526,9 +530,9 @@ export default function BDRLeadSourcing() {
               {meta?.note && <p className="text-[11px] text-muted-foreground mt-1">{meta.note}</p>}
               {secSummary && (
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {secSummary.returned} new of {secSummary.requested} requested
+                  {secVisible} new of {secSummary.requested} requested{secVisible !== secSummary.returned ? " showing" : ""}
                   {secSummary.excluded > 0 && ` · ${secSummary.excluded} firm${secSummary.excluded !== 1 ? "s" : ""} you already have skipped (leads or Research Queue)`}
-                  {secSummary.returned < secSummary.requested && (
+                  {secVisible < secSummary.requested && (
                     <span style={{ color: "hsl(38,92%,68%)" }}>
                       {" — "}{secSummary.stopped === "backfill_cap"
                         ? "stopped looking after the search limit; try a city or narrower keyword for more."
