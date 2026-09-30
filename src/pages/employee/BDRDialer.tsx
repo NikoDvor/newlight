@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -118,6 +119,7 @@ export default function BDRDialer() {
   const [userId, setUserId] = useState<string | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<string>(ALL_LIST);
+  const [showDialed, setShowDialed] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [callbackLead, setCallbackLead] = useState<Lead | null>(null);
   const [callbackDate, setCallbackDate] = useState<string>("");
@@ -230,7 +232,7 @@ export default function BDRDialer() {
       toast({
         title: `${lead.business_name} is Won`,
         description: "Won leads live in My Leads under the Won tab.",
-        action: <ToastAction altText="Open My Leads" onClick={() => navigate("/employee/my-leads")}>Open My Leads</ToastAction>,
+        action: <ToastAction altText="Open My Leads" onClick={() => navigate("/employee/leads")}>Open My Leads</ToastAction>,
       });
       return;
     }
