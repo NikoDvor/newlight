@@ -107,6 +107,26 @@ export default function BDRLeadSourcing() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<FirmResult[]>([]);
   const [meta, setMeta] = useState<{ total: number; source: string; note?: string } | null>(null);
+  const [secSummary, setSecSummary] = useState<{
+    requested: number; returned: number; excluded: number; noCrd: number; stopped: string;
+  } | null>(null);
+
+  // Every CRD this workspace already has: leads in any status, plus anything
+  // already in the Research Queue (sourced/queued/imported/skipped).
+  async function fetchExistingCrds(): Promise<string[]> {
+    if (!clientId) return [];
+    const all = new Set<string>();
+    for (const table of ["nl_bdr_leads", "nl_sourced_leads"]) {
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await (supabase as any).from(table)
+          .select("crd").eq("client_id", clientId).not("crd", "is", null).range(from, from + 999);
+        if (error) { console.warn(`${table} crd lookup failed:`, error.message); break; }
+        (data || []).forEach((d: any) => { const c = String(d.crd || "").trim(); if (/^\d+$/.test(c)) all.add(c); });
+        if (!data || data.length < 1000) break;
+      }
+    }
+    return [...all];
+  }
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [imported, setImported] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
@@ -180,9 +200,10 @@ export default function BDRLeadSourcing() {
   }
 
   async function runSearch() {
-    setLoading(true); setError(null); setResults([]); setMeta(null); setSelected(new Set()); setClaimMap({});
+    setLoading(true); setError(null); setResults([]); setMeta(null); setSelected(new Set()); setClaimMap({}); setSecSummary(null);
     try {
       const limit = commitMaxResults();
+      const exclude_crds = await fetchExistingCrds();
       const { data, error } = await supabase.functions.invoke("sec-firm-search", {
         body: {
           state,
@@ -191,6 +212,7 @@ export default function BDRLeadSourcing() {
           min_aum: minAum ? Number(minAum) : null,
           max_aum: maxAum ? Number(maxAum) : null,
           max_results: limit,
+          exclude_crds,
         },
       });
       if (error) throw error;
@@ -212,6 +234,13 @@ export default function BDRLeadSourcing() {
       }
       setResults(rows);
       setMeta({ total: (data as any).total ?? rows.length, source: (data as any).source, note: (data as any).note });
+      setSecSummary({
+        requested: (data as any).requested ?? limit,
+        returned: rows.length,
+        excluded: (data as any).excluded_existing ?? 0,
+        noCrd: (data as any).no_crd_count ?? 0,
+        stopped: (data as any).stopped_reason ?? "",
+      });
       // Fire duplicate check in the background
       checkClaimsBatch(rows);
       persistSourced(rows);
@@ -495,6 +524,22 @@ export default function BDRLeadSourcing() {
             <div>
               <CardTitle className="text-sm font-semibold">Results ({visibleResults.length} of {meta?.total?.toLocaleString?.() ?? results.length})</CardTitle>
               {meta?.note && <p className="text-[11px] text-muted-foreground mt-1">{meta.note}</p>}
+              {secSummary && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {secSummary.returned} new of {secSummary.requested} requested
+                  {secSummary.excluded > 0 && ` · ${secSummary.excluded} firm${secSummary.excluded !== 1 ? "s" : ""} you already have skipped (leads or Research Queue)`}
+                  {secSummary.returned < secSummary.requested && (
+                    <span style={{ color: "hsl(38,92%,68%)" }}>
+                      {" — "}{secSummary.stopped === "backfill_cap"
+                        ? "stopped looking after the search limit; try a city or narrower keyword for more."
+                        : secSummary.stopped === "time_budget" || secSummary.stopped === "rate_limited"
+                        ? "SEC was slow or throttled; run again for more."
+                        : "no more new firms found matching your criteria."}
+                    </span>
+                  )}
+                  {secSummary.noCrd > 0 && ` · ${secSummary.noCrd} without a CRD couldn't be checked by CRD`}
+                </p>
+              )}
               {(dupSummary.hard > 0 || dupSummary.soft > 0) && (
                 <p className="text-[11px] mt-1">
                   {dupSummary.hard > 0 && <span style={{ color: "hsl(142,72%,55%)" }}>{dupSummary.hard} already imported</span>}
