@@ -183,19 +183,38 @@ export default function BDRDialer() {
   }, [activeClientId]);
 
 
+  // Show Dialed filter: OFF = not yet dialed, ON = dialed but not won. Won leads never show here.
+  const isCallbackType = useCallback((id: string) => {
+    const o = latestOutcomeByLead[id];
+    return o === "Schedule Callback" || o === "Said They Would Reach Out";
+  }, [latestOutcomeByLead]);
+
+  const modeLeads = useMemo(() => leads.filter(l => {
+    if (l.pipeline_stage === "won") return false;
+    return showDialed ? !!l.called : !l.called;
+  }), [leads, showDialed]);
+
   const lists = useMemo(() => {
     const map = new Map<string, number>();
     leads.forEach(l => {
       const name = l.list_name || "Uncategorized";
+      if (!map.has(name)) map.set(name, 0);
+    });
+    modeLeads.forEach(l => {
+      const name = l.list_name || "Uncategorized";
       map.set(name, (map.get(name) || 0) + 1);
     });
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [leads]);
+  }, [leads, modeLeads]);
 
   const visibleLeads = useMemo(() => {
-    if (activeList === ALL_LIST) return leads;
-    return leads.filter(l => (l.list_name || "Uncategorized") === activeList);
-  }, [leads, activeList]);
+    const base = activeList === ALL_LIST
+      ? modeLeads
+      : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList);
+    if (!showDialed) return base;
+    // Stable partition: callback-type leads first, rest keep default order.
+    return [...base.filter(l => isCallbackType(l.id)), ...base.filter(l => !isCallbackType(l.id))];
+  }, [modeLeads, activeList, showDialed, isCallbackType]);
 
   const searchMatches = useMemo(() => {
     const q = ownerSearch.trim().toLowerCase();
@@ -206,6 +225,16 @@ export default function BDRDialer() {
   }, [leads, ownerSearch]);
 
   const jumpToLead = useCallback((lead: Lead) => {
+    if (lead.pipeline_stage === "won") {
+      setOwnerSearch("");
+      toast({
+        title: `${lead.business_name} is Won`,
+        description: "Won leads live in My Leads under the Won tab.",
+        action: <ToastAction altText="Open My Leads" onClick={() => navigate("/employee/my-leads")}>Open My Leads</ToastAction>,
+      });
+      return;
+    }
+    setShowDialed(!!lead.called);
     if (lead.list_name && (lead.list_name || "Uncategorized") !== activeList) {
       setActiveList(lead.list_name || "Uncategorized");
     } else if (!lead.list_name && activeList !== ALL_LIST && activeList !== "Uncategorized") {
@@ -217,7 +246,7 @@ export default function BDRDialer() {
       rowRefs.current[lead.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
     setTimeout(() => setHighlightId(null), 2400);
-  }, [activeList]);
+  }, [activeList, navigate]);
 
 
   const stats = useMemo(() => {
@@ -309,6 +338,9 @@ export default function BDRDialer() {
     setOutcomes(prev => [optimistic, ...prev]);
     if (!lead.called) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
+    }
+    if (def.label === "Won") {
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: "won" } : l));
     }
     if (callbackAt) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: callbackAt } : l));
@@ -524,6 +556,31 @@ export default function BDRDialer() {
         </div>
       </div>
 
+      {/* Show Dialed toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showDialed}
+          aria-label="Show Dialed"
+          onClick={() => setShowDialed(v => !v)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[36px]"
+          style={{
+            background: showDialed ? "hsla(211,96%,56%,.15)" : "hsla(215,35%,10%,.6)",
+            color: showDialed ? "hsl(211,96%,72%)" : "hsl(0,0%,70%)",
+            border: `1px solid ${showDialed ? "hsla(211,96%,56%,.4)" : "hsla(211,96%,60%,.12)"}`,
+          }}
+        >
+          <span className="relative inline-block h-4 w-7 rounded-full transition-colors" style={{ background: showDialed ? "hsl(211,96%,56%)" : "hsla(0,0%,100%,.2)" }}>
+            <span className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all" style={{ left: showDialed ? 14 : 2 }} />
+          </span>
+          Show Dialed
+        </button>
+        <span className="text-[11px] text-white/40">
+          {showDialed ? "Dialed, not yet won — callbacks pinned on top" : "Not yet dialed"}
+        </span>
+      </div>
+
       {/* List tabs */}
       <div
         className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-1 px-1 pb-1"
@@ -538,7 +595,7 @@ export default function BDRDialer() {
             border: `1px solid ${activeList === ALL_LIST ? "hsla(211,96%,56%,.4)" : "hsla(211,96%,60%,.12)"}`,
           }}
         >
-          All Leads <span className="opacity-60 ml-1">{leads.length}</span>
+          All Leads <span className="opacity-60 ml-1">{modeLeads.length}</span>
         </button>
         {lists.map(([name, count]) => (
           <div key={name} className="shrink-0 inline-flex items-center rounded-lg"
@@ -593,13 +650,14 @@ export default function BDRDialer() {
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
+                const pinned = showDialed && isCallbackType(lead.id);
                 return (
                   <tr key={lead.id}
                     ref={(el) => { rowRefs.current[lead.id] = el; }}
                     className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
-                    style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : undefined}>
+                    style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : pinned ? { background: "hsla(38,92%,55%,.08)" } : undefined}>
 
-                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,8%)" }}>
+                    <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: pinned ? "hsla(38,92%,55%,.10)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%)" : undefined }} title={pinned ? `Pinned: ${current}` : undefined}>
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-white/40 text-[11px]">{i + 1}</span>
                         <button
