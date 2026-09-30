@@ -530,7 +530,7 @@ export default function BDRLeadSourcing() {
               {meta?.note && <p className="text-[11px] text-muted-foreground mt-1">{meta.note}</p>}
               {secSummary && (
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {secVisible} new of {secSummary.requested} requested{secVisible !== secSummary.returned ? " showing" : ""}
+                  {secVisible} new of {secSummary.requested} requested (showing on screen)
                   {secSummary.excluded > 0 && ` · ${secSummary.excluded} firm${secSummary.excluded !== 1 ? "s" : ""} you already have skipped (leads or Research Queue)`}
                   {secVisible < secSummary.requested && (
                     <span style={{ color: "hsl(38,92%,68%)" }}>
