@@ -47,6 +47,15 @@ Deno.serve(async (req) => {
     const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
     const requestedMaxResults = Math.max(1, Math.min(300, Number(body.max_results) || 25));
 
+    // CRDs this workspace already has (leads in any status + anything already
+    // in the sourcing queue). Skipped during the walk so the walk keeps going
+    // and backfills with genuinely new firms.
+    const excludeCrds = new Set<string>(
+      Array.isArray(body.exclude_crds) ? body.exclude_crds.map((c: unknown) => String(c).trim()).filter(Boolean) : [],
+    );
+    let excludedExisting = 0;
+    let noCrdCount = 0;
+
     if (!keyword && !state && !cityRaw) {
       return json({ error: "Provide at least a keyword, state, or city." }, 400);
     }
@@ -75,7 +84,11 @@ Deno.serve(async (req) => {
       | "safety_cap"
       | "satisfied"
       | "time_budget"
-      | "rate_limited" = "end_of_results";
+      | "rate_limited"
+      | "backfill_cap" = "end_of_results";
+    // Backfill cap for statewide/keyword walks (city walks are already
+    // exhaustive): walk at most ~3x the requested rows' worth of pages.
+    const STATEWIDE_PAGE_CAP = Math.ceil((requestedMaxResults * 3) / SEC_HITS_PER_PAGE) + 2;
 
     // Single Relevance pass for every scope. The dual-sort merge was measured
     // against the 413-page STATEWIDE walk, where deep pagination is lossy and
@@ -261,6 +274,8 @@ Deno.serve(async (req) => {
           if (cityKeys.size && !cityKeys.has(normalizeCity(r.city ?? ""))) continue;
           if (r.crd && seenCrd.has(r.crd)) continue; // dedupe by CRD
           if (r.crd) seenCrd.add(r.crd);
+          if (r.crd && excludeCrds.has(r.crd)) { excludedExisting++; continue; }
+          if (!r.crd) noCrdCount++;
           filtered.push(r);
         }
 
@@ -276,6 +291,10 @@ Deno.serve(async (req) => {
           break outer;
         }
         if (page === HARD_PAGE_CAP) stoppedReason = "safety_cap";
+        if (!cityKeys.size && page >= STATEWIDE_PAGE_CAP) {
+          stoppedReason = "backfill_cap";
+          break outer;
+        }
       }
       }
     }
@@ -296,6 +315,8 @@ Deno.serve(async (req) => {
           if (cityKeys.size && !cityKeys.has(normalizeCity(r.city ?? ""))) continue;
           if (r.crd && seenCrd.has(r.crd)) continue;
           if (r.crd) seenCrd.add(r.crd);
+          if (r.crd && excludeCrds.has(r.crd)) { excludedExisting++; continue; }
+          if (!r.crd) noCrdCount++;
           filtered.push(r);
         }
       } catch { /* still unavailable — leave it counted as skipped */ }
@@ -354,6 +375,10 @@ Deno.serve(async (req) => {
       skipped_pages: skippedPages,
       requested_sec_page_size: SEC_REQUESTED_PAGE_SIZE,
       stopped_reason: stoppedReason,
+      requested: requestedMaxResults,
+      excluded_existing: excludedExisting,
+      no_crd_count: results.filter((r) => !r.crd).length,
+      backfill_page_cap: cityKeys.size ? null : STATEWIDE_PAGE_CAP,
       source: "SEC IAPD",
       source_url: lastUrl,
       note: cityKeys.size
