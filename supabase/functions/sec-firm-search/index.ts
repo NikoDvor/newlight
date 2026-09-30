@@ -11,6 +11,7 @@
 // Management, Bourke Wealth Management, Athens Capital Management were all
 // lost that way despite existing in SEC's data).
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SEC_ENDPOINT = "https://api.adviserinfo.sec.gov/search/firm";
 const SEC_REQUESTED_PAGE_SIZE = 100; // requested; SEC returns 20 per page
@@ -26,6 +27,8 @@ interface FirmResult {
   scope: string | null;
   /** true = Exempt Reporting Adviser (private-fund-only), false = registered, null = unknown */
   is_exempt_reporting?: boolean | null;
+  /** SEC Form ADV Item 5.G focus label from sec_adv_services, when known */
+  focus?: string | null;
   branches: number | null;
   iapd_url: string;
   aum: null;
@@ -54,6 +57,11 @@ Deno.serve(async (req) => {
       Array.isArray(body.exclude_crds) ? body.exclude_crds.map((c: unknown) => String(c).trim()).filter(Boolean) : [],
     );
     let excludedExisting = 0;
+    // Mirror of the page's hide toggles: the walk only counts firms that will
+    // actually be visible on screen toward max_results. Hidden firms are still
+    // returned (tagged) so switching a toggle off reveals them without a re-search.
+    const hideFund = body.hide_fund !== false && body.hide_fund !== undefined ? true : false;
+    const hideEra = body.hide_era === true;
     let noCrdCount = 0;
 
     if (!keyword && !state && !cityRaw) {
@@ -88,7 +96,8 @@ Deno.serve(async (req) => {
       | "backfill_cap" = "end_of_results";
     // Backfill cap for statewide/keyword walks (city walks are already
     // exhaustive): walk at most ~3x the requested rows' worth of pages.
-    const STATEWIDE_PAGE_CAP = Math.ceil((requestedMaxResults * 3) / SEC_HITS_PER_PAGE) + 2;
+    const STATEWIDE_PAGE_CAP =
+      Math.ceil((requestedMaxResults * ((hideFund || hideEra) ? 4 : 3)) / SEC_HITS_PER_PAGE) + 2;
 
     // Single Relevance pass for every scope. The dual-sort merge was measured
     // against the 413-page STATEWIDE walk, where deep pagination is lossy and
@@ -211,6 +220,55 @@ Deno.serve(async (req) => {
       return best;
     };
 
+    // --- Classification (ERA flag + Fund Management focus) -----------------
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const classified = new Set<FirmResult>();
+    const classify = async (rows: FirmResult[]) => {
+      const todo = rows.filter((r) => !classified.has(r));
+      if (!todo.length) return;
+      todo.forEach((r) => classified.add(r));
+      // Exempt Reporting Adviser detection (verified live against SEC IAPD):
+      // "802-" = SEC ERA, "801-" = registered; no SEC number -> firm detail
+      // orgScopeStatusFlags disambiguates.
+      const needDetail: FirmResult[] = [];
+      for (const r of todo) {
+        const sec = r.sec_number ?? "";
+        if (sec.startsWith("802-")) r.is_exempt_reporting = true;
+        else if (sec.startsWith("801-")) r.is_exempt_reporting = false;
+        else if (r.crd) needDetail.push(r);
+      }
+      const DETAIL_CONCURRENCY = 6;
+      for (let i = 0; i < needDetail.length; i += DETAIL_CONCURRENCY) {
+        if (Date.now() - startedAt >= TIME_BUDGET_MS + 15000) break;
+        await Promise.all(needDetail.slice(i, i + DETAIL_CONCURRENCY).map(async (r) => {
+          try {
+            const resp = await fetch(`${SEC_ENDPOINT}/${r.crd}`, {
+              headers: { "User-Agent": "NewLightBDR/1.0 (bdr-lead-sourcing)", Accept: "application/json" },
+            });
+            if (!resp.ok) return;
+            const d = await resp.json();
+            const raw = d?.hits?.hits?.[0]?._source?.iacontent;
+            const c = typeof raw === "string" ? JSON.parse(raw) : raw;
+            const f = c?.orgScopeStatusFlags;
+            if (!f) return;
+            r.is_exempt_reporting =
+              f.isERARegistered === "Y" && f.isSECRegistered !== "Y" && f.isStateRegistered !== "Y";
+          } catch { /* unknown — leave null so it stays visible */ }
+        }));
+      }
+      const crds = todo.map((r) => r.crd).filter(Boolean);
+      if (crds.length) {
+        const { data } = await sb.from("sec_adv_services").select("crd, focus_label").in("crd", crds);
+        const m = new Map<string, string | null>((data || []).map((d: any) => [d.crd, d.focus_label]));
+        todo.forEach((r) => { if (m.has(r.crd)) r.focus = m.get(r.crd) ?? null; });
+      }
+    };
+    const isHiddenFund = (r: FirmResult) => hideFund && r.focus === "Fund Management";
+    const isHiddenEra = (r: FirmResult) => hideEra && r.is_exempt_reporting === true;
+    const isVisible = (r: FirmResult) => !isHiddenFund(r) && !isHiddenEra(r);
+    const visibleCount = () => filtered.filter((r) => classified.has(r) && isVisible(r)).length;
+    const toggleAware = hideFund || hideEra;
+
     // One scope per city (native SEC city filter), or a single statewide /
     // keyword scope when no city was given.
     const scopes: (string | null)[] = cities.length ? cities : [null];
@@ -282,7 +340,8 @@ Deno.serve(async (req) => {
         if (p.hits.length === 0) break; // end of this scope
         if (scopeTotal > 0 && page * SEC_HITS_PER_PAGE >= scopeTotal) break;
 
-        if (!cityKeys.size && filtered.length >= requestedMaxResults) {
+        if (!cityKeys.size && toggleAware) await classify(filtered);
+        if (!cityKeys.size && (toggleAware ? visibleCount() : filtered.length) >= requestedMaxResults) {
           stoppedReason = "satisfied";
           break outer;
         }
@@ -327,39 +386,21 @@ Deno.serve(async (req) => {
       stoppedReason = "end_of_results";
     }
 
-    const results = filtered.slice(0, requestedMaxResults);
-
-    // Exempt Reporting Adviser detection (verified live against SEC IAPD):
-    // - SEC file number "802-" = SEC exempt reporting adviser; "801-" = registered.
-    // - No SEC number = state-registered RIA OR state ERA; the firm detail
-    //   record's orgScopeStatusFlags disambiguates (isERARegistered=Y with
-    //   isSECRegistered=N and isStateRegistered=N).
-    const needDetail: FirmResult[] = [];
-    for (const r of results) {
-      const sec = r.sec_number ?? "";
-      if (sec.startsWith("802-")) r.is_exempt_reporting = true;
-      else if (sec.startsWith("801-")) r.is_exempt_reporting = false;
-      else if (r.crd) needDetail.push(r);
+    // Take candidates in walk order until `requestedMaxResults` of them would be
+    // visible under the active toggles; hidden ones in between ride along tagged.
+    const results: FirmResult[] = [];
+    let visibleReturned = 0;
+    for (let i = 0; i < filtered.length && visibleReturned < requestedMaxResults; i += SEC_HITS_PER_PAGE) {
+      const chunk = filtered.slice(i, i + SEC_HITS_PER_PAGE);
+      await classify(chunk);
+      for (const r of chunk) {
+        if (visibleReturned >= requestedMaxResults) break;
+        results.push(r);
+        if (!toggleAware || isVisible(r)) visibleReturned++;
+      }
     }
-    const DETAIL_CONCURRENCY = 6;
-    for (let i = 0; i < needDetail.length; i += DETAIL_CONCURRENCY) {
-      if (Date.now() - startedAt >= TIME_BUDGET_MS + 15000) break;
-      await Promise.all(needDetail.slice(i, i + DETAIL_CONCURRENCY).map(async (r) => {
-        try {
-          const resp = await fetch(`${SEC_ENDPOINT}/${r.crd}`, {
-            headers: { "User-Agent": "NewLightBDR/1.0 (bdr-lead-sourcing)", Accept: "application/json" },
-          });
-          if (!resp.ok) return;
-          const d = await resp.json();
-          const raw = d?.hits?.hits?.[0]?._source?.iacontent;
-          const c = typeof raw === "string" ? JSON.parse(raw) : raw;
-          const f = c?.orgScopeStatusFlags;
-          if (!f) return;
-          r.is_exempt_reporting =
-            f.isERARegistered === "Y" && f.isSECRegistered !== "Y" && f.isStateRegistered !== "Y";
-        } catch { /* unknown — leave null so it stays visible */ }
-      }));
-    }
+    const hiddenFund = results.filter(isHiddenFund).length;
+    const hiddenEra = results.filter((r) => isHiddenEra(r) && !isHiddenFund(r)).length;
 
     return json({
       results,
@@ -377,6 +418,9 @@ Deno.serve(async (req) => {
       stopped_reason: stoppedReason,
       requested: requestedMaxResults,
       excluded_existing: excludedExisting,
+      visible_returned: visibleReturned,
+      hidden_fund: hiddenFund,
+      hidden_era: hiddenEra,
       no_crd_count: results.filter((r) => !r.crd).length,
       backfill_page_cap: cityKeys.size ? null : STATEWIDE_PAGE_CAP,
       source: "SEC IAPD",
