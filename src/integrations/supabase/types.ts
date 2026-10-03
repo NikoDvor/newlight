@@ -8285,6 +8285,7 @@ export type Database = {
           crm_contact_id: string | null
           crm_deal_id: string | null
           customer_notes: string | null
+          dialed_at: string | null
           dialer_bookable: boolean | null
           email: string | null
           estimated_annual_value: number | null
@@ -8354,6 +8355,7 @@ export type Database = {
           crm_contact_id?: string | null
           crm_deal_id?: string | null
           customer_notes?: string | null
+          dialed_at?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
           estimated_annual_value?: number | null
@@ -8423,6 +8425,7 @@ export type Database = {
           crm_contact_id?: string | null
           crm_deal_id?: string | null
           customer_notes?: string | null
+          dialed_at?: string | null
           dialer_bookable?: boolean | null
           email?: string | null
           estimated_annual_value?: number | null
