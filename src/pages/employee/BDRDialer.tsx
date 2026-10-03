@@ -29,6 +29,7 @@ interface Lead {
   niche: string | null;
   list_name: string | null;
   called: boolean | null;
+  dialed_at?: string | null;
   notes: string | null;
   callback_at?: string | null;
   website: string | null;
@@ -147,7 +148,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -214,9 +215,14 @@ export default function BDRDialer() {
       ? modeLeads
       : modeLeads.filter(l => (l.list_name || "Uncategorized") === activeList);
     if (!showDialed) return base;
-    // Stable partition: callback-type leads first, rest keep default order.
-    return [...base.filter(l => isCallbackType(l.id)), ...base.filter(l => !isCallbackType(l.id))];
-  }, [modeLeads, activeList, showDialed, isCallbackType]);
+    // Most recently dialed first; legacy rows with no dialed_at go last (stable).
+    return [...base].sort((a, b) => {
+      const ta = a.dialed_at ? Date.parse(a.dialed_at) : -Infinity;
+      const tb = b.dialed_at ? Date.parse(b.dialed_at) : -Infinity;
+      if (ta === tb) return 0;
+      return tb > ta ? 1 : -1;
+    });
+  }, [modeLeads, activeList, showDialed]);
 
   const searchMatches = useMemo(() => {
     const q = ownerSearch.trim().toLowerCase();
@@ -289,11 +295,13 @@ export default function BDRDialer() {
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
     const next = !lead.called;
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next } : l));
+    const prevDialedAt = lead.dialed_at ?? null;
+    const nextDialedAt = next ? new Date().toISOString() : null;
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next, dialed_at: nextDialedAt } : l));
     const { error } = await (supabase as any).from("nl_bdr_leads")
-      .update({ called: next }).eq("id", lead.id).eq("user_id", userId);
+      .update({ called: next, dialed_at: nextDialedAt }).eq("id", lead.id).eq("user_id", userId);
     if (error) {
-      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next } : l));
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: !next, dialed_at: prevDialedAt } : l));
       toast({ title: "Couldn't update", description: error.message, variant: "destructive" });
       return;
     }
@@ -338,9 +346,6 @@ export default function BDRDialer() {
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
     const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection, logged_at: new Date().toISOString() };
     setOutcomes(prev => [optimistic, ...prev]);
-    if (!lead.called) {
-      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
-    }
     if (def.label === "Won") {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: "won" } : l));
     }
@@ -363,16 +368,14 @@ export default function BDRDialer() {
       else if (def.label === "Said They Would Reach Out") pipelineStage = "warm";
       else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
       else pipelineStage = "warm";
+      // Logging an outcome never moves the lead to "dialed" — only the Mark Dialed switch does.
       const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
-      const dialTransition = !lead.called;
-      if (dialTransition) leadPatch.called = true;
       if (callbackAt) {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
       }
       await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
-      if (dialTransition) recordDial(lead.id);
       logDialerEvent({
         leadId: lead.id,
         businessName: lead.business_name,
@@ -579,7 +582,7 @@ export default function BDRDialer() {
           Show Dialed
         </button>
         <span className="text-[11px] text-white/40">
-          {showDialed ? "Dialed, not yet won — callbacks pinned on top" : "Not yet dialed"}
+          {showDialed ? "Dialed, not yet won — most recently dialed first" : "Not yet dialed"}
         </span>
       </div>
 
@@ -652,7 +655,7 @@ export default function BDRDialer() {
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
-                const pinned = showDialed && isCallbackType(lead.id);
+                const pinned = false;
                 return (
                   <tr key={lead.id}
                     ref={(el) => { rowRefs.current[lead.id] = el; }}
@@ -710,13 +713,7 @@ export default function BDRDialer() {
                               <span key={p.kind + p.number} className="inline-flex items-center gap-1 flex-wrap">
                                 <a href={`tel:${p.number}`}
                                   onClick={() => {
-                                    if (lead.called) return;
-                                    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: true } : l));
-                                    (supabase as any).from("nl_bdr_leads")
-                                      .update({ called: true })
-                                      .eq("id", lead.id)
-                                      .eq("user_id", userId)
-                                      .then(() => {});
+                                    // Count the call for stats only; lead stays in its list until "Mark Dialed" is flipped.
                                     recordDial(lead.id);
                                   }}
                                   className="font-mono inline-flex items-center gap-1 hover:underline text-xs" style={{ color: "hsl(211,96%,68%)" }}>
@@ -809,13 +806,24 @@ export default function BDRDialer() {
                     </td>
 
                     <td className="px-3 py-3 border-b border-white/5 text-center">
-                      <input
-                        type="checkbox"
-                        checked={!!lead.called}
-                        onChange={() => toggleCalled(lead)}
-                        aria-label={`Mark ${lead.business_name} as called`}
-                        className="h-5 w-5 rounded cursor-pointer accent-[hsl(142,72%,42%)]"
-                      />
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={!!lead.called}
+                        onClick={() => toggleCalled(lead)}
+                        aria-label={`Mark ${lead.business_name} as dialed`}
+                        className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors min-h-[36px]"
+                        style={{
+                          background: lead.called ? "hsla(142,72%,42%,.15)" : "hsla(215,35%,10%,.6)",
+                          color: lead.called ? "hsl(142,72%,62%)" : "hsl(0,0%,70%)",
+                          border: `1px solid ${lead.called ? "hsla(142,72%,42%,.45)" : "hsla(211,96%,60%,.12)"}`,
+                        }}
+                      >
+                        <span className="relative inline-block h-4 w-7 rounded-full transition-colors" style={{ background: lead.called ? "hsl(142,72%,42%)" : "hsla(0,0%,100%,.2)" }}>
+                          <span className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all" style={{ left: lead.called ? 14 : 2 }} />
+                        </span>
+                        {lead.called ? "Dialed" : "Mark Dialed"}
+                      </button>
                     </td>
                     <td className="px-3 py-3 border-b border-white/5">
                       <select
