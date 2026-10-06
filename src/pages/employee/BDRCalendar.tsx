@@ -62,7 +62,7 @@ function toLocalInput(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function BDRCalendar() {
+export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}) {
   const isMobile = useIsMobile();
   const [calendar, setCalendar] = useState<BdrCalendar | null>(null);
   const [extraCalendars, setExtraCalendars] = useState<BdrCalendar[]>([]);
@@ -87,7 +87,15 @@ export default function BDRCalendar() {
   };
 
   useEffect(() => { (async () => {
-    const cal = await ensureBdrCalendar();
+    let cal: BdrCalendar | null;
+    if (calendarId) {
+      // Admin mode: load this exact calendar; never create one.
+      const { data } = await (supabase as any)
+        .from("bdr_calendars").select("*").eq("id", calendarId).maybeSingle();
+      cal = (data as BdrCalendar) || null;
+    } else {
+      cal = await ensureBdrCalendar();
+    }
     setCalendar(cal);
     if (cal) {
       const [{ data: eventRows }, { data: allCals }] = await Promise.all([
@@ -205,7 +213,7 @@ export default function BDRCalendar() {
     );
   }
   if (!calendar) {
-    return <div className="p-8 text-white/60 text-sm">Could not load your calendar.</div>;
+    return <div className="p-8 text-white/60 text-sm">{calendarId ? "Calendar not found." : "Could not load your calendar."}</div>;
   }
 
   return (
@@ -390,6 +398,7 @@ export default function BDRCalendar() {
         calendar={calendar}
         bookingUrl={bookingUrl}
         onSaved={(updated) => setCalendar(updated)}
+        adminMode={!!calendarId}
       />
     </div>
   );
@@ -797,12 +806,13 @@ const TIMEZONES = [
   "Asia/Tokyo","Australia/Sydney","Pacific/Auckland",
 ];
 
-function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
+function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved, adminMode = false }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   calendar: BdrCalendar;
   bookingUrl: string;
   onSaved: (cal: BdrCalendar) => void;
+  adminMode?: boolean;
 }) {
   const [name, setName] = useState(calendar.name);
   const [tz, setTz] = useState(calendar.timezone);
@@ -828,10 +838,11 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
       setBookingFormId((calendar as any).booking_form_id ?? "");
       setAvailability(calendar.availability);
       (async () => {
-        const { data } = await (supabase as any)
+        let q = (supabase as any)
           .from("client_forms")
-          .select("id, form_name")
-          .order("form_name", { ascending: true });
+          .select("id, form_name");
+        if (adminMode && (calendar as any).client_id) q = q.eq("client_id", (calendar as any).client_id);
+        const { data } = await q.order("form_name", { ascending: true });
         setAvailableForms((data || []).map((f: any) => ({ id: f.id, form_name: f.form_name })));
       })();
     }
@@ -855,10 +866,16 @@ function SettingsDialog({ open, onOpenChange, calendar, bookingUrl, onSaved }: {
   const save = async () => {
     if (!name.trim()) return;
     setSaving(true);
+    // Merge edited weekday keys into the stored availability so unknown keys
+    // (e.g. _busy_per_day) survive an hours edit.
+    const mergedAvailability: Record<string, any> = { ...((calendar.availability as any) || {}) };
+    DAYS.forEach((d) => {
+      if ((availability as any)[d.key] !== undefined) mergedAvailability[d.key] = (availability as any)[d.key];
+    });
     const patch = {
       name: name.trim(),
       timezone: tz,
-      availability,
+      availability: mergedAvailability,
       booking_title: bookingTitle.trim() || null,
       booking_description: bookingDesc.trim() || null,
       booking_active: bookingActive,
