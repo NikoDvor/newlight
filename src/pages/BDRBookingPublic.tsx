@@ -347,7 +347,7 @@ export default function BDRBookingPublic() {
         logo_url: logoUrl || null,
         sms_consent: smsConsent,
         website: hpWebsite,
-        form_started_at: formStartedAt.current,
+        form_elapsed_ms: Date.now() - formStartedAt.current,
       },
     });
     setSubmitting(false);
