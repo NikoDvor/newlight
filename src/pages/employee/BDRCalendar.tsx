@@ -114,7 +114,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
       setExtraCalendars(((allCals || []) as BdrCalendar[]).filter((c) => c.id !== cal.id));
     }
     setLoading(false);
-  })(); }, []);
+  })(); }, [calendarId]);
 
   const reloadCalendars = useCallback(async () => {
     if (!calendar) return;
