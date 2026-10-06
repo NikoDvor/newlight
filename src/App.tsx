@@ -348,7 +348,7 @@ const App = () => {
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="bdr-meeting-analytics" element={<AdminBdrMeetingAnalytics />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
-                <Route path="calendars" element={<AdminAllCalendars />} />
+                <Route path="calendars" element={<Navigate to="/admin/staff-calendars" replace />} />
                 <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
                 <Route path="company-calendar" element={<AdminCompanyCalendar />} />
