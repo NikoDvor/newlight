@@ -230,10 +230,12 @@ Deno.serve(async (req) => {
           customer_name,
           business_name,
           phone,
-          email,
+          email: emailNorm,
           round_robin: roundRobin,
           origin_calendar_id: originCal.id,
           meeting_kind: "discovery",
+          sms_consent: smsConsentClean,
+          ...(smsConsentClean === true ? { sms_consent_at: new Date().toISOString() } : {}),
         },
       })
       .select("id")
@@ -272,7 +274,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("[bdr-book] failed:", (e as Error).stack || e);
     return new Response(
-      JSON.stringify({ error: (e as Error).message, stack: (e as Error).stack }),
+      JSON.stringify({ error: "Booking failed. Please call (805) 836-3557." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

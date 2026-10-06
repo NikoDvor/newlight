@@ -300,6 +300,8 @@ async function runNotifications(
   try {
     const { clientName, clientPhone, clientEmail, clientBusinessName, clientLogoUrl, bdrUserId, bdrPhone, bdrEmail, bdrName, startsAt, meta, recordId, leadId } = contacts;
     const when = formatDateTime(startsAt);
+    // Explicit false = booker declined texts. true/missing = legacy behavior.
+    const clientSmsBlocked = meta.sms_consent === false;
 
     // --- 0. Create Zoom meeting for this booking -----------------------------
     let zoomJoinUrl: string | null = null;
@@ -342,7 +344,9 @@ async function runNotifications(
     // --- 1. SMS to client ----------------------------------------------------
     const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
     let clientSent = false;
-    if (clientPhone) {
+    if (clientSmsBlocked) {
+      console.log("[SMS→client] skipped — no SMS consent");
+    } else if (clientPhone) {
       clientSent = await sendSms(clientPhone, clientMsg);
       console.log(`[SMS→client] to=${clientPhone} success=${clientSent}`);
     } else {
@@ -434,8 +438,8 @@ async function runNotifications(
             appointment_id: recordId,
             main_goal: meta.improvement_area || null,
             interested_service: meta.improvement_area || null,
-            preferred_contact_method: clientPhone ? "sms" : "email",
-            sms_consent: Boolean(clientPhone),
+            preferred_contact_method: clientPhone && !clientSmsBlocked ? "sms" : "email",
+            sms_consent: Boolean(clientPhone) && !clientSmsBlocked,
             booking_source: "bdr_booking",
           }),
         });
@@ -578,7 +582,9 @@ async function runNotifications(
     // --- 5. Follow-up SMS with credentials — brand-new accounts ONLY.
     // Never for a pre-existing account: the phone number comes from a public,
     // unauthenticated form and is attacker-controlled.
-    if (clientPhone && tempPassword && isNewUser) {
+    if (clientSmsBlocked) {
+      console.log("[SMS→client creds] skipped — no SMS consent");
+    } else if (clientPhone && tempPassword && isNewUser) {
       const credsSms = `Your NewLight workspace is ready. Login at https://newlight-app.com/auth — Email: ${clientEmail} Temporary password: ${tempPassword} — Change your password on first login.`;
       const credsSent = await sendSms(clientPhone, credsSms);
       console.log(`[SMS→client creds] to=${clientPhone} success=${credsSent}`);
