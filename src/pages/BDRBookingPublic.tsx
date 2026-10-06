@@ -172,7 +172,8 @@ function buildSlotsWithReserved(
   return buildSlots(availability, minNoticeMinutes, timeZone, [...booked, ...reserved]);
 }
 
-export default function BDRBookingPublic() {
+export default function BDRBookingPublic({ mode = "discovery" }: { mode?: "discovery" | "meeting" } = {}) {
+  const isMeeting = mode === "meeting";
   const { slug } = useParams<{ slug: string }>();
   const [cal, setCal] = useState<Cal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -402,6 +403,31 @@ export default function BDRBookingPublic() {
     setFormStepComplete(true);
   };
 
+  const submitMeeting = async () => {
+    if (!contact.customer_name || !contact.email || !selectedSlot) return;
+    setSubmitting(true);
+    const phone = contact.phone.trim();
+    const { error } = await supabase.functions.invoke("bdr-book", {
+      body: {
+        booking_slug: cal.booking_slug || cal.id,
+        meeting_kind: "meeting",
+        customer_name: contact.customer_name,
+        business_name: contact.business_name || "",
+        phone: phone || "",
+        email: contact.email,
+        notes: contact.notes,
+        starts_at: selectedSlot,
+        duration_minutes: 60,
+        sms_consent: phone ? smsConsent : false,
+        website: hpWebsite,
+        form_elapsed_ms: Date.now() - formStartedAt.current,
+      },
+    });
+    setSubmitting(false);
+    if (error) { alert("Couldn't book: " + error.message); return; }
+    setDone(true);
+  };
+
   const submitBooking = async () => {
     if (!contact.customer_name || !selectedSlot) return;
     setSubmitting(true);
@@ -480,14 +506,14 @@ export default function BDRBookingPublic() {
             <Check className="h-6 w-6 text-[hsl(142,72%,42%)]" />
           </div>
           <h1 className="text-xl font-bold text-white">You're booked!</h1>
-          <p className="text-sm text-white/60">We've added your appointment. Expect a call shortly.</p>
+          <p className="text-sm text-white/60">{isMeeting ? "A confirmation email with the meeting link is on its way." : "We've added your appointment. Expect a call shortly."}</p>
         </div>
       </div>
     );
   }
 
-  const showFormStep = !!cal.booking_form_id && !formStepComplete;
-  const totalSteps = cal.booking_form_id ? 2 : 1;
+  const showFormStep = !isMeeting && !!cal.booking_form_id && !formStepComplete;
+  const totalSteps = !isMeeting && cal.booking_form_id ? 2 : 1;
   const currentStep = showFormStep ? 1 : totalSteps === 2 ? 2 : 1;
 
   return (
@@ -495,8 +521,8 @@ export default function BDRBookingPublic() {
       <div className="max-w-xl mx-auto space-y-5">
         <div className="text-center">
           <CalIcon className="h-8 w-8 text-[hsl(211,96%,68%)] mx-auto mb-2" />
-          <h1 className="text-2xl font-bold text-white">{cal.booking_title || cal.name}</h1>
-          <p className="text-sm text-white/55 whitespace-pre-wrap">{cal.booking_description || "Pick a time and we'll be in touch."}</p>
+          <h1 className="text-2xl font-bold text-white">{isMeeting ? "Book a Meeting with NewLight" : (cal.booking_title || cal.name)}</h1>
+          <p className="text-sm text-white/55 whitespace-pre-wrap">{isMeeting ? "Pick a time below and a NewLight team member will meet with you." : (cal.booking_description || "Pick a time and we'll be in touch.")}</p>
           {totalSteps === 2 && (
             <div className="mt-3 inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/45">
               <span className={currentStep === 1 ? "text-[hsl(211,96%,68%)]" : ""}>Step 1 · Details</span>
@@ -529,7 +555,40 @@ export default function BDRBookingPublic() {
           </div>
         )}
 
-        {!showFormStep && (
+        {!showFormStep && isMeeting && (
+          <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+            <Field label="Your name" required><Input value={contact.customer_name} onChange={e => setContact({ ...contact, customer_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Email" required><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Phone (optional)"><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Company (optional)"><Input value={contact.business_name} onChange={e => setContact({ ...contact, business_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            <Field label="Notes (optional)">
+              <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white" />
+            </Field>
+            {contact.phone.trim() !== "" && (
+              <label className="flex items-start gap-2 text-xs text-white/60 cursor-pointer">
+                <input type="checkbox" checked={smsConsent} onChange={e => setSmsConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[hsl(211,96%,56%)]" />
+                <span>I agree to receive appointment confirmations and reminders by text message from NewLight Marketing at the number provided. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of booking.</span>
+              </label>
+            )}
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" value={hpWebsite} onChange={e => setHpWebsite(e.target.value)} />
+            </div>
+
+            <BookingSlotPicker slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} />
+
+            <Button onClick={submitMeeting} disabled={submitting || !contact.customer_name || !contact.email || !selectedSlot}
+              className="w-full bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]">
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book meeting"}
+            </Button>
+            {!contact.customer_name || !contact.email || !selectedSlot ? (
+              <p className="text-sm text-red-400 text-center">Please fill in your name, email and select a time slot.</p>
+            ) : null}
+          </div>
+        )}
+
+        {!showFormStep && !isMeeting && (
           <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Your name" required><Input value={contact.customer_name} onChange={e => setContact({ ...contact, customer_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>

@@ -237,7 +237,7 @@ export default function AdminAllCalendars({
             ownerEmail: emailMap[c.user_id],
             ownerDeleted: deleted,
             category: "salesmen",
-            searchSlugs: c.booking_slug ? `${c.booking_slug} /bdr/book/${c.booking_slug}` : "",
+            searchSlugs: c.booking_slug ? `${c.booking_slug} /bdr/book/${c.booking_slug} /bdr/meet/${c.booking_slug}` : "",
             calendarName: c.name,
             typeLabel: "Salesmen Pipeline",
 
@@ -246,7 +246,10 @@ export default function AdminAllCalendars({
             upcoming: ct.upcoming,
             active: !!c.booking_active,
             links: c.booking_slug
-              ? [{ label: "Discovery Booking (Form 1)", path: `/bdr/book/${c.booking_slug}` }]
+              ? [
+                  { label: "Discovery Booking (Form 1)", path: `/bdr/book/${c.booking_slug}` },
+                  { label: "Meeting Link (no form)", path: `/bdr/meet/${c.booking_slug}` },
+                ]
               : [],
             note: "Also receives: Close Prep closing meetings, Pay & Sign onboarding meetings",
           } as UnifiedCalendar;
