@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size, sms_consent, website, form_elapsed_ms } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size, sms_consent, website, form_elapsed_ms, meeting_kind } = body || {};
+    const isMeeting = meeting_kind === "meeting";
 
     // Spam guards — silent drops so bots get no signal.
     const silentDrop = () => new Response(JSON.stringify({ ok: true }), {
@@ -43,7 +44,10 @@ Deno.serve(async (req) => {
     const nameTrim = String(customer_name).trim();
     if (nameTrim.length < 2 || nameTrim.length > 120) return bad("Name must be between 2 and 120 characters.");
     if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return bad("Please enter a valid email address.");
-    if (typeof phone !== "string" || phone.replace(/\D/g, "").length < 10) return bad("Please enter a valid phone number (at least 10 digits).");
+    if (isMeeting) {
+      if (phone != null && typeof phone !== "string") return bad("Please enter a valid phone number (at least 10 digits).");
+      if (typeof phone === "string" && phone.trim() !== "" && phone.replace(/\D/g, "").length < 10) return bad("Please enter a valid phone number (at least 10 digits).");
+    } else if (typeof phone !== "string" || phone.replace(/\D/g, "").length < 10) return bad("Please enter a valid phone number (at least 10 digits).");
     if (business_name != null && String(business_name).length > 200) return bad("Business name must be 200 characters or fewer.");
     if (notes != null && String(notes).length > 2000) return bad("Notes must be 2000 characters or fewer.");
     if (Number.isNaN(new Date(starts_at).getTime())) return bad("Invalid appointment time.");
@@ -140,6 +144,88 @@ Deno.serve(async (req) => {
     const phoneNorm = phoneDigits.length === 11 && phoneDigits.startsWith("1")
       ? phoneDigits.slice(1)
       : phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
+
+    // Plain meeting link: no lead, no round-robin, source "manual" (never provisions).
+    if (isMeeting) {
+      const since = new Date(Date.now() - 10 * 60_000).toISOString();
+      const tooMany = () => new Response(
+        JSON.stringify({ error: "Too many booking attempts. Please call (805) 836-3557." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+      const q = (v: string) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+      const phoneTrim = typeof phone === "string" ? phone.trim() : "";
+      const bookerClauses: string[] = [];
+      if (emailNorm) bookerClauses.push(`metadata->>email.eq.${q(emailNorm)}`);
+      if (phoneTrim) bookerClauses.push(`metadata->>phone.eq.${q(phoneTrim)}`);
+      if (bookerClauses.length) {
+        const { count, error } = await supabase
+          .from("bdr_calendar_events")
+          .select("id", { count: "exact", head: true })
+          .eq("source", "manual")
+          .eq("metadata->>via", "meeting_link")
+          .gte("created_at", since)
+          .or(bookerClauses.join(","));
+        if (error) console.error("[bdr-book] meeting booker rate-limit query failed:", error.message);
+        else if ((count ?? 0) >= 2) return tooMany();
+      }
+      const { count: calCount, error: calCountErr } = await supabase
+        .from("bdr_calendar_events")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "manual")
+        .eq("metadata->>via", "meeting_link")
+        .gte("created_at", since)
+        .eq("metadata->>origin_calendar_id", originCal.id);
+      if (calCountErr) console.error("[bdr-book] meeting calendar rate-limit query failed:", calCountErr.message);
+      else if ((calCount ?? 0) >= 15) return tooMany();
+
+      const meetCal = originCal as any;
+      const { data: mEvt, error: mErr } = await supabase
+        .from("bdr_calendar_events")
+        .insert({
+          user_id: meetCal.user_id,
+          client_id: meetCal.client_id,
+          calendar_id: meetCal.id,
+          title: `Meeting: ${customer_name}${business_name ? " — " + business_name : ""}`,
+          starts_at: start.toISOString(),
+          ends_at: end.toISOString(),
+          lead_id: null,
+          stage: null,
+          source: "manual",
+          notes: notes || null,
+          metadata: {
+            customer_name,
+            business_name: business_name || "",
+            phone: phoneTrim,
+            email: emailNorm,
+            origin_calendar_id: meetCal.id,
+            meeting_kind: "meeting",
+            via: "meeting_link",
+            sms_consent: smsConsentClean,
+            ...(smsConsentClean === true ? { sms_consent_at: new Date().toISOString() } : {}),
+          },
+        })
+        .select("id")
+        .single();
+      if (mErr) throw mErr;
+
+      const mNotify = sendBookingNotifications(supabase, {
+        ownerUserId: meetCal.user_id,
+        customerName: customer_name,
+        businessName: business_name || null,
+        startsAt: start.toISOString(),
+      }).catch((e) => console.error("[bdr-book notifications] uncaught:", e));
+      // deno-lint-ignore no-explicit-any
+      const mWait = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
+      if (typeof mWait === "function") mWait(mNotify); else void mNotify;
+
+      return new Response(JSON.stringify({
+        ok: true,
+        event_id: mEvt.id,
+        lead_id: null,
+        assigned_to: meetCal.user_id,
+        assigned_calendar: meetCal.name,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Rate limits (fail open on query errors — never lose a real booking).
     {
