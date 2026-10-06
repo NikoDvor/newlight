@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, AlertTriangle, Calendar, CalendarPlus, Pencil, Phone } from "lucide-react";
+import { Eye, EyeOff, UserPlus, UserRoundPlus, Trash2, Send, Activity, ChevronDown, Users, AlertTriangle, CalendarPlus, Pencil, Phone } from "lucide-react";
 import { SendAppLinkDialog } from "@/components/admin/SendAppLinkDialog";
 import { EmployeeStatsDialog } from "@/components/admin/EmployeeStatsDialog";
 import { Badge } from "@/components/ui/badge";
@@ -84,8 +83,6 @@ export default function AdminTeam() {
   const [editPhoneValue, setEditPhoneValue] = useState("");
   const [editPhoneLoading, setEditPhoneLoading] = useState(false);
 
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
 
   const manualRoleOptions = [
     { value: "admin", label: "Admin" },
