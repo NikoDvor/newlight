@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Link2, Copy, Check, Search,
@@ -86,6 +87,9 @@ export default function AdminAllCalendars({
   subtitle = "Every calendar in the system — BDR pipeline, staff, service POC, team and booking calendars — with all public booking forms.",
 }: Props = {}) {
   const [chip, setChip] = useState<ChipKey>("all");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const calBase = location.pathname.startsWith("/admin") ? "/admin/staff-calendars" : "/staff-calendars";
   const [items, setItems] = useState<UnifiedCalendar[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -398,6 +402,15 @@ export default function AdminAllCalendars({
                   <span className="text-[hsl(211,96%,70%)]">{c.upcoming} upcoming</span>
                 </div>
 
+                {c.source === "bdr" && !c.ownerDeleted && (
+                  <button
+                    onClick={() => navigate(`${calBase}/${c.id}`)}
+                    className="inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 min-h-[40px] w-full sm:w-auto rounded-lg bg-[hsl(211,96%,56%)] text-white hover:bg-[hsl(211,96%,48%)] transition-colors shrink-0"
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    Open calendar
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     const next = !expanded[c.key];

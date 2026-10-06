@@ -212,6 +212,7 @@ const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetin
 const AdminBDRCalendars = lazy(() => import("./pages/admin/AdminBDRCalendars"));
 const AdminCompanyCalendar = lazy(() => import("./pages/admin/AdminCompanyCalendar"));
 const AdminStaffCalendars = lazy(() => import("./pages/admin/AdminStaffCalendars"));
+const AdminStaffCalendarView = lazy(() => import("./pages/admin/AdminStaffCalendarView"));
 const AdminMeetingIntelligence = lazy(() => import("./pages/admin/AdminMeetingIntelligence"));
 const AdminEmployeePerformance = lazy(() => import("./pages/admin/AdminEmployeePerformance"));
 const AdminWebsites = lazy(() => import("./pages/admin/AdminWebsites"));
@@ -350,6 +351,7 @@ const App = () => {
                 <Route path="calendars" element={<Navigate to="/admin/staff-calendars" replace />} />
                 <Route path="websites" element={<AdminWebsites />} />
                 <Route path="staff-calendars" element={<AdminStaffCalendars />} />
+                <Route path="staff-calendars/:calendarId" element={<AdminStaffCalendarView />} />
                 <Route path="company-calendar" element={<AdminCompanyCalendar />} />
                 <Route path="client-intelligence/health" element={<AdminClientHealth />} />
                 <Route path="client-intelligence/revenue" element={<AdminRevenueGrowth />} />
@@ -487,6 +489,7 @@ const App = () => {
                 <Route path="/knowledge-base" element={<PermissionGuard moduleKey="support"><KnowledgeBase /></PermissionGuard>} />
                 <Route path="/team" element={<PermissionGuard moduleKey="team"><AdminTeam /></PermissionGuard>} />
                 <Route path="/staff-calendars" element={<PermissionGuard moduleKey="team"><AdminStaffCalendars /></PermissionGuard>} />
+                <Route path="/staff-calendars/:calendarId" element={<PermissionGuard moduleKey="team"><AdminStaffCalendarView /></PermissionGuard>} />
                 <Route path="/employee-performance" element={<PermissionGuard moduleKey="team"><AdminEmployeePerformance /></PermissionGuard>} />
                 <Route path="/training-center" element={<PermissionGuard moduleKey="training"><AdminTrainingCenter /></PermissionGuard>} />
                 <Route path="/revenue-expansion" element={<PermissionGuard moduleKey="intelligence"><AdminRevenueExpansion /></PermissionGuard>} />
