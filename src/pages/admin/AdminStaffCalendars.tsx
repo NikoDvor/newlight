@@ -2,7 +2,9 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Eye } from "lucide-react";
+import { Calendar, Eye, Loader2 } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import AdminAllCalendars from "./AdminAllCalendars";
 
 interface ClientOption {
   id: string;
@@ -10,6 +12,21 @@ interface ClientOption {
 }
 
 export default function AdminStaffCalendars() {
+  const { isAdmin, rolesLoaded, isSessionLoading } = useWorkspace();
+  if (isSessionLoading || !rolesLoaded) {
+    return (
+      <div className="min-h-[60vh] grid place-items-center text-white/60">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+  if (isAdmin) {
+    return <AdminAllCalendars title="Staff Calendars" subtitle="Every calendar in the system, labelled by account." />;
+  }
+  return <ClientStaffCalendars />;
+}
+
+function ClientStaffCalendars() {
   const [staffCalendars, setStaffCalendars] = useState<any[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);

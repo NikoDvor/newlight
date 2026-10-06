@@ -17,6 +17,10 @@ interface UnifiedCalendar {
   id: string;
   source: "bdr" | "generic";
   ownerName: string;
+  ownerEmail?: string;
+  ownerDeleted?: boolean;
+  category: "salesmen" | "client_booking" | "other";
+  searchSlugs: string;
   calendarName: string;
   typeLabel: string;
   typeClass: string;
@@ -64,7 +68,24 @@ function groupByDay(rows: BookingRow[]): [string, BookingRow[]][] {
 
 
 
-export default function AdminAllCalendars() {
+type ChipKey = "all" | "salesmen" | "client_booking" | "other";
+const CHIPS: { key: ChipKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "salesmen", label: "Salesmen" },
+  { key: "client_booking", label: "Client booking" },
+  { key: "other", label: "Team/Other" },
+];
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+}
+
+export default function AdminAllCalendars({
+  title = "All Calendars",
+  subtitle = "Every calendar in the system — BDR pipeline, staff, service POC, team and booking calendars — with all public booking forms.",
+}: Props = {}) {
+  const [chip, setChip] = useState<ChipKey>("all");
   const [items, setItems] = useState<UnifiedCalendar[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -163,18 +184,31 @@ export default function AdminAllCalendars() {
       const bdrUserIds = [...new Set(bdrCals.map((c) => c.user_id).filter(Boolean))];
       const genUserIds = [...new Set(genCals.map((c) => c.owner_user_id).filter(Boolean))];
       const allUserIds = [...new Set([...bdrUserIds, ...genUserIds])];
+      // Owner label priority: employee_profiles.full_name → workspace_users.full_name → workspace_users.email
       const nameMap: Record<string, string> = {};
+      const emailMap: Record<string, string> = {};
+      const knownUser = new Set<string>();
       if (allUserIds.length) {
         const [wuRes, epRes] = await Promise.all([
-          supabase.from("workspace_users").select("user_id, display_name").in("user_id", allUserIds),
-          (supabase as any).from("employee_profiles").select("user_id, full_name").in("user_id", allUserIds),
+          supabase.from("workspace_users").select("user_id, full_name, email").in("user_id", allUserIds),
+          (supabase as any).from("employee_profiles").select("user_id, full_name, email").in("user_id", allUserIds),
         ]);
-        (epRes.data || []).forEach((u: any) => { if (u.full_name) nameMap[u.user_id] = u.full_name; });
-        (wuRes.data || []).forEach((u: any) => { if (u.display_name) nameMap[u.user_id] = u.display_name; });
+        (wuRes.data || []).forEach((u: any) => {
+          if (!u.user_id) return;
+          knownUser.add(u.user_id);
+          if (!nameMap[u.user_id] && (u.full_name || u.email)) nameMap[u.user_id] = u.full_name || u.email;
+          if (!emailMap[u.user_id] && u.email) emailMap[u.user_id] = u.email;
+        });
+        (epRes.data || []).forEach((u: any) => {
+          if (!u.user_id) return;
+          knownUser.add(u.user_id);
+          if (u.full_name) nameMap[u.user_id] = u.full_name;
+          if (u.email) emailMap[u.user_id] = u.email;
+        });
       }
 
-      // Client business names
-      const clientIds = [...new Set(genCals.map((c) => c.client_id).filter((id) => id && id !== OPS_CLIENT_ID))];
+      // Client business names (all clients — used for context and as owner fallback)
+      const clientIds = [...new Set(genCals.map((c) => c.client_id).filter(Boolean))];
       const clientMap: Record<string, string> = {};
       if (clientIds.length) {
         const { data } = await supabase.from("clients").select("id, business_name").in("id", clientIds as string[]);
@@ -190,11 +224,16 @@ export default function AdminAllCalendars() {
       const unified: UnifiedCalendar[] = [
         ...bdrCals.map((c) => {
           const ct = bdrCounts[c.id] || { total: 0, upcoming: 0 };
+          const deleted = !!c.user_id && !knownUser.has(c.user_id);
           return {
             key: `bdr-${c.id}`,
             id: c.id,
             source: "bdr" as const,
-            ownerName: nameMap[c.user_id] || "Unassigned",
+            ownerName: deleted ? "No account" : nameMap[c.user_id] || "Unassigned",
+            ownerEmail: emailMap[c.user_id],
+            ownerDeleted: deleted,
+            category: "salesmen",
+            searchSlugs: c.booking_slug ? `${c.booking_slug} /bdr/book/${c.booking_slug}` : "",
             calendarName: c.name,
             typeLabel: "Salesmen Pipeline",
 
@@ -215,7 +254,13 @@ export default function AdminAllCalendars() {
             key: `cal-${c.id}`,
             id: c.id,
             source: "generic" as const,
-            ownerName: (c.owner_user_id && nameMap[c.owner_user_id]) || "Unassigned",
+            ownerName:
+              (c.owner_user_id && nameMap[c.owner_user_id]) ||
+              (c.client_id && clientMap[c.client_id]) ||
+              "Unassigned",
+            ownerEmail: c.owner_user_id ? emailMap[c.owner_user_id] : undefined,
+            category: type === "booking" ? "client_booking" : "other",
+            searchSlugs: (linksByCal[c.id] || []).map((s) => `${s} /book/${s}`).join(" "),
 
             calendarName: c.calendar_name,
             typeLabel: typeLabelFor(type),
@@ -229,6 +274,10 @@ export default function AdminAllCalendars() {
         }),
       ];
 
+      unified.sort((a, b) => {
+        if (!!a.ownerDeleted !== !!b.ownerDeleted) return a.ownerDeleted ? 1 : -1;
+        return a.ownerName.localeCompare(b.ownerName);
+      });
       setItems(unified);
       setLoading(false);
     };
@@ -241,16 +290,29 @@ export default function AdminAllCalendars() {
     setTimeout(() => setCopied(null), 1500);
   };
 
-  const filtered = useMemo(() => {
+  const searched = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
       (i) =>
         i.ownerName.toLowerCase().includes(q) ||
-        i.calendarName?.toLowerCase().includes(q) ||
-        (i.contextLabel || "").toLowerCase().includes(q),
+        (i.ownerEmail || "").toLowerCase().includes(q) ||
+        (i.calendarName || "").toLowerCase().includes(q) ||
+        (i.contextLabel || "").toLowerCase().includes(q) ||
+        i.searchSlugs.toLowerCase().includes(q),
     );
   }, [items, query]);
+
+  const chipCounts = useMemo(() => {
+    const c: Record<ChipKey, number> = { all: searched.length, salesmen: 0, client_booking: 0, other: 0 };
+    searched.forEach((i) => { c[i.category] += 1; });
+    return c;
+  }, [searched]);
+
+  const filtered = useMemo(
+    () => (chip === "all" ? searched : searched.filter((i) => i.category === chip)),
+    [searched, chip],
+  );
 
   if (loading)
     return (
@@ -260,22 +322,36 @@ export default function AdminAllCalendars() {
     );
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-4 sm:p-6 space-y-6 text-white max-w-full overflow-x-hidden">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">All Calendars</h1>
-        <p className="text-sm text-white/60">
-          Every calendar in the system — BDR pipeline, staff, service POC, team and booking calendars — with all public booking forms.
-        </p>
+        <h1 className="text-2xl font-semibold">{title}</h1>
+        <p className="text-sm text-white/60">{subtitle}</p>
       </header>
 
-      <div className="relative max-w-md">
+      <div className="relative w-full sm:max-w-md">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter by owner, calendar or client…"
+          placeholder="Search by name, email or calendar…"
           className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/10 text-sm text-white placeholder:text-white/35 focus:outline-none focus:border-[hsl(211,96%,60%)]/50"
         />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {CHIPS.map((ch) => (
+          <button
+            key={ch.key}
+            onClick={() => setChip(ch.key)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              chip === ch.key
+                ? "bg-[hsl(211,96%,56%)]/20 border-[hsl(211,96%,60%)]/50 text-[hsl(211,96%,80%)]"
+                : "bg-white/[0.04] border-white/10 text-white/60 hover:text-white"
+            }`}
+          >
+            {ch.label} <span className="opacity-60">({chipCounts[ch.key]})</span>
+          </button>
+        ))}
       </div>
 
       <div className="text-xs text-white/40">{filtered.length} calendar{filtered.length === 1 ? "" : "s"}</div>
@@ -292,21 +368,29 @@ export default function AdminAllCalendars() {
           return (
             <div key={c.key} className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
               <div className="p-4 flex flex-wrap items-start gap-3">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-full sm:basis-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium truncate">{c.ownerName}</span>
+                    <span className="text-lg font-semibold break-words min-w-0">{c.ownerName}</span>
+                    {c.ownerDeleted && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full border bg-amber-500/15 border-amber-400/30 text-amber-300">
+                        Owner account deleted
+                      </span>
+                    )}
                     <span className={`text-[11px] px-2 py-0.5 rounded-full border ${c.typeClass}`}>{c.typeLabel}</span>
                     <span className={`text-[11px] px-2 py-0.5 rounded-full ${c.active ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-white/40"}`}>
                       {c.active ? "Live" : "Paused"}
                     </span>
                   </div>
-                  <div className="text-xs text-white/50 mt-1 truncate">
+                  {c.ownerEmail && (
+                    <div className="text-xs text-white/45 break-all">{c.ownerEmail}</div>
+                  )}
+                  <div className="text-xs text-white/50 mt-1 break-words">
                     {c.calendarName}
                     {c.contextLabel && <span className="text-white/35"> · {c.contextLabel}</span>}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs shrink-0">
+                <div className="flex items-center gap-3 text-xs flex-wrap">
                   <span className="text-white/70">
                     <CalendarIcon className="h-3 w-3 inline mr-1" />
                     {c.total} total
@@ -334,10 +418,10 @@ export default function AdminAllCalendars() {
                   ) : (
                     c.links.map((l) => (
                       <div key={l.path} className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-white/50 w-52 shrink-0">{l.label}</span>
+                        <span className="text-xs text-white/50 sm:w-52 shrink-0">{l.label}</span>
                         <button
                           onClick={() => copyLink(l.path)}
-                          className="inline-flex items-center gap-1.5 text-xs font-mono text-white/70 hover:text-white"
+                          className="inline-flex items-center gap-1.5 text-xs font-mono text-white/70 hover:text-white break-all text-left min-w-0"
                         >
                           <Link2 className="h-3 w-3" />
                           {l.path}
