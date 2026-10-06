@@ -204,9 +204,22 @@ Deno.serve(async (req) => {
             ...(smsConsentClean === true ? { sms_consent_at: new Date().toISOString() } : {}),
           },
         })
-        .select("id")
+        .select("*")
         .single();
       if (mErr) throw mErr;
+
+      // The DB webhook only fires booking-confirmation-sms for source='booking_form',
+      // so meeting-link events (source='manual') trigger it explicitly here.
+      const confirmTask = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/booking-confirmation-sms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        },
+        body: JSON.stringify({ type: "INSERT", table: "bdr_calendar_events", record: mEvt }),
+      }).then((r) => console.log(`[bdr-book] meeting confirmation dispatched status=${r.status}`))
+        .catch((e) => console.error("[bdr-book] meeting confirmation dispatch failed:", e));
 
       const mNotify = sendBookingNotifications(supabase, {
         ownerUserId: meetCal.user_id,
@@ -216,7 +229,7 @@ Deno.serve(async (req) => {
       }).catch((e) => console.error("[bdr-book notifications] uncaught:", e));
       // deno-lint-ignore no-explicit-any
       const mWait = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
-      if (typeof mWait === "function") mWait(mNotify); else void mNotify;
+      if (typeof mWait === "function") { mWait(mNotify); mWait(confirmTask); } else { void mNotify; void confirmTask; }
 
       return new Response(JSON.stringify({
         ok: true,

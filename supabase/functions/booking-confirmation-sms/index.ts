@@ -342,7 +342,10 @@ async function runNotifications(
     const joinLine = zoomJoinUrl ? `\n\nJoin the Zoom meeting: ${zoomJoinUrl}` : "";
 
     // --- 1. SMS to client ----------------------------------------------------
-    const clientMsg = `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
+    const isMeetingLink = meta.via === "meeting_link";
+    const clientMsg = isMeetingLink
+      ? `Your meeting with NewLight is confirmed for ${when}. Questions? Call (805) 836-3557${joinLine}`
+      : `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
     let clientSent = false;
     if (clientSmsBlocked) {
       console.log("[SMS→client] skipped — no SMS consent");
@@ -535,12 +538,12 @@ async function runNotifications(
              <p style="margin:12px 0 0;font-size:12px;color:#1E40AF;word-break:break-all;">${zoomJoinUrl}</p>
            </div>`
         : "";
-      const emailText = `${greeting}\n\nYour appointment with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}${magicBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
+      const emailText = `${greeting}\n\nYour ${isMeetingLink ? "meeting" : "appointment"} with NewLight is confirmed for ${when}.${zoomBlockText}${credsBlockText}${magicBlockText}\n\nQuestions? Call (805) 836-3557.\n\nSee you soon,\nThe NewLight Team`;
       const emailHtml = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your appointment is confirmed</h1>
+    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">${isMeetingLink ? "Your meeting is confirmed" : "Your appointment is confirmed"}</h1>
     <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">${greeting}</p>
-    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your strategy session with NewLight is confirmed for <strong>${when}</strong>.</p>
+    <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">Your ${isMeetingLink ? "meeting" : "strategy session"} with NewLight is confirmed for <strong>${when}</strong>.</p>
     ${zoomBlockHtml}
     ${credsBlockHtml}
     ${magicBlockHtml}
