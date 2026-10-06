@@ -210,7 +210,6 @@ const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetingAnalytics"));
 const AdminBDRCalendars = lazy(() => import("./pages/admin/AdminBDRCalendars"));
-const AdminAllCalendars = lazy(() => import("./pages/admin/AdminAllCalendars"));
 const AdminCompanyCalendar = lazy(() => import("./pages/admin/AdminCompanyCalendar"));
 const AdminStaffCalendars = lazy(() => import("./pages/admin/AdminStaffCalendars"));
 const AdminMeetingIntelligence = lazy(() => import("./pages/admin/AdminMeetingIntelligence"));
