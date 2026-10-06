@@ -16,12 +16,37 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size, sms_consent, website, form_started_at } = body || {};
+
+    // Spam guards — silent drops so bots get no signal.
+    const silentDrop = () => new Response(JSON.stringify({ ok: true }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    if (typeof website === "string" && website.length > 0) {
+      console.log("[bdr-book] honeypot tripped");
+      return silentDrop();
+    }
+    if (typeof form_started_at === "number" && Number.isFinite(form_started_at) && Date.now() - form_started_at < 3000) {
+      console.log("[bdr-book] too-fast submit");
+      return silentDrop();
+    }
+    const smsConsentClean: boolean | null = typeof sms_consent === "boolean" ? sms_consent : null;
+
     if (!booking_slug || !customer_name || !starts_at) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const bad = (msg: string) => new Response(JSON.stringify({ error: msg }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    const nameTrim = String(customer_name).trim();
+    if (nameTrim.length < 2 || nameTrim.length > 120) return bad("Name must be between 2 and 120 characters.");
+    if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return bad("Please enter a valid email address.");
+    if (typeof phone !== "string" || phone.replace(/\D/g, "").length < 10) return bad("Please enter a valid phone number (at least 10 digits).");
+    if (business_name != null && String(business_name).length > 200) return bad("Business name must be 200 characters or fewer.");
+    if (notes != null && String(notes).length > 2000) return bad("Notes must be 2000 characters or fewer.");
+    if (Number.isNaN(new Date(starts_at).getTime())) return bad("Invalid appointment time.");
     const modulesClean = Array.isArray(modules_of_interest)
       ? modules_of_interest.filter((m: unknown) => typeof m === "string" && m.length > 0).slice(0, 20)
       : null;
@@ -115,6 +140,38 @@ Deno.serve(async (req) => {
     const phoneNorm = phoneDigits.length === 11 && phoneDigits.startsWith("1")
       ? phoneDigits.slice(1)
       : phoneDigits.length >= 10 ? phoneDigits.slice(-10) : null;
+
+    // Rate limits (fail open on query errors — never lose a real booking).
+    {
+      const since = new Date(Date.now() - 10 * 60_000).toISOString();
+      const tooMany = () => new Response(
+        JSON.stringify({ error: "Too many booking attempts. Please call (805) 836-3557." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+      const q = (v: string) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+      const bookerClauses: string[] = [];
+      if (emailNorm) bookerClauses.push(`metadata->>email.eq.${q(emailNorm)}`);
+      if (typeof phone === "string" && phone) bookerClauses.push(`metadata->>phone.eq.${q(phone)}`);
+      if (bookerClauses.length) {
+        const { count, error } = await supabase
+          .from("bdr_calendar_events")
+          .select("id", { count: "exact", head: true })
+          .in("source", ["booking_form", "round_robin"])
+          .gte("created_at", since)
+          .or(bookerClauses.join(","));
+        if (error) console.error("[bdr-book] booker rate-limit query failed:", error.message);
+        else if ((count ?? 0) >= 2) return tooMany();
+      }
+      const { count: calCount, error: calCountErr } = await supabase
+        .from("bdr_calendar_events")
+        .select("id", { count: "exact", head: true })
+        .in("source", ["booking_form", "round_robin"])
+        .gte("created_at", since)
+        .eq("metadata->>origin_calendar_id", originCal.id);
+      if (calCountErr) console.error("[bdr-book] calendar rate-limit query failed:", calCountErr.message);
+      else if ((calCount ?? 0) >= 15) return tooMany();
+    }
+
 
     // The phone uniqueness indexes on nl_bdr_leads are GLOBAL (not per-rep), so a
     // rep-scoped dedupe lookup is not enough: a phone already claimed by another

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookingSlotPicker } from "@/components/BookingSlotPicker";
 import { useParams } from "react-router-dom";
 import { Loader2, Check, Calendar as CalIcon, ChevronRight } from "lucide-react";
@@ -111,6 +111,9 @@ export default function BDRBookingPublic() {
 
   // Step 2 (time slot + contact) state
   const [contact, setContact] = useState({ customer_name: "", business_name: "", phone: "", email: "", notes: "" });
+  const [smsConsent, setSmsConsent] = useState(false);
+  const [hpWebsite, setHpWebsite] = useState("");
+  const formStartedAt = useRef(Date.now());
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<{ start: Date; end: Date }[]>([]);
   const [hasSalesTeam, setHasSalesTeam] = useState<"" | "yes" | "no">("");
@@ -342,6 +345,9 @@ export default function BDRBookingPublic() {
         has_sales_team,
         sales_team_size: null,
         logo_url: logoUrl || null,
+        sms_consent: smsConsent,
+        website: hpWebsite,
+        form_started_at: formStartedAt.current,
       },
     });
     setSubmitting(false);
@@ -451,6 +457,14 @@ export default function BDRBookingPublic() {
               <Field label="Business" required><Input value={contact.business_name} onChange={e => setContact({ ...contact, business_name: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
               <Field label="Phone" required><Input value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
               <Field label="Email" required><Input type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} className="bg-white/5 border-white/10 text-white" /></Field>
+            </div>
+            <label className="flex items-start gap-2 text-xs text-white/60 cursor-pointer">
+              <input type="checkbox" checked={smsConsent} onChange={e => setSmsConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[hsl(211,96%,56%)]" />
+              <span>I agree to receive appointment confirmations and reminders by text message from NewLight Marketing at the number provided. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of booking.</span>
+            </label>
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" value={hpWebsite} onChange={e => setHpWebsite(e.target.value)} />
             </div>
             <Field label="Notes (optional)">
               <textarea value={contact.notes} onChange={e => setContact({ ...contact, notes: e.target.value })} rows={2}
