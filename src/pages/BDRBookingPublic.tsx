@@ -93,6 +93,85 @@ function buildSlots(
   }));
 }
 
+// --- Reserved ("busy") blocks: deterministic per calendar + day ---------------
+const SLOT_DURATION_MIN = 60;
+
+function hashString(str: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function busyPerDay(availability: any): number {
+  const n = Number(availability?._busy_per_day);
+  if (!Number.isInteger(n) || n < 0) return 0;
+  return Math.min(n, 6);
+}
+
+function dayKeyInTz(d: Date, timeZone: string): string {
+  // en-CA formats as YYYY-MM-DD
+  return d.toLocaleDateString("en-CA", { timeZone });
+}
+
+function buildSlotsWithReserved(
+  calId: string,
+  availability: any,
+  minNoticeMinutes: number,
+  timeZone: string,
+  booked: { start: Date; end: Date }[] = [],
+) {
+  const base = buildSlots(availability, minNoticeMinutes, timeZone, booked);
+  const n = busyPerDay(availability);
+  if (n <= 0) return base;
+
+  const durMs = SLOT_DURATION_MIN * 60_000;
+  const byDay = new Map<string, Date[]>();
+  base.forEach((s) => {
+    const k = dayKeyInTz(s.date, timeZone);
+    byDay.set(k, [...(byDay.get(k) || []), s.date]);
+  });
+
+  const overlaps = (aStart: number, bStart: number) => aStart < bStart + durMs && bStart < aStart + durMs;
+  const reserved: { start: Date; end: Date }[] = [];
+
+  byDay.forEach((starts, day) => {
+    if (starts.length <= 2) return;
+    const rand = mulberry32(hashString(`${calId}|${day}`));
+    // Deterministic shuffle of candidate starts.
+    const pool = starts.map((d) => d.getTime());
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const picks: number[] = [];
+    for (const t of pool) {
+      if (picks.length >= n) break;
+      if (picks.some((p) => overlaps(p, t))) continue;
+      picks.push(t);
+    }
+    const remaining = (ps: number[]) => starts.filter((d) => !ps.some((p) => overlaps(p, d.getTime()))).length;
+    while (picks.length && remaining(picks) < 2) picks.pop();
+    picks.forEach((p) => reserved.push({ start: new Date(p), end: new Date(p + durMs) }));
+  });
+
+  if (!reserved.length) return base;
+  return buildSlots(availability, minNoticeMinutes, timeZone, [...booked, ...reserved]);
+}
+
 export default function BDRBookingPublic() {
   const { slug } = useParams<{ slug: string }>();
   const [cal, setCal] = useState<Cal | null>(null);
@@ -260,7 +339,7 @@ export default function BDRBookingPublic() {
     })();
   }, [slug]);
 
-  const slots = useMemo(() => (cal ? buildSlots(cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles", bookedRanges) : []), [cal, bookedRanges]);
+  const slots = useMemo(() => (cal ? buildSlotsWithReserved(cal.id, cal.availability, cal.min_notice_minutes ?? DEFAULT_MIN_NOTICE_MINUTES, cal.timezone || "America/Los_Angeles", bookedRanges) : []), [cal, bookedRanges]);
 
   // Prefill Step-2 contact fields from common form keys (name/email/phone/business) if present.
   useEffect(() => {
