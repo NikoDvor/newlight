@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
-    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size, sms_consent, website, form_started_at } = body || {};
+    const { booking_slug, customer_name, business_name, phone, email, starts_at, duration_minutes, notes, modules_of_interest, logo_url, has_sales_team, sales_team_size, sms_consent, website, form_elapsed_ms } = body || {};
 
     // Spam guards — silent drops so bots get no signal.
     const silentDrop = () => new Response(JSON.stringify({ ok: true }), {
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       console.log("[bdr-book] honeypot tripped");
       return silentDrop();
     }
-    if (typeof form_started_at === "number" && Number.isFinite(form_started_at) && Date.now() - form_started_at < 3000) {
+    if (typeof form_elapsed_ms === "number" && Number.isFinite(form_elapsed_ms) && form_elapsed_ms >= 0 && form_elapsed_ms < 3000) {
       console.log("[bdr-book] too-fast submit");
       return silentDrop();
     }
