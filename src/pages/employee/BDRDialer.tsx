@@ -562,7 +562,7 @@ export default function BDRDialer() {
       </div>
 
       {/* Show Dialed toggle */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           role="switch"
@@ -1027,8 +1027,6 @@ function WonHistoryButton({ userId, onOpenLead }: { userId: string | null; onOpe
     setLoadingMore(false);
   };
 
-  const loadedCount = useRef(0);
-  useEffect(() => { loadedCount.current = rows.length; }, [rows]);
   const [offset, setOffset] = useState(WON_PAGE);
   useEffect(() => { if (open) setOffset(WON_PAGE); }, [open]);
 
