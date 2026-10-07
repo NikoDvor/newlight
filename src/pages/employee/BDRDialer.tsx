@@ -980,7 +980,14 @@ function WonHistoryButton({ userId, onOpenLead }: { userId: string | null; onOpe
     (wonLeads || []).forEach((l: any) => {
       if (!map.has(l.id)) map.set(l.id, l.updated_at || null);
     });
-    const list = [...map.entries()].map(([leadId, wonAt]) => ({ leadId, wonAt }))
+    // Drop leads that have since been deleted so the count matches what's listed.
+    const allIds = [...map.keys()];
+    const alive = new Set<string>();
+    for (let i = 0; i < allIds.length; i += 100) {
+      const { data: ex } = await (supabase as any).from("nl_bdr_leads").select("id").in("id", allIds.slice(i, i + 100));
+      (ex || []).forEach((r: any) => alive.add(r.id));
+    }
+    const list = [...map.entries()].filter(([id]) => alive.has(id)).map(([leadId, wonAt]) => ({ leadId, wonAt }))
       .sort((a, b) => (b.wonAt || "").localeCompare(a.wonAt || ""));
     setEntries(list);
     return list;
