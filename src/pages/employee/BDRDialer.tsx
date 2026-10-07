@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X, Trash2 } from "lucide-react";
+import { Loader2, BookOpen, Phone, Calendar, CalendarClock, Search, X, Trash2, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -581,6 +581,7 @@ export default function BDRDialer() {
           </span>
           Show Dialed
         </button>
+        <WonHistoryButton userId={userId} onOpenLead={() => navigate("/employee/leads?filter=stage:won")} />
         <span className="text-[11px] text-white/40">
           {showDialed ? "Dialed, not yet won — most recently dialed first" : "Not yet dialed"}
         </span>
@@ -933,5 +934,168 @@ export default function BDRDialer() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+
+// ─── Won history ─────────────────────────────────────────────────────────────
+// Every lead this BDR marked Won (bdr_call_outcomes) or owns at stage "won",
+// de-duplicated by lead id, newest first. Read-only; does not affect the queue.
+const WON_PAGE = 200;
+
+type WonEntry = { leadId: string; wonAt: string | null };
+type WonRow = WonEntry & {
+  business_name: string | null;
+  owner_name: string | null;
+  phone: string | null;
+  appointmentAt: string | null;
+};
+
+function fmtDateTime(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function WonHistoryButton({ userId, onOpenLead }: { userId: string | null; onOpenLead: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<WonEntry[] | null>(null);
+  const [rows, setRows] = useState<WonRow[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadEntries = useCallback(async () => {
+    if (!userId) return;
+    const [{ data: outs }, { data: wonLeads }] = await Promise.all([
+      (supabase as any).from("bdr_call_outcomes").select("lead_id, logged_at")
+        .eq("bdr_user_id", userId).eq("outcome", "Won")
+        .order("logged_at", { ascending: false }).limit(5000),
+      (supabase as any).from("nl_bdr_leads").select("id, updated_at")
+        .eq("user_id", userId).eq("pipeline_stage", "won").limit(5000),
+    ]);
+    const map = new Map<string, string | null>();
+    (outs || []).forEach((o: any) => {
+      if (!o.lead_id) return;
+      const prev = map.get(o.lead_id);
+      if (!prev || (o.logged_at && o.logged_at > prev)) map.set(o.lead_id, o.logged_at || null);
+    });
+    (wonLeads || []).forEach((l: any) => {
+      if (!map.has(l.id)) map.set(l.id, l.updated_at || null);
+    });
+    const list = [...map.entries()].map(([leadId, wonAt]) => ({ leadId, wonAt }))
+      .sort((a, b) => (b.wonAt || "").localeCompare(a.wonAt || ""));
+    setEntries(list);
+    return list;
+  }, [userId]);
+
+  const loadDetails = useCallback(async (slice: WonEntry[]) => {
+    if (!slice.length) return [] as WonRow[];
+    const ids = slice.map((e) => e.leadId);
+    const leadMap: Record<string, any> = {};
+    const apptMap: Record<string, string> = {};
+    for (let i = 0; i < ids.length; i += 100) {
+      const chunk = ids.slice(i, i + 100);
+      const [{ data: leads }, { data: evts }] = await Promise.all([
+        (supabase as any).from("nl_bdr_leads")
+          .select("id, business_name, owner_name, phone, owner_direct_phone, front_desk_phone").in("id", chunk),
+        (supabase as any).from("bdr_calendar_events")
+          .select("lead_id, starts_at, source").in("lead_id", chunk).neq("source", "dialer")
+          .order("starts_at", { ascending: false }),
+      ]);
+      (leads || []).forEach((l: any) => { leadMap[l.id] = l; });
+      (evts || []).forEach((e: any) => { if (e.lead_id && !apptMap[e.lead_id]) apptMap[e.lead_id] = e.starts_at; });
+    }
+    // Leads deleted since being won are skipped.
+    return slice.filter((e) => leadMap[e.leadId]).map((e) => {
+      const l = leadMap[e.leadId];
+      return {
+        ...e,
+        business_name: l.business_name,
+        owner_name: l.owner_name,
+        phone: l.owner_direct_phone || l.phone || l.front_desk_phone || null,
+        appointmentAt: apptMap[e.leadId] || null,
+      };
+    });
+  }, []);
+
+  useEffect(() => { loadEntries(); }, [loadEntries]);
+
+  const openSheet = async () => {
+    setOpen(true);
+    setRows([]);
+    setLoadingMore(true);
+    const list = (await loadEntries()) || [];
+    setRows(await loadDetails(list.slice(0, WON_PAGE)));
+    setLoadingMore(false);
+  };
+
+  const loadedCount = useRef(0);
+  useEffect(() => { loadedCount.current = rows.length; }, [rows]);
+  const [offset, setOffset] = useState(WON_PAGE);
+  useEffect(() => { if (open) setOffset(WON_PAGE); }, [open]);
+
+  const loadMore = async () => {
+    if (!entries) return;
+    setLoadingMore(true);
+    const more = await loadDetails(entries.slice(offset, offset + WON_PAGE));
+    setRows((prev) => [...prev, ...more]);
+    setOffset((o) => o + WON_PAGE);
+    setLoadingMore(false);
+  };
+
+  const total = entries?.length ?? 0;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={openSheet}
+        disabled={!userId}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] transition-colors"
+        style={{ background: "hsla(142,72%,42%,.12)", color: "hsl(142,72%,62%)", border: "1px solid hsla(142,72%,42%,.35)" }}
+      >
+        <Trophy className="h-3.5 w-3.5" />
+        Won history{entries ? ` (${total})` : ""}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white p-0 gap-0 flex flex-col overflow-hidden max-h-[100dvh] h-[100dvh] sm:h-auto sm:max-h-[85dvh] w-full max-w-lg">
+          <DialogHeader className="px-4 pt-4 pb-3 border-b border-white/10 shrink-0">
+            <DialogTitle>Won history{entries ? ` (${total})` : ""}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2" style={{ overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}>
+            {loadingMore && rows.length === 0 ? (
+              <div className="py-12 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-white/40" /></div>
+            ) : rows.length === 0 ? (
+              <div className="py-12 text-center text-sm text-white/50">
+                No won leads yet. When you log a "Won" outcome, the lead shows up here.
+              </div>
+            ) : (
+              <>
+                {rows.map((r) => (
+                  <button
+                    key={r.leadId}
+                    type="button"
+                    onClick={() => { setOpen(false); onOpenLead(); }}
+                    className="w-full text-left rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] p-3 space-y-1"
+                  >
+                    <div className="text-sm font-semibold break-words">{r.business_name || "Unnamed firm"}</div>
+                    <div className="text-xs text-white/60 break-words">
+                      {r.owner_name || "—"}{r.phone ? ` · ${r.phone}` : ""}
+                    </div>
+                    <div className="text-[11px] text-white/45">
+                      Won {fmtDateTime(r.wonAt)}
+                      {r.appointmentAt && <span className="text-[hsl(142,72%,62%)]"> · Appointment {fmtDateTime(r.appointmentAt)}</span>}
+                    </div>
+                  </button>
+                ))}
+                {entries && offset < entries.length && (
+                  <Button variant="ghost" className="w-full text-white/70" disabled={loadingMore} onClick={loadMore}>
+                    {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load more"}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
