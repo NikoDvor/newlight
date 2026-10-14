@@ -25,10 +25,10 @@ export interface BusinessCategory {
 
 export const BUSINESS_CATEGORIES: BusinessCategory[] = [
   {
-    id: "financial_compliance",
-    label: "Financial & Compliance",
-    helper: "Financial firms, CPA firms, and more",
-    industryKeys: ["financial_legal"],
+    id: "ria",
+    label: "Registered Investment Adviser (RIA)",
+    helper: "Independent and hybrid RIAs",
+    industryKeys: ["ria"],
     defaultArchetype: "high_ticket_recurring",
     defaultZoomTier: "z2",
     pricingFamily: "consultative_sales",
@@ -36,103 +36,48 @@ export const BUSINESS_CATEGORIES: BusinessCategory[] = [
     legacyIndustry: "financial services",
   },
   {
-    id: "aesthetics_wellness",
-    label: "Aesthetics, Wellness & Appointments",
-    helper: "Med spas, barber shops, and more",
-    industryKeys: ["healthcare_wellness"],
-    defaultArchetype: "appointments",
-    defaultZoomTier: "z2",
-    pricingFamily: "appointment_local",
-    legacyProfile: "appointment_local",
-    legacyIndustry: "healthcare",
-  },
-  {
-    id: "field_local_service",
-    label: "Field & Local Service",
-    helper: "Window washing, HVAC, and more",
-    industryKeys: ["home_services"],
-    defaultArchetype: "appointments",
-    defaultZoomTier: "z2",
-    pricingFamily: "field_service",
-    legacyProfile: "field_service",
-    legacyIndustry: "construction",
-  },
-  {
-    id: "food_hospitality",
-    label: "Food, Hospitality & Foot Traffic",
-    helper: "Restaurants, cafes, and more",
-    industryKeys: ["hospitality_local"],
-    defaultArchetype: "transactions",
-    defaultZoomTier: "z2",
-    pricingFamily: "appointment_local",
-    legacyProfile: "appointment_local",
-    legacyIndustry: "restaurant",
-  },
-  {
-    id: "professional_consultative",
-    label: "Professional & Consultative",
-    helper: "Marketing agencies, consultants, and more",
-    industryKeys: ["agencies_professional"],
-    defaultArchetype: "retainers",
-    defaultZoomTier: "z2",
-    pricingFamily: "consultative_sales",
-    legacyProfile: "consultative_sales",
-    legacyIndustry: "agency",
-  },
-  {
-    id: "real_estate",
-    label: "Real Estate & Property",
-    helper: "Real estate teams, brokerages, and more",
-    industryKeys: ["real_estate"],
+    id: "wealth_management",
+    label: "Wealth Management",
+    helper: "Wealth managers, financial planners, multi-family offices",
+    industryKeys: ["wealth_management"],
     defaultArchetype: "high_ticket_recurring",
     defaultZoomTier: "z2",
     pricingFamily: "consultative_sales",
     legacyProfile: "consultative_sales",
-    legacyIndustry: "real estate",
+    legacyIndustry: "financial services",
   },
   {
-    id: "membership_recurring",
-    label: "Membership & Recurring Revenue",
-    helper: "Gyms, coaching programs, and more",
-    industryKeys: ["education_coaching"],
+    id: "hedge_fund",
+    label: "Hedge Fund",
+    helper: "Hedge funds and alternative investment managers",
+    industryKeys: ["hedge_fund"],
+    defaultArchetype: "enterprise_accounts",
+    defaultZoomTier: "z2",
+    pricingFamily: "consultative_sales",
+    legacyProfile: "consultative_sales",
+    legacyIndustry: "financial services",
+  },
+  {
+    id: "private_equity_vc",
+    label: "Private Equity & Venture Capital",
+    helper: "PE firms, VC firms, fund managers",
+    industryKeys: ["private_equity_vc"],
+    defaultArchetype: "enterprise_accounts",
+    defaultZoomTier: "z2",
+    pricingFamily: "consultative_sales",
+    legacyProfile: "consultative_sales",
+    legacyIndustry: "financial services",
+  },
+  {
+    id: "financial_insurance",
+    label: "Financial Insurance",
+    helper: "Life, annuity and financial insurance firms",
+    industryKeys: ["financial_insurance"],
     defaultArchetype: "retainers",
     defaultZoomTier: "z2",
-    pricingFamily: "membership_recurring",
-    legacyProfile: "membership_recurring",
-    legacyIndustry: "fitness",
-  },
-  {
-    id: "retail_ecommerce",
-    label: "Retail, Ecommerce & Product Sales",
-    helper: "Retail stores, ecommerce brands, and more",
-    industryKeys: ["ecommerce_retail"],
-    defaultArchetype: "ecommerce",
-    defaultZoomTier: "z2",
-    pricingFamily: "appointment_local",
-    legacyProfile: "membership_recurring",
-    legacyIndustry: "e-commerce",
-  },
-  {
-    id: "technology_saas",
-    label: "Technology & SaaS",
-    helper: "SaaS companies, software firms, and more",
-    industryKeys: ["saas_tech"],
-    defaultArchetype: "subscription_saas",
-    defaultZoomTier: "z3",
-    pricingFamily: "membership_recurring",
-    legacyProfile: "membership_recurring",
-    legacyIndustry: "e-commerce",
-  },
-  {
-    id: "project_delivery",
-    label: "Project / Delivery Businesses",
-    helper: "Contractors, builders, and more",
-    industryKeys: ["logistics_industrial"],
-    defaultArchetype: "projects",
-    defaultZoomTier: "z2",
-    pricingFamily: "project_service",
-    legacyProfile: "project_service",
-    legacyIndustry: "construction",
+    pricingFamily: "consultative_sales",
+    legacyProfile: "consultative_sales",
+    legacyIndustry: "financial services",
   },
 ];
 
@@ -176,13 +121,14 @@ export function buildStructuredProfile(
   categoryId: string,
   _legacyNicheArg: null = null
 ): StructuredWorkspaceProfile {
-  const cat = getCategoryById(categoryId);
+  const cat = getCategoryById(categoryId) ?? getCategoryById("ria");
+  categoryId = cat?.id ?? "ria";
 
   // Fallback defaults when no category matches
-  const fallbackLegacyIndustry = "other";
-  const fallbackLegacyProfile = "custom_hybrid";
-  const fallbackPricingFamily = "custom_hybrid";
-  const fallbackArchetype = "appointments";
+  const fallbackLegacyIndustry = "financial services";
+  const fallbackLegacyProfile = "consultative_sales";
+  const fallbackPricingFamily = "consultative_sales";
+  const fallbackArchetype = "high_ticket_recurring";
 
   const archetype = cat?.defaultArchetype ?? fallbackArchetype;
   const zoomTier = cat?.defaultZoomTier ?? "z2";
@@ -204,16 +150,11 @@ export function buildStructuredProfile(
 
   // Derive pricing bracket from category
   const bracketFromCategory: Record<string, string> = {
-    financial_compliance: "premium_financial",
-    aesthetics_wellness: "high_local",
-    field_local_service: "standard_field",
-    food_hospitality: "standard_local",
-    professional_consultative: "standard_consultative",
-    real_estate: "real_estate_consultative",
-    membership_recurring: "standard_membership",
-    retail_ecommerce: "safe_default_retail",
-    technology_saas: "saas_recurring",
-    project_delivery: "standard_project",
+    ria: "premium_financial",
+    wealth_management: "premium_financial",
+    hedge_fund: "premium_financial",
+    private_equity_vc: "premium_financial",
+    financial_insurance: "premium_financial",
   };
   const bracketMap = bracketFromCategory;
 
@@ -230,7 +171,7 @@ export function buildStructuredProfile(
     },
     pricing: {
       family: pricingFamily,
-      bracket: bracketMap[categoryId] || "standard",
+      bracket: bracketMap[categoryId] || "premium_financial",
     },
     twilioPlaybook: `${archetype}_default`,
     appStoreTier: "premium",
