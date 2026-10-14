@@ -14,7 +14,7 @@ const fadeUp = {
 };
 
 const DEFAULT_PROFILE: WorkspaceProfile = {
-  industry: "agencies_professional",
+  industry: "ria",
   niche: null,
   archetype: "retainers",
   zoomTier: "z2",
