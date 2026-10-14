@@ -112,7 +112,14 @@ const STAGE_BY_KEY: Record<PipelineStageKey, PipelineStageDef> =
 export function pipelineStageFromOutcome(label: string | null | undefined): PipelineStageKey | null {
   if (!label) return null;
   const l = label.toLowerCase();
-  if (l.includes("won") || l.includes("booked") || l.includes("closed on the spot")) return "won";
+  // Lost-at-a-meeting labels from the outcome form
+  if (l.startsWith("lost at ")) return "cold";
+  // Firm-no outcomes go back to cold
+  if (l.includes("wasn't interested") || l.includes("didn't see the value") ||
+      l.includes("already has a marketing company") || l.includes("business closed")) return "cold";
+  // Booking a meeting is hot, not won
+  if (l.includes("booked")) return "hot";
+  if (l.includes("won") || l.includes("closed on the spot")) return "won";
   if (l.includes("call back") || l.includes("callback") || l.includes("follow up") ||
       l.includes("follow-up") || l.includes("owner wasn't") || l.includes("asked for info") ||
       l.includes("left owner")) return "hot";
@@ -128,7 +135,8 @@ function derivePipelineStage(lead: BdrLead): PipelineStageKey {
   const last = lead.outcome_history?.[lead.outcome_history.length - 1]?.label;
   const fromOutcome = pipelineStageFromOutcome(last);
   if (fromOutcome) return fromOutcome;
-  if (lead.status === "closed_won" || lead.status === "appointment_booked") return "won";
+  if (lead.status === "closed_won") return "won";
+  if (lead.status === "appointment_booked") return "hot";
   if (lead.status === "contacted") return "warm";
   return "cold";
 }
