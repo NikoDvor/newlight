@@ -2,11 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // ── Profile Types ──
 export const PROFILE_TYPES = [
-  { value: "field_service", label: "Field Service", description: "HVAC, plumbing, cleaning, landscaping — on-site dispatch", zoomDefault: false },
-  { value: "appointment_local", label: "Appointment / Local", description: "Dental, salon, law, med spa — in-office booking", zoomDefault: false },
-  { value: "consultative_sales", label: "Consultative Sales", description: "Agency, consulting, B2B — Zoom-heavy sales calls", zoomDefault: true },
-  { value: "membership_recurring", label: "Membership / Recurring", description: "Gym, subscription, coaching — recurring cadence", zoomDefault: false },
-  { value: "project_service", label: "Project / Delivery", description: "Contractor, agency delivery — project kickoff workflow", zoomDefault: true },
+  { value: "consultative_sales", label: "Financial Firm", description: "Discovery, review and planning meetings, Zoom-first", zoomDefault: true },
   { value: "custom_hybrid", label: "Custom / Hybrid", description: "Manual configuration — admin selects everything", zoomDefault: true },
 ] as const;
 
@@ -42,82 +38,17 @@ export interface ProfilePackDefinition {
 }
 
 const PROFILE_PACKS: Record<string, ProfilePackDefinition> = {
-  field_service: {
-    calendars: [
-      { calendar_name: "Service Dispatch", calendar_type: "team", appointment_types: ["On-site Visit", "Estimate"], default_duration: 60, location_type: "custom" },
-    ],
-    forms: [
-      { form_name: "Service Request", form_type: "booking" },
-      { form_name: "Client Intake", form_type: "intake" },
-    ],
-    reminders: [
-      { reminder_type: "before_appointment", channel: "sms", offset_minutes: 1440 },
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 1440 },
-      { reminder_type: "before_appointment", channel: "sms", offset_minutes: 60 },
-    ],
-    zoom_enabled: false,
-    reminder_channels: { email: true, sms: true },
-    module_flags: { meeting_intelligence: false, zoom_meetings: false, workforce: true },
-  },
-  appointment_local: {
-    calendars: [
-      { calendar_name: "Main Booking", calendar_type: "booking", appointment_types: ["Consultation", "Follow-up"], default_duration: 30, location_type: "in_person" },
-    ],
-    forms: [
-      { form_name: "Contact Form", form_type: "contact" },
-      { form_name: "Patient / Client Intake", form_type: "intake" },
-    ],
-    reminders: [
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 1440 },
-      { reminder_type: "before_appointment", channel: "sms", offset_minutes: 60 },
-    ],
-    zoom_enabled: false,
-    reminder_channels: { email: true, sms: true },
-    module_flags: { meeting_intelligence: false, zoom_meetings: false },
-  },
   consultative_sales: {
     calendars: [
-      { calendar_name: "Sales Calls", calendar_type: "booking", appointment_types: ["Discovery", "Demo", "Closing Call"], default_duration: 45, location_type: "virtual" },
-      { calendar_name: "Follow-up", calendar_type: "booking", appointment_types: ["Follow-up Call"], default_duration: 30, location_type: "virtual" },
+      { calendar_name: "Client Meetings", calendar_type: "booking", appointment_types: ["Discovery Call", "Financial Review", "Planning Session"], default_duration: 60, location_type: "virtual" },
+      { calendar_name: "Onboarding", calendar_type: "booking", appointment_types: ["Onboarding Meeting", "Account Setup"], default_duration: 60, location_type: "virtual" },
     ],
     forms: [
-      { form_name: "Lead Capture", form_type: "contact" },
-      { form_name: "Needs Assessment", form_type: "intake" },
+      { form_name: "Prospect Intake", form_type: "intake" },
     ],
     reminders: [
       { reminder_type: "before_appointment", channel: "email", offset_minutes: 1440 },
       { reminder_type: "before_appointment", channel: "email", offset_minutes: 15 },
-    ],
-    zoom_enabled: true,
-    reminder_channels: { email: true, sms: false },
-    module_flags: { meeting_intelligence: true, zoom_meetings: true },
-  },
-  membership_recurring: {
-    calendars: [
-      { calendar_name: "Class Schedule", calendar_type: "team", appointment_types: ["Intro Session", "Assessment"], default_duration: 60, location_type: "in_person" },
-      { calendar_name: "1-on-1 Booking", calendar_type: "booking", appointment_types: ["Personal Session"], default_duration: 30, location_type: "in_person" },
-    ],
-    forms: [
-      { form_name: "Membership Application", form_type: "intake" },
-    ],
-    reminders: [
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 10080 },
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 1440 },
-    ],
-    zoom_enabled: false,
-    reminder_channels: { email: true, sms: false },
-    module_flags: { meeting_intelligence: false, zoom_meetings: false },
-  },
-  project_service: {
-    calendars: [
-      { calendar_name: "Project Kickoff", calendar_type: "booking", appointment_types: ["Kickoff Call", "Check-in"], default_duration: 60, location_type: "virtual" },
-    ],
-    forms: [
-      { form_name: "Project Brief", form_type: "intake" },
-    ],
-    reminders: [
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 2880 },
-      { reminder_type: "before_appointment", channel: "email", offset_minutes: 60 },
     ],
     zoom_enabled: true,
     reminder_channels: { email: true, sms: false },
@@ -135,27 +66,12 @@ const PROFILE_PACKS: Record<string, ProfilePackDefinition> = {
 
 // ── Provisional Profile Guess ──
 export function guessProvisionalProfile(businessType: string): { profile: ProfileType; zoomDefault: boolean } {
-  const t = (businessType || "").toLowerCase();
-  if (["hvac", "plumbing", "cleaning service", "landscaping", "roofing", "window washing", "construction"].some(k => t.includes(k))) {
-    return { profile: "field_service", zoomDefault: false };
-  }
-  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) {
-    return { profile: "appointment_local", zoomDefault: false };
-  }
-  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) {
-    return { profile: "consultative_sales", zoomDefault: true };
-  }
-  if (["e-commerce"].some(k => t.includes(k))) {
-    return { profile: "membership_recurring", zoomDefault: false };
-  }
-  if (["legal", "construction"].some(k => t.includes(k))) {
-    return { profile: "project_service", zoomDefault: true };
-  }
-  return { profile: "custom_hybrid", zoomDefault: true };
+  void businessType;
+  return { profile: "consultative_sales", zoomDefault: true };
 }
 
 export function getProfilePack(profileType: string): ProfilePackDefinition {
-  return PROFILE_PACKS[profileType] || PROFILE_PACKS.custom_hybrid;
+  return PROFILE_PACKS[profileType] || PROFILE_PACKS.consultative_sales;
 }
 
 // ── Profile Application Engine (activation-time only) ──

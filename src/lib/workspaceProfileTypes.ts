@@ -4,66 +4,11 @@
 
 // ── Industry Categories ──
 export const INDUSTRY_CATEGORIES = [
-  {
-    value: "healthcare_wellness",
-    label: "Healthcare & Wellness",
-    examples: "Med spa, dental, chiropractic, fitness, mental health",
-  },
-  {
-    value: "financial_legal",
-    label: "Financial & Legal",
-    examples: "Accounting, wealth management, insurance, law firms",
-  },
-  {
-    value: "agencies_professional",
-    label: "Agencies & Professional Services",
-    examples: "Marketing agencies, consulting, staffing, IT services",
-  },
-  {
-    value: "ecommerce_retail",
-    label: "Ecommerce & Retail",
-    examples: "Online stores, DTC brands, retail chains",
-  },
-  {
-    value: "home_services",
-    label: "Home Services & Contractors",
-    examples: "HVAC, plumbing, roofing, cleaning, landscaping",
-  },
-  {
-    value: "real_estate",
-    label: "Real Estate",
-    examples: "Brokerages, property management, mortgage",
-  },
-  {
-    value: "hospitality_local",
-    label: "Restaurants, Hospitality & Local Foot Traffic",
-    examples: "Restaurants, hotels, salons, barbershops, auto shops",
-  },
-  {
-    value: "saas_tech",
-    label: "SaaS, Tech & Digital Products",
-    examples: "Software companies, app builders, digital platforms",
-  },
-  {
-    value: "logistics_industrial",
-    label: "Logistics, Industrial & Manufacturing",
-    examples: "Supply chain, warehousing, manufacturing, distribution",
-  },
-  {
-    value: "education_coaching",
-    label: "Education, Coaching & Training",
-    examples: "Online courses, coaching programs, tutoring, academies",
-  },
-  {
-    value: "nonprofit_community",
-    label: "Nonprofit & Community Organizations",
-    examples: "Nonprofits, religious orgs, community groups, advocacy",
-  },
-  {
-    value: "other",
-    label: "Other / Custom",
-    examples: "Doesn't fit a category above",
-  },
+  { value: "ria", label: "Registered Investment Adviser (RIA)", examples: "Independent and hybrid RIAs" },
+  { value: "wealth_management", label: "Wealth Management", examples: "Wealth managers, financial planners, multi-family offices" },
+  { value: "hedge_fund", label: "Hedge Fund", examples: "Hedge funds and alternative investment managers" },
+  { value: "private_equity_vc", label: "Private Equity & Venture Capital", examples: "PE firms, VC firms, fund managers" },
+  { value: "financial_insurance", label: "Financial Insurance", examples: "Life, annuity and financial insurance firms" },
 ] as const;
 
 export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number]["value"];
@@ -71,51 +16,21 @@ export type IndustryCategory = (typeof INDUSTRY_CATEGORIES)[number]["value"];
 // ── Business Model Archetypes ──
 export const BUSINESS_ARCHETYPES = [
   {
-    value: "appointments",
-    label: "Appointments",
-    description: "Revenue tied to scheduled sessions or visits",
-    icon: "calendar",
-  },
-  {
-    value: "projects",
-    label: "Projects",
-    description: "Scoped deliverables with milestones and deadlines",
-    icon: "folder",
+    value: "high_ticket_recurring",
+    label: "High-Ticket Recurring",
+    description: "AUM or advisory-fee based recurring client relationships",
+    icon: "trending-up",
   },
   {
     value: "retainers",
     label: "Retainers",
-    description: "Ongoing monthly service agreements",
+    description: "Retainer or flat-fee advisory engagements",
     icon: "repeat",
-  },
-  {
-    value: "transactions",
-    label: "Transactions",
-    description: "One-time purchases or point-of-sale activity",
-    icon: "credit-card",
-  },
-  {
-    value: "ecommerce",
-    label: "Ecommerce",
-    description: "Online product sales with carts and fulfillment",
-    icon: "shopping-bag",
-  },
-  {
-    value: "subscription_saas",
-    label: "Subscription / SaaS",
-    description: "Recurring digital subscriptions or platform access",
-    icon: "zap",
-  },
-  {
-    value: "high_ticket_recurring",
-    label: "High-Ticket Recurring",
-    description: "Premium services billed monthly or quarterly",
-    icon: "trending-up",
   },
   {
     value: "enterprise_accounts",
     label: "Enterprise Accounts",
-    description: "Large contracts with multi-stakeholder sales cycles",
+    description: "Institutional accounts with multi-stakeholder relationships",
     icon: "building",
   },
 ] as const;
@@ -162,36 +77,14 @@ import type { ProfileType } from "@/lib/profileEngine";
 
 /** Map new industry category → best-fit legacy ProfileType */
 export function mapIndustryToLegacyProfile(industry: IndustryCategory): ProfileType {
-  const map: Record<IndustryCategory, ProfileType> = {
-    healthcare_wellness: "appointment_local",
-    financial_legal: "consultative_sales",
-    agencies_professional: "consultative_sales",
-    ecommerce_retail: "membership_recurring",
-    home_services: "field_service",
-    real_estate: "consultative_sales",
-    hospitality_local: "appointment_local",
-    saas_tech: "membership_recurring",
-    logistics_industrial: "project_service",
-    education_coaching: "membership_recurring",
-    nonprofit_community: "custom_hybrid",
-    other: "custom_hybrid",
-  };
-  return map[industry] ?? "custom_hybrid";
+  void industry;
+  return "consultative_sales";
 }
 
 /** Map new archetype → best-fit legacy ProfileType (overrides industry if more specific) */
 export function mapArchetypeToLegacyProfile(archetype: BusinessArchetype): ProfileType {
-  const map: Record<BusinessArchetype, ProfileType> = {
-    appointments: "appointment_local",
-    projects: "project_service",
-    retainers: "consultative_sales",
-    transactions: "appointment_local",
-    ecommerce: "membership_recurring",
-    subscription_saas: "membership_recurring",
-    high_ticket_recurring: "consultative_sales",
-    enterprise_accounts: "consultative_sales",
-  };
-  return map[archetype] ?? "custom_hybrid";
+  void archetype;
+  return "consultative_sales";
 }
 
 /** Build a complete WorkspaceProfile with legacy mappings */
@@ -224,12 +117,12 @@ export function buildWorkspaceProfile(
 
 /** Default empty profile */
 export const DEFAULT_WORKSPACE_PROFILE: WorkspaceProfile = {
-  industry: "other",
+  industry: "ria",
   niche: null,
-  archetype: "appointments",
+  archetype: "high_ticket_recurring",
   zoomTier: "z2",
-  legacyProfileType: "custom_hybrid",
-  legacyIndustryValue: "",
+  legacyProfileType: "consultative_sales",
+  legacyIndustryValue: "registered investment adviser (ria)",
   metadata: {
     revenueModel: "lead_gen",
     salesCycle: "medium",

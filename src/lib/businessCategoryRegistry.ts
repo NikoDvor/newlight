@@ -176,9 +176,9 @@ export function buildStructuredProfile(
     twilioPlaybook: `${archetype}_default`,
     appStoreTier: "premium",
     onboardingPreset: `${archetype}_onboarding`,
-    modulePreset: `${archetype}_modules`,
-    proposalPreset: `${archetype}_proposal`,
-    contractPreset: `${archetype}_contract`,
+    modulePreset: "financial_compliance",
+    proposalPreset: "financial_compliance",
+    contractPreset: "financial_compliance",
     legacy: {
       industry: legacyIndustry,
       provisional_profile: legacyProfile,
