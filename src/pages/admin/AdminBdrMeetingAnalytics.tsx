@@ -10,6 +10,7 @@ import {
   RefreshCw, Target, Clock, Users,
 } from "lucide-react";
 import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
+import MeetingOutcomeAnalytics from "@/components/admin/MeetingOutcomeAnalytics";
 
 /* ─── constants ─── */
 const NEON = "hsl(211 96% 60%)";
@@ -540,6 +541,14 @@ export default function AdminBdrMeetingAnalytics() {
           </Select>
         </div>
       </div>
+
+      <MeetingOutcomeAnalytics
+        range={range}
+        repFilter={repFilter}
+        reps={reps.map(r => ({ id: r.id, name: r.name }))}
+        onRepSelect={setRepFilter}
+      />
+
 
 
       {loading ? (
