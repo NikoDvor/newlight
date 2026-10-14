@@ -185,7 +185,7 @@ serve(async (req) => {
     }
 
     // ---- Ask AI for recommendation per breached signal ----
-    const prompt = `You are a growth advisor for a ${client?.industry || "small business"} named "${client?.business_name || "the client"}".
+    const prompt = `You are a growth advisor for a ${client?.industry || "financial firm"} named "${client?.business_name || "the client"}".
 
 Below are business signals that are underperforming the ${industry} industry benchmark. For each, produce a specific, actionable recommendation.
 

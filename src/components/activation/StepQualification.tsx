@@ -128,7 +128,7 @@ export function StepQualification({ form, set, submitting, bookingModules, meeti
           <div><label className={labelCls}>Business Name *</label><Input value={form.business_name_confirmed} onChange={e => set("business_name_confirmed", e.target.value)} className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}>Legal Business Name</label><Input value={form.legal_business_name} onChange={e => set("legal_business_name", e.target.value)} className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}>Display Name</label><Input value={form.display_name} onChange={e => set("display_name", e.target.value)} className={inputCls} disabled={submitting} /></div>
-          <div><label className={labelCls}>Industry</label><Input value={form.industry} onChange={e => set("industry", e.target.value)} placeholder="e.g. Salon, Med Spa, Agency" className={inputCls} disabled={submitting} /></div>
+          <div><label className={labelCls}>Industry</label><Input value={form.industry} onChange={e => set("industry", e.target.value)} placeholder="e.g. RIA, Wealth Management, Hedge Fund" className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}><Globe className="h-3 w-3 inline mr-1" />Website</label><Input value={form.website_url} onChange={e => set("website_url", e.target.value)} placeholder="https://" className={inputCls} disabled={submitting} /></div>
           <div><label className={labelCls}><MapPin className="h-3 w-3 inline mr-1" />Primary Location</label><Input value={form.primary_location} onChange={e => set("primary_location", e.target.value)} className={inputCls} disabled={submitting} /></div>
         </div>

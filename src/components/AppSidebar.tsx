@@ -186,7 +186,6 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { hasAccess } = useWorkspacePermissions();
   const { isAdmin, activeClientId } = useWorkspace();
-  const [clientIndustry, setClientIndustry] = useState<string | null>(null);
   const [hasSalesTeam, setHasSalesTeam] = useState(false);
 
   useEffect(() => {
@@ -202,7 +201,6 @@ export function AppSidebar() {
     })();
   }, [activeClientId]);
 
-  const isFieldService = clientIndustry ? FIELD_SERVICE_TYPES.includes(clientIndustry) : false;
   const pathOnly = (url: string) => url.split("?")[0];
   const isActive = (url: string) => {
     const path = pathOnly(url);
@@ -216,7 +214,6 @@ export function AppSidebar() {
     if (item.internalOnly && !isNewLightInternal(activeClientId)) return false;
     if (item.salesTeamOnly && !isAdmin && !hasSalesTeam) return false;
     if (!item.moduleKey || isAdmin) return true;
-    if (item.moduleKey === "meeting_intel" && isFieldService) return false;
     return hasAccess(item.moduleKey, "view");
   };
 
