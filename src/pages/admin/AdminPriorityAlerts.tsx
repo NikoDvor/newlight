@@ -13,6 +13,15 @@ const STATUS_META = {
 export default function AdminPriorityAlerts() {
   const flagged = MOCK_CLIENTS.filter(c => c.status !== "healthy");
 
+  if (MOCK_CLIENTS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Clients that need attention will appear here once workspaces are live.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

@@ -480,10 +480,6 @@ function EmptyBlock({ icon: Icon, title, desc }: { icon: any; title: string; des
 }
 
 
-function fakeSparkline(base: number, len = 7): number[] {
-  if (base === 0) return Array.from({ length: len }, () => 0);
-  return Array.from({ length: len }, () => Math.max(0, base * (0.6 + Math.random() * 0.8)));
-}
 
 /* ── Circular Progress ── */
 function CircularProgress({ value, size = 56, stroke = 4 }: { value: number; size?: number; stroke?: number }) {
@@ -818,8 +814,6 @@ export default function Dashboard() {
   const isLive = onboardingStage === "active";
   const hasData = metrics.contacts > 0 || metrics.openDeals > 0 || metrics.upcomingEvents > 0;
   const displayName = branding.company_name || activeClientName || "your business";
-  const sparkContacts = useMemo(() => fakeSparkline(metrics.contacts), [metrics.contacts]);
-  const sparkEvents = useMemo(() => fakeSparkline(metrics.upcomingEvents), [metrics.upcomingEvents]);
 
   const quickActions = [
     { label: "New Contact", icon: UserPlus, to: "/crm" },
@@ -1041,8 +1035,8 @@ export default function Dashboard() {
             <SectionHeader icon={Cpu} label="System Metrics" extra={<AIIndicator />} />
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
               className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" sparkData={sparkContacts} />
-              <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} accent to="/calendar" sparkData={sparkEvents} />
+              <KpiCard label="Contacts" value={metrics.contacts} sub="Total in CRM" icon={Users} to="/crm" />
+              <KpiCard label="Appointments" value={metrics.upcomingEvents} sub={`${metrics.completedEvents} completed`} icon={Calendar} accent to="/calendar" />
               <KpiCard label="Proposals" value={metrics.pendingProposals} sub="Awaiting signature" icon={FileText} to="/proposals" />
               <KpiCard label="Follow-Ups" value={metrics.overdueFollowUps} sub={metrics.overdueFollowUps > 0 ? "Needs attention" : "All clear"} icon={Clock} to="/follow-up-queue" />
             </motion.div>

@@ -15,6 +15,15 @@ export default function AdminClientHealth() {
   const healthy = MOCK_CLIENTS.filter(c => c.score >= 70).length;
   const risk = MOCK_CLIENTS.filter(c => c.score < 50).length;
 
+  if (MOCK_CLIENTS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Health scores for each client workspace will appear here once clients are live.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

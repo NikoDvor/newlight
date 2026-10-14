@@ -8,6 +8,15 @@ export default function AdminRevenueGrowth() {
   const prevRev = MOCK_CLIENTS.reduce((s, c) => s + c.monthlyRevenue[0], 0);
   const delta = Math.round(((totalRev - prevRev) / prevRev) * 100);
 
+  if (MOCK_CLIENTS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Monthly revenue trends for each client will appear here once tracked.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

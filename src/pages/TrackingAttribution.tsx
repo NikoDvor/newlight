@@ -10,11 +10,10 @@ import {
 } from "@/lib/clientAcquisitionMock";
 
 // Scope this client-facing page to a single client's own data.
-// Uses Sunrise Med Spa as the mock source; the "sourcedBy" BDR field is
+// The "sourcedBy" BDR field is
 // intentionally omitted — that's admin-only info.
 const client =
-  MOCK_ACQUISITION_CLIENTS.find((c) => c.name === "Sunrise Med Spa") ??
-  MOCK_ACQUISITION_CLIENTS[0];
+  MOCK_ACQUISITION_CLIENTS[0] as (typeof MOCK_ACQUISITION_CLIENTS)[number] | undefined;
 
 const TOOLTIP_STYLE = {
   background: "hsl(220 35% 10%)",
@@ -24,6 +23,15 @@ const TOOLTIP_STYLE = {
 };
 
 export default function TrackingAttribution() {
+  if (!client) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Your traffic sources, appointments and close rate will appear here once tracking is connected.</p>
+        </div>
+      </div>
+    );
+
   const cr = closeRate(client);
   const br = bookingRate(client);
   const trendData = client.appointmentsTrend.map((v, i) => ({

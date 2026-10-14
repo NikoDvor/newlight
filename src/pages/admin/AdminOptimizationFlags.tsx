@@ -13,6 +13,15 @@ export default function AdminOptimizationFlags() {
   const suggestions = MOCK_CLIENTS.flatMap(c => c.optimizations.map(o => ({ ...o, client: c.name, industry: c.industry })));
   const high = suggestions.filter(s => s.priority === "high").length;
 
+  if (MOCK_CLIENTS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Optimization suggestions for client workspaces will appear here.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

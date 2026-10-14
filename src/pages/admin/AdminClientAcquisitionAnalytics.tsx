@@ -105,6 +105,15 @@ export default function AdminClientAcquisitionAnalytics() {
     return { views, appts, closed, avgClose };
   }, []);
 
+  if (MOCK_ACQUISITION_CLIENTS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Traffic, appointments and close rates per client will appear here once tracked.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

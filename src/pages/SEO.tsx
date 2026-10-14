@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { DataCard } from "@/components/DataCard";
 import { WidgetGrid } from "@/components/WidgetGrid";
-import { SetupBanner, DemoDataLabel } from "@/components/SetupBanner";
+import { SetupBanner } from "@/components/SetupBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,20 +18,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
-const DEMO_KEYWORDS = [
-  { keyword: "best plumber near me", position: 3, volume: 8100, change: 2 },
-  { keyword: "emergency plumbing service", position: 7, volume: 4400, change: -1 },
-  { keyword: "24 hour plumber", position: 12, volume: 6600, change: 3 },
-  { keyword: "drain cleaning service", position: 5, volume: 3200, change: 0 },
-  { keyword: "water heater repair", position: 18, volume: 2900, change: -4 },
-];
-
-const DEMO_CONTENT = [
-  { title: "Write blog: 'Top 10 Plumbing Tips for Homeowners'", keyword: "plumbing tips", potential: "High" },
-  { title: "Create FAQ page for common questions", keyword: "plumbing FAQ", potential: "Medium" },
-  { title: "Update service area pages with local keywords", keyword: "local SEO", potential: "High" },
-];
 
 export default function SEO() {
   const { activeClientId, isAdmin } = useWorkspace();
@@ -516,39 +502,10 @@ export default function SEO() {
                 </div>
               </div>
               {keywords.length === 0 ? (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <DemoDataLabel />
-                    <span className="text-[10px] text-muted-foreground">Example rankings — add your keywords to see real data</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left text-xs font-medium text-muted-foreground py-3">Keyword</th>
-                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Position</th>
-                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Volume</th>
-                          <th className="text-right text-xs font-medium text-muted-foreground py-3">Change</th>
-                        </tr>
-                      </thead>
-                      <tbody className="opacity-60">
-                        {DEMO_KEYWORDS.map((k, i) => (
-                          <tr key={i} className="border-b border-border last:border-0">
-                            <td className="text-sm py-3">{k.keyword}</td>
-                            <td className="text-sm font-medium text-right py-3 tabular-nums">#{k.position}</td>
-                            <td className="text-sm text-right py-3 tabular-nums text-muted-foreground">{k.volume.toLocaleString()}</td>
-                            <td className="text-right py-3">
-                              <span className={`text-xs flex items-center justify-end gap-0.5 ${k.change > 0 ? "text-emerald-600" : k.change < 0 ? "text-red-500" : "text-muted-foreground"}`}>
-                                {k.change > 0 ? <ArrowUp className="h-3 w-3" /> : k.change < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                                {Math.abs(k.change)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="text-center mt-4">
+                <div className="py-8 text-center">
+                  <p className="text-base font-semibold text-foreground">No data yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Your tracked keywords and rankings will appear here once you add them.</p>
+                  <div className="mt-4">
                     <Button size="sm" onClick={() => setKwOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Your Keywords</Button>
                   </div>
                 </div>
