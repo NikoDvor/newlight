@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
     // Attempt Twilio send
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    const FROM = "+18555066111") {
+    const FROM = "+18555066111";
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       status = "failed";
       errorNote = "Twilio credentials not configured in this environment (LOVABLE_API_KEY or TWILIO_API_KEY missing).";
     } else {
