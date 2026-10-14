@@ -50,12 +50,7 @@ async function sendEmail(to: string, subject: string, html: string, text: string
 async function sendSms(supabase: any, clientId: string, to: string, body: string) {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-  const FROM = Deno.env.get("TWILIO_FROM_NUMBER") || "+18555066111";
-
-  let sid: string | null = null;
-  let status = "sent";
-  let errorNote: string | null = null;
-
+  const FROM = "+18555066111";
   if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
     status = "failed";
     errorNote = "Twilio credentials not configured in this environment.";
