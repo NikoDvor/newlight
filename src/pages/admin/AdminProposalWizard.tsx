@@ -15,7 +15,7 @@ import type { QuoteOutput } from "@/lib/workspaceQuoteEngine";
 import { ArrowLeft, Brain, Package, Eye, Loader2 } from "lucide-react";
 
 const DEFAULT_PROFILE: WorkspaceProfile = {
-  industry: "agencies_professional",
+  industry: "ria",
   niche: null,
   archetype: "retainers",
   zoomTier: "z2",
