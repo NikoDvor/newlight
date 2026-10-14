@@ -348,6 +348,44 @@ Deno.serve(async (req) => {
     if (cplErr) console.error("[close-prep-submit] close_prep_links insert failed", cplErr.message);
 
 
+    // 6b. Log the Discovery meeting outcome (Won → Form 2). Silent skip if none.
+    try {
+      const preferredEventId = typeof body?.event_id === "string" ? body.event_id : null;
+      const { data: discEvents } = await supabase
+        .from("bdr_calendar_events")
+        .select("id, attempt_number, starts_at")
+        .eq("lead_id", lead.id)
+        .eq("meeting_kind", "discovery")
+        .order("starts_at", { ascending: false })
+        .limit(50);
+      const ids = (discEvents || []).map((e: any) => e.id);
+      let logged = new Set<string>();
+      if (ids.length) {
+        const { data: outs } = await supabase
+          .from("bdr_meeting_outcomes").select("event_id")
+          .in("event_id", ids).eq("meeting_kind", "discovery");
+        logged = new Set((outs || []).map((o: any) => o.event_id));
+      }
+      const open = (discEvents || []).filter((e: any) => !logged.has(e.id));
+      const target = open.find((e: any) => e.id === preferredEventId) || open[0];
+      if (target) {
+        const { error: oErr } = await supabase.from("bdr_meeting_outcomes").insert({
+          client_id: lead.client_id ?? null,
+          event_id: target.id,
+          lead_id: lead.id,
+          rep_user_id: userId,
+          meeting_kind: "discovery",
+          attempt_number: target.attempt_number ?? 1,
+          attendance: "attended",
+          result: "won",
+          next_step: "form_2",
+          next_event_id: evt.id,
+        } as any);
+        if (oErr) console.error("[close-prep-submit] outcome insert failed", oErr.message);
+        else await supabase.from("bdr_calendar_events").update({ attendance: "attended" }).eq("id", target.id);
+      }
+    } catch (e) { console.error("[close-prep-submit] discovery outcome error", e); }
+
     // Construct the client-facing Pay & Sign URL
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = "";
