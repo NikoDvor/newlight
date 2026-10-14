@@ -19,6 +19,8 @@ import RenameListButton from "@/components/employee/RenameListButton";
 import ResearchQueueCard from "@/components/employee/ResearchQueueCard";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
+import { rescheduleMeeting } from "@/lib/meetingReschedule";
+import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
@@ -189,7 +191,7 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 /* Latest meeting per lead, used for attendance tracking */
-interface LatestMeeting { id: string; starts_at: string; attendance: string | null; source: string | null; reschedule_count: number | null }
+interface LatestMeeting { id: string; starts_at: string; attendance: string | null; source: string | null; reschedule_count: number | null; meeting_kind?: string | null; attempt_number?: number | null }
 
 /** Hours remaining before the 72h Unattended auto-revert. */
 function unattendedHoursLeft(since: string): number {
@@ -228,6 +230,9 @@ export default function BDRMyLeads() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [latestMeetingByLead, setLatestMeetingByLead] = useState<Record<string, LatestMeeting>>({});
+  /** All outcome rows for my leads, keyed by lead id (newest first). */
+  const [outcomesByLead, setOutcomesByLead] = useState<Record<string, OutcomeRow[]>>({});
+  const [outcomeLeadSheet, setOutcomeLeadSheet] = useState<BdrLead | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
@@ -260,20 +265,26 @@ export default function BDRMyLeads() {
       const CHUNK = 200;
       for (let i = 0; i < leadIds.length; i += CHUNK) {
         const { data: evts } = await (supabase as any).from("bdr_calendar_events")
-          .select("id, lead_id, starts_at, attendance, source, reschedule_count")
+          .select("id, lead_id, starts_at, attendance, source, reschedule_count, meeting_kind, attempt_number")
           .in("lead_id", leadIds.slice(i, i + CHUNK))
           .order("starts_at", { ascending: false });
         (evts || []).forEach((e: any) => {
           if (!e.lead_id) return;
           const prev = meetingMap[e.lead_id];
           if (!prev || new Date(e.starts_at).getTime() > new Date(prev.starts_at).getTime()) {
-            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance, source: e.source ?? null, reschedule_count: e.reschedule_count ?? null };
+            meetingMap[e.lead_id] = { id: e.id, starts_at: e.starts_at, attendance: e.attendance, source: e.source ?? null, reschedule_count: e.reschedule_count ?? null, meeting_kind: e.meeting_kind ?? null, attempt_number: e.attempt_number ?? null };
           }
         });
       }
       setLatestMeetingByLead(meetingMap);
+      const { data: outs } = await (supabase as any).from("bdr_meeting_outcomes")
+        .select(OUTCOME_SELECT).in("lead_id", leadIds).order("logged_at", { ascending: false });
+      const om: Record<string, OutcomeRow[]> = {};
+      (outs || []).forEach((o: OutcomeRow) => { if (o.lead_id) (om[o.lead_id] ||= []).push(o); });
+      setOutcomesByLead(om);
     } else {
       setLatestMeetingByLead({});
+      setOutcomesByLead({});
     }
     setLoading(false);
   }, [user?.id]);
@@ -327,20 +338,20 @@ export default function BDRMyLeads() {
     let oldEventId: string | null = null;
     let newEventId: string | null = null;
     if (existing) {
-      const { data: old, error: readErr } = await (supabase as any).from("bdr_calendar_events")
-        .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count")
-        .eq("id", existing.id).single();
-      if (readErr || !old) { toast({ title: "Could not reschedule", description: readErr?.message, variant: "destructive" }); return; }
-      const nextCount = (old.reschedule_count ?? 0) + 1;
-      const { reschedule_count: _rc, ...copy } = old;
-      const { data: created, error } = await (supabase as any).from("bdr_calendar_events")
-        .insert({ ...copy, starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending", reschedule_count: nextCount })
-        .select("id").single();
-      if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
-      await (supabase as any).from("bdr_calendar_events").update({ attendance: "rescheduled" }).eq("id", existing.id);
+      let createdId: string;
+      try {
+        createdId = await rescheduleMeeting({ eventId: existing.id, lead, start, durationMinutes: 60 });
+      } catch (e: any) {
+        toast({ title: "Could not reschedule", description: e?.message, variant: "destructive" });
+        fetchLeads();
+        return;
+      }
+      const nextCount = ((existing as any).reschedule_count ?? 0) + 1;
+      const created = { id: createdId };
       oldEventId = existing.id;
       newEventId = created.id;
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: created.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null, reschedule_count: nextCount } }));
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: created.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null, reschedule_count: nextCount, meeting_kind: existing.meeting_kind ?? null, attempt_number: (existing.attempt_number ?? 1) + 1 } }));
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, unattended_since: null, unattended_return_stage: null, unattended_warned_at: null } : l));
     } else {
       const cal = await ensureBdrCalendar();
       if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
@@ -360,7 +371,8 @@ export default function BDRMyLeads() {
     }
 
     // Log the reschedule to the client's activity timeline
-    if (lead.client_id) {
+    // (existing-meeting reschedules are logged inside rescheduleMeeting)
+    if (!existing && lead.client_id) {
       await (supabase as any).from("audit_logs").insert({
         client_id: lead.client_id,
         module: "bdr_pipeline",
@@ -376,10 +388,10 @@ export default function BDRMyLeads() {
       });
     }
 
-    await clearUnattended(lead);
+    if (!existing) await clearUnattended(lead);
     toast({ title: "Meeting rescheduled" });
     setRescheduleLead(null);
-  }, [latestMeetingByLead, user?.id, clearUnattended]);
+  }, [latestMeetingByLead, user?.id, clearUnattended, fetchLeads]);
 
   const handleCancelMeeting = useCallback(async (lead: BdrLead) => {
     const existing = latestMeetingByLead[lead.id];
@@ -1177,6 +1189,32 @@ export default function BDRMyLeads() {
                         </div>
                         {(() => {
                           const m = latestMeetingByLead[lead.id];
+                          const leadOutcomes = outcomesByLead[lead.id] || [];
+                          if (m && OUTCOME_KINDS.includes((m.meeting_kind || "") as any)) {
+                            const hasOutcome = leadOutcomes.some(o => o.event_id === m.id && o.meeting_kind !== "pay_sign");
+                            if (needsOutcome(m, hasOutcome)) {
+                              return (
+                                <div onClick={(e) => e.stopPropagation()}
+                                  className="mt-2 flex flex-wrap items-center gap-2 rounded-lg px-2.5 py-1.5"
+                                  style={{ background: "hsla(0,72%,50%,.08)", border: "1px solid hsla(0,72%,50%,.35)" }}>
+                                  <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
+                                    style={{ background: "hsla(0,72%,50%,.16)", color: "hsl(0,72%,68%)", border: "1px solid hsla(0,72%,50%,.4)" }}>
+                                    Outcome needed
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {new Date(m.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                  </span>
+                                  <Button size="sm" className="h-6 text-[11px] px-2" onClick={() => setOutcomeLeadSheet(lead)}>Log meeting outcome</Button>
+                                </div>
+                              );
+                            }
+                          }
+                          if (leadOutcomes[0]) {
+                            return (
+                              <p className="mt-1.5 text-[11px] text-muted-foreground">{formatOutcomeSummary(leadOutcomes[0])}</p>
+                            );
+                          }
+                          if (m && m.meeting_kind) return null;
                           const st = derivePipelineStage(lead);
                           const needsAttendance = !!m && (st === "warm" || st === "hot" || st === "won")
                             && m.attendance === "pending"
@@ -1397,6 +1435,14 @@ export default function BDRMyLeads() {
         onClose={() => setRescheduleLead(null)}
         onConfirm={handleReschedule}
         onCancelMeeting={handleCancelMeeting}
+      />
+      <MeetingOutcomeSheet
+        event={outcomeLeadSheet && latestMeetingByLead[outcomeLeadSheet.id]
+          ? { ...latestMeetingByLead[outcomeLeadSheet.id], meeting_kind: latestMeetingByLead[outcomeLeadSheet.id].meeting_kind ?? null, attempt_number: latestMeetingByLead[outcomeLeadSheet.id].attempt_number ?? null, lead_id: outcomeLeadSheet.id }
+          : null}
+        lead={outcomeLeadSheet}
+        onCancel={() => setOutcomeLeadSheet(null)}
+        onDone={() => { setOutcomeLeadSheet(null); fetchLeads(); }}
       />
       <CustomerProfilePanel
         open={!!profileLeadId}

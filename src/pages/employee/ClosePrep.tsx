@@ -92,6 +92,7 @@ export default function ClosePrep() {
     const { data, error } = await supabase.functions.invoke("close-prep-submit", {
       body: {
         lead_id: lead.id,
+        event_id: new URLSearchParams(window.location.search).get("event") || null,
         initial_fee: Number(initialFee),
         pricing_model: pricingModel,
         recurring_fee: pricingModel === "retainer" ? Number(recurringFee) : null,
