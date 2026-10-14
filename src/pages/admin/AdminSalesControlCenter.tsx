@@ -81,8 +81,8 @@ const DEFAULT_PROFILE: WorkspaceProfile = {
   niche: "ria",
   archetype: "high_ticket_recurring",
   zoomTier: "z3",
-  legacyProfileType: "appointment_local",
-  legacyIndustryValue: "healthcare & wellness",
+  legacyProfileType: "consultative_sales",
+  legacyIndustryValue: "registered investment adviser (ria)",
   metadata: { revenueModel: "consultation", salesCycle: "short", ticketSize: "high", complexityLevel: "medium", complianceLevel: "moderate" },
 };
 
