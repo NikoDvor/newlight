@@ -12,14 +12,8 @@ import {
 
 /* ── industry-specific copy ── */
 const industryConfig: Record<string, { tagline: string; goals: string[]; modules: string[] }> = {
-  "med_spa": { tagline: "More appointments. Stronger patient growth. Effortless follow-up.", goals: ["consultations", "patient retention", "review generation"], modules: ["Calendar", "CRM", "Reviews", "Website"] },
-  "dental": { tagline: "Fill your chairs. Grow your practice. Automate recall.", goals: ["new patients", "appointment bookings", "recall campaigns"], modules: ["Calendar", "CRM", "Reviews", "Ads"] },
   "financial_services": { tagline: "Build trust. Win clients. Scale your practice.", goals: ["client acquisition", "consultations", "referral growth"], modules: ["CRM", "Calendar", "Website", "SEO"] },
-  "ecommerce": { tagline: "More sales. Higher conversions. Repeat customers.", goals: ["conversions", "repeat purchases", "cart recovery"], modules: ["Website", "Ads", "SEO", "Social Media"] },
-  "agency": { tagline: "Stronger pipeline. More proposals. Client growth.", goals: ["pipeline growth", "proposals sent", "client retention"], modules: ["CRM", "Calendar", "Reports", "Website"] },
-  "restaurant": { tagline: "Full tables. Rave reviews. Loyal customers.", goals: ["reservations", "reviews", "local visibility"], modules: ["Reviews", "Social Media", "SEO", "Calendar"] },
-  "real_estate": { tagline: "More listings. More closings. Dominant presence.", goals: ["lead generation", "closings", "market visibility"], modules: ["CRM", "Ads", "Website", "SEO"] },
-  default: { tagline: "More leads. Stronger follow-up. Faster growth.", goals: ["lead generation", "bookings", "reviews", "follow-up"], modules: ["Dashboard", "CRM", "Calendar", "Reviews", "Website", "SEO", "Ads", "Reports"] },
+  default: { tagline: "Build trust. Win clients. Scale your practice.", goals: ["client acquisition", "consultations", "referral growth"], modules: ["CRM", "Calendar", "Website", "SEO"] },
 };
 
 const moduleIcons: Record<string, any> = {
