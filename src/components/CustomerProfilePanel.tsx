@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Calendar, Clock, Mail, Phone, Building2, User, CheckCircle2, XCircle, RotateCcw, Loader2, Plus, Copy } from "lucide-react";
 import { getLeadPhones } from "@/lib/leadFlags";
+import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, kindAttemptLabel, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 
 type Attendance = "pending" | "attended" | "no_show" | "rescheduled";
 
@@ -38,6 +39,8 @@ interface EventRow {
   outcome: string | null;
   notes: string | null;
   source: string;
+  meeting_kind: string | null;
+  attempt_number: number | null;
 }
 
 const STAGES = [
@@ -95,6 +98,8 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
   const [stage, setStage] = useState<string>("cold");
   const [showSchedule, setShowSchedule] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+  const [outcomes, setOutcomes] = useState<Record<string, OutcomeRow>>({});
+  const [outcomeEvent, setOutcomeEvent] = useState<EventRow | null>(null);
 
   const copyLeadId = async () => {
     if (!lead) return;
@@ -118,10 +123,15 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
     }
     const { data: ev } = await (supabase as any)
       .from("bdr_calendar_events")
-      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source")
+      .select("id, calendar_id, title, starts_at, ends_at, attendance, outcome, notes, source, meeting_kind, attempt_number")
       .eq("lead_id", leadId)
       .order("starts_at", { ascending: false });
     setEvents((ev || []) as EventRow[]);
+    const { data: outs } = await (supabase as any).from("bdr_meeting_outcomes")
+      .select(OUTCOME_SELECT).eq("lead_id", leadId);
+    const om: Record<string, OutcomeRow> = {};
+    (outs || []).forEach((o: OutcomeRow) => { if (o.meeting_kind !== "pay_sign") om[o.event_id] = o; });
+    setOutcomes(om);
     setLoading(false);
   };
 
@@ -289,6 +299,20 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                         </div>
                         {e.outcome && <div className="text-xs text-white/60">Outcome: {e.outcome}</div>}
                         {e.notes && <div className="text-xs text-white/60 whitespace-pre-wrap">{e.notes}</div>}
+                        {OUTCOME_KINDS.includes((e.meeting_kind || "") as any) ? (
+                          <div className="pt-1">
+                            {outcomes[e.id] ? (
+                              <div className="text-xs text-white/80">{formatOutcomeSummary(outcomes[e.id])}</div>
+                            ) : needsOutcome(e, false) ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: "hsla(0,72%,50%,.16)", color: "hsl(0,72%,68%)" }}>Outcome needed</span>
+                                <Button size="sm" className="h-6 text-[11px] px-2" onClick={() => setOutcomeEvent(e)}>Log meeting outcome</Button>
+                              </div>
+                            ) : (
+                              <div className="text-xs text-white/50">{kindAttemptLabel(e.meeting_kind, e.attempt_number)}</div>
+                            )}
+                          </div>
+                        ) : (
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {ATTENDANCE_OPTIONS.map(o => (
                             <button key={o.key}
@@ -301,6 +325,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                             </button>
                           ))}
                         </div>
+                        )}
                       </div>
                     );
                   })}
@@ -326,6 +351,12 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
           </div>
         )}
       </SheetContent>
+      <MeetingOutcomeSheet
+        event={outcomeEvent ? { ...outcomeEvent, lead_id: lead?.id ?? null } : null}
+        lead={outcomeEvent && lead ? { id: lead.id, business_name: lead.business_name, client_id: (lead as any).client_id ?? null, crm_deal_id: (lead as any).crm_deal_id ?? null } : null}
+        onCancel={() => setOutcomeEvent(null)}
+        onDone={() => { setOutcomeEvent(null); load(); onUpdated?.(); }}
+      />
     </Sheet>
   );
 }
