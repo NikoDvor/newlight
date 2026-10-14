@@ -8,7 +8,7 @@ import { getSignedAgreementUrlForDeal } from "./agreement-pdf.ts";
 const OPS_SMS_TO = "+18058363557";
 const OPS_PHONE_DISPLAY = "(805) 836-3557";
 const OPS_EMAIL_TO = "team@newlightgen.com";
-const TWILIO_FROM = "+18058940908";
+const TWILIO_FROM = "+18555066111";
 const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.newlight-app.com";
 const SETUP_PORTAL_URL = `${APP_BASE_URL}/setup-portal`;
 

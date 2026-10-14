@@ -3,7 +3,7 @@
 
 const OPS_SMS_TO = "+18058363557"; // (805) 836-3557
 const OPS_EMAIL_TO = "team@newlightgen.com";
-const TWILIO_FROM = "+18058940908";
+const TWILIO_FROM = "+18555066111";
 
 async function sendSms(to: string, body: string): Promise<{ ok: boolean; detail: string }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

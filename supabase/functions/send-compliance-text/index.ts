@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Attempt Twilio send
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    const FROM = Deno.env.get("TWILIO_FROM_NUMBER") || "+18058940908";
+    const FROM = Deno.env.get("TWILIO_FROM_NUMBER") || "+18555066111";
 
     let sid: string | null = null;
     let status = "sent";

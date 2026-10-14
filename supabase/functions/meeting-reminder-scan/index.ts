@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TWILIO_FROM_DEFAULT = "+18058940908";
+const TWILIO_FROM_DEFAULT = "+18555066111";
 
 type Window = { key: "24h" | "3h" | "15m"; column: string; minutes: number; label: string };
 const WINDOWS: Window[] = [

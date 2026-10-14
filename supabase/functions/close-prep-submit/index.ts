@@ -35,7 +35,7 @@ const corsHeaders = {
 
 const UNIVERSAL_SMS_TO = "+18053408945";
 const UNIVERSAL_EMAIL_TO = "team@newlightgen.com";
-const TWILIO_FROM = "+18058940908";
+const TWILIO_FROM = "+18555066111";
 
 function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString("en-US", {
