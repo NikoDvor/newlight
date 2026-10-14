@@ -2011,7 +2011,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                   {existingLists.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
               ) : (
-                <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Ojai Hair Salons — State Street SB"' className="mt-1 h-9" />
+                <Input value={listName} onChange={e => setListName(e.target.value)} placeholder='e.g. "Texas RIAs — Austin"' className="mt-1 h-9" />
               )}
               <p className="text-[10px] text-muted-foreground mt-1">
                 {listMode === "existing" ? "Adds these leads to the selected list; duplicates by business name within the list are skipped." : "Name this batch so you can switch between lists later."}
@@ -2397,7 +2397,7 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
                 <ol className="space-y-1.5 text-xs leading-relaxed text-foreground/85 list-decimal list-inside">
                   <li>Open a new chat with Claude (web search turned on)</li>
                   <li>Paste the Master Prompt as your first message</li>
-                  <li>As your second message, just type the state and business type, like: <span className="font-mono text-[11px] text-foreground/80">"Texas, hair salons"</span> or <span className="font-mono text-[11px] text-foreground/80">"Ohio, HVAC contractors"</span></li>
+                  <li>As your second message, just type the state and business type, like: <span className="font-mono text-[11px] text-foreground/80">"Texas, RIAs"</span> or <span className="font-mono text-[11px] text-foreground/80">"Ohio, wealth managers"</span></li>
                   <li>Claude will find the businesses itself and research each one</li>
                   <li>Copy the finished list</li>
                   <li>Come back here, tap <span className="font-semibold text-foreground">Import</span>, paste it, then tap <span className="font-semibold text-foreground">Parse Leads</span></li>

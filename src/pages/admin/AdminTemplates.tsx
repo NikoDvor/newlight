@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-const INDUSTRIES = ["Med Spa", "Salon", "Agency", "Home Service", "Professional Service", "Retail", "Custom"];
+const INDUSTRIES = ["RIA", "Wealth Management", "Hedge Fund", "Private Equity & VC", "Financial Insurance"];
 const PACKAGES = ["Generate Leads / Appointments", "Drive Online Sales", "Increase Local Visibility", "Full Growth System", "Custom"];
 const COMPONENT_TYPES = [
   "Branding Defaults", "CRM Pipeline", "Calendar Setup", "Booking Forms",

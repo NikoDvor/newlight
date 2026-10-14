@@ -257,9 +257,7 @@ export function StepCalendar({ form, set, submitting }: StepProps) {
 
   // Industry suggestions
   const industry = (form.industry || "").toLowerCase();
-  const suggestions = Object.entries(INDUSTRY_CALENDAR_SUGGESTIONS).find(([key]) =>
-    industry.includes(key)
-  )?.[1];
+  const suggestions = INDUSTRY_CALENDAR_SUGGESTIONS.financial;
 
   const applySuggestions = () => {
     if (!suggestions) return;

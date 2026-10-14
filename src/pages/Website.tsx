@@ -921,9 +921,9 @@ export default function Website() {
             </div>
             {cwForm.site_type === 'newlight_build' ? (
               <>
-                <div className="space-y-2"><Label>Published URL</Label><Input value={cwForm.published_url} onChange={e => setCwForm(p => ({ ...p, published_url: e.target.value }))} placeholder="https://riviera-salon.newlightapp.com" /></div>
+                <div className="space-y-2"><Label>Published URL</Label><Input value={cwForm.published_url} onChange={e => setCwForm(p => ({ ...p, published_url: e.target.value }))} placeholder="https://summit-wealth.newlightapp.com" /></div>
                 <div className="space-y-2"><Label>Lovable Project URL</Label><Input value={cwForm.lovable_project_url} onChange={e => setCwForm(p => ({ ...p, lovable_project_url: e.target.value }))} placeholder="https://lovable.dev/projects/..." /></div>
-                <div className="space-y-2"><Label>Custom Domain</Label><Input value={cwForm.custom_domain} onChange={e => setCwForm(p => ({ ...p, custom_domain: e.target.value }))} placeholder="www.rivierasalon.com" /></div>
+                <div className="space-y-2"><Label>Custom Domain</Label><Input value={cwForm.custom_domain} onChange={e => setCwForm(p => ({ ...p, custom_domain: e.target.value }))} placeholder="www.summitwealth.com" /></div>
                 <div className="space-y-2"><Label>Domain Status</Label>
                   <Select value={cwForm.domain_status} onValueChange={v => setCwForm(p => ({ ...p, domain_status: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>

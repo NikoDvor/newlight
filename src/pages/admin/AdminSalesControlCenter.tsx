@@ -78,7 +78,7 @@ function getSalesFitIndicators(niche: any, financial: boolean) {
 // ═══════════════════════════════════════════════
 const DEFAULT_PROFILE: WorkspaceProfile = {
   industry: "ria",
-  niche: "med_spa",
+  niche: "ria",
   archetype: "high_ticket_recurring",
   zoomTier: "z3",
   legacyProfileType: "appointment_local",
