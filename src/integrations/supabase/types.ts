@@ -1186,6 +1186,7 @@ export type Database = {
       bdr_calendar_events: {
         Row: {
           all_day: boolean
+          attempt_number: number | null
           attendance: string
           calendar_id: string
           client_id: string
@@ -1195,6 +1196,7 @@ export type Database = {
           ends_at: string
           id: string
           lead_id: string | null
+          meeting_kind: string | null
           metadata: Json
           notes: string | null
           outcome: string | null
@@ -1219,6 +1221,7 @@ export type Database = {
         }
         Insert: {
           all_day?: boolean
+          attempt_number?: number | null
           attendance?: string
           calendar_id: string
           client_id: string
@@ -1228,6 +1231,7 @@ export type Database = {
           ends_at: string
           id?: string
           lead_id?: string | null
+          meeting_kind?: string | null
           metadata?: Json
           notes?: string | null
           outcome?: string | null
@@ -1252,6 +1256,7 @@ export type Database = {
         }
         Update: {
           all_day?: boolean
+          attempt_number?: number | null
           attendance?: string
           calendar_id?: string
           client_id?: string
@@ -1261,6 +1266,7 @@ export type Database = {
           ends_at?: string
           id?: string
           lead_id?: string | null
+          meeting_kind?: string | null
           metadata?: Json
           notes?: string | null
           outcome?: string | null
@@ -1442,6 +1448,95 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bdr_meeting_outcomes: {
+        Row: {
+          attempt_number: number
+          attendance: string | null
+          client_id: string | null
+          created_at: string
+          event_id: string
+          id: string
+          lead_id: string | null
+          logged_at: string
+          lost_reasons: string[]
+          meeting_kind: string
+          next_event_id: string | null
+          next_step: string | null
+          notes: string | null
+          primary_lost_reason: string | null
+          rep_user_id: string
+          reschedule_reason: string | null
+          result: string
+        }
+        Insert: {
+          attempt_number?: number
+          attendance?: string | null
+          client_id?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          lead_id?: string | null
+          logged_at?: string
+          lost_reasons?: string[]
+          meeting_kind: string
+          next_event_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          primary_lost_reason?: string | null
+          rep_user_id: string
+          reschedule_reason?: string | null
+          result: string
+        }
+        Update: {
+          attempt_number?: number
+          attendance?: string | null
+          client_id?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          lead_id?: string | null
+          logged_at?: string
+          lost_reasons?: string[]
+          meeting_kind?: string
+          next_event_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          primary_lost_reason?: string | null
+          rep_user_id?: string
+          reschedule_reason?: string | null
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdr_meeting_outcomes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdr_meeting_outcomes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdr_meeting_outcomes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdr_meeting_outcomes_next_event_id_fkey"
+            columns: ["next_event_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
             referencedColumns: ["id"]
           },
         ]
@@ -15221,6 +15316,10 @@ export type Database = {
       admin_reassign_lead: {
         Args: { _lead_id: string; _new_user: string }
         Returns: undefined
+      }
+      bdr_event_meeting_kind_from_source: {
+        Args: { _source: string }
+        Returns: string
       }
       check_and_increment_public_booking_upload: {
         Args: never
