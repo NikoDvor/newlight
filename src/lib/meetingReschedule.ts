@@ -35,6 +35,11 @@ export async function rescheduleMeeting(args: {
     .select("id").single();
   if (insErr || !created) throw new Error(insErr?.message || "Could not create new meeting");
 
+  // Notify the prospect + rep (fire-and-forget)
+  supabase.functions.invoke("meeting-reschedule-notice", { body: { event_id: created.id } })
+    .then(({ error }) => { if (error) console.error("meeting-reschedule-notice failed", error); })
+    .catch((e) => console.error("meeting-reschedule-notice failed", e));
+
   const { error: updErr } = await db.from("bdr_calendar_events")
     .update({ attendance: "rescheduled" }).eq("id", eventId);
   if (updErr) throw new Error(`New meeting created, but the old one could not be marked rescheduled: ${updErr.message}`);
