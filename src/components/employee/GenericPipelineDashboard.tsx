@@ -13,6 +13,7 @@ import { YourForms } from "@/components/employee/YourForms";
 import { RecentDiscoveryBookings } from "@/components/employee/RecentDiscoveryBookings";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
 import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
+import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcomeSheet";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -278,6 +279,10 @@ export function GenericPipelineDashboard() {
   return (
     <div className="relative space-y-6">
       <DashboardAtmosphere />
+
+      {/* Meetings needing an outcome + stalled Pay & Sign */}
+      <MeetingsNeedingOutcomeCard />
+
 
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <Reveal><YourForms /></Reveal>
