@@ -15,7 +15,7 @@ import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/
 const NEON = "hsl(211 96% 60%)";
 const GREEN = "hsl(152 60% 50%)";
 
-const DISCOVERY_SOURCES = ["booking_form", "dialer"];
+const DISCOVERY_SOURCES = ["booking_form", "round_robin"];
 const CLOSING_SOURCES = ["closing_meeting"];
 
 type MeetingKind = "discovery" | "closing";
