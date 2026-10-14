@@ -423,43 +423,15 @@ export const defaultIntegrations = (): ActivationFormState["integrations"] => {
   return result;
 };
 
+const FINANCIAL_CALENDAR_SUGGESTIONS = [
+  { name: "Client Meetings", type: "single", types: "Discovery Call, Financial Review, Planning Session" },
+  { name: "Onboarding", type: "single", types: "Onboarding Meeting, Account Setup" },
+  { name: "Advisor Calendars", type: "staff", types: "Client Review" },
+];
+
 export const INDUSTRY_CALENDAR_SUGGESTIONS: Record<string, { name: string; type: string; types: string }[]> = {
-  "salon": [
-    { name: "Consultation", type: "single", types: "Consultation" },
-    { name: "Staff Calendars", type: "staff", types: "Haircut, Color, Style" },
-  ],
-  "spa": [
-    { name: "Consultation", type: "single", types: "Consultation" },
-    { name: "Staff Calendars", type: "staff", types: "Massage, Facial, Body Treatment" },
-  ],
-  "med spa": [
-    { name: "Consultation", type: "single", types: "Consultation" },
-    { name: "Follow-Up", type: "single", types: "Follow-Up" },
-    { name: "Provider Calendars", type: "staff", types: "Botox, Filler, Laser" },
-  ],
-  "agency": [
-    { name: "Sales Calendar", type: "single", types: "Discovery Call, Demo" },
-    { name: "Onboarding Calendar", type: "single", types: "Kickoff, Setup" },
-    { name: "Support Calendar", type: "team", types: "Support Call" },
-  ],
-  "home service": [
-    { name: "Estimate Calendar", type: "single", types: "Estimate, Walkthrough" },
-    { name: "Service Calendar", type: "team", types: "Service Appointment" },
-    { name: "Team Calendar", type: "round_robin", types: "Service Call" },
-  ],
-  "professional service": [
-    { name: "Consultation", type: "single", types: "Consultation, Strategy Session" },
-    { name: "Team Calendar", type: "team", types: "Meeting" },
-    { name: "Support Calendar", type: "single", types: "Support Call" },
-  ],
-  "dental": [
-    { name: "New Patient", type: "single", types: "New Patient Exam" },
-    { name: "Provider Calendars", type: "staff", types: "Cleaning, Filling, Crown" },
-  ],
-  "fitness": [
-    { name: "Consultation", type: "single", types: "Free Consultation, Assessment" },
-    { name: "Trainer Calendars", type: "staff", types: "Personal Training, Group Class" },
-  ],
+  "financial": FINANCIAL_CALENDAR_SUGGESTIONS,
+  "default": FINANCIAL_CALENDAR_SUGGESTIONS,
 };
 
 export const defaultFormState = (): ActivationFormState => ({

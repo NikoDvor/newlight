@@ -138,12 +138,7 @@ export function buildStructuredProfile(
 
   // Derive emphasis from archetype
   const emphasisMap: Record<string, string> = {
-    appointments: "bookings_revenue",
-    projects: "deliverables_timeline",
     retainers: "retention_growth",
-    transactions: "volume_traffic",
-    ecommerce: "orders_revenue",
-    subscription_saas: "mrr_churn",
     high_ticket_recurring: "pipeline_close",
     enterprise_accounts: "pipeline_close",
   };
@@ -166,7 +161,7 @@ export function buildStructuredProfile(
     zoomTier,
     demoModel: `category_${categoryId}`,
     dashboard: {
-      emphasis: emphasisMap[archetype] || "bookings_revenue",
+      emphasis: emphasisMap[archetype] || "pipeline_close",
       gating: [], // populated later by gating engine
     },
     pricing: {

@@ -56,18 +56,13 @@ async function authorizeRequest(req: Request, body: any, supabaseUrl: string, se
 }
 
 function guessProvisionalProfile(businessType: string): string {
-  const t = (businessType || "").toLowerCase();
-  if (["hvac", "plumbing", "cleaning", "landscaping", "roofing", "window", "construction"].some(k => t.includes(k))) return "field_service";
-  if (["dental", "salon", "med spa", "healthcare", "fitness", "restaurant", "automotive"].some(k => t.includes(k))) return "appointment_local";
-  if (["agency", "consulting", "real estate"].some(k => t.includes(k))) return "consultative_sales";
-  if (["e-commerce"].some(k => t.includes(k))) return "membership_recurring";
-  if (["legal"].some(k => t.includes(k))) return "project_service";
-  return "custom_hybrid";
+  void businessType;
+  return "consultative_sales";
 }
 
 function guessZoomDefault(businessType: string): boolean {
-  const profile = guessProvisionalProfile(businessType);
-  return ["consultative_sales", "project_service", "custom_hybrid"].includes(profile);
+  void businessType;
+  return true;
 }
 
 // ─── Industry-aware starter defaults (ported from workspaceProvisioner.ts) ───
@@ -78,100 +73,30 @@ interface IndustryDefaults {
   forms: { name: string; type: string; questions: string[] }[];
 }
 
-const INDUSTRY_DEFAULTS: Record<string, IndustryDefaults> = {
-  "med spa": {
-    calendars: [
-      { name: "Consultations", type: "booking", apptTypes: ["Free Consultation", "Follow-Up"], duration: 30 },
-      { name: "Treatments", type: "booking", apptTypes: ["Treatment Session", "Touch-Up"], duration: 60 },
-    ],
-    services: [
-      { name: "Botox", description: "Cosmetic injection treatment", price: "Starting at $12/unit" },
-      { name: "Dermal Fillers", description: "Volume restoration and contouring", price: "Starting at $600" },
-      { name: "Facial", description: "Deep cleansing and rejuvenation", price: "$150" },
-    ],
-    forms: [{ name: "Patient Intake", type: "intake", questions: ["Allergies or sensitivities?", "Current medications?", "Previous treatments?"] }],
-  },
-  salon: {
-    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Haircut", "Color", "Styling", "Consultation"], duration: 45 }],
-    services: [
-      { name: "Haircut", description: "Cut and style", price: "From $45" },
-      { name: "Color", description: "Full color treatment", price: "From $120" },
-      { name: "Blowout", description: "Wash and blowout style", price: "$55" },
-    ],
-    forms: [{ name: "New Client Form", type: "intake", questions: ["Hair type?", "Any sensitivities?", "Style preferences?"] }],
-  },
-  dental: {
-    calendars: [
-      { name: "General", type: "booking", apptTypes: ["Cleaning", "Exam", "Consultation"], duration: 30 },
-      { name: "Procedures", type: "booking", apptTypes: ["Filling", "Crown", "Root Canal"], duration: 60 },
-    ],
-    services: [
-      { name: "Cleaning & Exam", description: "Routine dental cleaning and examination", price: "$200" },
-      { name: "Teeth Whitening", description: "Professional whitening treatment", price: "From $350" },
-    ],
-    forms: [{ name: "Patient Intake", type: "intake", questions: ["Dental insurance provider?", "Current medications?", "Last dental visit?"] }],
-  },
-  agency: {
-    calendars: [
-      { name: "Sales Calls", type: "booking", apptTypes: ["Discovery Call", "Strategy Session"], duration: 30 },
-      { name: "Onboarding", type: "booking", apptTypes: ["Kickoff Meeting", "Training Session"], duration: 60 },
-    ],
-    services: [
-      { name: "SEO Package", description: "Monthly SEO management", price: "From $1,500/mo" },
-      { name: "Social Media Management", description: "Content creation and posting", price: "From $1,000/mo" },
-      { name: "Paid Ads Management", description: "PPC campaign management", price: "From $1,200/mo" },
-    ],
-    forms: [{ name: "Lead Intake", type: "contact", questions: ["Monthly marketing budget?", "Current marketing challenges?", "Goals for the next 6 months?"] }],
-  },
-  "home service": {
-    calendars: [{ name: "Estimates", type: "booking", apptTypes: ["Free Estimate", "Consultation", "Service Call"], duration: 30 }],
-    services: [
-      { name: "Service Call", description: "Standard service visit", price: "From $99" },
-      { name: "Emergency Service", description: "Same-day emergency response", price: "From $199" },
-    ],
-    forms: [{ name: "Service Request", type: "contact", questions: ["Describe the issue", "Preferred date/time?", "Property type?"] }],
-  },
-  "professional service": {
-    calendars: [{ name: "Consultations", type: "booking", apptTypes: ["Initial Consultation", "Follow-Up", "Review Meeting"], duration: 45 }],
-    services: [
-      { name: "Consultation", description: "Professional consultation session", price: "From $150/hr" },
-      { name: "Monthly Retainer", description: "Ongoing advisory services", price: "From $2,000/mo" },
-    ],
-    forms: [{ name: "Client Intake", type: "intake", questions: ["Nature of your inquiry?", "Timeline or urgency?", "Budget range?"] }],
-  },
-  retail: {
-    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["In-Store Appointment", "Personal Shopping"], duration: 30 }],
-    services: [
-      { name: "Personal Shopping", description: "Guided shopping experience", price: "Complimentary" },
-    ],
-    forms: [{ name: "Contact Form", type: "contact", questions: ["What are you looking for?", "Preferred contact method?"] }],
-  },
-  "local business": {
-    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
-    services: [{ name: "Standard Service", description: "Our core service offering", price: "Contact for pricing" }],
-    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?", "Best time to reach you?"] }],
-  },
-  general: {
-    calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
-    services: [{ name: "Core Service", description: "Primary service offering", price: "Contact for pricing" }],
-    forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
-  },
+const FINANCIAL_FIRM_DEFAULTS: IndustryDefaults = {
+  calendars: [
+    { name: "Client Meetings", type: "booking", apptTypes: ["Discovery Call", "Financial Review", "Planning Session"], duration: 60 },
+    { name: "Onboarding", type: "booking", apptTypes: ["Onboarding Meeting", "Account Setup"], duration: 60 },
+  ],
+  services: [
+    { name: "Financial Planning", description: "Comprehensive planning for your financial goals", price: "Contact for pricing" },
+    { name: "Investment Management", description: "Ongoing management of your investment portfolio", price: "Contact for pricing" },
+    { name: "Retirement Planning", description: "Planning for income and security in retirement", price: "Contact for pricing" },
+    { name: "Insurance Review", description: "Review of your life, annuity and insurance coverage", price: "Contact for pricing" },
+  ],
+  forms: [{ name: "Prospect Intake", type: "intake", questions: ["What prompted you to reach out?", "Are you currently working with a financial advisor?", "What are your top financial goals right now?", "Best time to reach you?"] }],
 };
 
-const FALLBACK_DEFAULTS: IndustryDefaults = {
-  calendars: [{ name: "Appointments", type: "booking", apptTypes: ["Appointment", "Consultation"], duration: 30 }],
-  services: [],
-  forms: [{ name: "Contact Form", type: "contact", questions: ["How can we help you?"] }],
+const INDUSTRY_DEFAULTS: Record<string, IndustryDefaults> = {
+  financial: FINANCIAL_FIRM_DEFAULTS,
 };
 
 function matchIndustry(industry: string | null | undefined): IndustryDefaults | null {
-  if (!industry) return null;
-  const lower = industry.toLowerCase();
-  for (const [key, val] of Object.entries(INDUSTRY_DEFAULTS)) {
-    if (lower.includes(key)) return val;
-  }
-  return null;
+  void industry;
+  return INDUSTRY_DEFAULTS.financial;
 }
+
+const FALLBACK_DEFAULTS: IndustryDefaults = FINANCIAL_FIRM_DEFAULTS;
 
 const DEFAULT_CONTENT_BLOCKS = [
   { page_key: "home", block_key: "hero", block_type: "hero", block_label: "Hero Banner", display_order: 0, content_json: { headline: "", subheadline: "", cta_text: "Get Started", cta_url: "" }, is_active: true },

@@ -165,19 +165,14 @@ export interface AppStoreTierConfig {
 }
 
 const APP_STORE_TIERS: Record<string, AppStoreTierConfig> = {
-  field_service:        { tierKey: "field_service",        tierLabel: "Field Service",            isCustomQuote: true },
-  appointment_local:    { tierKey: "appointment_local",    tierLabel: "Appointment / Local",      isCustomQuote: true },
-  consultative_sales:   { tierKey: "consultative_sales",   tierLabel: "Consultative Sales",       isCustomQuote: true },
   premium_financial:    { tierKey: "premium_financial",    tierLabel: "Financial Firms Premium",   isCustomQuote: true },
-  membership_recurring: { tierKey: "membership_recurring", tierLabel: "Membership / Recurring",    isCustomQuote: true },
-  project_service:      { tierKey: "project_service",      tierLabel: "Project / Delivery",        isCustomQuote: true },
-  custom_hybrid:        { tierKey: "custom_hybrid",        tierLabel: "Custom / Hybrid",           isCustomQuote: true },
+  consultative_sales:   { tierKey: "consultative_sales",   tierLabel: "Consultative Sales",       isCustomQuote: true },
 };
 
 export function resolveAppStoreTier(profile: StructuredWorkspaceProfile): AppStoreTierConfig {
   const pricing = resolvePricing(profile);
   if (pricing.isFinancialPremium) return APP_STORE_TIERS.premium_financial;
-  return APP_STORE_TIERS[pricing.family] ?? APP_STORE_TIERS.custom_hybrid;
+  return APP_STORE_TIERS[pricing.family] ?? APP_STORE_TIERS.premium_financial;
 }
 
 // ═══════════════════════════════════════════════
