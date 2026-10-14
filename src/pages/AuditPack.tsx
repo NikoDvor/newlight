@@ -21,6 +21,15 @@ const STATUS_STYLE: Record<string, { dot: string; bg: string }> = {
 };
 
 export default function AuditPack() {
+  if (mockAuditItems.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Audit results for the active prospect will appear here once an audit runs.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div>
       <PageHeader title="Audit Pack" description="Internal audit status for the active prospect" />

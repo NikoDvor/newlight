@@ -29,6 +29,15 @@ export default function Inbox() {
 
   const filtered = channelFilter === "all" ? conversations : conversations.filter((c) => c.channel === channelFilter);
 
+  if (conversations.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Conversations from email, text and web leads will appear here.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="h-[calc(100vh-7.5rem)]">
       <PageHeader title="Inbox" description="Unified conversations across all channels" />
