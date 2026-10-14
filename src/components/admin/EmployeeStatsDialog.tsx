@@ -155,7 +155,8 @@ export function EmployeeStatsDialog(props: Props) {
         const { count } = await (supabase as any)
           .from("bdr_calendar_events")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .or("source.is.null,source.not.in.(dialer,manual)");
         appts = count ?? 0;
       } catch { /* ignore */ }
       setApptCount(appts);

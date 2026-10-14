@@ -27,8 +27,10 @@ interface OutcomeEntry { label: string; note?: string; timestamp: string; meetin
 
 /** Map a meeting source string to the pipeline meeting kind it represents. */
 function meetingKindFromSource(source?: string | null): "discovery" | "closing" | null {
-  if (source === "booking_form" || source === "dialer") return "discovery";
+  if (source === "booking_form") return "discovery";
   if (source === "closing_meeting") return "closing";
+  // dialer entries and onboarding meetings are not discovery/closing meetings
+  if (source === "dialer" || source === "onboarding_meeting") return null;
   return null;
 }
 interface BdrLead {
@@ -322,12 +324,23 @@ export default function BDRMyLeads() {
     const end = new Date(start.getTime() + 60 * 60_000);
     const existing = latestMeetingByLead[lead.id];
     const previousStartsAt = existing?.starts_at ?? null;
+    let oldEventId: string | null = null;
+    let newEventId: string | null = null;
     if (existing) {
-      const { error } = await (supabase as any).from("bdr_calendar_events")
-        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending", reschedule_count: (existing as any).reschedule_count != null ? (existing as any).reschedule_count + 1 : 1 })
-        .eq("id", existing.id);
+      const { data: old, error: readErr } = await (supabase as any).from("bdr_calendar_events")
+        .select("user_id, client_id, calendar_id, lead_id, title, description, source, metadata, zoom_meeting_id, zoom_join_url, zoom_start_url, meeting_kind, reschedule_count")
+        .eq("id", existing.id).single();
+      if (readErr || !old) { toast({ title: "Could not reschedule", description: readErr?.message, variant: "destructive" }); return; }
+      const nextCount = (old.reschedule_count ?? 0) + 1;
+      const { reschedule_count: _rc, ...copy } = old;
+      const { data: created, error } = await (supabase as any).from("bdr_calendar_events")
+        .insert({ ...copy, starts_at: start.toISOString(), ends_at: end.toISOString(), attendance: "pending", reschedule_count: nextCount })
+        .select("id").single();
       if (error) { toast({ title: "Could not reschedule", description: error.message, variant: "destructive" }); return; }
-      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: existing.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null, reschedule_count: (existing as any).reschedule_count != null ? (existing as any).reschedule_count + 1 : 1 } }));
+      await (supabase as any).from("bdr_calendar_events").update({ attendance: "rescheduled" }).eq("id", existing.id);
+      oldEventId = existing.id;
+      newEventId = created.id;
+      setLatestMeetingByLead(prev => ({ ...prev, [lead.id]: { id: created.id, starts_at: start.toISOString(), attendance: "pending", source: existing.source ?? null, reschedule_count: nextCount } }));
     } else {
       const cal = await ensureBdrCalendar();
       if (!cal) { toast({ title: "No calendar found", variant: "destructive" }); return; }
@@ -357,6 +370,8 @@ export default function BDRMyLeads() {
           business_name: lead.business_name,
           previous_starts_at: previousStartsAt,
           new_starts_at: start.toISOString(),
+          old_event_id: oldEventId,
+          new_event_id: newEventId,
         },
       });
     }
