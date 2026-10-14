@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
   }
 
   const results: Array<Record<string, unknown>> = [];
+  const consentCache: Record<string, boolean> = {};
 
   for (const evt of events || []) {
     const startMs = new Date(evt.starts_at as string).getTime();
@@ -172,7 +173,21 @@ Deno.serve(async (req) => {
 
       // ---- Send customer SMS ----
       let smsOk = false;
-      if (customerPhone) {
+      if (customerPhone && consentCache[evt.id as string] === undefined) {
+        let ok = meta.sms_consent === true;
+        if (!ok && evt.lead_id) {
+          const { data: others } = await supabase.from("bdr_calendar_events")
+            .select("id").eq("lead_id", evt.lead_id as string)
+            .eq("metadata->>sms_consent", "true").limit(1);
+          ok = (others || []).length > 0;
+        }
+        consentCache[evt.id as string] = ok;
+      }
+      const smsConsent = consentCache[evt.id as string] === true;
+      if (customerPhone && !smsConsent) {
+        results.push({ event_id: evt.id, window: w.key, action: "sms_skipped_no_consent" });
+      }
+      if (customerPhone && smsConsent) {
         const smsBody = zoomUrl
           ? `Reminder: your NewLight meeting is in ${w.label}. Join: ${zoomUrl}`
           : `Reminder: your NewLight meeting is in ${w.label}. Check your email for the meeting link.`;
