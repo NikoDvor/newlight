@@ -32,6 +32,15 @@ export default function AdminSignedDocuments() {
     completed: MOCK_SIGNED_DOCS.filter(d => d.status === "completed").length,
   };
 
+  if (MOCK_SIGNED_DOCS.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sent and signed client documents will appear here.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>

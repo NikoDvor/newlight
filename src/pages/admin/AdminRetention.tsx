@@ -32,6 +32,15 @@ export default function AdminRetention() {
     mrrLost: MOCK_RETENTION.filter(r => r.status === "churned").reduce((s, r) => s + r.mrr, 0),
   };
 
+  if (MOCK_RETENTION.length === 0) return (
+      <div className="p-6">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
+          <p className="text-base font-semibold text-foreground">No data yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Cancellation requests, saves and churned accounts will appear here.</p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="space-y-6">
       <div>
