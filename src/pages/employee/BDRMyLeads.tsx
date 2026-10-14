@@ -1438,7 +1438,7 @@ export default function BDRMyLeads() {
       />
       <MeetingOutcomeSheet
         event={outcomeLeadSheet && latestMeetingByLead[outcomeLeadSheet.id]
-          ? { ...latestMeetingByLead[outcomeLeadSheet.id], lead_id: outcomeLeadSheet.id }
+          ? { ...latestMeetingByLead[outcomeLeadSheet.id], meeting_kind: latestMeetingByLead[outcomeLeadSheet.id].meeting_kind ?? null, attempt_number: latestMeetingByLead[outcomeLeadSheet.id].attempt_number ?? null, lead_id: outcomeLeadSheet.id }
           : null}
         lead={outcomeLeadSheet}
         onCancel={() => setOutcomeLeadSheet(null)}
