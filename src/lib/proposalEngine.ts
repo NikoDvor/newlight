@@ -3,20 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 // ─── Proposal Auto-Generation Engine ───────────────────────────────
 
 const DEFAULT_TEMPLATES: Record<string, { title: string; deliverables: string[]; setupFee: number; monthlyFee: number; term: string }> = {
-  lead_generation: {
-    title: "Lead Generation & Appointments Package",
-    deliverables: ["Google Ads Management", "Landing Page Optimization", "CRM Pipeline Setup", "Lead Tracking Dashboard", "Bi-weekly Performance Reports"],
-    setupFee: 997, monthlyFee: 1997, term: "6 months",
-  },
-  ecommerce_growth: {
-    title: "Online Sales Growth Package",
-    deliverables: ["eCommerce SEO Audit & Fix", "Google Shopping Ads", "Social Media Ads (Meta)", "Conversion Rate Optimization", "Monthly Revenue Reports"],
-    setupFee: 1497, monthlyFee: 2497, term: "6 months",
-  },
-  local_visibility: {
-    title: "Local Visibility Package",
-    deliverables: ["Google Business Profile Optimization", "Local SEO (Citations + On-Page)", "Review Generation System", "Social Media Posting", "Monthly Visibility Report"],
-    setupFee: 497, monthlyFee: 1497, term: "6 months",
+  financial_firm: {
+    title: "Financial Firm Growth Package",
+    deliverables: ["Market research & organic online visibility", "Qualified appointment generation", "Pipeline, CRM & calendar setup", "Outcome logging and bottleneck tracking", "Ongoing strategy optimization"],
+    setupFee: 0, monthlyFee: 0, term: "12 months",
   },
   custom: {
     title: "Custom Growth Package",
