@@ -193,10 +193,9 @@ export function AppSidebar() {
     void (async () => {
       const { data } = await supabase
         .from("clients")
-        .select("industry, has_sales_team")
+        .select("has_sales_team")
         .eq("id", activeClientId)
         .maybeSingle();
-      setClientIndustry(data?.industry?.toLowerCase() || null);
       setHasSalesTeam(Boolean((data as { has_sales_team?: boolean } | null)?.has_sales_team));
     })();
   }, [activeClientId]);
