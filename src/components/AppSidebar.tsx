@@ -180,18 +180,12 @@ const navStructure: NavModule[] = [
   },
 ];
 
-const FIELD_SERVICE_TYPES = [
-  "hvac", "construction", "automotive", "window washing", "landscaping",
-  "plumbing", "roofing", "cleaning service",
-];
-
 export function AppSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { hasAccess } = useWorkspacePermissions();
   const { isAdmin, activeClientId } = useWorkspace();
-  const [clientIndustry, setClientIndustry] = useState<string | null>(null);
   const [hasSalesTeam, setHasSalesTeam] = useState(false);
 
   useEffect(() => {
@@ -199,15 +193,13 @@ export function AppSidebar() {
     void (async () => {
       const { data } = await supabase
         .from("clients")
-        .select("industry, has_sales_team")
+        .select("has_sales_team")
         .eq("id", activeClientId)
         .maybeSingle();
-      setClientIndustry(data?.industry?.toLowerCase() || null);
       setHasSalesTeam(Boolean((data as { has_sales_team?: boolean } | null)?.has_sales_team));
     })();
   }, [activeClientId]);
 
-  const isFieldService = clientIndustry ? FIELD_SERVICE_TYPES.includes(clientIndustry) : false;
   const pathOnly = (url: string) => url.split("?")[0];
   const isActive = (url: string) => {
     const path = pathOnly(url);
@@ -221,7 +213,6 @@ export function AppSidebar() {
     if (item.internalOnly && !isNewLightInternal(activeClientId)) return false;
     if (item.salesTeamOnly && !isAdmin && !hasSalesTeam) return false;
     if (!item.moduleKey || isAdmin) return true;
-    if (item.moduleKey === "meeting_intel" && isFieldService) return false;
     return hasAccess(item.moduleKey, "view");
   };
 

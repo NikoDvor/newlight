@@ -86,7 +86,7 @@ serve(async (req) => {
 
     const snapshot = {
       business_name: client?.business_name || "the client",
-      industry: client?.industry || "small business",
+      industry: client?.industry || "financial firm",
       leads_last_30_days: leadsLast30,
       appointments_last_30_days: apptsLast30,
       reviews_last_30_days: reviewsLast30,
