@@ -11,7 +11,7 @@ const corsHeaders = {
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-const TWILIO_FROM = "+18058940908";
+const TWILIO_FROM = "+18555066111";
 
 function formatDateTime(d: string) {
   return new Date(d).toLocaleString("en-US", {

@@ -48,7 +48,7 @@ async function sendSms(to: string, body: string): Promise<boolean> {
       },
       body: new URLSearchParams({
         To: to,
-        From: Deno.env.get("TWILIO_FROM_NUMBER") || "+18058940908",
+        From: Deno.env.get("TWILIO_FROM_NUMBER") || "+18555066111",
         Body: body,
       }),
     });

@@ -443,7 +443,7 @@ Deno.serve(async (req) => {
 // ---------------------------------------------------------------------------
 const UNIVERSAL_SMS_TO = "+18053408945";
 const UNIVERSAL_EMAIL_TO = "team@newlightgen.com";
-const TWILIO_FROM = "+18058940908";
+const TWILIO_FROM = "+18555066111";
 
 function formatWhen(iso: string): string {
   return new Date(iso).toLocaleString("en-US", {
