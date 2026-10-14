@@ -180,11 +180,6 @@ const navStructure: NavModule[] = [
   },
 ];
 
-const FIELD_SERVICE_TYPES = [
-  "hvac", "construction", "automotive", "window washing", "landscaping",
-  "plumbing", "roofing", "cleaning service",
-];
-
 export function AppSidebar() {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();

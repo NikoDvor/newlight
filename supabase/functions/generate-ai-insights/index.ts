@@ -7,16 +7,8 @@ const corsHeaders = {
 };
 
 // Map free-text industry to benchmark industry key
-function mapIndustry(raw: string | null | undefined): string {
-  const t = (raw || "").toLowerCase();
-  if (t.includes("med spa") || t.includes("aesthetic")) return "med_spa";
-  if (t.includes("hvac")) return "hvac";
-  if (t.includes("roof")) return "roofing";
-  if (t.includes("solar")) return "solar";
-  if (t.includes("law") || t.includes("legal") || t.includes("attorney")) return "law_firm";
-  if (t.includes("financial") || t.includes("wealth") || t.includes("advisor")) return "financial_advisor";
-  if (t.includes("salon") || t.includes("barber") || t.includes("spa")) return "salon";
-  return "default";
+function mapIndustry(_raw: string | null | undefined): string {
+  return "financial_advisor";
 }
 
 interface Signal {

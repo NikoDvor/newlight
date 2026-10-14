@@ -12,13 +12,11 @@ const FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.location,places.types";
 
 const CATEGORY_PREFIXES = [
-  "businesses on",
-  "restaurants on",
-  "retail stores on",
-  "salons and spas on",
-  "offices and services on",
-  "bars and cafes on",
-  "medical and professional services on",
+  "financial advisors on",
+  "wealth management firms on",
+  "investment firms on",
+  "insurance agencies on",
+  "financial planners on",
 ];
 
 interface PlaceRow {
