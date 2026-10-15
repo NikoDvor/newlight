@@ -346,9 +346,6 @@ export default function BDRDialer() {
     setLatestOutcomeByLead(prev => ({ ...prev, [lead.id]: label }));
     const optimistic: OutcomeRow = { lead_id: lead.id, outcome: label, objection_type: def.objection, logged_at: new Date().toISOString() };
     setOutcomes(prev => [optimistic, ...prev]);
-    if (def.label === "Won") {
-      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, pipeline_stage: "won" } : l));
-    }
     if (callbackAt) {
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, callback_at: callbackAt } : l));
     }
@@ -361,15 +358,11 @@ export default function BDRDialer() {
         objection_type: def.objection,
       });
       if (error) throw error;
-      let pipelineStage: "cold" | "warm" | "hot" | "won" = "warm";
-      if (def.label === "Won") pipelineStage = "won";
-      else if (def.label === "Lost") pipelineStage = "cold";
-      else if (def.label === "Schedule Callback") pipelineStage = "hot";
-      else if (def.label === "Said They Would Reach Out") pipelineStage = "warm";
-      else if (def.label === "Didn't Answer") pipelineStage = (lead.pipeline_stage as any) || "cold";
+      // Stage only moves on form completion / lost meetings — dialer outcomes never change it.
+      const pipelineStage = lead.pipeline_stage || "cold";
       else pipelineStage = "warm";
       // Logging an outcome never moves the lead to "dialed" — only the Mark Dialed switch does.
-      const leadPatch: Record<string, unknown> = { pipeline_stage: pipelineStage };
+      const leadPatch: Record<string, unknown> = {};
       if (callbackAt) {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
@@ -856,7 +849,7 @@ export default function BDRDialer() {
                           ))}
                         </optgroup>
                       </select>
-                      {(lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
+                      {(lead.pipeline_stage === "warm" || lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
                         <Button
                           size="sm"
                           className="mt-2 w-full h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"

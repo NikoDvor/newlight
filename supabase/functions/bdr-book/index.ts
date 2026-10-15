@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
       }
       const { data: matches } = await supabase
         .from("nl_bdr_leads")
-        .select("id, user_id, business_name, owner_name, phone, email")
+        .select("id, user_id, business_name, owner_name, phone, email, pipeline_stage")
         .or(orClauses.join(","))
         .order("created_at", { ascending: true })
         .limit(25);
@@ -304,6 +304,8 @@ Deno.serve(async (req) => {
       if (!existingLead.owner_name && customer_name) patch.owner_name = customer_name;
       if (!existingLead.phone && phone) patch.phone = phone;
       if (!existingLead.email && email) patch.email = email;
+      // Form 1 booked → Warm. Never downgrade hot/won.
+      if (!existingLead.pipeline_stage || ["cold", "expired_no_close_prep"].includes(existingLead.pipeline_stage)) patch.pipeline_stage = "warm";
       if (Object.keys(patch).length) {
         await supabase.from("nl_bdr_leads").update(patch).eq("id", existingLead.id);
       }
@@ -329,7 +331,7 @@ Deno.serve(async (req) => {
         email: email || null,
         lead_source: "booking_form",
         status: "follow_up",
-        pipeline_stage: "hot",
+        pipeline_stage: "warm",
         notes: noteParts.join("\n") || null,
         list_name: "Booking Form",
         modules_of_interest: modulesClean,
@@ -379,7 +381,7 @@ Deno.serve(async (req) => {
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         lead_id: lead.id,
-        stage: "hot",
+        stage: "warm",
         source: roundRobin ? "round_robin" : "booking_form",
         notes: notes || null,
         metadata: {

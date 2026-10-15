@@ -66,8 +66,8 @@ function derivePipelineStage(lead: RawLead): Stage {
   const last = hist[hist.length - 1]?.label;
   const fromOutcome = pipelineStageFromOutcome(last);
   if (fromOutcome) return fromOutcome as Stage;
-  if (lead.status === "closed_won" || lead.status === "appointment_booked") return "won";
-  if (lead.status === "contacted") return "warm";
+  if (lead.status === "closed_won") return "won";
+  if (lead.status === "appointment_booked") return "warm";
   return "cold";
 }
 

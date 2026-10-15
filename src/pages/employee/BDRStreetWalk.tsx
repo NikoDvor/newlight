@@ -10,7 +10,7 @@ import { logDialerEvent } from "@/lib/bdrCalendar";
 import { resolveEmployeeClientId } from "@/hooks/useEmployeeClientId";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
-import { OUTCOMES, stageForOutcome } from "@/lib/bdrOutcomes";
+import { OUTCOMES } from "@/lib/bdrOutcomes";
 
 /* ── Turn-by-turn directions: Apple Maps first, Google Maps fallback ── */
 let directionsCleanup: (() => void) | null = null;
@@ -288,12 +288,12 @@ export default function BDRStreetWalk() {
         objection_type: def.objection,
       });
       if (error) throw error;
-      const pipelineStage = stageForOutcome(def.label, lead.pipeline_stage);
+      const pipelineStage = lead.pipeline_stage || "cold"; // visits never change stage
       setLeads(p => p.map(l => l.id === lead.id
-        ? { ...l, visit_status: "visited", called: true, pipeline_stage: pipelineStage }
+        ? { ...l, visit_status: "visited", called: true }
         : l));
       await (supabase as any).from("nl_bdr_leads")
-        .update({ pipeline_stage: pipelineStage, called: true, visit_status: "visited" })
+        .update({ called: true, visit_status: "visited" })
         .eq("id", lead.id).eq("user_id", userId);
       logDialerEvent({
         leadId: lead.id,
@@ -341,7 +341,7 @@ export default function BDRStreetWalk() {
     const lead = callbackLead;
     const label = callbackLabel;
     const callbackAt = new Date(`${callbackDate}T${callbackTime}`).toISOString();
-    const nextStage = stageForOutcome(label);
+    const nextStage = lead.pipeline_stage || "cold"; // callbacks never change stage
     setCallbackLead(null);
     setSavingId(lead.id);
     try {
@@ -354,10 +354,9 @@ export default function BDRStreetWalk() {
       });
       if (error) throw error;
       setLeads(p => p.map(l => l.id === lead.id
-        ? { ...l, visit_status: "visited", called: true, pipeline_stage: nextStage }
+        ? { ...l, visit_status: "visited", called: true }
         : l));
       await (supabase as any).from("nl_bdr_leads").update({
-        pipeline_stage: nextStage,
         callback_at: callbackAt,
         callback_set_at: new Date().toISOString(),
         visit_status: "visited",

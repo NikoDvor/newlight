@@ -26,7 +26,7 @@ async function fetchEligible(userId: string, kind: Kind): Promise<LeadRow[]> {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (kind === "close-prep") {
-    q = q.in("pipeline_stage", ["hot", "won"]);
+    q = q.in("pipeline_stage", ["warm", "hot", "won"]);
   } else {
     q = q.not("crm_deal_id", "is", null);
   }

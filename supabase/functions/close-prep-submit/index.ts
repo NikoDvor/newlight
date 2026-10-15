@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     // 1. Load the lead & confirm ownership
     const { data: lead, error: leadErr } = await supabase
       .from("nl_bdr_leads")
-      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id")
+      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id, pipeline_stage")
       .eq("id", lead_id)
       .maybeSingle();
     if (leadErr || !lead) {
@@ -353,6 +353,8 @@ Deno.serve(async (req) => {
     const { error: linkErr } = await supabase.from("nl_bdr_leads").update({
       crm_contact_id: contactId,
       crm_deal_id: dealId,
+      // Form 2 submitted → Hot (never downgrade Won).
+      ...((lead as any).pipeline_stage === "won" ? {} : { pipeline_stage: "hot" }),
     }).eq("id", lead.id);
     if (linkErr) {
       // Hard-fail: without this link the BDR pipeline revenue reads $0.
