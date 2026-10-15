@@ -43,9 +43,9 @@ export function AdminLayout() {
             borderColor: "hsla(211,96%,60%,.12)",
             boxShadow: "0 1px 0 0 hsla(211,96%,60%,.06), 0 4px 20px -4px hsla(0,0%,0%,.3)"
           }}>
-            <div className="flex min-w-0 items-center gap-1.5 sm:gap-3 overflow-x-auto touch-x-scroll">
-              <SidebarTrigger className="text-white/60 hover:text-white transition-colors" />
-              <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+              <SidebarTrigger className="shrink-0 h-9 w-9 text-white/60 hover:text-white transition-colors" />
+              <div className="hidden sm:flex items-center gap-2 shrink-0">
                 <div className="h-6 w-6 rounded-md flex items-center justify-center" style={{
                   background: "linear-gradient(135deg, hsl(211 96% 56%), hsl(197 92% 68%))",
                   boxShadow: "0 0 14px -2px hsla(211,96%,60%,.4)"
@@ -55,10 +55,12 @@ export function AdminLayout() {
                 <span className="text-xs font-bold tracking-tight text-white/80">NewLight Admin</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
               <WorkspaceSwitcher />
-              <PWAInstallButton />
-              <CheckForUpdatesButton />
+              <div className="hidden sm:flex items-center gap-1.5 sm:gap-3">
+                <PWAInstallButton />
+                <CheckForUpdatesButton />
+              </div>
               <GlobalModuleSearch variant="admin" />
               <button className="p-2 rounded-xl transition-all duration-200 hover:bg-white/10 relative group">
                 <Bell className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />

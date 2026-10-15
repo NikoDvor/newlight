@@ -184,7 +184,7 @@ export function EmployeeLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between px-3 sm:px-6 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl relative z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+              <SidebarTrigger className="shrink-0 h-9 w-9 text-muted-foreground hover:text-foreground" />
               <div className="hidden sm:flex items-center gap-2 min-w-0">
                 <div className="h-7 w-7 rounded-md flex items-center justify-center bg-primary/15 text-primary">
                   <Zap className="h-4 w-4" />
@@ -193,8 +193,10 @@ export function EmployeeLayout() {
               </div>
             </div>
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-3 overflow-x-auto touch-x-scroll">
-              <PWAInstallButton />
-              <CheckForUpdatesButton />
+              <div className="hidden sm:flex items-center gap-1.5 sm:gap-3 shrink-0">
+                <PWAInstallButton />
+                <CheckForUpdatesButton />
+              </div>
               <GlobalModuleSearch variant="employee" />
               <div className="hidden sm:flex flex-col items-end leading-tight">
                 <span className="text-xs font-semibold text-foreground/80 max-w-40 truncate">{name}</span>
