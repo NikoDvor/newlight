@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PracticeRecordingVaultPage } from "@/components/training/PracticeRecordingVaultPage";
+import { PipelineGuideCard } from "@/components/training/PipelineGuideCard";
 
 interface TrackCardProps {
   title: string;
@@ -76,6 +77,8 @@ export default function AdminTrainingCenter() {
         title="Training Center"
         description="Build and manage BDR and SDR training tracks"
       />
+
+      <PipelineGuideCard to="/admin/training-center/pipeline-guide" />
 
       <Tabs defaultValue="tracks" className="space-y-5">
         <TabsList className="bg-background/50">

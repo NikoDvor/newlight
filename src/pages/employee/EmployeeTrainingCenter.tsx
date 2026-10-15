@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PracticeRecordingVaultPage } from "@/components/training/PracticeRecordingVaultPage";
+import { PipelineGuideCard } from "@/components/training/PipelineGuideCard";
 
 export default function EmployeeTrainingCenter() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export default function EmployeeTrainingCenter() {
         title="Training Center"
         description="Complete your training tracks to earn certification"
       />
+
+      <PipelineGuideCard to="/employee/training/pipeline-guide" />
 
       <Tabs defaultValue="tracks" className="space-y-5">
         <TabsList className="bg-background/50">

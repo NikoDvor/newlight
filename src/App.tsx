@@ -30,6 +30,7 @@ const Reports = lazy(() => import("./pages/Reports"));
 const SalesPipelineInsights = lazy(() => import("./pages/SalesPipelineInsights"));
 const AIInsights = lazy(() => import("./pages/AIInsights"));
 const Training = lazy(() => import("./pages/Training"));
+const PipelineGuide = lazy(() => import("./pages/PipelineGuide"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const Billing = lazy(() => import("./pages/Billing"));
 const Tasks = lazy(() => import("./pages/Tasks"));
@@ -291,6 +292,7 @@ const App = () => {
                 <Route path="monitoring" element={<AdminMonitoring />} />
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="training-center" element={<AdminTrainingCenter />} />
+                <Route path="training-center/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="sops" element={<PlaceholderPage title="Standard Operating Procedures" description="Standard operating procedures for your team." />} />
                 
                 <Route path="training-center/bdr/certification" element={<AdminBDRCertification />} />
@@ -382,6 +384,7 @@ const App = () => {
                 <Route path="support" element={<SupportEmployeeDashboard />} />
                 <Route path="generic" element={<GenericEmployeeDashboard />} />
                 <Route path="training" element={<EmployeeTrainingCenter />} />
+                <Route path="training/pipeline-guide" element={<PipelineGuide />} />
                 <Route path="training/bdr/certification" element={<AdminBDRCertification basePath="/employee/training" />} />
                 <Route path="training/bdr/flashcards" element={<AdminTrainingFlashcards />} />
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
