@@ -13,6 +13,7 @@ import { YourForms } from "@/components/employee/YourForms";
 import { RecentDiscoveryBookings } from "@/components/employee/RecentDiscoveryBookings";
 import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday } from "@/lib/bdrCalendar";
 import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
+import { Link } from "react-router-dom";
 import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcomeSheet";
 
 /* ── Glass panel class shared across cards ── */
@@ -282,6 +283,9 @@ export function GenericPipelineDashboard() {
 
       {/* Meetings needing an outcome + stalled Pay & Sign */}
       <MeetingsNeedingOutcomeCard />
+      <div className="flex justify-end -mt-3">
+        <Link to="/employee/my-stats" className="text-xs text-primary hover:underline">My close rates →</Link>
+      </div>
 
 
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
