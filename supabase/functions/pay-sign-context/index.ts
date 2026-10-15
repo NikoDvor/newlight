@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 import { notifyPaidSignedIfTransition } from "../_shared/paid-signed-notify.ts";
 import { seedSetupItemsForClient } from "../_shared/setup-items-seeder.ts";
+import { createZoomMeeting } from "../_shared/zoom.ts";
 import { sendPaymentConfirmation, sendWelcomeDocument, sendOnboardingRescheduleNotice } from "../_shared/pay-sign-notify.ts";
 import { getStripe, ensureStripeCustomer } from "../_shared/stripe-billing.ts";
 import { ensureServicePocCalendar, listServicePocs, listOnboardingPocs } from "../_shared/service-poc-calendar.ts";
@@ -213,6 +214,21 @@ Deno.serve(async (req) => {
     return { rep, targetCalendarId, targetUserId };
   }
 
+  // Zoom for onboarding events — failure never blocks the booking.
+  async function attachZoom(eventId: string, startIso: string, topic: string): Promise<string | null> {
+    try {
+      const zoom = await createZoomMeeting({ topic, startTime: startIso, durationMinutes: 60 });
+      const { error } = await supabase.from("bdr_calendar_events")
+        .update({ zoom_meeting_id: String(zoom.id), zoom_join_url: zoom.join_url, zoom_start_url: zoom.start_url })
+        .eq("id", eventId);
+      if (error) console.error("[pay-sign-context zoom] save failed:", error.message);
+      return zoom.join_url;
+    } catch (e) {
+      console.error("[pay-sign-context zoom] create failed:", (e as Error).message);
+      return null;
+    }
+  }
+
   if (action === "schedule_onboarding") {
     if (!deal) return json({ error: "No deal linked to envelope" }, 400);
     const starts_at = body.starts_at;
@@ -260,6 +276,7 @@ Deno.serve(async (req) => {
     if (evErr) return json({ error: evErr.message }, 500);
 
     await supabase.from("crm_deals").update({ onboarding_meeting_id: ev.id }).eq("id", deal.id);
+    const zoomJoinUrl = await attachZoom(ev.id, ev.starts_at, `NewLight Onboarding — ${client?.name || deal.deal_name || "Client"}`);
 
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
@@ -272,6 +289,7 @@ Deno.serve(async (req) => {
       repEmail: rep?.email || null,
       onboardingMeetingStartsAt: ev.starts_at,
       paySignUrl,
+      zoomJoinUrl,
     });
 
     return json({ ok: true, event_id: ev.id, starts_at: ev.starts_at, welcome });
@@ -349,6 +367,7 @@ Deno.serve(async (req) => {
       .eq("id", oldEvent.id);
 
     await supabase.from("crm_deals").update({ onboarding_meeting_id: newEvent.id }).eq("id", deal.id);
+    const zoomJoinUrl = await attachZoom(newEvent.id, newEvent.starts_at, `NewLight Onboarding — ${client?.name || deal.deal_name || "Client"}`);
 
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = ""; try { originBase = origin ? new URL(origin).origin : ""; } catch { originBase = ""; }
@@ -364,6 +383,7 @@ Deno.serve(async (req) => {
         previousStartsAt: oldEvent.starts_at,
         newStartsAt: newEvent.starts_at,
         paySignUrl,
+        zoomJoinUrl,
       });
     } catch (e: any) {
       notify = { sent: false, error: e?.message || String(e) };
