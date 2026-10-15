@@ -196,6 +196,7 @@ const SupportEmployeeDashboard = lazy(() => import("./pages/employee/EmployeeDas
 const EmployeeTrainingCenter = lazy(() => import("./pages/employee/EmployeeTrainingCenter"));
 const BDRCertificationExam = lazy(() => import("./pages/employee/BDRCertificationExam"));
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
+const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
 const BDRStreetWalk = lazy(() => import("./pages/employee/BDRStreetWalk"));
 const StreetSweepDiscover = lazy(() => import("./pages/employee/StreetSweepDiscover"));
@@ -386,6 +387,7 @@ const App = () => {
                 <Route path="training/:trackKey" element={<AdminTrainingTrack basePath="/employee/training" />} />
                 <Route path="certification/bdr" element={<BDRCertificationExam />} />
                 <Route path="leads" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyLeads /></ClientFlagGate>} />
+                <Route path="my-stats" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRMyStats /></ClientFlagGate>} />
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
