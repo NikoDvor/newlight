@@ -170,7 +170,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
   };
 
   const updateStage = async (newStage: string) => {
-    if (!lead) return;
+    if (!lead || !canOverrideStage) return;
     setStage(newStage);
     const { error } = await (supabase as any)
       .from("nl_bdr_leads")
@@ -239,8 +239,8 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
             {/* Pipeline stage */}
             <section className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wider text-white/50">Pipeline stage</Label>
-              <Select value={stage} onValueChange={updateStage}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+              <Select value={stage} onValueChange={updateStage} disabled={!canOverrideStage}>
+                <SelectTrigger title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"} className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-[hsl(215,35%,12%)] border-white/10 text-white">
                   {STAGES.map(s => (
                     <SelectItem key={s.key} value={s.key}>

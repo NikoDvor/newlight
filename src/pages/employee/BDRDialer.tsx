@@ -366,7 +366,7 @@ export default function BDRDialer() {
         leadPatch.callback_at = callbackAt;
         leadPatch.callback_set_at = new Date().toISOString();
       }
-      await (supabase as any).from("nl_bdr_leads")
+      if (Object.keys(leadPatch).length) await (supabase as any).from("nl_bdr_leads")
         .update(leadPatch).eq("id", lead.id).eq("user_id", userId);
       logDialerEvent({
         leadId: lead.id,
