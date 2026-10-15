@@ -18,19 +18,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
 import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 
-const navItems = [
-  { title: "Dashboard", url: "/employee", icon: BarChart3 },
-  { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
-  { title: "My Stats", url: "/employee/my-stats", icon: Target },
-  { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
-  { title: "Dialer", url: "/employee/dialer", icon: Phone },
-  { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
-  { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
-
-
-  { title: "Training Center", url: "/employee/training", icon: GraduationCap },
-  { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
-  { title: "My Profile", url: "/employee/profile", icon: UserCircle },
+const navGroups: { label?: string; items: { title: string; url: string; icon: any }[] }[] = [
+  {
+    items: [{ title: "Dashboard", url: "/employee", icon: BarChart3 }],
+  },
+  {
+    label: "Find",
+    items: [
+      { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
+      { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
+      { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
+    ],
+  },
+  {
+    label: "Work",
+    items: [
+      { title: "Dialer", url: "/employee/dialer", icon: Phone },
+      { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
+      { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Results",
+    items: [{ title: "My Stats", url: "/employee/my-stats", icon: Target }],
+  },
+  {
+    label: "Learn",
+    items: [{ title: "Training Center", url: "/employee/training", icon: GraduationCap }],
+  },
+  {
+    items: [{ title: "My Profile", url: "/employee/profile", icon: UserCircle }],
+  },
 ];
 
 function EmployeeSidebar() {
