@@ -1188,6 +1188,7 @@ export default function BDRMyLeads() {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          </span>
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
                           {lead.unattended_since && (
                             <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
