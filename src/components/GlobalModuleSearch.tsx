@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search, Users, ListChecks, Zap, Activity, Shield, Hammer,
+  Search, Users, ListChecks, Zap, Activity, Shield,
   Calendar, FileText, Rocket, Brain,
   HeartPulse, TrendingUp, AlertTriangle, Sparkles,
-  LayoutDashboard, Contact, GitBranch, MessageSquare,
+  LayoutDashboard, GitBranch, MessageSquare,
   FileSignature, Star, Share2, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
@@ -43,13 +43,10 @@ const ADMIN_NAV: NavEntry[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, groupLabel: "General" },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle, groupLabel: "General" },
   // Sales
-  { title: "Client Pipeline Overview", url: "/admin/pipeline-insights", icon: BarChart3, groupLabel: "Sales" },
+  { title: "Sales Team Results", url: "/admin/bdr-meeting-analytics", icon: BarChart3, groupLabel: "Sales" },
+  { title: "Dialer Activity", url: "/admin/bdr-performance", icon: TrendingUp, groupLabel: "Sales" },
   { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard, groupLabel: "Sales" },
-  { title: "Prospects", url: "/admin/prospects", icon: Contact, groupLabel: "Sales" },
-  { title: "BDR Performance", url: "/admin/bdr-performance", icon: TrendingUp, groupLabel: "Sales" },
-  { title: "BDR Meeting Analytics", url: "/admin/bdr-meeting-analytics", icon: BarChart3, groupLabel: "Sales" },
   { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature, groupLabel: "Sales" },
-  { title: "Sales Demo Creator", url: "/admin/sales-demo-creator", icon: Hammer, groupLabel: "Sales" },
   // Clients & Success
   { title: "Client Accounts", url: "/admin/clients", icon: Users, groupLabel: "Clients & Success" },
   { title: "Acquisition Analytics", url: "/admin/clients/acquisition-analytics", icon: TrendingUp, groupLabel: "Clients & Success" },

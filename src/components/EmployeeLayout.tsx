@@ -18,19 +18,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { hasAdminBackup, restoreAdminSession } from "@/lib/impersonation";
 import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 
-const navItems = [
-  { title: "Dashboard", url: "/employee", icon: BarChart3 },
-  { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
-  { title: "My Stats", url: "/employee/my-stats", icon: Target },
-  { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
-  { title: "Dialer", url: "/employee/dialer", icon: Phone },
-  { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
-  { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
-
-
-  { title: "Training Center", url: "/employee/training", icon: GraduationCap },
-  { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
-  { title: "My Profile", url: "/employee/profile", icon: UserCircle },
+const navGroups: { label?: string; items: { title: string; url: string; icon: any }[] }[] = [
+  {
+    items: [{ title: "Dashboard", url: "/employee", icon: BarChart3 }],
+  },
+  {
+    label: "Find",
+    items: [
+      { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
+      { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
+      { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
+    ],
+  },
+  {
+    label: "Work",
+    items: [
+      { title: "Dialer", url: "/employee/dialer", icon: Phone },
+      { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
+      { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Results",
+    items: [{ title: "My Stats", url: "/employee/my-stats", icon: Target }],
+  },
+  {
+    label: "Learn",
+    items: [{ title: "Training Center", url: "/employee/training", icon: GraduationCap }],
+  },
+  {
+    items: [{ title: "My Profile", url: "/employee/profile", icon: UserCircle }],
+  },
 ];
 
 function EmployeeSidebar() {
@@ -91,21 +109,32 @@ function EmployeeSidebar() {
             <span className="text-xs font-bold text-foreground/80 group-data-[collapsible=icon]:hidden">Employee Portal</span>
           </div>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const url = item.url === "/employee" ? dashboardRoute : item.url;
-                const active = location.pathname === url || (item.url === "/employee" && location.pathname === dashboardRoute);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <NavLink to={url} className="text-muted-foreground hover:text-foreground">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+            {navGroups.map((group, gi) => (
+              <SidebarMenu key={group.label || `group-${gi}`}>
+                {group.label && (
+                  <SidebarMenuItem className="pointer-events-none">
+                    <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden">
+                      {group.label}
+                    </div>
                   </SidebarMenuItem>
-                );
-              })}
+                )}
+                {group.items.map((item) => {
+                  const url = item.url === "/employee" ? dashboardRoute : item.url;
+                  const active = location.pathname === url || (item.url === "/employee" && location.pathname === dashboardRoute);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                        <NavLink to={url} className="text-muted-foreground hover:text-foreground">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            ))}
+              <SidebarMenu>
               {/* BDR Certification */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={certActive} tooltip="BDR Certification">

@@ -1,9 +1,9 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import {
-  Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut, Hammer,
+  Users, ListChecks, ChevronLeft, Zap, Activity, Shield, LogOut,
   Calendar, FileText, ChevronDown, Rocket, Brain,
   HeartPulse, TrendingUp, AlertTriangle, Sparkles,
-  LayoutDashboard, Contact, GitBranch, MessageSquare, Target,
+  LayoutDashboard, GitBranch, MessageSquare, Target,
   ClipboardList, FileSignature, Star, Share2, Search, Megaphone, Globe,
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
@@ -42,13 +42,10 @@ const adminGroups: NavGroup[] = [
   {
     label: "Sales",
     items: [
-      { title: "Client Pipeline Overview", description: "Compare pipeline performance across every client workspace.", url: "/admin/pipeline-insights", icon: BarChart3 },
+      { title: "Sales Team Results", description: "Close rates, attendance, reschedules, and why leads are lost — team and per salesman.", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
+      { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
-      { title: "Prospects", description: "Track potential NewLight clients before they become accounts.", url: "/admin/prospects", icon: Contact },
-      { title: "BDR Performance", description: "Review call activity and outcomes across the BDR team.", url: "/admin/bdr-performance", icon: TrendingUp },
-      { title: "BDR Meeting Analytics", description: "Measure meeting attendance, progression, and close outcomes.", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
       { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
-      { title: "Sales Demo Creator", description: "Capture a prospect and create a branded demo workspace.", url: "/admin/sales-demo-creator", icon: Hammer },
     ],
   },
   {
