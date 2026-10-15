@@ -97,9 +97,9 @@ const PIPELINE_STAGES: PipelineStageDef[] = [
     bg: "hsla(211,80%,60%,.15)", text: "hsl(211,90%,70%)", border: "hsla(211,80%,60%,.4)", bar: "hsl(211,90%,60%)" },
   { key: "warm", label: "Contacted / Warm Lead", description: "Reached owner, showed interest",
     bg: "hsla(38,92%,55%,.15)",  text: "hsl(38,95%,65%)",  border: "hsla(38,92%,55%,.4)",  bar: "hsl(38,92%,55%)" },
-  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Requested callback or follow up",
+  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Follow-up requested or meeting booked",
     bg: "hsla(14,90%,58%,.15)",  text: "hsl(14,95%,68%)",  border: "hsla(14,90%,58%,.4)",  bar: "hsl(14,90%,58%)" },
-  { key: "won",  label: "Won",                   description: "Appointment booked or deal closed",
+  { key: "won",  label: "Won",                   description: "Paid & signed — client won",
     bg: "hsla(142,72%,42%,.18)", text: "hsl(142,72%,55%)", border: "hsla(142,72%,42%,.5)", bar: "hsl(142,72%,42%)" },
 ];
 /** Terminal stage set by the hourly expiration job — rendered as a label but never offered as a column/target. */
