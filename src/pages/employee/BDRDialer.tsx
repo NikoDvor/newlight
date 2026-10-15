@@ -360,7 +360,6 @@ export default function BDRDialer() {
       if (error) throw error;
       // Stage only moves on form completion / lost meetings — dialer outcomes never change it.
       const pipelineStage = lead.pipeline_stage || "cold";
-      else pipelineStage = "warm";
       // Logging an outcome never moves the lead to "dialed" — only the Mark Dialed switch does.
       const leadPatch: Record<string, unknown> = {};
       if (callbackAt) {
