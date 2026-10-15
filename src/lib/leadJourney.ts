@@ -159,7 +159,8 @@ export function journeyStatusText(j: LeadJourney, reasonLabel: (k: string) => st
   if (j.status === "won") return `Won — activated after ${j.meetings} meeting${j.meetings === 1 ? "" : "s"}${j.reschedules ? ` (${j.reschedules} reschedule${j.reschedules === 1 ? "" : "s"})` : ""}`;
   if (j.status === "lost" && j.lostAt) {
     const l = j.lostAt;
-    const where = l.kind === "pay_sign" ? "Pay & Sign" : `${l.meetingSequence ? `meeting ${l.meetingSequence} — ` : ""}${journeyKindLabel(l.kind, l.attempt)}`;
+    const after = j.reschedules ? ` (after ${j.reschedules} reschedule${j.reschedules === 1 ? "" : "s"})` : "";
+    const where = l.kind === "pay_sign" ? `Pay & Sign${after}` : `${l.meetingSequence ? `meeting ${l.meetingSequence} — ` : ""}${journeyKindLabel(l.kind, l.attempt)}${after}`;
     const reasons = l.reason ? ` — ${reasonLabel(l.reason)}` : "";
     return `Lost at ${where}${l.viaCancel ? " (cancelled)" : ""}${reasons}`;
   }
