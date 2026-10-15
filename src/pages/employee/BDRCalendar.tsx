@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import MeetingOutcomeSheet, { OUTCOME_KINDS, type OutcomeLead } from "@/components/employee/MeetingOutcomeSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonthGrid,
@@ -36,6 +37,8 @@ interface Event {
   stage: string | null;
   lead_id: string | null;
   notes: string | null;
+  meeting_kind?: string | null;
+  attempt_number?: number | null;
 }
 
 const SOURCE_TONE: Record<string, string> = {
@@ -101,7 +104,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
       const [{ data: eventRows }, { data: allCals }] = await Promise.all([
         (supabase as any)
           .from("bdr_calendar_events")
-          .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes")
+          .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number")
           .eq("user_id", cal.user_id)
           .order("starts_at", { ascending: true }),
         (supabase as any)
@@ -130,7 +133,7 @@ export default function BDRCalendar({ calendarId }: { calendarId?: string } = {}
     if (!calendar) return;
     const { data } = await (supabase as any)
       .from("bdr_calendar_events")
-      .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes")
+      .select("id, title, description, starts_at, ends_at, source, outcome, stage, lead_id, notes, meeting_kind, attempt_number")
       .eq("user_id", calendar.user_id)
       .order("starts_at", { ascending: true });
     setEvents(data || []);
@@ -751,17 +754,39 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
 
 function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null; onClose: () => void; onDeleted: () => void; }) {
   const [deleting, setDeleting] = useState(false);
+  const [cancelLead, setCancelLead] = useState<OutcomeLead | null>(null);
   if (!event) return null;
+  const tracked = !!event.lead_id && OUTCOME_KINDS.includes((event.meeting_kind || "") as any);
   const start = new Date(event.starts_at);
   const end = new Date(event.ends_at);
   const remove = async () => {
     setDeleting(true);
+    if (tracked) {
+      // Tracked meetings are never deleted — cancelling requires an outcome.
+      const { data: lead, error: leadErr } = await (supabase as any).from("nl_bdr_leads")
+        .select("id, client_id, business_name, crm_deal_id").eq("id", event.lead_id).maybeSingle();
+      setDeleting(false);
+      if (leadErr || !lead) { toast({ title: "Couldn't load lead", description: leadErr?.message || "Lead not found", variant: "destructive" }); return; }
+      setCancelLead(lead);
+      return;
+    }
     const { error } = await (supabase as any).from("bdr_calendar_events").delete().eq("id", event.id);
     setDeleting(false);
     if (error) { toast({ title: "Couldn't delete", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Event deleted" });
     onDeleted();
   };
+  if (cancelLead) {
+    return (
+      <MeetingOutcomeSheet
+        mode="cancel"
+        event={{ id: event.id, lead_id: event.lead_id, meeting_kind: event.meeting_kind ?? null, attempt_number: event.attempt_number ?? null, starts_at: event.starts_at, source: event.source }}
+        lead={cancelLead}
+        onCancel={() => setCancelLead(null)}
+        onDone={() => { setCancelLead(null); onDeleted(); }}
+      />
+    );
+  }
   return (
     <Dialog open={!!event} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="bg-[hsl(215,35%,10%)] border-white/10 text-white">
@@ -779,7 +804,7 @@ function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null;
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} className="text-white/70"><X className="h-4 w-4 mr-1" />Close</Button>
           <Button variant="destructive" onClick={remove} disabled={deleting}>
-            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" />Delete</>}
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" />{tracked ? "Cancel meeting" : "Delete"}</>}
           </Button>
         </DialogFooter>
       </DialogContent>
