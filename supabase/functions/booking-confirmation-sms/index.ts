@@ -344,8 +344,8 @@ async function runNotifications(
     // --- 1. SMS to client ----------------------------------------------------
     const isMeetingLink = meta.via === "meeting_link";
     const clientMsg = isMeetingLink
-      ? `Your meeting with NewLight is confirmed for ${when}. Questions? Call (805) 836-3557${joinLine}`
-      : `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com`;
+      ? `Your meeting with NewLight is confirmed for ${when}. Questions? Call (805) 836-3557${joinLine} Reply STOP to opt out.`
+      : `Your appointment with NewLight is confirmed for ${when}. We'll see you then! Questions? Call (805) 836-3557${joinLine}\n\nDownload the NewLight app and get your system ready before we meet: https://newlight-app.com Reply STOP to opt out.`;
     let clientSent = false;
     if (clientSmsBlocked) {
       console.log("[SMS→client] skipped — no SMS consent");

@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     .or("reminder_24h_sent_at.is.null,reminder_3h_sent_at.is.null,reminder_15m_sent_at.is.null")
     // Rescheduled rows are superseded by a new event row — never remind off them.
     // Null-safe so events with no attendance recorded still get reminders.
-    .or("attendance.is.null,attendance.neq.rescheduled")
+    .or("attendance.is.null,attendance.not.in.(rescheduled,cancelled)")
     .limit(500);
 
   if (error) {

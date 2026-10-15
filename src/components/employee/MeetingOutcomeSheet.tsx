@@ -63,7 +63,7 @@ export function needsOutcome(
 ) {
   if (!e || hasOutcome) return false;
   if (!OUTCOME_KINDS.includes((e.meeting_kind || "") as any)) return false;
-  if (e.attendance === "rescheduled") return false;
+  if (e.attendance === "rescheduled" || e.attendance === "cancelled") return false;
   return new Date(e.starts_at).getTime() < Date.now();
 }
 
@@ -84,14 +84,15 @@ export function formatOutcomeSummary(o: OutcomeRow) {
   return `${head} · Won${o.next_step ? ` → ${NEXT_LABEL[o.next_step] || o.next_step}` : ""}`;
 }
 
-type Attendance = "attended" | "no_show";
+type Attendance = "attended" | "no_show" | "cancelled";
 type Result = "won" | "rescheduled" | "lost";
 
 interface Props {
   event: OutcomeEvent | null;
   lead: OutcomeLead | null;
   /** "pay_sign" = stalled Pay & Sign after a won closing: only Lost or Still waiting. */
-  mode?: "meeting" | "pay_sign";
+  /** "cancel" = rep is cancelling the meeting: only Reschedule or Lost, attendance 'cancelled'. */
+  mode?: "meeting" | "pay_sign" | "cancel";
   onDone: () => void;
   onCancel?: () => void;
 }
@@ -100,6 +101,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
   const navigate = useNavigate();
   const open = !!event && !!lead;
   const isPaySign = mode === "pay_sign";
+  const isCancel = mode === "cancel";
   const kind = (event?.meeting_kind || "discovery") as MeetingKind;
   const attempt = event?.attempt_number ?? 1;
 
@@ -116,9 +118,9 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
 
   useEffect(() => {
     if (!open) return;
-    setAttendance(null); setResult(isPaySign ? "lost" : null); setSlot(""); setReason("");
+    setAttendance(isCancel ? "cancelled" : null); setResult(isPaySign ? "lost" : null); setSlot(""); setReason("");
     setPrimary(""); setOthers(new Set()); setNotes(""); setSaving(false);
-  }, [open, event?.id, isPaySign]);
+  }, [open, event?.id, isPaySign, isCancel]);
 
   useEffect(() => {
     if (attendance === "no_show") {
@@ -148,6 +150,8 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
 
   const title = isPaySign
     ? `Pay & Sign — ${lead.business_name}`
+    : isCancel
+    ? `Cancel ${MEETING_KINDS[kind]?.split(" (")[0] || "Meeting"} #${attempt} — ${lead.business_name}`
     : `${MEETING_KINDS[kind]?.split(" (")[0] || "Meeting"} #${attempt} — ${lead.business_name}`;
 
   const baseRow = async () => {
@@ -228,11 +232,17 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
       result: "lost", primary_lost_reason: primary, lost_reasons: all, notes: notes.trim() || null,
     });
     if (!isPaySign && attendance) await setEventAttendance(attendance);
+    let seq: number | null = null;
+    if (!isPaySign) {
+      const { data: ev } = await (supabase as any).from("bdr_calendar_events")
+        .select("meeting_sequence").eq("id", event.id).maybeSingle();
+      seq = ev?.meeting_sequence ?? null;
+    }
 
     const { data: fresh } = await (supabase as any).from("nl_bdr_leads")
       .select("outcome_history, crm_deal_id").eq("id", lead.id).maybeSingle();
     const history = Array.isArray(fresh?.outcome_history) ? fresh.outcome_history : [];
-    const label = `Lost at ${isPaySign ? "Pay & Sign" : `${KIND_SHORT[kind]} #${attempt}`} — ${LOST_REASONS[primary]}`;
+    const label = `Lost at ${isPaySign ? "Pay & Sign" : `${KIND_SHORT[kind]} #${attempt}${seq ? ` (meeting ${seq})` : ""}`} — ${LOST_REASONS[primary]}`;
     const entry = { label, timestamp: new Date().toISOString(), meeting_kind: isPaySign ? "pay_sign" : kind };
     const { error: leadErr } = await (supabase as any).from("nl_bdr_leads")
       .update({ status: "closed_lost", pipeline_stage: "cold", outcome_history: [...history, entry] })
@@ -269,7 +279,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
         </SheetHeader>
 
         <div className="mt-5 space-y-5">
-          {!isPaySign && (
+          {!isPaySign && !isCancel && (
             <div className="space-y-2">
               <Label className="text-xs">1. Did the meeting happen?</Label>
               <div className="flex gap-2">
@@ -279,11 +289,11 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
             </div>
           )}
 
-          {(isPaySign || attendance) && (
+          {(isPaySign || isCancel || attendance) && (
             <div className="space-y-2">
-              <Label className="text-xs">{isPaySign ? "Outcome" : "2. Result"}</Label>
+              <Label className="text-xs">{isPaySign ? "Outcome" : isCancel ? "Instead of deleting — what happens next?" : "2. Result"}</Label>
               <div className="flex flex-wrap gap-2">
-                {!isPaySign && attendance === "attended" && (
+                {!isPaySign && !isCancel && attendance === "attended" && (
                   <button className={chip(result === "won")} onClick={() => setResult("won")}>
                     {kind === "onboarding" ? "Completed" : "Won"}
                   </button>
@@ -406,7 +416,7 @@ export function MeetingsNeedingOutcomeCard({ className }: { className?: string }
         .in("meeting_kind", OUTCOME_KINDS as unknown as string[])
         .lt("starts_at", nowIso)
         .not("lead_id", "is", null)
-        .or("attendance.is.null,attendance.neq.rescheduled")
+        .or("attendance.is.null,attendance.not.in.(rescheduled,cancelled)")
         .order("starts_at", { ascending: false })
         .limit(200);
       const evIds = (evts || []).map((e: any) => e.id);

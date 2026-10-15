@@ -251,6 +251,7 @@ export async function sendWelcomeDocument(
     repEmail?: string | null;
     onboardingMeetingStartsAt?: string | null;
     paySignUrl?: string;
+    zoomJoinUrl?: string | null;
   },
 ) {
   const { data: check } = await supabase
@@ -300,6 +301,11 @@ export async function sendWelcomeDocument(
         timeZone: "America/Los_Angeles",
       }) + " (Pacific Time)"
     : null;
+  let zoomJoinUrl = opts.zoomJoinUrl ?? null;
+  if (!zoomJoinUrl && check.onboarding_meeting_id) {
+    const { data: ev } = await supabase.from("bdr_calendar_events").select("zoom_join_url").eq("id", check.onboarding_meeting_id).maybeSingle();
+    zoomJoinUrl = ev?.zoom_join_url || null;
+  }
   const terms = termsLine(check);
   const signedPdfUrl = await getSignedAgreementUrlForDeal(supabase, dealId);
 
@@ -309,6 +315,7 @@ export async function sendWelcomeDocument(
     ``,
     `Your payment is received and your service agreement is signed and on file.`,
     when ? `Onboarding meeting: ${when}` : `We'll confirm your onboarding meeting shortly.`,
+    zoomJoinUrl ? `Join on Zoom: ${zoomJoinUrl}` : ``,
     `Your account manager: ${rep.name}${rep.email ? ` (${rep.email})` : ""}`,
     `Terms: ${terms}`,
     ``,
@@ -337,6 +344,7 @@ export async function sendWelcomeDocument(
         <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#0369a1;">Your onboarding meeting</div>
         <div style="font-size:17px;font-weight:700;margin-top:4px;">${esc(when)}</div>
         <div style="font-size:13px;color:#0369a1;margin-top:4px;">45 minutes · calendar invite to follow</div>
+        ${zoomJoinUrl ? `<div style="font-size:13px;margin-top:8px;">Join on Zoom: <a href="${esc(zoomJoinUrl)}" style="color:#0369a1;word-break:break-all;">${esc(zoomJoinUrl)}</a></div>` : ""}
       </div>` : `<p style="font-size:14px;line-height:1.7;">We'll confirm your onboarding meeting time shortly.</p>`}
 
       <table style="width:100%;font-size:14px;line-height:1.9;border-collapse:collapse;margin-bottom:20px;">
@@ -383,6 +391,7 @@ export async function sendOnboardingRescheduleNotice(opts: {
   previousStartsAt: string | null;
   newStartsAt: string;
   paySignUrl?: string;
+  zoomJoinUrl?: string | null;
 }): Promise<{ sent: boolean; results: { ok: boolean; detail: string }[] }> {
   const businessName = opts.clientName || "your business";
   const fmt = (iso: string | null) =>
@@ -405,6 +414,7 @@ export async function sendOnboardingRescheduleNotice(opts: {
     `(Previously: ${oldWhen})`,
     ``,
     opts.repName ? `You'll be meeting with ${opts.repName}.` : ``,
+    opts.zoomJoinUrl ? `Join on Zoom: ${opts.zoomJoinUrl}` : ``,
     opts.paySignUrl ? `View your documents and meeting details: ${opts.paySignUrl}` : ``,
     ``,
     `Questions? Reach us at ${OPS_EMAIL_TO} or ${OPS_PHONE_DISPLAY}.`,
@@ -421,6 +431,7 @@ export async function sendOnboardingRescheduleNotice(opts: {
       </p>
       <p style="font-size:13px;color:#6b7280;margin:0 0 24px;">Previously: ${esc(oldWhen)}</p>
       ${opts.repName ? `<p style="font-size:14px;color:#334155;margin:0 0 24px;">You'll be meeting with ${esc(opts.repName)}.</p>` : ""}
+      ${opts.zoomJoinUrl ? `<p style="font-size:14px;color:#334155;margin:0 0 24px;">Join on Zoom: <a href="${esc(opts.zoomJoinUrl)}" style="color:#0369a1;word-break:break-all;">${esc(opts.zoomJoinUrl)}</a></p>` : ""}
       ${opts.paySignUrl ? `<div style="margin:0 0 24px;"><a href="${esc(opts.paySignUrl)}" style="display:inline-block;background:#0f172a;color:#fff;padding:11px 18px;border-radius:6px;text-decoration:none;font-size:13px;">View meeting details</a></div>` : ""}
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
       <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0;">

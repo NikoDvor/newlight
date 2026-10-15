@@ -4,6 +4,7 @@
 // - Creates a closing_meeting bdr_calendar_events row on the rep's own calendar.
 // - Fires universal + rep-focused notifications (SMS + email).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createZoomMeeting } from "../_shared/zoom.ts";
 import { esc, fmtMoney, buildServiceAgreementHtml } from "../_shared/service-agreement-html.ts";
 
 // Short, distinct receipt/terms-summary document (separate from the full 16-section agreement).
@@ -229,6 +230,25 @@ Deno.serve(async (req) => {
       .single();
     if (evtErr) throw evtErr;
 
+    // 4b. Zoom for the closing meeting — never blocks the booking.
+    let zoomJoinUrl: string | null = null;
+    let zoomStartUrl: string | null = null;
+    try {
+      const zoom = await createZoomMeeting({
+        topic: `NewLight Closing Meeting — ${lead.business_name}`,
+        startTime: start.toISOString(),
+        durationMinutes: dur,
+        agenda: closing_notes || undefined,
+      });
+      zoomJoinUrl = zoom.join_url; zoomStartUrl = zoom.start_url;
+      const { error: zErr } = await supabase.from("bdr_calendar_events")
+        .update({ zoom_meeting_id: String(zoom.id), zoom_join_url: zoom.join_url, zoom_start_url: zoom.start_url })
+        .eq("id", evt.id);
+      if (zErr) console.error("[close-prep zoom] save failed:", zErr.message);
+    } catch (e) {
+      console.error("[close-prep zoom] create failed:", (e as Error).message);
+    }
+
     // 5a. Create Proposal row (Form 2 artifact #1)
     const priceLineForDoc =
       (isCommission
@@ -405,6 +425,8 @@ Deno.serve(async (req) => {
       recurring_fee: recurring_fee != null ? Number(recurring_fee) : null,
       closing_notes: closing_notes || null,
       paySignUrl,
+      zoomJoinUrl,
+      zoomStartUrl,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
     // deno-lint-ignore no-explicit-any
     const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
@@ -441,7 +463,10 @@ async function sendClosePrepNotifications(supabase: any, args: {
   recurring_fee: number | null;
   closing_notes: string | null;
   paySignUrl: string;
+  zoomJoinUrl?: string | null;
+  zoomStartUrl?: string | null;
 }) {
+  const { zoomJoinUrl = null, zoomStartUrl = null } = args;
   const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, pricing_model, closing_notes, paySignUrl } = args;
   const whenLbl = fmtWhen(when);
   const who = lead.owner_name ? `${lead.owner_name} (${lead.business_name})` : lead.business_name;
@@ -500,12 +525,15 @@ async function sendClosePrepNotifications(supabase: any, args: {
       lead.phone ? `  • Phone: ${lead.phone}` : "",
       lead.email ? `  • Email: ${lead.email}` : "",
       ``,
+      zoomJoinUrl ? `Zoom join link: ${zoomJoinUrl}` : "",
+      zoomStartUrl ? `Zoom host start link: ${zoomStartUrl}` : "",
+      ``,
       `Send this link to the client during the closing meeting so they can pay + e-sign in one flow:`,
       paySignUrl,
       ``,
       `— NewLight`,
     ].filter(Boolean).join("\n");
-    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl });
+    const html = closePrepHtml({ heading: `Closing meeting prep — ${lead.business_name}`, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl, zoomJoinUrl, zoomStartUrl });
     await sendEmail(repEmail, subj, html, text);
   }
 
@@ -519,6 +547,7 @@ async function sendClosePrepNotifications(supabase: any, args: {
         ``,
         `Your meeting is confirmed for ${whenLbl} (Pacific Time).`,
         ``,
+        zoomJoinUrl ? `Join on Zoom: ${zoomJoinUrl}\n` : "",
         `Looking forward to speaking with you. If you need to change the time, just reply to this email.`,
         ``,
         `— ${signer}`,
@@ -529,6 +558,7 @@ async function sendClosePrepNotifications(supabase: any, args: {
         whenLbl,
         signer,
         repEmail: repEmail || null,
+        zoomJoinUrl,
       });
       console.log(`[close-prep client email] to=${lead.email} subject="${subj}" when="${whenLbl}"`);
       await sendEmail(lead.email, subj, html, text);
@@ -543,13 +573,15 @@ function clientMeetingConfirmHtml(args: {
   whenLbl: string;
   signer: string;
   repEmail: string | null;
+  zoomJoinUrl?: string | null;
 }): string {
-  const { ownerName, whenLbl, signer, repEmail } = args;
+  const { ownerName, whenLbl, signer, repEmail, zoomJoinUrl } = args;
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your meeting is confirmed</h1>
     <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ${esc(ownerName || "there")},</p>
     <div style="padding:14px 16px;background:#f9fafb;border-radius:8px;font-size:15px;color:#111827;margin:0 0 20px;"><strong>${esc(whenLbl)}</strong> <span style="color:#6b7280;font-size:13px;">(Pacific Time)</span></div>
+    ${zoomJoinUrl ? `<p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Join on Zoom: <a href="${esc(zoomJoinUrl)}">${esc(zoomJoinUrl)}</a></p>` : ""}
     <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Looking forward to speaking with you. If you need to change the time, just reply to this email.</p>
     <p style="font-size:14px;line-height:1.6;margin:20px 0 0;">— ${esc(signer)}${repEmail ? `<br><span style="color:#6b7280;font-size:13px;">${esc(repEmail)}</span>` : ""}</p>
   </div>
@@ -566,8 +598,10 @@ function closePrepHtml(args: {
   closing_notes: string | null;
   lead: any;
   paySignUrl?: string;
+  zoomJoinUrl?: string | null;
+  zoomStartUrl?: string | null;
 }): string {
-  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl } = args;
+  const { heading, repName, who, whenLbl, priceLine, closing_notes, lead, paySignUrl, zoomJoinUrl, zoomStartUrl } = args;
   const rows: string[] = [
     `<tr><td style="padding:6px 0;color:#6b7280;width:130px;">BDR</td><td style="padding:6px 0;"><strong>${repName || "-"}</strong></td></tr>`,
     `<tr><td style="padding:6px 0;color:#6b7280;">Client</td><td style="padding:6px 0;"><strong>${who}</strong></td></tr>`,
@@ -576,6 +610,8 @@ function closePrepHtml(args: {
   ];
   if (lead.phone) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${lead.phone}</td></tr>`);
   if (lead.email) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${lead.email}</td></tr>`);
+  if (zoomJoinUrl) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Zoom join</td><td style="padding:6px 0;"><a href="${zoomJoinUrl}">${zoomJoinUrl}</a></td></tr>`);
+  if (zoomStartUrl) rows.push(`<tr><td style="padding:6px 0;color:#6b7280;">Zoom host start</td><td style="padding:6px 0;"><a href="${zoomStartUrl}">Start meeting as host</a></td></tr>`);
   const notesBlock = closing_notes
     ? `<div style="margin-top:16px;padding:12px 14px;background:#f9fafb;border-radius:8px;font-size:13px;color:#374151;white-space:pre-wrap;">${closing_notes.replace(/</g, "&lt;")}</div>`
     : "";

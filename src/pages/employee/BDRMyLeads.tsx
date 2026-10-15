@@ -154,7 +154,6 @@ interface OutcomeDef {
 
 const OUTCOMES: OutcomeDef[] = [
   { label: "Booked — Appointment Set", group: "positive", status: "appointment_booked", pipeline: "appointment_booked" },
-  { label: "Won — Closed on the Spot", group: "positive", status: "closed_won", pipeline: "closed_won" },
   { label: "Told to Call Back", group: "followup", status: "contacted", pipeline: "contacted", createTask: true },
   { label: "Owner Wasn't There", group: "followup", status: "new_lead", pipeline: "new_lead", createTask: true },
   { label: "Left Owner a Message", group: "followup", status: "contacted", pipeline: "contacted" },
@@ -241,6 +240,7 @@ export default function BDRMyLeads() {
   /** All outcome rows for my leads, keyed by lead id (newest first). */
   const [outcomesByLead, setOutcomesByLead] = useState<Record<string, OutcomeRow[]>>({});
   const [outcomeLeadSheet, setOutcomeLeadSheet] = useState<BdrLead | null>(null);
+  const [cancelLeadSheet, setCancelLeadSheet] = useState<BdrLead | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
   const [geoProgress, setGeoProgress] = useState(0);
@@ -404,6 +404,12 @@ export default function BDRMyLeads() {
   const handleCancelMeeting = useCallback(async (lead: BdrLead) => {
     const existing = latestMeetingByLead[lead.id];
     if (!existing) return;
+    // Tracked meetings are never deleted — cancelling requires an outcome (Reschedule or Lost).
+    if (OUTCOME_KINDS.includes((existing.meeting_kind || "") as any)) {
+      setRescheduleLead(null);
+      setCancelLeadSheet(lead);
+      return;
+    }
     const { error } = await (supabase as any).from("bdr_calendar_events").delete().eq("id", existing.id);
     if (error) { toast({ title: "Could not cancel", description: error.message, variant: "destructive" }); return; }
     setLatestMeetingByLead(prev => { const n = { ...prev }; delete n[lead.id]; return n; });
@@ -1451,6 +1457,15 @@ export default function BDRMyLeads() {
         lead={outcomeLeadSheet}
         onCancel={() => setOutcomeLeadSheet(null)}
         onDone={() => { setOutcomeLeadSheet(null); fetchLeads(); }}
+      />
+      <MeetingOutcomeSheet
+        mode="cancel"
+        event={cancelLeadSheet && latestMeetingByLead[cancelLeadSheet.id]
+          ? { ...latestMeetingByLead[cancelLeadSheet.id], meeting_kind: latestMeetingByLead[cancelLeadSheet.id].meeting_kind ?? null, attempt_number: latestMeetingByLead[cancelLeadSheet.id].attempt_number ?? null, lead_id: cancelLeadSheet.id }
+          : null}
+        lead={cancelLeadSheet}
+        onCancel={() => setCancelLeadSheet(null)}
+        onDone={() => { setCancelLeadSheet(null); fetchLeads(); }}
       />
       <CustomerProfilePanel
         open={!!profileLeadId}
