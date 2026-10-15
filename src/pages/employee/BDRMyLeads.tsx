@@ -93,13 +93,13 @@ interface PipelineStageDef {
   bar: string;
 }
 const PIPELINE_STAGES: PipelineStageDef[] = [
-  { key: "cold", label: "Cold Lead",            description: "New contact, not yet reached",
+  { key: "cold", label: "Cold Lead",            description: "Not booked yet, or lost",
     bg: "hsla(211,80%,60%,.15)", text: "hsl(211,90%,70%)", border: "hsla(211,80%,60%,.4)", bar: "hsl(211,90%,60%)" },
-  { key: "warm", label: "Contacted / Warm Lead", description: "Reached owner, showed interest",
+  { key: "warm", label: "Contacted / Warm Lead", description: "Form 1 booked — discovery stage",
     bg: "hsla(38,92%,55%,.15)",  text: "hsl(38,95%,65%)",  border: "hsla(38,92%,55%,.4)",  bar: "hsl(38,92%,55%)" },
-  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Follow-up requested or meeting booked",
+  { key: "hot",  label: "Follow Up / Hot Lead",  description: "Form 2 done — closing stage",
     bg: "hsla(14,90%,58%,.15)",  text: "hsl(14,95%,68%)",  border: "hsla(14,90%,58%,.4)",  bar: "hsl(14,90%,58%)" },
-  { key: "won",  label: "Won",                   description: "Paid & signed — client won",
+  { key: "won",  label: "Won",                   description: "Paid & signed",
     bg: "hsla(142,72%,42%,.18)", text: "hsl(142,72%,55%)", border: "hsla(142,72%,42%,.5)", bar: "hsl(142,72%,42%)" },
 ];
 /** Terminal stage set by the hourly expiration job — rendered as a label but never offered as a column/target. */
@@ -113,21 +113,9 @@ const STAGE_BY_KEY: Record<PipelineStageKey, PipelineStageDef> =
 
 export function pipelineStageFromOutcome(label: string | null | undefined): PipelineStageKey | null {
   if (!label) return null;
-  const l = label.toLowerCase();
-  // Lost-at-a-meeting labels from the outcome form
-  if (l.startsWith("lost at ")) return "cold";
-  // Firm-no outcomes go back to cold
-  if (l.includes("wasn't interested") || l.includes("didn't see the value") ||
-      l.includes("already has a marketing company") || l.includes("business closed")) return "cold";
-  // Booking a meeting is hot, not won
-  if (l.includes("booked")) return "hot";
-  if (l.includes("won") || l.includes("closed on the spot")) return "won";
-  if (l.includes("call back") || l.includes("callback") || l.includes("follow up") ||
-      l.includes("follow-up") || l.includes("owner wasn't") || l.includes("asked for info") ||
-      l.includes("left owner")) return "hot";
-  if (l === "lost") return "cold";
-  // objections / any other contacted outcome
-  return "warm";
+  // Only lost-at-a-meeting labels map to a stage; every other outcome leaves it alone.
+  if (label.toLowerCase().startsWith("lost at ")) return "cold";
+  return null;
 }
 
 function derivePipelineStage(lead: BdrLead): PipelineStageKey {
@@ -138,8 +126,7 @@ function derivePipelineStage(lead: BdrLead): PipelineStageKey {
   const fromOutcome = pipelineStageFromOutcome(last);
   if (fromOutcome) return fromOutcome;
   if (lead.status === "closed_won") return "won";
-  if (lead.status === "appointment_booked") return "hot";
-  if (lead.status === "contacted") return "warm";
+  if (lead.status === "appointment_booked") return "warm";
   return "cold";
 }
 
@@ -217,7 +204,8 @@ const FILTER_TABS: { key: string; label: string }[] = [
 
 /* ─── page ─── */
 export default function BDRMyLeads() {
-  const { user } = useWorkspace();
+  const { user, isAdmin, roles } = useWorkspace();
+  const canOverrideStage = isAdmin || roles.some(r => r.role === "admin" || r.role === "operator");
   const { clientId } = useEmployeeClientId();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -759,10 +747,9 @@ export default function BDRMyLeads() {
     };
     const newHistory = [...(lead.outcome_history || []), entry];
 
-    const newStage = pipelineStageFromOutcome(outcome.label) ?? derivePipelineStage({ ...lead, outcome_history: newHistory });
+    // Outcome logging never changes pipeline_stage — only forms and lost meetings do.
     await (supabase as any).from("nl_bdr_leads").update({
       status: outcome.status, outcome_history: newHistory,
-      pipeline_stage: newStage,
       notes: note ? (lead.notes ? `${lead.notes}\n${note}` : note) : lead.notes,
     }).eq("id", lead.id);
 
@@ -1175,11 +1162,13 @@ export default function BDRMyLeads() {
                               {lead.street_address || lead.street_number}{lead.side_of_street ? ` (${lead.side_of_street})` : ""}
                             </span>
                           )}
+                          <span title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"}>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                            <DropdownMenuTrigger asChild disabled={!canOverrideStage}>
                               <button
                                 onClick={(e) => e.stopPropagation()}
-                                title="Tap to change pipeline stage"
+                                disabled={!canOverrideStage}
+                                title={canOverrideStage ? "Tap to change pipeline stage" : "Stage changes automatically when the next form is filled out"}
                                 className="rounded-full px-2.5 py-0.5 text-[10px] font-bold inline-flex items-center gap-1 transition-opacity hover:opacity-80"
                                 style={{ background: stage.bg, color: stage.text, border: `1px solid ${stage.border}` }}
                               >
@@ -1199,6 +1188,7 @@ export default function BDRMyLeads() {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          </span>
                           <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
                           {lead.unattended_since && (
                             <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
@@ -1377,7 +1367,7 @@ export default function BDRMyLeads() {
                         {!selectMode && (lead.status === "new_lead" || lead.status === "contacted") && (
                           <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setOutcomeLead(lead); }}>Log Outcome</Button>
                         )}
-                        {!selectMode && (derivePipelineStage(lead) === "hot" || derivePipelineStage(lead) === "won") && (
+                        {!selectMode && (derivePipelineStage(lead) === "warm" || derivePipelineStage(lead) === "hot" || derivePipelineStage(lead) === "won") && (
                           <Button
                             size="sm"
                             className="text-xs h-7 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
