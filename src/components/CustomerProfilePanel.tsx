@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Calendar, Clock, Mail, Phone, Building2, User, CheckCircle2, XCircle, RotateCcw, Loader2, Plus, Copy } from "lucide-react";
 import { getLeadPhones } from "@/lib/leadFlags";
+import LeadMeetingJourney from "@/components/employee/LeadMeetingJourney";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, kindAttemptLabel, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 
 type Attendance = "pending" | "attended" | "no_show" | "rescheduled";
@@ -285,6 +286,11 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
             {/* Meeting history */}
             <section className="space-y-2">
               <Label className="text-xs uppercase tracking-wider text-white/50">Meeting history</Label>
+              {leadId && (
+                <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                  <LeadMeetingJourney leadId={leadId} reloadKey={events.length * 1000 + Object.keys(outcomes).length} />
+                </div>
+              )}
               {past.length === 0 ? (
                 <p className="text-xs text-white/40">No past meetings yet.</p>
               ) : (

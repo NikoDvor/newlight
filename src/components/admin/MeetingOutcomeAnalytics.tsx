@@ -3,16 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
+import CustomerProfilePanel from "@/components/CustomerProfilePanel";
+import { buildLeadJourney, furthestStageLabel, journeyStatusText } from "@/lib/leadJourney";
 import { LOST_REASONS, MEETING_KINDS, RESCHEDULE_REASONS, type LostReason } from "@/lib/meetingOutcomes";
 
 const NEON = "hsl(211,96%,60%)";
 const KINDS = ["discovery", "closing", "onboarding"] as const;
 
-interface Ev { id: string; user_id: string; lead_id: string | null; meeting_kind: string; attempt_number: number | null; starts_at: string; ends_at: string | null; attendance: string | null }
+interface Ev { id: string; user_id: string; lead_id: string | null; meeting_kind: string; attempt_number: number | null; meeting_sequence?: number | null; created_at?: string | null; starts_at: string; ends_at: string | null; attendance: string | null }
 interface Out {
   id: string; event_id: string; lead_id: string | null; rep_user_id: string; meeting_kind: string; attempt_number: number;
   attendance: string | null; result: "won" | "rescheduled" | "lost"; next_step: string | null; reschedule_reason: string | null;
   primary_lost_reason: string | null; lost_reasons: string[] | null; notes: string | null; logged_at: string;
+  meeting_sequence?: number | null;
 }
 interface Lead { id: string; business_name: string; user_id: string; crm_deal_id: string | null }
 interface Deal { id: string; pay_sign_status: string | null; paid_signed_at: string | null; fully_activated_at: string | null }
@@ -24,6 +27,8 @@ export interface MeetingOutcomeAnalyticsProps {
   repFilter: string;
   reps: { id: string; name: string }[];
   onRepSelect: (repId: string) => void;
+  /** When set, force-filter to this rep and hide the by-salesman table. */
+  repUserId?: string;
 }
 
 const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign" };
@@ -107,7 +112,8 @@ function computeMetrics(events: Ev[], outs: Out[], leads: Map<string, Lead>, dea
 }
 
 /* ─── component ─── */
-export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepSelect }: MeetingOutcomeAnalyticsProps) {
+export default function MeetingOutcomeAnalytics({ range, repFilter: repFilterProp, reps, onRepSelect, repUserId }: MeetingOutcomeAnalyticsProps) {
+  const repFilter = repUserId || repFilterProp;
   const [events, setEvents] = useState<Ev[]>([]);
   const [outs, setOuts] = useState<Out[]>([]);
   const [leads, setLeads] = useState<Map<string, Lead>>(new Map());
@@ -117,6 +123,10 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
   const [drill, setDrill] = useState<{ title: string; items: Item[] } | null>(null);
   const [sortKey, setSortKey] = useState("discMeetings");
   const [sortAsc, setSortAsc] = useState(false);
+  const [jSearch, setJSearch] = useState("");
+  const [jSortKey, setJSortKey] = useState("meetings");
+  const [jSortAsc, setJSortAsc] = useState(false);
+  const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,9 +136,10 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
       const since = rangeStart(range);
       const evs = await pageAll<Ev>((f, t) => {
         let q = db.from("bdr_calendar_events")
-          .select("id, user_id, lead_id, meeting_kind, attempt_number, starts_at, ends_at, attendance")
+          .select("id, user_id, lead_id, meeting_kind, attempt_number, meeting_sequence, created_at, starts_at, ends_at, attendance")
           .in("meeting_kind", KINDS as unknown as string[]).order("starts_at", { ascending: false });
         if (since) q = q.gte("starts_at", since);
+        if (repUserId) q = q.eq("user_id", repUserId);
         return q.range(f, t);
       });
       const os = await inChunks<Out>(evs.map((e) => e.id), async (c) => {
@@ -152,7 +163,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
       setLoading(false);
     })().catch((e) => { console.error("[MeetingOutcomeAnalytics]", e); if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [range]);
+  }, [range, repUserId]);
 
   const repName = useMemo(() => new Map(reps.map((r) => [r.id, r.name])), [reps]);
 
@@ -200,6 +211,76 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
   }, [repRows, sortKey, sortAsc]);
 
   const open = (title: string, items: Item[]) => setDrill({ title, items });
+
+  /* journeys */
+  const journeys = useMemo(() => buildLeadJourney(fEvents as any, fOuts as any), [fEvents, fOuts]);
+  const jx = useMemo(() => {
+    const all = Array.from(journeys.values()).filter((j) => j.meetings > 0);
+    const won = all.filter((j) => j.status === "won"), lostJ = all.filter((j) => j.status === "lost");
+    const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+    const evById = new Map(fEvents.map((e) => [e.id, e]));
+    const seqOf = (o: Out) => o.meeting_sequence ?? evById.get(o.event_id)?.meeting_sequence ?? null;
+    const meetingLost = m.lost.filter((o) => o.meeting_kind !== "pay_sign");
+    const onResched = m.lost.filter((o) => o.meeting_kind !== "pay_sign" && (o.attempt_number ?? 1) > 1);
+    const cancelled = fEvents.filter((e) => e.attendance === "cancelled" || fOuts.some((o) => o.event_id === e.id && o.attendance === "cancelled"));
+    const attDen = fOuts.filter((o) => o.attendance === "attended" || o.attendance === "no_show");
+    const buckets = ["1", "2", "3", "4", "5+"].map((b) => {
+      const os = meetingLost.filter((o) => { const s = seqOf(o); if (!s) return false; return b === "5+" ? s >= 5 : s === Number(b); });
+      return { b, os, first: os.filter((o) => (o.attempt_number ?? 1) <= 1), resched: os.filter((o) => (o.attempt_number ?? 1) > 1) };
+    });
+    const leadsWithEv = (k: string, pred: (e: Ev) => boolean = () => true) => new Set(fEvents.filter((e) => e.lead_id && e.meeting_kind === k && pred(e)).map((e) => e.lead_id!));
+    const attendedEv = (e: Ev) => e.attendance === "attended" || fOuts.some((o) => o.event_id === e.id && o.attendance === "attended");
+    const leadsWithOut = (k: string, res: string) => new Set(fOuts.filter((o) => o.lead_id && o.meeting_kind === k && o.result === res).map((o) => o.lead_id!));
+    const discBooked = leadsWithEv("discovery");
+    const dealOf = (l: string) => { const ld = leads.get(l); return ld?.crm_deal_id ? deals.get(ld.crm_deal_id) : undefined; };
+    const allLeads = new Set(all.map((j) => j.leadId));
+    const funnel: [string, Set<string>][] = [
+      ["Discovery booked", discBooked],
+      ["Discovery held", leadsWithEv("discovery", attendedEv)],
+      ["Form 2", leadsWithOut("discovery", "won")],
+      ["Closing held", leadsWithEv("closing", attendedEv)],
+      ["Pay & Sign sent", leadsWithOut("closing", "won")],
+      ["Paid + signed", new Set(Array.from(allLeads).filter((l) => dealOf(l)?.pay_sign_status === "paid_signed"))],
+      ["Onboarding held", leadsWithEv("onboarding", attendedEv)],
+      ["Activated", new Set(Array.from(allLeads).filter((l) => dealOf(l)?.fully_activated_at || journeys.get(l)?.status === "won"))],
+    ];
+    return {
+      all, won, lostJ, buckets, funnel, discBookedN: discBooked.size, meetingLostN: meetingLost.length,
+      tiles: [
+        { label: "Avg meetings per won lead", value: avg(won.map((j) => j.meetings)), fmt: "num", sub: `${won.length} won lead${won.length === 1 ? "" : "s"}`, items: [] as Item[] },
+        { label: "Avg reschedules — won vs lost", value: null, text: `${avg(won.map((j) => j.reschedules))?.toFixed(1) ?? "—"} vs ${avg(lostJ.map((j) => j.reschedules))?.toFixed(1) ?? "—"}`, sub: `${won.length} won · ${lostJ.length} lost`, items: [] as Item[] },
+        { label: "Losses on a rescheduled meeting", r: { num: onResched.length, den: m.lost.length, items: onResched.map((o) => ({ out: o, ev: evById.get(o.event_id) })) } as Rate },
+        { label: "Cancellation rate", r: { num: cancelled.length, den: fEvents.length, items: cancelled.map((ev) => ({ ev })) } as Rate },
+        { label: "Overall attendance rate", r: { num: attDen.filter((o) => o.attendance === "attended").length, den: attDen.length, items: attDen.map((o) => ({ out: o, ev: evById.get(o.event_id) })) } as Rate },
+      ],
+    };
+  }, [journeys, fEvents, fOuts, m.lost, leads, deals]);
+
+  const jRows = useMemo(() => {
+    const q = jSearch.trim().toLowerCase();
+    const rows = jx.all.map((j) => {
+      const lead = leads.get(j.leadId);
+      const repId = lead?.user_id || fEvents.find((e) => e.lead_id === j.leadId)?.user_id || "";
+      return {
+        j, id: j.leadId, business: lead?.business_name || "Unknown lead", salesman: repName.get(repId) || (repId ? repId.slice(0, 8) : "—"),
+        meetings: j.meetings, attended: j.attended, noShows: j.noShows, reschedules: j.reschedules, cancellations: j.cancellations,
+        attendance: j.attendanceRate == null ? null : Math.round(j.attendanceRate * 100),
+        furthest: furthestStageLabel(j.furthestStage), status: journeyStatusText(j, reasonLabel),
+      };
+    }).filter((r) => !q || r.business.toLowerCase().includes(q) || r.salesman.toLowerCase().includes(q) || r.status.toLowerCase().includes(q));
+    const dir = jSortAsc ? 1 : -1;
+    return rows.sort((a: any, b: any) => {
+      const av = a[jSortKey], bv = b[jSortKey];
+      if (typeof av === "string" || typeof bv === "string") return String(av ?? "").localeCompare(String(bv ?? "")) * dir;
+      return ((av ?? -1) - (bv ?? -1)) * dir;
+    });
+  }, [jx.all, leads, fEvents, repName, jSearch, jSortKey, jSortAsc]);
+  const JCOLS: { key: string; label: string }[] = [
+    { key: "business", label: "Business" }, ...(repUserId ? [] : [{ key: "salesman", label: "Salesman" }]),
+    { key: "meetings", label: "Meetings" }, { key: "attended", label: "Attended" }, { key: "noShows", label: "No-shows" },
+    { key: "reschedules", label: "Reschedules" }, { key: "cancellations", label: "Cancellations" },
+    { key: "attendance", label: "Attendance %" }, { key: "furthest", label: "Furthest stage" }, { key: "status", label: "Status" },
+  ];
   const evItems = (es: Ev[]): Item[] => es.map((ev) => ({ ev }));
 
   const tiles: { label: string; r: Rate }[] = [
@@ -270,6 +351,41 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
               ))}
             </div>
 
+            {/* 1b. Journey tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {jx.tiles.map((t: any) => {
+                const v = t.r ? (pct(t.r) == null ? "—" : `${pct(t.r)}%`) : t.text ?? (t.value == null ? "—" : t.value.toFixed(1));
+                const sub = t.r ? (t.r.den ? `${t.r.num} of ${t.r.den}` : "no meetings yet") : t.sub;
+                return (
+                  <button key={t.label} onClick={() => t.r && open(t.label, t.r.items)} className="text-left rounded-xl bg-white/[0.04] p-4 hover:bg-white/[0.07] transition-colors">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{t.label}</p>
+                    <p className="text-2xl font-bold text-white mt-1">{v}</p>
+                    <p className="text-[11px] text-white/35 mt-1">{sub}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 1c. Journey funnel */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lead journey funnel</p>
+              {jx.discBookedN === 0 ? <p className="text-xs text-white/35">No discovery meetings yet.</p> : (
+                <div className="space-y-1.5">
+                  {jx.funnel.map(([label, set]) => {
+                    const p = Math.round((set.size / jx.discBookedN) * 100);
+                    return (
+                      <button key={label} className="w-full text-left group" onClick={() => open(label, fOuts.filter((o) => o.lead_id && set.has(o.lead_id)).map((o) => ({ out: o, ev: fEvents.find((e) => e.id === o.event_id) })))}>
+                        <div className="flex justify-between text-xs text-white/70"><span>{label}</span><span className="text-white/50">{set.size} · {p}%</span></div>
+                        <div className="h-2 rounded bg-white/[0.06] mt-1 overflow-hidden">
+                          <div className="h-full rounded group-hover:brightness-125" style={{ width: `${Math.min(p, 100)}%`, background: NEON }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* 2. Where lost */}
             <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Where leads are lost</p>
@@ -286,6 +402,35 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
                       </button>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            {/* 2b. Lost on which meeting */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Lost on which meeting</p>
+              {jx.meetingLostN === 0 ? <p className="text-xs text-white/35">No lost meetings yet.</p> : (
+                <div className="space-y-1.5">
+                  {jx.buckets.map(({ b, os, first, resched }) => {
+                    const p = Math.round((os.length / jx.meetingLostN) * 100);
+                    const pf = (first.length / jx.meetingLostN) * 100, pr = (resched.length / jx.meetingLostN) * 100;
+                    return (
+                      <button key={b} onClick={() => open(`Lost on meeting ${b}`, m.lostItems(os))} className="w-full text-left group">
+                        <div className="flex justify-between text-xs text-white/70">
+                          <span>Meeting {b}</span>
+                          <span className="text-white/50">{os.length} · {p}% <span className="text-white/35">({first.length} first attempt · {resched.length} rescheduled)</span></span>
+                        </div>
+                        <div className="h-2 rounded bg-white/[0.06] mt-1 overflow-hidden flex">
+                          <div className="h-full group-hover:brightness-125" style={{ width: `${pf}%`, background: NEON }} />
+                          <div className="h-full group-hover:brightness-125" style={{ width: `${pr}%`, background: "hsl(38,92%,58%)" }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <p className="text-[10px] text-white/35 flex gap-3 pt-1">
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1" style={{ background: NEON }} />First attempt</span>
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1" style={{ background: "hsl(38,92%,58%)" }} />Rescheduled attempt</span>
+                  </p>
                 </div>
               )}
             </div>
@@ -338,7 +483,7 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
             </div>
 
             {/* 4. By salesman */}
-            <div>
+            {!repUserId && <div>
               <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">By salesman</p>
               <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
                 <table className="w-full text-xs min-w-[900px]">
@@ -375,10 +520,45 @@ export default function MeetingOutcomeAnalytics({ range, repFilter, reps, onRepS
                   </tbody>
                 </table>
               </div>
+            </div>}
+
+            {/* 4b. Lead journeys */}
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Lead journeys ({jRows.length})</p>
+                <input value={jSearch} onChange={(e) => setJSearch(e.target.value)} placeholder="Search business, salesman, status…"
+                  className="h-8 w-64 max-w-full rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-xs text-white placeholder:text-white/30" />
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-white/[0.06] max-h-[520px] overflow-y-auto">
+                <table className="w-full text-xs min-w-[980px]">
+                  <thead><tr className="text-white/40 text-left">
+                    {JCOLS.map((c) => (
+                      <th key={c.key} className="p-2 font-medium cursor-pointer select-none whitespace-nowrap hover:text-white/70"
+                        onClick={() => { if (jSortKey === c.key) setJSortAsc(!jSortAsc); else { setJSortKey(c.key); setJSortAsc(false); } }}>
+                        {c.label}{jSortKey === c.key ? (jSortAsc ? " ▲" : " ▼") : ""}
+                      </th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {jRows.length === 0 && <tr><td colSpan={JCOLS.length} className="p-3 text-white/35">No lead journeys yet.</td></tr>}
+                    {jRows.map((row: any) => (
+                      <tr key={row.id} onClick={() => setProfileLeadId(row.id)} className="border-t border-white/[0.04] cursor-pointer hover:bg-white/[0.04]">
+                        {JCOLS.map((c) => {
+                          const v = row[c.key];
+                          const cls = c.key === "status" ? (row.j.status === "won" ? "text-emerald-400" : row.j.status === "lost" ? "text-red-400" : "text-white/60") : c.key === "business" ? "text-white" : "text-white/75";
+                          return <td key={c.key} className={`p-2 whitespace-nowrap ${cls}`}>{c.key === "attendance" ? (v == null ? "—" : `${v}%`) : v}</td>;
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}
       </CardContent>
+
+      <CustomerProfilePanel open={!!profileLeadId} onOpenChange={(v) => { if (!v) setProfileLeadId(null); }} leadId={profileLeadId} />
 
       {/* 5. Drill-down */}
       <Sheet open={!!drill} onOpenChange={(o) => { if (!o) setDrill(null); }}>

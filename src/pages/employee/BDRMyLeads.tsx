@@ -20,6 +20,8 @@ import ResearchQueueCard from "@/components/employee/ResearchQueueCard";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { rescheduleMeeting } from "@/lib/meetingReschedule";
+import { JourneyCompact } from "@/components/employee/LeadMeetingJourney";
+import { buildLeadJourney, type LeadJourney } from "@/lib/leadJourney";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
@@ -239,6 +241,7 @@ export default function BDRMyLeads() {
   const [latestMeetingByLead, setLatestMeetingByLead] = useState<Record<string, LatestMeeting>>({});
   /** All outcome rows for my leads, keyed by lead id (newest first). */
   const [outcomesByLead, setOutcomesByLead] = useState<Record<string, OutcomeRow[]>>({});
+  const [journeyByLead, setJourneyByLead] = useState<Map<string, LeadJourney>>(new Map());
   const [outcomeLeadSheet, setOutcomeLeadSheet] = useState<BdrLead | null>(null);
   const [cancelLeadSheet, setCancelLeadSheet] = useState<BdrLead | null>(null);
   const [geocoding, setGeocoding] = useState(false);
@@ -270,12 +273,14 @@ export default function BDRMyLeads() {
     const leadIds = (data || []).map((d: any) => d.id).filter(Boolean);
     if (leadIds.length > 0) {
       const meetingMap: Record<string, LatestMeeting> = {};
+      const allEvts: any[] = [];
       const CHUNK = 200;
       for (let i = 0; i < leadIds.length; i += CHUNK) {
         const { data: evts } = await (supabase as any).from("bdr_calendar_events")
-          .select("id, lead_id, starts_at, attendance, source, reschedule_count, meeting_kind, attempt_number")
+          .select("id, lead_id, starts_at, attendance, source, reschedule_count, meeting_kind, attempt_number, meeting_sequence, created_at, user_id")
           .in("lead_id", leadIds.slice(i, i + CHUNK))
           .order("starts_at", { ascending: false });
+        allEvts.push(...(evts || []));
         (evts || []).forEach((e: any) => {
           if (!e.lead_id) return;
           const prev = meetingMap[e.lead_id];
@@ -286,13 +291,15 @@ export default function BDRMyLeads() {
       }
       setLatestMeetingByLead(meetingMap);
       const { data: outs } = await (supabase as any).from("bdr_meeting_outcomes")
-        .select(OUTCOME_SELECT).in("lead_id", leadIds).order("logged_at", { ascending: false });
+        .select(`${OUTCOME_SELECT}, attendance, meeting_sequence, lost_reasons, rep_user_id`).in("lead_id", leadIds).order("logged_at", { ascending: false });
+      setJourneyByLead(buildLeadJourney(allEvts, (outs || []) as any));
       const om: Record<string, OutcomeRow[]> = {};
       (outs || []).forEach((o: OutcomeRow) => { if (o.lead_id) (om[o.lead_id] ||= []).push(o); });
       setOutcomesByLead(om);
     } else {
       setLatestMeetingByLead({});
       setOutcomesByLead({});
+      setJourneyByLead(new Map());
     }
     setLoading(false);
   }, [user?.id]);
@@ -1201,6 +1208,9 @@ export default function BDRMyLeads() {
                             </span>
                           )}
                         </div>
+                        {(journeyByLead.get(lead.id)?.meetings ?? 0) > 0 && (
+                          <div className="mt-1"><JourneyCompact journey={journeyByLead.get(lead.id)!} /></div>
+                        )}
                         {(() => {
                           const m = latestMeetingByLead[lead.id];
                           const leadOutcomes = outcomesByLead[lead.id] || [];
