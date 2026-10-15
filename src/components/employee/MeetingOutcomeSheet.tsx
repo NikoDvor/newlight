@@ -416,7 +416,7 @@ export function MeetingsNeedingOutcomeCard({ className }: { className?: string }
         .in("meeting_kind", OUTCOME_KINDS as unknown as string[])
         .lt("starts_at", nowIso)
         .not("lead_id", "is", null)
-        .or("attendance.is.null,attendance.neq.rescheduled")
+        .or("attendance.is.null,attendance.not.in.(rescheduled,cancelled)")
         .order("starts_at", { ascending: false })
         .limit(200);
       const evIds = (evts || []).map((e: any) => e.id);
