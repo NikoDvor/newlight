@@ -2,7 +2,7 @@
 - [x] Move NewLight Internal into the shared client shell, activate its Client Overview, and retire the duplicate ops shell.
 # Roadmap
 
-- [ ] Build C: Add shared Pipeline Guide, training-center links, update lead-stage copy, and verify without publishing.
+- [x] Build C: Add shared Pipeline Guide, training-center links, update lead-stage copy, and verify without publishing (employee flow tested; admin access unavailable for current account).
 
 - [x] Make city-filtered SEC searches exhaust the existing raw-record budget and report the filtered match total.
 - [x] Ensure the SEC results table can scroll to its final row in the employee page shell.

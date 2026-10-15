@@ -113,7 +113,7 @@ export default function PipelineGuide() {
 
       <nav aria-label="Pipeline stages" className="grid grid-cols-1 md:grid-cols-8 gap-2">
         {stages.map((stage, index) => (
-          <Button key={stage.id} variant={activeStage === stage.id ? "default" : "outline"} onClick={() => selectStage(stage.id)} aria-current={activeStage === stage.id ? "step" : undefined} aria-controls={`stage-${stage.id}`} className="h-auto min-h-14 p-3 justify-start md:justify-center md:flex-col gap-2 whitespace-normal text-left md:text-center">
+          <Button key={stage.id} variant={activeStage === stage.id ? "default" : "secondary"} onClick={() => selectStage(stage.id)} aria-current={activeStage === stage.id ? "step" : undefined} aria-controls={`stage-${stage.id}`} className="rounded-lg h-auto min-h-14 p-3 justify-start md:justify-center md:flex-col gap-2 whitespace-normal text-left md:text-center">
             <span className="text-xs opacity-70 tabular-nums">{String(index + 1).padStart(2, "0")}</span>
             <span className="text-xs leading-4">{stage.short}</span>
           </Button>
