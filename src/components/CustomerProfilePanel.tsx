@@ -1,3 +1,4 @@
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useEffect, useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,8 @@ export interface CustomerProfilePanelProps {
 }
 
 export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpdated }: CustomerProfilePanelProps) {
+  const { isAdmin, roles } = useWorkspace();
+  const canOverrideStage = isAdmin || roles.some((r) => r.role === "admin" || r.role === "operator");
   const [lead, setLead] = useState<LeadLite | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -237,7 +240,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
             </section>
 
             {/* Pipeline stage */}
-            <section className="space-y-1.5">
+            <section className="space-y-1.5" title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"}>
               <Label className="text-xs uppercase tracking-wider text-white/50">Pipeline stage</Label>
               <Select value={stage} onValueChange={updateStage} disabled={!canOverrideStage}>
                 <SelectTrigger title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"} className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>

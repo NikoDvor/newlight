@@ -1162,6 +1162,7 @@ export default function BDRMyLeads() {
                               {lead.street_address || lead.street_number}{lead.side_of_street ? ` (${lead.side_of_street})` : ""}
                             </span>
                           )}
+                          <span title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild disabled={!canOverrideStage}>
                               <button
