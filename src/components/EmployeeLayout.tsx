@@ -91,21 +91,32 @@ function EmployeeSidebar() {
             <span className="text-xs font-bold text-foreground/80 group-data-[collapsible=icon]:hidden">Employee Portal</span>
           </div>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const url = item.url === "/employee" ? dashboardRoute : item.url;
-                const active = location.pathname === url || (item.url === "/employee" && location.pathname === dashboardRoute);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <NavLink to={url} className="text-muted-foreground hover:text-foreground">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+            {navGroups.map((group, gi) => (
+              <SidebarMenu key={group.label || `group-${gi}`}>
+                {group.label && (
+                  <SidebarMenuItem className="pointer-events-none">
+                    <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden">
+                      {group.label}
+                    </div>
                   </SidebarMenuItem>
-                );
-              })}
+                )}
+                {group.items.map((item) => {
+                  const url = item.url === "/employee" ? dashboardRoute : item.url;
+                  const active = location.pathname === url || (item.url === "/employee" && location.pathname === dashboardRoute);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                        <NavLink to={url} className="text-muted-foreground hover:text-foreground">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            ))}
+              <SidebarMenu>
               {/* BDR Certification */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={certActive} tooltip="BDR Certification">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -515,7 +516,7 @@ export default function AdminBdrMeetingAnalytics() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">BDR Meeting Analytics</h1>
+          <h1 className="text-xl font-bold text-white">Sales Team Results</h1>
           <p className="text-xs text-white/40 mt-0.5">
             Sales-side pipeline only (leads, discovery & closing meetings) — separate from client-facing Pipeline Insights.
           </p>
@@ -526,6 +527,12 @@ export default function AdminBdrMeetingAnalytics() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/admin/bdr-performance"
+            className="text-xs font-medium text-[hsl(211,96%,60%)] hover:underline whitespace-nowrap"
+          >
+            Dialer activity →
+          </Link>
           <Select value={repFilter} onValueChange={setRepFilter}>
             <SelectTrigger className="w-[180px] h-9 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>

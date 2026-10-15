@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import SystemHealthPanel from "@/components/training/SystemHealthPanel";
 import { DAILY_DIAL_GOAL } from "@/lib/bdrCalendar";
@@ -369,7 +369,10 @@ export default function AdminBDRPerformance() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">BDR Performance</h1>
+          <Link to="/admin/bdr-meeting-analytics" className="text-xs font-medium text-primary hover:underline">
+            Sales team results →
+          </Link>
+          <h1 className="text-2xl font-bold text-foreground">Dialer Activity</h1>
           <p className="text-sm text-muted-foreground">Lead activity, outcomes, and objection data across all BDRs</p>
         </div>
         <div className="flex gap-2 flex-wrap">
