@@ -1197,6 +1197,7 @@ export type Database = {
           id: string
           lead_id: string | null
           meeting_kind: string | null
+          meeting_sequence: number | null
           metadata: Json
           notes: string | null
           outcome: string | null
@@ -1232,6 +1233,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           meeting_kind?: string | null
+          meeting_sequence?: number | null
           metadata?: Json
           notes?: string | null
           outcome?: string | null
@@ -1267,6 +1269,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           meeting_kind?: string | null
+          meeting_sequence?: number | null
           metadata?: Json
           notes?: string | null
           outcome?: string | null
@@ -1464,6 +1467,7 @@ export type Database = {
           logged_at: string
           lost_reasons: string[]
           meeting_kind: string
+          meeting_sequence: number | null
           next_event_id: string | null
           next_step: string | null
           notes: string | null
@@ -1483,6 +1487,7 @@ export type Database = {
           logged_at?: string
           lost_reasons?: string[]
           meeting_kind: string
+          meeting_sequence?: number | null
           next_event_id?: string | null
           next_step?: string | null
           notes?: string | null
@@ -1502,6 +1507,7 @@ export type Database = {
           logged_at?: string
           lost_reasons?: string[]
           meeting_kind?: string
+          meeting_sequence?: number | null
           next_event_id?: string | null
           next_step?: string | null
           notes?: string | null

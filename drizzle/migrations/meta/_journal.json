@@ -8,6 +8,13 @@
       "when": 1792017176680,
       "tag": "0000_meeting_outcomes_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792082069806,
+      "tag": "0001_meeting_sequence_and_cancelled",
+      "breakpoints": true
     }
   ]
 }
