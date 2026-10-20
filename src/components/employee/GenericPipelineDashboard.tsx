@@ -294,7 +294,7 @@ export function GenericPipelineDashboard() {
       {/* 0a. RECENT DISCOVERY BOOKINGS — jump straight to Close Prep */}
       <Reveal delay={0.03}><RecentDiscoveryBookings /></Reveal>
 
-      {/* 0.5 DIALS — daily goal tracking (200/day expectation from Role module) */}
+      {/* 0.5 DIALS — daily goal tracking (250/day expectation from Role module) */}
       <Reveal delay={0.05}>
       {(() => {
         const hit = dialCounts.today >= DAILY_DIAL_GOAL;
