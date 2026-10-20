@@ -2,7 +2,7 @@ import { resolveEmployeeClientId as sharedResolveEmployeeClientId } from "@/hook
 import { supabase } from "@/integrations/supabase/client";
 
 /** Daily dial expectation for BDRs/Salesmen — matches Role training module. */
-export const DAILY_DIAL_GOAL = 200;
+export const DAILY_DIAL_GOAL = 250;
 
 /** Start of the current calendar week (Sunday 00:00 local), matching CallTracking.tsx. */
 export function startOfCurrentWeek(): Date {
