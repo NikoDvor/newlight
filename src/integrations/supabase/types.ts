@@ -15848,6 +15848,15 @@ export type Database = {
         }
         Returns: number
       }
+      nl_contact_rank: {
+        Args: { _owner: boolean; _title: string }
+        Returns: number
+      }
+      nl_jbool: { Args: { v: Json }; Returns: boolean }
+      nl_jdate: { Args: { v: Json }; Returns: string }
+      nl_jnum: { Args: { v: Json }; Returns: number }
+      nl_jtext_array: { Args: { v: Json }; Returns: string[] }
+      nl_phone10: { Args: { t: string }; Returns: string }
       nl_pool_assign: {
         Args: {
           _city?: string
@@ -15867,6 +15876,10 @@ export type Database = {
           _state: string
         }
         Returns: number
+      }
+      nl_pool_import: {
+        Args: { _file_name?: string; _kind: string; _rows: Json }
+        Returns: Json
       }
       nl_pool_pull: {
         Args: {
