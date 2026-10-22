@@ -8,7 +8,7 @@ import {
   LineChart, Briefcase, Wallet, Plug, Settings as SettingsIcon,
   Mail, BookOpen, LifeBuoy, HelpCircle, GraduationCap,
   CalendarCog, Bell, Image as ImageIcon, Package, ClipboardCheck, Home, ShieldCheck, Mic,
-  Eye, BarChart3, DollarSign,
+  Eye, BarChart3, DollarSign, Upload,
 } from "lucide-react";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -45,6 +45,7 @@ const adminGroups: NavGroup[] = [
       { title: "Sales Team Results", description: "Close rates, attendance, reschedules, and why leads are lost — team and per salesman.", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
       { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Territories", description: "Assign rep territories and push leads from the pool.", url: "/admin/territories", icon: Globe },
+      { title: "Lead Import", description: "Upload firm and people exports into the lead pool.", url: "/admin/lead-import", icon: Upload },
       { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
     ],
