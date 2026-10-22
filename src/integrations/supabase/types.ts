@@ -8417,6 +8417,7 @@ export type Database = {
           phone_normalized: string | null
           phone_type: string | null
           pipeline_stage: string | null
+          pool_firm_id: string | null
           provisioned_client_id: string | null
           released_at: string | null
           sales_team_size: string | null
@@ -8487,6 +8488,7 @@ export type Database = {
           phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          pool_firm_id?: string | null
           provisioned_client_id?: string | null
           released_at?: string | null
           sales_team_size?: string | null
@@ -8557,6 +8559,7 @@ export type Database = {
           phone_normalized?: string | null
           phone_type?: string | null
           pipeline_stage?: string | null
+          pool_firm_id?: string | null
           provisioned_client_id?: string | null
           released_at?: string | null
           sales_team_size?: string | null
@@ -8596,6 +8599,13 @@ export type Database = {
             columns: ["crm_deal_id"]
             isOneToOne: false
             referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_bdr_leads_pool_firm_id_fkey"
+            columns: ["pool_firm_id"]
+            isOneToOne: false
+            referencedRelation: "nl_lead_pool_firms"
             referencedColumns: ["id"]
           },
           {
@@ -8681,6 +8691,30 @@ export type Database = {
           score?: number
           user_id?: string
           weak_modules?: Json | null
+        }
+        Relationships: []
+      }
+      nl_dnc_numbers: {
+        Row: {
+          added_by: string | null
+          contact_id: string | null
+          created_at: string
+          phone_normalized: string
+          reason: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          contact_id?: string | null
+          created_at?: string
+          phone_normalized: string
+          reason?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          contact_id?: string | null
+          created_at?: string
+          phone_normalized?: string
+          reason?: string | null
         }
         Relationships: []
       }
@@ -8880,6 +8914,408 @@ export type Database = {
           street_name?: string
           total_count?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      nl_lead_call_log: {
+        Row: {
+          called_at: string
+          contact_id: string | null
+          id: string
+          lead_id: string
+          notes: string | null
+          outcome: string | null
+          phone: string | null
+          phone_kind: string | null
+          user_id: string
+        }
+        Insert: {
+          called_at?: string
+          contact_id?: string | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+          outcome?: string | null
+          phone?: string | null
+          phone_kind?: string | null
+          user_id: string
+        }
+        Update: {
+          called_at?: string
+          contact_id?: string | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          outcome?: string | null
+          phone?: string | null
+          phone_kind?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_lead_call_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "nl_lead_pool_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_lead_import_batches: {
+        Row: {
+          contacts_added: number | null
+          created_at: string
+          export_kind: string | null
+          file_name: string | null
+          firms_added: number | null
+          firms_updated: number | null
+          id: string
+          rows_skipped: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          contacts_added?: number | null
+          created_at?: string
+          export_kind?: string | null
+          file_name?: string | null
+          firms_added?: number | null
+          firms_updated?: number | null
+          id?: string
+          rows_skipped?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          contacts_added?: number | null
+          created_at?: string
+          export_kind?: string | null
+          file_name?: string | null
+          firms_added?: number | null
+          firms_updated?: number | null
+          id?: string
+          rows_skipped?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      nl_lead_import_mappings: {
+        Row: {
+          column_map: Json
+          export_kind: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          column_map?: Json
+          export_kind: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          column_map?: Json
+          export_kind?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      nl_lead_pool_contacts: {
+        Row: {
+          breakaway_date: string | null
+          created_at: string
+          designations: string[] | null
+          disclosure_count: number | null
+          do_not_call: boolean
+          education: string[] | null
+          email: string | null
+          est_age: number | null
+          extra: Json
+          firm_id: string
+          first_name: string | null
+          full_name: string
+          hobbies: string[] | null
+          id: string
+          individual_crd: string | null
+          is_advisor: boolean | null
+          is_broker: boolean | null
+          is_owner: boolean
+          job_start_date: string | null
+          landline_phone: string | null
+          last_name: string | null
+          linkedin_url: string | null
+          mobile_phone: string | null
+          personal_email: string | null
+          phone: string | null
+          prior_firm: string | null
+          rank: number
+          title: string | null
+          titles: string[] | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          breakaway_date?: string | null
+          created_at?: string
+          designations?: string[] | null
+          disclosure_count?: number | null
+          do_not_call?: boolean
+          education?: string[] | null
+          email?: string | null
+          est_age?: number | null
+          extra?: Json
+          firm_id: string
+          first_name?: string | null
+          full_name: string
+          hobbies?: string[] | null
+          id?: string
+          individual_crd?: string | null
+          is_advisor?: boolean | null
+          is_broker?: boolean | null
+          is_owner?: boolean
+          job_start_date?: string | null
+          landline_phone?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          mobile_phone?: string | null
+          personal_email?: string | null
+          phone?: string | null
+          prior_firm?: string | null
+          rank?: number
+          title?: string | null
+          titles?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          breakaway_date?: string | null
+          created_at?: string
+          designations?: string[] | null
+          disclosure_count?: number | null
+          do_not_call?: boolean
+          education?: string[] | null
+          email?: string | null
+          est_age?: number | null
+          extra?: Json
+          firm_id?: string
+          first_name?: string | null
+          full_name?: string
+          hobbies?: string[] | null
+          id?: string
+          individual_crd?: string | null
+          is_advisor?: boolean | null
+          is_broker?: boolean | null
+          is_owner?: boolean
+          job_start_date?: string | null
+          landline_phone?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          mobile_phone?: string | null
+          personal_email?: string | null
+          phone?: string | null
+          prior_firm?: string | null
+          rank?: number
+          title?: string | null
+          titles?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_lead_pool_contacts_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "nl_lead_pool_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_lead_pool_firms: {
+        Row: {
+          address: string | null
+          advisory_clients: number | null
+          alt_names: string[] | null
+          attempt_count: number
+          aum: number | null
+          aum_growth_1y_pct: number | null
+          aum_growth_3y_pct: number | null
+          avg_account_size: number | null
+          city: string | null
+          claimed_at: string | null
+          client_personas: string[] | null
+          cooldown_until: string | null
+          crd: string | null
+          created_at: string
+          crm_tags: string[] | null
+          custodians: string[] | null
+          description: string | null
+          employees: number | null
+          extra: Json
+          facebook_url: string | null
+          fee_structures: string[] | null
+          firm_type: string | null
+          general_email: string | null
+          id: string
+          import_batch_id: string | null
+          last_activity_at: string | null
+          lead_id: string | null
+          linkedin_url: string | null
+          main_phone: string | null
+          name: string
+          owner_rep_id: string | null
+          previous_owner_ids: string[]
+          recycle_count: number
+          services: string[] | null
+          signal: string | null
+          signal_date: string | null
+          size_tier: string | null
+          source: string
+          state: string | null
+          status: string
+          team_avg_age: number | null
+          technology_tags: string[] | null
+          total_reps: number | null
+          updated_at: string
+          website: string | null
+          x_url: string | null
+          year_founded: number | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          advisory_clients?: number | null
+          alt_names?: string[] | null
+          attempt_count?: number
+          aum?: number | null
+          aum_growth_1y_pct?: number | null
+          aum_growth_3y_pct?: number | null
+          avg_account_size?: number | null
+          city?: string | null
+          claimed_at?: string | null
+          client_personas?: string[] | null
+          cooldown_until?: string | null
+          crd?: string | null
+          created_at?: string
+          crm_tags?: string[] | null
+          custodians?: string[] | null
+          description?: string | null
+          employees?: number | null
+          extra?: Json
+          facebook_url?: string | null
+          fee_structures?: string[] | null
+          firm_type?: string | null
+          general_email?: string | null
+          id?: string
+          import_batch_id?: string | null
+          last_activity_at?: string | null
+          lead_id?: string | null
+          linkedin_url?: string | null
+          main_phone?: string | null
+          name: string
+          owner_rep_id?: string | null
+          previous_owner_ids?: string[]
+          recycle_count?: number
+          services?: string[] | null
+          signal?: string | null
+          signal_date?: string | null
+          size_tier?: string | null
+          source?: string
+          state?: string | null
+          status?: string
+          team_avg_age?: number | null
+          technology_tags?: string[] | null
+          total_reps?: number | null
+          updated_at?: string
+          website?: string | null
+          x_url?: string | null
+          year_founded?: number | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          advisory_clients?: number | null
+          alt_names?: string[] | null
+          attempt_count?: number
+          aum?: number | null
+          aum_growth_1y_pct?: number | null
+          aum_growth_3y_pct?: number | null
+          avg_account_size?: number | null
+          city?: string | null
+          claimed_at?: string | null
+          client_personas?: string[] | null
+          cooldown_until?: string | null
+          crd?: string | null
+          created_at?: string
+          crm_tags?: string[] | null
+          custodians?: string[] | null
+          description?: string | null
+          employees?: number | null
+          extra?: Json
+          facebook_url?: string | null
+          fee_structures?: string[] | null
+          firm_type?: string | null
+          general_email?: string | null
+          id?: string
+          import_batch_id?: string | null
+          last_activity_at?: string | null
+          lead_id?: string | null
+          linkedin_url?: string | null
+          main_phone?: string | null
+          name?: string
+          owner_rep_id?: string | null
+          previous_owner_ids?: string[]
+          recycle_count?: number
+          services?: string[] | null
+          signal?: string | null
+          signal_date?: string | null
+          size_tier?: string | null
+          source?: string
+          state?: string | null
+          status?: string
+          team_avg_age?: number | null
+          technology_tags?: string[] | null
+          total_reps?: number | null
+          updated_at?: string
+          website?: string | null
+          x_url?: string | null
+          year_founded?: number | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_lead_pool_firms_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "nl_lead_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nl_lead_territories: {
+        Row: {
+          active: boolean
+          city: string | null
+          created_at: string
+          id: string
+          rep_user_id: string
+          state: string
+        }
+        Insert: {
+          active?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          rep_user_id: string
+          state: string
+        }
+        Update: {
+          active?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          rep_user_id?: string
+          state?: string
         }
         Relationships: []
       }
@@ -15412,6 +15848,36 @@ export type Database = {
         }
         Returns: number
       }
+      nl_pool_assign: {
+        Args: {
+          _city?: string
+          _count?: number
+          _firm_type?: string
+          _rep: string
+          _state: string
+        }
+        Returns: number
+      }
+      nl_pool_claim_for: {
+        Args: {
+          _city: string
+          _count: number
+          _firm_type: string
+          _rep: string
+          _state: string
+        }
+        Returns: number
+      }
+      nl_pool_pull: {
+        Args: {
+          _city?: string
+          _count?: number
+          _firm_type?: string
+          _state: string
+        }
+        Returns: number
+      }
+      nl_pool_recycle: { Args: never; Returns: Json }
       normalize_business_name: { Args: { _n: string }; Returns: string }
       normalize_city_name: { Args: { _c: string }; Returns: string }
       normalize_phone_last10: { Args: { _p: string }; Returns: string }
