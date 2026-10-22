@@ -211,6 +211,7 @@ const EmployeePaySign = lazy(() => import("./pages/employee/EmployeePaySign"));
 const BDRBookingPublic = lazy(() => import("./pages/BDRBookingPublic"));
 const AdminBDRPerformance = lazy(() => import("./pages/admin/AdminBDRPerformance"));
 const AdminBdrMeetingAnalytics = lazy(() => import("./pages/admin/AdminBdrMeetingAnalytics"));
+const AdminTerritories = lazy(() => import("./pages/admin/AdminTerritories"));
 const AdminBDRCalendars = lazy(() => import("./pages/admin/AdminBDRCalendars"));
 const AdminCompanyCalendar = lazy(() => import("./pages/admin/AdminCompanyCalendar"));
 const AdminStaffCalendars = lazy(() => import("./pages/admin/AdminStaffCalendars"));
@@ -351,6 +352,7 @@ const App = () => {
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
                 <Route path="bdr-meeting-analytics" element={<AdminBdrMeetingAnalytics />} />
+                <Route path="territories" element={<AdminTerritories />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
                 <Route path="calendars" element={<Navigate to="/admin/staff-calendars" replace />} />
                 <Route path="websites" element={<AdminWebsites />} />
