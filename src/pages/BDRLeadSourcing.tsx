@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
+import { PullLeadsCard } from "@/components/employee/PullLeadsCard";
 
 type SourceKey = "SEC" | "TX_DFS" | "FL_DFS";
 
@@ -406,6 +407,7 @@ export default function BDRLeadSourcing() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      <PullLeadsCard />
       <div>
         <h1 className="text-2xl font-bold text-foreground">Lead Sourcing — SEC IAPD & State Insurance Licenses</h1>
         <p className="text-sm text-muted-foreground mt-1">
