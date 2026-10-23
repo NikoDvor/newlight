@@ -771,7 +771,22 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       <div className="flex flex-col gap-1">
-                        {(() => {
+                        {isPool ? (
+                          det ? (
+                            <>
+                              {(det.firm?.main_phone || lead.front_desk_phone) ? (
+                                <span className="inline-flex items-center gap-1 flex-wrap">
+                                  <span className="font-mono inline-flex items-center gap-1 text-xs text-white/70">
+                                    <Phone className="h-3 w-3" /> {det.firm?.main_phone || lead.front_desk_phone}
+                                  </span>
+                                  {det.front_desk_dnc && (
+                                    <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
+                                  )}
+                                </span>
+                              ) : <span className="text-white/30">—</span>}
+                            </>
+                          ) : <span className="text-white/30 text-xs">…</span>
+                        ) : (() => {
                           const phones = getLeadPhones(lead);
                           if (phones.length === 0) return <span className="text-white/30">—</span>;
                           return phones.map((p) => {
