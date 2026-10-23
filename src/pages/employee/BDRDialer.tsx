@@ -690,7 +690,42 @@ export default function BDRDialer() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>
+                      {lead.business_name}
+                      {isPool && det?.firm && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {det.firm.firm_type && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(211,96%,56%,.14)", color: "hsl(211,96%,70%)" }}>
+                              {FIRM_TYPE_LABEL[det.firm.firm_type] || det.firm.firm_type}
+                            </span>
+                          )}
+                          {det.firm.size_tier && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)" }}>
+                              {det.firm.size_tier}
+                            </span>
+                          )}
+                          {det.firm.signal && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(38,95%,55%,.16)", color: "hsl(38,100%,72%)", border: "1px solid hsla(38,95%,55%,.4)" }}>
+                              {SIGNAL_LABEL[det.firm.signal] || det.firm.signal}
+                            </span>
+                          )}
+                          {det.firm.fee_structures?.[0] && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }} title="How they earn">
+                              {det.firm.fee_structures[0]}
+                            </span>
+                          )}
+                          {det.firm.aum_growth_1y_pct != null && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                              style={det.firm.aum_growth_1y_pct >= 0
+                                ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }
+                                : { background: "hsla(0,72%,50%,.15)", color: "hsl(0,72%,72%)" }}
+                              title="1-year AUM growth">
+                              {det.firm.aum_growth_1y_pct >= 0 ? "+" : ""}{det.firm.aum_growth_1y_pct}% AUM 1y
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
                       {(() => {
                         const flags = parseLeadFlags(lead.owner_name);
