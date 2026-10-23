@@ -860,6 +860,26 @@ export default function BDRDialer() {
                         )}
                       </div>
                     </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/60 whitespace-nowrap">
+                      {isPool && det?.firm
+                        ? ([det.firm.city, det.firm.state].filter(Boolean).join(", ") || "—")
+                        : (lead.city || "—")}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (fmtAum(det?.firm?.aum) || "—") : "—"}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (det?.firm?.employees != null ? det.firm.employees : "—") : "—"}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (
+                        det ? (
+                          <span title={det.calls[0]?.called_at ? `Last call ${new Date(det.calls[0].called_at).toLocaleString()}` : "No calls yet"}>
+                            {det.calls.length}{det.calls[0]?.called_at ? ` · ${new Date(det.calls[0].called_at).toLocaleDateString([], { month: "short", day: "numeric" })}` : ""}
+                          </span>
+                        ) : "…"
+                      ) : "—"}
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       {lead.website ? (
                         <a
