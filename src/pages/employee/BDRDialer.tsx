@@ -15,6 +15,7 @@ import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import DialerLeadDetail, { type DialerLeadDetails, FIRM_TYPE_LABEL, SIGNAL_LABEL, fmtAum } from "@/components/employee/DialerLeadDetail";
 
 
 
@@ -50,6 +51,7 @@ interface Lead {
   dialer_bookable: boolean | null;
   pipeline_stage: string | null;
   crm_deal_id: string | null;
+  pool_firm_id?: string | null;
   _claimConflict?: boolean;
 }
 
@@ -95,6 +97,7 @@ function NotesCell({ initial, onSave }: { initial: string; onSave: (v: string) =
   return (
     <textarea
       value={value}
+      onClick={(e) => e.stopPropagation()}
       onChange={(e) => setValue(e.target.value)}
       onBlur={async () => {
         if (value === baseline) return;
@@ -131,6 +134,17 @@ export default function BDRDialer() {
   const [confirmState, setConfirmState] = useState<
     { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
   >(null);
+  const [detailsByLead, setDetailsByLead] = useState<Record<string, DialerLeadDetails>>({});
+  const [detailLead, setDetailLead] = useState<Lead | null>(null);
+
+  // Pool-lead intel (decision makers, firm data, call history, DNC) via one batched RPC.
+  const fetchDetails = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
+    const { data, error } = await (supabase as any).rpc("nl_dialer_lead_details", { _lead_ids: ids });
+    if (error || !data) return;
+    setDetailsByLead(prev => ({ ...prev, ...(data as Record<string, DialerLeadDetails>) }));
+  }, []);
+  const refreshLeadDetails = useCallback((id: string) => fetchDetails([id]), [fetchDetails]);
   // window.confirm() is blocked in the installed PWA / embedded app shell, which
   // silently cancelled every destructive action. Use a real dialog instead.
   const askConfirm = useCallback(
@@ -148,7 +162,7 @@ export default function BDRDialer() {
       setClientId(cid);
       const [{ data: leadRows }, { data: outcomeRows }, { data: dialRows }] = await Promise.all([
         (supabase as any).from("nl_bdr_leads")
-          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id")
+          .select("id, business_name, owner_name, phone, front_desk_phone, owner_direct_phone, city, niche, list_name, called, dialed_at, notes, callback_at, website, has_booking_system, booking_system_exists, booking_platform, booking_system_platform, booking_system_methods, booking_system_checked_at, phone_type, booking_link, booking_link_is_owner, owner_calendar_confirmed, owner_booking_link, owner_booking_link_send_ready, self_booking_widget_non_owner, dialer_bookable, pipeline_stage, crm_deal_id, pool_firm_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         (supabase as any).from("bdr_call_outcomes")
@@ -181,6 +195,9 @@ export default function BDRDialer() {
           setLeads(prev => prev.map(l => conflictIds.has(l.id) ? { ...l, _claimConflict: true } : l));
         }
       }
+      // Batch-load pool-lead details (decision makers, firm intel, call history) in one RPC.
+      const poolIds = (leadRows || []).filter((l: any) => l.pool_firm_id).map((l: any) => l.id);
+      if (poolIds.length) fetchDetails(poolIds);
       setLoading(false);
     })();
   }, [activeClientId]);
@@ -632,8 +649,12 @@ export default function BDRDialer() {
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,12%)" }}>#</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px]" style={{ background: "hsl(215,35%,12%)" }}>Business Name</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Decision Makers</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Front Desk</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[100px]">Location</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-20">AUM</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-16">Empl.</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-24">Calls</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-24 text-center">Booking Sys</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
@@ -644,15 +665,18 @@ export default function BDRDialer() {
             <tbody>
               {visibleLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                  <td colSpan={13} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 const pinned = false;
+                const det = lead.pool_firm_id ? detailsByLead[lead.id] : undefined;
+                const isPool = !!lead.pool_firm_id;
                 return (
                   <tr key={lead.id}
                     ref={(el) => { rowRefs.current[lead.id] = el; }}
-                    className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
+                    onClick={isPool ? () => setDetailLead(lead) : undefined}
+                    className={`hover:bg-white/[0.03] transition-colors align-top ${isPool ? "cursor-pointer" : ""} ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : pinned ? { background: "hsla(38,92%,55%,.08)" } : undefined}>
 
                     <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: pinned ? "hsla(38,92%,55%,.10)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%)" : undefined }} title={pinned ? `Pinned: ${current}` : undefined}>
@@ -667,9 +691,61 @@ export default function BDRDialer() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>{lead.business_name}</td>
+                    <td className="px-3 py-3 border-b border-white/5 text-white font-medium break-words leading-snug min-w-[200px]" style={{ background: "hsl(215,35%,8%)" }}>
+                      {lead.business_name}
+                      {isPool && det?.firm && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {det.firm.firm_type && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(211,96%,56%,.14)", color: "hsl(211,96%,70%)" }}>
+                              {FIRM_TYPE_LABEL[det.firm.firm_type] || det.firm.firm_type}
+                            </span>
+                          )}
+                          {det.firm.size_tier && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)" }}>
+                              {det.firm.size_tier}
+                            </span>
+                          )}
+                          {det.firm.signal && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(38,95%,55%,.16)", color: "hsl(38,100%,72%)", border: "1px solid hsla(38,95%,55%,.4)" }}>
+                              {SIGNAL_LABEL[det.firm.signal] || det.firm.signal}
+                            </span>
+                          )}
+                          {det.firm.fee_structures?.[0] && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }} title="How they earn">
+                              {det.firm.fee_structures[0]}
+                            </span>
+                          )}
+                          {det.firm.aum_growth_1y_pct != null && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                              style={det.firm.aum_growth_1y_pct >= 0
+                                ? { background: "hsla(142,72%,42%,.15)", color: "hsl(142,72%,55%)" }
+                                : { background: "hsla(0,72%,50%,.15)", color: "hsl(0,72%,72%)" }}
+                              title="1-year AUM growth">
+                              {det.firm.aum_growth_1y_pct >= 0 ? "+" : ""}{det.firm.aum_growth_1y_pct}% AUM 1y
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
-                      {(() => {
+                      {isPool ? (
+                        <div className="flex flex-col gap-1">
+                          {(det?.contacts || []).slice(0, 2).map(c => (
+                            <div key={c.id} className="text-xs leading-snug">
+                              <span className="text-white/80 font-medium">{c.full_name || "Unnamed"}</span>
+                              {c.title && <span className="text-white/45"> · {c.title}</span>}
+                              {(c.do_not_call || (c.mobile_dnc && c.office_dnc)) && (
+                                <span className="ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
+                              )}
+                            </div>
+                          ))}
+                          {(det?.contacts?.length || 0) > 2 && (
+                            <span className="text-[10px] text-white/40">+{(det?.contacts?.length || 0) - 2} more</span>
+                          )}
+                          {!det && <span className="text-white/30 text-xs">…</span>}
+                          {det && det.contacts.length === 0 && <span className="text-white/30 text-xs">—</span>}
+                        </div>
+                      ) : (() => {
                         const flags = parseLeadFlags(lead.owner_name);
                         const cleaned = stripLeadFlags(lead.owner_name);
                         return (
@@ -696,7 +772,22 @@ export default function BDRDialer() {
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       <div className="flex flex-col gap-1">
-                        {(() => {
+                        {isPool ? (
+                          det ? (
+                            <>
+                              {(det.firm?.main_phone || lead.front_desk_phone) ? (
+                                <span className="inline-flex items-center gap-1 flex-wrap">
+                                  <span className="font-mono inline-flex items-center gap-1 text-xs text-white/70">
+                                    <Phone className="h-3 w-3" /> {det.firm?.main_phone || lead.front_desk_phone}
+                                  </span>
+                                  {det.front_desk_dnc && (
+                                    <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
+                                  )}
+                                </span>
+                              ) : <span className="text-white/30">—</span>}
+                            </>
+                          ) : <span className="text-white/30 text-xs">…</span>
+                        ) : (() => {
                           const phones = getLeadPhones(lead);
                           if (phones.length === 0) return <span className="text-white/30">—</span>;
                           return phones.map((p) => {
@@ -770,6 +861,26 @@ export default function BDRDialer() {
                         )}
                       </div>
                     </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/60 whitespace-nowrap">
+                      {isPool && det?.firm
+                        ? ([det.firm.city, det.firm.state].filter(Boolean).join(", ") || "—")
+                        : (lead.city || "—")}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (fmtAum(det?.firm?.aum) || "—") : "—"}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (det?.firm?.employees != null ? det.firm.employees : "—") : "—"}
+                    </td>
+                    <td className="px-3 py-3 border-b border-white/5 text-xs text-white/70 whitespace-nowrap">
+                      {isPool ? (
+                        det ? (
+                          <span title={det.calls[0]?.called_at ? `Last call ${new Date(det.calls[0].called_at).toLocaleString()}` : "No calls yet"}>
+                            {det.calls.length}{det.calls[0]?.called_at ? ` · ${new Date(det.calls[0].called_at).toLocaleDateString([], { month: "short", day: "numeric" })}` : ""}
+                          </span>
+                        ) : "…"
+                      ) : "—"}
+                    </td>
                     <td className="px-3 py-3 border-b border-white/5 break-words">
                       {lead.website ? (
                         <a
@@ -803,7 +914,7 @@ export default function BDRDialer() {
                         type="button"
                         role="switch"
                         aria-checked={!!lead.called}
-                        onClick={() => toggleCalled(lead)}
+                        onClick={(e) => { e.stopPropagation(); toggleCalled(lead); }}
                         aria-label={`Mark ${lead.business_name} as dialed`}
                         className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors min-h-[36px]"
                         style={{
@@ -821,6 +932,7 @@ export default function BDRDialer() {
                     <td className="px-3 py-3 border-b border-white/5">
                       <select
                         value={current}
+                        onClick={(e) => e.stopPropagation()}
                         disabled={savingId === lead.id}
                         onChange={(e) => setOutcomeFor(lead, e.target.value)}
                         className="w-full bg-transparent text-white text-xs px-2 py-2 rounded border border-white/10 hover:border-white/20 focus:border-[hsl(211,96%,56%)] focus:outline-none cursor-pointer"
@@ -852,7 +964,7 @@ export default function BDRDialer() {
                         <Button
                           size="sm"
                           className="mt-2 w-full h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"
-                          onClick={() => navigate(`/employee/close-prep/${lead.id}`)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/employee/close-prep/${lead.id}`); }}
                         >
                           Close Prep
                         </Button>
@@ -872,6 +984,15 @@ export default function BDRDialer() {
           </table>
         </div>
       </div>
+
+      <DialerLeadDetail
+        open={!!detailLead}
+        onOpenChange={(o) => { if (!o) setDetailLead(null); }}
+        leadId={detailLead?.id || null}
+        businessName={detailLead?.business_name || ""}
+        details={detailLead ? detailsByLead[detailLead.id] : undefined}
+        onRefresh={() => { if (detailLead) refreshLeadDetails(detailLead.id); }}
+      />
 
       <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
         <DialogContent className="max-w-sm">

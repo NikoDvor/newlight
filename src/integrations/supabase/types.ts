@@ -15852,10 +15852,26 @@ export type Database = {
         Args: { _owner: boolean; _title: string }
         Returns: number
       }
+      nl_dialer_lead_details: { Args: { _lead_ids: string[] }; Returns: Json }
       nl_jbool: { Args: { v: Json }; Returns: boolean }
       nl_jdate: { Args: { v: Json }; Returns: string }
       nl_jnum: { Args: { v: Json }; Returns: number }
       nl_jtext_array: { Args: { v: Json }; Returns: string[] }
+      nl_log_call: {
+        Args: {
+          _contact_id?: string
+          _lead_id: string
+          _notes?: string
+          _outcome?: string
+          _phone?: string
+          _phone_kind?: string
+        }
+        Returns: string
+      }
+      nl_mark_dnc: {
+        Args: { _contact_id?: string; _phone: string; _reason?: string }
+        Returns: undefined
+      }
       nl_phone10: { Args: { t: string }; Returns: string }
       nl_pool_assign: {
         Args: {
@@ -15891,6 +15907,10 @@ export type Database = {
         Returns: number
       }
       nl_pool_recycle: { Args: never; Returns: Json }
+      nl_update_call: {
+        Args: { _call_id: string; _notes?: string; _outcome: string }
+        Returns: undefined
+      }
       normalize_business_name: { Args: { _n: string }; Returns: string }
       normalize_city_name: { Args: { _c: string }; Returns: string }
       normalize_phone_last10: { Args: { _p: string }; Returns: string }
