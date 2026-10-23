@@ -727,7 +727,24 @@ export default function BDRDialer() {
                       )}
                     </td>
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
-                      {(() => {
+                      {isPool ? (
+                        <div className="flex flex-col gap-1">
+                          {(det?.contacts || []).slice(0, 2).map(c => (
+                            <div key={c.id} className="text-xs leading-snug">
+                              <span className="text-white/80 font-medium">{c.full_name || "Unnamed"}</span>
+                              {c.title && <span className="text-white/45"> · {c.title}</span>}
+                              {(c.do_not_call || (c.mobile_dnc && c.office_dnc)) && (
+                                <span className="ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
+                              )}
+                            </div>
+                          ))}
+                          {(det?.contacts?.length || 0) > 2 && (
+                            <span className="text-[10px] text-white/40">+{(det?.contacts?.length || 0) - 2} more</span>
+                          )}
+                          {!det && <span className="text-white/30 text-xs">…</span>}
+                          {det && det.contacts.length === 0 && <span className="text-white/30 text-xs">—</span>}
+                        </div>
+                      ) : (() => {
                         const flags = parseLeadFlags(lead.owner_name);
                         const cleaned = stripLeadFlags(lead.owner_name);
                         return (
