@@ -813,7 +813,7 @@ export default function BDRDialer() {
                             );
                           });
                         })()}
-                        {!isPool && (lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
+                        {(lead.owner_booking_link_send_ready || lead.owner_booking_link) && (
                           <a
                             href={(lead.owner_booking_link_send_ready || lead.owner_booking_link)!.startsWith("http")
                               ? (lead.owner_booking_link_send_ready || lead.owner_booking_link)!
