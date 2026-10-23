@@ -15,6 +15,7 @@ import { parseLeadFlags, stripLeadFlags, getLeadPhones } from "@/lib/leadFlags";
 import RenameListButton from "@/components/employee/RenameListButton";
 import { OUTCOMES } from "@/lib/bdrOutcomes";
 import { BookingSystemBadge } from "@/components/employee/LeadFields";
+import DialerLeadDetail, { type DialerLeadDetails, FIRM_TYPE_LABEL, SIGNAL_LABEL, fmtAum } from "@/components/employee/DialerLeadDetail";
 
 
 
@@ -50,6 +51,7 @@ interface Lead {
   dialer_bookable: boolean | null;
   pipeline_stage: string | null;
   crm_deal_id: string | null;
+  pool_firm_id?: string | null;
   _claimConflict?: boolean;
 }
 
@@ -131,6 +133,17 @@ export default function BDRDialer() {
   const [confirmState, setConfirmState] = useState<
     { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
   >(null);
+  const [detailsByLead, setDetailsByLead] = useState<Record<string, DialerLeadDetails>>({});
+  const [detailLead, setDetailLead] = useState<Lead | null>(null);
+
+  // Pool-lead intel (decision makers, firm data, call history, DNC) via one batched RPC.
+  const fetchDetails = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
+    const { data, error } = await (supabase as any).rpc("nl_dialer_lead_details", { _lead_ids: ids });
+    if (error || !data) return;
+    setDetailsByLead(prev => ({ ...prev, ...(data as Record<string, DialerLeadDetails>) }));
+  }, []);
+  const refreshLeadDetails = useCallback((id: string) => fetchDetails([id]), [fetchDetails]);
   // window.confirm() is blocked in the installed PWA / embedded app shell, which
   // silently cancelled every destructive action. Use a real dialog instead.
   const askConfirm = useCallback(
