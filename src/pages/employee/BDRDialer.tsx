@@ -985,6 +985,15 @@ export default function BDRDialer() {
         </div>
       </div>
 
+      <DialerLeadDetail
+        open={!!detailLead}
+        onOpenChange={(o) => { if (!o) setDetailLead(null); }}
+        leadId={detailLead?.id || null}
+        businessName={detailLead?.business_name || ""}
+        details={detailLead ? detailsByLead[detailLead.id] : undefined}
+        onRefresh={() => { if (detailLead) refreshLeadDetails(detailLead.id); }}
+      />
+
       <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
