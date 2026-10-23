@@ -669,10 +669,13 @@ export default function BDRDialer() {
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
                 const pinned = false;
+                const det = lead.pool_firm_id ? detailsByLead[lead.id] : undefined;
+                const isPool = !!lead.pool_firm_id;
                 return (
                   <tr key={lead.id}
                     ref={(el) => { rowRefs.current[lead.id] = el; }}
-                    className={`hover:bg-white/[0.03] transition-colors align-top ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
+                    onClick={isPool ? () => setDetailLead(lead) : undefined}
+                    className={`hover:bg-white/[0.03] transition-colors align-top ${isPool ? "cursor-pointer" : ""} ${highlightId === lead.id ? "ring-2 ring-[hsl(211,96%,60%)]" : ""}`}
                     style={highlightId === lead.id ? { background: "hsla(211,96%,56%,.12)" } : pinned ? { background: "hsla(38,92%,55%,.08)" } : undefined}>
 
                     <td className="px-3 py-3 border-b border-white/5 w-10 min-w-[40px] max-w-[40px]" style={{ background: pinned ? "hsla(38,92%,55%,.10)" : "hsl(215,35%,8%)", boxShadow: pinned ? "inset 3px 0 0 hsl(38,92%,55%)" : undefined }} title={pinned ? `Pinned: ${current}` : undefined}>
