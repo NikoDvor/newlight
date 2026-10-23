@@ -648,8 +648,12 @@ export default function BDRDialer() {
               <tr className="text-left text-[10px] uppercase tracking-wider text-white/55">
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-10 min-w-[40px] max-w-[40px]" style={{ background: "hsl(215,35%,12%)" }}>#</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[200px]" style={{ background: "hsl(215,35%,12%)" }}>Business Name</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Owner</th>
-                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Phone</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Decision Makers</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[140px]">Front Desk</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[100px]">Location</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-20">AUM</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-16">Empl.</th>
+                <th className="px-3 py-3 font-semibold border-b border-white/10 w-24">Calls</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 min-w-[180px]">Website</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 w-24 text-center">Booking Sys</th>
                 <th className="px-3 py-3 font-semibold border-b border-white/10 text-center w-16">Called</th>
@@ -660,7 +664,7 @@ export default function BDRDialer() {
             <tbody>
               {visibleLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
+                  <td colSpan={13} className="text-center text-white/40 py-12 text-xs">No leads in this list.</td>
                 </tr>
               ) : visibleLeads.map((lead, i) => {
                 const current = latestOutcomeByLead[lead.id] || "";
