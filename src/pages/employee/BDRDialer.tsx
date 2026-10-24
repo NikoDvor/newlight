@@ -309,6 +309,18 @@ export default function BDRDialer() {
     }
   }, [userId]);
 
+  const logPoolCall = useCallback((lead: Lead, contactId: string | null, phone: string, kind: "mobile" | "office" | "front_desk") => {
+    recordDial(lead.id);
+    (supabase as any).rpc("nl_log_call", {
+      _lead_id: lead.id,
+      _contact_id: contactId,
+      _phone: phone,
+      _phone_kind: kind,
+      _outcome: null,
+      _notes: null,
+    }).then(() => refreshLeadDetails(lead.id)).catch((e: any) => console.warn("nl_log_call failed", e));
+  }, [recordDial, refreshLeadDetails]);
+
   const toggleCalled = useCallback(async (lead: Lead) => {
     if (!userId) return;
     const next = !lead.called;
@@ -730,15 +742,35 @@ export default function BDRDialer() {
                     <td className="px-3 py-3 border-b border-white/5 text-white/70 break-words leading-snug">
                       {isPool ? (
                         <div className="flex flex-col gap-1">
-                          {(det?.contacts || []).slice(0, 2).map(c => (
+                          {(det?.contacts || []).slice(0, 2).map(c => {
+                            const dial = !c.do_not_call
+                              ? (c.mobile_phone && !c.mobile_dnc
+                                ? { phone: c.mobile_phone, kind: "mobile" as const }
+                                : c.office_phone && !c.office_dnc
+                                  ? { phone: c.office_phone, kind: "office" as const }
+                                  : null)
+                              : null;
+                            return (
                             <div key={c.id} className="text-xs leading-snug">
                               <span className="text-white/80 font-medium">{c.full_name || "Unnamed"}</span>
                               {c.title && <span className="text-white/45"> · {c.title}</span>}
+                              {dial && (
+                                <a
+                                  href={`tel:${dial.phone}`}
+                                  onClick={(e) => { e.stopPropagation(); logPoolCall(lead, c.id, dial.phone, dial.kind); }}
+                                  className="ml-1 font-mono hover:underline"
+                                  style={{ color: "hsl(211,96%,68%)" }}
+                                  title={`Call ${c.full_name || "contact"} (${dial.kind})`}
+                                >
+                                  {dial.phone}
+                                </a>
+                              )}
                               {(c.do_not_call || (c.mobile_dnc && c.office_dnc)) && (
                                 <span className="ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
                               )}
                             </div>
-                          ))}
+                            );
+                          })}
                           {(det?.contacts?.length || 0) > 2 && (
                             <span className="text-[10px] text-white/40">+{(det?.contacts?.length || 0) - 2} more</span>
                           )}
@@ -777,9 +809,20 @@ export default function BDRDialer() {
                             <>
                               {(det.firm?.main_phone || lead.front_desk_phone) ? (
                                 <span className="inline-flex items-center gap-1 flex-wrap">
-                                  <span className="font-mono inline-flex items-center gap-1 text-xs text-white/70">
-                                    <Phone className="h-3 w-3" /> {det.firm?.main_phone || lead.front_desk_phone}
-                                  </span>
+                                  {det.front_desk_dnc ? (
+                                    <span className="font-mono inline-flex items-center gap-1 text-xs text-white/70">
+                                      <Phone className="h-3 w-3" /> {det.firm?.main_phone || lead.front_desk_phone}
+                                    </span>
+                                  ) : (
+                                    <a
+                                      href={`tel:${det.firm?.main_phone || lead.front_desk_phone}`}
+                                      onClick={(e) => { e.stopPropagation(); logPoolCall(lead, null, (det.firm?.main_phone || lead.front_desk_phone)!, "front_desk"); }}
+                                      className="font-mono inline-flex items-center gap-1 text-xs hover:underline"
+                                      style={{ color: "hsl(211,96%,68%)" }}
+                                    >
+                                      <Phone className="h-3 w-3" /> {det.firm?.main_phone || lead.front_desk_phone}
+                                    </a>
+                                  )}
                                   {det.front_desk_dnc && (
                                     <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold" style={{ background: "hsla(0,72%,50%,.18)", color: "hsl(0,72%,72%)" }}>DNC</span>
                                   )}
@@ -992,6 +1035,7 @@ export default function BDRDialer() {
         businessName={detailLead?.business_name || ""}
         details={detailLead ? detailsByLead[detailLead.id] : undefined}
         onRefresh={() => { if (detailLead) refreshLeadDetails(detailLead.id); }}
+        onDial={recordDial}
       />
 
       <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
