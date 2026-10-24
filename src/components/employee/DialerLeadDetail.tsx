@@ -116,9 +116,10 @@ interface Props {
   businessName: string;
   details: DialerLeadDetails | undefined;
   onRefresh: () => void;
+  onDial: (leadId: string) => void;
 }
 
-export default function DialerLeadDetail({ open, onOpenChange, leadId, businessName, details, onRefresh }: Props) {
+export default function DialerLeadDetail({ open, onOpenChange, leadId, businessName, details, onRefresh, onDial }: Props) {
   const [activeCall, setActiveCall] = useState<{ callId: string; label: string } | null>(null);
   const [outcomeSel, setOutcomeSel] = useState("");
   const [callNote, setCallNote] = useState("");
@@ -134,6 +135,7 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
 
   const startCall = async (contact: DialerContact | null, phone: string, kind: "mobile" | "office" | "front_desk") => {
     if (!leadId) return;
+    onDial(leadId);
     const label = contact ? `${contact.full_name || "Contact"} (${kind})` : "Front desk";
     try {
       const { data, error } = await (supabase as any).rpc("nl_log_call", {
@@ -145,6 +147,7 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
         _notes: null,
       });
       if (error) throw error;
+      onRefresh();
       setActiveCall({ callId: data as string, label });
       setOutcomeSel("");
       setCallNote("");
