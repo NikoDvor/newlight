@@ -83,7 +83,15 @@ function RepCard({ rep, terrs, reload }: { rep: { id: string; name: string }; te
 export default function AdminTerritories() {
   const [reps, setReps] = useState<{ id: string; name: string }[]>([]);
   const [terrs, setTerrs] = useState<any[]>([]);
-  const [pool, setPool] = useState<[string, number][]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const totals = stats.reduce((a, s) => ({
+    available: a.available + (s.available ?? 0),
+    claimed: a.claimed + (s.claimed ?? 0),
+    resting: a.resting + (s.resting ?? 0),
+    converted: a.converted + (s.converted ?? 0),
+    removed: a.removed + (s.removed ?? 0),
+    total: a.total + (s.total ?? 0),
+  }), { available: 0, claimed: 0, resting: 0, converted: 0, removed: 0, total: 0 });
 
   const loadTerrs = async () => {
     const { data } = await (supabase as any).from("nl_lead_territories").select("*").order("state");
@@ -95,14 +103,8 @@ export default function AdminTerritories() {
       const { data } = await supabase.from("employee_profiles").select("user_id, full_name").order("full_name");
       setReps(((data as any[]) || []).filter(r => r.user_id).map(r => ({ id: r.user_id, name: r.full_name || "Unnamed" })));
       loadTerrs();
-      const counts: Record<string, number> = {};
-      for (let from = 0; ; from += 1000) {
-        const { data: rows } = await (supabase as any).from("nl_lead_pool_firms")
-          .select("state").eq("status", "available").range(from, from + 999);
-        (rows || []).forEach((r: any) => { const k = r.state || "—"; counts[k] = (counts[k] || 0) + 1; });
-        if (!rows || rows.length < 1000) break;
-      }
-      setPool(Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10));
+      const { data: st } = await (supabase as any).rpc("nl_pool_stats");
+      setStats(((st as any[]) || []).slice().sort((a, b) => (b.available ?? 0) - (a.available ?? 0)));
     })();
   }, []);
 
@@ -110,10 +112,47 @@ export default function AdminTerritories() {
     <div className="max-w-5xl mx-auto space-y-4">
       <h1 className="text-2xl font-bold text-foreground">Territories</h1>
       <Card>
-        <CardHeader><CardTitle className="text-base">Pool — available firms by state</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-3 text-sm">
-          {pool.length === 0 ? <span className="text-muted-foreground">No available firms.</span> :
-            pool.map(([s, n]) => <span key={s} className="rounded-md border border-border px-2 py-1">{s}: {n}</span>)}
+        <CardHeader><CardTitle className="text-base">Pool — by state</CardTitle></CardHeader>
+        <CardContent>
+          {stats.length === 0 ? <span className="text-muted-foreground text-sm">No pool data.</span> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground">
+                    <th className="pr-3 py-1 font-medium">State</th>
+                    <th className="pr-3 py-1 font-medium text-right">Available</th>
+                    <th className="pr-3 py-1 font-medium text-right">With reps</th>
+                    <th className="pr-3 py-1 font-medium text-right">Resting</th>
+                    <th className="pr-3 py-1 font-medium text-right">Converted</th>
+                    <th className="pr-3 py-1 font-medium text-right">Removed</th>
+                    <th className="py-1 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.map(s => (
+                    <tr key={s.state || "—"} className="border-t border-border">
+                      <td className="pr-3 py-1">{s.state || "—"}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{s.available ?? 0}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{s.claimed ?? 0}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{s.resting ?? 0}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{s.converted ?? 0}</td>
+                      <td className="pr-3 py-1 text-right tabular-nums">{s.removed ?? 0}</td>
+                      <td className="py-1 text-right tabular-nums">{s.total ?? 0}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-t border-border font-bold">
+                    <td className="pr-3 py-1">Total</td>
+                    <td className="pr-3 py-1 text-right tabular-nums">{totals.available}</td>
+                    <td className="pr-3 py-1 text-right tabular-nums">{totals.claimed}</td>
+                    <td className="pr-3 py-1 text-right tabular-nums">{totals.resting}</td>
+                    <td className="pr-3 py-1 text-right tabular-nums">{totals.converted}</td>
+                    <td className="pr-3 py-1 text-right tabular-nums">{totals.removed}</td>
+                    <td className="py-1 text-right tabular-nums">{totals.total}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
       {reps.map(r => <RepCard key={r.id} rep={r} terrs={terrs.filter(t => t.rep_user_id === r.id)} reload={loadTerrs} />)}
