@@ -15897,6 +15897,14 @@ export type Database = {
         Args: { _file_name?: string; _kind: string; _rows: Json }
         Returns: Json
       }
+      nl_pool_my_availability: {
+        Args: never
+        Returns: {
+          available: number
+          city: string
+          state: string
+        }[]
+      }
       nl_pool_pull: {
         Args: {
           _city?: string
@@ -15907,6 +15915,18 @@ export type Database = {
         Returns: number
       }
       nl_pool_recycle: { Args: never; Returns: Json }
+      nl_pool_stats: {
+        Args: never
+        Returns: {
+          available: number
+          claimed: number
+          converted: number
+          removed: number
+          resting: number
+          state: string
+          total: number
+        }[]
+      }
       nl_update_call: {
         Args: { _call_id: string; _notes?: string; _outcome: string }
         Returns: undefined

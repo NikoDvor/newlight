@@ -17,6 +17,14 @@ export function PullLeadsCard() {
   const [firm, setFirm] = useState("any");
   const [count, setCount] = useState(50);
   const [busy, setBusy] = useState(false);
+  const [avail, setAvail] = useState<Record<string, number>>({});
+
+  const fetchAvail = async () => {
+    const { data } = await (supabase as any).rpc("nl_pool_my_availability");
+    const m: Record<string, number> = {};
+    ((data as any[]) || []).forEach((r: any) => { m[`${r.state}|${r.city || ""}`] = Number(r.available) || 0; });
+    setAvail(m);
+  };
 
   useEffect(() => {
     (async () => {
@@ -26,6 +34,7 @@ export function PullLeadsCard() {
         .select("id,state,city").eq("rep_user_id", user.id).eq("active", true).order("state");
       setTerrs(data || []);
       if (data?.[0]) setSel(data[0].id);
+      fetchAvail();
     })();
   }, []);
 
@@ -38,8 +47,11 @@ export function PullLeadsCard() {
     });
     setBusy(false);
     if (error) toast({ title: error.message, variant: "destructive" });
-    else toast({ title: `Pulled ${data ?? 0} leads into My Leads` });
+    else { toast({ title: `Pulled ${data ?? 0} leads into My Leads` }); fetchAvail(); }
   };
+
+  const selT = terrs?.find(x => x.id === sel);
+  const selAvail = selT ? avail[`${selT.state}|${selT.city || ""}`] : undefined;
 
   return (
     <Card>
@@ -48,21 +60,28 @@ export function PullLeadsCard() {
         {terrs === null ? null : terrs.length === 0 ? (
           <p className="text-sm text-muted-foreground">No territory assigned yet — ask your admin.</p>
         ) : (
-          <div className="flex flex-wrap gap-2 items-center">
-            <Select value={sel} onValueChange={setSel}>
-              <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-              <SelectContent>{terrs.map(t => (
-                <SelectItem key={t.id} value={t.id}>{t.city ? `${t.city}, ${t.state}` : `${t.state} (whole state)`}</SelectItem>
-              ))}</SelectContent>
-            </Select>
-            <Select value={firm} onValueChange={setFirm}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>{FIRM_TYPES.map(f => <SelectItem key={f.v} value={f.v}>{f.l}</SelectItem>)}</SelectContent>
-            </Select>
-            <Input type="number" min={1} max={300} value={count} className="w-24"
-              onChange={e => setCount(Math.min(300, Number(e.target.value)))} />
-            <Button onClick={pull} disabled={busy || !sel}>{busy ? "Pulling…" : "Pull leads"}</Button>
-          </div>
+          <>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Select value={sel} onValueChange={setSel}>
+                <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+                <SelectContent>{terrs.map(t => {
+                  const n = avail[`${t.state}|${t.city || ""}`];
+                  const base = t.city ? `${t.city} · ${t.state}` : `${t.state} (whole state)`;
+                  return <SelectItem key={t.id} value={t.id}>{n == null ? base : `${base} — ${n} available`}</SelectItem>;
+                })}</SelectContent>
+              </Select>
+              <Select value={firm} onValueChange={setFirm}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>{FIRM_TYPES.map(f => <SelectItem key={f.v} value={f.v}>{f.l}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input type="number" min={1} max={300} value={count} className="w-24"
+                onChange={e => setCount(Math.min(300, Number(e.target.value)))} />
+              <Button onClick={pull} disabled={busy || !sel || selAvail === 0}>{busy ? "Pulling…" : "Pull leads"}</Button>
+            </div>
+            {selAvail === 0 && (
+              <p className="text-xs text-muted-foreground mt-2">No leads left here — ask your admin to upload more</p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
