@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Download, CheckCircle2, ExternalLink, AlertTriangle, Loader2, Copy, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -404,6 +405,15 @@ export default function BDRLeadSourcing() {
     });
     return { hard, soft };
   })();
+
+  const { pathname } = useLocation();
+  if (pathname.startsWith("/employee")) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <PullLeadsCard />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
