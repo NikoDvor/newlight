@@ -923,7 +923,6 @@ export default function BDRMyLeads() {
         </div>
         <div className="overflow-x-auto whitespace-nowrap scrollbar-hide -mx-1 px-1">
           <div className="flex gap-2">
-            <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowHowTo(true)} aria-label="How to get leads"><HelpCircle className="h-4 w-4 mr-1" /> Guide</Button>
             <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
             <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
             <Button className="flex-shrink-0" size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
@@ -1439,7 +1438,6 @@ export default function BDRMyLeads() {
 
       {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={existingListsByRecency} />
-      <HowToImportModal open={showHowTo} onClose={() => setShowHowTo(false)} />
       <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
