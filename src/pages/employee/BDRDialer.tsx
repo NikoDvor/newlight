@@ -136,6 +136,9 @@ export default function BDRDialer() {
   >(null);
   const [detailsByLead, setDetailsByLead] = useState<Record<string, DialerLeadDetails>>({});
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
+  // Leads just marked Dialed stay on screen for a few seconds (with Undo) so the
+  // next row doesn't slide under the rep's finger and get marked by accident.
+  const [stickyDialed, setStickyDialed] = useState<Set<string>>(new Set());
 
   // Pool-lead intel (decision makers, firm data, call history, DNC) via one batched RPC.
   const fetchDetails = useCallback(async (ids: string[]) => {
@@ -211,8 +214,8 @@ export default function BDRDialer() {
 
   const modeLeads = useMemo(() => leads.filter(l => {
     if (l.pipeline_stage === "won") return false;
-    return showDialed ? !!l.called : !l.called;
-  }), [leads, showDialed]);
+    return showDialed ? !!l.called : (!l.called || stickyDialed.has(l.id));
+  }), [leads, showDialed, stickyDialed]);
 
   const lists = useMemo(() => {
     const map = new Map<string, number>();
@@ -326,6 +329,17 @@ export default function BDRDialer() {
     const next = !lead.called;
     const prevDialedAt = lead.dialed_at ?? null;
     const nextDialedAt = next ? new Date().toISOString() : null;
+    setStickyDialed(prev => {
+      const s = new Set(prev);
+      if (next) s.add(lead.id); else s.delete(lead.id);
+      return s;
+    });
+    if (next) {
+      setTimeout(() => setStickyDialed(prev => {
+        if (!prev.has(lead.id)) return prev;
+        const s = new Set(prev); s.delete(lead.id); return s;
+      }), 4000);
+    }
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, called: next, dialed_at: nextDialedAt } : l));
     const { error } = await (supabase as any).from("nl_bdr_leads")
       .update({ called: next, dialed_at: nextDialedAt }).eq("id", lead.id).eq("user_id", userId);
@@ -969,7 +983,7 @@ export default function BDRDialer() {
                         <span className="relative inline-block h-4 w-7 rounded-full transition-colors" style={{ background: lead.called ? "hsl(142,72%,42%)" : "hsla(0,0%,100%,.2)" }}>
                           <span className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all" style={{ left: lead.called ? 14 : 2 }} />
                         </span>
-                        {lead.called ? "Dialed" : "Mark Dialed"}
+                        {lead.called ? (stickyDialed.has(lead.id) ? "Dialed ✓ · Undo" : "Dialed") : "Mark Dialed"}
                       </button>
                     </td>
                     <td className="px-3 py-3 border-b border-white/5">
@@ -1036,6 +1050,11 @@ export default function BDRDialer() {
         details={detailLead ? detailsByLead[detailLead.id] : undefined}
         onRefresh={() => { if (detailLead) refreshLeadDetails(detailLead.id); }}
         onDial={recordDial}
+        called={detailLead ? !!(leads.find(l => l.id === detailLead.id)?.called) : false}
+        onToggleDialed={() => {
+          const cur = detailLead ? leads.find(l => l.id === detailLead.id) : undefined;
+          if (cur) toggleCalled(cur);
+        }}
       />
 
       <Dialog open={!!callbackLead} onOpenChange={(o) => !o && setCallbackLead(null)}>
