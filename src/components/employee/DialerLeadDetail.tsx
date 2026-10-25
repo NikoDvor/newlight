@@ -88,9 +88,7 @@ export const CALL_OUTCOMES = [
   "Voicemail",
   "Gatekeeper",
   "Talked",
-  "Callback",
   "Not interested",
-  "Booked",
   "Wrong number",
 ];
 
@@ -117,9 +115,11 @@ interface Props {
   details: DialerLeadDetails | undefined;
   onRefresh: () => void;
   onDial: (leadId: string) => void;
+  called?: boolean;
+  onToggleDialed?: () => void;
 }
 
-export default function DialerLeadDetail({ open, onOpenChange, leadId, businessName, details, onRefresh, onDial }: Props) {
+export default function DialerLeadDetail({ open, onOpenChange, leadId, businessName, details, onRefresh, onDial, called, onToggleDialed }: Props) {
   const [activeCall, setActiveCall] = useState<{ callId: string; label: string } | null>(null);
   const [outcomeSel, setOutcomeSel] = useState("");
   const [callNote, setCallNote] = useState("");
@@ -261,6 +261,23 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
           <SheetTitle className="text-white text-left">{businessName}</SheetTitle>
         </SheetHeader>
 
+        {onToggleDialed && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!called}
+            onClick={onToggleDialed}
+            className="mb-4 w-full inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold min-h-[44px]"
+            style={{
+              background: called ? "hsla(142,72%,42%,.15)" : "hsla(211,96%,56%,.12)",
+              color: called ? "hsl(142,72%,62%)" : "hsl(211,96%,72%)",
+              border: `1px solid ${called ? "hsla(142,72%,42%,.45)" : "hsla(211,96%,56%,.4)"}`,
+            }}
+          >
+            {called ? "Dialed ✓ (tap to undo)" : "Mark Dialed"}
+          </button>
+        )}
+
         {/* Inline outcome picker after a call is logged */}
         {activeCall && (
           <div className="rounded-lg border border-[hsla(211,96%,56%,.4)] bg-[hsla(211,96%,56%,.08)] p-3 mb-4 space-y-2">
@@ -287,6 +304,7 @@ export default function DialerLeadDetail({ open, onOpenChange, leadId, businessN
               rows={2}
               className="w-full bg-white/[0.04] text-white text-xs px-2 py-1.5 rounded border border-white/10 focus:border-[hsl(211,96%,56%)] focus:outline-none resize-y"
             />
+            <p className="text-[10px] text-white/40">To schedule a callback or book, use the Outcome dropdown on the lead's row.</p>
             <div className="flex gap-2">
               <Button size="sm" className="h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]" disabled={!outcomeSel || savingCall} onClick={saveCallOutcome}>
                 {savingCall ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save outcome"}
