@@ -15,3 +15,9 @@ alter table public.nl_bdr_leads
   drop column if exists visit_status,
   drop column if exists latitude,
   drop column if exists longitude;
+
+-- Oct 28, 2026 (later): Pay & Sign link send dates, former-client marker.
+alter table public.crm_deals add column if not exists pay_sign_sent_at timestamptz, add column if not exists pay_sign_last_sent_at timestamptz;
+alter table public.clients add column if not exists former_client_at timestamptz, add column if not exists former_client_reason text;
+-- Removed 298 empty CRM deals created at lead import (no Form 2, no price);
+-- import/add no longer creates a deal — Form 2 does.

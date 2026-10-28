@@ -59,15 +59,13 @@ const adminGroups: NavGroup[] = [
   {
     label: "Won Clients",
     items: [
+      { title: "Client Records", description: "Current and former clients — agreement, terms, everything paid, lifetime value.", url: "/admin/client-records", icon: FileText },
       { title: "Clients Overview", description: "Client workspaces, sub-accounts, client revenue and system health.", url: "/admin/clients-overview", icon: Building2 },
       { title: "Client Accounts", description: "Manage every client workspace and account status.", url: "/admin/clients", icon: Users },
-      { title: "Fix Now", description: "Resolve urgent issues across client accounts.", url: "/admin/fix-now", icon: AlertTriangle },
-      { title: "Acquisition Analytics", description: "Compare how client acquisition channels are performing.", url: "/admin/clients/acquisition-analytics", icon: TrendingUp },
-      { title: "Onboarding Ops", description: "Oversee setup progress and blockers across clients.", url: "/admin/onboarding-command-center", icon: Rocket },
-      { title: "Provision Queue", description: "Track workspace creation and setup work.", url: "/admin/provision", icon: ListChecks },
-      { title: "Client Monitoring", description: "Watch client health, integrations, and system alerts.", url: "/admin/monitoring", icon: Activity },
-      { title: "Client Success", description: "Manage risks, support, renewals, and growth opportunities.", url: "/admin/client-success", icon: Shield },
-      { title: "Website Portfolio", description: "Oversee websites managed across client accounts.", url: "/admin/websites", icon: Globe },
+      // Hidden until there are paying clients (pages still work by URL, all empty Oct 28, 2026):
+      // Fix Now /admin/fix-now · Acquisition Analytics /admin/clients/acquisition-analytics ·
+      // Onboarding Ops /admin/onboarding-command-center · Provision Queue /admin/provision ·
+      // Client Monitoring /admin/monitoring · Client Success /admin/client-success · Website Portfolio /admin/websites
 
     ],
   },

@@ -16,6 +16,7 @@ import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
 import { Link } from "react-router-dom";
 import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcomeSheet";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
+import TodayStrip from "@/components/pipeline/TodayStrip";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -281,6 +282,9 @@ export function GenericPipelineDashboard() {
   return (
     <div className="relative space-y-6">
       <DashboardAtmosphere />
+
+      {/* TODAY — the numbers to act on first */}
+      <TodayStrip scope="mine" />
 
       {/* Meetings needing an outcome + stalled Pay & Sign */}
       <MeetingsNeedingOutcomeCard />

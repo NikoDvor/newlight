@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
 import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
+import TodayStrip from "@/components/pipeline/TodayStrip";
 import AdminPipelineMeetings from "@/components/admin/AdminPipelineMeetings";
 import AdminBdrMeetingAnalytics from "@/pages/admin/AdminBdrMeetingAnalytics";
 import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
@@ -39,7 +40,7 @@ export default function AdminPipeline() {
     })();
   }, []);
 
-  const showRepFilter = tab === "board" || tab === "meetings";
+  const showRepFilter = tab !== "results";
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -64,6 +65,8 @@ export default function AdminPipeline() {
           </select>
         )}
       </div>
+
+      {showRepFilter && <TodayStrip scope="team" repUserId={rep || undefined} />}
 
       {tab === "overview" && (
         <>

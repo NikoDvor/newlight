@@ -315,13 +315,9 @@ Deno.serve(async (req) => {
           (existingLead.user_id !== assignedCal.user_id ? " (claimed by another rep)" : "")
       );
     } else {
-      // Year-one realistic estimate: $7,997 setup + 9 months of $3,000/mo retainer (retainer billing has a
-      // 90-day trial before the first charge, then starts on the 1st of the following month — see
-      // computeRetainerTrialEnd/computeBillingCycleAnchor in _shared/stripe-billing.ts — so only ~9 months
-      // actually bill in year one, not 12). Used as a blended placeholder for both retainer and commission
-      // deals until real closed-deal data exists to replace it with an actual average. Real deal value is set
-      // at Close Prep; this is just the Form-1-stage pipeline estimate.
-      const FORM1_ESTIMATED_ANNUAL_VALUE = 7997 + 3000 * 9; // 34997
+      // Form 1 pipeline value placeholder = the price of the pipeline + app offer.
+      // The real deal value (initial fee + retainer or commission) is entered on Form 2.
+      const FORM1_ESTIMATED_ANNUAL_VALUE = 34997; // price of the pipeline + app offer
       const baseLead: Record<string, any> = {
         user_id: assignedCal.user_id,
         client_id: assignedCal.client_id,

@@ -44,6 +44,8 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
   const [loading, setLoading] = useState(true);
   const [openLead, setOpenLead] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  // Phone view: colored stage tiles; tap one to open its leads as a list.
+  const [picked, setPicked] = useState<StageKey>("warm");
 
   useEffect(() => { const t = setTimeout(() => setQuery(search.trim()), 300); return () => clearTimeout(t); }, [search]);
 
@@ -88,7 +90,7 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
             .or("attendance.is.null,attendance.not.in.(rescheduled,cancelled)").limit(3000),
           db.from("bdr_meeting_outcomes").select("event_id, lead_id, meeting_kind, result, logged_at").in("lead_id", ids).limit(3000),
           dealIds.length
-            ? db.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, pay_sign_status").in("id", dealIds)
+            ? db.from("crm_deals").select("id, pricing_model, initial_fee, recurring_fee, commission_rate, pay_sign_status, pay_sign_sent_at").in("id", dealIds)
             : Promise.resolve({ data: [] }),
           db.from("nl_discovery_numbers").select("*").in("lead_id", ids),
         ]);
@@ -109,8 +111,10 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
           if (overdue.has(l.id)) f.push({ label: "Outcome overdue", tone: "red" });
           if (l.unattended_since) f.push({ label: "No-show timer", tone: "red" });
           const deal: any = l.crm_deal_id ? dealMap.get(l.crm_deal_id) : null;
-          if (st === "hot" && closingWon.has(l.id) && deal?.pay_sign_status !== "paid_signed") {
-            const days = Math.floor((Date.now() - new Date(closingWon.get(l.id)!).getTime()) / 86400_000);
+          if (st === "hot" && (deal?.pay_sign_sent_at || closingWon.has(l.id)) && deal?.pay_sign_status !== "paid_signed") {
+            // Counts from when the Pay & Sign link was emailed (falls back to the closing outcome).
+            const since = deal?.pay_sign_sent_at || closingWon.get(l.id)!;
+            const days = Math.floor((Date.now() - new Date(since).getTime()) / 86400_000);
             f.push({ label: `Pay & Sign waiting ${days}d`, tone: days >= 7 ? "red" : "amber" });
           }
           if ((st === "warm" || st === "hot") && !nm[l.id] && !closingWon.has(l.id) && !overdue.has(l.id)) {
@@ -163,6 +167,32 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
   const columns = [...(query ? [COLD] : []), ...BOARD, ...(showExpired ? [EXPIRED] : [])];
   const fmtWhen = (iso: string) => new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const flaggedCount = Object.keys(flags).length;
+  const renderCard = (l: LeadCard) => {
+                  const f = flags[l.id] || [];
+                  return (
+                    <button key={l.id} onClick={() => setOpenLead(l.id)}
+                      className={`w-full text-left rounded-lg px-2.5 py-2 bg-white/[0.03] hover:bg-white/[0.07] border transition-colors ${f.some((x) => x.tone === "red") ? "border-red-500/40" : f.length ? "border-amber-400/30" : "border-white/[0.06]"}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-xs font-semibold truncate">{l.business_name}</div>
+                        {money[l.id] && <span className="text-[10px] tabular-nums text-white/70 shrink-0">{money[l.id]}</span>}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {[l.owner_name, scope === "team" ? names[l.user_id] : null].filter(Boolean).join(" · ") || "—"}
+                      </div>
+                      {(nextMeeting[l.id] || f.length > 0) && (
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          {nextMeeting[l.id] && (
+                            <span className="text-[10px] inline-flex items-center gap-1 text-sky-300"><CalendarClock className="h-3 w-3" />{fmtWhen(nextMeeting[l.id])}</span>
+                          )}
+                          {f.map((x) => (
+                            <span key={x.label} className={`text-[10px] px-1.5 py-0.5 rounded ${x.tone === "red" ? "bg-red-500/15 text-red-300" : "bg-amber-400/15 text-amber-300"}`}>{x.label}</span>
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                  );
+  };
+  const flaggedIn = (st: StageKey) => (cols[st]?.rows || []).filter((r) => flags[r.id]).length;
 
   return (
     <div className="space-y-3">
@@ -203,7 +233,40 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
         </div>
       )}
 
-      <div className={`grid gap-3 ${columns.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+      {/* Phone: colored stage tiles — tap to open that stage's leads as a list */}
+      <div className="md:hidden space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          {columns.map((c) => {
+            const on = picked === c.key;
+            const f = flaggedIn(c.key);
+            return (
+              <button key={c.key} onClick={() => setPicked(c.key)}
+                className="rounded-xl px-3 py-2.5 text-left border transition-colors"
+                style={{ borderColor: on ? c.color : "hsla(0,0%,100%,.1)", background: on ? `color-mix(in srgb, ${c.color} 16%, transparent)` : "hsla(0,0%,100%,.03)" }}>
+                <div className="text-xs font-semibold" style={{ color: c.color }}>{c.label}</div>
+                <div className="text-2xl font-bold tabular-nums leading-tight">{cols[c.key]?.count ?? 0}</div>
+                <div className="text-[10px] text-muted-foreground">{f ? `${f} need attention` : c.hint}</div>
+              </button>
+            );
+          })}
+        </div>
+        {(() => {
+          const c = columns.find((x) => x.key === picked) || columns[0];
+          const col = cols[c.key] || { rows: [], count: 0 };
+          return (
+            <div className="rounded-xl border bg-white/[0.02] p-2 space-y-1.5" style={{ borderColor: c.color }}>
+              <div className="px-1 pb-1 text-xs font-semibold" style={{ color: c.color }}>{c.label} · {col.count}</div>
+              {col.rows.length === 0 && !loading && <p className="text-[11px] text-muted-foreground text-center py-6">No leads</p>}
+              {col.rows.map(renderCard)}
+              {col.count > col.rows.length && (
+                <p className="text-[10px] text-muted-foreground text-center py-1">+{col.count - col.rows.length} more — search to find them</p>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className={`hidden md:grid gap-3 ${columns.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
         {columns.map((c) => {
           const col = cols[c.key] || { rows: [], count: 0 };
           return (
@@ -217,31 +280,7 @@ export default function PipelineBoard({ scope, repUserId }: { scope: "team" | "m
               </div>
               <div className="p-2 space-y-1.5 overflow-y-auto" style={{ maxHeight: "62vh" }}>
                 {col.rows.length === 0 && !loading && <p className="text-[11px] text-muted-foreground text-center py-6">No leads</p>}
-                {col.rows.map((l) => {
-                  const f = flags[l.id] || [];
-                  return (
-                    <button key={l.id} onClick={() => setOpenLead(l.id)}
-                      className={`w-full text-left rounded-lg px-2.5 py-2 bg-white/[0.03] hover:bg-white/[0.07] border transition-colors ${f.some((x) => x.tone === "red") ? "border-red-500/40" : f.length ? "border-amber-400/30" : "border-white/[0.06]"}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="text-xs font-semibold truncate">{l.business_name}</div>
-                        {money[l.id] && <span className="text-[10px] tabular-nums text-white/70 shrink-0">{money[l.id]}</span>}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {[l.owner_name, scope === "team" ? names[l.user_id] : null].filter(Boolean).join(" · ") || "—"}
-                      </div>
-                      {(nextMeeting[l.id] || f.length > 0) && (
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {nextMeeting[l.id] && (
-                            <span className="text-[10px] inline-flex items-center gap-1 text-sky-300"><CalendarClock className="h-3 w-3" />{fmtWhen(nextMeeting[l.id])}</span>
-                          )}
-                          {f.map((x) => (
-                            <span key={x.label} className={`text-[10px] px-1.5 py-0.5 rounded ${x.tone === "red" ? "bg-red-500/15 text-red-300" : "bg-amber-400/15 text-amber-300"}`}>{x.label}</span>
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+                {col.rows.map(renderCard)}
                 {col.count > col.rows.length && (
                   <p className="text-[10px] text-muted-foreground text-center py-1">+{col.count - col.rows.length} more — search to find them</p>
                 )}

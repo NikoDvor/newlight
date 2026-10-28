@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
   if (envelope.related_type === "crm_deal" && envelope.related_id) {
     const { data: d } = await supabase
       .from("crm_deals")
-      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id")
+      .select("id, client_id, provisioned_client_id, deal_name, initial_fee, pricing_model, recurring_fee, commission_rate, payment_invoice_id, pay_sign_status, contact_id, proposal_id_current, assigned_user, onboarding_meeting_id, pay_sign_sent_at")
       .eq("id", envelope.related_id)
       .maybeSingle();
     deal = d;
@@ -909,6 +909,14 @@ Deno.serve(async (req) => {
     const html = clientNextStepHtml({ ownerName, priceLine, retainerKpi: d.retainer_kpi || null, paySignUrl });
 
     const sent = await sendPlainEmail(to, subject, html, text);
+    // Record when the Pay & Sign link actually went out (first send + latest send).
+    if (sent) {
+      const nowIso = new Date().toISOString();
+      const patch: Record<string, unknown> = { pay_sign_last_sent_at: nowIso };
+      if (!(deal as any).pay_sign_sent_at) patch.pay_sign_sent_at = nowIso;
+      const { error: sErr } = await supabase.from("crm_deals").update(patch as any).eq("id", (deal as any).id);
+      if (sErr) console.error("[pay-sign-context] sent timestamp save failed:", sErr.message);
+    }
     return json({ ok: true, sent, to, pay_sign_url: paySignUrl, terms: priceLine });
   }
 

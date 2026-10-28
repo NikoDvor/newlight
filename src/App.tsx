@@ -74,6 +74,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminCombinedDashboard = lazy(() => import("./pages/admin/AdminCombinedDashboard"));
 const AdminPipeline = lazy(() => import("./pages/admin/AdminPipeline"));
+const AdminClientRecords = lazy(() => import("./pages/admin/AdminClientRecords"));
 const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
 const AdminClientProfile = lazy(() => import("./pages/admin/AdminClientProfile"));
 
@@ -289,6 +290,7 @@ const App = () => {
                 <Route path="pipeline/:tab" element={<AdminPipeline />} />
                 <Route path="dashboard" element={<Navigate to="/admin" replace />} />
                 <Route path="clients-overview" element={<AdminCombinedDashboard />} />
+                <Route path="client-records" element={<AdminClientRecords />} />
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="clients/acquisition-analytics" element={<AdminClientAcquisitionAnalytics />} />
                 <Route path="clients/:clientId" element={<AdminClientProfile />} />

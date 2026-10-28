@@ -74,9 +74,11 @@ export default function AdminClientProfile() {
       const [clientRes, leadRes, dealRes, subRes, invRes, logRes] = await Promise.all([
         supabase.from("clients").select("*").eq("id", clientId).maybeSingle(),
         (supabase as any).from("nl_bdr_leads").select("*").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1),
-        (supabase as any).from("crm_deals").select("*").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1),
+        // A won client's deal lives on NewLight's books (client_id = NewLight) and
+        // points at this workspace via provisioned_client_id.
+        (supabase as any).from("crm_deals").select("*").or(`provisioned_client_id.eq.${clientId},client_id.eq.${clientId}`).order("created_at", { ascending: false }).limit(1),
         (supabase as any).from("subscriptions").select("*").eq("client_id", clientId).order("created_at", { ascending: false }),
-        (supabase as any).from("invoices").select("*").eq("client_id", clientId).order("created_at", { ascending: false }),
+        (supabase as any).from("invoices").select("*").or(`provisioned_client_id.eq.${clientId},client_id.eq.${clientId}`).order("created_at", { ascending: false }),
         (supabase as any).from("audit_logs").select("*").eq("client_id", clientId).order("created_at", { ascending: false }).limit(50),
       ]);
       if (cancelled) return;

@@ -524,14 +524,11 @@ export default function BDRMyLeads() {
     } as any).select("id").single();
     if (ctErr) console.warn("crm_contacts insert failed:", ctErr.message);
     if (!contact) return null;
-    const { data: deal, error: dErr } = await supabase.from("crm_deals").insert({
-      client_id: clientId, deal_name: `${lead.business_name} — BDR Lead`, pipeline_stage: "new_lead",
-      status: "open", lead_source: "bdr_field", assigned_user: user.id, contact_id: contact.id,
-      company_id: company?.id ?? null,
-    } as any).select("id").single();
-    if (dErr) console.warn("crm_deals insert failed:", dErr.message);
-    await (supabase as any).from("nl_bdr_leads").update({ crm_contact_id: contact.id, crm_deal_id: deal?.id || null }).eq("id", leadId);
-    return deal?.id ?? null;
+    // No deal here: a lead only gets a deal when Form 2 is submitted
+    // (close-prep-submit). An empty deal made the lead look like it had
+    // reached Form 2 (Pay & Sign button, expiry skipped, pickers).
+    await (supabase as any).from("nl_bdr_leads").update({ crm_contact_id: contact.id }).eq("id", leadId);
+    return null;
   };
 
   const checkClaim = async (phone?: string | null, website?: string | null) => {
