@@ -297,7 +297,6 @@ export default function AdminExecutiveDashboard() {
               { label: "Revenue & Billing", path: "/admin/billing" },
               { label: "Automations", path: "/admin/automations" },
               { label: "Fix Now Items", path: "/admin/fix-now" },
-              { label: "Prospects", path: "/admin/prospects" },
               { label: "All Clients", path: "/admin/clients" },
               { label: "Reports", path: "/admin/reports" },
               { label: "Audit Logs", path: "/admin/audit-logs" },

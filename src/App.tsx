@@ -307,7 +307,8 @@ const App = () => {
                 <Route path="training-center/question-reassignment" element={<AdminQuestionReassignment />} />
                 <Route path="training-health" element={<AdminTrainingHealth />} />
                 <Route path="training-center/:trackKey" element={<AdminTrainingTrack />} />
-                <Route path="prospects" element={<AdminProspects />} />
+                {/* old flow (Prospects / Demo Builds) retired Oct 28, 2026 */}
+                <Route path="prospects" element={<Navigate to="/admin" replace />} />
                 <Route path="provision" element={<AdminProvision />} />
                 <Route path="fix-now" element={<AdminFixNow />} />
                 <Route path="audit-logs" element={<AdminAuditLogs />} />
@@ -320,11 +321,14 @@ const App = () => {
                 <Route path="growth-advisor" element={<AdminGrowthAdvisor />} />
                 <Route path="master-activation" element={<AdminMasterActivation />} />
                 <Route path="clients/:clientId/activate" element={<AdminMasterActivation />} />
-                <Route path="demo-builds" element={<AdminDemoBuilds />} />
-                <Route path="demo-builds/:buildId/close" element={<AdminCloseConfirm />} />
+                {/* old flow (Prospects / Demo Builds) retired Oct 28, 2026 */}
+                <Route path="demo-builds" element={<Navigate to="/admin" replace />} />
+                {/* old flow (Prospects / Demo Builds) retired Oct 28, 2026 */}
+                <Route path="demo-builds/:buildId/close" element={<Navigate to="/admin" replace />} />
                 <Route path="clients/:clientId/setup" element={<AdminClientSetup />} />
                 <Route path="clients/:clientId/sop" element={<AdminClientSOP />} />
-                <Route path="prospects/:prospectId" element={<AdminProspectDetail />} />
+                {/* old flow (Prospects / Demo Builds) retired Oct 28, 2026 */}
+                <Route path="prospects/:prospectId" element={<Navigate to="/admin" replace />} />
                 <Route path="welcome" element={<AdminWelcome />} />
                 <Route path="app-settings" element={<AdminAppSettings />} />
                 <Route path="sales-pipeline" element={<AdminSalesPipeline />} />

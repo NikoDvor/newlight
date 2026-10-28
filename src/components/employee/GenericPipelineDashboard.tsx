@@ -110,7 +110,13 @@ function SectionCard({ title, icon: Icon, right, children }: { title: string; ic
 }
 
 
-export function GenericPipelineDashboard() {
+/**
+ * section="home" (default): the salesman's My Pipeline page — Today strip,
+ * meetings needing an outcome, the board, Your Forms, today's dial goal.
+ * section="stats": the month stats, objections, outcomes, practice, training
+ * and 14-day activity — shown on My Stats.
+ */
+export function GenericPipelineDashboard({ section = "home" }: { section?: "home" | "stats" } = {}) {
   const { user } = useWorkspace();
   const userId = user?.id;
 
@@ -281,8 +287,9 @@ export function GenericPipelineDashboard() {
 
   return (
     <div className="relative space-y-6">
-      <DashboardAtmosphere />
+      {section === "home" && <DashboardAtmosphere />}
 
+      {section === "home" && <>
       {/* TODAY — the numbers to act on first */}
       <TodayStrip scope="mine" />
 
@@ -303,8 +310,6 @@ export function GenericPipelineDashboard() {
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <Reveal><YourForms /></Reveal>
 
-      {/* 0a. RECENT DISCOVERY BOOKINGS — jump straight to Close Prep */}
-      <Reveal delay={0.03}><RecentDiscoveryBookings /></Reveal>
 
       {/* 0.5 DIALS — daily goal tracking (250/day expectation from Role module) */}
       <Reveal delay={0.05}>
@@ -366,26 +371,9 @@ export function GenericPipelineDashboard() {
       })()}
       </Reveal>
 
-      {/* 0.6 EST. PIPELINE VALUE — deal_value (post Close Prep) + estimated_annual_value (post Form 1) */}
-      <Reveal delay={0.07}>
-        <Card className={`${GLASS} p-4 flex items-center gap-3`}>
-          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
-            <DollarSign className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Est. Pipeline Value</p>
-            <p className="text-2xl font-bold text-foreground tabular-nums">${Math.round(pipelineValue).toLocaleString()}</p>
-            <p className="text-[11px] text-muted-foreground">Booked-lead estimates + open deal values</p>
-          </div>
-        </Card>
-      </Reveal>
+      </>}
 
-      {/* 1. PIPELINE TABLE */}
-      <Reveal delay={0.1}>
-
-      <UpcomingPipelineCard rows={rows} />
-      </Reveal>
-
+      {section === "stats" && <>
       {/* 2. STATS ROW */}
       <Reveal delay={0.05}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -537,6 +525,7 @@ export function GenericPipelineDashboard() {
       </SectionCard>
       </Reveal>
 
+      </>}
     </div>
   );
 }
