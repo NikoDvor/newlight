@@ -1366,7 +1366,7 @@ export default function BDRMyLeads() {
                         {!selectMode && (lead.status === "new_lead" || lead.status === "contacted") && (
                           <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setOutcomeLead(lead); }}>Log Outcome</Button>
                         )}
-                        {!selectMode && (derivePipelineStage(lead) === "warm" || derivePipelineStage(lead) === "hot" || derivePipelineStage(lead) === "won") && (
+                        {!selectMode && ( /* Close Prep on every lead — Cold leads can skip Form 1 */
                           <Button
                             size="sm"
                             className="text-xs h-7 bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"

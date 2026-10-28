@@ -106,6 +106,34 @@ Deno.serve(async (req) => {
     return { rep, calendar: cal || null };
   }
 
+  // The originating sales lead (if any) — used for text-message permission.
+  async function resolveLead() {
+    if (!deal?.id) return null;
+    const { data } = await supabase.from("nl_bdr_leads")
+      .select("id, owner_direct_phone, front_desk_phone, phone")
+      .eq("crm_deal_id", deal.id).limit(1).maybeSingle();
+    return data || null;
+  }
+  async function leadSmsConsent(leadId: string): Promise<boolean> {
+    const { data } = await supabase.from("bdr_calendar_events")
+      .select("id").eq("lead_id", leadId).eq("metadata->>sms_consent", "true").limit(1);
+    return (data || []).length > 0;
+  }
+
+  if (action === "set_sms_consent") {
+    const lead = await resolveLead();
+    if (!lead) return json({ error: "No meetings found for this agreement" }, 404);
+    const consent = body.consent === true;
+    const { data: evs } = await supabase.from("bdr_calendar_events")
+      .select("id, metadata").eq("lead_id", lead.id).limit(200);
+    const at = new Date().toISOString();
+    for (const ev of evs || []) {
+      const meta = { ...((ev as any).metadata || {}), sms_consent: consent, sms_consent_at: at, sms_consent_source: "pay_sign" };
+      await supabase.from("bdr_calendar_events").update({ metadata: meta }).eq("id", (ev as any).id);
+    }
+    return json({ ok: true, sms_consent: consent });
+  }
+
   if (action === "context") {
     // Also fetch items for the sign panel
     const { data: items } = await supabase
@@ -144,10 +172,18 @@ Deno.serve(async (req) => {
         .update({ viewed_at: new Date().toISOString(), status: envelope.status === "sent" ? "viewed" : envelope.status })
         .eq("id", envelope.id);
     }
+    let sms: { consent: boolean; phone_last4: string | null } | null = null;
+    try {
+      const lead = await resolveLead();
+      if (lead) {
+        const ph = String(lead.owner_direct_phone || lead.front_desk_phone || lead.phone || "").replace(/\D/g, "");
+        sms = { consent: await leadSmsConsent(lead.id), phone_last4: ph ? ph.slice(-4) : null };
+      }
+    } catch (e) { console.error("[pay-sign-context] sms status failed:", (e as Error).message); }
     return json({
       envelope, deal, invoice, client, items: items || [],
       proposal, rep, rep_availability: calendar?.availability || null,
-      rep_timezone: calendar?.timezone || null, onboarding_meeting,
+      rep_timezone: calendar?.timezone || null, onboarding_meeting, sms,
     });
   }
 

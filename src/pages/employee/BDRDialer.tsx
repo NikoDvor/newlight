@@ -1017,7 +1017,7 @@ export default function BDRDialer() {
                           ))}
                         </optgroup>
                       </select>
-                      {(lead.pipeline_stage === "warm" || lead.pipeline_stage === "hot" || lead.pipeline_stage === "won") && (
+                      {( /* Close Prep on every lead — Cold leads can skip Form 1 */
                         <Button
                           size="sm"
                           className="mt-2 w-full h-7 text-xs bg-[hsl(211,96%,56%)] hover:bg-[hsl(211,96%,48%)]"

@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
       closing_notes,
       meeting_starts_at,
       duration_minutes,
+      client_details,
     } = body || {};
 
     if (!lead_id || !meeting_starts_at) {
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
     // 1. Load the lead & confirm ownership
     const { data: lead, error: leadErr } = await supabase
       .from("nl_bdr_leads")
-      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id, pipeline_stage")
+      .select("id, user_id, client_id, provisioned_client_id, business_name, owner_name, phone, email, crm_contact_id, crm_deal_id, pipeline_stage, outcome_history, customer_notes, website, logo_url")
       .eq("id", lead_id)
       .maybeSingle();
     if (leadErr || !lead) {
@@ -149,6 +150,53 @@ Deno.serve(async (req) => {
     }
     if (lead.user_id !== userId) {
       return new Response(JSON.stringify({ error: "Not your lead" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // 1b. Skip-Form-1 path: no discovery meeting was ever booked for this lead.
+    //     The rep supplies the client's details here instead, and the client's
+    //     account is created below exactly as a Form 1 booking would have.
+    const { count: discoveryCount } = await supabase
+      .from("bdr_calendar_events")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .eq("meeting_kind", "discovery");
+    const skippedDiscovery = (discoveryCount ?? 0) === 0;
+    if (skippedDiscovery) {
+      const cd = client_details && typeof client_details === "object" ? client_details : {};
+      const cdName = typeof cd.full_name === "string" ? cd.full_name.trim().slice(0, 120) : "";
+      const cdEmail = typeof cd.email === "string" ? cd.email.trim().toLowerCase().slice(0, 200) : "";
+      const cdPhone = typeof cd.phone === "string" ? cd.phone.trim().slice(0, 40) : "";
+      if (!cdName || !cdPhone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cdEmail)) {
+        return new Response(JSON.stringify({ error: "This lead skipped Form 1 — client name, a valid email and phone are required." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const modules = Array.isArray(cd.modules_of_interest)
+        ? cd.modules_of_interest.filter((m: unknown) => typeof m === "string" && m).slice(0, 20) : null;
+      const notesExtra = cd.compliance_restrictions === "yes" ? "Compliance restrictions: yes (from Close Prep)"
+        : cd.compliance_restrictions === "no" ? "Compliance restrictions: no (from Close Prep)" : "";
+      const history = Array.isArray((lead as any).outcome_history) ? (lead as any).outcome_history : [];
+      const patch: Record<string, unknown> = {
+        owner_name: cdName,
+        email: cdEmail,
+        phone: cdPhone,
+        skipped_discovery: true,
+        outcome_history: [...history, { label: "Skipped discovery — went straight to Form 2", timestamp: new Date().toISOString() }],
+      };
+      if (modules) patch.modules_of_interest = modules;
+      if (typeof cd.has_sales_team === "boolean") patch.has_sales_team = cd.has_sales_team;
+      if (typeof cd.sales_team_size === "string" && cd.sales_team_size) patch.sales_team_size = cd.sales_team_size.slice(0, 40);
+      if (notesExtra) patch.customer_notes = [(lead as any).customer_notes, notesExtra].filter(Boolean).join("\n");
+      const { error: cdErr } = await supabase.from("nl_bdr_leads").update(patch as any).eq("id", lead.id);
+      if (cdErr) {
+        // Phone may collide with another rep's lead (unique index) — keep the rest.
+        console.error("[close-prep-submit] client details update failed, retrying without phone:", cdErr.message);
+        delete patch.phone;
+        await supabase.from("nl_bdr_leads").update(patch as any).eq("id", lead.id);
+      }
+      (lead as any).owner_name = cdName;
+      (lead as any).email = cdEmail;
+      (lead as any).phone = cdPhone;
     }
 
     // 2. Ensure calendar (reps may own several booking links — take the oldest)
@@ -408,6 +456,61 @@ Deno.serve(async (req) => {
       }
     } catch (e) { console.error("[close-prep-submit] discovery outcome error", e); }
 
+    // 6c. Skip path: create the client's account + login (what Form 1 would have done).
+    let credentials: { tempPassword?: string | null; magicLink?: string | null } | null = null;
+    if (skippedDiscovery && !(lead as any).provisioned_client_id && lead.email) {
+      try {
+        const provResp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/provision-from-booking`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-cron-secret": Deno.env.get("CRON_SECRET") || "",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            business_name: lead.business_name,
+            company_name: lead.business_name,
+            bdr_lead_id: lead.id,
+            logo_url: (lead as any).logo_url || null,
+            website: (lead as any).website || null,
+            contact_name: lead.owner_name || lead.email.split("@")[0],
+            contact_email: lead.email,
+            contact_phone: lead.phone || null,
+            preferred_contact_method: "email",
+            sms_consent: false,
+            booking_source: "close_prep_skip",
+          }),
+        });
+        const prov = await provResp.json().catch(() => ({}));
+        if (!provResp.ok || !prov?.success) {
+          console.error("[close-prep-submit] provisioning failed:", provResp.status, prov?.error);
+        } else {
+          if (prov.client_id) {
+            await supabase.from("crm_deals").update({ provisioned_client_id: prov.client_id } as any).eq("id", dealId);
+          }
+          const linkedUserId: string | null = prov.linked_user_id || null;
+          const isNewUser = prov.is_new_user === true && prov.existing_user !== true;
+          if (linkedUserId && isNewUser) {
+            const rand = crypto.getRandomValues(new Uint8Array(9));
+            const candidate = "NL-" + btoa(String.fromCharCode(...rand)).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
+            const { error: updErr } = await supabase.auth.admin.updateUserById(linkedUserId, {
+              password: candidate, email_confirm: true, user_metadata: { must_change_password: true },
+            });
+            if (!updErr) credentials = { tempPassword: candidate };
+            else console.error("[close-prep-submit] temp password failed:", updErr.message);
+          } else if (linkedUserId) {
+            const { data: linkData } = await supabase.auth.admin.generateLink({
+              type: "magiclink", email: lead.email, options: { redirectTo: "https://newlight-app.com/auth" },
+            });
+            const ml = (linkData as any)?.properties?.action_link || null;
+            if (ml) credentials = { magicLink: ml };
+          }
+        }
+      } catch (e) {
+        console.error("[close-prep-submit] provisioning error:", (e as Error).message);
+      }
+    }
+
     // Construct the client-facing Pay & Sign URL
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     let originBase = "";
@@ -429,6 +532,8 @@ Deno.serve(async (req) => {
       paySignUrl,
       zoomJoinUrl,
       zoomStartUrl,
+      credentials,
+      clientEmail: lead.email || null,
     }).catch((e) => console.error("[close-prep notifications] uncaught:", e));
     // deno-lint-ignore no-explicit-any
     const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil?.bind((globalThis as any).EdgeRuntime);
@@ -467,6 +572,8 @@ async function sendClosePrepNotifications(supabase: any, args: {
   paySignUrl: string;
   zoomJoinUrl?: string | null;
   zoomStartUrl?: string | null;
+  credentials?: { tempPassword?: string | null; magicLink?: string | null } | null;
+  clientEmail?: string | null;
 }) {
   const { zoomJoinUrl = null, zoomStartUrl = null } = args;
   const { userId, userEmail, lead, when, initial_fee, recurring_fee, commission_rate, commission_rate_ongoing, pricing_model, closing_notes, paySignUrl } = args;
@@ -551,16 +658,24 @@ async function sendClosePrepNotifications(supabase: any, args: {
         ``,
         zoomJoinUrl ? `Join on Zoom: ${zoomJoinUrl}\n` : "",
         `Looking forward to speaking with you. If you need to change the time, just reply to this email.`,
+        args.credentials?.tempPassword
+          ? `\nYour NewLight workspace is ready.\nLogin: https://newlight-app.com/auth\nEmail: ${lead.email}\nTemporary password: ${args.credentials.tempPassword}\n(You'll be asked to change it on first login.)\n`
+          : args.credentials?.magicLink
+            ? `\nYour NewLight workspace is ready. Sign in (link expires shortly): ${args.credentials.magicLink}\n`
+            : "",
         ``,
         `— ${signer}`,
         repEmail ? `Email: ${repEmail}` : "",
       ].filter(Boolean).join("\n");
+      const creds = args.credentials || null;
       const html = clientMeetingConfirmHtml({
         ownerName: lead.owner_name || null,
         whenLbl,
         signer,
         repEmail: repEmail || null,
         zoomJoinUrl,
+        credentials: creds,
+        clientEmail: lead.email,
       });
       console.log(`[close-prep client email] to=${lead.email} subject="${subj}" when="${whenLbl}"`);
       await sendEmail(lead.email, subj, html, text);
@@ -576,8 +691,25 @@ function clientMeetingConfirmHtml(args: {
   signer: string;
   repEmail: string | null;
   zoomJoinUrl?: string | null;
+  credentials?: { tempPassword?: string | null; magicLink?: string | null } | null;
+  clientEmail?: string | null;
 }): string {
-  const { ownerName, whenLbl, signer, repEmail, zoomJoinUrl } = args;
+  const { ownerName, whenLbl, signer, repEmail, zoomJoinUrl, credentials, clientEmail } = args;
+  const credsHtml = credentials?.tempPassword
+    ? `<div style="margin:20px 0;padding:16px;background:#F1F5F9;border-radius:10px;border:1px solid #E2E8F0;">
+         <p style="margin:0 0 8px;font-size:14px;font-weight:700;">Your NewLight workspace is ready</p>
+         <p style="margin:0 0 4px;font-size:14px;"><strong>Email:</strong> ${esc(clientEmail || "")}</p>
+         <p style="margin:0 0 12px;font-size:14px;"><strong>Temporary password:</strong> <code>${esc(credentials.tempPassword)}</code></p>
+         <a href="https://newlight-app.com/auth" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px;text-decoration:none;">Log in to NewLight</a>
+         <p style="margin:10px 0 0;font-size:12px;color:#64748B;">You'll be asked to change your password on first login.</p>
+       </div>`
+    : credentials?.magicLink
+      ? `<div style="margin:20px 0;padding:16px;background:#F1F5F9;border-radius:10px;border:1px solid #E2E8F0;">
+           <p style="margin:0 0 10px;font-size:14px;font-weight:700;">Your NewLight workspace is ready</p>
+           <a href="${esc(credentials.magicLink)}" style="display:inline-block;background:#0EA5E9;color:#fff;font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px;text-decoration:none;">Sign in to NewLight</a>
+           <p style="margin:10px 0 0;font-size:12px;color:#64748B;">This sign-in link expires shortly.</p>
+         </div>`
+      : "";
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your meeting is confirmed</h1>
@@ -585,6 +717,7 @@ function clientMeetingConfirmHtml(args: {
     <div style="padding:14px 16px;background:#f9fafb;border-radius:8px;font-size:15px;color:#111827;margin:0 0 20px;"><strong>${esc(whenLbl)}</strong> <span style="color:#6b7280;font-size:13px;">(Pacific Time)</span></div>
     ${zoomJoinUrl ? `<p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Join on Zoom: <a href="${esc(zoomJoinUrl)}">${esc(zoomJoinUrl)}</a></p>` : ""}
     <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">Looking forward to speaking with you. If you need to change the time, just reply to this email.</p>
+    ${credsHtml}
     <p style="font-size:14px;line-height:1.6;margin:20px 0 0;">— ${esc(signer)}${repEmail ? `<br><span style="color:#6b7280;font-size:13px;">${esc(repEmail)}</span>` : ""}</p>
   </div>
 </body></html>`;

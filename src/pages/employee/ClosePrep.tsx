@@ -10,6 +10,11 @@ import { toast } from "@/hooks/use-toast";
 import { ensureBdrCalendar } from "@/lib/bdrCalendar";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
+// Same module bundle Form 1 submits (see BDRBookingPublic) — used when Form 1 was skipped.
+const INCLUDED_MODULE_KEYS = ["paid_ads", "seo", "website_management", "tracking_attribution", "crm_automation", "lifecycle_nurture", "reputation_reviews"];
+const SALES_TOOL_KEYS = ["sales_meeting_intelligence", "sales_call_tracking", "sales_followups", "sales_tasks", "sales_contacts", "sales_companies", "sales_deals", "sales_pipeline", "sales_appointments", "sales_approvals"];
+const TEAM_SIZES = ["1-2", "3-5", "6-10", "10+"];
+
 interface Lead {
   id: string;
   business_name: string;
@@ -44,6 +49,15 @@ export default function ClosePrep() {
   const [notes, setNotes] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
 
+  // Skip-Form-1 path: client details the booking form would normally have collected.
+  const [skippedDiscovery, setSkippedDiscovery] = useState(false);
+  const [cdName, setCdName] = useState("");
+  const [cdEmail, setCdEmail] = useState("");
+  const [cdPhone, setCdPhone] = useState("");
+  const [cdSalesTeam, setCdSalesTeam] = useState<"" | "yes" | "no">("");
+  const [cdTeamSize, setCdTeamSize] = useState("");
+  const [cdCompliance, setCdCompliance] = useState<"" | "yes" | "no">("");
+
 
   useEffect(() => {
     (async () => {
@@ -58,6 +72,20 @@ export default function ClosePrep() {
         .eq("id", leadId)
         .maybeSingle();
       setLead(ld || null);
+      if (ld) {
+        const { count } = await (supabase as any)
+          .from("bdr_calendar_events")
+          .select("id", { count: "exact", head: true })
+          .eq("lead_id", ld.id)
+          .eq("meeting_kind", "discovery");
+        const skipped = (count ?? 0) === 0;
+        setSkippedDiscovery(skipped);
+        if (skipped) {
+          setCdName(ld.owner_name || "");
+          setCdEmail(ld.email || "");
+          setCdPhone(ld.phone || "");
+        }
+      }
 
       const cal = await ensureBdrCalendar();
       setAvailability(cal?.availability || null);
@@ -80,8 +108,11 @@ export default function ClosePrep() {
     }));
   }, [availability, calTimezone]);
 
+  const cdValid = !skippedDiscovery || (
+    !!cdName.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cdEmail.trim()) && !!cdPhone.trim()
+  );
   const canSubmit =
-    !!lead && !!selectedSlot && !!initialFee.trim() &&
+    !!lead && !!selectedSlot && !!initialFee.trim() && cdValid &&
     (pricingModel === "retainer"
       ? !!recurringFee.trim()
       : (!!commissionRate.trim() && !!commissionRateOngoing.trim()));
@@ -102,6 +133,19 @@ export default function ClosePrep() {
         closing_notes: notes || null,
         meeting_starts_at: selectedSlot,
         duration_minutes: 60,
+        client_details: skippedDiscovery ? {
+          full_name: cdName.trim(),
+          email: cdEmail.trim(),
+          phone: cdPhone.trim(),
+          has_sales_team: cdSalesTeam === "" ? null : cdSalesTeam === "yes",
+          sales_team_size: cdSalesTeam === "yes" ? (cdTeamSize || null) : null,
+          compliance_restrictions: cdCompliance || null,
+          modules_of_interest: Array.from(new Set([
+            ...INCLUDED_MODULE_KEYS,
+            ...(cdSalesTeam === "yes" ? SALES_TOOL_KEYS : []),
+            ...(cdCompliance === "yes" ? ["financial_compliance"] : []),
+          ])),
+        } : undefined,
       },
     });
 
@@ -201,6 +245,61 @@ export default function ClosePrep() {
           {lead.city && <span>·  {lead.city}</span>}
         </div>
       </div>
+
+      {skippedDiscovery && (
+        <section className="space-y-3 p-4 rounded-xl border border-[hsla(38,92%,55%,.35)] bg-[hsla(38,92%,55%,.06)]">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Client details</h2>
+            <p className="text-xs text-white/55 mt-0.5">
+              This lead skipped Form 1, so we need these to create their account and send their login. They'll get emails only until they turn on text reminders on their Pay &amp; Sign page.
+            </p>
+          </div>
+          <div>
+            <Label className="text-xs text-white/60">Client name <span className="text-red-500">*</span></Label>
+            <Input value={cdName} onChange={e => setCdName(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+          </div>
+          <div>
+            <Label className="text-xs text-white/60">Client email <span className="text-red-500">*</span></Label>
+            <Input type="email" value={cdEmail} onChange={e => setCdEmail(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+          </div>
+          <div>
+            <Label className="text-xs text-white/60">Client phone <span className="text-red-500">*</span></Label>
+            <Input value={cdPhone} onChange={e => setCdPhone(e.target.value)} className="bg-white/5 border-white/10 text-white" />
+          </div>
+          <div>
+            <Label className="text-xs text-white/60">Do they have a sales team?</Label>
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              {(["yes", "no"] as const).map(v => (
+                <Button key={v} type="button" variant="outline" onClick={() => setCdSalesTeam(v)}
+                  className={cdSalesTeam === v ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white" : "border-white/10 bg-white/5 text-white/60"}>
+                  {v === "yes" ? "Yes" : "No"}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {cdSalesTeam === "yes" && (
+            <div>
+              <Label className="text-xs text-white/60">Sales team size</Label>
+              <select value={cdTeamSize} onChange={e => setCdTeamSize(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white">
+                <option value="" className="bg-[hsl(215,35%,12%)]">— Select —</option>
+                {TEAM_SIZES.map(t => <option key={t} value={t} className="bg-[hsl(215,35%,12%)]">{t}</option>)}
+              </select>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs text-white/60">Do they have compliance restrictions?</Label>
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              {(["yes", "no"] as const).map(v => (
+                <Button key={v} type="button" variant="outline" onClick={() => setCdCompliance(v)}
+                  className={cdCompliance === v ? "border-[hsl(211,96%,56%)] bg-[hsl(211,96%,56%)]/15 text-white" : "border-white/10 bg-white/5 text-white/60"}>
+                  {v === "yes" ? "Yes" : "No"}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/[0.03]">
         <h2 className="text-sm font-semibold text-white">Deal Terms</h2>

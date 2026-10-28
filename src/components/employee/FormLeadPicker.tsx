@@ -26,7 +26,8 @@ async function fetchEligible(userId: string, kind: Kind): Promise<LeadRow[]> {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (kind === "close-prep") {
-    q = q.in("pipeline_stage", ["warm", "hot", "won"]);
+    // Any lead can go to Form 2 (Cold leads skip Form 1); most recently active first.
+    q = q.limit(300);
   } else {
     q = q.not("crm_deal_id", "is", null);
   }
@@ -61,7 +62,7 @@ export function FormLeadPickerCard({
 
   const emptyMsg =
     kind === "close-prep"
-      ? "No hot leads yet — mark a lead Hot in My Leads first."
+      ? "No leads yet — add or pull leads first."
       : "No deals ready yet — complete Close Prep first.";
 
   const handleOpen = async () => {

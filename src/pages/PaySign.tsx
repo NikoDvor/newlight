@@ -45,6 +45,7 @@ type Ctx = {
   rep_availability?: any;
   rep_timezone?: string | null;
   onboarding_meeting?: any;
+  sms?: { consent: boolean; phone_last4: string | null } | null;
 };
 
 type StepKey = "review" | "pay" | "sign" | "schedule" | "done";
@@ -120,6 +121,7 @@ export default function PaySign() {
   const [onbAvailability, setOnbAvailability] = useState<any>(null);
   const [onbTimezone, setOnbTimezone] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
+  const [smsBusy, setSmsBusy] = useState(false);
 
   // Ongoing service meetings (optional)
   const [pocs, setPocs] = useState<{ user_id: string; full_name: string; email: string | null }[]>([]);
@@ -399,6 +401,37 @@ export default function PaySign() {
         </div>
 
         <StepIndicator current={currentStep} paid={isPaid} signed={signed} scheduled={scheduled} />
+
+        {ctx.sms && (
+          <Card className="p-4 mb-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-primary"
+                checked={!!ctx.sms.consent}
+                disabled={smsBusy}
+                onChange={async (e) => {
+                  const consent = e.target.checked;
+                  setSmsBusy(true);
+                  const { data, error } = await supabase.functions.invoke("pay-sign-context", {
+                    body: { share_token: token, action: "set_sms_consent", consent },
+                  });
+                  setSmsBusy(false);
+                  if (error || data?.error) { toast.error("Couldn't save your text preference. Please try again."); return; }
+                  setCtx((c) => (c ? { ...c, sms: { ...(c.sms as any), consent } } : c));
+                  toast.success(consent ? "You'll get text reminders before your meetings." : "Text reminders turned off.");
+                }}
+              />
+              <span className="text-sm">
+                <span className="font-medium">Text me reminders about my meetings</span>
+                {ctx.sms.phone_last4 ? <span className="text-muted-foreground"> (phone ending {ctx.sms.phone_last4})</span> : null}
+                <span className="block text-xs text-muted-foreground mt-1">
+                  Optional. Meeting confirmations and reminders only. Msg &amp; data rates may apply. Reply STOP to opt out anytime.
+                </span>
+              </span>
+            </label>
+          </Card>
+        )}
 
         {/* Terms summary */}
         <Card className="p-6 mb-6">
