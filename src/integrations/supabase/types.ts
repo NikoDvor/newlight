@@ -1196,6 +1196,7 @@ export type Database = {
           ends_at: string
           extra_type: string | null
           id: string
+          is_external: boolean
           is_extra: boolean
           lead_id: string | null
           meeting_kind: string | null
@@ -1234,6 +1235,7 @@ export type Database = {
           ends_at: string
           extra_type?: string | null
           id?: string
+          is_external?: boolean
           is_extra?: boolean
           lead_id?: string | null
           meeting_kind?: string | null
@@ -1272,6 +1274,7 @@ export type Database = {
           ends_at?: string
           extra_type?: string | null
           id?: string
+          is_external?: boolean
           is_extra?: boolean
           lead_id?: string | null
           meeting_kind?: string | null
@@ -1457,6 +1460,63 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bdr_meeting_attendees: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          event_id: string
+          id: string
+          lead_id: string | null
+          name: string
+          optin_token: string
+          phone: string | null
+          sms_consent: boolean
+          sms_consent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          event_id: string
+          id?: string
+          lead_id?: string | null
+          name: string
+          optin_token?: string
+          phone?: string | null
+          sms_consent?: boolean
+          sms_consent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          event_id?: string
+          id?: string
+          lead_id?: string | null
+          name?: string
+          optin_token?: string
+          phone?: string | null
+          sms_consent?: boolean
+          sms_consent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdr_meeting_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdr_meeting_attendees_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "nl_bdr_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -15857,6 +15917,11 @@ export type Database = {
         }
         Returns: number
       }
+      nl_attendee_optin_info: { Args: { _token: string }; Returns: Json }
+      nl_attendee_sms_optin: {
+        Args: { _consent?: boolean; _phone?: string; _token: string }
+        Returns: Json
+      }
       nl_contact_rank: {
         Args: { _owner: boolean; _title: string }
         Returns: number
@@ -15876,6 +15941,22 @@ export type Database = {
           _phone_kind?: string
         }
         Returns: string
+      }
+      nl_log_external_first_meeting: {
+        Args: {
+          _business_name: string
+          _customer_name: string
+          _duration_minutes?: number
+          _email: string
+          _has_sales_team?: boolean
+          _lead_id: string
+          _modules?: string[]
+          _notes?: string
+          _phone: string
+          _sales_team_size?: string
+          _starts_at: string
+        }
+        Returns: Json
       }
       nl_mark_dnc: {
         Args: { _contact_id?: string; _phone: string; _reason?: string }
