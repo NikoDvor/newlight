@@ -76,7 +76,7 @@ export function YourForms() {
       name: "Pay & Sign",
       badge: "Meeting 3",
       pickerKind: "pay-sign",
-      hint: "Opens your won leads — tap Pay & Sign on the one ready to onboard.",
+      hint: "Pick a lead that finished Form 2 — after the closing meeting, send their Pay & Sign link.",
     },
   ];
 
