@@ -4166,6 +4166,8 @@ export type Database = {
           created_at: string
           crm_mode: string
           email_delivery_status: string | null
+          former_client_at: string | null
+          former_client_reason: string | null
           has_compliance_requirements: boolean
           has_sales_team: boolean
           id: string
@@ -4220,6 +4222,8 @@ export type Database = {
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
+          former_client_at?: string | null
+          former_client_reason?: string | null
           has_compliance_requirements?: boolean
           has_sales_team?: boolean
           id?: string
@@ -4274,6 +4278,8 @@ export type Database = {
           created_at?: string
           crm_mode?: string
           email_delivery_status?: string | null
+          former_client_at?: string | null
+          former_client_reason?: string | null
           has_compliance_requirements?: boolean
           has_sales_team?: boolean
           id?: string
@@ -5117,6 +5123,8 @@ export type Database = {
           notes_summary: string | null
           onboarding_meeting_id: string | null
           paid_signed_at: string | null
+          pay_sign_last_sent_at: string | null
+          pay_sign_sent_at: string | null
           pay_sign_status: string
           payment_invoice_id: string | null
           pipeline_stage: string
@@ -5172,6 +5180,8 @@ export type Database = {
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
           paid_signed_at?: string | null
+          pay_sign_last_sent_at?: string | null
+          pay_sign_sent_at?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
           pipeline_stage?: string
@@ -5227,6 +5237,8 @@ export type Database = {
           notes_summary?: string | null
           onboarding_meeting_id?: string | null
           paid_signed_at?: string | null
+          pay_sign_last_sent_at?: string | null
+          pay_sign_sent_at?: string | null
           pay_sign_status?: string
           payment_invoice_id?: string | null
           pipeline_stage?: string
@@ -8461,11 +8473,9 @@ export type Database = {
           has_booking_system: boolean | null
           has_sales_team: boolean | null
           id: string
-          latitude: number | null
           lead_source: string
           list_name: string | null
           logo_url: string | null
-          longitude: number | null
           meeting_booked: string | null
           modules_of_interest: string[] | null
           name_normalized: string | null
@@ -8488,19 +8498,15 @@ export type Database = {
           released_at: string | null
           sales_team_size: string | null
           self_booking_widget_non_owner: boolean | null
-          sequence_order: number | null
-          side_of_street: string | null
           skipped_discovery: boolean
           source_type: string | null
           status: string
           street_address: string | null
-          street_number: number | null
           unattended_return_stage: string | null
           unattended_since: string | null
           unattended_warned_at: string | null
           updated_at: string
           user_id: string
-          visit_status: string | null
           website: string | null
           website_host: string | null
         }
@@ -8533,11 +8539,9 @@ export type Database = {
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
-          latitude?: number | null
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
-          longitude?: number | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
           name_normalized?: string | null
@@ -8560,19 +8564,15 @@ export type Database = {
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
-          sequence_order?: number | null
-          side_of_street?: string | null
           skipped_discovery?: boolean
           source_type?: string | null
           status?: string
           street_address?: string | null
-          street_number?: number | null
           unattended_return_stage?: string | null
           unattended_since?: string | null
           unattended_warned_at?: string | null
           updated_at?: string
           user_id: string
-          visit_status?: string | null
           website?: string | null
           website_host?: string | null
         }
@@ -8605,11 +8605,9 @@ export type Database = {
           has_booking_system?: boolean | null
           has_sales_team?: boolean | null
           id?: string
-          latitude?: number | null
           lead_source?: string
           list_name?: string | null
           logo_url?: string | null
-          longitude?: number | null
           meeting_booked?: string | null
           modules_of_interest?: string[] | null
           name_normalized?: string | null
@@ -8632,19 +8630,15 @@ export type Database = {
           released_at?: string | null
           sales_team_size?: string | null
           self_booking_widget_non_owner?: boolean | null
-          sequence_order?: number | null
-          side_of_street?: string | null
           skipped_discovery?: boolean
           source_type?: string | null
           status?: string
           street_address?: string | null
-          street_number?: number | null
           unattended_return_stage?: string | null
           unattended_since?: string | null
           unattended_warned_at?: string | null
           updated_at?: string
           user_id?: string
-          visit_status?: string | null
           website?: string | null
           website_host?: string | null
         }
@@ -8763,6 +8757,90 @@ export type Database = {
         }
         Relationships: []
       }
+      nl_discovery_numbers: {
+        Row: {
+          created_at: string
+          current_clients: number | null
+          current_revenue: number | null
+          current_revenue_period: string
+          event_id: string | null
+          firm_type: string
+          goal_clients: number | null
+          goal_revenue: number | null
+          goal_revenue_period: string
+          id: string
+          lead_id: string
+          leads_per_client: number | null
+          model_close_rate: number | null
+          model_leads: number | null
+          model_ticket: number | null
+          new_leads: number | null
+          new_leads_period: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_clients?: number | null
+          current_revenue?: number | null
+          current_revenue_period?: string
+          event_id?: string | null
+          firm_type?: string
+          goal_clients?: number | null
+          goal_revenue?: number | null
+          goal_revenue_period?: string
+          id?: string
+          lead_id: string
+          leads_per_client?: number | null
+          model_close_rate?: number | null
+          model_leads?: number | null
+          model_ticket?: number | null
+          new_leads?: number | null
+          new_leads_period?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_clients?: number | null
+          current_revenue?: number | null
+          current_revenue_period?: string
+          event_id?: string | null
+          firm_type?: string
+          goal_clients?: number | null
+          goal_revenue?: number | null
+          goal_revenue_period?: string
+          id?: string
+          lead_id?: string
+          leads_per_client?: number | null
+          model_close_rate?: number | null
+          model_leads?: number | null
+          model_ticket?: number | null
+          new_leads?: number | null
+          new_leads_period?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nl_discovery_numbers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "bdr_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nl_discovery_numbers_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "nl_bdr_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nl_dnc_numbers: {
         Row: {
           added_by: string | null
@@ -8823,166 +8901,6 @@ export type Database = {
           overall_status?: string
           total_chapters?: number
           total_questions?: number
-        }
-        Relationships: []
-      }
-      nl_inperson_leads: {
-        Row: {
-          added_mid_walk: boolean
-          address: string | null
-          business_name: string
-          created_at: string
-          has_booking_page: boolean | null
-          id: string
-          niche: string | null
-          notes: string | null
-          outcome: string | null
-          owner_name: string | null
-          sells_online: boolean | null
-          status: string
-          street_id: string
-          updated_at: string
-          walk_sequence: number
-          website: string | null
-        }
-        Insert: {
-          added_mid_walk?: boolean
-          address?: string | null
-          business_name: string
-          created_at?: string
-          has_booking_page?: boolean | null
-          id?: string
-          niche?: string | null
-          notes?: string | null
-          outcome?: string | null
-          owner_name?: string | null
-          sells_online?: boolean | null
-          status?: string
-          street_id: string
-          updated_at?: string
-          walk_sequence: number
-          website?: string | null
-        }
-        Update: {
-          added_mid_walk?: boolean
-          address?: string | null
-          business_name?: string
-          created_at?: string
-          has_booking_page?: boolean | null
-          id?: string
-          niche?: string | null
-          notes?: string | null
-          outcome?: string | null
-          owner_name?: string | null
-          sells_online?: boolean | null
-          status?: string
-          street_id?: string
-          updated_at?: string
-          walk_sequence?: number
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nl_inperson_leads_street_id_fkey"
-            columns: ["street_id"]
-            isOneToOne: false
-            referencedRelation: "nl_inperson_streets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      nl_inperson_master_prompt: {
-        Row: {
-          content: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      nl_inperson_outcomes: {
-        Row: {
-          id: string
-          lead_id: string
-          logged_at: string
-          notes: string | null
-          outcome: string
-          rep_user_id: string
-        }
-        Insert: {
-          id?: string
-          lead_id: string
-          logged_at?: string
-          notes?: string | null
-          outcome: string
-          rep_user_id: string
-        }
-        Update: {
-          id?: string
-          lead_id?: string
-          logged_at?: string
-          notes?: string | null
-          outcome?: string
-          rep_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nl_inperson_outcomes_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "nl_inperson_leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      nl_inperson_streets: {
-        Row: {
-          city: string
-          created_at: string
-          current_position: number
-          id: string
-          rep_user_id: string
-          starting_cross_street: string | null
-          state: string
-          status: string
-          street_name: string
-          total_count: number
-          updated_at: string
-        }
-        Insert: {
-          city: string
-          created_at?: string
-          current_position?: number
-          id?: string
-          rep_user_id: string
-          starting_cross_street?: string | null
-          state?: string
-          status?: string
-          street_name: string
-          total_count?: number
-          updated_at?: string
-        }
-        Update: {
-          city?: string
-          created_at?: string
-          current_position?: number
-          id?: string
-          rep_user_id?: string
-          starting_cross_street?: string | null
-          state?: string
-          status?: string
-          street_name?: string
-          total_count?: number
-          updated_at?: string
         }
         Relationships: []
       }
@@ -13589,147 +13507,6 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      street_sweep_routes: {
-        Row: {
-          assigned_to: string | null
-          block_range: string | null
-          city: string
-          client_id: string
-          created_at: string
-          created_by: string
-          id: string
-          route_name: string
-          state: string
-          status: string
-          street_name: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          block_range?: string | null
-          city: string
-          client_id: string
-          created_at?: string
-          created_by: string
-          id?: string
-          route_name: string
-          state?: string
-          status?: string
-          street_name: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          block_range?: string | null
-          city?: string
-          client_id?: string
-          created_at?: string
-          created_by?: string
-          id?: string
-          route_name?: string
-          state?: string
-          status?: string
-          street_name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      street_sweep_visits: {
-        Row: {
-          address: string
-          booking_link_type: string | null
-          business_name: string
-          client_id: string
-          created_at: string
-          has_booking_qr: boolean | null
-          has_signage: boolean | null
-          id: string
-          lat: number | null
-          lead_id: string | null
-          lng: number | null
-          niche_guess: string | null
-          notes: string | null
-          owner_name: string | null
-          owner_phone: string | null
-          photo_url: string | null
-          research_status: string
-          route_id: string
-          sequence: number | null
-          storefront_status: string
-          unit_suite: string | null
-          updated_at: string
-          visited_by: string
-          website: string | null
-        }
-        Insert: {
-          address: string
-          booking_link_type?: string | null
-          business_name: string
-          client_id: string
-          created_at?: string
-          has_booking_qr?: boolean | null
-          has_signage?: boolean | null
-          id?: string
-          lat?: number | null
-          lead_id?: string | null
-          lng?: number | null
-          niche_guess?: string | null
-          notes?: string | null
-          owner_name?: string | null
-          owner_phone?: string | null
-          photo_url?: string | null
-          research_status?: string
-          route_id: string
-          sequence?: number | null
-          storefront_status?: string
-          unit_suite?: string | null
-          updated_at?: string
-          visited_by: string
-          website?: string | null
-        }
-        Update: {
-          address?: string
-          booking_link_type?: string | null
-          business_name?: string
-          client_id?: string
-          created_at?: string
-          has_booking_qr?: boolean | null
-          has_signage?: boolean | null
-          id?: string
-          lat?: number | null
-          lead_id?: string | null
-          lng?: number | null
-          niche_guess?: string | null
-          notes?: string | null
-          owner_name?: string | null
-          owner_phone?: string | null
-          photo_url?: string | null
-          research_status?: string
-          route_id?: string
-          sequence?: number | null
-          storefront_status?: string
-          unit_suite?: string | null
-          updated_at?: string
-          visited_by?: string
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "street_sweep_visits_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "nl_bdr_leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "street_sweep_visits_route_id_fkey"
-            columns: ["route_id"]
-            isOneToOne: false
-            referencedRelation: "street_sweep_routes"
             referencedColumns: ["id"]
           },
         ]
