@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MeetingOutcomeAnalytics from "@/components/admin/MeetingOutcomeAnalytics";
+import MeetingEffortCard from "@/components/admin/MeetingEffortCard";
 import { RANGE_OPTIONS, type RangeKey } from "@/components/insights/PipelineInsightsView";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
@@ -23,7 +24,10 @@ export default function BDRMyStats() {
         </Select>
       </div>
       {user?.id ? (
-        <MeetingOutcomeAnalytics range={range} repFilter={user.id} reps={[]} onRepSelect={() => {}} repUserId={user.id} />
+        <>
+          <MeetingEffortCard range={range} title="My meeting effort vs team average" />
+          <MeetingOutcomeAnalytics range={range} repFilter={user.id} reps={[]} onRepSelect={() => {}} repUserId={user.id} />
+        </>
       ) : (
         <p className="text-sm text-white/50">Sign in to see your stats.</p>
       )}

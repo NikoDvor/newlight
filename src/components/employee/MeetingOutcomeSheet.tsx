@@ -47,10 +47,10 @@ export interface OutcomeRow {
 export const OUTCOME_SELECT =
   "id, event_id, lead_id, meeting_kind, attempt_number, result, next_step, primary_lost_reason, reschedule_reason, logged_at, next_event:bdr_calendar_events!bdr_meeting_outcomes_next_event_id_fkey(starts_at, attempt_number, meeting_kind)";
 
-export const OUTCOME_KINDS = ["discovery", "closing", "onboarding"] as const;
+export const OUTCOME_KINDS = ["discovery", "closing", "onboarding", "check_in"] as const;
 
-const KIND_SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign" };
-const NEXT_LABEL: Record<string, string> = { form_2: "Form 2", form_3: "Pay & Sign", activated: "Activated" };
+const KIND_SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign", check_in: "Check-in" };
+const NEXT_LABEL: Record<string, string> = { form_2: "Form 2", form_3: "Pay & Sign", activated: "Activated", completed: "Completed" };
 
 export function kindAttemptLabel(kind: string | null | undefined, attempt: number | null | undefined) {
   return `${KIND_SHORT[kind || ""] || "Meeting"} #${attempt ?? 1}`;
@@ -199,6 +199,14 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
       navigate(`/employee/pay-sign/${lead.crm_deal_id || lead.id}`);
       return;
     }
+    if (kind === "check_in") {
+      // Extra check-in meeting: completed, no stage change.
+      await insertOutcome({ result: "won", next_step: "completed" });
+      await setEventAttendance("attended");
+      toast({ title: "Check-in logged" });
+      onDone();
+      return;
+    }
     // onboarding
     await insertOutcome({ result: "won", next_step: "activated" });
     await setEventAttendance("attended");
@@ -295,7 +303,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
               <div className="flex flex-wrap gap-2">
                 {!isPaySign && !isCancel && attendance === "attended" && (
                   <button className={chip(result === "won")} onClick={() => setResult("won")}>
-                    {kind === "onboarding" ? "Completed" : "Won"}
+                    {kind === "onboarding" || kind === "check_in" ? "Completed" : "Won"}
                   </button>
                 )}
                 {!isPaySign && <button className={chip(result === "rescheduled")} onClick={() => setResult("rescheduled")}>Reschedule</button>}
@@ -307,7 +315,7 @@ export default function MeetingOutcomeSheet({ event, lead, mode = "meeting", onD
           {result === "won" && attendance === "attended" && !isPaySign && (
             <Button className="w-full" disabled={saving} onClick={saveWon}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {kind === "discovery" ? "Fill out Form 2" : kind === "closing" ? "Won — send Pay & Sign" : "Completed — activate client"}
+              {kind === "discovery" ? "Fill out Form 2" : kind === "closing" ? "Won — send Pay & Sign" : kind === "check_in" ? "Log check-in as completed" : "Completed — activate client"}
             </Button>
           )}
 

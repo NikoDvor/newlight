@@ -23,6 +23,7 @@ import { rescheduleMeeting } from "@/lib/meetingReschedule";
 import { JourneyCompact } from "@/components/employee/LeadMeetingJourney";
 import { buildLeadJourney, type LeadJourney } from "@/lib/leadJourney";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
+import ScheduleExtraMeetingDialog from "@/components/employee/ScheduleExtraMeetingDialog";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
@@ -220,6 +221,7 @@ export default function BDRMyLeads() {
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
+  const [extraMeetingLead, setExtraMeetingLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
@@ -1386,6 +1388,17 @@ export default function BDRMyLeads() {
                           </Button>
                         )}
                         {!selectMode && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7"
+                            onClick={(e) => { e.stopPropagation(); setExtraMeetingLead(lead); }}
+                            title="Schedule another meeting with this lead (not a reschedule)"
+                          >
+                            + Meeting
+                          </Button>
+                        )}
+                        {!selectMode && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setRescheduleLead(lead); }}
                             aria-label={`Reschedule ${lead.business_name}`}
@@ -1441,6 +1454,18 @@ export default function BDRMyLeads() {
       <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
+      <ScheduleExtraMeetingDialog
+        lead={extraMeetingLead ? {
+          id: extraMeetingLead.id,
+          client_id: extraMeetingLead.client_id,
+          business_name: extraMeetingLead.business_name,
+          owner_name: extraMeetingLead.owner_name,
+          phone: extraMeetingLead.owner_direct_phone || extraMeetingLead.phone || extraMeetingLead.front_desk_phone,
+          email: (extraMeetingLead as any).email ?? null,
+        } : null}
+        onClose={() => setExtraMeetingLead(null)}
+        onScheduled={() => fetchLeads()}
+      />
       <RescheduleModal
         lead={rescheduleLead}
         meeting={rescheduleLead ? latestMeetingByLead[rescheduleLead.id] : undefined}

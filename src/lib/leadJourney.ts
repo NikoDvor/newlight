@@ -4,7 +4,7 @@
  * Pure — callers load the rows.
  */
 
-export const JOURNEY_KINDS = ["discovery", "closing", "onboarding"] as const;
+export const JOURNEY_KINDS = ["discovery", "closing", "onboarding", "check_in"] as const;
 export type JourneyKind = (typeof JOURNEY_KINDS)[number];
 
 export interface JourneyEvent {
@@ -96,7 +96,7 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
 
     let attended = 0, noShows = 0, reschedules = 0, cancellations = 0;
     const stages: LeadJourney["stages"] = {
-      discovery: { held: 0, booked: 0 }, closing: { held: 0, booked: 0 }, onboarding: { held: 0, booked: 0 },
+      discovery: { held: 0, booked: 0 }, closing: { held: 0, booked: 0 }, onboarding: { held: 0, booked: 0 }, check_in: { held: 0, booked: 0 },
     };
     const timeline: JourneyTimelineRow[] = evs.map((e) => {
       const o = outByEvent.get(e.id) || null;
@@ -150,7 +150,7 @@ export function buildLeadJourney(events: JourneyEvent[], outcomes: JourneyOutcom
   return result;
 }
 
-const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", pay_sign: "Pay & Sign", activated: "Activated" };
+const SHORT: Record<string, string> = { discovery: "Discovery", closing: "Closing", onboarding: "Onboarding", check_in: "Check-in", pay_sign: "Pay & Sign", activated: "Activated" };
 export const journeyKindLabel = (k: string, attempt?: number | null) => (k === "pay_sign" ? "Pay & Sign" : `${SHORT[k] || k} #${attempt ?? 1}`);
 export const furthestStageLabel = (s: LeadJourney["furthestStage"]) => (s ? SHORT[s] : "—");
 

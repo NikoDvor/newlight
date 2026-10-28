@@ -1,14 +1,15 @@
 /** Shared constants for BDR meeting outcomes (Discovery / Closing / Onboarding / Pay & Sign). */
 
-export type MeetingKind = "discovery" | "closing" | "onboarding" | "pay_sign";
+export type MeetingKind = "discovery" | "closing" | "onboarding" | "pay_sign" | "check_in";
 export type MeetingResult = "won" | "rescheduled" | "lost";
-export type NextStep = "form_2" | "form_3" | "activated";
+export type NextStep = "form_2" | "form_3" | "activated" | "completed";
 
 export const MEETING_KINDS: Record<MeetingKind, string> = {
   discovery: "Discovery (Form 1)",
   closing: "Closing (Form 2)",
   onboarding: "Onboarding (Form 3)",
   pay_sign: "Pay & Sign",
+  check_in: "Check-in",
 };
 
 export const RESCHEDULE_REASONS = {

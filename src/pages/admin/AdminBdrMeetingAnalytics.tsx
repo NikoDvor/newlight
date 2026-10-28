@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
 import MeetingOutcomeAnalytics from "@/components/admin/MeetingOutcomeAnalytics";
+import MeetingEffortCard from "@/components/admin/MeetingEffortCard";
 
 /* ─── constants ─── */
 const NEON = "hsl(211 96% 60%)";
@@ -555,6 +556,8 @@ export default function AdminBdrMeetingAnalytics() {
         reps={reps.map(r => ({ id: r.id, name: r.name }))}
         onRepSelect={setRepFilter}
       />
+
+      <MeetingEffortCard range={range} repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} title="Meeting effort by salesman" />
 
 
 

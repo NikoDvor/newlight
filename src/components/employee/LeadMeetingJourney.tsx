@@ -96,7 +96,7 @@ export default function LeadMeetingJourney({ leadId, compact, journey: provided,
     ["Meetings", String(j.meetings)], ["Attended", String(j.attended)], ["No-shows", String(j.noShows)],
     ["Reschedules", String(j.reschedules)], ["Cancellations", String(j.cancellations)],
     ["Attendance", pctText(j.attendanceRate)], ["Reschedule", pctText(j.rescheduleRate)],
-    ...JOURNEY_KINDS.map((k) => [k[0].toUpperCase() + k.slice(1), `${j.stages[k].held}/${j.stages[k].booked}`] as [string, string]),
+    ...JOURNEY_KINDS.map((k) => [k === "check_in" ? "Check-ins" : k[0].toUpperCase() + k.slice(1), `${j.stages[k].held}/${j.stages[k].booked}`] as [string, string]),
   ];
 
   return (
