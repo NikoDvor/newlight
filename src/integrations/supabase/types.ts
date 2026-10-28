@@ -1194,7 +1194,9 @@ export type Database = {
           created_at: string
           description: string | null
           ends_at: string
+          extra_type: string | null
           id: string
+          is_extra: boolean
           lead_id: string | null
           meeting_kind: string | null
           meeting_sequence: number | null
@@ -1230,7 +1232,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           ends_at: string
+          extra_type?: string | null
           id?: string
+          is_extra?: boolean
           lead_id?: string | null
           meeting_kind?: string | null
           meeting_sequence?: number | null
@@ -1266,7 +1270,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           ends_at?: string
+          extra_type?: string | null
           id?: string
+          is_extra?: boolean
           lead_id?: string | null
           meeting_kind?: string | null
           meeting_sequence?: number | null
@@ -8424,6 +8430,7 @@ export type Database = {
           self_booking_widget_non_owner: boolean | null
           sequence_order: number | null
           side_of_street: string | null
+          skipped_discovery: boolean
           source_type: string | null
           status: string
           street_address: string | null
@@ -8495,6 +8502,7 @@ export type Database = {
           self_booking_widget_non_owner?: boolean | null
           sequence_order?: number | null
           side_of_street?: string | null
+          skipped_discovery?: boolean
           source_type?: string | null
           status?: string
           street_address?: string | null
@@ -8566,6 +8574,7 @@ export type Database = {
           self_booking_widget_non_owner?: boolean | null
           sequence_order?: number | null
           side_of_street?: string | null
+          skipped_discovery?: boolean
           source_type?: string | null
           status?: string
           street_address?: string | null
@@ -15871,6 +15880,21 @@ export type Database = {
       nl_mark_dnc: {
         Args: { _contact_id?: string; _phone: string; _reason?: string }
         Returns: undefined
+      }
+      nl_meeting_effort: {
+        Args: { _rep?: string; _since?: string }
+        Returns: {
+          avg_days_to_won: number
+          extra_by_type: Json
+          extra_meetings: number
+          lost_leads: number
+          meetings_held: number
+          meetings_per_lost: number
+          meetings_per_won: number
+          rep_name: string
+          rep_user_id: string
+          won_clients: number
+        }[]
       }
       nl_phone10: { Args: { t: string }; Returns: string }
       nl_pool_assign: {
