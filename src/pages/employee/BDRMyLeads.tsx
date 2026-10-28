@@ -25,6 +25,7 @@ import { buildLeadJourney, type LeadJourney } from "@/lib/leadJourney";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 import ScheduleExtraMeetingDialog from "@/components/employee/ScheduleExtraMeetingDialog";
 import LogExternalMeetingDialog from "@/components/employee/LogExternalMeetingDialog";
+import DiscoveryNumbersDialog from "@/components/pipeline/DiscoveryNumbersDialog";
 import { computeAvailableSlots, weeklyMapToRows } from "@/lib/availabilitySlots";
 
 
@@ -224,6 +225,7 @@ export default function BDRMyLeads() {
   const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
   const [extraMeetingLead, setExtraMeetingLead] = useState<BdrLead | null>(null);
   const [externalLead, setExternalLead] = useState<BdrLead | null>(null);
+  const [numbersLead, setNumbersLead] = useState<BdrLead | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profileLeadId, setProfileLeadId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"leads" | "objections">("leads");
@@ -1405,6 +1407,17 @@ export default function BDRMyLeads() {
                             size="sm"
                             variant="outline"
                             className="text-xs h-7"
+                            onClick={(e) => { e.stopPropagation(); setNumbersLead(lead); }}
+                            title="Discovery numbers — their goal, where they are, and the missed revenue opportunity"
+                          >
+                            Numbers
+                          </Button>
+                        )}
+                        {!selectMode && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7"
                             onClick={(e) => { e.stopPropagation(); setExtraMeetingLead(lead); }}
                             title="Schedule another meeting with this lead (not a reschedule)"
                           >
@@ -1478,6 +1491,10 @@ export default function BDRMyLeads() {
         } : null}
         onClose={() => setExtraMeetingLead(null)}
         onScheduled={() => fetchLeads()}
+      />
+      <DiscoveryNumbersDialog
+        lead={numbersLead ? { id: numbersLead.id, business_name: numbersLead.business_name } : null}
+        onClose={() => setNumbersLead(null)}
       />
       <LogExternalMeetingDialog
         open={!!externalLead}

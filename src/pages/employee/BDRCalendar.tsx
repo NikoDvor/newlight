@@ -11,6 +11,7 @@ import { ensureBdrCalendar, BdrCalendar } from "@/lib/bdrCalendar";
 import CustomerProfilePanel from "@/components/CustomerProfilePanel";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, type OutcomeLead } from "@/components/employee/MeetingOutcomeSheet";
 import MeetingSetupPanel from "@/components/employee/MeetingSetupPanel";
+import DiscoveryNumbersDialog from "@/components/pipeline/DiscoveryNumbersDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   MonthGrid,
@@ -762,6 +763,7 @@ function ShareDialog({ open, onOpenChange, origin, primary, extras, onExtrasChan
 function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null; onClose: () => void; onDeleted: () => void; }) {
   const [deleting, setDeleting] = useState(false);
   const [cancelLead, setCancelLead] = useState<OutcomeLead | null>(null);
+  const [numbersOpen, setNumbersOpen] = useState(false);
   if (!event) return null;
   const tracked = !!event.lead_id && OUTCOME_KINDS.includes((event.meeting_kind || "") as any);
   const start = new Date(event.starts_at);
@@ -808,6 +810,12 @@ function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null;
           </div>
           {event.description && <p className="text-white/70 whitespace-pre-wrap">{event.description}</p>}
           {event.notes && event.notes !== event.description && <p className="text-white/60 text-xs whitespace-pre-wrap">{event.notes}</p>}
+          {tracked && (event.meeting_kind === "discovery" || event.meeting_kind === "closing") && (
+            <Button type="button" size="sm" variant="outline" className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+              onClick={() => setNumbersOpen(true)}>
+              Discovery numbers
+            </Button>
+          )}
           {tracked && !["rescheduled", "cancelled"].includes(event.attendance || "") && (
             <MeetingSetupPanel
               eventId={event.id}
@@ -817,6 +825,11 @@ function EventDetailDialog({ event, onClose, onDeleted }: { event: Event | null;
             />
           )}
         </div>
+        <DiscoveryNumbersDialog
+          lead={numbersOpen && event.lead_id ? { id: event.lead_id } : null}
+          eventId={event.id}
+          onClose={() => setNumbersOpen(false)}
+        />
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} className="text-white/70"><X className="h-4 w-4 mr-1" />Close</Button>
           <Button variant="destructive" onClick={remove} disabled={deleting}>

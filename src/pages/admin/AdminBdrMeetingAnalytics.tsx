@@ -13,6 +13,7 @@ import {
 import { RANGE_OPTIONS, rangeStart, type RangeKey } from "@/components/insights/PipelineInsightsView";
 import MeetingOutcomeAnalytics from "@/components/admin/MeetingOutcomeAnalytics";
 import MeetingEffortCard from "@/components/admin/MeetingEffortCard";
+import DiscoveryNumbersCard from "@/components/admin/DiscoveryNumbersCard";
 
 /* ─── constants ─── */
 const NEON = "hsl(211 96% 60%)";
@@ -558,6 +559,7 @@ export default function AdminBdrMeetingAnalytics() {
       />
 
       <MeetingEffortCard range={range} repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} title="Meeting effort by salesman" />
+      <DiscoveryNumbersCard repUserId={repFilter && repFilter !== "all" ? repFilter : undefined} />
 
 
 

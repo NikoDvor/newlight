@@ -11,6 +11,7 @@ import { Calendar, Clock, Mail, Phone, Building2, User, CheckCircle2, XCircle, R
 import { getLeadPhones } from "@/lib/leadFlags";
 import LeadMeetingJourney from "@/components/employee/LeadMeetingJourney";
 import MeetingSetupPanel from "@/components/employee/MeetingSetupPanel";
+import DiscoveryNumbersDialog from "@/components/pipeline/DiscoveryNumbersDialog";
 import { fetchLeadAttendeeSuggestions, type AttendeeDraft } from "@/lib/meetingAttendees";
 import MeetingOutcomeSheet, { OUTCOME_KINDS, OUTCOME_SELECT, formatOutcomeSummary, kindAttemptLabel, needsOutcome, type OutcomeRow } from "@/components/employee/MeetingOutcomeSheet";
 
@@ -108,6 +109,7 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
   const [outcomes, setOutcomes] = useState<Record<string, OutcomeRow>>({});
   const [outcomeEvent, setOutcomeEvent] = useState<EventRow | null>(null);
   const [otherPeople, setOtherPeople] = useState<AttendeeDraft[]>([]);
+  const [numbersOpen, setNumbersOpen] = useState(false);
 
   const copyLeadId = async () => {
     if (!lead) return;
@@ -253,6 +255,11 @@ export default function CustomerProfilePanel({ open, onOpenChange, leadId, onUpd
                 </div>
               )}
             </section>
+
+            <Button size="sm" variant="outline" className="w-full bg-white/5 border-white/15 hover:bg-white/10 text-white" onClick={() => setNumbersOpen(true)}>
+              Discovery numbers
+            </Button>
+            <DiscoveryNumbersDialog lead={numbersOpen ? { id: lead.id, business_name: lead.business_name } : null} onClose={() => setNumbersOpen(false)} />
 
             {/* Pipeline stage */}
             <section className="space-y-1.5" title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"}>

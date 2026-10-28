@@ -36,7 +36,8 @@ export interface PipelineRevenueOpportunityProps {
 }
 
 
-const PANEL: React.CSSProperties = {
+// Shared look — also used by DiscoveryNumbersPanel (Prospect mode).
+export const PANEL: React.CSSProperties = {
   background:
     "linear-gradient(155deg, hsla(215,40%,11%,.92) 0%, hsla(222,42%,7%,.94) 58%, hsla(211,60%,10%,.9) 100%)",
   border: "1px solid hsla(211,96%,60%,.16)",
@@ -44,7 +45,7 @@ const PANEL: React.CSSProperties = {
     "0 24px 60px -32px hsla(211,96%,50%,.55), inset 0 1px 0 hsla(211,96%,80%,.07), inset 0 -30px 60px -50px hsla(211,96%,70%,.35)",
 };
 
-const SUBPANEL: React.CSSProperties = {
+export const SUBPANEL: React.CSSProperties = {
   background: "hsla(215,38%,10%,.62)",
   border: "1px solid hsla(211,96%,60%,.10)",
   boxShadow: "inset 0 1px 0 hsla(211,96%,85%,.05), inset 0 -18px 30px -30px hsla(211,96%,70%,.4)",
@@ -839,7 +840,7 @@ export function PipelineRevenueOpportunity({
   );
 }
 
-function StatTile({
+export function StatTile({
   icon: Icon,
   label,
   value,
