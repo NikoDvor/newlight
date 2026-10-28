@@ -15,6 +15,7 @@ import { DAILY_DIAL_GOAL, startOfCurrentMonth, startOfCurrentWeek, startOfToday 
 import { DashboardAtmosphere } from "@/components/employee/DashboardAtmosphere";
 import { Link } from "react-router-dom";
 import { MeetingsNeedingOutcomeCard } from "@/components/employee/MeetingOutcomeSheet";
+import PipelineBoard from "@/components/pipeline/PipelineBoard";
 
 /* ── Glass panel class shared across cards ── */
 const GLASS =
@@ -287,6 +288,13 @@ export function GenericPipelineDashboard() {
         <Link to="/employee/my-stats" className="text-xs text-primary hover:underline">My close rates →</Link>
       </div>
 
+
+      {/* MY PIPELINE — every lead by stage (the home page's main thing) */}
+      <Reveal>
+        <SectionCard title="My Pipeline" icon={Target} right={<Link to="/employee/leads" className="text-xs text-primary hover:underline">All my leads →</Link>}>
+          <PipelineBoard scope="mine" />
+        </SectionCard>
+      </Reveal>
 
       {/* 0. YOUR FORMS — NewLight 5-form structure quick-links */}
       <Reveal><YourForms /></Reveal>

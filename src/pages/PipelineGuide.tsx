@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const stages = [
   {
     id: "scraping", short: "Lead Scraping", title: "Lead Scraping",
-    happens: "Admin sources financial firms through lead sourcing / street discovery. Leads land in nl_bdr_leads, assigned to a salesman, at stage Cold.",
+    happens: "Admin loads financial firms into the lead pool (AdvizorPro); salesmen pull them. Leads land in nl_bdr_leads, assigned to a salesman, at stage Cold.",
     rep: "See assigned firms in My Leads and the Dialer.",
     system: "Makes the assigned leads available in My Leads and the Dialer.",
     stored: ["nl_bdr_leads"],
@@ -154,7 +154,7 @@ export default function PipelineGuide() {
         <h2 id="numbers-heading" className="text-xl font-semibold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" />Where to see the numbers</h2>
         <div className="grid sm:grid-cols-2 gap-6 text-sm leading-relaxed">
           <div className="space-y-2"><h3 className="font-semibold">Rep</h3><ul className="space-y-2 text-muted-foreground"><li>My Leads — each card: meetings · reschedules · attendance % · Lost at meeting N / Won.</li><li>Customer profile → Meeting journey — full timeline.</li><li>My Stats — own close rates, where and why leads are lost, and lead journeys.</li></ul>{!isAdmin && <Button asChild variant="link" className="px-0"><Link to="/employee/my-stats">My Stats <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>}</div>
-          <div className="space-y-2"><h3 className="font-semibold">Admin</h3><p className="text-muted-foreground">Admin → Sales → BDR Meeting Analytics — team and per-salesman close rates, attendance, reschedule recovery, lost-on-which-meeting, why-lost by stage, lead journeys table, and drill-down.</p>{isAdmin && <Button asChild variant="link" className="px-0"><Link to="/admin/bdr-meeting-analytics">BDR Meeting Analytics <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>}</div>
+          <div className="space-y-2"><h3 className="font-semibold">Admin</h3><p className="text-muted-foreground">Admin → Pipeline → Sales Team Results — team and per-salesman close rates, attendance, reschedule recovery, lost-on-which-meeting, why-lost by stage, lead journeys table, and drill-down.</p>{isAdmin && <Button asChild variant="link" className="px-0"><Link to="/admin/pipeline/results">Sales Team Results <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>}</div>
         </div>
       </section>
 

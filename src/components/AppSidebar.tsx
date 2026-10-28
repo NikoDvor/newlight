@@ -105,7 +105,6 @@ const navStructure: NavModule[] = [
     items: [
       { title: "Lead Sourcing", url: "/bdr-lead-sourcing", icon: Search, moduleKey: "crm", salesTeamOnly: true },
       { title: "Dialer", url: "/bdr-dialer", icon: Phone, moduleKey: "crm", salesTeamOnly: true },
-      { title: "Street Walk", url: "/bdr-street-walk", icon: MapPin, moduleKey: "crm", salesTeamOnly: true },
       { title: "Referral Program", url: "/referral-program", icon: Users, moduleKey: "intelligence" },
       { title: "Lifecycle & Nurture", url: "/lifecycle-nurture", icon: Workflow, moduleKey: "intelligence" },
     ],

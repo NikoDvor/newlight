@@ -7,7 +7,7 @@ import {
 } from "@/lib/bookingSystem";
 
 /**
- * Canonical lead-field renderers shared by BDR Dialer, Street Walk and My Leads
+ * Canonical lead-field renderers shared by BDR Dialer and My Leads
  * so the tag conventions/colors stay identical across every surface.
  */
 
@@ -184,19 +184,9 @@ export function LeadMetaTags({ lead }: { lead: LeadDisplayShape }) {
         <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
           style={{ background: "hsla(211,96%,56%,.10)", color: "hsl(211,96%,70%)" }}>{lead.city}</span>
       )}
-      {lead.side_of_street && (
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-          style={{ background: "hsla(0,0%,50%,.15)", color: "hsl(0,0%,70%)" }}>{lead.side_of_street} side</span>
-      )}
       {lead.niche && (
         <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
           style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}>{lead.niche}</span>
-      )}
-      {lead.source_type === "street_sweep" && (
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-          style={{ background: "hsla(190,90%,55%,.12)", color: "hsl(190,90%,70%)", border: "1px solid hsla(190,90%,55%,.3)" }}>
-          Research in field
-        </span>
       )}
       {confidence && (
         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={confTone}

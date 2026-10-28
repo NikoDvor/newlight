@@ -73,6 +73,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 // Admin pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminCombinedDashboard = lazy(() => import("./pages/admin/AdminCombinedDashboard"));
+const AdminPipeline = lazy(() => import("./pages/admin/AdminPipeline"));
 const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
 const AdminClientProfile = lazy(() => import("./pages/admin/AdminClientProfile"));
 
@@ -200,8 +201,6 @@ const BDRCertificationExam = lazy(() => import("./pages/employee/BDRCertificatio
 const BDRMyLeads = lazy(() => import("./pages/employee/BDRMyLeads"));
 const BDRMyStats = lazy(() => import("./pages/employee/BDRMyStats"));
 const BDRDialer = lazy(() => import("./pages/employee/BDRDialer"));
-const BDRStreetWalk = lazy(() => import("./pages/employee/BDRStreetWalk"));
-const StreetSweepDiscover = lazy(() => import("./pages/employee/StreetSweepDiscover"));
 
 
 
@@ -286,8 +285,10 @@ const App = () => {
 
               {/* Admin Portal */}
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminCombinedDashboard />} />
-                <Route path="dashboard" element={<AdminCombinedDashboard />} />
+                <Route index element={<AdminPipeline />} />
+                <Route path="pipeline/:tab" element={<AdminPipeline />} />
+                <Route path="dashboard" element={<Navigate to="/admin" replace />} />
+                <Route path="clients-overview" element={<AdminCombinedDashboard />} />
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="clients/acquisition-analytics" element={<AdminClientAcquisitionAnalytics />} />
                 <Route path="clients/:clientId" element={<AdminClientProfile />} />
@@ -336,7 +337,7 @@ const App = () => {
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="client-revenue" element={<AdminClientRevenue />} />
                 <Route path="automations" element={<AdminAutomations />} />
-                <Route path="executive" element={<Navigate to="/admin" replace />} />
+                <Route path="executive" element={<Navigate to="/admin/clients-overview" replace />} />
                 <Route path="launch-checklist" element={<AdminLaunchChecklist />} />
                 <Route path="client-success" element={<AdminClientSuccess />} />
                 <Route path="conversations" element={<ConversationsPage scopeType="admin_global" title="Admin Conversations" />} />
@@ -354,7 +355,7 @@ const App = () => {
                 <Route path="onboarding-command-center" element={<AdminOnboardingCommandCenter />} />
                 <Route path="sales-control-center" element={<AdminSalesControlCenter />} />
                 <Route path="bdr-performance" element={<AdminBDRPerformance />} />
-                <Route path="bdr-meeting-analytics" element={<AdminBdrMeetingAnalytics />} />
+                <Route path="bdr-meeting-analytics" element={<Navigate to="/admin/pipeline/results" replace />} />
                 <Route path="territories" element={<AdminTerritories />} />
                 <Route path="lead-import" element={<AdminLeadImport />} />
                 <Route path="bdr-calendars" element={<AdminBDRCalendars />} />
@@ -400,13 +401,11 @@ const App = () => {
                 <Route path="lead-sourcing" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="team-pipeline" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="dialer" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRDialer /></ClientFlagGate>} />
-                <Route path="street-walk" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRStreetWalk /></ClientFlagGate>} />
-                <Route path="street-sweep" element={<ClientFlagGate flag="has_sales_team" source="employee"><StreetSweepDiscover /></ClientFlagGate>} />
 
 
 
 
-                <Route path="pipeline" element={<EmployeePlaceholder title="My Leads/Pipeline" />} />
+                <Route path="pipeline" element={<Navigate to="/employee" replace />} />
                 <Route path="calendar" element={<ClientFlagGate flag="has_sales_team" source="employee"><BDRCalendar /></ClientFlagGate>} />
                 <Route path="close-prep/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><ClosePrep /></ClientFlagGate>} />
                 <Route path="pay-sign/:leadId" element={<ClientFlagGate flag="has_sales_team" source="employee"><EmployeePaySign /></ClientFlagGate>} />
@@ -510,7 +509,6 @@ const App = () => {
                 <Route path="/bdr-team-pipeline" element={<ClientFlagGate flag="has_sales_team"><BDRTeamPipeline /></ClientFlagGate>} />
                 <Route path="/bdr-lead-sourcing" element={<ClientFlagGate flag="has_sales_team"><BDRLeadSourcing /></ClientFlagGate>} />
                 <Route path="/bdr-dialer" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><BDRDialer /></ClientFlagGate></PermissionGuard>} />
-                <Route path="/bdr-street-walk" element={<PermissionGuard moduleKey="crm"><ClientFlagGate flag="has_sales_team"><BDRStreetWalk /></ClientFlagGate></PermissionGuard>} />
                 <Route path="/calendar-integrations" element={<PermissionGuard moduleKey="calendar"><CalendarIntegrations /></PermissionGuard>} />
                 <Route path="/setup-center" element={<SetupCenter />} />
                 <Route path="/service-manager" element={<PermissionGuard moduleKey="services"><ServiceManager /></PermissionGuard>} />

@@ -32,28 +32,36 @@ interface NavGroup {
 
 const adminGroups: NavGroup[] = [
   {
-    label: "Top",
+    label: "Pipeline",
     ungrouped: true,
     items: [
-      { title: "Dashboard", description: "See agency performance and priorities at a glance.", url: "/admin", icon: LayoutDashboard },
-      { title: "Fix Now", description: "Resolve urgent issues across client accounts.", url: "/admin/fix-now", icon: AlertTriangle },
+      { title: "Pipeline", description: "Revenue opportunity, stage counts and won revenue.", url: "/admin", icon: LayoutDashboard },
+      { title: "Board", description: "Every lead by stage — Cold, Warm, Hot, Won.", url: "/admin/pipeline/board", icon: GitBranch },
+      { title: "Meetings", description: "Meetings needing an outcome, and what's coming up.", url: "/admin/pipeline/meetings", icon: Calendar },
+      { title: "Sales Team Results", description: "Close rates, losses, meeting effort and discovery numbers — team and per salesman.", url: "/admin/pipeline/results", icon: BarChart3 },
     ],
   },
   {
-    label: "Sales",
+    label: "Lead Supply",
     items: [
-      { title: "Sales Team Results", description: "Close rates, attendance, reschedules, and why leads are lost — team and per salesman.", url: "/admin/bdr-meeting-analytics", icon: BarChart3 },
-      { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
       { title: "Territories", description: "Assign rep territories and push leads from the pool.", url: "/admin/territories", icon: Globe },
       { title: "Lead Import", description: "Upload firm and people exports into the lead pool.", url: "/admin/lead-import", icon: Upload },
+      { title: "Dialer Activity", description: "Call volume, connects, and call outcomes across the team.", url: "/admin/bdr-performance", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Sales Tools",
+    items: [
       { title: "Sales Control Center", description: "Build pricing, packages, and proposals for a client.", url: "/admin/sales-control-center", icon: LayoutDashboard },
       { title: "Proposal Templates", description: "Manage reusable pricing and terms for proposals.", url: "/admin/proposal-templates", icon: FileSignature },
     ],
   },
   {
-    label: "Clients & Success",
+    label: "Won Clients",
     items: [
+      { title: "Clients Overview", description: "Client workspaces, sub-accounts, client revenue and system health.", url: "/admin/clients-overview", icon: Building2 },
       { title: "Client Accounts", description: "Manage every client workspace and account status.", url: "/admin/clients", icon: Users },
+      { title: "Fix Now", description: "Resolve urgent issues across client accounts.", url: "/admin/fix-now", icon: AlertTriangle },
       { title: "Acquisition Analytics", description: "Compare how client acquisition channels are performing.", url: "/admin/clients/acquisition-analytics", icon: TrendingUp },
       { title: "Onboarding Ops", description: "Oversee setup progress and blockers across clients.", url: "/admin/onboarding-command-center", icon: Rocket },
       { title: "Provision Queue", description: "Track workspace creation and setup work.", url: "/admin/provision", icon: ListChecks },

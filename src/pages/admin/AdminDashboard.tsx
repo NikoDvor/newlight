@@ -7,29 +7,26 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { RevenueByPeriod } from "@/components/pipeline/RevenueByPeriod";
-import { PipelineRevenueOpportunity } from "@/components/pipeline/PipelineRevenueOpportunity";
-import { NEWLIGHT_INTERNAL_CLIENT_ID } from "@/hooks/useEmployeeClientId";
 
 
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
+/**
+ * Clients Overview (was the admin home). The sales pipeline moved to the
+ * Pipeline page (/admin); this page is everything about client workspaces.
+ * Old-flow counters (prospects, demo builds, provisioning) were removed.
+ */
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { setViewMode, setActiveClientId } = useWorkspace();
   const [clientCount, setClientCount] = useState(0);
   const [potentialClientCount, setPotentialClientCount] = useState(0);
   const [fixCount, setFixCount] = useState(0);
-  const [prospectCount, setProspectCount] = useState(0);
-  const [demoInProgress, setDemoInProgress] = useState(0);
-  const [awaitingClosing, setAwaitingClosing] = useState(0);
-  const [provisioningCount, setProvisioningCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [autoActive, setAutoActive] = useState(0);
   const [autoFailed, setAutoFailed] = useState(0);
   const [autoTotal, setAutoTotal] = useState(0);
-  const [pipelineStages, setPipelineStages] = useState<Record<string, number>>({});
   const [templateCount, setTemplateCount] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [recentClients, setRecentClients] = useState<{ id: string; business_name: string; status: string }[]>([]);
@@ -49,10 +46,6 @@ export default function AdminDashboard() {
       supabase.from("clients").select("id, business_name, status").neq("status", "archived").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentClients(data ?? [])),
       supabase.from("clients").select("id, business_name, status, payment_status, created_at").order("created_at", { ascending: false }).then(({ data }) => setAllClients(data ?? [])),
       supabase.from("fix_now_items").select("id", { count: "exact", head: true }).eq("status", "open").then(({ count }) => setFixCount(count ?? 0)),
-      supabase.from("prospects").select("id", { count: "exact", head: true }).then(({ count }) => setProspectCount(count ?? 0)),
-      supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "build_in_progress").then(({ count }) => setDemoInProgress(count ?? 0)),
-      supabase.from("demo_builds").select("id", { count: "exact", head: true }).eq("status", "awaiting_closing").then(({ count }) => setAwaitingClosing(count ?? 0)),
-      supabase.from("provision_queue").select("id", { count: "exact", head: true }).eq("provision_status", "provisioning").then(({ count }) => setProvisioningCount(count ?? 0)),
       supabase.from("audit_logs").select("action, module, created_at, metadata").order("created_at", { ascending: false }).limit(8).then(({ data }) => setRecentActivity(data ?? [])),
       supabase.from("automations").select("id, enabled").then(({ data }) => {
         const d = data ?? [];
@@ -62,23 +55,14 @@ export default function AdminDashboard() {
       supabase.from("automation_runs").select("id, status").order("started_at", { ascending: false }).limit(200).then(({ data }) => {
         setAutoFailed((data ?? []).filter((r: any) => r.status === "failed").length);
       }),
-      supabase.from("crm_deals").select("pipeline_stage").neq("client_id", "d0c0edc1-ff61-4597-8500-96e02fdd87d8").then(({ data }) => {
-        const stages: Record<string, number> = {};
-        (data ?? []).forEach((d: any) => { stages[d.pipeline_stage] = (stages[d.pipeline_stage] || 0) + 1; });
-        setPipelineStages(stages);
-      }),
       supabase.from("workspace_templates" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setTemplateCount(count ?? 0)),
       supabase.from("template_deployments" as any).select("id", { count: "exact", head: true }).then(({ count }: any) => setDeploymentCount(count ?? 0)),
     ]);
   }, []);
 
   const stats = [
-    { label: "Total Clients", value: clientCount.toString(), icon: Users, color: "hsl(var(--nl-sky))" },
-    { label: "Potential Clients", value: potentialClientCount.toString(), icon: Building2, color: "hsl(var(--nl-cyan))" },
-    { label: "Prospects", value: prospectCount.toString(), icon: Zap, color: "hsl(var(--nl-neon))" },
-    { label: "Demo Builds", value: demoInProgress.toString(), icon: Hammer, color: "hsl(var(--nl-cyan))" },
-    { label: "Awaiting Closing", value: awaitingClosing.toString(), icon: Clock, color: "hsl(var(--nl-electric))" },
-    { label: "Provisioning", value: provisioningCount.toString(), icon: Server, color: "hsl(var(--nl-sky))" },
+    { label: "Paying Clients", value: clientCount.toString(), icon: Users, color: "hsl(var(--nl-sky))" },
+    { label: "Unpaid Sub-Accounts", value: potentialClientCount.toString(), icon: Building2, color: "hsl(var(--nl-cyan))" },
     { label: "Fix Now Items", value: fixCount.toString(), icon: AlertTriangle, color: "hsl(var(--nl-electric))" },
   ];
 
@@ -91,28 +75,15 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <NewLightHero
-        title="Admin Dashboard"
-        subtitle="Platform overview and system monitoring"
+        title="Clients Overview"
+        subtitle="Client workspaces, sub-accounts and system health"
       >
-        <Button onClick={() => navigate("/admin/demo-builds")} variant="outline" className="border-white/10 text-white hover:bg-white/10 flex-1 sm:flex-none text-xs sm:text-sm">
-          <Hammer className="h-4 w-4 mr-1" /> Demo Build
-        </Button>
         <Button onClick={() => navigate("/admin/clients")} className="bg-[hsl(var(--nl-electric))] hover:bg-[hsl(var(--nl-deep))] text-white flex-1 sm:flex-none text-xs sm:text-sm">
           <Plus className="h-4 w-4 mr-1" /> New Client
         </Button>
       </NewLightHero>
 
-      {/* Won revenue by period — same closed-won source as the widget above */}
-      <RevenueByPeriod clientId={NEWLIGHT_INTERNAL_CLIENT_ID} />
-
-      {/* Company-wide BDR sales pipeline (all reps, all nl_bdr_leads) */}
-      <PipelineRevenueOpportunity
-        clientId={NEWLIGHT_INTERNAL_CLIENT_ID}
-        variant="admin"
-        source="bdr"
-      />
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {stats.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.35 }}
             className="card-admin group cursor-default p-3 sm:p-4"
@@ -257,32 +228,8 @@ export default function AdminDashboard() {
         </CardContent>
       </div>
 
-      {/* Pipeline Health + Templates */}
+      {/* Templates */}
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="card-admin overflow-hidden">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-white/80">Pipeline Health</CardTitle>
-            <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs" onClick={() => navigate("/admin/sales-pipeline")}>
-              View Pipeline <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {Object.keys(pipelineStages).length === 0 ? (
-              <p className="text-xs text-white/30 py-4 text-center">No deals in pipeline</p>
-            ) : (
-              Object.entries(pipelineStages).map(([stage, count]) => (
-                <div key={stage} className="flex items-center justify-between py-1.5">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="h-3 w-3 text-[hsl(var(--nl-neon))]" />
-                    <span className="text-xs text-white/70 capitalize">{stage.replace(/_/g, " ")}</span>
-                  </div>
-                  <Badge className="bg-white/10 text-white border-0 text-[10px]">{count}</Badge>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </div>
-
         <div className="card-admin overflow-hidden">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white/80">Templates & Deployment</CardTitle>
@@ -338,13 +285,10 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-1">
             {[
-              { label: "New Demo Build", path: "/admin/demo-builds" },
               { label: "Client Activation", path: "/admin/master-activation" },
-              { label: "View Prospects", path: "/admin/prospects" },
               { label: "Provision Queue", path: "/admin/provision" },
               { label: "Deploy Template", path: "/admin/templates" },
               { label: "Review Fix Now Items", path: "/admin/fix-now" },
-              { label: "Executive Dashboard", path: "/admin/executive" },
             ].map((action, i) => (
               <motion.button key={action.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
                 onClick={() => navigate(action.path)}

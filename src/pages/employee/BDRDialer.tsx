@@ -69,7 +69,7 @@ interface DialLogRow {
 
 
 
-// Outcome list lives in @/lib/bdrOutcomes so the Street Walk page logs the same set.
+// Outcome list lives in @/lib/bdrOutcomes.
 
 
 const STAT_KEYS = OUTCOMES.map(o => o.label);

@@ -277,67 +277,6 @@ export default function AdminBDRPerformance() {
     return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 50);
   }, [filteredLeads, profiles]);
 
-  /* ─── Street Sweep (derived from nl_bdr_leads, source_type = 'street_sweep') ─── */
-  const sweepLeads = useMemo(
-    () => leads.filter(l => l.source_type === "street_sweep" && filterByDate(l.created_at, dateRange)),
-    [leads, dateRange]);
-
-  const sweepListRows = useMemo(() => {
-    const groups = new Map<string, any[]>();
-    sweepLeads.forEach(l => {
-      const key = `${l.user_id || "unknown"}|${l.list_name || "(no list)"}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(l);
-    });
-    return [...groups.entries()].map(([key, rows]) => {
-      const uid = rows[0]?.user_id as string | undefined;
-      const lastActivity = rows
-        .map(r => r.updated_at || r.created_at)
-        .filter(Boolean)
-        .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())[0] || null;
-      return {
-        key,
-        listName: rows[0]?.list_name || "(no list)",
-        repName: uid ? (profiles[uid] || uid.slice(0, 8)) : "Unassigned",
-        total: rows.length,
-        visited: rows.filter(r => r.visit_status === "visited").length,
-        skipped: rows.filter(r => r.visit_status === "skipped").length,
-        pending: rows.filter(r => !r.visit_status || r.visit_status === "pending").length,
-        lastActivity,
-      };
-    }).sort((a, b) => new Date(b.lastActivity || 0).getTime() - new Date(a.lastActivity || 0).getTime());
-  }, [sweepLeads, profiles]);
-
-  const sweepTeamStats = useMemo(() => ({
-    sweeps: sweepListRows.length,
-    total: sweepLeads.length,
-    visited: sweepLeads.filter(l => l.visit_status === "visited").length,
-    pending: sweepLeads.filter(l => !l.visit_status || l.visit_status === "pending").length,
-  }), [sweepListRows, sweepLeads]);
-
-  const exportSweepCSV = () => {
-    const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
-    const rows = [["Rep", "List", "Business", "Address", "Visit Status", "Owner Name", "Owner Phone", "Booking System", "Booking Platform", "Detection Methods", "Created"].join(",")];
-    sweepLeads.forEach(l => {
-      rows.push([
-        esc(profiles[l.user_id] || l.user_id),
-        esc(l.list_name), esc(l.business_name), esc(l.street_address || l.address),
-        esc(l.visit_status || "pending"), esc(l.owner_name),
-        esc(l.owner_direct_phone || l.phone),
-        esc(bookingSystemState(l) === "unknown" ? "Unknown" : bookingSystemState(l) === "yes" ? "Yes" : "No"),
-        esc(bookingSystemPlatform(l) || ""),
-        esc((l.booking_system_methods || []).join(" | ")),
-        esc(new Date(l.created_at).toLocaleString()),
-      ].join(","));
-    });
-    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `street-sweep-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-
   // CSV export
   const exportCSV = () => {
     const esc = (s: any) => `"${String(s ?? "").replace(/"/g, '""')}"`;
@@ -369,7 +308,7 @@ export default function AdminBDRPerformance() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <Link to="/admin/bdr-meeting-analytics" className="text-xs font-medium text-primary hover:underline">
+          <Link to="/admin/pipeline/results" className="text-xs font-medium text-primary hover:underline">
             Sales team results →
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Dialer Activity</h1>
@@ -384,7 +323,6 @@ export default function AdminBDRPerformance() {
             </button>
           ))}
           <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> Export</Button>
-          <Button variant="outline" size="sm" onClick={exportSweepCSV}><Download className="h-4 w-4 mr-1" /> Street Sweep</Button>
         </div>
       </div>
 
@@ -523,51 +461,6 @@ export default function AdminBDRPerformance() {
           </div>
         )}
       </div>
-
-      {/* Street Sweep Activity */}
-      <div>
-        <h2 className="text-sm font-bold text-foreground mb-3">Street Sweep Activity</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {[
-            { label: "Total Sweeps", value: sweepTeamStats.sweeps },
-            { label: "Total Leads", value: sweepTeamStats.total },
-            { label: "Visited", value: sweepTeamStats.visited },
-            { label: "Pending", value: sweepTeamStats.pending },
-          ].map(s => (
-            <div key={s.label} className="rounded-2xl p-3 text-center" style={cardStyle}>
-              <p className="text-lg font-bold text-foreground">{s.value}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <h3 className="text-xs font-bold text-foreground mt-4 mb-2">Sweeps by List</h3>
-        {sweepListRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No street sweep activity yet.</p>
-        ) : (
-          <div className="space-y-1.5">
-            <div className="hidden sm:grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wide">
-              <span className="col-span-2">List / Owner</span><span>Leads</span><span>Visited</span><span>Skipped</span><span>Pending</span><span>Last Activity</span>
-            </div>
-            {sweepListRows.map(row => (
-              <div key={row.key} className="rounded-xl px-4 py-3 sm:grid sm:grid-cols-7 sm:gap-2 sm:items-center flex flex-col gap-1" style={cardStyle}>
-                <div className="col-span-2 min-w-0">
-                  <p className="font-medium text-foreground truncate">{row.listName}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{row.repName}</p>
-                </div>
-                <span className="text-sm text-foreground">{row.total}</span>
-                <span className="text-sm text-foreground">{row.visited}</span>
-                <span className="text-sm text-foreground">{row.skipped}</span>
-                <span className="text-sm text-foreground">{row.pending}</span>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-2.5 w-2.5" />{row.lastActivity ? timeAgo(row.lastActivity) : "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
 
       {/* Objection leaderboard */}
       <div>

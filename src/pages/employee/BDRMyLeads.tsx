@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, CalendarCheck, MapPin, Copy } from "lucide-react";
+import { Plus, Upload, Search, Phone, ExternalLink, ChevronDown, ChevronUp, BookOpen, CheckCircle2, Trash2, HelpCircle, Calendar, CalendarCheck, Copy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -72,12 +72,6 @@ interface BdrLead {
   owner_booking_link: string | null;
   owner_booking_link_send_ready: string | null;
   dialer_bookable: boolean | null;
-  street_address?: string | null;
-  street_number?: number | null;
-  side_of_street?: string | null;
-  sequence_order?: number | null;
-  latitude?: number | null;
-  longitude?: number | null;
   unattended_since?: string | null;
   unattended_return_stage?: string | null;
   unattended_warned_at?: string | null;
@@ -219,7 +213,6 @@ export default function BDRMyLeads() {
   const [search, setSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
-  const [showStreetSweepGuide, setShowStreetSweepGuide] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [outcomeLead, setOutcomeLead] = useState<BdrLead | null>(null);
   const [rescheduleLead, setRescheduleLead] = useState<BdrLead | null>(null);
@@ -238,9 +231,7 @@ export default function BDRMyLeads() {
   const [journeyByLead, setJourneyByLead] = useState<Map<string, LeadJourney>>(new Map());
   const [outcomeLeadSheet, setOutcomeLeadSheet] = useState<BdrLead | null>(null);
   const [cancelLeadSheet, setCancelLeadSheet] = useState<BdrLead | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
   const [bookingChecking, setBookingChecking] = useState(false);
-  const [geoProgress, setGeoProgress] = useState(0);
   const [confirmState, setConfirmState] = useState<
     { title: string; description: string; confirmLabel: string; resolve: (v: boolean) => void } | null
   >(null);
@@ -479,11 +470,6 @@ export default function BDRMyLeads() {
     } else {
       list = list.filter(l => l.business_name.toLowerCase().includes(q) || (l.owner_name || "").toLowerCase().includes(q));
     }
-    // Street-sweep lists carry sequence_order — show them in walk order instead
-    // of the default created_at ordering.
-    if (list.some(l => l.sequence_order != null)) {
-      list = [...list].sort((a, b) => (a.sequence_order ?? 1e9) - (b.sequence_order ?? 1e9));
-    }
     return list;
   }, [listScopedLeads, filter, search, todayStart, tomorrowStart]);
 
@@ -502,46 +488,6 @@ export default function BDRMyLeads() {
     return { total, contacted, booked, won, rate: total ? Math.round((booked / total) * 100) : 0 };
   }, [listScopedLeads]);
 
-
-  /* ─── Nominatim geocoding (manual, rate-limited to ~1 req/sec) ─── */
-  const geocodeTargets = useMemo(
-    () => listScopedLeads.filter(l => l.street_address && l.latitude == null && l.longitude == null),
-    [listScopedLeads],
-  );
-
-  const canWalkList = useMemo(
-    () => activeList !== "__all__" && listScopedLeads.some(l => l.sequence_order != null),
-    [activeList, listScopedLeads],
-  );
-
-
-  const runGeocode = async () => {
-    if (geocoding || geocodeTargets.length === 0) return;
-    setGeocoding(true); setGeoProgress(0);
-    let ok = 0, fail = 0;
-    for (let i = 0; i < geocodeTargets.length; i++) {
-      const lead = geocodeTargets[i];
-      setGeoProgress(i + 1);
-      const q = [lead.street_address, lead.city].filter(Boolean).join(", ");
-      try {
-        // NOTE: Nominatim asks for a descriptive User-Agent, but browsers forbid
-        // setting that header on fetch, so we can't send one from the client.
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
-        const json = await res.json();
-        const hit = Array.isArray(json) ? json[0] : null;
-        if (hit?.lat && hit?.lon) {
-          const latitude = parseFloat(hit.lat), longitude = parseFloat(hit.lon);
-          await (supabase as any).from("nl_bdr_leads").update({ latitude, longitude }).eq("id", lead.id);
-          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, latitude, longitude } : l));
-          ok++;
-        } else fail++;
-      } catch { fail++; }
-      // Nominatim free-tier usage policy: max 1 request/second.
-      if (i < geocodeTargets.length - 1) await new Promise(r => setTimeout(r, 1100));
-    }
-    setGeocoding(false);
-    toast({ title: "Geocoding complete", description: `${ok} located${fail ? ` · ${fail} failed` : ""}` });
-  };
 
   const handleChangeStage = async (lead: BdrLead, stage: PipelineStageKey) => {
     if (!user?.id) return;
@@ -643,7 +589,6 @@ export default function BDRMyLeads() {
     let count = 0;
     let skipped = 0;
     let claimedByOther = 0;
-    const inserted: { id: string; street_number: number | null; side_of_street: string | null }[] = [];
     for (const row of rows) {
       const key = (row.business_name || "").trim().toLowerCase();
       if (!key || existingNames.has(key) || seenInBatch.has(key)) { skipped++; continue; }
@@ -689,10 +634,6 @@ export default function BDRMyLeads() {
         crd: row.crd || null,
         city: row.city || null,
         niche: row.niche || null,
-        street_address: row.street_address || null,
-        street_number: row.street_number ?? null,
-        side_of_street: row.side_of_street ?? null,
-        source_type: row.street_address ? "street_sweep" : null,
         notes: [
           row.notes || null,
           row.rapport_note ? `Rapport: ${row.rapport_note}` : null,
@@ -703,7 +644,6 @@ export default function BDRMyLeads() {
       if (error && (error as any).code === "23505") { claimedByOther++; continue; }
       if (data) {
         await createCRMRecords({ ...row, phone: primaryPhone }, data.id);
-        inserted.push({ id: data.id, street_number: row.street_number ?? null, side_of_street: row.side_of_street ?? null });
         count++;
         // Close the loop on the research queue — silent no-op if never sourced.
         if (row.crd && clientId) {
@@ -714,20 +654,6 @@ export default function BDRMyLeads() {
           } catch { /* never block import */ }
         }
       }
-    }
-
-    // Walk order: only for this import's rows, keyed on the ids we just got back
-    // (never re-queried by list name, so unrelated leads are untouched).
-    const withStreet = inserted.filter(r => r.street_number != null);
-    if (withStreet.length > 0) {
-      withStreet.sort((a, b) => {
-        const sa = a.side_of_street || "zz", sb = b.side_of_street || "zz";
-        if (sa !== sb) return sa.localeCompare(sb);
-        return (a.street_number || 0) - (b.street_number || 0);
-      });
-      await Promise.all(withStreet.map((r, i) =>
-        (supabase as any).from("nl_bdr_leads").update({ sequence_order: i + 1 }).eq("id", r.id)
-      ));
     }
 
     const parts: string[] = [];
@@ -929,7 +855,6 @@ export default function BDRMyLeads() {
         </div>
         <div className="overflow-x-auto whitespace-nowrap scrollbar-hide -mx-1 px-1">
           <div className="flex gap-2">
-            <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowStreetSweepGuide(true)} aria-label="Street sweep guide"><MapPin className="h-4 w-4 mr-1" /> Street Sweep</Button>
             <Button className="flex-shrink-0" variant="outline" size="sm" onClick={() => setShowImport(true)}><Upload className="h-4 w-4 mr-1" /> Import</Button>
             <Button className="flex-shrink-0" size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add Lead</Button>
           </div>
@@ -1062,17 +987,6 @@ export default function BDRMyLeads() {
                   </>
                 ) : (
                   <>
-                    {canWalkList && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/employee/street-walk?list=${encodeURIComponent(activeList)}`)}>
-                        <MapPin className="h-3 w-3 mr-1" /> Walk this list
-                      </Button>
-                    )}
-                    {geocodeTargets.length > 0 && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={geocoding} onClick={runGeocode}>
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {geocoding ? `Geocoding ${geoProgress}/${geocodeTargets.length}…` : `Geocode this list (${geocodeTargets.length})`}
-                      </Button>
-                    )}
                     {bookingCheckTargets.length > 0 && (
                       <Button size="sm" variant="outline" className="h-7 text-xs" disabled={bookingChecking} onClick={runBookingCheck}>
                         <CalendarCheck className="h-3 w-3 mr-1" />
@@ -1158,13 +1072,6 @@ export default function BDRMyLeads() {
                               style={{ background: "hsla(262,80%,65%,.14)", color: "hsl(262,80%,78%)" }}
                               title="Firm type — copied from the SEC Focus classification at import">
                               {lead.niche}
-                            </span>
-                          )}
-                          {lead.street_number != null && (
-                            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                              style={{ background: "hsla(211,96%,60%,.10)", color: "hsl(211,96%,66%)" }}
-                              title={lead.street_address || undefined}>
-                              {lead.street_address || lead.street_number}{lead.side_of_street ? ` (${lead.side_of_street})` : ""}
                             </span>
                           )}
                           <span title={canOverrideStage ? undefined : "Stage changes automatically when the next form is filled out"}>
@@ -1477,7 +1384,6 @@ export default function BDRMyLeads() {
 
       {/* Modals */}
       <ImportModal open={showImport} onClose={() => setShowImport(false)} onImport={handleImport} existingLists={existingListsByRecency} />
-      <StreetSweepGuideModal open={showStreetSweepGuide} onClose={() => setShowStreetSweepGuide(false)} />
       <AddLeadModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleAddLead} />
       <OutcomeSheet lead={outcomeLead} onClose={() => setOutcomeLead(null)} onSaveOutcome={handleSaveOutcome} onSaveObjection={handleSaveObjection} />
       <ScheduleExtraMeetingDialog
@@ -1918,7 +1824,7 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         oblIdx = -1,    // legacy V13 "Owner Booking Link"
         oblsrIdx = -1,  // V16 "Owner Booking Link (Send-Ready)"
         swIdx = -1, dbIdx = -1, mbIdx = -1, crdIdx = -1, cityIdx = -1,
-        nicheIdx = -1, notesIdx = -1, lnIdx = -1, saIdx = -1;
+        nicheIdx = -1, notesIdx = -1, lnIdx = -1;
     let expectedCols = -1;
     let dataRows: string[][];
 
@@ -1948,7 +1854,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
 
         else if (/meeting[\s_-]*booked/.test(c)) mbIdx = i;
         else if (/^crd$|crd[\s_-]*(number|#|no\.?)/.test(c)) crdIdx = i;
-        else if (/street[\s_-]*address|^address$/.test(c)) saIdx = i;
         else if (/^city$|city[\s_-]*\/?[\s_-]*state|location/.test(c)) cityIdx = i;
         else if (/niche|category|industry/.test(c)) nicheIdx = i;
         else if (/list[\s_-]*name|^list$/.test(c)) lnIdx = i;
@@ -2087,13 +1992,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
           niche: nicheIdx >= 0 ? unquote(r[nicheIdx]) : "",
           notes: notesIdx >= 0 ? unquote(r[notesIdx]) : "",
           list_name: lnIdx >= 0 ? unquote(r[lnIdx]) : "",
-          ...(() => {
-            const street_address = saIdx >= 0 ? (unquote(r[saIdx]) || "") : "";
-            const m = street_address.match(/^\s*(\d+)/);
-            const street_number = m ? parseInt(m[1], 10) : null;
-            const side_of_street = street_number == null ? null : (street_number % 2 === 0 ? "even" : "odd");
-            return { street_address, street_number, side_of_street };
-          })(),
           rapport_note: rapportMap[(r[biIdx] || "").trim().toLowerCase()] || null,
         };
       });
@@ -2105,18 +2003,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
       if (fromCsv) { setListMode("new"); setListName(fromCsv); }
     }
   };
-
-  // Routing preview: which parsed rows will be sequenced into Street Walk vs
-  // land in Dialer / My Leads only (and which have an unparseable address).
-  const routing = useMemo(() => {
-    const walk: any[] = [], dialerOnly: any[] = [], unparsed: any[] = [];
-    parsed.forEach(r => {
-      if (r.street_number != null) walk.push(r);
-      else if ((r.street_address || "").trim()) unparsed.push(r);
-      else dialerOnly.push(r);
-    });
-    return { walk, dialerOnly: [...dialerOnly, ...unparsed], unparsed };
-  }, [parsed]);
 
   const flagsFor = (ownerName: string): string[] => parseLeadFlags(ownerName);
 
@@ -2166,18 +2052,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                 {listMode === "existing" ? "Adds these leads to the selected list; duplicates by business name within the list are skipped." : "Name this batch so you can switch between lists later."}
               </p>
             </div>
-            <div className="rounded-lg px-3 py-2 space-y-1"
-              style={{ background: "hsla(211,96%,56%,.08)", border: "1px solid hsla(211,96%,60%,.25)" }}>
-              <p className="text-[11px] font-semibold" style={{ color: "hsl(211,96%,75%)" }}>Where will these leads land?</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Rows with a <span className="text-foreground font-medium">Street Address</span> column that starts with a house
-                number (e.g. <span className="font-mono">502 State St</span>) are automatically sequenced into{" "}
-                <span className="text-foreground font-medium">Street Walk</span> in walking order (odd side ascending, then even side).
-                Rows without a parseable street address appear in{" "}
-                <span className="text-foreground font-medium">Dialer / My Leads</span> only — they will not show up on a walk.
-                You'll see an exact breakdown before anything is imported.
-              </p>
-            </div>
             <Textarea value={raw} onChange={e => setRaw(e.target.value)} rows={10}
               placeholder={"Paste the Lead Researcher output (pipe-delimited table). Columns:\nBusiness Name | Owner Name | Front Desk Phone | Owner Direct Phone | Website | Booking System Exists | Booking Platform | Booking Link | Owner's Calendar Confirmed | Owner Booking Link (Send-Ready) | Dialer-Bookable | Meeting Booked"} />
             <Button onClick={parse} disabled={!raw.trim() || !finalListName} className="w-full">Parse Leads</Button>
@@ -2185,31 +2059,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
         ) : (
           <div className="space-y-3">
 
-            {/* Routing breakdown: Street Walk vs Dialer-only */}
-            <div className="rounded-lg px-3 py-2 space-y-1.5"
-              style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,60%,.2)" }}>
-              <p className="text-[11px] font-semibold" style={{ color: "hsl(211,96%,75%)" }}>Before you import — where these leads will land</p>
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(190,90%,55%,.14)", color: "hsl(190,90%,72%)", border: "1px solid hsla(190,90%,55%,.35)" }}>
-                  {routing.walk.length} → Street Walk (sequenced)
-                </span>
-                <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(0,0%,60%,.12)", color: "hsl(0,0%,75%)", border: "1px solid hsla(0,0%,60%,.28)" }}>
-                  {routing.dialerOnly.length} → Dialer / My Leads only
-                </span>
-                {routing.unparsed.length > 0 && (
-                  <span className="text-[11px] px-2 py-1 rounded" style={{ background: "hsla(38,92%,55%,.16)", color: "hsl(38,95%,70%)", border: "1px solid hsla(38,92%,55%,.45)" }}>
-                    ⚠ {routing.unparsed.length} address not parseable
-                  </span>
-                )}
-              </div>
-              {routing.unparsed.length > 0 && (
-                <p className="text-[11px] leading-relaxed" style={{ color: "hsl(38,95%,72%)" }}>
-                  These rows have a Street Address but no leading house number, so they would silently fall back to Dialer / My Leads:
-                  {" "}<span className="text-foreground font-medium">{routing.unparsed.map(r => `${r.business_name} ("${r.street_address}")`).join(", ")}</span>.
-                  Go Back and fix the address (start it with the house number) if they belong on a walk.
-                </p>
-              )}
-            </div>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <p className="text-sm text-muted-foreground">{parsed.length} leads found → <span className="text-foreground font-medium">"{finalListName}"</span></p>
               {skippedCount > 0 && (
@@ -2237,13 +2086,6 @@ function ImportModal({ open, onClose, onImport, existingLists }: { open: boolean
                   )}
                   {r.front_desk_phone && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(211,50%,55%,.15)", color: "hsl(211,60%,72%)" }}>Front Desk</span>
-                  )}
-                  {r.street_number != null ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(190,90%,55%,.14)", color: "hsl(190,90%,72%)" }}>Street Walk</span>
-                  ) : (r.street_address || "").trim() ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "hsla(38,92%,55%,.16)", color: "hsl(38,95%,70%)", border: "1px solid hsla(38,92%,55%,.45)" }}>⚠ Address unparsed → Dialer only</span>
-                  ) : (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "hsla(0,0%,60%,.12)", color: "hsl(0,0%,72%)" }}>Dialer only</span>
                   )}
                 </label>
                 );
@@ -2554,214 +2396,6 @@ function HowToImportModal({ open, onClose }: { open: boolean; onClose: () => voi
               </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ──────────────────────────────────────────────── */
-/* In-Person Street Sweep Guide Modal                */
-/* ──────────────────────────────────────────────── */
-const BEHAVIORAL_RULES = `1. Whenever I ask you to run a street sweep, confirm Web search is toggled ON before starting.
-2. Run the STREET SOURCING PROMPT first, filling in whatever street/city/state I give you. Let it run automatically through every batch of 5 until it reaches the top of the address range — don't wait for me to say "continue."
-3. In the SAME chat, once that finishes, I'll paste the LEADS ENRICHMENT PROMPT. Use the business list already compiled above in this conversation as its input — don't ask me to re-paste it.
-4. Let the enrichment prompt run automatically through every batch until finished.
-5. Give me both a human-readable table AND the fenced CSV block for each batch, so I can copy just the CSV into the app.
-6. Never claim results are "perfect," "complete," or "guaranteed" — always state realistic confidence and flag what's uncertain.
-7. If you run low on context mid-street, stop cleanly and tell me exactly which address to resume from — don't silently skip ahead or restart from the beginning.`;
-
-
-
-const STREET_SOURCING_PROMPT = `# ROLE
-You are a meticulous local-commerce field researcher compiling a storefront census for one street. Accuracy and COMPLETE COVERAGE matter more than speed. Do not oversell your results as "perfect," "complete," or "guaranteed" — report realistic confidence and flag every uncertainty. Use web search for every verification step.
-
-# INPUT
-Street: [STREET NAME]
-City: [CITY]
-State: [STATE]
-Side(s): [both / odd side only / even side only]
-Block range (REQUIRED): a specific bounded stretch, e.g. "400–800" or "the 500 and 600 blocks." This must be a range walkable in one sweep — roughly 3–10 blocks / 20–60 addresses. Do NOT accept a request to sweep an entire street end-to-end in one pass.
-
-# STEP 0 — ESTABLISH THE FULL ADDRESS RANGE BEFORE LISTING ANY BUSINESS
-1. Determine the full commercial address range of this street using, in priority order: (a) city/county GIS parcel situs data or assessor parcel lookup, (b) Google Maps scrolled end to end, (c) OpenStreetMap/Overpass.
-2. State the established range explicitly with your source.
-3. Build a MASTER CHECKLIST of every plausible street number in the range, ascending, unchecked.
-
-# SCOPE CHECK (do this before anything else)
-If no block range was given, or the requested range spans more than roughly 10 blocks / 60 addresses, STOP and ask the person to pick a specific, narrower block range instead of proceeding. Do not attempt a full-street sweep and do not silently substitute a broad research summary in its place — a bounded range is a hard requirement of this protocol, not a suggestion.
-
-# STEP 1 — STRICT ASCENDING ORDER, 5 BUSINESSES PER BATCH
-Process addresses from lowest number upward. Output EXACTLY 5 businesses per batch. Vacant/closed/no-address entries are logged inline but don't count toward the 5.
-
-# PER-BUSINESS VERIFICATION — 7 NAMED METHODS
-For each address, attempt all 7 and record which succeeded:
-1. Google Maps/Business Profile — name, category, phone, website, open/closed status banner.
-2. City business license/tax data.
-3. GIS parcel situs data.
-4. OpenStreetMap/Overpass.
-5. Chamber/BID/downtown business directory.
-6. Recent Google/Yelp reviews and photos (closure/new-tenant signals).
-7. Local news/trade press + state business-entity status as corroboration.
-
-# STEP 2 — FLAG, DON'T OMIT
-Every address resolves to: FOUND / VACANT-FOR-LEASE / CLOSED / NOT FOUND / MULTI-TENANT (list each suite).
-
-# OUTPUT FORMAT
-Start every batch with: "BATCH n | addresses [x]–[y] of range [lo]–[hi] | businesses so far: [count] | remaining: [y+1]–[hi]"
-Then per entry: [number] [name or —] | STATUS | category | phone | website | owner if found | methods confirmed | confidence High/Med/Low | notes
-
-# CONTINUATION RULES
-After each batch, continue automatically to the next. Do not ask to continue. Do not start mid-range. Do not stop early. If running low on room, end cleanly with "PAUSE — resume at address [N]."
-
-# FINAL SELF-CHECK
-Confirm every number in the range is marked found/vacant/closed/not-found/multi-tenant. Report totals. Compare business count to commercial-parcel frontage count and flag if it looks short. If the person originally asked for more than this bounded range, remind them at the end that additional ranges need their own separate sweep.
-
-# CLOSING DISCLAIMER (REQUIRED)
-State an honest coverage confidence estimate and known limitations. Do not claim the list is perfect or complete.`;
-
-const LEADS_ENRICHMENT_PROMPT = `# ROLE
-You enrich a storefront census into CRM-ready lead records. Work in the SAME strict batches of 5. Be honest about missing/low-confidence fields — never invent an owner name or phone. Use web search for every verification step.
-
-# INPUT
-Use the business list compiled above in this conversation. Also: City = [CITY]; list_name = [e.g., "State St 400-1300 Sweep 2026-07"].
-
-# TASK
-For each FOUND/MULTI-TENANT business (skip pure VACANT/NOT-FOUND; keep CLOSED entries flagged, don't rework them), produce one record with exactly these fields: business_name, owner_name (research via business license ownership data, state business registry, the business's own site/About page, LinkedIn; leave blank and note "owner unverified" if not found — never guess), phone, website, niche (best-fit category; flag if unsure), city, street_address (the literal street number + street name + suite if any, e.g. "1114 State St, Suite 12" — this is its own required field, do NOT fold it into notes), booking_system_exists, booking_platform, booking_methods, notes (closure/verification flags, confidence, which sources confirmed), list_name.
-
-# BOOKING SYSTEM CHECK (REQUIRED — run on the website you already found; do NOT go hunting for a different site)
-For every business that has a website, run all 5 detection routes against that site before you decide. Stop early only when a route confirms Yes.
-1. URL / path — look for /book, /book-now, /booking, /schedule, /appointments, /reservations, or a booking. / schedule. subdomain.
-2. Embedded widget or script — Calendly, Square Appointments, Acuity/Squarespace Scheduling, Vagaro, Booksy, Fresha, Mindbody, Setmore, Schedulicity, SimplyBook, OpenTable, Resy, Tock, Housecall Pro, Jobber, Zocdoc, GoHighLevel, HubSpot Meetings, Microsoft Bookings, Google Appointment Schedules.
-3. CTA text — a visible "Book Now", "Book Online", "Schedule an Appointment", "Reserve a Table", "Request an Appointment" button or link.
-4. Structured data / meta — schema.org Reservation / ReserveAction / potentialAction markup, or booking-specific meta tags.
-5. Footer / contact-page link-out — an outbound link to any third-party booking domain from the footer, contact page, or social profile links.
-
-Record the result honestly:
-- booking_system_exists = Yes only if at least one route confirmed it; No only if you actually checked the site and all 5 routes came back empty; Unknown if there is no website or the site would not load. Never write No for a business you could not check.
-- booking_platform = the platform name (e.g. "Calendly", "Square Appointments") or "custom/native" when it is the business's own booking page; blank when Unknown or No.
-- booking_methods = the routes that confirmed it, pipe-separated, using these exact codes: url_path | embed_script | cta_text | structured_data | footer_linkout. Blank when No or Unknown.
-
-# BATCH & CONTINUATION RULES
-Output exactly 5 records per batch. Continue automatically after each batch — do not wait for "continue." Start with the first business in the input; never start mid-list; don't stop until all are enriched. If running low on room, end cleanly with "PAUSE — resume at [business_name]."
-
-# OUTPUT FORMAT
-Emit each batch as BOTH a human-readable table AND a fenced CSV block with header row exactly:
-business_name,owner_name,phone,website,niche,city,street_address,booking_system_exists,booking_platform,booking_methods,notes,list_name
-One row per record, quoted fields.
-
-# CLOSING (REQUIRED)
-After the final batch, report: # records enriched, # with unverified owner, # with low-confidence status, # with a booking system (Yes / No / Unknown split), and remind that owner names/phones for small independents are the least reliable fields and should be confirmed on the call.`;
-
-
-const PROJECT_INSTRUCTIONS = `STREET SWEEP WORKFLOW — paste this into this Claude Project's custom instructions (Settings → this Project → Instructions) once. It contains everything needed, including the full text of both prompts below, so it works standalone even if the person only pastes this one block.
-
-${BEHAVIORAL_RULES}
-
-======================
-FULL TEXT: STREET SOURCING PROMPT (run this first when asked to sweep a street)
-======================
-${STREET_SOURCING_PROMPT}
-
-======================
-FULL TEXT: LEADS ENRICHMENT PROMPT (run this second, on the list the sourcing prompt just compiled)
-======================
-${LEADS_ENRICHMENT_PROMPT}
-`;
-
-function StreetSweepGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
-
-  const copy = async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedKey(key);
-      toast({ title: "Copied!", description: `${text.length.toLocaleString()} characters copied to clipboard.` });
-      setTimeout(() => setCopiedKey(k => (k === key ? null : k)), 2500);
-    } catch {
-      toast({ title: "Copy failed", description: "Your browser blocked clipboard access.", variant: "destructive" });
-    }
-  };
-
-  const steps = [
-    'Pick ONE bounded block range first — e.g. "400–800 State St," not the whole street. 3–10 blocks per sweep is the sweet spot; a full corridor has to be swept in multiple separate passes.',
-    'Open this Claude project. Tap + (or the slider icon) and confirm "Web search" is toggled ON — it must be blue/on.',
-    "Copy the STREET SOURCING PROMPT below. Paste it into the Claude chat, filling in the street, city, and state at the top.",
-    'Let it run through every batch of 5 until it reaches the top of the address range on its own — don\'t say "continue," it should keep going automatically.',
-    'In the SAME chat, right after it finishes, copy and paste the LEADS ENRICHMENT PROMPT below. Add this line above it: "Run this on the full business list you just compiled above." Do not open a new chat — it needs Prompt 1\'s output already in view.',
-    "Let it run through every batch until finished.",
-    "Copy ONLY the CSV code block(s) from the final output — not the human-readable table above it.",
-    "Come back here, tap Import, and paste the CSV in.",
-    "Review the preview before confirming. Anything flagged vacant, not-found, multi-tenant, or low-confidence needs your judgment call — don't import those blind.",
-  ];
-
-  const proTips = [
-    "A fresh Claude chat resets the Web search toggle — check it's on again each time you start a new street.",
-    'If Prompt 1 pauses mid-street with "PAUSE — resume at address N," just reply "resume at N" — don\'t restart from the beginning.',
-    "This is a real research pass, not a database lookup — expect it to take a few minutes per batch, and expect it to miss a small percentage of businesses (upstairs offices, unlisted shops, brand-new openings).",
-    "The in-person walk is what catches what the prompts can't see remotely — treat flagged/uncertain addresses as things to verify on foot, not errors.",
-  ];
-
-  const promptCard = (key: string, badge: string, title: string, text: string) => (
-    <div className="rounded-xl p-4" style={{ background: "hsla(211,96%,56%,.06)", border: "1px solid hsla(211,96%,56%,.3)" }}>
-      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                style={{ background: "hsla(211,96%,56%,.2)", color: "hsl(211,96%,70%)" }}>{badge}</span>
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        </div>
-        <Button size="sm" onClick={() => copy(key, text)}>
-          <Copy className="h-3.5 w-3.5 mr-1" />{copiedKey === key ? "Copied ✓" : "Copy"}
-        </Button>
-      </div>
-      <pre className="max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-[11px] leading-relaxed font-mono text-foreground/80"
-           style={{ background: "hsla(215,35%,10%,.6)", border: "1px solid hsla(211,96%,60%,.15)" }}>{text}</pre>
-    </div>
-  );
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-2xl max-h-[85dvh] overflow-y-auto overflow-x-hidden">
-        <DialogHeader className="text-left pr-8">
-          <DialogTitle>In-Person Street Sweep Guide</DialogTitle>
-          <DialogDescription>Turn any street into an ordered, research-backed lead list.</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 min-w-0">
-          <div className="rounded-xl p-4 min-w-0" style={{ background: "hsla(158,70%,40%,.08)", border: "1px solid hsla(158,70%,45%,.35)" }}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                    style={{ background: "hsla(158,70%,45%,.2)", color: "hsl(158,70%,65%)" }}>Steps</span>
-              <h3 className="text-sm font-semibold text-foreground">How This Works</h3>
-            </div>
-            <ol className="space-y-1.5 text-xs leading-relaxed text-foreground/85 list-decimal list-inside">
-              {steps.map((s, i) => <li key={i}>{s}</li>)}
-            </ol>
-          </div>
-
-          <div className="rounded-xl p-4" style={{ background: "hsla(38,92%,55%,.08)", border: "1px solid hsla(38,92%,55%,.25)" }}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                    style={{ background: "hsla(38,92%,55%,.2)", color: "hsl(38,95%,70%)" }}>Pro Tips</span>
-              <h3 className="text-sm font-semibold text-foreground">Keep It Accurate</h3>
-            </div>
-            <ul className="space-y-2">
-              {proTips.map((t, i) => (
-                <li key={i} className="flex gap-2 text-xs leading-relaxed text-foreground/85">
-                  <span style={{ color: "hsl(38,95%,65%)" }}>•</span>
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="text-xs text-muted-foreground leading-relaxed px-1">
-            Paste this once into this Claude Project's own instructions — it's separate from the two prompts below, which you paste into the chat itself each time.
-          </p>
-
-          {promptCard("p0", "Paste Once", "Claude Project Instructions — tap to copy", PROJECT_INSTRUCTIONS)}
-          {promptCard("p1", "Prompt 1 of 2", "Street Sourcing Prompt — tap to copy", STREET_SOURCING_PROMPT)}
-          {promptCard("p2", "Prompt 2 of 2", "Leads Enrichment Prompt — tap to copy", LEADS_ENRICHMENT_PROMPT)}
         </div>
       </DialogContent>
     </Dialog>

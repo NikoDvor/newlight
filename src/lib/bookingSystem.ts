@@ -1,5 +1,5 @@
 // Shared model for the 5-method booking-system check run against a lead's
-// already-known website. Used by the dialer, street walk, my-leads and the
+// already-known website. Used by the dialer, my-leads and the
 // admin/team lead tables so the Yes / No / Unknown semantics never drift.
 
 export const BOOKING_METHOD_LABELS: Record<string, string> = {

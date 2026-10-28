@@ -20,22 +20,20 @@ import { AdminImpersonationBar } from "@/components/AdminImpersonationBar";
 
 const navGroups: { label?: string; items: { title: string; url: string; icon: any }[] }[] = [
   {
-    items: [{ title: "Dashboard", url: "/employee", icon: BarChart3 }],
+    items: [{ title: "My Pipeline", url: "/employee", icon: BarChart3 }],
   },
   {
-    label: "Find",
+    label: "Work the pipeline",
     items: [
-      { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
-      { title: "Street Walk", url: "/employee/street-walk", icon: MapPin },
-      { title: "Street Sweep", url: "/employee/street-sweep", icon: Footprints },
+      { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
+      { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
     ],
   },
   {
-    label: "Work",
+    label: "Get leads",
     items: [
       { title: "Dialer", url: "/employee/dialer", icon: Phone },
-      { title: "My Leads", url: "/employee/leads", icon: ClipboardList },
-      { title: "My Calendar", url: "/employee/calendar", icon: CalendarDays },
+      { title: "Lead Sourcing", url: "/employee/lead-sourcing", icon: Search },
     ],
   },
   {

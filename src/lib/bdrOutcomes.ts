@@ -1,4 +1,4 @@
-// Shared BDR outcome definitions used by the Dialer and Street Walk pages.
+// Shared BDR outcome definitions used by the Dialer.
 // Each outcome is its own distinct value. objection === null skips the 50-hit unlock tracker.
 export type OutcomeCategory = "no_contact" | "positive" | "objection" | "closed";
 

@@ -89,7 +89,7 @@ function isConverted(deal: BdrLinkedDealRow | undefined): boolean {
  * Canonical stage for a BDR lead.
  *
  * Both BDR writers use their own vocabulary — the Dialer writes
- * new_lead/contacted/appointment_booked/closed_won/closed_lost, Street Walk
+ * new_lead/contacted/appointment_booked/closed_won/closed_lost, the forms
  * writes cold/warm/hot/won — and `toCanonStage` already maps every one of
  * those. On top of that we escalate using hard evidence: a booked meeting
  * proves Warm, a close-prep meeting or Form 2 artefact proves Hot, and a

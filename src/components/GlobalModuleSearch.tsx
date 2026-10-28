@@ -40,10 +40,12 @@ interface NavEntry {
 // Sourced from src/components/AdminSidebar.tsx (adminGroups).
 const ADMIN_NAV: NavEntry[] = [
   // Top
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, groupLabel: "General" },
+  { title: "Pipeline", url: "/admin", icon: LayoutDashboard, groupLabel: "General" },
+  { title: "Pipeline Board", url: "/admin/pipeline/board", icon: LayoutDashboard, groupLabel: "Pipeline" },
+  { title: "Clients Overview", url: "/admin/clients-overview", icon: LayoutDashboard, groupLabel: "Clients" },
   { title: "Fix Now", url: "/admin/fix-now", icon: AlertTriangle, groupLabel: "General" },
   // Sales
-  { title: "Sales Team Results", url: "/admin/bdr-meeting-analytics", icon: BarChart3, groupLabel: "Sales" },
+  { title: "Sales Team Results", url: "/admin/pipeline/results", icon: BarChart3, groupLabel: "Pipeline" },
   { title: "Dialer Activity", url: "/admin/bdr-performance", icon: TrendingUp, groupLabel: "Sales" },
   { title: "Sales Control Center", url: "/admin/sales-control-center", icon: LayoutDashboard, groupLabel: "Sales" },
   { title: "Proposal Templates", url: "/admin/proposal-templates", icon: FileSignature, groupLabel: "Sales" },
@@ -64,7 +66,7 @@ const ADMIN_NAV: NavEntry[] = [
 
 // Sourced from src/components/EmployeeLayout.tsx (navItems + BDR Certification).
 const EMPLOYEE_NAV: NavEntry[] = [
-  { title: "Dashboard", url: "/employee", icon: BarChart3, groupLabel: "Employee Portal" },
+  { title: "My Pipeline", url: "/employee", icon: BarChart3, groupLabel: "Employee Portal" },
   { title: "My Leads", url: "/employee/leads", icon: ClipboardList, groupLabel: "Employee Portal" },
   { title: "Dialer", url: "/employee/dialer", icon: Phone, groupLabel: "Employee Portal" },
   { title: "Training Center", url: "/employee/training", icon: GraduationCap, groupLabel: "Employee Portal" },
