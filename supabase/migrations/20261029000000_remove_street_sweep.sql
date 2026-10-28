@@ -1,5 +1,5 @@
 -- Street Walk / Street Sweep removed from the app (Oct 28, 2026; financial firms only).
--- Apply AFTER the frontend without Street Walk is published (old published code
+-- Applied Oct 28, 2026 after the user published the frontend (old published code
 -- still reads these). Data at removal time: 1 test route + 1 test street, no
 -- visits, no in-person leads, no lead with walk/geo data.
 drop table if exists public.street_sweep_visits;
@@ -7,6 +7,7 @@ drop table if exists public.street_sweep_routes;
 drop table if exists public.nl_inperson_outcomes;
 drop table if exists public.nl_inperson_leads;
 drop table if exists public.nl_inperson_streets;
+drop table if exists public.nl_inperson_master_prompt;
 alter table public.nl_bdr_leads
   drop column if exists street_number,
   drop column if exists side_of_street,
